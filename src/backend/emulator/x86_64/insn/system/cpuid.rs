@@ -56,10 +56,10 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                                   | (1 << 24)  // FXSR - REQUIRED
                                   | (1 << 25)  // SSE - REQUIRED
                                   | (1 << 26); // SSE2 - REQUIRED
-                                               // ECX: SSE3(0), SSSE3(9), SSE4.1(19), SSE4.2(20), POPCNT(23)
-                                               // Note: TSC_DEADLINE (bit 24) NOT advertised - LAPIC only supports oneshot/periodic modes
-                                               // XSAVE (26), OSXSAVE (27, reflects CR4) and AVX (28) ARE advertised:
-                                               // XGETBV/XSETBV/XSAVE/XRSTOR + XCR0 are implemented (see group7.rs, leaf 0xD).
+            // ECX: SSE3(0), SSSE3(9), SSE4.1(19), SSE4.2(20), POPCNT(23)
+            // Note: TSC_DEADLINE (bit 24) NOT advertised - LAPIC only supports oneshot/periodic modes
+            // XSAVE (26), OSXSAVE (27, reflects CR4) and AVX (28) ARE advertised:
+            // XGETBV/XSETBV/XSAVE/XRSTOR + XCR0 are implemented (see group7.rs, leaf 0xD).
             let osxsave = ((vcpu.sregs.cr4 >> 18) & 1) as u32; // CR4.OSXSAVE
             let features_ecx: u32 = (1 << 0)   // SSE3
                                   | (1 << 9)   // SSSE3
@@ -164,7 +164,12 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                     if vcpu.xcr0 & XCR0_APX_F != 0 {
                         cur_size = cur_size.max(XSAVE_APX_OFFSET + XSAVE_APX_SIZE);
                     }
-                    (xcr0_valid as u32, cur_size, XSAVE_MAX_SIZE, (xcr0_valid >> 32) as u32)
+                    (
+                        xcr0_valid as u32,
+                        cur_size,
+                        XSAVE_MAX_SIZE,
+                        (xcr0_valid >> 32) as u32,
+                    )
                 }
                 // Subleaf 1: XSAVEOPT/XSAVEC/XSAVES not supported.
                 1 => (0, 0, 0, 0),

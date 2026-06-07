@@ -108,8 +108,16 @@ fn test_smsw_sequential() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // All should have same MSW value
-    assert_eq!(regs.rax & 0xFFFF, regs.rbx & 0xFFFF, "MSW values should match");
-    assert_eq!(regs.rax & 0xFFFF, regs.rcx & 0xFFFF, "MSW values should match");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        regs.rbx & 0xFFFF,
+        "MSW values should match"
+    );
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        regs.rcx & 0xFFFF,
+        "MSW values should match"
+    );
 }
 
 // Test LMSW basic execution
@@ -140,7 +148,11 @@ fn test_lmsw_with_value() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // MSW should be preserved
-    assert_eq!(regs.rax & 0xFFFF, regs.rbx & 0xFFFF, "MSW should be preserved");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        regs.rbx & 0xFFFF,
+        "MSW should be preserved"
+    );
 }
 
 // Test LMSW preserves flags
@@ -292,7 +304,11 @@ fn test_lmsw_round_trip() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Values should match (at least low 16 bits)
-    assert_eq!(regs.rax & 0xFFFF, regs.rbx & 0xFFFF, "MSW should be preserved");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        regs.rbx & 0xFFFF,
+        "MSW should be preserved"
+    );
 }
 
 // Test SMSW with conditional jumps
@@ -488,5 +504,9 @@ fn test_lmsw_idempotent() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Multiple LMSW with same value should be safe
-    assert_eq!(regs.rax & 0xFFFF, regs.rbx & 0xFFFF, "MSW should be preserved");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        regs.rbx & 0xFFFF,
+        "MSW should be preserved"
+    );
 }

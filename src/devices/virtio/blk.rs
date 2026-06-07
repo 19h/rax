@@ -25,7 +25,7 @@
 //! and the topology/geometry config fields are not implemented. Indirect
 //! descriptors are not followed (see the transport's [`VirtQueue`]).
 
-use super::{DescriptorChain, Mem, VirtQueue, VirtioDevice, VIRTIO_F_VERSION_1};
+use super::{DescriptorChain, Mem, VIRTIO_F_VERSION_1, VirtQueue, VirtioDevice};
 
 /// virtio-blk DeviceID.
 pub const VIRTIO_ID_BLOCK: u32 = 2;
@@ -163,9 +163,7 @@ impl VirtioBlk {
         // First descriptor: device-readable request header.
         let mut header_buf = [0u8; REQ_HEADER_LEN];
         let hdr_desc = descs[0];
-        if (hdr_desc.len as usize) < REQ_HEADER_LEN
-            || !mem.read(hdr_desc.addr, &mut header_buf)
-        {
+        if (hdr_desc.len as usize) < REQ_HEADER_LEN || !mem.read(hdr_desc.addr, &mut header_buf) {
             return 0;
         }
         let header = match BlkReqHeader::parse(&header_buf) {
@@ -184,9 +182,7 @@ impl VirtioBlk {
 
         let mut data_written = 0u32;
         let status = match header.req_type {
-            VIRTIO_BLK_T_IN => {
-                self.transfer(mem, header.sector, data, true, &mut data_written)
-            }
+            VIRTIO_BLK_T_IN => self.transfer(mem, header.sector, data, true, &mut data_written),
             VIRTIO_BLK_T_OUT => {
                 if self.read_only {
                     VIRTIO_BLK_S_IOERR
@@ -257,12 +253,7 @@ impl VirtioBlk {
 
     /// Service a `GET_ID` request: copy the device id string into the first
     /// device-writable data descriptor.
-    fn get_id<M: Mem>(
-        &self,
-        mem: &mut M,
-        data: &[super::Descriptor],
-        written: &mut u32,
-    ) -> u8 {
+    fn get_id<M: Mem>(&self, mem: &mut M, data: &[super::Descriptor], written: &mut u32) -> u8 {
         let Some(desc) = data.first() else {
             return VIRTIO_BLK_S_IOERR;
         };
@@ -328,7 +319,7 @@ mod tests {
     use super::*;
     use crate::devices::bus::MmioDevice;
     use crate::devices::virtio::{
-        VecMem, VirtioMmio, REG_CONFIG, REG_DEVICE_ID, VRING_DESC_F_NEXT, VRING_DESC_F_WRITE,
+        REG_CONFIG, REG_DEVICE_ID, VRING_DESC_F_NEXT, VRING_DESC_F_WRITE, VecMem, VirtioMmio,
     };
 
     const BASE: u64 = 0xd000_0000;
@@ -411,7 +402,12 @@ mod tests {
         let data = super::super::Descriptor {
             addr: 0x200,
             len: data_len,
-            flags: VRING_DESC_F_NEXT | if data_write_only { VRING_DESC_F_WRITE } else { 0 },
+            flags: VRING_DESC_F_NEXT
+                | if data_write_only {
+                    VRING_DESC_F_WRITE
+                } else {
+                    0
+                },
             next: 2,
         };
         let status = super::super::Descriptor {
@@ -432,7 +428,9 @@ mod tests {
         let mut mem = VecMem::new(0x1000);
 
         // Stage a sector worth of pattern at the data buffer, issue an OUT.
-        let pattern: Vec<u8> = (0..SECTOR_SIZE as usize).map(|i| (i & 0xff) as u8).collect();
+        let pattern: Vec<u8> = (0..SECTOR_SIZE as usize)
+            .map(|i| (i & 0xff) as u8)
+            .collect();
         mem.write(0x200, &pattern);
         let out_chain = build_chain(&mut mem, VIRTIO_BLK_T_OUT, 1, false, SECTOR_SIZE as u32);
         let written = blk.handle_chain(&out_chain, &mut mem);
@@ -500,8 +498,7 @@ mod tests {
         // and an interrupt is raised then cleared.
         use crate::devices::virtio::{
             INT_USED_BUFFER, REG_INTERRUPT_ACK, REG_QUEUE_DESC_LOW, REG_QUEUE_DEVICE_LOW,
-            REG_QUEUE_DRIVER_LOW, REG_QUEUE_NOTIFY, REG_QUEUE_NUM, REG_QUEUE_READY,
-            REG_QUEUE_SEL,
+            REG_QUEUE_DRIVER_LOW, REG_QUEUE_NOTIFY, REG_QUEUE_NUM, REG_QUEUE_READY, REG_QUEUE_SEL,
         };
 
         // Memory map: descriptors @ 0x1000, avail @ 0x2000, used @ 0x3000,
@@ -519,14 +516,22 @@ mod tests {
         mem.write(0x200, &pattern);
 
         // Descriptor table: 3 chained descriptors.
-        let write_desc = |mem: &mut VecMem, idx: u64, addr: u64, len: u32, flags: u16, next: u16| {
-            let base = 0x1000 + idx * 16;
-            mem.write(base, &addr.to_le_bytes());
-            mem.write(base + 8, &len.to_le_bytes());
-            mem.write(base + 12, &flags.to_le_bytes());
-            mem.write(base + 14, &next.to_le_bytes());
-        };
-        write_desc(&mut mem, 0, 0x100, REQ_HEADER_LEN as u32, VRING_DESC_F_NEXT, 1);
+        let write_desc =
+            |mem: &mut VecMem, idx: u64, addr: u64, len: u32, flags: u16, next: u16| {
+                let base = 0x1000 + idx * 16;
+                mem.write(base, &addr.to_le_bytes());
+                mem.write(base + 8, &len.to_le_bytes());
+                mem.write(base + 12, &flags.to_le_bytes());
+                mem.write(base + 14, &next.to_le_bytes());
+            };
+        write_desc(
+            &mut mem,
+            0,
+            0x100,
+            REQ_HEADER_LEN as u32,
+            VRING_DESC_F_NEXT,
+            1,
+        );
         write_desc(&mut mem, 1, 0x200, SECTOR_SIZE as u32, VRING_DESC_F_NEXT, 2);
         write_desc(&mut mem, 2, 0x300, 1, VRING_DESC_F_WRITE, 0);
 

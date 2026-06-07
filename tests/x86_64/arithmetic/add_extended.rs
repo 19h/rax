@@ -225,8 +225,13 @@ fn test_add_extended_r16_registers() {
 fn test_add_all_16bit_gp_registers() {
     // Test BX, CX, DX, SI, DI, SP, BP
     let regs_to_test = vec![
-        (0xD8, "BX"), (0xC8, "CX"), (0xD0, "DX"),
-        (0xF0, "SI"), (0xF8, "DI"), (0xE0, "SP"), (0xE8, "BP"),
+        (0xD8, "BX"),
+        (0xC8, "CX"),
+        (0xD0, "DX"),
+        (0xF0, "SI"),
+        (0xF8, "DI"),
+        (0xE0, "SP"),
+        (0xE8, "BP"),
     ];
 
     for (modrm, _name) in regs_to_test {
@@ -387,8 +392,8 @@ fn test_add_r64_imm8_sign_extended() {
 fn test_add_all_64bit_gp_registers() {
     // Test RAX through R15
     let all_regs = [
-        "RAX", "RCX", "RDX", "RBX", "RSP", "RBP", "RSI", "RDI",
-        "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15"
+        "RAX", "RCX", "RDX", "RBX", "RSP", "RBP", "RSI", "RDI", "R8", "R9", "R10", "R11", "R12",
+        "R13", "R14", "R15",
     ];
 
     for i in 0..all_regs.len() {
@@ -420,7 +425,11 @@ fn test_add_all_64bit_gp_registers() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert!(regs.rax >= 0x1000000000000000, "RAX should increase for {}", all_regs[i]);
+        assert!(
+            regs.rax >= 0x1000000000000000,
+            "RAX should increase for {}",
+            all_regs[i]
+        );
     }
 }
 
@@ -627,7 +636,11 @@ fn test_add_preserves_high_bits_8bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax >> 8, 0xDEADBEEF123456, "High bits should be preserved");
+    assert_eq!(
+        regs.rax >> 8,
+        0xDEADBEEF123456,
+        "High bits should be preserved"
+    );
 }
 
 #[test]
@@ -638,7 +651,11 @@ fn test_add_preserves_high_bits_16bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax >> 16, 0xDEADBEEF1234, "High bits should be preserved");
+    assert_eq!(
+        regs.rax >> 16,
+        0xDEADBEEF1234,
+        "High bits should be preserved"
+    );
 }
 
 #[test]
@@ -649,7 +666,11 @@ fn test_add_zeros_high_bits_32bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax >> 32, 0, "High 32 bits should be zeroed for 32-bit op");
+    assert_eq!(
+        regs.rax >> 32,
+        0,
+        "High 32 bits should be zeroed for 32-bit op"
+    );
 }
 
 #[test]
@@ -683,5 +704,9 @@ fn test_add_commutative() {
     let (mut vcpu2, _) = setup_vm(&code2, Some(regs2));
     let result2 = run_until_hlt(&mut vcpu2).unwrap();
 
-    assert_eq!(result1.rax & 0xFF, result2.rbx & 0xFF, "Results should match");
+    assert_eq!(
+        result1.rax & 0xFF,
+        result2.rbx & 0xFF,
+        "Results should match"
+    );
 }

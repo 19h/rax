@@ -27,7 +27,10 @@ fn test_bsr_ax_bx_bit_0() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0, "AX should contain 0 (bit 0 is MSB)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (source is non-zero)");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (source is non-zero)"
+    );
 }
 
 #[test]
@@ -42,8 +45,15 @@ fn test_bsr_ax_bx_bit_15() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 15, "AX should contain 15 (bit 15 is MSB)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (source is non-zero)");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        15,
+        "AX should contain 15 (bit 15 is MSB)"
+    );
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (source is non-zero)"
+    );
 }
 
 #[test]
@@ -58,8 +68,15 @@ fn test_bsr_eax_ebx_bit_0() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should contain 0 (bit 0 is MSB)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (source is non-zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "EAX should contain 0 (bit 0 is MSB)"
+    );
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (source is non-zero)"
+    );
 }
 
 #[test]
@@ -74,8 +91,15 @@ fn test_bsr_eax_ebx_bit_31() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 31, "EAX should contain 31 (bit 31 is MSB)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (source is non-zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        31,
+        "EAX should contain 31 (bit 31 is MSB)"
+    );
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (source is non-zero)"
+    );
 }
 
 #[test]
@@ -91,7 +115,10 @@ fn test_bsr_rax_rbx_bit_0() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax, 0, "RAX should contain 0 (bit 0 is MSB)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (source is non-zero)");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (source is non-zero)"
+    );
 }
 
 #[test]
@@ -107,7 +134,10 @@ fn test_bsr_rax_rbx_bit_63() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax, 63, "RAX should contain 63 (bit 63 is MSB)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (source is non-zero)");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (source is non-zero)"
+    );
 }
 
 #[test]
@@ -137,7 +167,11 @@ fn test_bsr_multiple_bits_finds_highest() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 7, "EAX should contain 7 (highest bit set)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        7,
+        "EAX should contain 7 (highest bit set)"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -153,7 +187,11 @@ fn test_bsr_all_bits_set() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 31, "EAX should contain 31 (bit 31 is highest)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        31,
+        "EAX should contain 31 (bit 31 is highest)"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -169,7 +207,11 @@ fn test_bsr_alternating_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 31, "EAX should contain 31 (highest bit set)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        31,
+        "EAX should contain 31 (highest bit set)"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -185,7 +227,11 @@ fn test_bsr_alternating_bits_inverted() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 30, "EAX should contain 30 (highest bit set)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        30,
+        "EAX should contain 30 (highest bit set)"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -202,8 +248,18 @@ fn test_bsr_single_bit_positions() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, bit_pos as u64, "EAX should contain {} for bit {}", bit_pos, bit_pos);
-        assert!(!zf_set(regs.rflags), "ZF should be clear for bit {}", bit_pos);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            bit_pos as u64,
+            "EAX should contain {} for bit {}",
+            bit_pos,
+            bit_pos
+        );
+        assert!(
+            !zf_set(regs.rflags),
+            "ZF should be clear for bit {}",
+            bit_pos
+        );
     }
 }
 
@@ -342,7 +398,11 @@ fn test_bsr_sparse_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 31, "EAX should contain 31 (higher bit)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        31,
+        "EAX should contain 31 (higher bit)"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -358,7 +418,11 @@ fn test_bsr_consecutive_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 23, "EAX should contain 23 (highest of consecutive bits)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        23,
+        "EAX should contain 23 (highest of consecutive bits)"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -406,7 +470,13 @@ fn test_bsr_power_of_two() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, i as u64, "EAX should contain {} for 2^{}", i, i);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            i as u64,
+            "EAX should contain {} for 2^{}",
+            i,
+            i
+        );
     }
 }
 
@@ -422,7 +492,11 @@ fn test_bsr_leading_zeros() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 11, "EAX should contain 11 (highest bit set)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        11,
+        "EAX should contain 11 (highest bit set)"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -512,9 +586,9 @@ fn test_bsr_clears_stale_lazy_flags_setz() {
     // BSR EAX, ECX -> ECX=0 => ZF must become 1
     // SETZ DL      -> reads ZF; must be 1 if BSR's ZF won, 0 if stale OR won
     let code = [
-        0x09, 0xdb,             // OR EBX, EBX
-        0x0f, 0xbd, 0xc1,       // BSR EAX, ECX
-        0x0f, 0x94, 0xc2,       // SETZ DL
+        0x09, 0xdb, // OR EBX, EBX
+        0x0f, 0xbd, 0xc1, // BSR EAX, ECX
+        0x0f, 0x94, 0xc2, // SETZ DL
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -523,8 +597,15 @@ fn test_bsr_clears_stale_lazy_flags_setz() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rdx & 0xFF, 1, "SETZ must observe BSR's ZF=1 (zero source), not OR's stale ZF=0");
-    assert!(zf_set(regs.rflags), "ZF should reflect BSR's result (source is zero), not stale OR");
+    assert_eq!(
+        regs.rdx & 0xFF,
+        1,
+        "SETZ must observe BSR's ZF=1 (zero source), not OR's stale ZF=0"
+    );
+    assert!(
+        zf_set(regs.rflags),
+        "ZF should reflect BSR's result (source is zero), not stale OR"
+    );
 }
 
 #[test]
@@ -535,11 +616,11 @@ fn test_bsr_clears_stale_lazy_flags_jz() {
     // If lazy state is not cleared, JZ recomputes ZF=0 from OR and falls
     // through, wrongly executing MOV ESI, 1.
     let code = [
-        0x09, 0xc0,                         // OR EAX, EAX
-        0x0f, 0xbd, 0xd9,                   // BSR EBX, ECX
-        0x74, 0x05,                         // JZ +5 (skip the 5-byte MOV ESI)
-        0xbe, 0x01, 0x00, 0x00, 0x00,       // MOV ESI, 1 (fall-through; wrong path)
-        0xf4,                               // HLT
+        0x09, 0xc0, // OR EAX, EAX
+        0x0f, 0xbd, 0xd9, // BSR EBX, ECX
+        0x74, 0x05, // JZ +5 (skip the 5-byte MOV ESI)
+        0xbe, 0x01, 0x00, 0x00, 0x00, // MOV ESI, 1 (fall-through; wrong path)
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 7; // OR => ZF=0
@@ -547,7 +628,11 @@ fn test_bsr_clears_stale_lazy_flags_jz() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rsi & 0xFFFFFFFF, 0, "JZ must be taken on BSR's ZF=1; MOV ESI,1 must NOT execute");
+    assert_eq!(
+        regs.rsi & 0xFFFFFFFF,
+        0,
+        "JZ must be taken on BSR's ZF=1; MOV ESI,1 must NOT execute"
+    );
 }
 
 #[test]
@@ -555,9 +640,9 @@ fn test_bsr_nonzero_clears_stale_lazy_zf() {
     // OR with zero operands => stale lazy ZF=1. BSR of a non-zero source must
     // produce ZF=0. Verifies the clear works in the non-zero (ZF=0) branch too.
     let code = [
-        0x09, 0xc0,             // OR EAX, EAX (EAX=0 => stale ZF=1)
-        0x0f, 0xbd, 0xd9,       // BSR EBX, ECX (ECX nonzero => ZF=0)
-        0x0f, 0x94, 0xc2,       // SETZ DL
+        0x09, 0xc0, // OR EAX, EAX (EAX=0 => stale ZF=1)
+        0x0f, 0xbd, 0xd9, // BSR EBX, ECX (ECX nonzero => ZF=0)
+        0x0f, 0x94, 0xc2, // SETZ DL
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -567,6 +652,13 @@ fn test_bsr_nonzero_clears_stale_lazy_zf() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rbx & 0xFFFFFFFF, 3, "BSR should find bit 3");
-    assert_eq!(regs.rdx & 0xFF, 0, "SETZ must observe BSR's ZF=0, not OR's stale ZF=1");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (BSR source non-zero)");
+    assert_eq!(
+        regs.rdx & 0xFF,
+        0,
+        "SETZ must observe BSR's ZF=0, not OR's stale ZF=1"
+    );
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (BSR source non-zero)"
+    );
 }

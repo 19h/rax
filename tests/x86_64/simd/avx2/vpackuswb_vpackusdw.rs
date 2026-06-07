@@ -170,8 +170,11 @@ fn test_vpackuswb_ymm2_ymm3_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let pattern: Vec<u8> = (0..16).flat_map(|i| ((i * 8) as i16).to_le_bytes()).collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let pattern: Vec<u8> = (0..16)
+        .flat_map(|i| ((i * 8) as i16).to_le_bytes())
+        .collect();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -274,7 +277,9 @@ fn test_vpackusdw_ymm0_ymm1_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = (0..8).flat_map(|i| (i as i32 * 100).to_le_bytes()).collect();
+    let data: Vec<u8> = (0..8)
+        .flat_map(|i| (i as i32 * 100).to_le_bytes())
+        .collect();
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -346,8 +351,11 @@ fn test_vpackusdw_ymm2_ymm3_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let pattern: Vec<u8> = (0..8).flat_map(|i| (i as i32 * 1000).to_le_bytes()).collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let pattern: Vec<u8> = (0..8)
+        .flat_map(|i| (i as i32 * 1000).to_le_bytes())
+        .collect();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -499,7 +507,15 @@ fn test_vpackuswb_ymm4_ymm5_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -514,7 +530,15 @@ fn test_vpackusdw_ymm4_ymm5_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

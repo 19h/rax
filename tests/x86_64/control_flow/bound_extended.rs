@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm, setup_vm_compat, write_mem_at_u32, write_mem_at_u16};
+use crate::common::{run_until_hlt, setup_vm, setup_vm_compat, write_mem_at_u16, write_mem_at_u32};
 use rax::cpu::Registers;
 
 // Comprehensive tests for BOUND instruction
@@ -396,7 +396,7 @@ fn test_bound_inverted_bounds() {
     let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     write_mem_at_u16(&mem, 0x2000, 10); // lower = 10
-    write_mem_at_u16(&mem, 0x2002, 0);  // upper = 0 (inverted!)
+    write_mem_at_u16(&mem, 0x2002, 0); // upper = 0 (inverted!)
 
     // Behavior is undefined/implementation-specific
 }
@@ -417,8 +417,8 @@ fn test_bound_16bit_max_bounds() {
     ];
     let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
-    write_mem_at_u16(&mem, 0x2000, 0);       // lower = 0
-    write_mem_at_u16(&mem, 0x2002, 0x7FFF);  // upper = 32767 (max positive signed)
+    write_mem_at_u16(&mem, 0x2000, 0); // lower = 0
+    write_mem_at_u16(&mem, 0x2002, 0x7FFF); // upper = 32767 (max positive signed)
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rbx, 1);
@@ -436,7 +436,7 @@ fn test_bound_32bit_max_bounds() {
     ];
     let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
-    write_mem_at_u32(&mem, 0x2000, 0);          // lower = 0
+    write_mem_at_u32(&mem, 0x2000, 0); // lower = 0
     write_mem_at_u32(&mem, 0x2004, 0x7FFFFFFF); // upper = 2147483647 (max positive signed)
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -493,8 +493,7 @@ fn test_bound_preserves_flags() {
         0xb8, 0x05, 0x00, // MOV AX, 5
         0x62, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // BOUND AX, [0x2000]
         0x72, 0x05, // JC +5 (check if CF still set)
-        0xf4, 0xf4, 0xf4, 0xf4, 0xf4,
-        0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
+        0xf4, 0xf4, 0xf4, 0xf4, 0xf4, 0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm_compat(&code, None);
@@ -577,8 +576,8 @@ fn test_bound_string_length_check() {
     ];
     let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
-    write_mem_at_u32(&mem, 0x2000, 0);  // min index
-    write_mem_at_u32(&mem, 0x2004, 9);  // max index (length 10)
+    write_mem_at_u32(&mem, 0x2000, 0); // min index
+    write_mem_at_u32(&mem, 0x2004, 9); // max index (length 10)
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rbx, 0xcc);
@@ -596,7 +595,7 @@ fn test_bound_buffer_access_validation() {
     ];
     let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
-    write_mem_at_u32(&mem, 0x2000, 0);   // buffer start
+    write_mem_at_u32(&mem, 0x2000, 0); // buffer start
     write_mem_at_u32(&mem, 0x2004, 255); // buffer end
 
     let regs = run_until_hlt(&mut vcpu).unwrap();

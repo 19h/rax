@@ -420,7 +420,8 @@ fn test_cr8_different_values() {
 fn test_cr0_preserves_other_registers() {
     let code = [
         0x48, 0xc7, 0xc6, 0x42, 0x42, 0x42, 0x42, // MOV RSI, 0x42424242
-        0x48, 0xc7, 0xc7, 0x2a, 0x2a, 0x2a, 0x2a, // MOV RDI, 0x2a2a2a2a (bit 31 clear to avoid sign-extension)
+        0x48, 0xc7, 0xc7, 0x2a, 0x2a, 0x2a,
+        0x2a, // MOV RDI, 0x2a2a2a2a (bit 31 clear to avoid sign-extension)
         0x0f, 0x20, 0xc0, // MOV RAX, CR0
         0x0f, 0x22, 0xc0, // MOV CR0, RAX
         0xf4, // HLT
@@ -650,11 +651,11 @@ fn test_cr0_to_multiple_registers() {
 #[test]
 fn test_cr0_set_wp_bit_roundtrip() {
     let code = [
-        0x0f, 0x20, 0xc0,                 // MOV RAX, CR0  (= 0x00050033)
+        0x0f, 0x20, 0xc0, // MOV RAX, CR0  (= 0x00050033)
         0x48, 0x0d, 0x00, 0x00, 0x01, 0x00, // OR RAX, 0x10000 (WP, bit 16)
-        0x0f, 0x22, 0xc0,                 // MOV CR0, RAX
-        0x0f, 0x20, 0xc3,                 // MOV RBX, CR0 (read back)
-        0xf4,                             // HLT
+        0x0f, 0x22, 0xc0, // MOV CR0, RAX
+        0x0f, 0x20, 0xc3, // MOV RBX, CR0 (read back)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -668,10 +669,10 @@ fn test_cr0_set_wp_bit_roundtrip() {
 #[test]
 fn test_cr0_clear_mp_bit_roundtrip() {
     let code = [
-        0x0f, 0x20, 0xc0,                 // MOV RAX, CR0 (= 0x00050033, MP set)
-        0x48, 0x83, 0xe0, 0xfd,           // AND RAX, ~2 (clear MP, bit 1)
-        0x0f, 0x22, 0xc0,                 // MOV CR0, RAX
-        0x0f, 0x20, 0xc1,                 // MOV RCX, CR0
+        0x0f, 0x20, 0xc0, // MOV RAX, CR0 (= 0x00050033, MP set)
+        0x48, 0x83, 0xe0, 0xfd, // AND RAX, ~2 (clear MP, bit 1)
+        0x0f, 0x22, 0xc0, // MOV CR0, RAX
+        0x0f, 0x20, 0xc1, // MOV RCX, CR0
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -687,8 +688,8 @@ fn test_cr4_write_read_exact() {
     // 0x30 = PAE|PSE; 0x200 = OSFXSR (bit 9); 0x40000 = OSXSAVE (bit 18).
     let code = [
         0x48, 0xc7, 0xc0, 0x30, 0x02, 0x04, 0x00, // MOV RAX, 0x40230
-        0x0f, 0x22, 0xe0,                          // MOV CR4, RAX
-        0x0f, 0x20, 0xe3,                          // MOV RBX, CR4
+        0x0f, 0x22, 0xe0, // MOV CR4, RAX
+        0x0f, 0x20, 0xe3, // MOV RBX, CR4
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -704,11 +705,11 @@ fn test_cr4_write_read_exact() {
 #[test]
 fn test_clts_clears_cr0_ts() {
     let code = [
-        0x0f, 0x20, 0xc0,                 // MOV RAX, CR0
-        0x48, 0x83, 0xc8, 0x08,           // OR RAX, 8 (TS, bit 3)
-        0x0f, 0x22, 0xc0,                 // MOV CR0, RAX (TS now set)
-        0x0f, 0x06,                       // CLTS
-        0x0f, 0x20, 0xc3,                 // MOV RBX, CR0
+        0x0f, 0x20, 0xc0, // MOV RAX, CR0
+        0x48, 0x83, 0xc8, 0x08, // OR RAX, 8 (TS, bit 3)
+        0x0f, 0x22, 0xc0, // MOV CR0, RAX (TS now set)
+        0x0f, 0x06, // CLTS
+        0x0f, 0x20, 0xc3, // MOV RBX, CR0
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

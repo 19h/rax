@@ -32,7 +32,7 @@ fn test_aam_basic_decimal() {
     // AAM with base 10 (standard): AL = 35
     let code = [
         0xD4, 0x0A, // AAM (base 10)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0023; // AL = 35 decimal
@@ -101,10 +101,22 @@ fn test_aam_all_single_digit_products() {
 
             let expected_ah = product / 10;
             let expected_al = product % 10;
-            assert_eq!((regs.rax >> 8) & 0xFF, expected_ah as u64,
-                "AH wrong for {} * {} = {}", i, j, product);
-            assert_eq!(regs.rax & 0xFF, expected_al as u64,
-                "AL wrong for {} * {} = {}", i, j, product);
+            assert_eq!(
+                (regs.rax >> 8) & 0xFF,
+                expected_ah as u64,
+                "AH wrong for {} * {} = {}",
+                i,
+                j,
+                product
+            );
+            assert_eq!(
+                regs.rax & 0xFF,
+                expected_al as u64,
+                "AL wrong for {} * {} = {}",
+                i,
+                j,
+                product
+            );
         }
     }
 }
@@ -174,7 +186,11 @@ fn test_aam_preserves_high_bits() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Only AX (lower 16 bits) should be modified
-    assert_eq!(regs.rax >> 16, 0xDEADBEEF_1234, "High bits should be preserved");
+    assert_eq!(
+        regs.rax >> 16,
+        0xDEADBEEF_1234,
+        "High bits should be preserved"
+    );
 }
 
 #[test]
@@ -226,7 +242,7 @@ fn test_aad_basic_decimal() {
     // AAD with base 10: AH=3, AL=5 (representing 35 in unpacked BCD)
     let code = [
         0xD5, 0x0A, // AAD (base 10)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0305; // AH=3, AL=5
@@ -293,10 +309,20 @@ fn test_aad_all_two_digit_values() {
             let regs = run_until_hlt(&mut vcpu).unwrap();
 
             let expected = tens * 10 + ones;
-            assert_eq!(regs.rax & 0xFF, expected as u64,
-                "Wrong result for AH={}, AL={}", tens, ones);
-            assert_eq!((regs.rax >> 8) & 0xFF, 0,
-                "AH should be 0 for AH={}, AL={}", tens, ones);
+            assert_eq!(
+                regs.rax & 0xFF,
+                expected as u64,
+                "Wrong result for AH={}, AL={}",
+                tens,
+                ones
+            );
+            assert_eq!(
+                (regs.rax >> 8) & 0xFF,
+                0,
+                "AH should be 0 for AH={}, AL={}",
+                tens,
+                ones
+            );
         }
     }
 }
@@ -352,7 +378,11 @@ fn test_aad_preserves_high_bits() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Only AX (lower 16 bits) should be modified
-    assert_eq!(regs.rax >> 16, 0xDEADBEEF_1234, "High bits should be preserved");
+    assert_eq!(
+        regs.rax >> 16,
+        0xDEADBEEF_1234,
+        "High bits should be preserved"
+    );
 }
 
 #[test]
@@ -391,7 +421,7 @@ fn test_aam_aad_roundtrip() {
     let code = [
         0xD4, 0x0A, // AAM
         0xD5, 0x0A, // AAD
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     for val in 0..100 {
         let mut regs = Registers::default();
@@ -410,7 +440,7 @@ fn test_aad_aam_sequence() {
     let code = [
         0xD5, 0x0A, // AAD (unpacked -> binary)
         0xD4, 0x0A, // AAM (binary -> unpacked)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0807; // 87 in unpacked BCD
@@ -428,7 +458,7 @@ fn test_multiply_with_aam() {
     // Simulate 6 * 7 = 42, then AAM to get unpacked BCD
     let code = [
         0xD4, 0x0A, // AAM
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 42; // Product of 6 * 7
@@ -444,7 +474,7 @@ fn test_division_with_aad() {
     // Prepare 87 in unpacked BCD, AAD to prepare for division
     let code = [
         0xD5, 0x0A, // AAD
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0807; // 87 in unpacked BCD
@@ -526,10 +556,18 @@ fn test_aam_all_bases() {
 
         let expected_ah = test_val / base;
         let expected_al = test_val % base;
-        assert_eq!((regs.rax >> 8) & 0xFF, expected_ah as u64,
-            "AH wrong for base {}", base);
-        assert_eq!(regs.rax & 0xFF, expected_al as u64,
-            "AL wrong for base {}", base);
+        assert_eq!(
+            (regs.rax >> 8) & 0xFF,
+            expected_ah as u64,
+            "AH wrong for base {}",
+            base
+        );
+        assert_eq!(
+            regs.rax & 0xFF,
+            expected_al as u64,
+            "AL wrong for base {}",
+            base
+        );
     }
 }
 
@@ -562,8 +600,12 @@ fn test_aam_zero_flag_combinations() {
         let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(zf_set(regs.rflags), expect_zf,
-            "ZF incorrect for value {}", val);
+        assert_eq!(
+            zf_set(regs.rflags),
+            expect_zf,
+            "ZF incorrect for value {}",
+            val
+        );
     }
 }
 
@@ -571,9 +613,9 @@ fn test_aam_zero_flag_combinations() {
 fn test_aad_zero_flag_combinations() {
     // Test zero flag with different values
     let test_cases = vec![
-        (0x0000u16, true),   // Should set ZF
-        (0x0100u16, false),  // Should clear ZF (AH=1, AL=0 -> 10)
-        (0x0A00u16, false),  // Should clear ZF
+        (0x0000u16, true),  // Should set ZF
+        (0x0100u16, false), // Should clear ZF (AH=1, AL=0 -> 10)
+        (0x0A00u16, false), // Should clear ZF
     ];
 
     for (val, expect_zf) in test_cases {
@@ -583,7 +625,11 @@ fn test_aad_zero_flag_combinations() {
         let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(zf_set(regs.rflags), expect_zf,
-            "ZF incorrect for value 0x{:04X}", val);
+        assert_eq!(
+            zf_set(regs.rflags),
+            expect_zf,
+            "ZF incorrect for value 0x{:04X}",
+            val
+        );
     }
 }

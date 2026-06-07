@@ -1,4 +1,4 @@
-use crate::common::{get_xmm, run_until_hlt, set_xmm, setup_vm, TestCase};
+use crate::common::{TestCase, get_xmm, run_until_hlt, set_xmm, setup_vm};
 
 // Galois Field (GF2P8) Instructions for AES-GCM
 

@@ -4,7 +4,7 @@
 //! fVNAVGS=(a-b)>>1, fABS, fVSAT*.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fld, SemCtx};
+use super::{SemCtx, fld};
 
 type Bytes = [u8; 128];
 
@@ -109,12 +109,24 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::V6_vminub => mb(&vu, &vv, |a, b| a.min(b)),
         Opcode::V6_vminuh => mh(&vu, &vv, |a, b| a.min(b)),
         // ---- signed average (a+b)>>1 ----
-        Opcode::V6_vavgb => mb(&vu, &vv, |a, b| avg(a as i8 as i64, b as i8 as i64, 0) as u8),
-        Opcode::V6_vavgh => mh(&vu, &vv, |a, b| avg(a as i16 as i64, b as i16 as i64, 0) as u16),
-        Opcode::V6_vavgw => mw(&vu, &vv, |a, b| avg(a as i32 as i64, b as i32 as i64, 0) as u32),
-        Opcode::V6_vavgbrnd => mb(&vu, &vv, |a, b| avg(a as i8 as i64, b as i8 as i64, 1) as u8),
-        Opcode::V6_vavghrnd => mh(&vu, &vv, |a, b| avg(a as i16 as i64, b as i16 as i64, 1) as u16),
-        Opcode::V6_vavgwrnd => mw(&vu, &vv, |a, b| avg(a as i32 as i64, b as i32 as i64, 1) as u32),
+        Opcode::V6_vavgb => mb(&vu, &vv, |a, b| {
+            avg(a as i8 as i64, b as i8 as i64, 0) as u8
+        }),
+        Opcode::V6_vavgh => mh(&vu, &vv, |a, b| {
+            avg(a as i16 as i64, b as i16 as i64, 0) as u16
+        }),
+        Opcode::V6_vavgw => mw(&vu, &vv, |a, b| {
+            avg(a as i32 as i64, b as i32 as i64, 0) as u32
+        }),
+        Opcode::V6_vavgbrnd => mb(&vu, &vv, |a, b| {
+            avg(a as i8 as i64, b as i8 as i64, 1) as u8
+        }),
+        Opcode::V6_vavghrnd => mh(&vu, &vv, |a, b| {
+            avg(a as i16 as i64, b as i16 as i64, 1) as u16
+        }),
+        Opcode::V6_vavgwrnd => mw(&vu, &vv, |a, b| {
+            avg(a as i32 as i64, b as i32 as i64, 1) as u32
+        }),
         // ---- unsigned average ----
         Opcode::V6_vavgub => mb(&vu, &vv, |a, b| avg(a as i64, b as i64, 0) as u8),
         Opcode::V6_vavguh => mh(&vu, &vv, |a, b| avg(a as i64, b as i64, 0) as u16),
@@ -123,9 +135,15 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::V6_vavguhrnd => mh(&vu, &vv, |a, b| avg(a as i64, b as i64, 1) as u16),
         Opcode::V6_vavguwrnd => mw(&vu, &vv, |a, b| avg(a as i64, b as i64, 1) as u32),
         // ---- negative average (a-b)>>1 ----
-        Opcode::V6_vnavgb => mb(&vu, &vv, |a, b| ((a as i8 as i64 - b as i8 as i64) >> 1) as u8),
-        Opcode::V6_vnavgh => mh(&vu, &vv, |a, b| ((a as i16 as i64 - b as i16 as i64) >> 1) as u16),
-        Opcode::V6_vnavgw => mw(&vu, &vv, |a, b| ((a as i32 as i64 - b as i32 as i64) >> 1) as u32),
+        Opcode::V6_vnavgb => mb(&vu, &vv, |a, b| {
+            ((a as i8 as i64 - b as i8 as i64) >> 1) as u8
+        }),
+        Opcode::V6_vnavgh => mh(&vu, &vv, |a, b| {
+            ((a as i16 as i64 - b as i16 as i64) >> 1) as u16
+        }),
+        Opcode::V6_vnavgw => mw(&vu, &vv, |a, b| {
+            ((a as i32 as i64 - b as i32 as i64) >> 1) as u32
+        }),
         Opcode::V6_vnavgub => mb(&vu, &vv, |a, b| ((a as i64 - b as i64) >> 1) as u8),
         // ---- absolute value ----
         Opcode::V6_vabsb => ub(&vu, |a| (a as i8).wrapping_abs() as u8),
@@ -135,12 +153,12 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::V6_vabsh_sat => uh(&vu, |a| (a as i16 as i32).abs().min(32767) as u16),
         Opcode::V6_vabsw_sat => uw(&vu, |a| (a as i32 as i64).abs().min(i32::MAX as i64) as u32),
         // ---- absolute difference (result is the magnitude, unsigned lane) ----
-        Opcode::V6_vabsdiffh => {
-            mh(&vu, &vv, |a, b| (a as i16 as i32 - b as i16 as i32).unsigned_abs() as u16)
-        }
-        Opcode::V6_vabsdiffw => {
-            mw(&vu, &vv, |a, b| (a as i32 as i64 - b as i32 as i64).unsigned_abs() as u32)
-        }
+        Opcode::V6_vabsdiffh => mh(&vu, &vv, |a, b| {
+            (a as i16 as i32 - b as i16 as i32).unsigned_abs() as u16
+        }),
+        Opcode::V6_vabsdiffw => mw(&vu, &vv, |a, b| {
+            (a as i32 as i64 - b as i32 as i64).unsigned_abs() as u32
+        }),
         Opcode::V6_vabsdiffub => mb(&vu, &vv, |a, b| if a > b { a - b } else { b - a }),
         Opcode::V6_vabsdiffuh => mh(&vu, &vv, |a, b| if a > b { a - b } else { b - a }),
         _ => return false,

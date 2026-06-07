@@ -248,7 +248,11 @@ fn test_movzx_boundary_values_byte() {
         regs.rbx = input;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(regs.rax, expected, "MOVZX byte {:#x} should be {:#x}", input, expected);
+        assert_eq!(
+            regs.rax, expected,
+            "MOVZX byte {:#x} should be {:#x}",
+            input, expected
+        );
     }
 }
 
@@ -272,7 +276,11 @@ fn test_movzx_boundary_values_word() {
         regs.rbx = input;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(regs.rax, expected, "MOVZX word {:#x} should be {:#x}", input, expected);
+        assert_eq!(
+            regs.rax, expected,
+            "MOVZX word {:#x} should be {:#x}",
+            input, expected
+        );
     }
 }
 
@@ -386,8 +394,7 @@ fn test_movzx_rip_relative() {
     // RIP after the instruction points to offset 8 (HLT), so displacement of 1 reads offset 9 (data)
     let code = [
         0x48, 0x0f, 0xb6, 0x05, 0x01, 0x00, 0x00, 0x00, // MOVZX RAX, BYTE PTR [RIP+1]
-        0xf4,
-        0x80, // Data: 128
+        0xf4, 0x80, // Data: 128
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -451,7 +458,11 @@ fn test_movzx_word_various_patterns() {
         regs.rbx = input;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(regs.rax, expected, "MOVZX word {:#x} should be {:#x}", input, expected);
+        assert_eq!(
+            regs.rax, expected,
+            "MOVZX word {:#x} should be {:#x}",
+            input, expected
+        );
     }
 }
 
@@ -588,7 +599,11 @@ fn test_movzx_ascii_range() {
         regs.rbx = input as u64;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(regs.rax, expected, "MOVZX ASCII '{:#x}' should be {:#x}", input, expected);
+        assert_eq!(
+            regs.rax, expected,
+            "MOVZX ASCII '{:#x}' should be {:#x}",
+            input, expected
+        );
     }
 }
 
@@ -615,7 +630,11 @@ fn test_movzx_power_of_two_values() {
         regs.rbx = input;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(regs.rax, expected, "MOVZX byte {:#x} should be {:#x}", input, expected);
+        assert_eq!(
+            regs.rax, expected,
+            "MOVZX byte {:#x} should be {:#x}",
+            input, expected
+        );
     }
 }
 
@@ -668,7 +687,11 @@ fn test_movzx_alternating_bit_pattern() {
         regs.rbx = input;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(regs.rax, expected, "MOVZX byte {:#x} should be {:#x}", input, expected);
+        assert_eq!(
+            regs.rax, expected,
+            "MOVZX byte {:#x} should be {:#x}",
+            input, expected
+        );
     }
 }
 

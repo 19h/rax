@@ -20,7 +20,11 @@ fn test_cmova_eax_ebx_cf_clear_zf_clear() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved when 5 > 3");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved when 5 > 3"
+    );
 }
 
 // CMOVA when CF=1 (below, should not move)
@@ -38,7 +42,11 @@ fn test_cmova_eax_ebx_cf_set() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000003, "EAX should not be moved when 3 < 5");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000003,
+        "EAX should not be moved when 3 < 5"
+    );
 }
 
 // CMOVA when ZF=1 (equal, should not move)
@@ -56,7 +64,11 @@ fn test_cmova_eax_ebx_zf_set() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000005, "EAX should not be moved when 5 == 5");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000005,
+        "EAX should not be moved when 5 == 5"
+    );
 }
 
 // CMOVNBE (same as CMOVA)
@@ -74,7 +86,11 @@ fn test_cmovnbe_edx_ecx() {
     regs.rcx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x00000005, "EDX should be moved when not below or equal");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x00000005,
+        "EDX should be moved when not below or equal"
+    );
 }
 
 // Test 16-bit operand
@@ -146,7 +162,11 @@ fn test_cmova_unsigned_comparison() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved (unsigned 0xFFFFFFFF > 1)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved (unsigned 0xFFFFFFFF > 1)"
+    );
 }
 
 // Test with 0 comparison
@@ -164,7 +184,11 @@ fn test_cmova_greater_than_zero() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved when 1 > 0");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved when 1 > 0"
+    );
 }
 
 // Test maximum unsigned values
@@ -219,7 +243,10 @@ fn test_cmova_zeros_upper_32() {
     regs.rbx = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000012345678, "Upper 32 bits should be zeroed");
+    assert_eq!(
+        regs.rax, 0x0000000012345678,
+        "Upper 32 bits should be zeroed"
+    );
 }
 
 // Test practical use case: max of two unsigned values
@@ -269,7 +296,11 @@ fn test_cmova_self_comparison() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x11111111, "EAX should not change (equal comparison)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x11111111,
+        "EAX should not change (equal comparison)"
+    );
 }
 
 // Test different register combinations
@@ -340,5 +371,9 @@ fn test_cmova_after_sub_borrow() {
     regs.rbx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x33333333, "EDX should not be moved (CF=1)");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x33333333,
+        "EDX should not be moved (CF=1)"
+    );
 }

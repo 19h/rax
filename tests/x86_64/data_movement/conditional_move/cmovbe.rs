@@ -20,7 +20,11 @@ fn test_cmovbe_eax_ebx_cf_set() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved when 3 <= 5");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved when 3 <= 5"
+    );
 }
 
 // CMOVBE when ZF=1 (equal)
@@ -38,7 +42,11 @@ fn test_cmovbe_eax_ebx_zf_set() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved when 5 <= 5");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved when 5 <= 5"
+    );
 }
 
 // CMOVBE when CF=0 and ZF=0 (above, should not move)
@@ -56,7 +64,11 @@ fn test_cmovbe_eax_ebx_above() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000005, "EAX should not be moved when 5 > 3");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000005,
+        "EAX should not be moved when 5 > 3"
+    );
 }
 
 // CMOVNA (same as CMOVBE)
@@ -74,7 +86,11 @@ fn test_cmovna_edx_ecx_below() {
     regs.rcx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x0000000a, "EDX should be moved when not above");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x0000000a,
+        "EDX should be moved when not above"
+    );
 }
 
 #[test]
@@ -91,7 +107,11 @@ fn test_cmovna_edx_ecx_equal() {
     regs.rcx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x0000000a, "EDX should be moved when not above");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x0000000a,
+        "EDX should be moved when not above"
+    );
 }
 
 // Test 16-bit operand
@@ -181,7 +201,11 @@ fn test_cmovbe_zero_comparison() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved when 0 <= 0");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved when 0 <= 0"
+    );
 }
 
 // Test that flags are preserved
@@ -217,7 +241,10 @@ fn test_cmovbe_zeros_upper_32() {
     regs.rbx = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000012345678, "Upper 32 bits should be zeroed");
+    assert_eq!(
+        regs.rax, 0x0000000012345678,
+        "Upper 32 bits should be zeroed"
+    );
 }
 
 // Test practical use case: clamping to max value
@@ -230,7 +257,7 @@ fn test_cmovbe_practical_clamp() {
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
-    regs.rax = 50;  // value
+    regs.rax = 50; // value
     regs.rbx = 100; // max
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -252,7 +279,11 @@ fn test_cmovbe_after_sub_borrow() {
     regs.rbx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x44444444, "EDX should be moved (CF=1)");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x44444444,
+        "EDX should be moved (CF=1)"
+    );
 }
 
 #[test]
@@ -269,7 +300,11 @@ fn test_cmovbe_after_sub_equal() {
     regs.rbx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x44444444, "EDX should be moved (ZF=1)");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x44444444,
+        "EDX should be moved (ZF=1)"
+    );
 }
 
 // Test edge case: comparing with itself
@@ -285,7 +320,11 @@ fn test_cmovbe_self_comparison() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved (equal is <=)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved (equal is <=)"
+    );
 }
 
 // Test different register combinations
@@ -395,10 +434,10 @@ fn test_cmovbe_practical_bounds_check() {
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
-    regs.rax = 10;  // index
+    regs.rax = 10; // index
     regs.rbx = 100; // max_index
-    regs.rdx = 0;   // valid flag (initially false)
-    regs.rcx = 1;   // true value
+    regs.rdx = 0; // valid flag (initially false)
+    regs.rcx = 1; // true value
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rdx, 1, "Valid flag should be set");
@@ -414,8 +453,8 @@ fn test_cmovbe_practical_bounds_check_out_of_bounds() {
     let mut regs = Registers::default();
     regs.rax = 150; // index (out of bounds)
     regs.rbx = 100; // max_index
-    regs.rdx = 0;   // valid flag
-    regs.rcx = 1;   // true value
+    regs.rdx = 0; // valid flag
+    regs.rcx = 1; // true value
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rdx, 0, "Valid flag should remain false");

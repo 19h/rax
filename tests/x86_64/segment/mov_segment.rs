@@ -304,7 +304,8 @@ fn test_mov_segment_preserves_upper_bits() {
 fn test_mov_segment_from_r64_uses_low16() {
     // When loading segment from 64-bit register, only low 16 bits are used
     let code = [
-        0x48, 0xb8, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, // MOV RAX, 0xFFFFFFFF00000000
+        0x48, 0xb8, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
+        0xff, // MOV RAX, 0xFFFFFFFF00000000
         0x8e, 0xe0, // MOV FS, AX (should use low 16 bits = 0)
         0x8c, 0xe3, // MOV BX, FS (read back)
         0xf4, // HLT
@@ -410,7 +411,6 @@ fn test_mov_fs_different_values() {
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0
         0x8e, 0xe0, // MOV FS, AX
         0x8c, 0xe3, // MOV BX, FS
-
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0 (again)
         0x8e, 0xe0, // MOV FS, AX
         0x8c, 0xe1, // MOV CX, FS
@@ -630,7 +630,7 @@ fn test_mov_segment_null_selector() {
 fn test_mov_ax_cs_reads_selector() {
     let code = [
         0x8c, 0xc8, // MOV AX, CS
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -641,12 +641,15 @@ fn test_mov_ax_cs_reads_selector() {
 fn test_mov_r64_cs_zero_extends() {
     let code = [
         0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, // MOV RAX, -1
-        0x48, 0x8c, 0xc8,                         // MOV RAX, CS (REX.W)
+        0x48, 0x8c, 0xc8, // MOV RAX, CS (REX.W)
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000_0000_0000_0008, "RAX = CS selector, zero-extended");
+    assert_eq!(
+        regs.rax, 0x0000_0000_0000_0008,
+        "RAX = CS selector, zero-extended"
+    );
 }
 
 // A non-zero selector loaded into a segment register reads back exactly.
@@ -654,13 +657,17 @@ fn test_mov_r64_cs_zero_extends() {
 fn test_mov_fs_nonzero_selector_roundtrip() {
     let code = [
         0x48, 0xc7, 0xc0, 0x10, 0x00, 0x00, 0x00, // MOV RAX, 0x10
-        0x8e, 0xe0,                               // MOV FS, AX
-        0x8c, 0xe3,                               // MOV BX, FS
+        0x8e, 0xe0, // MOV FS, AX
+        0x8c, 0xe3, // MOV BX, FS
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbx & 0xFFFF, 0x0010, "FS reads back loaded selector 0x10");
+    assert_eq!(
+        regs.rbx & 0xFFFF,
+        0x0010,
+        "FS reads back loaded selector 0x10"
+    );
 }
 
 // FS-base + override: a load through an FS override reads from (fs.base + EA).
@@ -669,20 +676,23 @@ fn test_mov_fs_nonzero_selector_roundtrip() {
 fn test_fs_base_override_load_linear_address() {
     let code = [
         // WRMSR FS.base = 0x3000 : ECX=0xC0000100, EDX:EAX=0:0x3000
-        0xb9, 0x00, 0x01, 0x00, 0xc0,             // MOV ECX, 0xC0000100
-        0x31, 0xd2,                               // XOR EDX, EDX
-        0xb8, 0x00, 0x30, 0x00, 0x00,             // MOV EAX, 0x3000
-        0x0f, 0x30,                               // WRMSR
+        0xb9, 0x00, 0x01, 0x00, 0xc0, // MOV ECX, 0xC0000100
+        0x31, 0xd2, // XOR EDX, EDX
+        0xb8, 0x00, 0x30, 0x00, 0x00, // MOV EAX, 0x3000
+        0x0f, 0x30, // WRMSR
         // RBX = 0; load [FS:RBX] (FS override = 0x64)
-        0x48, 0x31, 0xdb,                         // XOR RBX, RBX
-        0x64, 0x48, 0x8b, 0x03,                   // MOV RAX, FS:[RBX]
+        0x48, 0x31, 0xdb, // XOR RBX, RBX
+        0x64, 0x48, 0x8b, 0x03, // MOV RAX, FS:[RBX]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     // Plant a sentinel at the FS-relative linear address 0x3000.
     write_mem_at_u64(&mem, 0x3000, 0xF00DCAFE_12345678);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xF00DCAFE_12345678, "FS:[0] reads fs.base linear addr 0x3000");
+    assert_eq!(
+        regs.rax, 0xF00DCAFE_12345678,
+        "FS:[0] reads fs.base linear addr 0x3000"
+    );
 }
 
 // FS-base + override with displacement: linear address = fs.base + disp.
@@ -690,39 +700,51 @@ fn test_fs_base_override_load_linear_address() {
 #[test]
 fn test_fs_base_override_load_with_disp() {
     let code = [
-        0xb9, 0x00, 0x01, 0x00, 0xc0,             // MOV ECX, 0xC0000100
-        0x31, 0xd2,                               // XOR EDX, EDX
-        0xb8, 0x00, 0x40, 0x00, 0x00,             // MOV EAX, 0x4000
-        0x0f, 0x30,                               // WRMSR (FS.base = 0x4000)
-        0x48, 0x31, 0xdb,                         // XOR RBX, RBX
-        0x64, 0x48, 0x8b, 0x43, 0x40,             // MOV RAX, FS:[RBX + 0x40]
+        0xb9, 0x00, 0x01, 0x00, 0xc0, // MOV ECX, 0xC0000100
+        0x31, 0xd2, // XOR EDX, EDX
+        0xb8, 0x00, 0x40, 0x00, 0x00, // MOV EAX, 0x4000
+        0x0f, 0x30, // WRMSR (FS.base = 0x4000)
+        0x48, 0x31, 0xdb, // XOR RBX, RBX
+        0x64, 0x48, 0x8b, 0x43, 0x40, // MOV RAX, FS:[RBX + 0x40]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_at_u64(&mem, 0x4040, 0xAABBCCDD_EEFF0011);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xAABBCCDD_EEFF0011, "FS:[disp] reads fs.base + disp (0x4040)");
+    assert_eq!(
+        regs.rax, 0xAABBCCDD_EEFF0011,
+        "FS:[disp] reads fs.base + disp (0x4040)"
+    );
 }
 
 // A store through an FS override writes to (fs.base + EA).
 #[test]
 fn test_fs_base_override_store_linear_address() {
     let code = [
-        0xb9, 0x00, 0x01, 0x00, 0xc0,             // MOV ECX, 0xC0000100
-        0x31, 0xd2,                               // XOR EDX, EDX
-        0xb8, 0x00, 0x50, 0x00, 0x00,             // MOV EAX, 0x5000
-        0x0f, 0x30,                               // WRMSR (FS.base = 0x5000)
-        0x48, 0x31, 0xdb,                         // XOR RBX, RBX
-        0x48, 0xb8, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, // MOV RAX, 0x1122334455667788
-        0x64, 0x48, 0x89, 0x03,                   // MOV FS:[RBX], RAX
+        0xb9, 0x00, 0x01, 0x00, 0xc0, // MOV ECX, 0xC0000100
+        0x31, 0xd2, // XOR EDX, EDX
+        0xb8, 0x00, 0x50, 0x00, 0x00, // MOV EAX, 0x5000
+        0x0f, 0x30, // WRMSR (FS.base = 0x5000)
+        0x48, 0x31, 0xdb, // XOR RBX, RBX
+        0x48, 0xb8, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22,
+        0x11, // MOV RAX, 0x1122334455667788
+        0x64, 0x48, 0x89, 0x03, // MOV FS:[RBX], RAX
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu).unwrap();
     // The store must land at the FS-relative linear address 0x5000.
-    assert_eq!(read_mem_at_u64(&mem, 0x5000), 0x1122334455667788, "FS:[0] store at 0x5000");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x5000),
+        0x1122334455667788,
+        "FS:[0] store at 0x5000"
+    );
     // And NOT at offset 0 (no base applied).
-    assert_eq!(read_mem_at_u64(&mem, 0x0000), 0x0000000000000000, "no write at linear 0");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x0000),
+        0x0000000000000000,
+        "no write at linear 0"
+    );
 }
 
 // GS-base + override: load through a GS override reads from (gs.base + EA).
@@ -731,18 +753,21 @@ fn test_fs_base_override_store_linear_address() {
 #[test]
 fn test_gs_base_override_load_linear_address() {
     let code = [
-        0xb9, 0x01, 0x01, 0x00, 0xc0,             // MOV ECX, 0xC0000101 (GS.base)
-        0x31, 0xd2,                               // XOR EDX, EDX
-        0xb8, 0x00, 0x60, 0x00, 0x00,             // MOV EAX, 0x6000
-        0x0f, 0x30,                               // WRMSR (GS.base = 0x6000)
-        0x48, 0x31, 0xdb,                         // XOR RBX, RBX
-        0x65, 0x48, 0x8b, 0x03,                   // MOV RAX, GS:[RBX] (GS override = 0x65)
+        0xb9, 0x01, 0x01, 0x00, 0xc0, // MOV ECX, 0xC0000101 (GS.base)
+        0x31, 0xd2, // XOR EDX, EDX
+        0xb8, 0x00, 0x60, 0x00, 0x00, // MOV EAX, 0x6000
+        0x0f, 0x30, // WRMSR (GS.base = 0x6000)
+        0x48, 0x31, 0xdb, // XOR RBX, RBX
+        0x65, 0x48, 0x8b, 0x03, // MOV RAX, GS:[RBX] (GS override = 0x65)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_at_u64(&mem, 0x6000, 0x0123456789ABCDEF);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0123456789ABCDEF, "GS:[0] reads gs.base linear addr 0x6000");
+    assert_eq!(
+        regs.rax, 0x0123456789ABCDEF,
+        "GS:[0] reads gs.base linear addr 0x6000"
+    );
 }
 
 // ES/DS/SS overrides have no base in 64-bit mode: a DS override on a [RBX]
@@ -751,13 +776,16 @@ fn test_gs_base_override_load_linear_address() {
 fn test_ds_override_no_base_64bit() {
     let code = [
         0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
-        0x3e, 0x48, 0x8b, 0x03,                   // MOV RAX, DS:[RBX] (DS override = 0x3E)
+        0x3e, 0x48, 0x8b, 0x03, // MOV RAX, DS:[RBX] (DS override = 0x3E)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_at_u64(&mem, 0x2000, 0xDEADBEEFCAFEBABE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xDEADBEEFCAFEBABE, "DS override applies no base in 64-bit mode");
+    assert_eq!(
+        regs.rax, 0xDEADBEEFCAFEBABE,
+        "DS override applies no base in 64-bit mode"
+    );
 }
 
 // LAR with a non-null selector: ZF set, dest loaded with the emulated access
@@ -774,8 +802,15 @@ fn test_lar_valid_selector() {
     regs.rflags = 0x2; // ZF clear initially
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbx & 0xFFFF_FFFF, 0x00CF9300, "LAR loads access-rights dword");
-    assert!(zf_set(regs.rflags), "LAR sets ZF for a valid (non-null) selector");
+    assert_eq!(
+        regs.rbx & 0xFFFF_FFFF,
+        0x00CF9300,
+        "LAR loads access-rights dword"
+    );
+    assert!(
+        zf_set(regs.rflags),
+        "LAR sets ZF for a valid (non-null) selector"
+    );
 }
 
 // LAR with the null selector (0): ZF cleared.
@@ -811,8 +846,15 @@ fn test_lsl_valid_selector() {
     regs.rflags = 0x2; // ZF clear initially
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbx & 0xFFFF_FFFF, 0xFFFF_FFFF, "LSL loads segment limit");
-    assert!(zf_set(regs.rflags), "LSL sets ZF for a valid (non-null) selector");
+    assert_eq!(
+        regs.rbx & 0xFFFF_FFFF,
+        0xFFFF_FFFF,
+        "LSL loads segment limit"
+    );
+    assert!(
+        zf_set(regs.rflags),
+        "LSL sets ZF for a valid (non-null) selector"
+    );
 }
 
 // LSL with the null selector: ZF cleared. (EAX/ZF seeded via the register file;

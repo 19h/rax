@@ -274,7 +274,10 @@ fn test_documentation_pushad_order() {
     // Document the order PUSHAD would use in 32-bit mode:
     // PUSHAD pushes: EAX, ECX, EDX, EBX, ESP (original), EBP, ESI, EDI
     // This is for documentation purposes only
-    assert!(true, "PUSHAD order (32-bit): EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI");
+    assert!(
+        true,
+        "PUSHAD order (32-bit): EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI"
+    );
 }
 
 #[test]
@@ -283,7 +286,10 @@ fn test_documentation_popad_order() {
     // POPAD pops: EDI, ESI, EBP, ESP (ignored), EBX, EDX, ECX, EAX
     // Note: ESP value from stack is ignored, not restored
     // This is for documentation purposes only
-    assert!(true, "POPAD order (32-bit): EDI, ESI, EBP, ESP (ignored), EBX, EDX, ECX, EAX");
+    assert!(
+        true,
+        "POPAD order (32-bit): EDI, ESI, EBP, ESP (ignored), EBX, EDX, ECX, EAX"
+    );
 }
 
 #[test]

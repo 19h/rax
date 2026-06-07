@@ -132,7 +132,9 @@ fn test_vdivss_xmm0_xmm1_mem32() {
     let code = [0xc5, 0xf2, 0x5e, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, 0xf4];
     let (mut vcpu, vm_memory) = setup_vm(&code, None);
     let test_data = [0x00, 0x00, 0x80, 0x3f]; // 1.0f
-    vm_memory.write(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    vm_memory
+        .write(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -141,7 +143,9 @@ fn test_vdivss_xmm2_xmm3_mem32() {
     let code = [0xc5, 0xe2, 0x5e, 0x14, 0x25, 0x00, 0x30, 0x00, 0x00, 0xf4];
     let (mut vcpu, vm_memory) = setup_vm(&code, None);
     let test_data = [0x00, 0x00, 0x00, 0x40]; // 2.0f
-    vm_memory.write(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    vm_memory
+        .write(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -266,7 +270,9 @@ fn test_vdivsd_xmm0_xmm1_mem64() {
     let code = [0xc5, 0xf3, 0x5e, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, 0xf4];
     let (mut vcpu, vm_memory) = setup_vm(&code, None);
     let test_data = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f]; // 1.0
-    vm_memory.write(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    vm_memory
+        .write(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -275,7 +281,9 @@ fn test_vdivsd_xmm2_xmm3_mem64() {
     let code = [0xc5, 0xe3, 0x5e, 0x14, 0x25, 0x00, 0x30, 0x00, 0x00, 0xf4];
     let (mut vcpu, vm_memory) = setup_vm(&code, None);
     let test_data = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40]; // 2.0
-    vm_memory.write(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    vm_memory
+        .write(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -284,6 +292,8 @@ fn test_vdivsd_xmm4_xmm5_mem64() {
     let code = [0xc5, 0xd3, 0x5e, 0x24, 0x25, 0x00, 0x30, 0x00, 0x00, 0xf4];
     let (mut vcpu, vm_memory) = setup_vm(&code, None);
     let test_data = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x40]; // 3.0
-    vm_memory.write(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    vm_memory
+        .write(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

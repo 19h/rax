@@ -90,8 +90,7 @@ impl FwCfg {
         // SIGNATURE: ASCII "QEMU".
         dev.items.insert(FW_CFG_SIGNATURE, b"QEMU".to_vec());
         // ID: little-endian u32 feature bitmap.
-        dev.items
-            .insert(FW_CFG_ID, dev.id.to_le_bytes().to_vec());
+        dev.items.insert(FW_CFG_ID, dev.id.to_le_bytes().to_vec());
         // FILE_DIR: starts empty (count == 0).
         dev.rebuild_file_dir();
 

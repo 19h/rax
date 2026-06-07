@@ -134,7 +134,8 @@ fn test_nop_8_byte() {
 #[test]
 fn test_nop_9_byte() {
     let code = [
-        0x66, 0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00, // NOP word [RAX+RAX*1+0x00000000]
+        0x66, 0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00,
+        0x00, // NOP word [RAX+RAX*1+0x00000000]
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -206,7 +207,11 @@ fn test_nop_sequence_different_lengths() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xDEADBEEF, "RAX unchanged after NOP sequence");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xDEADBEEF,
+        "RAX unchanged after NOP sequence"
+    );
 }
 
 // Test NOP with RBX as base register
@@ -458,7 +463,10 @@ fn test_nop_9_byte_multiple() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFFFFFFFF, "RAX unchanged after three 9-byte NOPs");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFF,
+        "RAX unchanged after three 9-byte NOPs"
+    );
 }
 
 // Test NOP doesn't cause exceptions
@@ -493,5 +501,9 @@ fn test_all_nop_lengths_sequence() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xBAADF00D, "RAX unchanged after all NOP variants");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xBAADF00D,
+        "RAX unchanged after all NOP variants"
+    );
 }

@@ -15,7 +15,7 @@
 //! the qemu-hexagon vector oracle (tests/hexagon_hvx_diff.rs).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fld, SemCtx};
+use super::{SemCtx, fld};
 
 type Bytes = [u8; 128];
 
@@ -110,7 +110,13 @@ fn sub_uwsat(a: u32, b: u32) -> u32 {
 }
 
 /// Apply a per-byte op to both vectors of a source pair, producing a dest pair.
-fn dv_b(u0: &Bytes, u1: &Bytes, v0: &Bytes, v1: &Bytes, f: impl Fn(u8, u8) -> u8) -> (Bytes, Bytes) {
+fn dv_b(
+    u0: &Bytes,
+    u1: &Bytes,
+    v0: &Bytes,
+    v1: &Bytes,
+    f: impl Fn(u8, u8) -> u8,
+) -> (Bytes, Bytes) {
     let mut o0 = [0u8; 128];
     let mut o1 = [0u8; 128];
     for i in 0..128 {
@@ -277,7 +283,11 @@ fn widen_ubh(d: &DecodedOp, ctx: &mut SemCtx, f: impl Fn(i32, i32) -> i32, acc: 
     let vu = to_bytes(&ctx.vread(fld(d, b'u')));
     let vv = to_bytes(&ctx.vread(fld(d, b'v')));
     let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-    let mut o0 = if acc { to_bytes(&ctx.vread(dbase)) } else { [0u8; 128] };
+    let mut o0 = if acc {
+        to_bytes(&ctx.vread(dbase))
+    } else {
+        [0u8; 128]
+    };
     let mut o1 = if acc {
         to_bytes(&ctx.vread(dbase + 1))
     } else {
@@ -308,19 +318,17 @@ fn widen_hw(
     let vu = to_bytes(&ctx.vread(fld(d, b'u')));
     let vv = to_bytes(&ctx.vread(fld(d, b'v')));
     let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-    let mut o0 = if acc { to_bytes(&ctx.vread(dbase)) } else { [0u8; 128] };
+    let mut o0 = if acc {
+        to_bytes(&ctx.vread(dbase))
+    } else {
+        [0u8; 128]
+    };
     let mut o1 = if acc {
         to_bytes(&ctx.vread(dbase + 1))
     } else {
         [0u8; 128]
     };
-    let ext = |h: u16| -> i64 {
-        if unsigned {
-            h as i64
-        } else {
-            h as i16 as i64
-        }
-    };
+    let ext = |h: u16| -> i64 { if unsigned { h as i64 } else { h as i16 as i64 } };
     for i in 0..32 {
         let lo = f(ext(get_h(&vu, i * 2)), ext(get_h(&vv, i * 2)));
         let hi = f(ext(get_h(&vu, i * 2 + 1)), ext(get_h(&vv, i * 2 + 1)));

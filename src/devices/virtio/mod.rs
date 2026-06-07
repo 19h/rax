@@ -544,8 +544,7 @@ impl<M: Mem> VirtioMmio<M> {
                 let word = (self.driver_features_sel as usize).min(FEATURE_WORDS - 1);
                 let shift = word as u64 * 32;
                 let mask = 0xffff_ffffu64 << shift;
-                self.driver_features =
-                    (self.driver_features & !mask) | ((value as u64) << shift);
+                self.driver_features = (self.driver_features & !mask) | ((value as u64) << shift);
             }
             REG_DRIVER_FEATURES_SEL => {
                 self.driver_features_sel = value;

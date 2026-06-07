@@ -479,7 +479,7 @@ impl<M: Mem> NvmeController<M> {
             // CAP / VS are read-only.
             REG_CAP | REG_VS => {}
             o if o == REG_CAP + 4 => {}
-            REG_INTMS => self.intms |= value, // write-1-to-set
+            REG_INTMS => self.intms |= value,  // write-1-to-set
             REG_INTMC => self.intms &= !value, // write-1-to-clear
             REG_CC => self.write_cc(value),
             REG_CSTS => {} // status is controller-owned (read-only to host).
@@ -592,10 +592,7 @@ impl<M: Mem> NvmeController<M> {
             (&mut self.admin_cq, self.admin_sq.head, 0u16)
         } else {
             let sqid = self.sqid_for_cqid(cqid);
-            let sq_head = self
-                .io_sqs
-                .get(sqid as usize)
-                .map_or(0, |q| q.head);
+            let sq_head = self.io_sqs.get(sqid as usize).map_or(0, |q| q.head);
             let cq = match self.io_cqs.get_mut(cqid as usize) {
                 Some(q) if q.active => q,
                 _ => return,
@@ -794,7 +791,11 @@ impl<M: Mem> NvmeController<M> {
             return (SC_INVALID_FIELD, 0);
         }
         // The spec requires all associated SQs be deleted first.
-        if self.io_sqs.iter().any(|q| q.active && q.cqid as usize == qid) {
+        if self
+            .io_sqs
+            .iter()
+            .any(|q| q.active && q.cqid as usize == qid)
+        {
             return (SC_INVALID_FIELD, 0);
         }
         self.io_cqs[qid].reset();
@@ -1274,7 +1275,16 @@ mod tests {
         bring_up(&mut d, asq, acq, 16);
 
         // Request a pile of queues; controller grants its maximum.
-        let sqe = make_sqe(ADMIN_SET_FEATURES, 3, 0, 0, 0, FID_NUM_QUEUES as u32, 0xffff_ffff, 0);
+        let sqe = make_sqe(
+            ADMIN_SET_FEATURES,
+            3,
+            0,
+            0,
+            0,
+            FID_NUM_QUEUES as u32,
+            0xffff_ffff,
+            0,
+        );
         d.mem_mut_write(asq, &sqe);
         write32(&mut d, REG_DOORBELL_BASE, 1);
 
@@ -1309,7 +1319,16 @@ mod tests {
 
         // 1. Create I/O CQ qid=1, size=8 (0-based 7), PC=1, base=io_cq.
         let cdw10 = 1 | (7u32 << 16);
-        let sqe = make_sqe(ADMIN_CREATE_IO_CQ, 0x10, 0, io_cq, 0, cdw10, 1 /*PC*/, 0);
+        let sqe = make_sqe(
+            ADMIN_CREATE_IO_CQ,
+            0x10,
+            0,
+            io_cq,
+            0,
+            cdw10,
+            1, /*PC*/
+            0,
+        );
         d.mem_mut_write(asq + 0 * SQE_SIZE, &sqe);
         // 2. Create I/O SQ qid=1, size=8, PC=1, cqid=1, base=io_sq.
         let cdw10 = 1 | (7u32 << 16);
@@ -1336,7 +1355,11 @@ mod tests {
         d.mem_mut_write(data, &pattern);
 
         // NVM Write: nsid=1, prp1=data, slba=2 (cdw10 low), nlb=0 (one block).
-        let write_sqe = make_sqe(NVM_WRITE, 0x20, 1, data, 0, 2 /*slba lo*/, 0 /*slba hi*/, 0 /*nlb=0 => 1 block*/);
+        let write_sqe = make_sqe(
+            NVM_WRITE, 0x20, 1, data, 0, 2, /*slba lo*/
+            0, /*slba hi*/
+            0, /*nlb=0 => 1 block*/
+        );
         d.mem_mut_write(io_sq + 0 * SQE_SIZE, &write_sqe);
 
         // I/O SQ1 tail doorbell: index = 2*1 + 0 = 2 => offset 0x1000 + 2*4.
@@ -1380,7 +1403,16 @@ mod tests {
         // Create CQ1 + SQ1.
         let sqe = make_sqe(ADMIN_CREATE_IO_CQ, 1, 0, io_cq, 0, 1 | (7u32 << 16), 1, 0);
         d.mem_mut_write(asq, &sqe);
-        let sqe = make_sqe(ADMIN_CREATE_IO_SQ, 2, 0, io_sq, 0, 1 | (7u32 << 16), 1 | (1u32 << 16), 0);
+        let sqe = make_sqe(
+            ADMIN_CREATE_IO_SQ,
+            2,
+            0,
+            io_sq,
+            0,
+            1 | (7u32 << 16),
+            1 | (1u32 << 16),
+            0,
+        );
         d.mem_mut_write(asq + SQE_SIZE, &sqe);
         write32(&mut d, REG_DOORBELL_BASE, 2);
 

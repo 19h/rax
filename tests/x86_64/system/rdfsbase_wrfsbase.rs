@@ -37,7 +37,7 @@ fn test_wrfsbase_64bit() {
     let code = [
         0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 0x100000000
         0xF3, 0x48, 0x0F, 0xAE, 0xD0, // WRFSBASE RAX
-        0xF4,                          // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -53,8 +53,8 @@ fn test_wrfsbase_32bit() {
     // F3 0F AE /2 - upper 32 bits of FS base should be cleared
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x10, 0x00, 0x00, // MOV RAX, 0x1000
-        0xF3, 0x0F, 0xAE, 0xD0,                   // WRFSBASE EAX (32-bit)
-        0xF4,                                      // HLT
+        0xF3, 0x0F, 0xAE, 0xD0, // WRFSBASE EAX (32-bit)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -76,7 +76,8 @@ fn test_wrfsbase_various_values() {
 
     for &value in &test_values {
         let code = [
-            0x48, 0xB8,
+            0x48,
+            0xB8,
             (value & 0xFF) as u8,
             ((value >> 8) & 0xFF) as u8,
             ((value >> 16) & 0xFF) as u8,
@@ -84,9 +85,13 @@ fn test_wrfsbase_various_values() {
             ((value >> 32) & 0xFF) as u8,
             ((value >> 40) & 0xFF) as u8,
             ((value >> 48) & 0xFF) as u8,
-            ((value >> 56) & 0xFF) as u8,     // MOV RAX, value
-            0xF3, 0x48, 0x0F, 0xAE, 0xD0,     // WRFSBASE RAX
-            0xF4,                              // HLT
+            ((value >> 56) & 0xFF) as u8, // MOV RAX, value
+            0xF3,
+            0x48,
+            0x0F,
+            0xAE,
+            0xD0, // WRFSBASE RAX
+            0xF4, // HLT
         ];
         let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -101,17 +106,14 @@ fn test_wrfsbase_from_different_registers() {
     let code = [
         // Write from RBX
         0x48, 0xC7, 0xC3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
-        0xF3, 0x48, 0x0F, 0xAE, 0xD3,             // WRFSBASE RBX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xD3, // WRFSBASE RBX
         // Write from RCX
         0x48, 0xC7, 0xC1, 0x00, 0x30, 0x00, 0x00, // MOV RCX, 0x3000
-        0xF3, 0x48, 0x0F, 0xAE, 0xD1,             // WRFSBASE RCX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xD1, // WRFSBASE RCX
         // Write from RDX
         0x48, 0xC7, 0xC2, 0x00, 0x40, 0x00, 0x00, // MOV RDX, 0x4000
-        0xF3, 0x48, 0x0F, 0xAE, 0xD2,             // WRFSBASE RDX
-
-        0xF4,                                      // HLT
+        0xF3, 0x48, 0x0F, 0xAE, 0xD2, // WRFSBASE RDX
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -126,28 +128,28 @@ fn test_wrfsbase_preserves_flags() {
     let code = [
         // Set some flags
         0x48, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
-        0x48, 0x83, 0xC0, 0x01,                   // ADD RAX, 1 (sets ZF)
-
+        0x48, 0x83, 0xC0, 0x01, // ADD RAX, 1 (sets ZF)
         // Save flags
-        0x9C,                   // PUSHFQ
-        0x5B,                   // POP RBX
-
+        0x9C, // PUSHFQ
+        0x5B, // POP RBX
         // Write FS base
         0x48, 0xC7, 0xC0, 0x00, 0x10, 0x00, 0x00, // MOV RAX, 0x1000
-        0xF3, 0x48, 0x0F, 0xAE, 0xD0,             // WRFSBASE RAX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xD0, // WRFSBASE RAX
         // Check flags
-        0x9C,                   // PUSHFQ
-        0x59,                   // POP RCX
-
-        0xF4,                   // HLT
+        0x9C, // PUSHFQ
+        0x59, // POP RCX
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Flags should be unchanged
-    assert_eq!(regs.rbx & 0xCD5, regs.rcx & 0xCD5, "WRFSBASE should preserve flags");
+    assert_eq!(
+        regs.rbx & 0xCD5,
+        regs.rcx & 0xCD5,
+        "WRFSBASE should preserve flags"
+    );
 }
 
 // ============================================================================
@@ -161,7 +163,7 @@ fn test_wrgsbase_64bit() {
     let code = [
         0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, // MOV RAX, 0x200000000
         0xF3, 0x48, 0x0F, 0xAE, 0xD8, // WRGSBASE RAX
-        0xF4,                          // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -175,8 +177,8 @@ fn test_wrgsbase_32bit() {
     // WRGSBASE with 32-bit operand
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0xF3, 0x0F, 0xAE, 0xD8,                   // WRGSBASE EAX (32-bit)
-        0xF4,                                      // HLT
+        0xF3, 0x0F, 0xAE, 0xD8, // WRGSBASE EAX (32-bit)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -191,27 +193,27 @@ fn test_wrgsbase_preserves_flags() {
     let code = [
         // Set flags
         0x48, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
-        0x48, 0x83, 0xC0, 0x01,                   // ADD RAX, 1 (sets ZF)
-
+        0x48, 0x83, 0xC0, 0x01, // ADD RAX, 1 (sets ZF)
         // Save flags
-        0x9C,                   // PUSHFQ
-        0x5B,                   // POP RBX
-
+        0x9C, // PUSHFQ
+        0x5B, // POP RBX
         // Write GS base
         0x48, 0xC7, 0xC0, 0x00, 0x60, 0x00, 0x00, // MOV RAX, 0x6000
-        0xF3, 0x48, 0x0F, 0xAE, 0xD8,             // WRGSBASE RAX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xD8, // WRGSBASE RAX
         // Check flags
-        0x9C,                   // PUSHFQ
-        0x59,                   // POP RCX
-
-        0xF4,                   // HLT
+        0x9C, // PUSHFQ
+        0x59, // POP RCX
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx & 0xCD5, regs.rcx & 0xCD5, "WRGSBASE should preserve flags");
+    assert_eq!(
+        regs.rbx & 0xCD5,
+        regs.rcx & 0xCD5,
+        "WRGSBASE should preserve flags"
+    );
 }
 
 // ============================================================================
@@ -226,19 +228,20 @@ fn test_rdfsbase_64bit() {
         // First set FS base
         0x48, 0xB8, 0x34, 0x12, 0x00, 0x00, 0x78, 0x56, 0x00, 0x00, // MOV RAX, 0x5678000 01234
         0xF3, 0x48, 0x0F, 0xAE, 0xD0, // WRFSBASE RAX
-
         // Now read it back
-        0x48, 0x31, 0xDB,             // XOR RBX, RBX (clear RBX)
+        0x48, 0x31, 0xDB, // XOR RBX, RBX (clear RBX)
         0xF3, 0x48, 0x0F, 0xAE, 0xC3, // RDFSBASE RBX
-
-        0xF4,                          // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // RBX should contain the FS base value we wrote
-    assert_eq!(regs.rbx, regs.rax, "RDFSBASE should read back written value");
+    assert_eq!(
+        regs.rbx, regs.rax,
+        "RDFSBASE should read back written value"
+    );
 }
 
 #[test]
@@ -248,20 +251,26 @@ fn test_rdfsbase_32bit_clears_upper_bits() {
         // Set FS base to a 64-bit value
         0x48, 0xB8, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0x80000000
         0xF3, 0x48, 0x0F, 0xAE, 0xD0, // WRFSBASE RAX
-
         // Read with 32-bit RDFSBASE
         0x48, 0xC7, 0xC3, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RBX, -1 (all bits set)
-        0xF3, 0x0F, 0xAE, 0xC3,                   // RDFSBASE EBX (32-bit)
-
-        0xF4,                                      // HLT
+        0xF3, 0x0F, 0xAE, 0xC3, // RDFSBASE EBX (32-bit)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Upper 32 bits of RBX should be cleared
-    assert_eq!(regs.rbx >> 32, 0, "32-bit RDFSBASE should clear upper 32 bits");
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x80000000, "Lower 32 bits should match");
+    assert_eq!(
+        regs.rbx >> 32,
+        0,
+        "32-bit RDFSBASE should clear upper 32 bits"
+    );
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0x80000000,
+        "Lower 32 bits should match"
+    );
 }
 
 #[test]
@@ -270,14 +279,12 @@ fn test_rdfsbase_to_different_registers() {
     let code = [
         // Set FS base
         0x48, 0xC7, 0xC0, 0x00, 0x70, 0x00, 0x00, // MOV RAX, 0x7000
-        0xF3, 0x48, 0x0F, 0xAE, 0xD0,             // WRFSBASE RAX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xD0, // WRFSBASE RAX
         // Read into different registers
-        0xF3, 0x48, 0x0F, 0xAE, 0xC3,             // RDFSBASE RBX
-        0xF3, 0x48, 0x0F, 0xAE, 0xC1,             // RDFSBASE RCX
-        0xF3, 0x48, 0x0F, 0xAE, 0xC2,             // RDFSBASE RDX
-
-        0xF4,                                      // HLT
+        0xF3, 0x48, 0x0F, 0xAE, 0xC3, // RDFSBASE RBX
+        0xF3, 0x48, 0x0F, 0xAE, 0xC1, // RDFSBASE RCX
+        0xF3, 0x48, 0x0F, 0xAE, 0xC2, // RDFSBASE RDX
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -294,30 +301,29 @@ fn test_rdfsbase_preserves_flags() {
     let code = [
         // Set FS base
         0x48, 0xC7, 0xC0, 0x00, 0x10, 0x00, 0x00, // MOV RAX, 0x1000
-        0xF3, 0x48, 0x0F, 0xAE, 0xD0,             // WRFSBASE RAX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xD0, // WRFSBASE RAX
         // Set some flags
         0x48, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
-        0x48, 0x83, 0xC0, 0x01,                   // ADD RAX, 1 (sets ZF)
-
+        0x48, 0x83, 0xC0, 0x01, // ADD RAX, 1 (sets ZF)
         // Save flags
-        0x9C,                   // PUSHFQ
-        0x5B,                   // POP RBX
-
+        0x9C, // PUSHFQ
+        0x5B, // POP RBX
         // Read FS base
-        0xF3, 0x48, 0x0F, 0xAE, 0xC0,             // RDFSBASE RAX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xC0, // RDFSBASE RAX
         // Check flags
-        0x9C,                   // PUSHFQ
-        0x59,                   // POP RCX
-
-        0xF4,                   // HLT
+        0x9C, // PUSHFQ
+        0x59, // POP RCX
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx & 0xCD5, regs.rcx & 0xCD5, "RDFSBASE should preserve flags");
+    assert_eq!(
+        regs.rbx & 0xCD5,
+        regs.rcx & 0xCD5,
+        "RDFSBASE should preserve flags"
+    );
     assert_eq!(regs.rax, 0x1000, "RDFSBASE should read correct value");
 }
 
@@ -333,12 +339,10 @@ fn test_rdgsbase_64bit() {
         // Set GS base
         0x48, 0xB8, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0x8000
         0xF3, 0x48, 0x0F, 0xAE, 0xD8, // WRGSBASE RAX
-
         // Read it back
-        0x48, 0x31, 0xDB,             // XOR RBX, RBX
+        0x48, 0x31, 0xDB, // XOR RBX, RBX
         0xF3, 0x48, 0x0F, 0xAE, 0xCB, // RDGSBASE RBX
-
-        0xF4,                          // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -354,19 +358,25 @@ fn test_rdgsbase_32bit_clears_upper_bits() {
         // Set GS base
         0x48, 0xB8, 0xFF, 0xFF, 0xFF, 0x7F, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0x7FFFFFFF
         0xF3, 0x48, 0x0F, 0xAE, 0xD8, // WRGSBASE RAX
-
         // Read with 32-bit operand
         0x48, 0xC7, 0xC3, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RBX, -1
-        0xF3, 0x0F, 0xAE, 0xCB,                   // RDGSBASE EBX (32-bit)
-
-        0xF4,                                      // HLT
+        0xF3, 0x0F, 0xAE, 0xCB, // RDGSBASE EBX (32-bit)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx >> 32, 0, "32-bit RDGSBASE should clear upper 32 bits");
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x7FFFFFFF, "Lower 32 bits should match");
+    assert_eq!(
+        regs.rbx >> 32,
+        0,
+        "32-bit RDGSBASE should clear upper 32 bits"
+    );
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0x7FFFFFFF,
+        "Lower 32 bits should match"
+    );
 }
 
 #[test]
@@ -375,30 +385,29 @@ fn test_rdgsbase_preserves_flags() {
     let code = [
         // Set GS base
         0x48, 0xC7, 0xC0, 0x00, 0x90, 0x00, 0x00, // MOV RAX, 0x9000
-        0xF3, 0x48, 0x0F, 0xAE, 0xD8,             // WRGSBASE RAX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xD8, // WRGSBASE RAX
         // Set flags
         0x48, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
-        0x48, 0x83, 0xC0, 0x01,                   // ADD RAX, 1 (sets ZF)
-
+        0x48, 0x83, 0xC0, 0x01, // ADD RAX, 1 (sets ZF)
         // Save flags
-        0x9C,                   // PUSHFQ
-        0x5B,                   // POP RBX
-
+        0x9C, // PUSHFQ
+        0x5B, // POP RBX
         // Read GS base
-        0xF3, 0x48, 0x0F, 0xAE, 0xC8,             // RDGSBASE RAX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xC8, // RDGSBASE RAX
         // Check flags
-        0x9C,                   // PUSHFQ
-        0x59,                   // POP RCX
-
-        0xF4,                   // HLT
+        0x9C, // PUSHFQ
+        0x59, // POP RCX
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx & 0xCD5, regs.rcx & 0xCD5, "RDGSBASE should preserve flags");
+    assert_eq!(
+        regs.rbx & 0xCD5,
+        regs.rcx & 0xCD5,
+        "RDGSBASE should preserve flags"
+    );
     assert_eq!(regs.rax, 0x9000, "RDGSBASE should read correct value");
 }
 
@@ -412,19 +421,15 @@ fn test_fs_gs_independent() {
     let code = [
         // Set FS base
         0x48, 0xC7, 0xC0, 0x00, 0x10, 0x00, 0x00, // MOV RAX, 0x1000
-        0xF3, 0x48, 0x0F, 0xAE, 0xD0,             // WRFSBASE RAX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xD0, // WRFSBASE RAX
         // Set GS base
         0x48, 0xC7, 0xC0, 0x00, 0x20, 0x00, 0x00, // MOV RAX, 0x2000
-        0xF3, 0x48, 0x0F, 0xAE, 0xD8,             // WRGSBASE RAX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xD8, // WRGSBASE RAX
         // Read FS base
-        0xF3, 0x48, 0x0F, 0xAE, 0xC3,             // RDFSBASE RBX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xC3, // RDFSBASE RBX
         // Read GS base
-        0xF3, 0x48, 0x0F, 0xAE, 0xC9,             // RDGSBASE RCX
-
-        0xF4,                                      // HLT
+        0xF3, 0x48, 0x0F, 0xAE, 0xC9, // RDGSBASE RCX
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -446,7 +451,8 @@ fn test_write_read_cycle_fs() {
 
     for &value in &test_values {
         let code = [
-            0x48, 0xB8,
+            0x48,
+            0xB8,
             (value & 0xFF) as u8,
             ((value >> 8) & 0xFF) as u8,
             ((value >> 16) & 0xFF) as u8,
@@ -454,17 +460,31 @@ fn test_write_read_cycle_fs() {
             ((value >> 32) & 0xFF) as u8,
             ((value >> 40) & 0xFF) as u8,
             ((value >> 48) & 0xFF) as u8,
-            ((value >> 56) & 0xFF) as u8,     // MOV RAX, value
-            0xF3, 0x48, 0x0F, 0xAE, 0xD0,     // WRFSBASE RAX
-            0x48, 0x31, 0xDB,                 // XOR RBX, RBX
-            0xF3, 0x48, 0x0F, 0xAE, 0xC3,     // RDFSBASE RBX
-            0xF4,                              // HLT
+            ((value >> 56) & 0xFF) as u8, // MOV RAX, value
+            0xF3,
+            0x48,
+            0x0F,
+            0xAE,
+            0xD0, // WRFSBASE RAX
+            0x48,
+            0x31,
+            0xDB, // XOR RBX, RBX
+            0xF3,
+            0x48,
+            0x0F,
+            0xAE,
+            0xC3, // RDFSBASE RBX
+            0xF4, // HLT
         ];
         let (mut vcpu, _) = setup_vm(&code, None);
 
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rbx, value, "RDFSBASE should read back 0x{:016X}", value);
+        assert_eq!(
+            regs.rbx, value,
+            "RDFSBASE should read back 0x{:016X}",
+            value
+        );
     }
 }
 
@@ -479,7 +499,8 @@ fn test_write_read_cycle_gs() {
 
     for &value in &test_values {
         let code = [
-            0x48, 0xB8,
+            0x48,
+            0xB8,
             (value & 0xFF) as u8,
             ((value >> 8) & 0xFF) as u8,
             ((value >> 16) & 0xFF) as u8,
@@ -487,17 +508,31 @@ fn test_write_read_cycle_gs() {
             ((value >> 32) & 0xFF) as u8,
             ((value >> 40) & 0xFF) as u8,
             ((value >> 48) & 0xFF) as u8,
-            ((value >> 56) & 0xFF) as u8,     // MOV RAX, value
-            0xF3, 0x48, 0x0F, 0xAE, 0xD8,     // WRGSBASE RAX
-            0x48, 0x31, 0xDB,                 // XOR RBX, RBX
-            0xF3, 0x48, 0x0F, 0xAE, 0xCB,     // RDGSBASE RBX
-            0xF4,                              // HLT
+            ((value >> 56) & 0xFF) as u8, // MOV RAX, value
+            0xF3,
+            0x48,
+            0x0F,
+            0xAE,
+            0xD8, // WRGSBASE RAX
+            0x48,
+            0x31,
+            0xDB, // XOR RBX, RBX
+            0xF3,
+            0x48,
+            0x0F,
+            0xAE,
+            0xCB, // RDGSBASE RBX
+            0xF4, // HLT
         ];
         let (mut vcpu, _) = setup_vm(&code, None);
 
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rbx, value, "RDGSBASE should read back 0x{:016X}", value);
+        assert_eq!(
+            regs.rbx, value,
+            "RDGSBASE should read back 0x{:016X}",
+            value
+        );
     }
 }
 
@@ -506,22 +541,17 @@ fn test_alternate_fs_gs_writes() {
     // Alternate writes to FS and GS bases
     let code = [
         0x48, 0xC7, 0xC0, 0x11, 0x11, 0x00, 0x00, // MOV RAX, 0x1111
-        0xF3, 0x48, 0x0F, 0xAE, 0xD0,             // WRFSBASE RAX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xD0, // WRFSBASE RAX
         0x48, 0xC7, 0xC0, 0x22, 0x22, 0x00, 0x00, // MOV RAX, 0x2222
-        0xF3, 0x48, 0x0F, 0xAE, 0xD8,             // WRGSBASE RAX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xD8, // WRGSBASE RAX
         0x48, 0xC7, 0xC0, 0x33, 0x33, 0x00, 0x00, // MOV RAX, 0x3333
-        0xF3, 0x48, 0x0F, 0xAE, 0xD0,             // WRFSBASE RAX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xD0, // WRFSBASE RAX
         0x48, 0xC7, 0xC0, 0x44, 0x44, 0x00, 0x00, // MOV RAX, 0x4444
-        0xF3, 0x48, 0x0F, 0xAE, 0xD8,             // WRGSBASE RAX
-
+        0xF3, 0x48, 0x0F, 0xAE, 0xD8, // WRGSBASE RAX
         // Read both
-        0xF3, 0x48, 0x0F, 0xAE, 0xC3,             // RDFSBASE RBX
-        0xF3, 0x48, 0x0F, 0xAE, 0xC9,             // RDGSBASE RCX
-
-        0xF4,                                      // HLT
+        0xF3, 0x48, 0x0F, 0xAE, 0xC3, // RDFSBASE RBX
+        0xF3, 0x48, 0x0F, 0xAE, 0xC9, // RDGSBASE RCX
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -536,24 +566,29 @@ fn test_32bit_write_clears_upper_fs() {
     // Verify 32-bit WRFSBASE clears upper 32 bits
     let code = [
         // First set a 64-bit value
-        0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, 0xFFFFFFFF00000000
+        0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
+        0xFF, // MOV RAX, 0xFFFFFFFF00000000
         0xF3, 0x48, 0x0F, 0xAE, 0xD0, // WRFSBASE RAX (64-bit)
-
         // Now write 32-bit value
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0xF3, 0x0F, 0xAE, 0xD0,                   // WRFSBASE EAX (32-bit)
-
+        0xF3, 0x0F, 0xAE, 0xD0, // WRFSBASE EAX (32-bit)
         // Read back
-        0xF3, 0x48, 0x0F, 0xAE, 0xC3,             // RDFSBASE RBX
-
-        0xF4,                                      // HLT
+        0xF3, 0x48, 0x0F, 0xAE, 0xC3, // RDFSBASE RBX
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx, 0x5000, "FS base should be 0x5000 with upper bits cleared");
-    assert_eq!(regs.rbx >> 32, 0, "Upper 32 bits should be cleared by 32-bit write");
+    assert_eq!(
+        regs.rbx, 0x5000,
+        "FS base should be 0x5000 with upper bits cleared"
+    );
+    assert_eq!(
+        regs.rbx >> 32,
+        0,
+        "Upper 32 bits should be cleared by 32-bit write"
+    );
 }
 
 #[test]
@@ -561,22 +596,27 @@ fn test_32bit_write_clears_upper_gs() {
     // Verify 32-bit WRGSBASE clears upper 32 bits
     let code = [
         // First set a 64-bit value
-        0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, 0xFFFFFFFF00000000
+        0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
+        0xFF, // MOV RAX, 0xFFFFFFFF00000000
         0xF3, 0x48, 0x0F, 0xAE, 0xD8, // WRGSBASE RAX (64-bit)
-
         // Now write 32-bit value
         0x48, 0xC7, 0xC0, 0x00, 0x60, 0x00, 0x00, // MOV RAX, 0x6000
-        0xF3, 0x0F, 0xAE, 0xD8,                   // WRGSBASE EAX (32-bit)
-
+        0xF3, 0x0F, 0xAE, 0xD8, // WRGSBASE EAX (32-bit)
         // Read back
-        0xF3, 0x48, 0x0F, 0xAE, 0xCB,             // RDGSBASE RBX
-
-        0xF4,                                      // HLT
+        0xF3, 0x48, 0x0F, 0xAE, 0xCB, // RDGSBASE RBX
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx, 0x6000, "GS base should be 0x6000 with upper bits cleared");
-    assert_eq!(regs.rbx >> 32, 0, "Upper 32 bits should be cleared by 32-bit write");
+    assert_eq!(
+        regs.rbx, 0x6000,
+        "GS base should be 0x6000 with upper bits cleared"
+    );
+    assert_eq!(
+        regs.rbx >> 32,
+        0,
+        "Upper 32 bits should be cleared by 32-bit write"
+    );
 }

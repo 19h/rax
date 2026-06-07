@@ -570,7 +570,7 @@ impl FromStr for MemorySize {
                 _ => {
                     return Err(Error::InvalidConfig(format!(
                         "invalid memory size suffix: {suffix_part}"
-                    )))
+                    )));
                 }
             }
         };

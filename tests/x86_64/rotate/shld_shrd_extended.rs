@@ -6,10 +6,10 @@
 // - Flag behavior edge cases
 // - Double-precision shift scenarios
 
-use crate::common::{run_until_hlt, setup_vm};
-use rax::cpu::Registers;
-use rax::backend::emulator::x86_64::flags;
 use crate::common::{cf_set, of_set, sf_set, zf_set};
+use crate::common::{run_until_hlt, setup_vm};
+use rax::backend::emulator::x86_64::flags;
+use rax::cpu::Registers;
 
 // ============================================================================
 // SHLD comprehensive shift count tests
@@ -32,7 +32,11 @@ fn test_shld_all_counts_16bit() {
             // For 16-bit, count is masked to 5 bits: 16 & 0x1F = 16
             // Since count (16) == operand size (16), result is undefined per spec
             // Implementation treats 16 as valid shift, shifting out all original bits
-            assert_eq!(regs.rax & 0xFFFF, 0x5555, "SHLD AX by 16 (full replacement)");
+            assert_eq!(
+                regs.rax & 0xFFFF,
+                0x5555,
+                "SHLD AX by 16 (full replacement)"
+            );
         }
     }
 }
@@ -53,7 +57,11 @@ fn test_shrd_all_counts_16bit() {
             // For 16-bit, count is masked to 5 bits: 16 & 0x1F = 16
             // Since count (16) == operand size (16), result is undefined per spec
             // Implementation treats 16 as valid shift, shifting out all original bits
-            assert_eq!(regs.rax & 0xFFFF, 0x5555, "SHRD AX by 16 (full replacement)");
+            assert_eq!(
+                regs.rax & 0xFFFF,
+                0x5555,
+                "SHRD AX by 16 (full replacement)"
+            );
         }
     }
 }
@@ -72,7 +80,11 @@ fn test_shld_all_counts_32bit() {
             assert_eq!(regs.rax & 0xFFFFFFFF, 0xAAAAAAAA, "SHLD EAX by 0");
         } else if *count == 32 {
             // Count is masked: 32 MOD 32 = 0, so no shift occurs
-            assert_eq!(regs.rax & 0xFFFFFFFF, 0xAAAAAAAA, "SHLD EAX by 32 (count masked to 0)");
+            assert_eq!(
+                regs.rax & 0xFFFFFFFF,
+                0xAAAAAAAA,
+                "SHLD EAX by 32 (count masked to 0)"
+            );
         }
     }
 }
@@ -91,7 +103,11 @@ fn test_shrd_all_counts_32bit() {
             assert_eq!(regs.rax & 0xFFFFFFFF, 0xAAAAAAAA, "SHRD EAX by 0");
         } else if *count == 32 {
             // Count is masked: 32 MOD 32 = 0, so no shift occurs
-            assert_eq!(regs.rax & 0xFFFFFFFF, 0xAAAAAAAA, "SHRD EAX by 32 (count masked to 0)");
+            assert_eq!(
+                regs.rax & 0xFFFFFFFF,
+                0xAAAAAAAA,
+                "SHRD EAX by 32 (count masked to 0)"
+            );
         }
     }
 }
@@ -110,7 +126,10 @@ fn test_shld_all_counts_64bit() {
             assert_eq!(regs.rax, 0xAAAAAAAAAAAAAAAA, "SHLD RAX by 0");
         } else if *count == 64 {
             // Count is masked: 64 MOD 64 = 0, so no shift occurs
-            assert_eq!(regs.rax, 0xAAAAAAAAAAAAAAAA, "SHLD RAX by 64 (count masked to 0)");
+            assert_eq!(
+                regs.rax, 0xAAAAAAAAAAAAAAAA,
+                "SHLD RAX by 64 (count masked to 0)"
+            );
         }
     }
 }
@@ -129,7 +148,10 @@ fn test_shrd_all_counts_64bit() {
             assert_eq!(regs.rax, 0xAAAAAAAAAAAAAAAA, "SHRD RAX by 0");
         } else if *count == 64 {
             // Count is masked: 64 MOD 64 = 0, so no shift occurs
-            assert_eq!(regs.rax, 0xAAAAAAAAAAAAAAAA, "SHRD RAX by 64 (count masked to 0)");
+            assert_eq!(
+                regs.rax, 0xAAAAAAAAAAAAAAAA,
+                "SHRD RAX by 64 (count masked to 0)"
+            );
         }
     }
 }
@@ -158,7 +180,13 @@ fn test_shld_boundary_values_32bit() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = ((*dest << 16) | (*src >> 16)) & 0xFFFFFFFF;
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "SHLD 0x{:08X} with 0x{:08X}", dest, src);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "SHLD 0x{:08X} with 0x{:08X}",
+            dest,
+            src
+        );
     }
 }
 
@@ -182,7 +210,13 @@ fn test_shrd_boundary_values_32bit() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = ((*dest >> 16) | (*src << 16)) & 0xFFFFFFFF;
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "SHRD 0x{:08X} with 0x{:08X}", dest, src);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "SHRD 0x{:08X} with 0x{:08X}",
+            dest,
+            src
+        );
     }
 }
 
@@ -204,7 +238,11 @@ fn test_shld_boundary_values_64bit() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = (*dest << 32) | (*src >> 32);
-        assert_eq!(regs.rax, expected, "SHLD 0x{:016X} with 0x{:016X}", dest, src);
+        assert_eq!(
+            regs.rax, expected,
+            "SHLD 0x{:016X} with 0x{:016X}",
+            dest, src
+        );
     }
 }
 
@@ -226,7 +264,11 @@ fn test_shrd_boundary_values_64bit() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = (*dest >> 32) | (*src << 32);
-        assert_eq!(regs.rax, expected, "SHRD 0x{:016X} with 0x{:016X}", dest, src);
+        assert_eq!(
+            regs.rax, expected,
+            "SHRD 0x{:016X} with 0x{:016X}",
+            dest, src
+        );
     }
 }
 
@@ -252,7 +294,11 @@ fn test_shld_count_masking_32bit() {
     let (mut vcpu2, _) = setup_vm(&code2, Some(regs2));
     let regs2 = run_until_hlt(&mut vcpu2).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, regs2.rax & 0xFFFFFFFF, "Count masking for 32-bit SHLD");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        regs2.rax & 0xFFFFFFFF,
+        "Count masking for 32-bit SHLD"
+    );
 }
 
 #[test]
@@ -272,7 +318,11 @@ fn test_shrd_count_masking_32bit() {
     let (mut vcpu2, _) = setup_vm(&code2, Some(regs2));
     let regs2 = run_until_hlt(&mut vcpu2).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, regs2.rax & 0xFFFFFFFF, "Count masking for 32-bit SHRD");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        regs2.rax & 0xFFFFFFFF,
+        "Count masking for 32-bit SHRD"
+    );
 }
 
 #[test]
@@ -337,7 +387,13 @@ fn test_shld_cf_edge_cases() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(cf_set(regs.rflags), *expected_cf, "CF for SHLD 0x{:08X} by {}", value, count);
+        assert_eq!(
+            cf_set(regs.rflags),
+            *expected_cf,
+            "CF for SHLD 0x{:08X} by {}",
+            value,
+            count
+        );
     }
 }
 
@@ -358,7 +414,13 @@ fn test_shrd_cf_edge_cases() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(cf_set(regs.rflags), *expected_cf, "CF for SHRD 0x{:08X} by {}", value, count);
+        assert_eq!(
+            cf_set(regs.rflags),
+            *expected_cf,
+            "CF for SHRD 0x{:08X} by {}",
+            value,
+            count
+        );
     }
 }
 
@@ -398,7 +460,10 @@ fn test_shld_sf_zf_flags() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(sf_set(regs.rflags), "SF should be set (result is negative)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (result is non-zero)"
+    );
 }
 
 #[test]
@@ -411,7 +476,10 @@ fn test_shrd_sf_zf_flags() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(sf_set(regs.rflags), "SF should be set (result is negative)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (result is non-zero)"
+    );
 }
 
 #[test]
@@ -451,7 +519,7 @@ fn test_shld_128bit_simulation() {
     // Simulate a 128-bit shift left by 16 bits
     let code = [
         0x48, 0x0f, 0xa4, 0xd0, 0x10, // SHLD RAX, RDX, 16
-        0x48, 0xc1, 0xe2, 0x10,       // SHL RDX, 16
+        0x48, 0xc1, 0xe2, 0x10, // SHL RDX, 16
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -469,7 +537,7 @@ fn test_shrd_128bit_simulation() {
     // Simulate a 128-bit shift right by 16 bits
     let code = [
         0x48, 0x0f, 0xac, 0xd0, 0x10, // SHRD RAX, RDX, 16
-        0x48, 0xc1, 0xea, 0x10,       // SHR RDX, 16
+        0x48, 0xc1, 0xea, 0x10, // SHR RDX, 16
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -495,7 +563,11 @@ fn test_shld_alternating_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xAAAA5555, "Alternating pattern SHLD");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xAAAA5555,
+        "Alternating pattern SHLD"
+    );
 }
 
 #[test]
@@ -507,7 +579,11 @@ fn test_shrd_alternating_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x5555AAAA, "Alternating pattern SHRD");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x5555AAAA,
+        "Alternating pattern SHRD"
+    );
 }
 
 #[test]

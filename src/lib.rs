@@ -6,7 +6,6 @@ pub mod console;
 pub mod cpu;
 pub mod devices;
 pub mod error;
-pub mod terminal;
 #[cfg(feature = "debug")]
 pub mod gdb;
 pub mod isa_oracle;
@@ -16,6 +15,7 @@ pub mod profiling;
 pub mod riscv;
 pub mod smir;
 pub mod snapshot;
+pub mod terminal;
 pub mod timing;
 #[cfg(feature = "trace")]
 pub mod trace;

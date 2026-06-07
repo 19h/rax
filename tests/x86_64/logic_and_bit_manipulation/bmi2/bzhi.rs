@@ -24,7 +24,11 @@ fn test_bzhi_eax_ebx_ecx_index_0() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should be zero (all bits masked)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "EAX should be zero (all bits masked)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set (result is zero)");
     assert!(!cf_set(regs.rflags), "CF should be clear (index < 32)");
 }
@@ -42,8 +46,15 @@ fn test_bzhi_eax_ebx_ecx_index_8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x78, "EAX should contain lower 8 bits");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x78,
+        "EAX should contain lower 8 bits"
+    );
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (result is non-zero)"
+    );
     assert!(!cf_set(regs.rflags), "CF should be clear");
 }
 
@@ -60,7 +71,11 @@ fn test_bzhi_eax_ebx_ecx_index_16() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x5678, "EAX should contain lower 16 bits");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x5678,
+        "EAX should contain lower 16 bits"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -77,7 +92,11 @@ fn test_bzhi_eax_ebx_ecx_index_32() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX should contain all bits");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX should contain all bits"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
     assert!(cf_set(regs.rflags), "CF should be set (index >= 32)");
 }
@@ -95,7 +114,11 @@ fn test_bzhi_eax_ebx_ecx_index_beyond() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX should contain all bits");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX should contain all bits"
+    );
     assert!(cf_set(regs.rflags), "CF should be set (index >= 32)");
 }
 
@@ -181,14 +204,19 @@ fn test_bzhi_with_extended_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let expected = 0xABCDEF01 & ((1u32 << 12) - 1);
-    assert_eq!(regs.r8 & 0xFFFFFFFF, expected as u64, "R8D should contain lower 12 bits");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        expected as u64,
+        "R8D should contain lower 12 bits"
+    );
 }
 
 #[test]
 fn test_bzhi_mem32() {
     // BZHI EAX, [mem], ECX
     let code = [
-        0xc4, 0xe2, 0x70, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // BZHI EAX, [DATA_ADDR], ECX
+        0xc4, 0xe2, 0x70, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00,
+        0x00, // BZHI EAX, [DATA_ADDR], ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -197,14 +225,19 @@ fn test_bzhi_mem32() {
     write_mem_u32(&mem, 0xAABBCCDD);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xDD, "EAX should contain lower 8 bits from memory");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xDD,
+        "EAX should contain lower 8 bits from memory"
+    );
 }
 
 #[test]
 fn test_bzhi_mem64() {
     // BZHI RAX, [mem], RCX
     let code = [
-        0xc4, 0xe2, 0xf0, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // BZHI RAX, [DATA_ADDR], RCX
+        0xc4, 0xe2, 0xf0, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00,
+        0x00, // BZHI RAX, [DATA_ADDR], RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -214,7 +247,10 @@ fn test_bzhi_mem64() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let expected = 0x0123456789ABCDEF & ((1u64 << 16) - 1);
-    assert_eq!(regs.rax, expected, "RAX should contain lower 16 bits from memory");
+    assert_eq!(
+        regs.rax, expected,
+        "RAX should contain lower 16 bits from memory"
+    );
 }
 
 #[test]
@@ -236,7 +272,12 @@ fn test_bzhi_mask_creation() {
         } else {
             ((1u64 << index) - 1) & 0xFFFFFFFF
         };
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "Should create {}-bit mask", index);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "Should create {}-bit mask",
+            index
+        );
     }
 }
 
@@ -253,7 +294,11 @@ fn test_bzhi_nibble_mask() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x8, "EAX should contain lower nibble");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x8,
+        "EAX should contain lower nibble"
+    );
 }
 
 #[test]
@@ -286,7 +331,11 @@ fn test_bzhi_index_modulo_behavior() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should be zero (index wraps to 0)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "EAX should be zero (index wraps to 0)"
+    );
 }
 
 #[test]
@@ -302,7 +351,11 @@ fn test_bzhi_alternating_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xAAAA, "EAX should contain lower 16 bits of pattern");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xAAAA,
+        "EAX should contain lower 16 bits of pattern"
+    );
 }
 
 #[test]
@@ -334,7 +387,11 @@ fn test_bzhi_sparse_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x1001, "EAX should contain bits 0 and 12 only");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x1001,
+        "EAX should contain bits 0 and 12 only"
+    );
 }
 
 #[test]
@@ -359,7 +416,14 @@ fn test_bzhi_field_extraction() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "BZHI(0x{:X}, {}) should be 0x{:X}", value, index, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "BZHI(0x{:X}, {}) should be 0x{:X}",
+            value,
+            index,
+            expected
+        );
     }
 }
 
@@ -403,7 +467,11 @@ fn test_bzhi_cf_boundary_32bit() {
         if expect_cf {
             assert!(cf_set(regs.rflags), "CF should be set for index {}", index);
         } else {
-            assert!(!cf_set(regs.rflags), "CF should be clear for index {}", index);
+            assert!(
+                !cf_set(regs.rflags),
+                "CF should be clear for index {}",
+                index
+            );
         }
     }
 }
@@ -431,7 +499,11 @@ fn test_bzhi_cf_boundary_64bit() {
         if expect_cf {
             assert!(cf_set(regs.rflags), "CF should be set for index {}", index);
         } else {
-            assert!(!cf_set(regs.rflags), "CF should be clear for index {}", index);
+            assert!(
+                !cf_set(regs.rflags),
+                "CF should be clear for index {}",
+                index
+            );
         }
     }
 }
@@ -450,5 +522,9 @@ fn test_bzhi_combines_with_shifts() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let expected = (0x12345678 >> 8) & 0xFFFF;
-    assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "Should extract bits 8-23");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        expected as u64,
+        "Should extract bits 8-23"
+    );
 }

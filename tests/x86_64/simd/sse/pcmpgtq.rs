@@ -158,7 +158,8 @@ fn test_pcmpgtq_xmm7_mem() {
 #[test]
 fn test_pcmpgtq_xmm15_mem() {
     let code = [
-        0x66, 0x44, 0x0f, 0x38, 0x37, 0x3c, 0x25, 0x00, 0x30, 0x00, 0x00, // PCMPGTQ XMM15, [0x3000]
+        0x66, 0x44, 0x0f, 0x38, 0x37, 0x3c, 0x25, 0x00, 0x30, 0x00,
+        0x00, // PCMPGTQ XMM15, [0x3000]
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -224,7 +225,6 @@ fn test_pcmpgtq_zero_comparison() {
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
-
 
 // ============================================================================
 // Known-answer value tests (register-to-register via set_xmm/get_xmm)

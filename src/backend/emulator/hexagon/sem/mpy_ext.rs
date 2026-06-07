@@ -23,7 +23,7 @@
 //! Verified against the qemu-hexagon oracle (tests/hexagon_diff.rs).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fld, SemCtx};
+use super::{SemCtx, fld};
 
 /// Accumulate mode for the 16x16 multiply matrix.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -50,11 +50,7 @@ fn get_word(src: u64, n: u32) -> i64 {
 fn cmpy_terms(rss: u64, rtt: u64, w0: u32, w1: u32, w2: u32, w3: u32, add: bool) -> i128 {
     let tmp = (get_word(rss, w0) as i128) * (get_word(rtt, w1) as i128);
     let acc = (get_word(rss, w2) as i128) * (get_word(rtt, w3) as i128);
-    if add {
-        tmp + acc
-    } else {
-        tmp - acc
-    }
+    if add { tmp + acc } else { tmp - acc }
 }
 
 /// fGETHALF(n, src): signed 16-bit lane, sign-extended to i64.
@@ -171,29 +167,61 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
     let rd = fld(d, b'd');
     match op {
         // ============ 16x16 multiply matrix (M2_mpy* / mpyd / mpyu / mpyud) ============
-        Opcode::M2_mpy_acc_hh_s0 => mpy16(ctx, d, 1, 1, false, false, Acc::Add, false, false, false),
+        Opcode::M2_mpy_acc_hh_s0 => {
+            mpy16(ctx, d, 1, 1, false, false, Acc::Add, false, false, false)
+        }
         Opcode::M2_mpy_acc_hh_s1 => mpy16(ctx, d, 1, 1, false, true, Acc::Add, false, false, false),
-        Opcode::M2_mpy_acc_hl_s0 => mpy16(ctx, d, 1, 0, false, false, Acc::Add, false, false, false),
+        Opcode::M2_mpy_acc_hl_s0 => {
+            mpy16(ctx, d, 1, 0, false, false, Acc::Add, false, false, false)
+        }
         Opcode::M2_mpy_acc_hl_s1 => mpy16(ctx, d, 1, 0, false, true, Acc::Add, false, false, false),
-        Opcode::M2_mpy_acc_lh_s0 => mpy16(ctx, d, 0, 1, false, false, Acc::Add, false, false, false),
+        Opcode::M2_mpy_acc_lh_s0 => {
+            mpy16(ctx, d, 0, 1, false, false, Acc::Add, false, false, false)
+        }
         Opcode::M2_mpy_acc_lh_s1 => mpy16(ctx, d, 0, 1, false, true, Acc::Add, false, false, false),
-        Opcode::M2_mpy_acc_ll_s0 => mpy16(ctx, d, 0, 0, false, false, Acc::Add, false, false, false),
+        Opcode::M2_mpy_acc_ll_s0 => {
+            mpy16(ctx, d, 0, 0, false, false, Acc::Add, false, false, false)
+        }
         Opcode::M2_mpy_acc_ll_s1 => mpy16(ctx, d, 0, 0, false, true, Acc::Add, false, false, false),
-        Opcode::M2_mpy_acc_sat_hh_s0 => mpy16(ctx, d, 1, 1, false, false, Acc::Add, false, true, false),
-        Opcode::M2_mpy_acc_sat_hh_s1 => mpy16(ctx, d, 1, 1, false, true, Acc::Add, false, true, false),
-        Opcode::M2_mpy_acc_sat_hl_s0 => mpy16(ctx, d, 1, 0, false, false, Acc::Add, false, true, false),
-        Opcode::M2_mpy_acc_sat_hl_s1 => mpy16(ctx, d, 1, 0, false, true, Acc::Add, false, true, false),
-        Opcode::M2_mpy_acc_sat_lh_s0 => mpy16(ctx, d, 0, 1, false, false, Acc::Add, false, true, false),
-        Opcode::M2_mpy_acc_sat_lh_s1 => mpy16(ctx, d, 0, 1, false, true, Acc::Add, false, true, false),
-        Opcode::M2_mpy_acc_sat_ll_s0 => mpy16(ctx, d, 0, 0, false, false, Acc::Add, false, true, false),
-        Opcode::M2_mpy_acc_sat_ll_s1 => mpy16(ctx, d, 0, 0, false, true, Acc::Add, false, true, false),
-        Opcode::M2_mpyd_acc_hh_s0 => mpy16(ctx, d, 1, 1, false, false, Acc::Add, false, false, true),
+        Opcode::M2_mpy_acc_sat_hh_s0 => {
+            mpy16(ctx, d, 1, 1, false, false, Acc::Add, false, true, false)
+        }
+        Opcode::M2_mpy_acc_sat_hh_s1 => {
+            mpy16(ctx, d, 1, 1, false, true, Acc::Add, false, true, false)
+        }
+        Opcode::M2_mpy_acc_sat_hl_s0 => {
+            mpy16(ctx, d, 1, 0, false, false, Acc::Add, false, true, false)
+        }
+        Opcode::M2_mpy_acc_sat_hl_s1 => {
+            mpy16(ctx, d, 1, 0, false, true, Acc::Add, false, true, false)
+        }
+        Opcode::M2_mpy_acc_sat_lh_s0 => {
+            mpy16(ctx, d, 0, 1, false, false, Acc::Add, false, true, false)
+        }
+        Opcode::M2_mpy_acc_sat_lh_s1 => {
+            mpy16(ctx, d, 0, 1, false, true, Acc::Add, false, true, false)
+        }
+        Opcode::M2_mpy_acc_sat_ll_s0 => {
+            mpy16(ctx, d, 0, 0, false, false, Acc::Add, false, true, false)
+        }
+        Opcode::M2_mpy_acc_sat_ll_s1 => {
+            mpy16(ctx, d, 0, 0, false, true, Acc::Add, false, true, false)
+        }
+        Opcode::M2_mpyd_acc_hh_s0 => {
+            mpy16(ctx, d, 1, 1, false, false, Acc::Add, false, false, true)
+        }
         Opcode::M2_mpyd_acc_hh_s1 => mpy16(ctx, d, 1, 1, false, true, Acc::Add, false, false, true),
-        Opcode::M2_mpyd_acc_hl_s0 => mpy16(ctx, d, 1, 0, false, false, Acc::Add, false, false, true),
+        Opcode::M2_mpyd_acc_hl_s0 => {
+            mpy16(ctx, d, 1, 0, false, false, Acc::Add, false, false, true)
+        }
         Opcode::M2_mpyd_acc_hl_s1 => mpy16(ctx, d, 1, 0, false, true, Acc::Add, false, false, true),
-        Opcode::M2_mpyd_acc_lh_s0 => mpy16(ctx, d, 0, 1, false, false, Acc::Add, false, false, true),
+        Opcode::M2_mpyd_acc_lh_s0 => {
+            mpy16(ctx, d, 0, 1, false, false, Acc::Add, false, false, true)
+        }
         Opcode::M2_mpyd_acc_lh_s1 => mpy16(ctx, d, 0, 1, false, true, Acc::Add, false, false, true),
-        Opcode::M2_mpyd_acc_ll_s0 => mpy16(ctx, d, 0, 0, false, false, Acc::Add, false, false, true),
+        Opcode::M2_mpyd_acc_ll_s0 => {
+            mpy16(ctx, d, 0, 0, false, false, Acc::Add, false, false, true)
+        }
         Opcode::M2_mpyd_acc_ll_s1 => mpy16(ctx, d, 0, 0, false, true, Acc::Add, false, false, true),
         Opcode::M2_mpyd_hh_s0 => mpy16(ctx, d, 1, 1, false, false, Acc::Set, false, false, true),
         Opcode::M2_mpyd_hh_s1 => mpy16(ctx, d, 1, 1, false, true, Acc::Set, false, false, true),
@@ -203,13 +231,21 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M2_mpyd_lh_s1 => mpy16(ctx, d, 0, 1, false, true, Acc::Set, false, false, true),
         Opcode::M2_mpyd_ll_s0 => mpy16(ctx, d, 0, 0, false, false, Acc::Set, false, false, true),
         Opcode::M2_mpyd_ll_s1 => mpy16(ctx, d, 0, 0, false, true, Acc::Set, false, false, true),
-        Opcode::M2_mpyd_nac_hh_s0 => mpy16(ctx, d, 1, 1, false, false, Acc::Sub, false, false, true),
+        Opcode::M2_mpyd_nac_hh_s0 => {
+            mpy16(ctx, d, 1, 1, false, false, Acc::Sub, false, false, true)
+        }
         Opcode::M2_mpyd_nac_hh_s1 => mpy16(ctx, d, 1, 1, false, true, Acc::Sub, false, false, true),
-        Opcode::M2_mpyd_nac_hl_s0 => mpy16(ctx, d, 1, 0, false, false, Acc::Sub, false, false, true),
+        Opcode::M2_mpyd_nac_hl_s0 => {
+            mpy16(ctx, d, 1, 0, false, false, Acc::Sub, false, false, true)
+        }
         Opcode::M2_mpyd_nac_hl_s1 => mpy16(ctx, d, 1, 0, false, true, Acc::Sub, false, false, true),
-        Opcode::M2_mpyd_nac_lh_s0 => mpy16(ctx, d, 0, 1, false, false, Acc::Sub, false, false, true),
+        Opcode::M2_mpyd_nac_lh_s0 => {
+            mpy16(ctx, d, 0, 1, false, false, Acc::Sub, false, false, true)
+        }
         Opcode::M2_mpyd_nac_lh_s1 => mpy16(ctx, d, 0, 1, false, true, Acc::Sub, false, false, true),
-        Opcode::M2_mpyd_nac_ll_s0 => mpy16(ctx, d, 0, 0, false, false, Acc::Sub, false, false, true),
+        Opcode::M2_mpyd_nac_ll_s0 => {
+            mpy16(ctx, d, 0, 0, false, false, Acc::Sub, false, false, true)
+        }
         Opcode::M2_mpyd_nac_ll_s1 => mpy16(ctx, d, 0, 0, false, true, Acc::Sub, false, false, true),
         Opcode::M2_mpyd_rnd_hh_s0 => mpy16(ctx, d, 1, 1, false, false, Acc::Set, true, false, true),
         Opcode::M2_mpyd_rnd_hh_s1 => mpy16(ctx, d, 1, 1, false, true, Acc::Set, true, false, true),
@@ -227,22 +263,46 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M2_mpy_lh_s1 => mpy16(ctx, d, 0, 1, false, true, Acc::Set, false, false, false),
         Opcode::M2_mpy_ll_s0 => mpy16(ctx, d, 0, 0, false, false, Acc::Set, false, false, false),
         Opcode::M2_mpy_ll_s1 => mpy16(ctx, d, 0, 0, false, true, Acc::Set, false, false, false),
-        Opcode::M2_mpy_nac_hh_s0 => mpy16(ctx, d, 1, 1, false, false, Acc::Sub, false, false, false),
+        Opcode::M2_mpy_nac_hh_s0 => {
+            mpy16(ctx, d, 1, 1, false, false, Acc::Sub, false, false, false)
+        }
         Opcode::M2_mpy_nac_hh_s1 => mpy16(ctx, d, 1, 1, false, true, Acc::Sub, false, false, false),
-        Opcode::M2_mpy_nac_hl_s0 => mpy16(ctx, d, 1, 0, false, false, Acc::Sub, false, false, false),
+        Opcode::M2_mpy_nac_hl_s0 => {
+            mpy16(ctx, d, 1, 0, false, false, Acc::Sub, false, false, false)
+        }
         Opcode::M2_mpy_nac_hl_s1 => mpy16(ctx, d, 1, 0, false, true, Acc::Sub, false, false, false),
-        Opcode::M2_mpy_nac_lh_s0 => mpy16(ctx, d, 0, 1, false, false, Acc::Sub, false, false, false),
+        Opcode::M2_mpy_nac_lh_s0 => {
+            mpy16(ctx, d, 0, 1, false, false, Acc::Sub, false, false, false)
+        }
         Opcode::M2_mpy_nac_lh_s1 => mpy16(ctx, d, 0, 1, false, true, Acc::Sub, false, false, false),
-        Opcode::M2_mpy_nac_ll_s0 => mpy16(ctx, d, 0, 0, false, false, Acc::Sub, false, false, false),
+        Opcode::M2_mpy_nac_ll_s0 => {
+            mpy16(ctx, d, 0, 0, false, false, Acc::Sub, false, false, false)
+        }
         Opcode::M2_mpy_nac_ll_s1 => mpy16(ctx, d, 0, 0, false, true, Acc::Sub, false, false, false),
-        Opcode::M2_mpy_nac_sat_hh_s0 => mpy16(ctx, d, 1, 1, false, false, Acc::Sub, false, true, false),
-        Opcode::M2_mpy_nac_sat_hh_s1 => mpy16(ctx, d, 1, 1, false, true, Acc::Sub, false, true, false),
-        Opcode::M2_mpy_nac_sat_hl_s0 => mpy16(ctx, d, 1, 0, false, false, Acc::Sub, false, true, false),
-        Opcode::M2_mpy_nac_sat_hl_s1 => mpy16(ctx, d, 1, 0, false, true, Acc::Sub, false, true, false),
-        Opcode::M2_mpy_nac_sat_lh_s0 => mpy16(ctx, d, 0, 1, false, false, Acc::Sub, false, true, false),
-        Opcode::M2_mpy_nac_sat_lh_s1 => mpy16(ctx, d, 0, 1, false, true, Acc::Sub, false, true, false),
-        Opcode::M2_mpy_nac_sat_ll_s0 => mpy16(ctx, d, 0, 0, false, false, Acc::Sub, false, true, false),
-        Opcode::M2_mpy_nac_sat_ll_s1 => mpy16(ctx, d, 0, 0, false, true, Acc::Sub, false, true, false),
+        Opcode::M2_mpy_nac_sat_hh_s0 => {
+            mpy16(ctx, d, 1, 1, false, false, Acc::Sub, false, true, false)
+        }
+        Opcode::M2_mpy_nac_sat_hh_s1 => {
+            mpy16(ctx, d, 1, 1, false, true, Acc::Sub, false, true, false)
+        }
+        Opcode::M2_mpy_nac_sat_hl_s0 => {
+            mpy16(ctx, d, 1, 0, false, false, Acc::Sub, false, true, false)
+        }
+        Opcode::M2_mpy_nac_sat_hl_s1 => {
+            mpy16(ctx, d, 1, 0, false, true, Acc::Sub, false, true, false)
+        }
+        Opcode::M2_mpy_nac_sat_lh_s0 => {
+            mpy16(ctx, d, 0, 1, false, false, Acc::Sub, false, true, false)
+        }
+        Opcode::M2_mpy_nac_sat_lh_s1 => {
+            mpy16(ctx, d, 0, 1, false, true, Acc::Sub, false, true, false)
+        }
+        Opcode::M2_mpy_nac_sat_ll_s0 => {
+            mpy16(ctx, d, 0, 0, false, false, Acc::Sub, false, true, false)
+        }
+        Opcode::M2_mpy_nac_sat_ll_s1 => {
+            mpy16(ctx, d, 0, 0, false, true, Acc::Sub, false, true, false)
+        }
         Opcode::M2_mpy_rnd_hh_s0 => mpy16(ctx, d, 1, 1, false, false, Acc::Set, true, false, false),
         Opcode::M2_mpy_rnd_hh_s1 => mpy16(ctx, d, 1, 1, false, true, Acc::Set, true, false, false),
         Opcode::M2_mpy_rnd_hl_s0 => mpy16(ctx, d, 1, 0, false, false, Acc::Set, true, false, false),
@@ -259,29 +319,61 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M2_mpy_sat_lh_s1 => mpy16(ctx, d, 0, 1, false, true, Acc::Set, false, true, false),
         Opcode::M2_mpy_sat_ll_s0 => mpy16(ctx, d, 0, 0, false, false, Acc::Set, false, true, false),
         Opcode::M2_mpy_sat_ll_s1 => mpy16(ctx, d, 0, 0, false, true, Acc::Set, false, true, false),
-        Opcode::M2_mpy_sat_rnd_hh_s0 => mpy16(ctx, d, 1, 1, false, false, Acc::Set, true, true, false),
-        Opcode::M2_mpy_sat_rnd_hh_s1 => mpy16(ctx, d, 1, 1, false, true, Acc::Set, true, true, false),
-        Opcode::M2_mpy_sat_rnd_hl_s0 => mpy16(ctx, d, 1, 0, false, false, Acc::Set, true, true, false),
-        Opcode::M2_mpy_sat_rnd_hl_s1 => mpy16(ctx, d, 1, 0, false, true, Acc::Set, true, true, false),
-        Opcode::M2_mpy_sat_rnd_lh_s0 => mpy16(ctx, d, 0, 1, false, false, Acc::Set, true, true, false),
-        Opcode::M2_mpy_sat_rnd_lh_s1 => mpy16(ctx, d, 0, 1, false, true, Acc::Set, true, true, false),
-        Opcode::M2_mpy_sat_rnd_ll_s0 => mpy16(ctx, d, 0, 0, false, false, Acc::Set, true, true, false),
-        Opcode::M2_mpy_sat_rnd_ll_s1 => mpy16(ctx, d, 0, 0, false, true, Acc::Set, true, true, false),
-        Opcode::M2_mpyu_acc_hh_s0 => mpy16(ctx, d, 1, 1, true, false, Acc::Add, false, false, false),
+        Opcode::M2_mpy_sat_rnd_hh_s0 => {
+            mpy16(ctx, d, 1, 1, false, false, Acc::Set, true, true, false)
+        }
+        Opcode::M2_mpy_sat_rnd_hh_s1 => {
+            mpy16(ctx, d, 1, 1, false, true, Acc::Set, true, true, false)
+        }
+        Opcode::M2_mpy_sat_rnd_hl_s0 => {
+            mpy16(ctx, d, 1, 0, false, false, Acc::Set, true, true, false)
+        }
+        Opcode::M2_mpy_sat_rnd_hl_s1 => {
+            mpy16(ctx, d, 1, 0, false, true, Acc::Set, true, true, false)
+        }
+        Opcode::M2_mpy_sat_rnd_lh_s0 => {
+            mpy16(ctx, d, 0, 1, false, false, Acc::Set, true, true, false)
+        }
+        Opcode::M2_mpy_sat_rnd_lh_s1 => {
+            mpy16(ctx, d, 0, 1, false, true, Acc::Set, true, true, false)
+        }
+        Opcode::M2_mpy_sat_rnd_ll_s0 => {
+            mpy16(ctx, d, 0, 0, false, false, Acc::Set, true, true, false)
+        }
+        Opcode::M2_mpy_sat_rnd_ll_s1 => {
+            mpy16(ctx, d, 0, 0, false, true, Acc::Set, true, true, false)
+        }
+        Opcode::M2_mpyu_acc_hh_s0 => {
+            mpy16(ctx, d, 1, 1, true, false, Acc::Add, false, false, false)
+        }
         Opcode::M2_mpyu_acc_hh_s1 => mpy16(ctx, d, 1, 1, true, true, Acc::Add, false, false, false),
-        Opcode::M2_mpyu_acc_hl_s0 => mpy16(ctx, d, 1, 0, true, false, Acc::Add, false, false, false),
+        Opcode::M2_mpyu_acc_hl_s0 => {
+            mpy16(ctx, d, 1, 0, true, false, Acc::Add, false, false, false)
+        }
         Opcode::M2_mpyu_acc_hl_s1 => mpy16(ctx, d, 1, 0, true, true, Acc::Add, false, false, false),
-        Opcode::M2_mpyu_acc_lh_s0 => mpy16(ctx, d, 0, 1, true, false, Acc::Add, false, false, false),
+        Opcode::M2_mpyu_acc_lh_s0 => {
+            mpy16(ctx, d, 0, 1, true, false, Acc::Add, false, false, false)
+        }
         Opcode::M2_mpyu_acc_lh_s1 => mpy16(ctx, d, 0, 1, true, true, Acc::Add, false, false, false),
-        Opcode::M2_mpyu_acc_ll_s0 => mpy16(ctx, d, 0, 0, true, false, Acc::Add, false, false, false),
+        Opcode::M2_mpyu_acc_ll_s0 => {
+            mpy16(ctx, d, 0, 0, true, false, Acc::Add, false, false, false)
+        }
         Opcode::M2_mpyu_acc_ll_s1 => mpy16(ctx, d, 0, 0, true, true, Acc::Add, false, false, false),
-        Opcode::M2_mpyud_acc_hh_s0 => mpy16(ctx, d, 1, 1, true, false, Acc::Add, false, false, true),
+        Opcode::M2_mpyud_acc_hh_s0 => {
+            mpy16(ctx, d, 1, 1, true, false, Acc::Add, false, false, true)
+        }
         Opcode::M2_mpyud_acc_hh_s1 => mpy16(ctx, d, 1, 1, true, true, Acc::Add, false, false, true),
-        Opcode::M2_mpyud_acc_hl_s0 => mpy16(ctx, d, 1, 0, true, false, Acc::Add, false, false, true),
+        Opcode::M2_mpyud_acc_hl_s0 => {
+            mpy16(ctx, d, 1, 0, true, false, Acc::Add, false, false, true)
+        }
         Opcode::M2_mpyud_acc_hl_s1 => mpy16(ctx, d, 1, 0, true, true, Acc::Add, false, false, true),
-        Opcode::M2_mpyud_acc_lh_s0 => mpy16(ctx, d, 0, 1, true, false, Acc::Add, false, false, true),
+        Opcode::M2_mpyud_acc_lh_s0 => {
+            mpy16(ctx, d, 0, 1, true, false, Acc::Add, false, false, true)
+        }
         Opcode::M2_mpyud_acc_lh_s1 => mpy16(ctx, d, 0, 1, true, true, Acc::Add, false, false, true),
-        Opcode::M2_mpyud_acc_ll_s0 => mpy16(ctx, d, 0, 0, true, false, Acc::Add, false, false, true),
+        Opcode::M2_mpyud_acc_ll_s0 => {
+            mpy16(ctx, d, 0, 0, true, false, Acc::Add, false, false, true)
+        }
         Opcode::M2_mpyud_acc_ll_s1 => mpy16(ctx, d, 0, 0, true, true, Acc::Add, false, false, true),
         Opcode::M2_mpyud_hh_s0 => mpy16(ctx, d, 1, 1, true, false, Acc::Set, false, false, true),
         Opcode::M2_mpyud_hh_s1 => mpy16(ctx, d, 1, 1, true, true, Acc::Set, false, false, true),
@@ -291,13 +383,21 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M2_mpyud_lh_s1 => mpy16(ctx, d, 0, 1, true, true, Acc::Set, false, false, true),
         Opcode::M2_mpyud_ll_s0 => mpy16(ctx, d, 0, 0, true, false, Acc::Set, false, false, true),
         Opcode::M2_mpyud_ll_s1 => mpy16(ctx, d, 0, 0, true, true, Acc::Set, false, false, true),
-        Opcode::M2_mpyud_nac_hh_s0 => mpy16(ctx, d, 1, 1, true, false, Acc::Sub, false, false, true),
+        Opcode::M2_mpyud_nac_hh_s0 => {
+            mpy16(ctx, d, 1, 1, true, false, Acc::Sub, false, false, true)
+        }
         Opcode::M2_mpyud_nac_hh_s1 => mpy16(ctx, d, 1, 1, true, true, Acc::Sub, false, false, true),
-        Opcode::M2_mpyud_nac_hl_s0 => mpy16(ctx, d, 1, 0, true, false, Acc::Sub, false, false, true),
+        Opcode::M2_mpyud_nac_hl_s0 => {
+            mpy16(ctx, d, 1, 0, true, false, Acc::Sub, false, false, true)
+        }
         Opcode::M2_mpyud_nac_hl_s1 => mpy16(ctx, d, 1, 0, true, true, Acc::Sub, false, false, true),
-        Opcode::M2_mpyud_nac_lh_s0 => mpy16(ctx, d, 0, 1, true, false, Acc::Sub, false, false, true),
+        Opcode::M2_mpyud_nac_lh_s0 => {
+            mpy16(ctx, d, 0, 1, true, false, Acc::Sub, false, false, true)
+        }
         Opcode::M2_mpyud_nac_lh_s1 => mpy16(ctx, d, 0, 1, true, true, Acc::Sub, false, false, true),
-        Opcode::M2_mpyud_nac_ll_s0 => mpy16(ctx, d, 0, 0, true, false, Acc::Sub, false, false, true),
+        Opcode::M2_mpyud_nac_ll_s0 => {
+            mpy16(ctx, d, 0, 0, true, false, Acc::Sub, false, false, true)
+        }
         Opcode::M2_mpyud_nac_ll_s1 => mpy16(ctx, d, 0, 0, true, true, Acc::Sub, false, false, true),
         Opcode::M2_mpyu_hh_s0 => mpy16(ctx, d, 1, 1, true, false, Acc::Set, false, false, false),
         Opcode::M2_mpyu_hh_s1 => mpy16(ctx, d, 1, 1, true, true, Acc::Set, false, false, false),
@@ -307,13 +407,21 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M2_mpyu_lh_s1 => mpy16(ctx, d, 0, 1, true, true, Acc::Set, false, false, false),
         Opcode::M2_mpyu_ll_s0 => mpy16(ctx, d, 0, 0, true, false, Acc::Set, false, false, false),
         Opcode::M2_mpyu_ll_s1 => mpy16(ctx, d, 0, 0, true, true, Acc::Set, false, false, false),
-        Opcode::M2_mpyu_nac_hh_s0 => mpy16(ctx, d, 1, 1, true, false, Acc::Sub, false, false, false),
+        Opcode::M2_mpyu_nac_hh_s0 => {
+            mpy16(ctx, d, 1, 1, true, false, Acc::Sub, false, false, false)
+        }
         Opcode::M2_mpyu_nac_hh_s1 => mpy16(ctx, d, 1, 1, true, true, Acc::Sub, false, false, false),
-        Opcode::M2_mpyu_nac_hl_s0 => mpy16(ctx, d, 1, 0, true, false, Acc::Sub, false, false, false),
+        Opcode::M2_mpyu_nac_hl_s0 => {
+            mpy16(ctx, d, 1, 0, true, false, Acc::Sub, false, false, false)
+        }
         Opcode::M2_mpyu_nac_hl_s1 => mpy16(ctx, d, 1, 0, true, true, Acc::Sub, false, false, false),
-        Opcode::M2_mpyu_nac_lh_s0 => mpy16(ctx, d, 0, 1, true, false, Acc::Sub, false, false, false),
+        Opcode::M2_mpyu_nac_lh_s0 => {
+            mpy16(ctx, d, 0, 1, true, false, Acc::Sub, false, false, false)
+        }
         Opcode::M2_mpyu_nac_lh_s1 => mpy16(ctx, d, 0, 1, true, true, Acc::Sub, false, false, false),
-        Opcode::M2_mpyu_nac_ll_s0 => mpy16(ctx, d, 0, 0, true, false, Acc::Sub, false, false, false),
+        Opcode::M2_mpyu_nac_ll_s0 => {
+            mpy16(ctx, d, 0, 0, true, false, Acc::Sub, false, false, false)
+        }
         Opcode::M2_mpyu_nac_ll_s1 => mpy16(ctx, d, 0, 0, true, true, Acc::Sub, false, false, false),
 
         // ============ hmmpy: 32 x signed-16 high-half multiply (:<<1[:rnd]:sat) ============
@@ -400,7 +508,16 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
 /// (or `Rxx +=`) result wraps in 64 bits, exactly matching the idef's int64.
 #[allow(clippy::too_many_arguments)]
 #[inline]
-fn m7_dcmpy(ctx: &mut SemCtx, d: &DecodedOp, add: bool, w0: u32, w1: u32, w2: u32, w3: u32, acc: bool) {
+fn m7_dcmpy(
+    ctx: &mut SemCtx,
+    d: &DecodedOp,
+    add: bool,
+    w0: u32,
+    w1: u32,
+    w2: u32,
+    w3: u32,
+    acc: bool,
+) {
     let rss = ctx.rp(fld(d, b's'));
     let rtt = ctx.rp(fld(d, b't'));
     let prod = cmpy_terms(rss, rtt, w0, w1, w2, w3, add) as i64;
@@ -420,7 +537,16 @@ fn m7_dcmpy(ctx: &mut SemCtx, d: &DecodedOp, add: bool, w0: u32, w1: u32, w2: u3
 /// saturating to a word; `:rnd` adds 0x40000000 before the shift.
 #[allow(clippy::too_many_arguments)]
 #[inline]
-fn m7_wcmpy(ctx: &mut SemCtx, d: &DecodedOp, add: bool, w0: u32, w1: u32, w2: u32, w3: u32, rnd: bool) {
+fn m7_wcmpy(
+    ctx: &mut SemCtx,
+    d: &DecodedOp,
+    add: bool,
+    w0: u32,
+    w1: u32,
+    w2: u32,
+    w3: u32,
+    rnd: bool,
+) {
     let rss = ctx.rp(fld(d, b's'));
     let rtt = ctx.rp(fld(d, b't'));
     let mut acc = cmpy_terms(rss, rtt, w0, w1, w2, w3, add);

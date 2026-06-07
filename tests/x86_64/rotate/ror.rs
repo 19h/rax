@@ -23,10 +23,10 @@
 // - Other flags: Undefined
 // - Count is 0: No flags affected
 
-use crate::common::{run_until_hlt, setup_vm};
-use rax::cpu::Registers;
-use rax::backend::emulator::x86_64::flags;
 use crate::common::{cf_set, of_set, sf_set, zf_set};
+use crate::common::{run_until_hlt, setup_vm};
+use rax::backend::emulator::x86_64::flags;
+use rax::cpu::Registers;
 
 // ============================================================================
 // 8-bit ROR tests
@@ -37,7 +37,7 @@ fn test_ror_al_1() {
     // ROR AL, 1 (opcode D0 /1)
     let code = [
         0xd0, 0xc8, // ROR AL, 1
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x42; // 0100_0010
@@ -61,7 +61,11 @@ fn test_ror_al_1_with_lsb() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0xC0, "AL: 0x81 ROR 1 = 0xC0 (LSB rotates to MSB)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0xC0,
+        "AL: 0x81 ROR 1 = 0xC0 (LSB rotates to MSB)"
+    );
     assert!(cf_set(regs.rflags), "CF: receives LSB (was 1)");
     // OF = XOR of two most-significant bits of result: 0xC0 = 1100_0000, MSB=1, MSB-1=1, so 1 XOR 1 = 0
     assert!(!of_set(regs.rflags), "OF: MSB XOR (MSB-1) = 1 XOR 1 = 0");
@@ -112,7 +116,11 @@ fn test_ror_full_rotation_8bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0x42, "AL: full rotation returns to original");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x42,
+        "AL: full rotation returns to original"
+    );
 }
 
 #[test]
@@ -147,9 +155,11 @@ fn test_ror_count_zero_preserves_flags() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x42, "AL: unchanged");
-    assert_eq!(regs.rflags & (flags::bits::CF | flags::bits::ZF | flags::bits::OF),
-               initial_flags & (flags::bits::CF | flags::bits::ZF | flags::bits::OF),
-               "Flags preserved");
+    assert_eq!(
+        regs.rflags & (flags::bits::CF | flags::bits::ZF | flags::bits::OF),
+        initial_flags & (flags::bits::CF | flags::bits::ZF | flags::bits::OF),
+        "Flags preserved"
+    );
 }
 
 #[test]
@@ -247,7 +257,11 @@ fn test_ror_ax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0x3412, "AX: 0x1234 ROR 8 = 0x3412 (byte swap)");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x3412,
+        "AX: 0x1234 ROR 8 = 0x3412 (byte swap)"
+    );
 }
 
 #[test]
@@ -262,7 +276,11 @@ fn test_ror_ax_full_rotation() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0x1234, "AX: full rotation returns to original");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x1234,
+        "AX: full rotation returns to original"
+    );
 }
 
 #[test]
@@ -328,7 +346,11 @@ fn test_ror_eax_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x43218765, "EAX: 0x86430ECA ROR 1 = 0x43218765");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x43218765,
+        "EAX: 0x86430ECA ROR 1 = 0x43218765"
+    );
 }
 
 #[test]
@@ -344,7 +366,11 @@ fn test_ror_eax_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x78123456, "EAX: 0x12345678 ROR 8 = 0x78123456");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x78123456,
+        "EAX: 0x12345678 ROR 8 = 0x78123456"
+    );
 }
 
 #[test]
@@ -359,7 +385,11 @@ fn test_ror_eax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x56781234, "EAX: 0x12345678 ROR 16 = 0x56781234");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x56781234,
+        "EAX: 0x12345678 ROR 16 = 0x56781234"
+    );
 }
 
 #[test]
@@ -374,7 +404,11 @@ fn test_ror_eax_full_rotation() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX: full rotation returns to original");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX: full rotation returns to original"
+    );
 }
 
 #[test]
@@ -389,7 +423,11 @@ fn test_ror_ebx() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x80000000, "EBX: 0x00000001 ROR 1 = 0x80000000");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0x80000000,
+        "EBX: 0x00000001 ROR 1 = 0x80000000"
+    );
     assert!(cf_set(regs.rflags), "CF: LSB was 1");
 }
 
@@ -405,7 +443,11 @@ fn test_ror_ecx() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rcx & 0xFFFFFFFF, 0x1ABCDEF0, "ECX: 0xABCDEF01 ROR 4 = 0x1ABCDEF0");
+    assert_eq!(
+        regs.rcx & 0xFFFFFFFF,
+        0x1ABCDEF0,
+        "ECX: 0xABCDEF01 ROR 4 = 0x1ABCDEF0"
+    );
 }
 
 #[test]
@@ -421,7 +463,11 @@ fn test_ror_edx_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x000000FF, "EDX: 0xFF000000 ROR 24 = 0x000000FF");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x000000FF,
+        "EDX: 0xFF000000 ROR 24 = 0x000000FF"
+    );
 }
 
 #[test]
@@ -436,7 +482,11 @@ fn test_ror_esi() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rsi & 0xFFFFFFFF, 0x40000000, "ESI: 0x80000000 ROR 1 = 0x40000000");
+    assert_eq!(
+        regs.rsi & 0xFFFFFFFF,
+        0x40000000,
+        "ESI: 0x80000000 ROR 1 = 0x40000000"
+    );
 }
 
 #[test]
@@ -451,7 +501,11 @@ fn test_ror_edi() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rdi & 0xFFFFFFFF, 0x67812345, "EDI: 0x12345678 ROR 12 = 0x67812345");
+    assert_eq!(
+        regs.rdi & 0xFFFFFFFF,
+        0x67812345,
+        "EDI: 0x12345678 ROR 12 = 0x67812345"
+    );
 }
 
 // ============================================================================
@@ -486,7 +540,10 @@ fn test_ror_rax_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xF0123456789ABCDE, "RAX: 0x123456789ABCDEF0 ROR 8");
+    assert_eq!(
+        regs.rax, 0xF0123456789ABCDE,
+        "RAX: 0x123456789ABCDEF0 ROR 8"
+    );
 }
 
 #[test]
@@ -501,7 +558,10 @@ fn test_ror_rax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xDEF0123456789ABC, "RAX: 0x123456789ABCDEF0 ROR 16");
+    assert_eq!(
+        regs.rax, 0xDEF0123456789ABC,
+        "RAX: 0x123456789ABCDEF0 ROR 16"
+    );
 }
 
 #[test]
@@ -516,7 +576,10 @@ fn test_ror_rax_32bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x9ABCDEF012345678, "RAX: ROR 32 swaps high/low dwords");
+    assert_eq!(
+        regs.rax, 0x9ABCDEF012345678,
+        "RAX: ROR 32 swaps high/low dwords"
+    );
 }
 
 #[test]
@@ -531,7 +594,10 @@ fn test_ror_rax_full_rotation() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x123456789ABCDEF0, "RAX: full rotation returns to original");
+    assert_eq!(
+        regs.rax, 0x123456789ABCDEF0,
+        "RAX: full rotation returns to original"
+    );
 }
 
 #[test]
@@ -546,7 +612,10 @@ fn test_ror_rbx() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx, 0x8000000000000000, "RBX: 0x0000000000000001 ROR 1 = 0x8000000000000000");
+    assert_eq!(
+        regs.rbx, 0x8000000000000000,
+        "RBX: 0x0000000000000001 ROR 1 = 0x8000000000000000"
+    );
     assert!(cf_set(regs.rflags), "CF: LSB was 1");
 }
 
@@ -679,11 +748,13 @@ fn test_ror_r15() {
 
 #[test]
 fn test_ror_mem8() {
-    use crate::common::{DATA_ADDR, write_mem_u8, read_mem_u8};
+    use crate::common::{DATA_ADDR, read_mem_u8, write_mem_u8};
 
     // ROR byte [DATA_ADDR], 1
     let code = [
-        0xd0, 0x0c, 0x25, // ROR byte ptr [disp32], 1
+        0xd0,
+        0x0c,
+        0x25, // ROR byte ptr [disp32], 1
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -701,11 +772,14 @@ fn test_ror_mem8() {
 
 #[test]
 fn test_ror_mem16() {
-    use crate::common::{DATA_ADDR, write_mem_u16, read_mem_u16};
+    use crate::common::{DATA_ADDR, read_mem_u16, write_mem_u16};
 
     // ROR word [DATA_ADDR], 4
     let code = [
-        0x66, 0xc1, 0x0c, 0x25, // ROR word ptr [disp32], imm8
+        0x66,
+        0xc1,
+        0x0c,
+        0x25, // ROR word ptr [disp32], imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -723,11 +797,13 @@ fn test_ror_mem16() {
 
 #[test]
 fn test_ror_mem32() {
-    use crate::common::{DATA_ADDR, write_mem_u32, read_mem_u32};
+    use crate::common::{DATA_ADDR, read_mem_u32, write_mem_u32};
 
     // ROR dword [DATA_ADDR], CL
     let code = [
-        0xd3, 0x0c, 0x25, // ROR dword ptr [disp32], CL
+        0xd3,
+        0x0c,
+        0x25, // ROR dword ptr [disp32], CL
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -740,16 +816,23 @@ fn test_ror_mem32() {
     write_mem_u32(&mem, 0x12345678);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u32(&mem), 0x78123456, "Memory: 0x12345678 ROR 8 = 0x78123456");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0x78123456,
+        "Memory: 0x12345678 ROR 8 = 0x78123456"
+    );
 }
 
 #[test]
 fn test_ror_mem64() {
-    use crate::common::{DATA_ADDR, write_mem_u64, read_mem_u64};
+    use crate::common::{DATA_ADDR, read_mem_u64, write_mem_u64};
 
     // ROR qword [DATA_ADDR], 16
     let code = [
-        0x48, 0xc1, 0x0c, 0x25, // ROR qword ptr [disp32], imm8
+        0x48,
+        0xc1,
+        0x0c,
+        0x25, // ROR qword ptr [disp32], imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,

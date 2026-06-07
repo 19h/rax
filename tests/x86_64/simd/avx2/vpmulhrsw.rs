@@ -332,8 +332,7 @@ fn test_vpmulhrsw_mem_mixed_signs() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data: Vec<u8> = vec![
-        0x7FFFu16, 0x8000, 0x4000, 0xC000,
-        0x2000, 0xE000, 0x1000, 0xF000,
+        0x7FFFu16, 0x8000, 0x4000, 0xC000, 0x2000, 0xE000, 0x1000, 0xF000,
     ]
     .into_iter()
     .cycle()
@@ -418,8 +417,7 @@ fn test_vpmulhrsw_mem_boundary_values() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data: Vec<u8> = vec![
-        0x0000u16, 0x0001, 0x7FFF, 0x8000,
-        0xFFFFu16, 0x4000, 0xC000, 0x2000,
+        0x0000u16, 0x0001, 0x7FFF, 0x8000, 0xFFFFu16, 0x4000, 0xC000, 0x2000,
     ]
     .into_iter()
     .cycle()

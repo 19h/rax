@@ -113,9 +113,7 @@ fn voracle_path() -> Option<PathBuf> {
     if needs {
         let cc = std::env::var("RISCV64_CC").unwrap_or_else(|_| "riscv64-linux-gnu-gcc".into());
         let status = Command::new(cc)
-            .args([
-                "-static", "-O2", "-march=rv64gc", "-mabi=lp64d", "-o",
-            ])
+            .args(["-static", "-O2", "-march=rv64gc", "-mabi=lp64d", "-o"])
             .arg(&oracle)
             .arg(dir.join("voracle.c"))
             .stdout(Stdio::null())
@@ -126,11 +124,7 @@ fn voracle_path() -> Option<PathBuf> {
             return None;
         }
     }
-    if oracle.exists() {
-        Some(oracle)
-    } else {
-        None
-    }
+    if oracle.exists() { Some(oracle) } else { None }
 }
 
 fn run_oracle(oracle: &PathBuf, cases: &[(u32, VState)]) -> Option<Vec<VOutCase>> {
@@ -260,24 +254,39 @@ fn compare(label: &str, insn: u32, input: &VState, oracle: &VOutCase, ms: &mut V
             continue;
         }
         if rax.x[i] != oracle.st.x[i] {
-            d.push(format!("x{i}: rax={:#x} hw={:#x}", rax.x[i], oracle.st.x[i]));
+            d.push(format!(
+                "x{i}: rax={:#x} hw={:#x}",
+                rax.x[i], oracle.st.x[i]
+            ));
         }
     }
     if rax.vl != oracle.st.vl {
         d.push(format!("vl: rax={} hw={}", rax.vl, oracle.st.vl));
     }
     if rax.vtype != oracle.st.vtype {
-        d.push(format!("vtype: rax={:#x} hw={:#x}", rax.vtype, oracle.st.vtype));
+        d.push(format!(
+            "vtype: rax={:#x} hw={:#x}",
+            rax.vtype, oracle.st.vtype
+        ));
     }
     if rax.fcsr != oracle.st.fcsr {
-        d.push(format!("fcsr: rax={:#x} hw={:#x}", rax.fcsr, oracle.st.fcsr));
+        d.push(format!(
+            "fcsr: rax={:#x} hw={:#x}",
+            rax.fcsr, oracle.st.fcsr
+        ));
     }
     if rax.vcsr != oracle.st.vcsr {
-        d.push(format!("vcsr: rax={:#x} hw={:#x}", rax.vcsr, oracle.st.vcsr));
+        d.push(format!(
+            "vcsr: rax={:#x} hw={:#x}",
+            rax.vcsr, oracle.st.vcsr
+        ));
     }
     for i in 0..32usize {
         if rax.f[i] != oracle.st.f[i] {
-            d.push(format!("f{i}: rax={:#x} hw={:#x}", rax.f[i], oracle.st.f[i]));
+            d.push(format!(
+                "f{i}: rax={:#x} hw={:#x}",
+                rax.f[i], oracle.st.f[i]
+            ));
         }
     }
     for r in 0..32usize {
@@ -419,7 +428,11 @@ fn diff_v_arith() {
                         let mut stm = st;
                         stm.v[0] = rng.next(); // mask in v0
                         stm.v[1] = rng.next();
-                        batch.push((format!("{name}.vv.m"), op_iv(f6, 0, vs2, vs1, 0b000, vd), stm));
+                        batch.push((
+                            format!("{name}.vv.m"),
+                            op_iv(f6, 0, vs2, vs1, 0b000, vd),
+                            stm,
+                        ));
                     }
                 }
             }
@@ -445,9 +458,21 @@ fn diff_v_merge() {
                 st.v[0] = rng.next(); // mask
                 st.v[1] = rng.next();
                 // vmerge.vvm / vxm / vim (vm=0)
-                batch.push(("vmerge.vvm".into(), op_iv(0b010111, 0, vs2, vs1, 0b000, vd), st));
-                batch.push(("vmerge.vxm".into(), op_iv(0b010111, 0, vs2, rs1, 0b100, vd), st));
-                batch.push(("vmerge.vim".into(), op_iv(0b010111, 0, vs2, imm, 0b011, vd), st));
+                batch.push((
+                    "vmerge.vvm".into(),
+                    op_iv(0b010111, 0, vs2, vs1, 0b000, vd),
+                    st,
+                ));
+                batch.push((
+                    "vmerge.vxm".into(),
+                    op_iv(0b010111, 0, vs2, rs1, 0b100, vd),
+                    st,
+                ));
+                batch.push((
+                    "vmerge.vim".into(),
+                    op_iv(0b010111, 0, vs2, imm, 0b011, vd),
+                    st,
+                ));
                 // vmv.v.v / vx / vi (vm=1, vs2=0)
                 batch.push(("vmv.v.v".into(), op_iv(0b010111, 1, 0, vs1, 0b000, vd), st));
                 batch.push(("vmv.v.x".into(), op_iv(0b010111, 1, 0, rs1, 0b100, vd), st));
@@ -496,7 +521,11 @@ fn diff_v_compare() {
                         let mut stm = st;
                         stm.v[0] = rng.next();
                         stm.v[1] = rng.next();
-                        batch.push((format!("{name}.vv.m"), op_iv(f6, 0, vs2, vs1, 0b000, vd), stm));
+                        batch.push((
+                            format!("{name}.vv.m"),
+                            op_iv(f6, 0, vs2, vs1, 0b000, vd),
+                            stm,
+                        ));
                     }
                 }
             }
@@ -541,7 +570,11 @@ fn diff_v_muldiv() {
                         let mut stm = st;
                         stm.v[0] = rng.next();
                         stm.v[1] = rng.next();
-                        batch.push((format!("{name}.vv.m"), op_iv(f6, 0, vs2, vs1, 0b010, vd), stm));
+                        batch.push((
+                            format!("{name}.vv.m"),
+                            op_iv(f6, 0, vs2, vs1, 0b010, vd),
+                            stm,
+                        ));
                     }
                 }
             }
@@ -565,10 +598,18 @@ fn fp_setup(st: &mut VState, rng: &mut Rng, eb: usize) {
     // Splice some canonical values (±0, ±inf, qNaN, small ints) across lanes so
     // equality / ordering / special-case paths are exercised, not just randoms.
     let specials: &[u64] = match eb {
-        2 => &[0x0000, 0x8000, 0x7c00, 0xfc00, 0x7e00, 0x3c00, 0xbc00, 0x0001],
+        2 => &[
+            0x0000, 0x8000, 0x7c00, 0xfc00, 0x7e00, 0x3c00, 0xbc00, 0x0001,
+        ],
         4 => &[
-            0x0000_0000, 0x8000_0000, 0x7f80_0000, 0xff80_0000, 0x7fc0_0000, 0x3f80_0000,
-            0xbf80_0000, 0x0000_0001,
+            0x0000_0000,
+            0x8000_0000,
+            0x7f80_0000,
+            0xff80_0000,
+            0x7fc0_0000,
+            0x3f80_0000,
+            0xbf80_0000,
+            0x0000_0001,
         ],
         _ => &[
             0x0000_0000_0000_0000,
@@ -588,7 +629,11 @@ fn fp_setup(st: &mut VState, rng: &mut Rng, eb: usize) {
         let widx = byte / 8;
         let shift = (byte % 8) * 8;
         if widx < 64 {
-            let m = if eb == 8 { u64::MAX } else { ((1u64 << (eb * 8)) - 1) << shift };
+            let m = if eb == 8 {
+                u64::MAX
+            } else {
+                ((1u64 << (eb * 8)) - 1) << shift
+            };
             st.v[widx] = (st.v[widx] & !m) | ((val << shift) & m);
         }
     }
@@ -644,7 +689,11 @@ fn diff_v_fp() {
                         let mut stm = st;
                         stm.v[0] = rng.next();
                         stm.v[1] = rng.next();
-                        batch.push((format!("{name}.vv.m"), op_iv(f6, 0, vs2, vs1, 0b001, vd), stm));
+                        batch.push((
+                            format!("{name}.vv.m"),
+                            op_iv(f6, 0, vs2, vs1, 0b001, vd),
+                            stm,
+                        ));
                     }
                 }
             }
@@ -699,7 +748,11 @@ fn diff_v_fp() {
                         let mut stm = st;
                         stm.v[0] = rng.next();
                         stm.v[1] = rng.next();
-                        batch.push((format!("{name}.vv.m"), op_iv(f6, 0, vs2, vs1, 0b001, vd), stm));
+                        batch.push((
+                            format!("{name}.vv.m"),
+                            op_iv(f6, 0, vs2, vs1, 0b001, vd),
+                            stm,
+                        ));
                     }
                 }
             }
@@ -737,7 +790,11 @@ fn diff_v_redux() {
                         let mut stm = st;
                         stm.v[0] = rng.next();
                         stm.v[1] = rng.next();
-                        batch.push((format!("{name}.vs.m"), op_iv(f6, 0, vs2, vs1, 0b010, vd), stm));
+                        batch.push((
+                            format!("{name}.vs.m"),
+                            op_iv(f6, 0, vs2, vs1, 0b010, vd),
+                            stm,
+                        ));
                     }
                 }
             }
@@ -775,7 +832,11 @@ fn diff_v_fp_redux() {
                         let mut stm = st;
                         stm.v[0] = rng.next();
                         stm.v[1] = rng.next();
-                        batch.push((format!("{name}.vs.m"), op_iv(f6, 0, vs2, vs1, 0b001, vd), stm));
+                        batch.push((
+                            format!("{name}.vs.m"),
+                            op_iv(f6, 0, vs2, vs1, 0b001, vd),
+                            stm,
+                        ));
                     }
                 }
             }
@@ -887,7 +948,11 @@ fn diff_v_ext() {
                         let mut stm = st;
                         stm.v[0] = rng.next();
                         stm.v[1] = rng.next();
-                        batch.push((format!("{name}.m"), op_iv(0b010010, 0, vs2, sel, 0b010, vd), stm));
+                        batch.push((
+                            format!("{name}.m"),
+                            op_iv(0b010010, 0, vs2, sel, 0b010, vd),
+                            stm,
+                        ));
                     }
                 }
             }
@@ -914,23 +979,79 @@ fn diff_v_mask_ops() {
                 let mut st = rand_vstate(&mut rng, sew_log2, vl);
                 st.v[0] = rng.next(); // v0 mask + general source bits
                 // vcpop.m / vfirst.m write x[rd].
-                batch.push(("vcpop.m".into(), op_iv(0b010000, 1, vs2, 0b10000, 0b010, rd), st));
-                batch.push(("vfirst.m".into(), op_iv(0b010000, 1, vs2, 0b10001, 0b010, rd), st));
-                batch.push(("vcpop.m.m".into(), op_iv(0b010000, 0, vs2, 0b10000, 0b010, rd), st));
-                batch.push(("vfirst.m.m".into(), op_iv(0b010000, 0, vs2, 0b10001, 0b010, rd), st));
+                batch.push((
+                    "vcpop.m".into(),
+                    op_iv(0b010000, 1, vs2, 0b10000, 0b010, rd),
+                    st,
+                ));
+                batch.push((
+                    "vfirst.m".into(),
+                    op_iv(0b010000, 1, vs2, 0b10001, 0b010, rd),
+                    st,
+                ));
+                batch.push((
+                    "vcpop.m.m".into(),
+                    op_iv(0b010000, 0, vs2, 0b10000, 0b010, rd),
+                    st,
+                ));
+                batch.push((
+                    "vfirst.m.m".into(),
+                    op_iv(0b010000, 0, vs2, 0b10001, 0b010, rd),
+                    st,
+                ));
                 // vmsbf/vmsof/vmsif.m and viota.m / vid.v write a vector register.
-                batch.push(("vmsbf.m".into(), op_iv(0b010100, 1, vs2, 0b00001, 0b010, vd), st));
-                batch.push(("vmsof.m".into(), op_iv(0b010100, 1, vs2, 0b00010, 0b010, vd), st));
-                batch.push(("vmsif.m".into(), op_iv(0b010100, 1, vs2, 0b00011, 0b010, vd), st));
-                batch.push(("viota.m".into(), op_iv(0b010100, 1, vs2, 0b10000, 0b010, vd), st));
-                batch.push(("vid.v".into(), op_iv(0b010100, 1, 0, 0b10001, 0b010, vd), st));
+                batch.push((
+                    "vmsbf.m".into(),
+                    op_iv(0b010100, 1, vs2, 0b00001, 0b010, vd),
+                    st,
+                ));
+                batch.push((
+                    "vmsof.m".into(),
+                    op_iv(0b010100, 1, vs2, 0b00010, 0b010, vd),
+                    st,
+                ));
+                batch.push((
+                    "vmsif.m".into(),
+                    op_iv(0b010100, 1, vs2, 0b00011, 0b010, vd),
+                    st,
+                ));
+                batch.push((
+                    "viota.m".into(),
+                    op_iv(0b010100, 1, vs2, 0b10000, 0b010, vd),
+                    st,
+                ));
+                batch.push((
+                    "vid.v".into(),
+                    op_iv(0b010100, 1, 0, 0b10001, 0b010, vd),
+                    st,
+                ));
                 // Masked forms (vm=0, vd != v0); v0 supplies the active mask.
                 if vd != 0 {
-                    batch.push(("vmsbf.m.m".into(), op_iv(0b010100, 0, vs2, 0b00001, 0b010, vd), st));
-                    batch.push(("vmsif.m.m".into(), op_iv(0b010100, 0, vs2, 0b00011, 0b010, vd), st));
-                    batch.push(("vmsof.m.m".into(), op_iv(0b010100, 0, vs2, 0b00010, 0b010, vd), st));
-                    batch.push(("viota.m.m".into(), op_iv(0b010100, 0, vs2, 0b10000, 0b010, vd), st));
-                    batch.push(("vid.v.m".into(), op_iv(0b010100, 0, 0, 0b10001, 0b010, vd), st));
+                    batch.push((
+                        "vmsbf.m.m".into(),
+                        op_iv(0b010100, 0, vs2, 0b00001, 0b010, vd),
+                        st,
+                    ));
+                    batch.push((
+                        "vmsif.m.m".into(),
+                        op_iv(0b010100, 0, vs2, 0b00011, 0b010, vd),
+                        st,
+                    ));
+                    batch.push((
+                        "vmsof.m.m".into(),
+                        op_iv(0b010100, 0, vs2, 0b00010, 0b010, vd),
+                        st,
+                    ));
+                    batch.push((
+                        "viota.m.m".into(),
+                        op_iv(0b010100, 0, vs2, 0b10000, 0b010, vd),
+                        st,
+                    ));
+                    batch.push((
+                        "vid.v.m".into(),
+                        op_iv(0b010100, 0, 0, 0b10001, 0b010, vd),
+                        st,
+                    ));
                 }
             }
         }
@@ -959,27 +1080,71 @@ fn diff_v_slide() {
                 let mut st = rand_vstate(&mut rng, sew_log2, vl);
                 fp_setup(&mut st, &mut rng, eb.max(2));
                 st.x[rs1 as usize] = rng.next() % (vmax + 3); // small vx offset
-                batch.push(("vslideup.vx".into(), op_iv(0b001110, 1, vs2, rs1, 0b100, vd), st));
-                batch.push(("vslidedown.vx".into(), op_iv(0b001111, 1, vs2, rs1, 0b100, vd), st));
-                batch.push(("vslideup.vi".into(), op_iv(0b001110, 1, vs2, imm, 0b011, vd), st));
-                batch.push(("vslidedown.vi".into(), op_iv(0b001111, 1, vs2, imm, 0b011, vd), st));
+                batch.push((
+                    "vslideup.vx".into(),
+                    op_iv(0b001110, 1, vs2, rs1, 0b100, vd),
+                    st,
+                ));
+                batch.push((
+                    "vslidedown.vx".into(),
+                    op_iv(0b001111, 1, vs2, rs1, 0b100, vd),
+                    st,
+                ));
+                batch.push((
+                    "vslideup.vi".into(),
+                    op_iv(0b001110, 1, vs2, imm, 0b011, vd),
+                    st,
+                ));
+                batch.push((
+                    "vslidedown.vi".into(),
+                    op_iv(0b001111, 1, vs2, imm, 0b011, vd),
+                    st,
+                ));
                 // slide-by-1 with scalar insertion (x[rs1] arbitrary here)
                 let mut st2 = st;
                 st2.x[rs1 as usize] = rng.next();
-                batch.push(("vslide1up.vx".into(), op_iv(0b001110, 1, vs2, rs1, 0b110, vd), st2));
-                batch.push(("vslide1down.vx".into(), op_iv(0b001111, 1, vs2, rs1, 0b110, vd), st2));
+                batch.push((
+                    "vslide1up.vx".into(),
+                    op_iv(0b001110, 1, vs2, rs1, 0b110, vd),
+                    st2,
+                ));
+                batch.push((
+                    "vslide1down.vx".into(),
+                    op_iv(0b001111, 1, vs2, rs1, 0b110, vd),
+                    st2,
+                ));
                 if sew_log2 >= 1 {
                     // FP slide-by-1 valid only for SEW in {16,32,64}.
-                    batch.push(("vfslide1up.vf".into(), op_iv(0b001110, 1, vs2, fr, 0b101, vd), st2));
-                    batch.push(("vfslide1down.vf".into(), op_iv(0b001111, 1, vs2, fr, 0b101, vd), st2));
+                    batch.push((
+                        "vfslide1up.vf".into(),
+                        op_iv(0b001110, 1, vs2, fr, 0b101, vd),
+                        st2,
+                    ));
+                    batch.push((
+                        "vfslide1down.vf".into(),
+                        op_iv(0b001111, 1, vs2, fr, 0b101, vd),
+                        st2,
+                    ));
                 }
                 if vd != 0 && k % 2 == 0 {
                     let mut stm = st;
                     stm.v[0] = rng.next();
                     stm.v[1] = rng.next();
-                    batch.push(("vslideup.vx.m".into(), op_iv(0b001110, 0, vs2, rs1, 0b100, vd), stm));
-                    batch.push(("vslidedown.vi.m".into(), op_iv(0b001111, 0, vs2, imm, 0b011, vd), stm));
-                    batch.push(("vslide1up.vx.m".into(), op_iv(0b001110, 0, vs2, rs1, 0b110, vd), stm));
+                    batch.push((
+                        "vslideup.vx.m".into(),
+                        op_iv(0b001110, 0, vs2, rs1, 0b100, vd),
+                        stm,
+                    ));
+                    batch.push((
+                        "vslidedown.vi.m".into(),
+                        op_iv(0b001111, 0, vs2, imm, 0b011, vd),
+                        stm,
+                    ));
+                    batch.push((
+                        "vslide1up.vx.m".into(),
+                        op_iv(0b001110, 0, vs2, rs1, 0b110, vd),
+                        stm,
+                    ));
                 }
             }
         }
@@ -1023,9 +1188,21 @@ fn diff_v_gather() {
                 let mut st = rand_vstate(&mut rng, sew_log2, vl);
                 fill_indices(&mut st, vs1, eb, vmax, &mut rng);
                 st.x[rs1 as usize] = rng.next() % (vmax + 2);
-                batch.push(("vrgather.vv".into(), op_iv(0b001100, 1, vs2, vs1, 0b000, vd), st));
-                batch.push(("vrgather.vx".into(), op_iv(0b001100, 1, vs2, rs1, 0b100, vd), st));
-                batch.push(("vrgather.vi".into(), op_iv(0b001100, 1, vs2, imm, 0b011, vd), st));
+                batch.push((
+                    "vrgather.vv".into(),
+                    op_iv(0b001100, 1, vs2, vs1, 0b000, vd),
+                    st,
+                ));
+                batch.push((
+                    "vrgather.vx".into(),
+                    op_iv(0b001100, 1, vs2, rs1, 0b100, vd),
+                    st,
+                ));
+                batch.push((
+                    "vrgather.vi".into(),
+                    op_iv(0b001100, 1, vs2, imm, 0b011, vd),
+                    st,
+                ));
                 // vrgatherei16: 16-bit indices. At SEW=8 the index EMUL is 2
                 // (two-register group); restrict to SEW>=16 so vs1 is one register.
                 if sew_log2 >= 1 {
@@ -1043,7 +1220,11 @@ fn diff_v_gather() {
                     stm.v[1] = rng.next();
                     // keep index lanes small after perturbing v0/v1
                     fill_indices(&mut stm, vs1, eb, vmax, &mut rng);
-                    batch.push(("vrgather.vv.m".into(), op_iv(0b001100, 0, vs2, vs1, 0b000, vd), stm));
+                    batch.push((
+                        "vrgather.vv.m".into(),
+                        op_iv(0b001100, 0, vs2, vs1, 0b000, vd),
+                        stm,
+                    ));
                 }
             }
         }
@@ -1071,7 +1252,11 @@ fn diff_v_compress() {
                 }
                 let st = rand_vstate(&mut rng, sew_log2, vl);
                 // vcompress.vm is always unmasked (vm=1).
-                batch.push(("vcompress.vm".into(), op_iv(0b010111, 1, vs2, vs1, 0b010, vd), st));
+                batch.push((
+                    "vcompress.vm".into(),
+                    op_iv(0b010111, 1, vs2, vs1, 0b010, vd),
+                    st,
+                ));
             }
         }
     }
@@ -1095,20 +1280,72 @@ fn diff_v_carry() {
                 st.v[0] = rng.next(); // v0 carry-in bits
                 st.v[1] = rng.next();
                 // vadc (write data) — vvm/vxm/vim, vm=0.
-                batch.push(("vadc.vvm".into(), op_iv(0b010000, 0, vs2, vs1, 0b000, vd), st));
-                batch.push(("vadc.vxm".into(), op_iv(0b010000, 0, vs2, rs1, 0b100, vd), st));
-                batch.push(("vadc.vim".into(), op_iv(0b010000, 0, vs2, imm, 0b011, vd), st));
-                batch.push(("vsbc.vvm".into(), op_iv(0b010010, 0, vs2, vs1, 0b000, vd), st));
-                batch.push(("vsbc.vxm".into(), op_iv(0b010010, 0, vs2, rs1, 0b100, vd), st));
+                batch.push((
+                    "vadc.vvm".into(),
+                    op_iv(0b010000, 0, vs2, vs1, 0b000, vd),
+                    st,
+                ));
+                batch.push((
+                    "vadc.vxm".into(),
+                    op_iv(0b010000, 0, vs2, rs1, 0b100, vd),
+                    st,
+                ));
+                batch.push((
+                    "vadc.vim".into(),
+                    op_iv(0b010000, 0, vs2, imm, 0b011, vd),
+                    st,
+                ));
+                batch.push((
+                    "vsbc.vvm".into(),
+                    op_iv(0b010010, 0, vs2, vs1, 0b000, vd),
+                    st,
+                ));
+                batch.push((
+                    "vsbc.vxm".into(),
+                    op_iv(0b010010, 0, vs2, rs1, 0b100, vd),
+                    st,
+                ));
                 // vmadc/vmsbc (write mask) — with carry (vm=0) and without (vm=1).
-                batch.push(("vmadc.vvm".into(), op_iv(0b010001, 0, vs2, vs1, 0b000, vd), st));
-                batch.push(("vmadc.vv".into(), op_iv(0b010001, 1, vs2, vs1, 0b000, vd), st));
-                batch.push(("vmadc.vim".into(), op_iv(0b010001, 0, vs2, imm, 0b011, vd), st));
-                batch.push(("vmadc.vi".into(), op_iv(0b010001, 1, vs2, imm, 0b011, vd), st));
-                batch.push(("vmsbc.vvm".into(), op_iv(0b010011, 0, vs2, vs1, 0b000, vd), st));
-                batch.push(("vmsbc.vv".into(), op_iv(0b010011, 1, vs2, vs1, 0b000, vd), st));
-                batch.push(("vmadc.vxm".into(), op_iv(0b010001, 0, vs2, rs1, 0b100, vd), st));
-                batch.push(("vmsbc.vx".into(), op_iv(0b010011, 1, vs2, rs1, 0b100, vd), st));
+                batch.push((
+                    "vmadc.vvm".into(),
+                    op_iv(0b010001, 0, vs2, vs1, 0b000, vd),
+                    st,
+                ));
+                batch.push((
+                    "vmadc.vv".into(),
+                    op_iv(0b010001, 1, vs2, vs1, 0b000, vd),
+                    st,
+                ));
+                batch.push((
+                    "vmadc.vim".into(),
+                    op_iv(0b010001, 0, vs2, imm, 0b011, vd),
+                    st,
+                ));
+                batch.push((
+                    "vmadc.vi".into(),
+                    op_iv(0b010001, 1, vs2, imm, 0b011, vd),
+                    st,
+                ));
+                batch.push((
+                    "vmsbc.vvm".into(),
+                    op_iv(0b010011, 0, vs2, vs1, 0b000, vd),
+                    st,
+                ));
+                batch.push((
+                    "vmsbc.vv".into(),
+                    op_iv(0b010011, 1, vs2, vs1, 0b000, vd),
+                    st,
+                ));
+                batch.push((
+                    "vmadc.vxm".into(),
+                    op_iv(0b010001, 0, vs2, rs1, 0b100, vd),
+                    st,
+                ));
+                batch.push((
+                    "vmsbc.vx".into(),
+                    op_iv(0b010011, 1, vs2, rs1, 0b100, vd),
+                    st,
+                ));
             }
         }
     }
@@ -1148,7 +1385,11 @@ fn diff_v_satadd() {
                         let mut stm = st;
                         stm.v[0] = rng.next();
                         stm.v[1] = rng.next();
-                        batch.push((format!("{name}.vv.m"), op_iv(f6, 0, vs2, vs1, 0b000, vd), stm));
+                        batch.push((
+                            format!("{name}.vv.m"),
+                            op_iv(f6, 0, vs2, vs1, 0b000, vd),
+                            stm,
+                        ));
                     }
                 }
             }
@@ -1216,21 +1457,61 @@ fn diff_v_scale() {
                     let mut st = rand_vstate(&mut rng, sew_log2, vl);
                     st.vcsr = (vxrm << 1) | (rng.next() & 1);
                     // vssrl / vssra: vv/vx/vi
-                    batch.push(("vssrl.vv".into(), op_iv(0b101010, 1, vs2, vs1, 0b000, vd), st));
-                    batch.push(("vssrl.vx".into(), op_iv(0b101010, 1, vs2, rs1, 0b100, vd), st));
-                    batch.push(("vssrl.vi".into(), op_iv(0b101010, 1, vs2, imm, 0b011, vd), st));
-                    batch.push(("vssra.vv".into(), op_iv(0b101011, 1, vs2, vs1, 0b000, vd), st));
-                    batch.push(("vssra.vx".into(), op_iv(0b101011, 1, vs2, rs1, 0b100, vd), st));
-                    batch.push(("vssra.vi".into(), op_iv(0b101011, 1, vs2, imm, 0b011, vd), st));
+                    batch.push((
+                        "vssrl.vv".into(),
+                        op_iv(0b101010, 1, vs2, vs1, 0b000, vd),
+                        st,
+                    ));
+                    batch.push((
+                        "vssrl.vx".into(),
+                        op_iv(0b101010, 1, vs2, rs1, 0b100, vd),
+                        st,
+                    ));
+                    batch.push((
+                        "vssrl.vi".into(),
+                        op_iv(0b101010, 1, vs2, imm, 0b011, vd),
+                        st,
+                    ));
+                    batch.push((
+                        "vssra.vv".into(),
+                        op_iv(0b101011, 1, vs2, vs1, 0b000, vd),
+                        st,
+                    ));
+                    batch.push((
+                        "vssra.vx".into(),
+                        op_iv(0b101011, 1, vs2, rs1, 0b100, vd),
+                        st,
+                    ));
+                    batch.push((
+                        "vssra.vi".into(),
+                        op_iv(0b101011, 1, vs2, imm, 0b011, vd),
+                        st,
+                    ));
                     // vsmul: vv/vx (signed fractional multiply, saturating)
-                    batch.push(("vsmul.vv".into(), op_iv(0b100111, 1, vs2, vs1, 0b000, vd), st));
-                    batch.push(("vsmul.vx".into(), op_iv(0b100111, 1, vs2, rs1, 0b100, vd), st));
+                    batch.push((
+                        "vsmul.vv".into(),
+                        op_iv(0b100111, 1, vs2, vs1, 0b000, vd),
+                        st,
+                    ));
+                    batch.push((
+                        "vsmul.vx".into(),
+                        op_iv(0b100111, 1, vs2, rs1, 0b100, vd),
+                        st,
+                    ));
                     if vd != 0 && k % 2 == 0 {
                         let mut stm = st;
                         stm.v[0] = rng.next();
                         stm.v[1] = rng.next();
-                        batch.push(("vssra.vv.m".into(), op_iv(0b101011, 0, vs2, vs1, 0b000, vd), stm));
-                        batch.push(("vsmul.vv.m".into(), op_iv(0b100111, 0, vs2, vs1, 0b000, vd), stm));
+                        batch.push((
+                            "vssra.vv.m".into(),
+                            op_iv(0b101011, 0, vs2, vs1, 0b000, vd),
+                            stm,
+                        ));
+                        batch.push((
+                            "vsmul.vv.m".into(),
+                            op_iv(0b100111, 0, vs2, vs1, 0b000, vd),
+                            stm,
+                        ));
                     }
                 }
             }
@@ -1272,7 +1553,11 @@ fn diff_v_widen_add() {
                         let mut stm = st;
                         stm.v[0] = rng.next();
                         stm.v[1] = rng.next();
-                        batch.push((format!("{name}.vv.m"), op_iv(f6, 0, vs2, vs1, 0b010, vd), stm));
+                        batch.push((
+                            format!("{name}.vv.m"),
+                            op_iv(f6, 0, vs2, vs1, 0b010, vd),
+                            stm,
+                        ));
                     }
                 }
             }
@@ -1313,7 +1598,11 @@ fn diff_v_widen_mul() {
                         let mut stm = st;
                         stm.v[0] = rng.next();
                         stm.v[1] = rng.next();
-                        batch.push((format!("{name}.vv.m"), op_iv(f6, 0, vs2, vs1, 0b010, vd), stm));
+                        batch.push((
+                            format!("{name}.vv.m"),
+                            op_iv(f6, 0, vs2, vs1, 0b010, vd),
+                            stm,
+                        ));
                     }
                 }
             }
@@ -1354,7 +1643,11 @@ fn diff_v_narrow() {
                             let mut stm = st;
                             stm.v[0] = rng.next();
                             stm.v[1] = rng.next();
-                            batch.push((format!("{name}.wv.m"), op_iv(f6, 0, vs2, vs1, 0b000, vd), stm));
+                            batch.push((
+                                format!("{name}.wv.m"),
+                                op_iv(f6, 0, vs2, vs1, 0b000, vd),
+                                stm,
+                            ));
                         }
                     }
                 }
@@ -1395,7 +1688,11 @@ fn diff_v_fcvt() {
                             let mut stm = st;
                             stm.v[0] = rng.next();
                             stm.v[1] = rng.next();
-                            batch.push((format!("{name}.m"), op_iv(0b010010, 0, vs2, sel, 0b001, vd), stm));
+                            batch.push((
+                                format!("{name}.m"),
+                                op_iv(0b010010, 0, vs2, sel, 0b001, vd),
+                                stm,
+                            ));
                         }
                     }
                 }
@@ -1439,7 +1736,11 @@ fn diff_v_fwcvt() {
                             let mut stm = st;
                             stm.v[0] = rng.next();
                             stm.v[1] = rng.next();
-                            batch.push((format!("{name}.m"), op_iv(0b010010, 0, vs2, sel, 0b001, vd), stm));
+                            batch.push((
+                                format!("{name}.m"),
+                                op_iv(0b010010, 0, vs2, sel, 0b001, vd),
+                                stm,
+                            ));
                         }
                     }
                 }
@@ -1483,7 +1784,11 @@ fn diff_v_fncvt() {
                             let mut stm = st;
                             stm.v[0] = rng.next();
                             stm.v[1] = rng.next();
-                            batch.push((format!("{name}.m"), op_iv(0b010010, 0, vs2, sel, 0b001, vd), stm));
+                            batch.push((
+                                format!("{name}.m"),
+                                op_iv(0b010010, 0, vs2, sel, 0b001, vd),
+                                stm,
+                            ));
                         }
                     }
                 }
@@ -1528,7 +1833,11 @@ fn diff_v_fwarith() {
                             let mut stm = st;
                             stm.v[0] = rng.next();
                             stm.v[1] = rng.next();
-                            batch.push((format!("{name}.vv.m"), op_iv(f6, 0, vs2, vs1, 0b001, vd), stm));
+                            batch.push((
+                                format!("{name}.vv.m"),
+                                op_iv(f6, 0, vs2, vs1, 0b001, vd),
+                                stm,
+                            ));
                         }
                     }
                 }
@@ -1570,7 +1879,11 @@ fn diff_v_fwmac() {
                             let mut stm = st;
                             stm.v[0] = rng.next();
                             stm.v[1] = rng.next();
-                            batch.push((format!("{name}.vv.m"), op_iv(f6, 0, vs2, vs1, 0b001, vd), stm));
+                            batch.push((
+                                format!("{name}.vv.m"),
+                                op_iv(f6, 0, vs2, vs1, 0b001, vd),
+                                stm,
+                            ));
                         }
                     }
                 }
@@ -1607,11 +1920,27 @@ fn diff_v_wredux() {
                     st.v[r as usize * 2 + 1] = rng.next();
                 }
                 // Integer widening sum reductions (.vs).
-                batch.push(("vwredsumu.vs".into(), op_iv(0b110000, 1, vs2, vs1, 0b000, vd), st));
-                batch.push(("vwredsum.vs".into(), op_iv(0b110001, 1, vs2, vs1, 0b000, vd), st));
+                batch.push((
+                    "vwredsumu.vs".into(),
+                    op_iv(0b110000, 1, vs2, vs1, 0b000, vd),
+                    st,
+                ));
+                batch.push((
+                    "vwredsum.vs".into(),
+                    op_iv(0b110001, 1, vs2, vs1, 0b000, vd),
+                    st,
+                ));
                 // FP widening sum reductions (.vs).
-                batch.push(("vfwredusum.vs".into(), op_iv(0b110001, 1, vs2, vs1, 0b001, vd), st));
-                batch.push(("vfwredosum.vs".into(), op_iv(0b110011, 1, vs2, vs1, 0b001, vd), st));
+                batch.push((
+                    "vfwredusum.vs".into(),
+                    op_iv(0b110001, 1, vs2, vs1, 0b001, vd),
+                    st,
+                ));
+                batch.push((
+                    "vfwredosum.vs".into(),
+                    op_iv(0b110011, 1, vs2, vs1, 0b001, vd),
+                    st,
+                ));
             }
         }
     }
@@ -1647,18 +1976,43 @@ fn diff_v_loadstore_adv() {
                 st.set_vreg_bytes(idxreg as usize, &ib);
 
                 // strided
-                let vlse = (0b10 << 26) | (1 << 25) | (11 << 20) | (10 << 15) | (w3 << 12) | (vd << 7) | 0x07;
-                let vsse = (0b10 << 26) | (1 << 25) | (11 << 20) | (10 << 15) | (w3 << 12) | (vd << 7) | 0x27;
+                let vlse = (0b10 << 26)
+                    | (1 << 25)
+                    | (11 << 20)
+                    | (10 << 15)
+                    | (w3 << 12)
+                    | (vd << 7)
+                    | 0x07;
+                let vsse = (0b10 << 26)
+                    | (1 << 25)
+                    | (11 << 20)
+                    | (10 << 15)
+                    | (w3 << 12)
+                    | (vd << 7)
+                    | 0x27;
                 batch.push(("vlse".into(), vlse, st));
                 batch.push(("vsse".into(), vsse, st));
                 // indexed (unordered mop=01); index EEW = data width here
-                let vlxei = (0b01 << 26) | (1 << 25) | (idxreg << 20) | (10 << 15) | (w3 << 12) | (vd << 7) | 0x07;
-                let vsxei = (0b01 << 26) | (1 << 25) | (idxreg << 20) | (10 << 15) | (w3 << 12) | (vd << 7) | 0x27;
+                let vlxei = (0b01 << 26)
+                    | (1 << 25)
+                    | (idxreg << 20)
+                    | (10 << 15)
+                    | (w3 << 12)
+                    | (vd << 7)
+                    | 0x07;
+                let vsxei = (0b01 << 26)
+                    | (1 << 25)
+                    | (idxreg << 20)
+                    | (10 << 15)
+                    | (w3 << 12)
+                    | (vd << 7)
+                    | 0x27;
                 batch.push(("vlxei".into(), vlxei, st));
                 batch.push(("vsxei".into(), vsxei, st));
                 // fault-only-first load (lumop=10000); scratch never faults, so it
                 // must match plain vle and leave vl unchanged.
-                let vleff = (1 << 25) | (0b10000 << 20) | (10 << 15) | (w3 << 12) | (vd << 7) | 0x07;
+                let vleff =
+                    (1 << 25) | (0b10000 << 20) | (10 << 15) | (w3 << 12) | (vd << 7) | 0x07;
                 batch.push(("vleff".into(), vleff, st));
                 // mask load/store (lumop=01011, width 0)
                 let vlm = (1 << 25) | (0b01011 << 20) | (10 << 15) | (vd << 7) | 0x07;
@@ -1671,7 +2025,11 @@ fn diff_v_loadstore_adv() {
     // whole-register load/store (nf+1 regs), independent of vtype.
     for nf in [0u32, 1] {
         for _ in 0..6 {
-            let vd = if nf == 0 { VPOOL[(rng.next() % 6) as usize] } else { 2 };
+            let vd = if nf == 0 {
+                VPOOL[(rng.next() % 6) as usize]
+            } else {
+                2
+            };
             let mut st = rand_vstate(&mut rng, 0, 16);
             st.x[10] = SCRATCH_BASE;
             for s in st.scratch.iter_mut() {
@@ -1702,12 +2060,20 @@ fn diff_v_class_mvr() {
                 fp_setup(&mut st, &mut rng, eb);
                 st.v[vs2 as usize * 2] = rng.next();
                 st.v[vs2 as usize * 2 + 1] = rng.next();
-                batch.push(("vfclass.v".into(), op_iv(0b010011, 1, vs2, 0b10000, 0b001, vd), st));
+                batch.push((
+                    "vfclass.v".into(),
+                    op_iv(0b010011, 1, vs2, 0b10000, 0b001, vd),
+                    st,
+                ));
                 if vd != 0 && k % 2 == 0 {
                     let mut stm = st;
                     stm.v[0] = rng.next();
                     stm.v[1] = rng.next();
-                    batch.push(("vfclass.v.m".into(), op_iv(0b010011, 0, vs2, 0b10000, 0b001, vd), stm));
+                    batch.push((
+                        "vfclass.v.m".into(),
+                        op_iv(0b010011, 0, vs2, 0b10000, 0b001, vd),
+                        stm,
+                    ));
                 }
             }
         }
@@ -1717,7 +2083,11 @@ fn diff_v_class_mvr() {
         for _ in 0..4 {
             let st = rand_vstate(&mut rng, 0, 16);
             // vd=8, vs2=16 are aligned to 8, valid for all nreg.
-            batch.push((format!("vmv{}r.v", simm + 1), op_iv(0b100111, 1, 16, simm, 0b011, 8), st));
+            batch.push((
+                format!("vmv{}r.v", simm + 1),
+                op_iv(0b100111, 1, 16, simm, 0b011, 8),
+                st,
+            ));
         }
     }
     run_batch(&batch);
@@ -1747,7 +2117,11 @@ fn diff_v_estimate() {
                             let mut stm = st;
                             stm.v[0] = rng.next();
                             stm.v[1] = rng.next();
-                            batch.push((format!("{name}.m"), op_iv(0b010011, 0, vs2, sel, 0b001, vd), stm));
+                            batch.push((
+                                format!("{name}.m"),
+                                op_iv(0b010011, 0, vs2, sel, 0b001, vd),
+                                stm,
+                            ));
                         }
                     }
                 }
@@ -1789,8 +2163,14 @@ fn diff_v_segment() {
                     st.set_vreg_bytes(idxreg as usize, &ib);
 
                     let seg = |mop: u32, rs2: u32, op: u32| {
-                        (nf_field << 29) | (mop << 26) | (1 << 25) | (rs2 << 20)
-                            | (10 << 15) | (w3 << 12) | (vd << 7) | op
+                        (nf_field << 29)
+                            | (mop << 26)
+                            | (1 << 25)
+                            | (rs2 << 20)
+                            | (10 << 15)
+                            | (w3 << 12)
+                            | (vd << 7)
+                            | op
                     };
                     batch.push(("vlseg".into(), seg(0b00, 0, 0x07), st)); // unit-stride
                     batch.push(("vsseg".into(), seg(0b00, 0, 0x27), st));

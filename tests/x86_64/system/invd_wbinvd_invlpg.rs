@@ -44,8 +44,8 @@ fn test_invd_preserves_registers() {
         0x48, 0xC7, 0xC3, 0x22, 0x22, 0x22, 0x22, // MOV RBX, 0x22222222
         0x48, 0xC7, 0xC1, 0x33, 0x33, 0x33, 0x33, // MOV RCX, 0x33333333
         0x48, 0xC7, 0xC2, 0x44, 0x44, 0x44, 0x44, // MOV RDX, 0x44444444
-        0x0F, 0x08,                               // INVD
-        0xF4,                                      // HLT
+        0x0F, 0x08, // INVD
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -62,9 +62,9 @@ fn test_invd_preserves_flags() {
     // INVD should not modify flags
     let code = [
         0x48, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
-        0x48, 0x83, 0xC0, 0x01,                   // ADD RAX, 1 (sets ZF)
-        0x0F, 0x08,                               // INVD
-        0xF4,                                      // HLT
+        0x48, 0x83, 0xC0, 0x01, // ADD RAX, 1 (sets ZF)
+        0x0F, 0x08, // INVD
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -80,7 +80,7 @@ fn test_invd_multiple() {
         0x0F, 0x08, // INVD #1
         0x0F, 0x08, // INVD #2
         0x0F, 0x08, // INVD #3
-        0xF4,       // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -93,9 +93,9 @@ fn test_invd_with_memory_operations() {
     // INVD after memory writes
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0xC7, 0x00, 0x42, 0x42, 0x42, 0x42,       // MOV DWORD PTR [RAX], 0x42424242
-        0x0F, 0x08,                               // INVD
-        0xF4,                                      // HLT
+        0xC7, 0x00, 0x42, 0x42, 0x42, 0x42, // MOV DWORD PTR [RAX], 0x42424242
+        0x0F, 0x08, // INVD
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -127,8 +127,8 @@ fn test_wbinvd_preserves_registers() {
         0x48, 0xC7, 0xC3, 0xBB, 0xBB, 0xBB, 0xBB, // MOV RBX, 0xBBBBBBBB
         0x48, 0xC7, 0xC1, 0xCC, 0xCC, 0xCC, 0xCC, // MOV RCX, 0xCCCCCCCC
         0x48, 0xC7, 0xC2, 0xDD, 0xDD, 0xDD, 0xDD, // MOV RDX, 0xDDDDDDDD
-        0x0F, 0x09,                               // WBINVD
-        0xF4,                                      // HLT
+        0x0F, 0x09, // WBINVD
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -146,9 +146,9 @@ fn test_wbinvd_preserves_flags() {
     // WBINVD should not modify flags
     let code = [
         0x48, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
-        0x48, 0x83, 0xC0, 0x01,                   // ADD RAX, 1 (sets ZF)
-        0x0F, 0x09,                               // WBINVD
-        0xF4,                                      // HLT
+        0x48, 0x83, 0xC0, 0x01, // ADD RAX, 1 (sets ZF)
+        0x0F, 0x09, // WBINVD
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -162,10 +162,10 @@ fn test_wbinvd_is_serializing() {
     // WBINVD is a serializing instruction
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0xC7, 0x00, 0x11, 0x22, 0x33, 0x44,       // MOV DWORD PTR [RAX], 0x44332211
-        0x0F, 0x09,                               // WBINVD (serializes)
-        0x8B, 0x08,                               // MOV ECX, [RAX]
-        0xF4,                                      // HLT
+        0xC7, 0x00, 0x11, 0x22, 0x33, 0x44, // MOV DWORD PTR [RAX], 0x44332211
+        0x0F, 0x09, // WBINVD (serializes)
+        0x8B, 0x08, // MOV ECX, [RAX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -181,7 +181,7 @@ fn test_wbinvd_multiple() {
         0x0F, 0x09, // WBINVD #1
         0x0F, 0x09, // WBINVD #2
         0x0F, 0x09, // WBINVD #3
-        0xF4,       // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -193,11 +193,11 @@ fn test_wbinvd_with_writes() {
     // WBINVD after multiple memory writes
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0xC7, 0x00, 0x01, 0x00, 0x00, 0x00,       // MOV DWORD PTR [RAX], 1
+        0xC7, 0x00, 0x01, 0x00, 0x00, 0x00, // MOV DWORD PTR [RAX], 1
         0xC7, 0x40, 0x04, 0x02, 0x00, 0x00, 0x00, // MOV DWORD PTR [RAX+4], 2
         0xC7, 0x40, 0x08, 0x03, 0x00, 0x00, 0x00, // MOV DWORD PTR [RAX+8], 3
-        0x0F, 0x09,                               // WBINVD
-        0xF4,                                      // HLT
+        0x0F, 0x09, // WBINVD
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -214,7 +214,7 @@ fn test_invd_then_wbinvd() {
     let code = [
         0x0F, 0x08, // INVD
         0x0F, 0x09, // WBINVD
-        0xF4,       // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -227,7 +227,7 @@ fn test_wbinvd_then_invd() {
     let code = [
         0x0F, 0x09, // WBINVD
         0x0F, 0x08, // INVD
-        0xF4,       // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -244,8 +244,8 @@ fn test_invlpg_basic() {
     // 0F 01 /7 = INVLPG m
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x40, 0x00, 0x00, // MOV RAX, 0x4000
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX]
-        0xF4,                                      // HLT
+        0x0F, 0x01, 0x38, // INVLPG [RAX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -259,8 +259,8 @@ fn test_invlpg_preserves_registers() {
         0x48, 0xC7, 0xC0, 0x00, 0x40, 0x00, 0x00, // MOV RAX, 0x4000
         0x48, 0xC7, 0xC3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242
         0x48, 0xC7, 0xC1, 0x99, 0x99, 0x99, 0x99, // MOV RCX, 0x99999999
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX]
-        0xF4,                                      // HLT
+        0x0F, 0x01, 0x38, // INVLPG [RAX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -277,10 +277,10 @@ fn test_invlpg_preserves_flags() {
     // INVLPG should not modify flags
     let code = [
         0x48, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
-        0x48, 0x83, 0xC0, 0x01,                   // ADD RAX, 1 (sets ZF)
+        0x48, 0x83, 0xC0, 0x01, // ADD RAX, 1 (sets ZF)
         0x48, 0xC7, 0xC3, 0x00, 0x50, 0x00, 0x00, // MOV RBX, 0x5000
-        0x0F, 0x01, 0x3B,                         // INVLPG [RBX]
-        0xF4,                                      // HLT
+        0x0F, 0x01, 0x3B, // INVLPG [RBX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -294,12 +294,12 @@ fn test_invlpg_different_addresses() {
     // Invalidate TLB entries for different pages
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x40, 0x00, 0x00, // MOV RAX, 0x4000
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX]
+        0x0F, 0x01, 0x38, // INVLPG [RAX]
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX]
+        0x0F, 0x01, 0x38, // INVLPG [RAX]
         0x48, 0xC7, 0xC0, 0x00, 0x60, 0x00, 0x00, // MOV RAX, 0x6000
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX]
-        0xF4,                                      // HLT
+        0x0F, 0x01, 0x38, // INVLPG [RAX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -311,10 +311,10 @@ fn test_invlpg_page_boundaries() {
     // Test INVLPG at page boundaries (4KB pages)
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x10, 0x00, 0x00, // MOV RAX, 0x1000
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX]
+        0x0F, 0x01, 0x38, // INVLPG [RAX]
         0x48, 0xC7, 0xC0, 0x00, 0x20, 0x00, 0x00, // MOV RAX, 0x2000
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX]
-        0xF4,                                      // HLT
+        0x0F, 0x01, 0x38, // INVLPG [RAX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -326,8 +326,8 @@ fn test_invlpg_with_offset() {
     // INVLPG with base+offset addressing
     let code = [
         0x48, 0xC7, 0xC3, 0x00, 0x40, 0x00, 0x00, // MOV RBX, 0x4000
-        0x0F, 0x01, 0x7B, 0x10,                   // INVLPG [RBX+0x10]
-        0xF4,                                      // HLT
+        0x0F, 0x01, 0x7B, 0x10, // INVLPG [RBX+0x10]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -343,11 +343,11 @@ fn test_invlpg_loop() {
         0x48, 0xC7, 0xC0, 0x00, 0x10, 0x00, 0x00, // MOV RAX, 0x1000
         0x48, 0xC7, 0xC1, 0x05, 0x00, 0x00, 0x00, // MOV RCX, 5
         // loop:
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX]
-        0x48, 0x05, 0x00, 0x10, 0x00, 0x00,       // ADD RAX, 0x1000 (next page)
-        0x48, 0xFF, 0xC9,                         // DEC RCX
-        0x75, 0xF3,                               // JNZ loop
-        0xF4,                                      // HLT
+        0x0F, 0x01, 0x38, // INVLPG [RAX]
+        0x48, 0x05, 0x00, 0x10, 0x00, 0x00, // ADD RAX, 0x1000 (next page)
+        0x48, 0xFF, 0xC9, // DEC RCX
+        0x75, 0xF3, // JNZ loop
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -362,10 +362,10 @@ fn test_invlpg_after_memory_access() {
     // Access memory, then invalidate TLB
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0xC7, 0x00, 0x42, 0x42, 0x42, 0x42,       // MOV DWORD PTR [RAX], 0x42424242
-        0x8B, 0x08,                               // MOV ECX, [RAX]
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX]
-        0xF4,                                      // HLT
+        0xC7, 0x00, 0x42, 0x42, 0x42, 0x42, // MOV DWORD PTR [RAX], 0x42424242
+        0x8B, 0x08, // MOV ECX, [RAX]
+        0x0F, 0x01, 0x38, // INVLPG [RAX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -383,9 +383,9 @@ fn test_invlpg_then_wbinvd() {
     // INVLPG followed by WBINVD
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x40, 0x00, 0x00, // MOV RAX, 0x4000
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX]
-        0x0F, 0x09,                               // WBINVD
-        0xF4,                                      // HLT
+        0x0F, 0x01, 0x38, // INVLPG [RAX]
+        0x0F, 0x09, // WBINVD
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -396,10 +396,10 @@ fn test_invlpg_then_wbinvd() {
 fn test_wbinvd_then_invlpg() {
     // WBINVD followed by INVLPG
     let code = [
-        0x0F, 0x09,                               // WBINVD
+        0x0F, 0x09, // WBINVD
         0x48, 0xC7, 0xC0, 0x00, 0x40, 0x00, 0x00, // MOV RAX, 0x4000
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX]
-        0xF4,                                      // HLT
+        0x0F, 0x01, 0x38, // INVLPG [RAX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -411,12 +411,12 @@ fn test_cache_tlb_sequence() {
     // Comprehensive cache and TLB management sequence
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0xC7, 0x00, 0x11, 0x22, 0x33, 0x44,       // MOV DWORD PTR [RAX], 0x44332211
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX]
-        0x0F, 0x09,                               // WBINVD
-        0x8B, 0x08,                               // MOV ECX, [RAX]
-        0x0F, 0x08,                               // INVD
-        0xF4,                                      // HLT
+        0xC7, 0x00, 0x11, 0x22, 0x33, 0x44, // MOV DWORD PTR [RAX], 0x44332211
+        0x0F, 0x01, 0x38, // INVLPG [RAX]
+        0x0F, 0x09, // WBINVD
+        0x8B, 0x08, // MOV ECX, [RAX]
+        0x0F, 0x08, // INVD
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -430,10 +430,10 @@ fn test_invlpg_multiple_same_page() {
     // Multiple INVLPG to same page
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x40, 0x00, 0x00, // MOV RAX, 0x4000
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX]
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX] again
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX] again
-        0xF4,                                      // HLT
+        0x0F, 0x01, 0x38, // INVLPG [RAX]
+        0x0F, 0x01, 0x38, // INVLPG [RAX] again
+        0x0F, 0x01, 0x38, // INVLPG [RAX] again
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -445,10 +445,10 @@ fn test_all_cache_instructions() {
     // Use all three cache/TLB instructions
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x40, 0x00, 0x00, // MOV RAX, 0x4000
-        0x0F, 0x08,                               // INVD
-        0x0F, 0x01, 0x38,                         // INVLPG [RAX]
-        0x0F, 0x09,                               // WBINVD
-        0xF4,                                      // HLT
+        0x0F, 0x08, // INVD
+        0x0F, 0x01, 0x38, // INVLPG [RAX]
+        0x0F, 0x09, // WBINVD
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 

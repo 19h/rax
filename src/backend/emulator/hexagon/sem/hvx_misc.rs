@@ -13,7 +13,7 @@
 //! qemu-hexagon vector oracle (tests/hexagon_hvx_diff.rs, `diff_hvx_misc`).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fld, SemCtx};
+use super::{SemCtx, fld};
 
 /// 128-byte vector viewed as raw bytes (little-endian within each u32 word).
 type Bytes = [u8; 128];
@@ -188,7 +188,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let qt = ctx.qread_new(fld(d, b't'));
             let mut q = [0u32; 4];
             for i in 0..128 {
-                let v = if i & 1 != 0 { qbit(&qs, i - 1) } else { qbit(&qt, i) };
+                let v = if i & 1 != 0 {
+                    qbit(&qs, i - 1)
+                } else {
+                    qbit(&qt, i)
+                };
                 set_qbit(&mut q, i, v);
             }
             ctx.set_q(fld(d, b'd'), q);
@@ -200,7 +204,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let qt = ctx.qread_new(fld(d, b't'));
             let mut q = [0u32; 4];
             for i in 0..128 {
-                let v = if i & 2 != 0 { qbit(&qs, i - 2) } else { qbit(&qt, i) };
+                let v = if i & 2 != 0 {
+                    qbit(&qs, i - 2)
+                } else {
+                    qbit(&qt, i)
+                };
                 set_qbit(&mut q, i, v);
             }
             ctx.set_q(fld(d, b'd'), q);

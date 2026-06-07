@@ -33,7 +33,7 @@
 //!   unsigned (usat_16); the Qv forms gate on `Qv[2*i]`.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fimm_u, fld, SemCtx};
+use super::{SemCtx, fimm_u, fld};
 
 /// Working register file as 32 * 128 bytes (little-endian within each word).
 type File = [[u8; 128]; 32];

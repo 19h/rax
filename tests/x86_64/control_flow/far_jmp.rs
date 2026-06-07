@@ -20,7 +20,8 @@ fn test_far_jmp_immediate_16_16_basic() {
 
     // Write HLT at target address 0x2000
     let target_code = [0xf4]; // HLT
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2001);
@@ -36,7 +37,8 @@ fn test_far_jmp_immediate_16_32_basic() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3001);
@@ -56,7 +58,8 @@ fn test_far_jmp_no_return_address() {
         0x48, 0x89, 0xe0, // MOV RAX, RSP (check stack)
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Stack should be unchanged
@@ -78,11 +81,13 @@ fn test_far_jmp_mem_indirect_16_16() {
 
     // Write far pointer at 0x2000: offset=0x3000, selector=0x0008
     let far_ptr = [0x00, 0x30, 0x08, 0x00]; // offset:selector (little-endian)
-    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     // Write target code at 0x3000
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3001);
@@ -99,10 +104,12 @@ fn test_far_jmp_mem_indirect_16_32() {
 
     // Write far pointer: 32-bit offset + 16-bit selector
     let far_ptr = [0x00, 0x40, 0x00, 0x00, 0x08, 0x00];
-    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x4000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x4000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x4001);
@@ -122,10 +129,12 @@ fn test_far_jmp_mem_indirect_16_64() {
         0x00, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 64-bit offset
         0x08, 0x00, // 16-bit selector
     ];
-    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x5000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x5000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x5001);
@@ -148,7 +157,8 @@ fn test_far_jmp_same_privilege_level() {
         0x48, 0xc7, 0xc1, 0xaa, 0x00, 0x00, 0x00, // MOV RCX, 0xAA
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 0xaa);
@@ -167,7 +177,8 @@ fn test_far_jmp_conforming_segment() {
         0x48, 0xc7, 0xc2, 0xbb, 0x00, 0x00, 0x00, // MOV RDX, 0xBB
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rdx, 0xbb);
@@ -186,7 +197,8 @@ fn test_far_jmp_to_higher_privilege() {
         0x48, 0xc7, 0xc0, 0x99, 0x00, 0x00, 0x00, // MOV RAX, 0x99
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x99);
@@ -221,7 +233,8 @@ fn test_far_jmp_to_tss_descriptor() {
         0x48, 0xc7, 0xc3, 0xdd, 0x00, 0x00, 0x00, // MOV RBX, 0xDD
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rbx, 0xdd);
@@ -240,7 +253,8 @@ fn test_far_jmp_through_task_gate() {
         0x48, 0xc7, 0xc4, 0xee, 0x00, 0x00, 0x00, // MOV RSP, 0xEE
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     assert!(run_until_hlt(&mut vcpu).is_err());
 }
@@ -259,7 +273,8 @@ fn test_far_jmp_task_switch_clears_busy() {
         0x48, 0xc7, 0xc0, 0x99, 0x00, 0x00, 0x00, // MOV RAX, 0x99
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x99);
@@ -306,7 +321,8 @@ fn test_far_jmp_ldt_selector() {
         0x48, 0xc7, 0xc5, 0xee, 0x00, 0x00, 0x00, // MOV RBP, 0xEE
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     assert!(run_until_hlt(&mut vcpu).is_err());
 }
@@ -324,7 +340,8 @@ fn test_far_jmp_gdt_selector() {
         0x48, 0xc7, 0xc6, 0xff, 0x00, 0x00, 0x00, // MOV RSI, 0xFF
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rsi, 0xff);
@@ -344,7 +361,8 @@ fn test_far_jmp_operand_size_16() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2001);
@@ -360,7 +378,8 @@ fn test_far_jmp_operand_size_32() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3001);
@@ -375,14 +394,13 @@ fn test_far_jmp_rex_prefix_64() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let far_ptr = [
-        0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x08, 0x00,
-    ];
-    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000)).unwrap();
+    let far_ptr = [0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00];
+    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x4000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x4000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x4001);
@@ -443,10 +461,12 @@ fn test_far_jmp_mem_register_indirect() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let far_ptr = [0x00, 0x30, 0x00, 0x00, 0x08, 0x00];
-    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3001);
@@ -463,10 +483,12 @@ fn test_far_jmp_mem_base_displacement() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let far_ptr = [0x00, 0x40, 0x00, 0x00, 0x08, 0x00];
-    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x4000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x4000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x4001);
@@ -485,10 +507,12 @@ fn test_far_jmp_mem_sib_addressing() {
 
     // Address = 0x1E00 + 0x80*4 = 0x2000
     let far_ptr = [0x00, 0x50, 0x00, 0x00, 0x08, 0x00];
-    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x5000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x5000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x5001);
@@ -505,10 +529,12 @@ fn test_far_jmp_mem_rip_relative() {
 
     // Calculate target address: RIP after instruction + displacement
     let far_ptr = [0x00, 0x60, 0x00, 0x00, 0x08, 0x00];
-    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x6000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x6000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x6001);
@@ -530,7 +556,8 @@ fn test_far_jmp_preserves_general_registers() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x1111);
@@ -547,7 +574,8 @@ fn test_far_jmp_modifies_cs_and_rip() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2001);
@@ -567,7 +595,8 @@ fn test_far_jmp_does_not_modify_stack() {
         0x48, 0x89, 0xe7, // MOV RDI, RSP
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Stack pointer should be unchanged
@@ -588,7 +617,8 @@ fn test_far_jmp_to_boundary_address() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0xFFFF)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0xFFFF))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x10000);
@@ -604,7 +634,8 @@ fn test_far_jmp_zero_offset() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x0000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x0000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x0001);
@@ -620,7 +651,8 @@ fn test_far_jmp_max_offset_32bit() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x00FF_FFFF)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x00FF_FFFF))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x0100_0000);
@@ -636,7 +668,8 @@ fn test_far_jmp_aligned_addresses() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3001);
@@ -652,7 +685,8 @@ fn test_far_jmp_unaligned_addresses() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3003)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3003))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3004);
@@ -670,7 +704,8 @@ fn test_far_jmp_backwards() {
 
     // Write HLT at 0x1000
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x1000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x1000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x1001);
@@ -686,7 +721,8 @@ fn test_far_jmp_forward_large_offset() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x10000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x10000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x10001);
@@ -705,7 +741,8 @@ fn test_far_jmp_same_segment_different_offset() {
         0x48, 0xc7, 0xc0, 0xab, 0xcd, 0x00, 0x00, // MOV RAX, 0xCDAB
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0xcdab);

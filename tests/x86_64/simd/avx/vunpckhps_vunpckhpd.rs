@@ -323,7 +323,8 @@ fn test_vunpckhps_ymm15_ymm14_ymm13() {
 fn test_vunpckhps_xmm0_xmm1_mem128() {
     // VUNPCKHPS XMM0, XMM1, [mem128]
     let code = [
-        0xc5, 0xf0, 0x15, 0x05, 0x00, 0x40, 0x00, 0x00, // VUNPCKHPS XMM0, XMM1, [rip + 0x4000]
+        0xc5, 0xf0, 0x15, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VUNPCKHPS XMM0, XMM1, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -335,7 +336,8 @@ fn test_vunpckhps_xmm0_xmm1_mem128() {
         0x00, 0x00, 0x40, 0x40, // 3.0
         0x00, 0x00, 0x80, 0x40, // 4.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -344,7 +346,8 @@ fn test_vunpckhps_xmm0_xmm1_mem128() {
 fn test_vunpckhps_ymm0_ymm1_mem256() {
     // VUNPCKHPS YMM0, YMM1, [mem256]
     let code = [
-        0xc5, 0xf4, 0x15, 0x05, 0x00, 0x40, 0x00, 0x00, // VUNPCKHPS YMM0, YMM1, [rip + 0x4000]
+        0xc5, 0xf4, 0x15, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VUNPCKHPS YMM0, YMM1, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -360,7 +363,8 @@ fn test_vunpckhps_ymm0_ymm1_mem256() {
         0x00, 0x00, 0xe0, 0x40, // 7.0
         0x00, 0x00, 0x00, 0x41, // 8.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -369,13 +373,18 @@ fn test_vunpckhps_ymm0_ymm1_mem256() {
 fn test_vunpckhps_xmm8_xmm9_mem128() {
     // VUNPCKHPS XMM8, XMM9, [mem128]
     let code = [
-        0xc4, 0xc1, 0x30, 0x15, 0x05, 0x00, 0x40, 0x00, 0x00, // VUNPCKHPS XMM8, XMM9, [rip + 0x4000]
+        0xc4, 0xc1, 0x30, 0x15, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VUNPCKHPS XMM8, XMM9, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 16] = [0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let test_data: [u8; 16] = [
+        0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+        0xaa,
+    ];
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -682,7 +691,8 @@ fn test_vunpckhpd_ymm15_ymm14_ymm13() {
 fn test_vunpckhpd_xmm0_xmm1_mem128() {
     // VUNPCKHPD XMM0, XMM1, [mem128]
     let code = [
-        0xc5, 0xf1, 0x15, 0x05, 0x00, 0x40, 0x00, 0x00, // VUNPCKHPD XMM0, XMM1, [rip + 0x4000]
+        0xc5, 0xf1, 0x15, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VUNPCKHPD XMM0, XMM1, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -692,7 +702,8 @@ fn test_vunpckhpd_xmm0_xmm1_mem128() {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f, // 1.0
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, // 2.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -701,7 +712,8 @@ fn test_vunpckhpd_xmm0_xmm1_mem128() {
 fn test_vunpckhpd_ymm0_ymm1_mem256() {
     // VUNPCKHPD YMM0, YMM1, [mem256]
     let code = [
-        0xc5, 0xf5, 0x15, 0x05, 0x00, 0x40, 0x00, 0x00, // VUNPCKHPD YMM0, YMM1, [rip + 0x4000]
+        0xc5, 0xf5, 0x15, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VUNPCKHPD YMM0, YMM1, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -713,7 +725,8 @@ fn test_vunpckhpd_ymm0_ymm1_mem256() {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x40, // 3.0
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x40, // 4.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -722,13 +735,18 @@ fn test_vunpckhpd_ymm0_ymm1_mem256() {
 fn test_vunpckhpd_xmm8_xmm9_mem128() {
     // VUNPCKHPD XMM8, XMM9, [mem128]
     let code = [
-        0xc4, 0xc1, 0x31, 0x15, 0x05, 0x00, 0x40, 0x00, 0x00, // VUNPCKHPD XMM8, XMM9, [rip + 0x4000]
+        0xc4, 0xc1, 0x31, 0x15, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VUNPCKHPD XMM8, XMM9, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 16] = [0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let test_data: [u8; 16] = [
+        0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+        0xaa,
+    ];
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }

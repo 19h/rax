@@ -139,7 +139,11 @@ impl Aarch64Lifter {
                 Some(Operand::Imm(offset)),
                 Some(Operand::Imm(_tag_offset)),
             ) => (rd, rn, offset.effective_value()),
-            _ => return Err(LiftError::Internal("invalid ADDG/SUBG operands".to_string())),
+            _ => {
+                return Err(LiftError::Internal(
+                    "invalid ADDG/SUBG operands".to_string(),
+                ));
+            }
         };
 
         let adjusted = ctx.alloc_vreg();
@@ -440,7 +444,15 @@ impl Aarch64Lifter {
             SrcOperand::Imm(value) | SrcOperand::Imm64(value) => VReg::Imm(value),
             src => {
                 let tmp = ctx.alloc_vreg();
-                Self::push_lifted_op(ops, pc, OpKind::Mov { dst: tmp, src, width });
+                Self::push_lifted_op(
+                    ops,
+                    pc,
+                    OpKind::Mov {
+                        dst: tmp,
+                        src,
+                        width,
+                    },
+                );
                 tmp
             }
         }
@@ -960,16 +972,7 @@ impl Aarch64Lifter {
                     let signed = insn.mnemonic == Mnemonic::SMULL;
                     let src1 = self.widen_w_to_x(&mut ops, pc, ctx, rn, signed);
                     let src2 = self.widen_w_to_x(&mut ops, pc, ctx, rm, signed);
-                    Self::push_mul_op(
-                        &mut ops,
-                        pc,
-                        dst,
-                        None,
-                        src1,
-                        src2,
-                        OpWidth::W64,
-                        signed,
-                    );
+                    Self::push_mul_op(&mut ops, pc, dst, None, src1, src2, OpWidth::W64, signed);
                 }
             }
 
@@ -3031,13 +3034,7 @@ impl Aarch64Lifter {
                     Mnemonic::CSNEG => CondSelectFalseOp::Negate,
                     _ => unreachable!(),
                 };
-                (
-                    rd,
-                    self.arm_reg(&rn),
-                    self.arm_reg(&rm),
-                    false_op,
-                    cond,
-                )
+                (rd, self.arm_reg(&rn), self.arm_reg(&rm), false_op, cond)
             }
             Mnemonic::CINC | Mnemonic::CINV | Mnemonic::CNEG => {
                 let (rd, rn, cond) = match (
@@ -3045,11 +3042,9 @@ impl Aarch64Lifter {
                     insn.operands.get(1),
                     insn.operands.get(2),
                 ) {
-                    (
-                        Some(Operand::Reg(rd)),
-                        Some(Operand::Reg(rn)),
-                        Some(Operand::Cond(cond)),
-                    ) => (*rd, *rn, *cond),
+                    (Some(Operand::Reg(rd)), Some(Operand::Reg(rn)), Some(Operand::Cond(cond))) => {
+                        (*rd, *rn, *cond)
+                    }
                     _ => return Err(invalid()),
                 };
                 let false_op = match insn.mnemonic {
@@ -3058,13 +3053,7 @@ impl Aarch64Lifter {
                     Mnemonic::CNEG => CondSelectFalseOp::Negate,
                     _ => unreachable!(),
                 };
-                (
-                    rd,
-                    self.arm_reg(&rn),
-                    self.arm_reg(&rn),
-                    false_op,
-                    cond,
-                )
+                (rd, self.arm_reg(&rn), self.arm_reg(&rn), false_op, cond)
             }
             Mnemonic::CSET | Mnemonic::CSETM => {
                 let (rd, cond) = match (insn.operands.get(0), insn.operands.get(1)) {
@@ -3345,7 +3334,11 @@ impl Aarch64Lifter {
     ) -> Result<(), LiftError> {
         let (rd, mem) = match (insn.operands.get(0), insn.operands.get(1)) {
             (Some(Operand::Reg(r)), Some(Operand::Mem(m))) => (r, m),
-            _ => return Err(LiftError::Internal("invalid load-exclusive operands".to_string())),
+            _ => {
+                return Err(LiftError::Internal(
+                    "invalid load-exclusive operands".to_string(),
+                ));
+            }
         };
 
         let dst = self.dst_reg(rd, ctx);
@@ -3428,10 +3421,12 @@ impl Aarch64Lifter {
             insn.operands.get(1),
             insn.operands.get(2),
         ) {
-            (Some(Operand::Reg(rs)), Some(Operand::Reg(rt)), Some(Operand::Mem(m))) => {
-                (rs, rt, m)
+            (Some(Operand::Reg(rs)), Some(Operand::Reg(rt)), Some(Operand::Mem(m))) => (rs, rt, m),
+            _ => {
+                return Err(LiftError::Internal(
+                    "invalid atomic RMW operands".to_string(),
+                ));
             }
-            _ => return Err(LiftError::Internal("invalid atomic RMW operands".to_string())),
         };
 
         let width = match (insn.raw >> 30) & 0x3 {

@@ -23,9 +23,16 @@ fn test_blsr_eax_ebx_bit_0() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_0000, "EAX should be zero (bit 0 reset)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0000_0000,
+        "EAX should be zero (bit 0 reset)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set (result is zero)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (source was non-zero)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (source was non-zero)"
+    );
 }
 
 #[test]
@@ -56,8 +63,15 @@ fn test_blsr_eax_ebx_multiple_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b1010_0000, "EAX should have bit 3 reset");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b1010_0000,
+        "EAX should have bit 3 reset"
+    );
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (result is non-zero)"
+    );
 }
 
 #[test]
@@ -105,7 +119,11 @@ fn test_blsr_all_bits_set() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFE, "EAX should have bit 0 reset");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFE,
+        "EAX should have bit 0 reset"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -121,7 +139,11 @@ fn test_blsr_alternating_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xAAAAAAAA & !0x2, "EAX should have bit 1 reset");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xAAAAAAAA & !0x2,
+        "EAX should have bit 1 reset"
+    );
 }
 
 #[test]
@@ -136,7 +158,11 @@ fn test_blsr_alternating_pattern_inverted() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x55555554, "EAX should have bit 0 reset");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x55555554,
+        "EAX should have bit 0 reset"
+    );
 }
 
 #[test]
@@ -152,8 +178,17 @@ fn test_blsr_single_bit_positions_32bit() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should be zero for single bit at {}", bit_pos);
-        assert!(zf_set(regs.rflags), "ZF should be set for single bit at {}", bit_pos);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            0,
+            "EAX should be zero for single bit at {}",
+            bit_pos
+        );
+        assert!(
+            zf_set(regs.rflags),
+            "ZF should be set for single bit at {}",
+            bit_pos
+        );
     }
 }
 
@@ -170,8 +205,16 @@ fn test_blsr_single_bit_positions_64bit() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax, 0, "RAX should be zero for single bit at {}", bit_pos);
-        assert!(zf_set(regs.rflags), "ZF should be set for single bit at {}", bit_pos);
+        assert_eq!(
+            regs.rax, 0,
+            "RAX should be zero for single bit at {}",
+            bit_pos
+        );
+        assert!(
+            zf_set(regs.rflags),
+            "ZF should be set for single bit at {}",
+            bit_pos
+        );
     }
 }
 
@@ -187,7 +230,11 @@ fn test_blsr_with_extended_registers() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0b0001_0000, "R8D should have bit 3 reset");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0b0001_0000,
+        "R8D should have bit 3 reset"
+    );
 }
 
 #[test]
@@ -201,7 +248,11 @@ fn test_blsr_mem32() {
     write_mem_u32(&mem, 0xFFFFF000); // bits 12-31 set
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFE000, "EAX should have bit 12 reset");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFE000,
+        "EAX should have bit 12 reset"
+    );
 }
 
 #[test]
@@ -230,7 +281,11 @@ fn test_blsr_trailing_zeros() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFE000, "EAX should have bit 12 reset");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFE000,
+        "EAX should have bit 12 reset"
+    );
 }
 
 #[test]
@@ -245,7 +300,11 @@ fn test_blsr_sparse_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX should have bit 12 reset");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX should have bit 12 reset"
+    );
 }
 
 #[test]
@@ -277,7 +336,11 @@ fn test_blsr_vs_and_sub() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let expected = value & value.wrapping_sub(1);
-    assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "BLSR should equal src & (src - 1)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        expected as u64,
+        "BLSR should equal src & (src - 1)"
+    );
 }
 
 #[test]
@@ -309,7 +372,11 @@ fn test_blsr_consecutive_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00FE0000, "EAX should have bit 16 reset");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00FE0000,
+        "EAX should have bit 16 reset"
+    );
 }
 
 #[test]
@@ -345,7 +412,12 @@ fn test_blsr_iterative_removal() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "Iteration {}: should have reset lowest bit", idx);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "Iteration {}: should have reset lowest bit",
+            idx
+        );
 
         // Update value for next iteration
         value = regs.rax & 0xFFFFFFFF;
@@ -380,7 +452,10 @@ fn test_blsr_mixed_high_low_64() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x8000_0000_0000_0000, "RAX should have bit 8 reset");
+    assert_eq!(
+        regs.rax, 0x8000_0000_0000_0000,
+        "RAX should have bit 8 reset"
+    );
 }
 
 #[test]
@@ -450,7 +525,13 @@ fn test_blsr_byte_boundaries_32bit() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, *expected as u64, "BLSR({:08x}) should be {:08x}", input, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "BLSR({:08x}) should be {:08x}",
+            input,
+            expected
+        );
     }
 }
 
@@ -466,7 +547,7 @@ fn test_blsr_64bit_comprehensive() {
         (0x0000_0000_0000_0002u64, 0x0000_0000_0000_0000u64), // bit 1
         (0x0000_0001_0000_0000u64, 0x0000_0000_0000_0000u64), // bit 32
         (0x0000_0000_0000_0003u64, 0x0000_0000_0000_0002u64), // bits 0,1
-        (0xFFFFFFFFFFFFFFFFu64, 0xFFFFFFFFFFFFFFFEu64), // all bits
+        (0xFFFFFFFFFFFFFFFFu64, 0xFFFFFFFFFFFFFFFEu64),       // all bits
     ];
 
     for (input, expected) in &test_cases {
@@ -475,6 +556,10 @@ fn test_blsr_64bit_comprehensive() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax, *expected, "BLSR({:016x}) should be {:016x}", input, expected);
+        assert_eq!(
+            regs.rax, *expected,
+            "BLSR({:016x}) should be {:016x}",
+            input, expected
+        );
     }
 }

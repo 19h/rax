@@ -369,7 +369,7 @@ fn test_bndstx_r8_r9_bnd3() {
 fn test_lea_base_only() {
     let code = [
         0x48, 0x8d, 0x03, // LEA RAX, [RBX]
-        0xf4,             // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rbx = 0x0000_1234_5678_9AB0;
@@ -383,7 +383,7 @@ fn test_lea_base_only() {
 fn test_lea_base_plus_index() {
     let code = [
         0x48, 0x8d, 0x04, 0x0b, // LEA RAX, [RBX + RCX]  (SIB: scale=0 index=001 base=011)
-        0xf4,                   // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rbx = 0x4000;
@@ -490,7 +490,11 @@ fn test_lea_base_index_scale_disp32() {
     regs.rcx = 0x0010;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x6000 + 0x0010 * 4 + 0x1000, "LEA [RBX + RCX*4 + 0x1000]");
+    assert_eq!(
+        regs.rax,
+        0x6000 + 0x0010 * 4 + 0x1000,
+        "LEA [RBX + RCX*4 + 0x1000]"
+    );
 }
 
 // LEA r64, [RIP + disp32] -- 64-bit-mode RIP-relative.
@@ -505,7 +509,10 @@ fn test_lea_rip_relative() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x1107, "LEA [RIP + 0x100] = next_rip(0x1007) + 0x100");
+    assert_eq!(
+        regs.rax, 0x1107,
+        "LEA [RIP + 0x100] = next_rip(0x1007) + 0x100"
+    );
 }
 
 // LEA r64, [RIP - disp32] -- negative RIP-relative displacement.
@@ -534,7 +541,10 @@ fn test_lea_32bit_dest_truncates() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // 64-bit EA = 0x2_0000_1010; 32-bit dest keeps low 32 and zero-extends.
-    assert_eq!(regs.rax, 0x0000_1010, "LEA EAX zero-extends low 32 bits of EA");
+    assert_eq!(
+        regs.rax, 0x0000_1010,
+        "LEA EAX zero-extends low 32 bits of EA"
+    );
 }
 
 // LEA r64, [index*scale + disp32] with no base (SIB base=101, mod=00).
@@ -548,7 +558,11 @@ fn test_lea_index_scale_no_base() {
     regs.rcx = 0x0020;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0020 * 4 + 0x1000, "LEA [RCX*4 + disp32], no base");
+    assert_eq!(
+        regs.rax,
+        0x0020 * 4 + 0x1000,
+        "LEA [RCX*4 + disp32], no base"
+    );
 }
 
 // ----- MOV with complex SIB to/from memory: exact byte assertions -----
@@ -559,9 +573,9 @@ fn test_mov_store_sib_scale4_disp8_exact_bytes() {
     let code = [
         0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000 (base)
         0x48, 0xc7, 0xc1, 0x04, 0x00, 0x00, 0x00, // MOV RCX, 4 (index)
-        0xb8, 0x78, 0x56, 0x34, 0x12,             // MOV EAX, 0x12345678
-        0x89, 0x44, 0x8b, 0x10,                   // MOV [RBX + RCX*4 + 0x10], EAX
-        0xf4,                                     // HLT
+        0xb8, 0x78, 0x56, 0x34, 0x12, // MOV EAX, 0x12345678
+        0x89, 0x44, 0x8b, 0x10, // MOV [RBX + RCX*4 + 0x10], EAX
+        0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -569,7 +583,11 @@ fn test_mov_store_sib_scale4_disp8_exact_bytes() {
     assert_eq!(regs.rax & 0xFFFF_FFFF, 0x12345678, "EAX unchanged by store");
     let mut buf = [0u8; 4];
     mem.read_slice(&mut buf, GuestAddress(0x2020)).unwrap();
-    assert_eq!(buf, [0x78, 0x56, 0x34, 0x12], "little-endian bytes at EA 0x2020");
+    assert_eq!(
+        buf,
+        [0x78, 0x56, 0x34, 0x12],
+        "little-endian bytes at EA 0x2020"
+    );
     assert_eq!(read_mem_at_u32(&mem, 0x2020), 0x12345678, "u32 readback");
 }
 
@@ -579,14 +597,17 @@ fn test_mov_load_sib_scale8_exact() {
     let code = [
         0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000 (base)
         0x48, 0xc7, 0xc1, 0x02, 0x00, 0x00, 0x00, // MOV RCX, 2 (index)
-        0x48, 0x8b, 0x04, 0xcb,                   // MOV RAX, [RBX + RCX*8]
-        0xf4,                                     // HLT
+        0x48, 0x8b, 0x04, 0xcb, // MOV RAX, [RBX + RCX*8]
+        0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     // EA = 0x2000 + 2*8 = 0x2010.
     write_mem_at_u64(&mem, 0x2010, 0xCAFEF00DDEADBEEF);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xCAFEF00DDEADBEEF, "MOV RAX, [RBX + RCX*8] @ 0x2010");
+    assert_eq!(
+        regs.rax, 0xCAFEF00DDEADBEEF,
+        "MOV RAX, [RBX + RCX*8] @ 0x2010"
+    );
 }
 
 // MOV [base + index] (scale 1) byte store places exact byte.
@@ -595,15 +616,27 @@ fn test_mov_store_sib_scale1_byte() {
     let code = [
         0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
         0x48, 0xc7, 0xc1, 0x07, 0x00, 0x00, 0x00, // MOV RCX, 7
-        0xb0, 0xA5,                               // MOV AL, 0xA5
-        0x88, 0x04, 0x0b,                         // MOV [RBX + RCX], AL
+        0xb0, 0xA5, // MOV AL, 0xA5
+        0x88, 0x04, 0x0b, // MOV [RBX + RCX], AL
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_at_u8(&mem, 0x2007), 0xA5, "byte store at SIB EA 0x2007");
-    assert_eq!(read_mem_at_u8(&mem, 0x2006), 0x00, "neighbour byte untouched");
-    assert_eq!(read_mem_at_u8(&mem, 0x2008), 0x00, "neighbour byte untouched");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2007),
+        0xA5,
+        "byte store at SIB EA 0x2007"
+    );
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2006),
+        0x00,
+        "neighbour byte untouched"
+    );
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2008),
+        0x00,
+        "neighbour byte untouched"
+    );
 }
 
 // ----- MOVNTI: non-temporal 32/64-bit integer store -----
@@ -612,26 +645,35 @@ fn test_mov_store_sib_scale1_byte() {
 fn test_movnti_32bit_store() {
     let code = [
         0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
-        0xb8, 0xEF, 0xBE, 0xAD, 0xDE,             // MOV EAX, 0xDEADBEEF
-        0x0f, 0xc3, 0x03,                         // MOVNTI [RBX], EAX
+        0xb8, 0xEF, 0xBE, 0xAD, 0xDE, // MOV EAX, 0xDEADBEEF
+        0x0f, 0xc3, 0x03, // MOVNTI [RBX], EAX
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_at_u32(&mem, 0x2000), 0xDEADBEEF, "MOVNTI m32 store");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2000),
+        0xDEADBEEF,
+        "MOVNTI m32 store"
+    );
 }
 
 #[test]
 fn test_movnti_64bit_store() {
     let code = [
         0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
-        0x48, 0xb8, 0xEF, 0xBE, 0xAD, 0xDE, 0x0D, 0xF0, 0xFE, 0xCA, // MOV RAX, 0xCAFEF00DDEADBEEF
-        0x48, 0x0f, 0xc3, 0x03,                   // MOVNTI [RBX], RAX (REX.W)
+        0x48, 0xb8, 0xEF, 0xBE, 0xAD, 0xDE, 0x0D, 0xF0, 0xFE,
+        0xCA, // MOV RAX, 0xCAFEF00DDEADBEEF
+        0x48, 0x0f, 0xc3, 0x03, // MOVNTI [RBX], RAX (REX.W)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_at_u64(&mem, 0x2000), 0xCAFEF00DDEADBEEF, "MOVNTI m64 store");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x2000),
+        0xCAFEF00DDEADBEEF,
+        "MOVNTI m64 store"
+    );
 }
 
 // MOVNTI with a displaced destination address.
@@ -639,13 +681,17 @@ fn test_movnti_64bit_store() {
 fn test_movnti_32bit_store_disp() {
     let code = [
         0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
-        0xb8, 0x44, 0x33, 0x22, 0x11,             // MOV EAX, 0x11223344
-        0x0f, 0xc3, 0x43, 0x20,                   // MOVNTI [RBX + 0x20], EAX
+        0xb8, 0x44, 0x33, 0x22, 0x11, // MOV EAX, 0x11223344
+        0x0f, 0xc3, 0x43, 0x20, // MOVNTI [RBX + 0x20], EAX
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_at_u32(&mem, 0x2020), 0x11223344, "MOVNTI m32 @ disp 0x20");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2020),
+        0x11223344,
+        "MOVNTI m32 @ disp 0x20"
+    );
 }
 
 // ----- MOVNTDQ: non-temporal 128-bit XMM store (66 0F E7 /r) -----
@@ -654,7 +700,7 @@ fn test_movnti_32bit_store_disp() {
 fn test_movntdq_128bit_store() {
     let code = [
         0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
-        0x66, 0x0f, 0xe7, 0x03,                   // MOVNTDQ [RBX], XMM0
+        0x66, 0x0f, 0xe7, 0x03, // MOVNTDQ [RBX], XMM0
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -674,7 +720,7 @@ fn test_movntdq_128bit_store() {
 fn test_mem_operand_size_16bit() {
     let code = [
         0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
-        0x66, 0x8b, 0x03,                         // MOV AX, [RBX]
+        0x66, 0x8b, 0x03, // MOV AX, [RBX]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -685,14 +731,18 @@ fn test_mem_operand_size_16bit() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // 16-bit load only writes AX; upper bits preserved.
     assert_eq!(regs.rax & 0xFFFF, 0xBEEF, "AX loaded from m16");
-    assert_eq!(regs.rax >> 16, 0xFFFF_FFFF_FFFF, "upper bits preserved on 16-bit load");
+    assert_eq!(
+        regs.rax >> 16,
+        0xFFFF_FFFF_FFFF,
+        "upper bits preserved on 16-bit load"
+    );
 }
 
 #[test]
 fn test_mem_operand_size_32bit_zero_extends() {
     let code = [
         0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
-        0x8b, 0x03,                               // MOV EAX, [RBX]
+        0x8b, 0x03, // MOV EAX, [RBX]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -708,7 +758,7 @@ fn test_mem_operand_size_32bit_zero_extends() {
 fn test_mem_operand_size_64bit() {
     let code = [
         0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
-        0x48, 0x8b, 0x03,                         // MOV RAX, [RBX]
+        0x48, 0x8b, 0x03, // MOV RAX, [RBX]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -725,13 +775,16 @@ fn test_mem_operand_size_64bit() {
 fn test_addr32_override_load() {
     let code = [
         0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
-        0x67, 0x48, 0x8b, 0x03,                   // MOV RAX, [EBX] (0x67 addr-size override)
+        0x67, 0x48, 0x8b, 0x03, // MOV RAX, [EBX] (0x67 addr-size override)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_at_u64(&mem, 0x2000, 0x0BADF00DCAFEBABE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0BADF00DCAFEBABE, "0x67 32-bit-address load reads EBX");
+    assert_eq!(
+        regs.rax, 0x0BADF00DCAFEBABE,
+        "0x67 32-bit-address load reads EBX"
+    );
 }
 
 // With 0x67, only the low 32 bits of the base participate: a dirty high half of
@@ -739,14 +792,18 @@ fn test_addr32_override_load() {
 #[test]
 fn test_addr32_override_ignores_high_base_bits() {
     let code = [
-        0x48, 0xbb, 0x00, 0x20, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, // MOV RBX, 0xFFFFFFFF00002000
-        0x67, 0x48, 0x8b, 0x03,                                     // MOV RAX, [EBX]
+        0x48, 0xbb, 0x00, 0x20, 0x00, 0x00, 0xff, 0xff, 0xff,
+        0xff, // MOV RBX, 0xFFFFFFFF00002000
+        0x67, 0x48, 0x8b, 0x03, // MOV RAX, [EBX]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_at_u64(&mem, 0x2000, 0x5555AAAA5555AAAA);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x5555AAAA5555AAAA, "0x67 ignores high 32 bits of base");
+    assert_eq!(
+        regs.rax, 0x5555AAAA5555AAAA,
+        "0x67 ignores high 32 bits of base"
+    );
 }
 
 // ----- Misaligned accesses (x86 allows them; value must be exact) -----
@@ -755,15 +812,19 @@ fn test_addr32_override_ignores_high_base_bits() {
 fn test_misaligned_u32_store_load() {
     let code = [
         0x48, 0xc7, 0xc3, 0x03, 0x20, 0x00, 0x00, // MOV RBX, 0x2003 (misaligned)
-        0xb8, 0x21, 0x43, 0x65, 0x87,             // MOV EAX, 0x87654321
-        0x89, 0x03,                               // MOV [RBX], EAX
+        0xb8, 0x21, 0x43, 0x65, 0x87, // MOV EAX, 0x87654321
+        0x89, 0x03, // MOV [RBX], EAX
         0x48, 0xc7, 0xc1, 0x03, 0x20, 0x00, 0x00, // MOV RCX, 0x2003
-        0x8b, 0x11,                               // MOV EDX, [RCX]
+        0x8b, 0x11, // MOV EDX, [RCX]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_at_u32(&mem, 0x2003), 0x87654321, "misaligned u32 store");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2003),
+        0x87654321,
+        "misaligned u32 store"
+    );
     assert_eq!(regs.rdx & 0xFFFF_FFFF, 0x87654321, "misaligned u32 load");
 }
 
@@ -771,14 +832,19 @@ fn test_misaligned_u32_store_load() {
 fn test_misaligned_u64_store_load() {
     let code = [
         0x48, 0xc7, 0xc3, 0x01, 0x20, 0x00, 0x00, // MOV RBX, 0x2001 (misaligned)
-        0x48, 0xb8, 0xEF, 0xCD, 0xAB, 0x89, 0x67, 0x45, 0x23, 0x01, // MOV RAX, 0x0123456789ABCDEF
-        0x48, 0x89, 0x03,                         // MOV [RBX], RAX
-        0x48, 0x8b, 0x13,                         // MOV RDX, [RBX]
+        0x48, 0xb8, 0xEF, 0xCD, 0xAB, 0x89, 0x67, 0x45, 0x23,
+        0x01, // MOV RAX, 0x0123456789ABCDEF
+        0x48, 0x89, 0x03, // MOV [RBX], RAX
+        0x48, 0x8b, 0x13, // MOV RDX, [RBX]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_at_u64(&mem, 0x2001), 0x0123456789ABCDEF, "misaligned u64 store");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x2001),
+        0x0123456789ABCDEF,
+        "misaligned u64 store"
+    );
     assert_eq!(regs.rdx, 0x0123456789ABCDEF, "misaligned u64 load");
 }
 
@@ -790,29 +856,46 @@ fn test_page_crossing_u64_store_load() {
     let addr = 0x2FFC; // 4 bytes before the 0x3000 boundary
     let code = [
         0x48, 0xc7, 0xc3, 0xFC, 0x2F, 0x00, 0x00, // MOV RBX, 0x2FFC
-        0x48, 0xb8, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, // MOV RAX, 0x1122334455667788
-        0x48, 0x89, 0x03,                         // MOV [RBX], RAX
-        0x48, 0x8b, 0x13,                         // MOV RDX, [RBX]
+        0x48, 0xb8, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22,
+        0x11, // MOV RAX, 0x1122334455667788
+        0x48, 0x89, 0x03, // MOV [RBX], RAX
+        0x48, 0x8b, 0x13, // MOV RDX, [RBX]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_at_u64(&mem, addr), 0x1122334455667788, "page-crossing u64 store");
+    assert_eq!(
+        read_mem_at_u64(&mem, addr),
+        0x1122334455667788,
+        "page-crossing u64 store"
+    );
     assert_eq!(regs.rdx, 0x1122334455667788, "page-crossing u64 load");
     // The high dword physically lands on the next page.
-    assert_eq!(read_mem_at_u32(&mem, 0x3000), 0x11223344, "high dword on next page");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x3000),
+        0x11223344,
+        "high dword on next page"
+    );
 }
 
 #[test]
 fn test_page_crossing_u16_store() {
     let code = [
         0x48, 0xc7, 0xc3, 0xFF, 0x2F, 0x00, 0x00, // MOV RBX, 0x2FFF (last byte of page)
-        0x66, 0xb8, 0xCD, 0xAB,                   // MOV AX, 0xABCD
-        0x66, 0x89, 0x03,                         // MOV [RBX], AX
+        0x66, 0xb8, 0xCD, 0xAB, // MOV AX, 0xABCD
+        0x66, 0x89, 0x03, // MOV [RBX], AX
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_at_u8(&mem, 0x2FFF), 0xCD, "low byte on page 0x2000");
-    assert_eq!(read_mem_at_u8(&mem, 0x3000), 0xAB, "high byte on page 0x3000");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2FFF),
+        0xCD,
+        "low byte on page 0x2000"
+    );
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x3000),
+        0xAB,
+        "high byte on page 0x3000"
+    );
 }

@@ -288,7 +288,11 @@ fn test_movsx_boundary_values_byte() {
         regs.rbx = input;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(regs.rax, expected, "MOVSX byte {:#x} should be {:#x}", input, expected);
+        assert_eq!(
+            regs.rax, expected,
+            "MOVSX byte {:#x} should be {:#x}",
+            input, expected
+        );
     }
 }
 
@@ -312,7 +316,11 @@ fn test_movsx_boundary_values_word() {
         regs.rbx = input;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(regs.rax, expected, "MOVSX word {:#x} should be {:#x}", input, expected);
+        assert_eq!(
+            regs.rax, expected,
+            "MOVSX word {:#x} should be {:#x}",
+            input, expected
+        );
     }
 }
 
@@ -336,7 +344,11 @@ fn test_movsxd_boundary_values_dword() {
         regs.rbx = input as u64;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(regs.rax, expected, "MOVSXD dword {:#x} should be {:#x}", input, expected);
+        assert_eq!(
+            regs.rax, expected,
+            "MOVSXD dword {:#x} should be {:#x}",
+            input, expected
+        );
     }
 }
 
@@ -464,8 +476,7 @@ fn test_movsx_rip_relative() {
     // RIP after the instruction points to offset 8 (HLT), so displacement of 1 reads offset 9 (data)
     let code = [
         0x48, 0x0f, 0xbe, 0x05, 0x01, 0x00, 0x00, 0x00, // MOVSX RAX, BYTE PTR [RIP+1]
-        0xf4,
-        0x80, // Data: -128
+        0xf4, 0x80, // Data: -128
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -529,7 +540,11 @@ fn test_movsx_word_various_patterns() {
         regs.rbx = input;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(regs.rax, expected, "MOVSX word {:#x} should be {:#x}", input, expected);
+        assert_eq!(
+            regs.rax, expected,
+            "MOVSX word {:#x} should be {:#x}",
+            input, expected
+        );
     }
 }
 
@@ -555,7 +570,11 @@ fn test_movsxd_various_patterns() {
         regs.rbx = input as u64;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(regs.rax, expected, "MOVSXD dword {:#x} should be {:#x}", input, expected);
+        assert_eq!(
+            regs.rax, expected,
+            "MOVSXD dword {:#x} should be {:#x}",
+            input, expected
+        );
     }
 }
 

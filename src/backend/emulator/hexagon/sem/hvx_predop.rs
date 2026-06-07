@@ -18,7 +18,7 @@
 //!   untouched. `vccombine` writes the pair `Vdd.v[0] = Vv`, `Vdd.v[1] = Vu`.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fld, SemCtx};
+use super::{SemCtx, fld};
 
 /// 128-byte vector viewed as raw bytes (little-endian within each u32 word).
 type Bytes = [u8; 128];
@@ -53,7 +53,14 @@ fn qbit(q: &[u32; 4], i: usize) -> bool {
 /// according to the corresponding Q bit (`fCONDMASK{8,16,32}` semantics).
 /// `q_selects_op` is the Q-bit polarity that takes the operation result: `true`
 /// for the q-form (`if (Qv) ...`), `false` for the nq-form (`if (!Qv) ...`).
-fn cond_addsub(vx: &Bytes, vu: &Bytes, qv: &[u32; 4], w: usize, add: bool, q_selects_op: bool) -> Bytes {
+fn cond_addsub(
+    vx: &Bytes,
+    vu: &Bytes,
+    qv: &[u32; 4],
+    w: usize,
+    add: bool,
+    q_selects_op: bool,
+) -> Bytes {
     let mut out = *vx;
     let lanes = 128 / w;
     for lane in 0..lanes {
@@ -64,13 +71,21 @@ fn cond_addsub(vx: &Bytes, vu: &Bytes, qv: &[u32; 4], w: usize, add: bool, q_sel
             1 => {
                 let a = vx[base];
                 let b = vu[base];
-                let r = if add { a.wrapping_add(b) } else { a.wrapping_sub(b) };
+                let r = if add {
+                    a.wrapping_add(b)
+                } else {
+                    a.wrapping_sub(b)
+                };
                 [r, 0, 0, 0]
             }
             2 => {
                 let a = u16::from_le_bytes([vx[base], vx[base + 1]]);
                 let b = u16::from_le_bytes([vu[base], vu[base + 1]]);
-                let r = if add { a.wrapping_add(b) } else { a.wrapping_sub(b) };
+                let r = if add {
+                    a.wrapping_add(b)
+                } else {
+                    a.wrapping_sub(b)
+                };
                 let rb = r.to_le_bytes();
                 [rb[0], rb[1], 0, 0]
             }
@@ -78,7 +93,11 @@ fn cond_addsub(vx: &Bytes, vu: &Bytes, qv: &[u32; 4], w: usize, add: bool, q_sel
             _ => {
                 let a = u32::from_le_bytes([vx[base], vx[base + 1], vx[base + 2], vx[base + 3]]);
                 let b = u32::from_le_bytes([vu[base], vu[base + 1], vu[base + 2], vu[base + 3]]);
-                let r = if add { a.wrapping_add(b) } else { a.wrapping_sub(b) };
+                let r = if add {
+                    a.wrapping_add(b)
+                } else {
+                    a.wrapping_sub(b)
+                };
                 r.to_le_bytes()
             }
         };
@@ -137,7 +156,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         // CANCEL (no write) when the condition is false.
         Opcode::V6_vcmov | Opcode::V6_vncmov => {
             let ps = ctx.p(fld(d, b's')) & 1;
-            let take = if matches!(op, Opcode::V6_vncmov) { ps == 0 } else { ps != 0 };
+            let take = if matches!(op, Opcode::V6_vncmov) {
+                ps == 0
+            } else {
+                ps != 0
+            };
             if take {
                 let vu = ctx.vread(fld(d, b'u'));
                 ctx.set_v(fld(d, b'd'), vu);
@@ -149,7 +172,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         // Vdd.v[0] = Vv (low), Vdd.v[1] = Vu (high). CANCEL when false.
         Opcode::V6_vccombine | Opcode::V6_vnccombine => {
             let ps = ctx.p(fld(d, b's')) & 1;
-            let take = if matches!(op, Opcode::V6_vnccombine) { ps == 0 } else { ps != 0 };
+            let take = if matches!(op, Opcode::V6_vnccombine) {
+                ps == 0
+            } else {
+                ps != 0
+            };
             if take {
                 let vu = ctx.vread(fld(d, b'u'));
                 let vv = ctx.vread(fld(d, b'v'));

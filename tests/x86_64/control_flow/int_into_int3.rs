@@ -53,7 +53,11 @@ fn test_int3_one_byte_encoding() {
     // Both INT3 (0xCC) and INT 3 (0xCD 03) trap to vector 3; the IRETQ stub
     // returns to the next instruction, so execution reaches the final HLT.
     // RIP is past the HLT at offset 3 => 0x1000 + 3 + 1.
-    assert_eq!(regs.rip, 0x1000 + code.len() as u64, "reached final HLT past both INT3 forms");
+    assert_eq!(
+        regs.rip,
+        0x1000 + code.len() as u64,
+        "reached final HLT past both INT3 forms"
+    );
 }
 
 #[test]
@@ -287,8 +291,16 @@ fn test_into_overflow_flag_set() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // INTO with OF=1 traps to vector 4; the IDT stub IRETQs back to the
     // instruction after INTO, so EBX=0x99 is reached and EAX wrapped to 0x80000000.
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "0x7FFFFFFF + 1 overflowed");
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x99, "execution resumed after INTO trap");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "0x7FFFFFFF + 1 overflowed"
+    );
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0x99,
+        "execution resumed after INTO trap"
+    );
 }
 
 #[test]

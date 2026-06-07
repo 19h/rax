@@ -130,12 +130,7 @@ pub fn sm4ed(rs1: u64, rs2: u64, bs: u32) -> u64 {
     let shamt = bs * 8;
     let sb_in = ((rs2 >> shamt) & 0xff) as u8;
     let x = SM4_SBOX[sb_in as usize] as u32;
-    let y = x
-        ^ (x << 8)
-        ^ (x << 2)
-        ^ (x << 18)
-        ^ ((x & 0x3f) << 26)
-        ^ ((x & 0xc0) << 10);
+    let y = x ^ (x << 8) ^ (x << 2) ^ (x << 18) ^ ((x & 0x3f) << 26) ^ ((x & 0xc0) << 10);
     let z = rol32(y, shamt);
     sext32(z ^ (rs1 as u32))
 }
@@ -145,11 +140,7 @@ pub fn sm4ks(rs1: u64, rs2: u64, bs: u32) -> u64 {
     let shamt = bs * 8;
     let sb_in = ((rs2 >> shamt) & 0xff) as u8;
     let x = SM4_SBOX[sb_in as usize] as u32;
-    let y = x
-        ^ ((x & 0x07) << 29)
-        ^ ((x & 0xfe) << 7)
-        ^ ((x & 0x01) << 23)
-        ^ ((x & 0xf8) << 13);
+    let y = x ^ ((x & 0x07) << 29) ^ ((x & 0xfe) << 7) ^ ((x & 0x01) << 23) ^ ((x & 0xf8) << 13);
     let z = rol32(y, shamt);
     sext32(z ^ (rs1 as u32))
 }

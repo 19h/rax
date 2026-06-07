@@ -222,7 +222,8 @@ fn test_unpcklpd_xmm0_mem() {
     for d in &double_data {
         bytes.extend_from_slice(&d.to_le_bytes());
     }
-    mem.write_slice(&bytes, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&bytes, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -247,7 +248,8 @@ fn test_unpcklpd_xmm1_mem() {
     for d in &double_data {
         bytes.extend_from_slice(&d.to_le_bytes());
     }
-    mem.write_slice(&bytes, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&bytes, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -267,7 +269,14 @@ fn test_unpcklpd_xmm2_mem() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -287,7 +296,14 @@ fn test_unpcklpd_xmm7_mem() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&[0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55,
+            0x55, 0x55,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -310,7 +326,14 @@ fn test_unpcklpd_xmm0_mem_displacement() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77,
+            0x77, 0x77,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -328,7 +351,14 @@ fn test_unpcklpd_xmm1_mem_rbx() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88,
+            0x88, 0x88,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -346,7 +376,14 @@ fn test_unpcklpd_xmm2_mem_rcx() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99,
+            0x99, 0x99,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -364,7 +401,14 @@ fn test_unpcklpd_xmm3_mem_rdx() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB,
+            0xBB, 0xBB,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -386,7 +430,14 @@ fn test_unpcklpd_all_zeros() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -404,7 +455,14 @@ fn test_unpcklpd_all_ones() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -422,9 +480,14 @@ fn test_unpcklpd_alternating_pattern() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55,
-                      0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55],
-                     vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55,
+            0xAA, 0x55,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -442,8 +505,11 @@ fn test_unpcklpd_sequential_bytes() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-                     vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

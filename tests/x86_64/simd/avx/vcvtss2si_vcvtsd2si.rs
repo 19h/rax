@@ -245,7 +245,8 @@ fn test_vcvtss2si_eax_mem() {
     let test_data: [u8; 4] = [
         0x00, 0x00, 0x80, 0x3f, // 1.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -262,7 +263,8 @@ fn test_vcvtss2si_ebx_mem_negative() {
     let test_data: [u8; 4] = [
         0x00, 0x00, 0x80, 0xbf, // -1.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -279,7 +281,8 @@ fn test_vcvtss2si_ecx_mem_round_nearest() {
     let test_data: [u8; 4] = [
         0x00, 0x00, 0x00, 0x40, // 2.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -296,7 +299,8 @@ fn test_vcvtss2si_edx_mem_large() {
     let test_data: [u8; 4] = [
         0x00, 0x00, 0x7a, 0x44, // 1000.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -313,7 +317,8 @@ fn test_vcvtss2si_r8d_mem() {
     let test_data: [u8; 4] = [
         0x00, 0x00, 0xc8, 0x42, // 100.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -593,7 +598,8 @@ fn test_vcvtsd2si_eax_mem() {
     let test_data: [u8; 8] = [
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f, // 1.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -610,7 +616,8 @@ fn test_vcvtsd2si_ebx_mem_negative() {
     let test_data: [u8; 8] = [
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0xbf, // -1.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -627,7 +634,8 @@ fn test_vcvtsd2si_ecx_mem_round_nearest() {
     let test_data: [u8; 8] = [
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, // 2.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -644,7 +652,8 @@ fn test_vcvtsd2si_edx_mem_large() {
     let test_data: [u8; 8] = [
         0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x8f, 0x40, // 1000.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -661,7 +670,8 @@ fn test_vcvtsd2si_r8d_mem() {
     let test_data: [u8; 8] = [
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x59, 0x40, // 100.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }

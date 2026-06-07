@@ -3,7 +3,7 @@
 //! This module decodes Thumb instructions, which are either 16 or 32 bits wide.
 //! 32-bit Thumb-2 instructions are encoded as two halfwords.
 
-use super::{operand::*, Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
+use super::{Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType, operand::*};
 use crate::arm::ExecutionState;
 
 /// Thumb instruction decoder.

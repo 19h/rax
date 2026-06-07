@@ -100,7 +100,15 @@ fn test_vpsubb_ymm0_ymm1_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+            0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+            0x11, 0x11, 0x11, 0x11,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -115,7 +123,15 @@ fn test_vpsubb_ymm2_ymm3_mem_max_values() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -214,7 +230,10 @@ fn test_vpsubw_ymm0_ymm1_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = (0..32).flat_map(|i| ((i * 0x0101u16) as u16).to_le_bytes()).take(32).collect();
+    let data: Vec<u8> = (0..32)
+        .flat_map(|i| ((i * 0x0101u16) as u16).to_le_bytes())
+        .take(32)
+        .collect();
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -230,7 +249,15 @@ fn test_vpsubw_ymm2_ymm3_mem_max_values() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -245,7 +272,9 @@ fn test_vpsubw_ymm4_ymm5_mem_sequential() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = (0..16).flat_map(|i| (i as u16 * 0x1111).to_le_bytes()).collect();
+    let data: Vec<u8> = (0..16)
+        .flat_map(|i| (i as u16 * 0x1111).to_le_bytes())
+        .collect();
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -329,7 +358,9 @@ fn test_vpsubd_ymm0_ymm1_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = (0..8).flat_map(|i| ((i * 0x11111111u32) as u32).to_le_bytes()).collect();
+    let data: Vec<u8> = (0..8)
+        .flat_map(|i| ((i * 0x11111111u32) as u32).to_le_bytes())
+        .collect();
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -345,7 +376,15 @@ fn test_vpsubd_ymm2_ymm3_mem_max_values() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -444,7 +483,9 @@ fn test_vpsubq_ymm0_ymm1_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = (0..4).flat_map(|i| ((i * 0x1111111111111111u64) as u64).to_le_bytes()).collect();
+    let data: Vec<u8> = (0..4)
+        .flat_map(|i| ((i * 0x1111111111111111u64) as u64).to_le_bytes())
+        .collect();
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -460,7 +501,15 @@ fn test_vpsubq_ymm2_ymm3_mem_max_values() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -543,7 +592,15 @@ fn test_vpsubb_mem_unaligned_offset() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42,
+            0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42,
+            0x42, 0x42, 0x42, 0x42, 0x42,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -558,8 +615,11 @@ fn test_vpsubw_mem_pattern() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let pattern: Vec<u8> = (0..16).flat_map(|i| if i % 2 == 0 { 0xAAAAu16 } else { 0x5555u16 }.to_le_bytes()).collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let pattern: Vec<u8> = (0..16)
+        .flat_map(|i| if i % 2 == 0 { 0xAAAAu16 } else { 0x5555u16 }.to_le_bytes())
+        .collect();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -575,7 +635,8 @@ fn test_vpsubd_mem_powers_of_two() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let powers: Vec<u8> = (0..8).flat_map(|i| (1u32 << i).to_le_bytes()).collect();
-    mem.write_slice(&powers, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&powers, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -595,8 +656,12 @@ fn test_vpsubq_mem_large_values() {
         0xAAAAAAAAAAAAAAAAu64,
         0x5555555555555555u64,
         0x0000000000000001u64,
-    ].into_iter().flat_map(|v| v.to_le_bytes()).collect();
-    mem.write_slice(&large_vals, GuestAddress(ALIGNED_ADDR)).unwrap();
+    ]
+    .into_iter()
+    .flat_map(|v| v.to_le_bytes())
+    .collect();
+    mem.write_slice(&large_vals, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -626,7 +691,9 @@ fn ksub_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
 fn psub_bytes(a: u128, b: u128) -> u128 {
     let (ab, bb) = (a.to_le_bytes(), b.to_le_bytes());
     let mut out = [0u8; 16];
-    for i in 0..16 { out[i] = ab[i].wrapping_sub(bb[i]); }
+    for i in 0..16 {
+        out[i] = ab[i].wrapping_sub(bb[i]);
+    }
     u128::from_le_bytes(out)
 }
 fn psub_words(a: u128, b: u128) -> u128 {

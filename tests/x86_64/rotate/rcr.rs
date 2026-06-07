@@ -24,10 +24,10 @@
 // - Other flags: Undefined
 // - Count is 0: No flags affected
 
-use crate::common::{run_until_hlt, setup_vm};
-use rax::cpu::Registers;
-use rax::backend::emulator::x86_64::flags;
 use crate::common::{cf_set, of_set, sf_set, zf_set};
+use crate::common::{run_until_hlt, setup_vm};
+use rax::backend::emulator::x86_64::flags;
+use rax::cpu::Registers;
 
 // ============================================================================
 // 8-bit RCR tests
@@ -38,7 +38,7 @@ fn test_rcr_al_1_cf_clear() {
     // RCR AL, 1 (opcode D0 /3) with CF clear
     let code = [
         0xd0, 0xd8, // RCR AL, 1
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x42; // 0100_0010
@@ -157,7 +157,11 @@ fn test_rcr_full_rotation_9bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0x42, "AL: full 9-bit rotation returns to original");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x42,
+        "AL: full 9-bit rotation returns to original"
+    );
     assert!(!cf_set(regs.rflags), "CF: also returns to original");
 }
 
@@ -176,9 +180,11 @@ fn test_rcr_count_zero_preserves_flags() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x42, "AL: unchanged");
-    assert_eq!(regs.rflags & (flags::bits::CF | flags::bits::ZF | flags::bits::OF),
-               initial_flags & (flags::bits::CF | flags::bits::ZF | flags::bits::OF),
-               "Flags preserved");
+    assert_eq!(
+        regs.rflags & (flags::bits::CF | flags::bits::ZF | flags::bits::OF),
+        initial_flags & (flags::bits::CF | flags::bits::ZF | flags::bits::OF),
+        "Flags preserved"
+    );
 }
 
 #[test]
@@ -228,7 +234,11 @@ fn test_rcr_ax_1() {
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x4321, "AX: 0x8642 RCR 1 (CF=0) = 0x4321");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x4321,
+        "AX: 0x8642 RCR 1 (CF=0) = 0x4321"
+    );
 }
 
 #[test]
@@ -239,7 +249,11 @@ fn test_rcr_ax_1_cf_set() {
     regs.rflags = 0x2 | flags::bits::CF; // CF set
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0xC321, "AX: 0x8642 RCR 1 (CF=1) = 0xC321");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0xC321,
+        "AX: 0x8642 RCR 1 (CF=1) = 0xC321"
+    );
 }
 
 #[test]
@@ -284,7 +298,11 @@ fn test_rcr_bx() {
     regs.rflags = 0x2 | flags::bits::CF; // CF set
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbx & 0xFFFF, 0x8000, "BX: 0x0001 RCR 1 (CF=1) = 0x8000");
+    assert_eq!(
+        regs.rbx & 0xFFFF,
+        0x8000,
+        "BX: 0x0001 RCR 1 (CF=1) = 0x8000"
+    );
 }
 
 #[test]
@@ -369,7 +387,11 @@ fn test_rcr_eax_full_rotation() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // 33 & 31 = 1, so effective count is 1
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x091A2B3C, "EAX: RCR 33 (masked to 1)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x091A2B3C,
+        "EAX: RCR 33 (masked to 1)"
+    );
 }
 
 #[test]
@@ -597,9 +619,11 @@ fn test_rcr_r15() {
 
 #[test]
 fn test_rcr_mem8() {
-    use crate::common::{DATA_ADDR, write_mem_u8, read_mem_u8};
+    use crate::common::{DATA_ADDR, read_mem_u8, write_mem_u8};
     let code = [
-        0xd0, 0x1c, 0x25, // RCR byte ptr [disp32], 1
+        0xd0,
+        0x1c,
+        0x25, // RCR byte ptr [disp32], 1
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -617,9 +641,12 @@ fn test_rcr_mem8() {
 
 #[test]
 fn test_rcr_mem16() {
-    use crate::common::{DATA_ADDR, write_mem_u16, read_mem_u16};
+    use crate::common::{DATA_ADDR, read_mem_u16, write_mem_u16};
     let code = [
-        0x66, 0xc1, 0x1c, 0x25, // RCR word ptr [disp32], imm8
+        0x66,
+        0xc1,
+        0x1c,
+        0x25, // RCR word ptr [disp32], imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -637,9 +664,11 @@ fn test_rcr_mem16() {
 
 #[test]
 fn test_rcr_mem32() {
-    use crate::common::{DATA_ADDR, write_mem_u32, read_mem_u32};
+    use crate::common::{DATA_ADDR, read_mem_u32, write_mem_u32};
     let code = [
-        0xd3, 0x1c, 0x25, // RCR dword ptr [disp32], CL
+        0xd3,
+        0x1c,
+        0x25, // RCR dword ptr [disp32], CL
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -652,14 +681,21 @@ fn test_rcr_mem32() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     write_mem_u32(&mem, 0x12345678);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_u32(&mem), 0xF0123456, "Memory: 0x12345678 RCR 8 (CF=0)");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0xF0123456,
+        "Memory: 0x12345678 RCR 8 (CF=0)"
+    );
 }
 
 #[test]
 fn test_rcr_mem64() {
-    use crate::common::{DATA_ADDR, write_mem_u64, read_mem_u64};
+    use crate::common::{DATA_ADDR, read_mem_u64, write_mem_u64};
     let code = [
-        0x48, 0xc1, 0x1c, 0x25, // RCR qword ptr [disp32], imm8
+        0x48,
+        0xc1,
+        0x1c,
+        0x25, // RCR qword ptr [disp32], imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -672,5 +708,9 @@ fn test_rcr_mem64() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     write_mem_u64(&mem, 0x123456789ABCDEF0);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_u64(&mem), 0xBDE0123456789ABC, "Memory: RCR 16 (CF=0)");
+    assert_eq!(
+        read_mem_u64(&mem),
+        0xBDE0123456789ABC,
+        "Memory: RCR 16 (CF=0)"
+    );
 }

@@ -18,7 +18,11 @@ fn test_movzx_ax_bl_all_ones() {
     regs.rbx = 0xFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x00FF, "AX should be zero-extended to 0x00FF, not 0xFFFF");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x00FF,
+        "AX should be zero-extended to 0x00FF, not 0xFFFF"
+    );
 }
 
 #[test]
@@ -38,7 +42,11 @@ fn test_movzx_ax_bl_positive() {
     regs.rbx = 0x7F; // 127
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x007F, "AX should be zero-extended to 0x007F");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x007F,
+        "AX should be zero-extended to 0x007F"
+    );
 }
 
 #[test]
@@ -48,7 +56,11 @@ fn test_movzx_cx_dl() {
     regs.rdx = 0x80; // Would be -128 as signed, but 128 as unsigned
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx & 0xFFFF, 0x0080, "CX should be zero-extended to 0x0080");
+    assert_eq!(
+        regs.rcx & 0xFFFF,
+        0x0080,
+        "CX should be zero-extended to 0x0080"
+    );
 }
 
 // Note: SPL register test removed
@@ -64,7 +76,11 @@ fn test_movzx_eax_bl_all_ones() {
     regs.rbx = 0xFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x000000FF, "EAX should be zero-extended to 0x000000FF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x000000FF,
+        "EAX should be zero-extended to 0x000000FF"
+    );
 }
 
 #[test]
@@ -74,7 +90,11 @@ fn test_movzx_eax_bl_sign_bit_set() {
     regs.rbx = 0x80; // sign bit set
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000080, "EAX should zero-extend, not sign-extend");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000080,
+        "EAX should zero-extend, not sign-extend"
+    );
 }
 
 #[test]
@@ -84,7 +104,11 @@ fn test_movzx_eax_cl() {
     regs.rcx = 0x42;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000042, "EAX should be zero-extended from CL");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000042,
+        "EAX should be zero-extended from CL"
+    );
 }
 
 #[test]
@@ -94,7 +118,11 @@ fn test_movzx_edx_bl() {
     regs.rbx = 0xAA;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x000000AA, "EDX should be zero-extended");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x000000AA,
+        "EDX should be zero-extended"
+    );
 }
 
 #[test]
@@ -104,7 +132,11 @@ fn test_movzx_esi_dl() {
     regs.rdx = 0xFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rsi & 0xFFFFFFFF, 0x000000FF, "ESI should be zero-extended from DL");
+    assert_eq!(
+        regs.rsi & 0xFFFFFFFF,
+        0x000000FF,
+        "ESI should be zero-extended from DL"
+    );
 }
 
 #[test]
@@ -114,7 +146,11 @@ fn test_movzx_edi_al() {
     regs.rax = 0xCC;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdi & 0xFFFFFFFF, 0x000000CC, "EDI should be zero-extended from AL");
+    assert_eq!(
+        regs.rdi & 0xFFFFFFFF,
+        0x000000CC,
+        "EDI should be zero-extended from AL"
+    );
 }
 
 // ============================================================================
@@ -128,7 +164,10 @@ fn test_movzx_rax_bl_all_ones() {
     regs.rbx = 0xFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x00000000000000FF, "RAX should be zero-extended to 0x00000000000000FF");
+    assert_eq!(
+        regs.rax, 0x00000000000000FF,
+        "RAX should be zero-extended to 0x00000000000000FF"
+    );
 }
 
 #[test]
@@ -138,7 +177,10 @@ fn test_movzx_rax_bl_zero() {
     regs.rbx = 0x00;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000000000000, "RAX should be 0x0000000000000000");
+    assert_eq!(
+        regs.rax, 0x0000000000000000,
+        "RAX should be 0x0000000000000000"
+    );
 }
 
 // Note: SPL register test removed
@@ -154,7 +196,11 @@ fn test_movzx_eax_bx_all_ones() {
     regs.rbx = 0xFFFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0000FFFF, "EAX should be zero-extended to 0x0000FFFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x0000FFFF,
+        "EAX should be zero-extended to 0x0000FFFF"
+    );
 }
 
 #[test]
@@ -164,7 +210,11 @@ fn test_movzx_eax_bx_sign_bit_set() {
     regs.rbx = 0x8000; // sign bit set
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00008000, "EAX should zero-extend, not sign-extend");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00008000,
+        "EAX should zero-extend, not sign-extend"
+    );
 }
 
 #[test]
@@ -174,7 +224,11 @@ fn test_movzx_eax_cx() {
     regs.rcx = 0x1234;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00001234, "EAX should be zero-extended from CX");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00001234,
+        "EAX should be zero-extended from CX"
+    );
 }
 
 #[test]
@@ -184,7 +238,11 @@ fn test_movzx_edx_bx() {
     regs.rbx = 0xABCD;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x0000ABCD, "EDX should be zero-extended");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x0000ABCD,
+        "EDX should be zero-extended"
+    );
 }
 
 // ============================================================================
@@ -198,7 +256,10 @@ fn test_movzx_rax_bx_all_ones() {
     regs.rbx = 0xFFFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x000000000000FFFF, "RAX should be zero-extended to 0x000000000000FFFF");
+    assert_eq!(
+        regs.rax, 0x000000000000FFFF,
+        "RAX should be zero-extended to 0x000000000000FFFF"
+    );
 }
 
 #[test]
@@ -208,7 +269,10 @@ fn test_movzx_rax_bx_zero() {
     regs.rbx = 0x0000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000000000000, "RAX should be 0x0000000000000000");
+    assert_eq!(
+        regs.rax, 0x0000000000000000,
+        "RAX should be 0x0000000000000000"
+    );
 }
 
 #[test]
@@ -218,7 +282,10 @@ fn test_movzx_rcx_di() {
     regs.rdi = 0xBEEF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0x000000000000BEEF, "RCX should be zero-extended from DI");
+    assert_eq!(
+        regs.rcx, 0x000000000000BEEF,
+        "RCX should be zero-extended from DI"
+    );
 }
 
 // ============================================================================
@@ -232,7 +299,11 @@ fn test_movzx_r8d_bl() {
     regs.rbx = 0xFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0x000000FF, "R8D should be zero-extended");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0x000000FF,
+        "R8D should be zero-extended"
+    );
 }
 
 #[test]
@@ -242,7 +313,11 @@ fn test_movzx_eax_r8b() {
     regs.r8 = 0xFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x000000FF, "EAX should be zero-extended from R8B");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x000000FF,
+        "EAX should be zero-extended from R8B"
+    );
 }
 
 #[test]
@@ -252,7 +327,10 @@ fn test_movzx_r9_r10b() {
     regs.r10 = 0x80;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r9, 0x0000000000000080, "R9 should be zero-extended from R10B");
+    assert_eq!(
+        regs.r9, 0x0000000000000080,
+        "R9 should be zero-extended from R10B"
+    );
 }
 
 #[test]
@@ -262,7 +340,10 @@ fn test_movzx_r11_r12b() {
     regs.r12 = 0x7F;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r11, 0x000000000000007F, "R11 should be zero-extended from R12B");
+    assert_eq!(
+        regs.r11, 0x000000000000007F,
+        "R11 should be zero-extended from R12B"
+    );
 }
 
 #[test]
@@ -272,7 +353,11 @@ fn test_movzx_r15d_bl() {
     regs.rbx = 0x42;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r15 & 0xFFFFFFFF, 0x00000042, "R15D should be zero-extended");
+    assert_eq!(
+        regs.r15 & 0xFFFFFFFF,
+        0x00000042,
+        "R15D should be zero-extended"
+    );
 }
 
 // ============================================================================
@@ -287,7 +372,10 @@ fn test_movzx_clears_destination_eax() {
     regs.rbx = 0x01;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000000000001, "RAX should be completely cleared except for byte");
+    assert_eq!(
+        regs.rax, 0x0000000000000001,
+        "RAX should be completely cleared except for byte"
+    );
 }
 
 // Note: test removed
@@ -370,7 +458,12 @@ fn test_movzx_sequential_byte_values() {
         regs.rbx = value as u64;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(regs.rax & 0xFFFFFFFF, value as u64, "MOVZX should zero-extend 0x{:02X}", value);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            value as u64,
+            "MOVZX should zero-extend 0x{:02X}",
+            value
+        );
     }
 }
 
@@ -384,7 +477,12 @@ fn test_movzx_word_values() {
         regs.rbx = value;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(regs.rax & 0xFFFFFFFF, value as u64, "MOVZX should zero-extend 0x{:04X}", value);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            value as u64,
+            "MOVZX should zero-extend 0x{:04X}",
+            value
+        );
     }
 }
 
@@ -443,7 +541,12 @@ fn test_movzx_ascii_characters() {
         regs.rbx = value;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(regs.rax & 0xFFFFFFFF, value, "MOVZX should zero-extend ASCII value 0x{:02X}", value);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            value,
+            "MOVZX should zero-extend ASCII value 0x{:02X}",
+            value
+        );
     }
 }
 
@@ -458,7 +561,11 @@ fn test_movzx_extract_low_byte() {
     regs.rbx = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000078, "Should extract low byte 0x78");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000078,
+        "Should extract low byte 0x78"
+    );
 }
 
 #[test]
@@ -468,7 +575,11 @@ fn test_movzx_extract_low_word() {
     regs.rbx = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00005678, "Should extract low word 0x5678");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00005678,
+        "Should extract low word 0x5678"
+    );
 }
 
 // ============================================================================
@@ -491,8 +602,16 @@ fn test_movzx_vs_movsx_negative_byte() {
     let (mut vcpu, _) = setup_vm(&code_sx, Some(regs));
     let regs_sx = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs_zx.rax & 0xFFFFFFFF, 0x00000080, "MOVZX should zero-extend to 0x00000080");
-    assert_eq!(regs_sx.rax & 0xFFFFFFFF, 0xFFFFFF80, "MOVSX should sign-extend to 0xFFFFFF80");
+    assert_eq!(
+        regs_zx.rax & 0xFFFFFFFF,
+        0x00000080,
+        "MOVZX should zero-extend to 0x00000080"
+    );
+    assert_eq!(
+        regs_sx.rax & 0xFFFFFFFF,
+        0xFFFFFF80,
+        "MOVSX should sign-extend to 0xFFFFFF80"
+    );
 }
 
 #[test]
@@ -511,8 +630,16 @@ fn test_movzx_vs_movsx_negative_word() {
     let (mut vcpu, _) = setup_vm(&code_sx, Some(regs));
     let regs_sx = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs_zx.rax & 0xFFFFFFFF, 0x00008000, "MOVZX should zero-extend to 0x00008000");
-    assert_eq!(regs_sx.rax & 0xFFFFFFFF, 0xFFFF8000, "MOVSX should sign-extend to 0xFFFF8000");
+    assert_eq!(
+        regs_zx.rax & 0xFFFFFFFF,
+        0x00008000,
+        "MOVZX should zero-extend to 0x00008000"
+    );
+    assert_eq!(
+        regs_sx.rax & 0xFFFFFFFF,
+        0xFFFF8000,
+        "MOVSX should sign-extend to 0xFFFF8000"
+    );
 }
 
 // ============================================================================
@@ -527,7 +654,10 @@ fn test_movzx_eax_clears_upper_32() {
     regs.rbx = 0xFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x00000000000000FF, "Upper 32 bits should be zeroed");
+    assert_eq!(
+        regs.rax, 0x00000000000000FF,
+        "Upper 32 bits should be zeroed"
+    );
 }
 
 // ============================================================================
@@ -547,9 +677,21 @@ fn test_movzx_multiple_operations() {
     regs.rdx = 0x7F;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x000000FF, "EAX should be 0x000000FF");
-    assert_eq!(regs.rcx & 0xFFFFFFFF, 0x0000007F, "ECX should be 0x0000007F");
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x0000007F, "EDX should be 0x0000007F");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x000000FF,
+        "EAX should be 0x000000FF"
+    );
+    assert_eq!(
+        regs.rcx & 0xFFFFFFFF,
+        0x0000007F,
+        "ECX should be 0x0000007F"
+    );
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x0000007F,
+        "EDX should be 0x0000007F"
+    );
 }
 
 // ============================================================================
@@ -564,7 +706,11 @@ fn test_movzx_practical_extract_flag() {
     regs.rbx = 0x42; // Some packed data, extracting low byte
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000042, "Should extract byte as unsigned value");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000042,
+        "Should extract byte as unsigned value"
+    );
 }
 
 // Note: test with arithmetic after MOVZX removed

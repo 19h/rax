@@ -25,8 +25,8 @@ fn test_monitor_basic() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x2000; // Address to monitor
-    regs.rcx = 0;      // Extensions (must be 0)
-    regs.rdx = 0;      // Hints
+    regs.rcx = 0; // Extensions (must be 0)
+    regs.rdx = 0; // Hints
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -211,8 +211,8 @@ fn test_mwait_basic() {
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rax = 0;      // Hints
-    regs.rcx = 0;      // Extensions
+    regs.rax = 0; // Hints
+    regs.rcx = 0; // Extensions
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -289,7 +289,7 @@ fn test_mwait_with_c1_state() {
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rax = 0x10;   // C1 state (bits 7:4 = 1)
+    regs.rax = 0x10; // C1 state (bits 7:4 = 1)
     regs.rcx = 0;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -305,7 +305,7 @@ fn test_mwait_with_c2_state() {
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rax = 0x20;   // C2 state (bits 7:4 = 2)
+    regs.rax = 0x20; // C2 state (bits 7:4 = 2)
     regs.rcx = 0;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -321,7 +321,7 @@ fn test_mwait_with_substate() {
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rax = 0x13;   // C1 state, substate 3
+    regs.rax = 0x13; // C1 state, substate 3
     regs.rcx = 0;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -357,9 +357,9 @@ fn test_monitor_mwait_different_addresses() {
     // MONITOR on one address, then change RAX before MWAIT
     let code = [
         0x48, 0xc7, 0xc0, 0x00, 0x20, 0x00, 0x00, // MOV rax, 0x2000
-        0x0f, 0x01, 0xc8,                         // MONITOR
+        0x0f, 0x01, 0xc8, // MONITOR
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // MOV rax, 0x0 (hints for MWAIT)
-        0x0f, 0x01, 0xc9,                         // MWAIT
+        0x0f, 0x01, 0xc9, // MWAIT
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -414,10 +414,10 @@ fn test_monitor_without_mwait() {
 fn test_monitor_mwait_with_operations_between() {
     // MONITOR/MWAIT with operations in between
     let code = [
-        0x0f, 0x01, 0xc8,                         // MONITOR
+        0x0f, 0x01, 0xc8, // MONITOR
         0x48, 0xc7, 0xc3, 0x42, 0x00, 0x00, 0x00, // MOV rbx, 0x42
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // MOV rax, 0x0 (hints)
-        0x0f, 0x01, 0xc9,                         // MWAIT
+        0x0f, 0x01, 0xc9, // MWAIT
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -494,7 +494,7 @@ fn test_mwait_interleaved_with_operations() {
     // MWAIT interleaved with other operations
     let code = [
         0x48, 0xc7, 0xc3, 0x11, 0x00, 0x00, 0x00, // MOV rbx, 0x11
-        0x0f, 0x01, 0xc9,                         // MWAIT
+        0x0f, 0x01, 0xc9, // MWAIT
         0x48, 0xc7, 0xc1, 0x22, 0x00, 0x00, 0x00, // MOV rcx, 0x22
         0xf4,
     ];
@@ -513,9 +513,9 @@ fn test_monitor_mwait_loop_pattern() {
     // Simulated loop pattern with MONITOR/MWAIT
     let code = [
         0x48, 0xc7, 0xc3, 0x00, 0x00, 0x00, 0x00, // MOV rbx, 0
-        0x0f, 0x01, 0xc8,                         // MONITOR
-        0x0f, 0x01, 0xc9,                         // MWAIT
-        0x48, 0xff, 0xc3,                         // INC rbx
+        0x0f, 0x01, 0xc8, // MONITOR
+        0x0f, 0x01, 0xc9, // MWAIT
+        0x48, 0xff, 0xc3, // INC rbx
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -566,9 +566,9 @@ fn test_mwait_with_zero_hints() {
 fn test_monitor_mwait_memory_read_after() {
     // MONITOR/MWAIT followed by memory read
     let code = [
-        0x0f, 0x01, 0xc8,             // MONITOR
+        0x0f, 0x01, 0xc8, // MONITOR
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // MOV rax, 0
-        0x0f, 0x01, 0xc9,             // MWAIT
+        0x0f, 0x01, 0xc9, // MWAIT
         0x48, 0x8b, 0x1d, 0x00, 0x00, 0x00, 0x00, // MOV rbx, [rip]
         0xf4,
     ];
@@ -609,7 +609,7 @@ fn test_mwait_with_c3_state() {
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rax = 0x30;   // C3 state (bits 7:4 = 3)
+    regs.rax = 0x30; // C3 state (bits 7:4 = 3)
     regs.rcx = 0;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -727,10 +727,10 @@ fn test_monitor_mwait_with_increments() {
     // MONITOR/MWAIT with counter increments
     let code = [
         0x48, 0xc7, 0xc3, 0x00, 0x00, 0x00, 0x00, // MOV rbx, 0
-        0x0f, 0x01, 0xc8,                         // MONITOR
-        0x48, 0xff, 0xc3,                         // INC rbx
-        0x0f, 0x01, 0xc9,                         // MWAIT
-        0x48, 0xff, 0xc3,                         // INC rbx
+        0x0f, 0x01, 0xc8, // MONITOR
+        0x48, 0xff, 0xc3, // INC rbx
+        0x0f, 0x01, 0xc9, // MWAIT
+        0x48, 0xff, 0xc3, // INC rbx
         0xf4,
     ];
     let mut regs = Registers::default();

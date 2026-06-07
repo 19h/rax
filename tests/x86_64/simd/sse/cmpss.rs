@@ -68,8 +68,10 @@ fn test_cmpss_eq_different_values() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -92,8 +94,10 @@ fn test_cmpss_eq_positive_and_negative_zero() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(0.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(-0.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(0.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(-0.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -112,7 +116,8 @@ fn test_cmpss_eq_same_denormal() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let denormal = f32::from_bits(1);
-    mem.write_slice(&float_bits(denormal), GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&float_bits(denormal), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -139,8 +144,10 @@ fn test_cmpss_lt_true() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -163,8 +170,10 @@ fn test_cmpss_lt_false() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(3.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(3.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -182,7 +191,8 @@ fn test_cmpss_lt_equal_false() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(5.0), GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&float_bits(5.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -205,8 +215,10 @@ fn test_cmpss_lt_negative_values() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(-5.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(-2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(-5.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(-2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -233,8 +245,10 @@ fn test_cmpss_le_less() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(1.5), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(1.5), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -252,7 +266,8 @@ fn test_cmpss_le_equal() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(3.14), GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&float_bits(3.14), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -275,8 +290,10 @@ fn test_cmpss_le_greater() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(5.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(5.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -299,8 +316,10 @@ fn test_cmpss_le_with_zeros() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(0.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(0.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(0.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(0.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -327,8 +346,10 @@ fn test_cmpss_unord_ordered() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -346,7 +367,8 @@ fn test_cmpss_unord_same_value() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(7.5), GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&float_bits(7.5), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -373,8 +395,10 @@ fn test_cmpss_neq_different() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(3.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(3.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -392,7 +416,8 @@ fn test_cmpss_neq_equal() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -415,8 +440,10 @@ fn test_cmpss_neq_tiny_difference() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(1.0000001), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(1.0000001), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -443,8 +470,10 @@ fn test_cmpss_nlt_greater() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(5.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(5.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -462,7 +491,8 @@ fn test_cmpss_nlt_equal() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&float_bits(4.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -485,8 +515,10 @@ fn test_cmpss_nlt_less() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(3.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(3.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -513,8 +545,10 @@ fn test_cmpss_nle_greater() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(6.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(6.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -532,7 +566,8 @@ fn test_cmpss_nle_equal() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(1.5), GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&float_bits(1.5), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -555,8 +590,10 @@ fn test_cmpss_nle_less_or_equal() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(3.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(3.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -579,8 +616,10 @@ fn test_cmpss_nle_negative_values() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(-1.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(-3.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(-1.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(-3.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -607,8 +646,10 @@ fn test_cmpss_ord_both_ordered() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(10.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(20.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(10.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(20.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -626,7 +667,8 @@ fn test_cmpss_ord_same_value() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(99.99), GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&float_bits(99.99), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -649,8 +691,10 @@ fn test_cmpss_ord_very_small_values() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(1e-10), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(2e-10), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(1e-10), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(2e-10), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -673,8 +717,10 @@ fn test_cmpss_ord_large_values() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(1e10), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(2e10), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(1e10), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(2e10), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -701,8 +747,10 @@ fn test_cmpss_eq_infinities() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(f32::INFINITY), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(f32::INFINITY), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(f32::INFINITY), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(f32::INFINITY), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -725,8 +773,10 @@ fn test_cmpss_lt_infinity() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(f32::INFINITY), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(f32::INFINITY), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -749,8 +799,10 @@ fn test_cmpss_lt_negative_infinity() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(f32::NEG_INFINITY), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(f32::NEG_INFINITY), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -773,8 +825,10 @@ fn test_cmpss_neq_large_numbers() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(1e30), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(2e30), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(1e30), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(2e30), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -797,8 +851,10 @@ fn test_cmpss_le_mixed_signs() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(-100.5), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(100.5), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(-100.5), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(100.5), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -821,8 +877,10 @@ fn test_cmpss_nlt_large_positive_numbers() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(1e20), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(1e19), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(1e20), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(1e19), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -845,8 +903,10 @@ fn test_cmpss_nle_zero_comparison() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(0.1), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(0.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(0.1), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(0.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -869,8 +929,10 @@ fn test_cmpss_ord_both_negative_zero() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(-0.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(-0.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(-0.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(-0.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -893,8 +955,10 @@ fn test_cmpss_eq_mixed_special_values() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&float_bits(f32::NEG_INFINITY), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(f32::INFINITY), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(f32::NEG_INFINITY), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(f32::INFINITY), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -918,7 +982,9 @@ fn test_cmpss_lt_with_denormal_values() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let denormal = f32::from_bits(1);
-    mem.write_slice(&float_bits(denormal), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&float_bits(denormal), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&float_bits(1.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

@@ -487,12 +487,15 @@ fn test_pshufhw_xmm0_mem_imm_0xe4() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     // Write test data to memory (8 words)
-    let word_data: [u16; 8] = [0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888];
+    let word_data: [u16; 8] = [
+        0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888,
+    ];
     let mut bytes = Vec::new();
     for w in &word_data {
         bytes.extend_from_slice(&w.to_le_bytes());
     }
-    mem.write_slice(&bytes, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&bytes, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -512,12 +515,15 @@ fn test_pshufhw_xmm1_mem_imm_0x1b() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    let word_data: [u16; 8] = [0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD, 0xEEEE, 0xFFFF, 0x0000, 0x1111];
+    let word_data: [u16; 8] = [
+        0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD, 0xEEEE, 0xFFFF, 0x0000, 0x1111,
+    ];
     let mut bytes = Vec::new();
     for w in &word_data {
         bytes.extend_from_slice(&w.to_le_bytes());
     }
-    mem.write_slice(&bytes, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&bytes, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -536,7 +542,14 @@ fn test_pshufhw_xmm2_mem_imm_0x00() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -554,7 +567,14 @@ fn test_pshufhw_xmm3_mem_imm_0xff() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
+            0xAA, 0xAA,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -572,7 +592,14 @@ fn test_pshufhw_xmm7_mem_imm_0x4e() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55,
+            0x55, 0x55,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -594,7 +621,14 @@ fn test_pshufhw_xmm0_mem_displacement_imm_0xe4() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77,
+            0x77, 0x77,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -612,7 +646,14 @@ fn test_pshufhw_xmm1_mem_rbx_imm_0xe4() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88,
+            0x88, 0x88,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

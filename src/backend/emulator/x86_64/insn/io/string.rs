@@ -107,19 +107,11 @@ fn sub_rep_count(vcpu: &mut X86_64Vcpu, addr_size: u8, count: u64) {
 
 fn addr_size_bytes(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
     if vcpu.sregs.cs.l {
-        if ctx.address_size_override {
-            4
-        } else {
-            8
-        }
+        if ctx.address_size_override { 4 } else { 8 }
     } else {
         let default_16bit = !vcpu.sregs.cs.db;
         let is_16bit = default_16bit ^ ctx.address_size_override;
-        if is_16bit {
-            2
-        } else {
-            4
-        }
+        if is_16bit { 2 } else { 4 }
     }
 }
 

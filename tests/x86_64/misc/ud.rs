@@ -34,9 +34,9 @@ fn test_ud2_basic() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD2 should cause exception, not reach HLT"),
-        Ok(VcpuExit::Shutdown) => {}, // Exception occurred
-        Err(_) => {}, // Exception occurred
-        _ => {}, // Other exit is acceptable (implementation specific)
+        Ok(VcpuExit::Shutdown) => {} // Exception occurred
+        Err(_) => {}                 // Exception occurred
+        _ => {}                      // Other exit is acceptable (implementation specific)
     }
 }
 
@@ -76,9 +76,9 @@ fn test_ud1_rax_rax() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD1 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -94,9 +94,9 @@ fn test_ud1_rbx_rcx() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD1 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -112,9 +112,9 @@ fn test_ud1_memory_rax() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD1 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -130,9 +130,9 @@ fn test_ud0_rax_rax() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD0 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -148,9 +148,9 @@ fn test_ud0_rdx_rsi() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD0 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -166,9 +166,9 @@ fn test_ud0_memory() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD0 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -185,9 +185,9 @@ fn test_ud2_first_triggers() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("First UD2 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -203,9 +203,9 @@ fn test_ud1_rdi_rsi() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD1 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -221,9 +221,9 @@ fn test_ud1_rbp_rsp() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD1 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -239,9 +239,9 @@ fn test_ud0_all_bits() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD0 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -258,9 +258,9 @@ fn test_ud2_after_mov() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD2 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -276,9 +276,9 @@ fn test_ud1_with_disp8() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD1 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -294,9 +294,9 @@ fn test_ud0_with_sib() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD0 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -312,9 +312,9 @@ fn test_ud1_rex_w() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD1 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -330,9 +330,9 @@ fn test_ud0_rex_w() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD0 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -348,9 +348,9 @@ fn test_ud2_rex_prefix() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD2 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -366,9 +366,9 @@ fn test_ud1_r8_r9() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD1 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -384,9 +384,9 @@ fn test_ud0_r15_r14() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD0 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -403,9 +403,9 @@ fn test_ud2_always_undefined() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD2 is guaranteed to be undefined"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -421,9 +421,9 @@ fn test_ud1_modrm_00() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD1 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -439,9 +439,9 @@ fn test_ud0_modrm_00() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD0 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -457,9 +457,9 @@ fn test_ud1_modrm_patterns() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD1 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -475,9 +475,9 @@ fn test_ud0_modrm_patterns() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD0 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }
 
@@ -494,8 +494,8 @@ fn test_ud2_instruction_pointer_references_ud() {
     let result = vcpu.run();
     match result {
         Ok(VcpuExit::Hlt) => panic!("UD2 should cause exception"),
-        Ok(VcpuExit::Shutdown) => {},
-        Err(_) => {},
-        _ => {},
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
     }
 }

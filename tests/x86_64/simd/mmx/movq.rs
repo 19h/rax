@@ -29,7 +29,7 @@ fn test_movq_mm0_mm1() {
     // Test MOVQ MM0, MM1
     let code = vec![
         0x0f, 0x6f, 0x0c, 0x25, 0x00, 0x20, 0x00, 0x00, // MOVQ MM1, [0x2000]
-        0x0f, 0x6f, 0xc1,                               // MOVQ MM0, MM1
+        0x0f, 0x6f, 0xc1, // MOVQ MM0, MM1
         0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // MOVQ [0x3000], MM0
         0xf4,
     ];
@@ -40,8 +40,10 @@ fn test_movq_mm0_mm1() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0x0123456789ABCDEF,
-        "MOVQ MM0, MM1 should copy value");
+    assert_eq!(
+        result, 0x0123456789ABCDEF,
+        "MOVQ MM0, MM1 should copy value"
+    );
 }
 
 #[test]
@@ -49,7 +51,7 @@ fn test_movq_mm2_mm3() {
     // Test MOVQ MM2, MM3
     let code = vec![
         0x0f, 0x6f, 0x1c, 0x25, 0x00, 0x20, 0x00, 0x00, // MOVQ MM3, [0x2000]
-        0x0f, 0x6f, 0xd3,                               // MOVQ MM2, MM3
+        0x0f, 0x6f, 0xd3, // MOVQ MM2, MM3
         0x0f, 0x7f, 0x14, 0x25, 0x00, 0x30, 0x00, 0x00, // MOVQ [0x3000], MM2
         0xf4,
     ];
@@ -60,8 +62,10 @@ fn test_movq_mm2_mm3() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0xFEDCBA9876543210,
-        "MOVQ MM2, MM3 should copy value");
+    assert_eq!(
+        result, 0xFEDCBA9876543210,
+        "MOVQ MM2, MM3 should copy value"
+    );
 }
 
 #[test]
@@ -69,7 +73,7 @@ fn test_movq_mm4_mm5() {
     // Test MOVQ MM4, MM5
     let code = vec![
         0x0f, 0x6f, 0x2c, 0x25, 0x00, 0x20, 0x00, 0x00, // MOVQ MM5, [0x2000]
-        0x0f, 0x6f, 0xe5,                               // MOVQ MM4, MM5
+        0x0f, 0x6f, 0xe5, // MOVQ MM4, MM5
         0x0f, 0x7f, 0x24, 0x25, 0x00, 0x30, 0x00, 0x00, // MOVQ [0x3000], MM4
         0xf4,
     ];
@@ -80,8 +84,10 @@ fn test_movq_mm4_mm5() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0xAAAA_BBBB_CCCC_DDDD,
-        "MOVQ MM4, MM5 should copy value");
+    assert_eq!(
+        result, 0xAAAA_BBBB_CCCC_DDDD,
+        "MOVQ MM4, MM5 should copy value"
+    );
 }
 
 #[test]
@@ -89,7 +95,7 @@ fn test_movq_mm6_mm7() {
     // Test MOVQ MM6, MM7
     let code = vec![
         0x0f, 0x6f, 0x3c, 0x25, 0x00, 0x20, 0x00, 0x00, // MOVQ MM7, [0x2000]
-        0x0f, 0x6f, 0xf7,                               // MOVQ MM6, MM7
+        0x0f, 0x6f, 0xf7, // MOVQ MM6, MM7
         0x0f, 0x7f, 0x34, 0x25, 0x00, 0x30, 0x00, 0x00, // MOVQ [0x3000], MM6
         0xf4,
     ];
@@ -100,8 +106,10 @@ fn test_movq_mm6_mm7() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0x1111_2222_3333_4444,
-        "MOVQ MM6, MM7 should copy value");
+    assert_eq!(
+        result, 0x1111_2222_3333_4444,
+        "MOVQ MM6, MM7 should copy value"
+    );
 }
 
 #[test]
@@ -109,7 +117,7 @@ fn test_movq_same_register() {
     // Test MOVQ MM0, MM0 (copy to itself)
     let code = vec![
         0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // MOVQ MM0, [0x2000]
-        0x0f, 0x6f, 0xc0,                               // MOVQ MM0, MM0
+        0x0f, 0x6f, 0xc0, // MOVQ MM0, MM0
         0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // MOVQ [0x3000], MM0
         0xf4,
     ];
@@ -120,8 +128,10 @@ fn test_movq_same_register() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0xCAFEBABEDEADBEEF,
-        "MOVQ MM0, MM0 should preserve value");
+    assert_eq!(
+        result, 0xCAFEBABEDEADBEEF,
+        "MOVQ MM0, MM0 should preserve value"
+    );
 }
 
 // ============================================================================
@@ -143,8 +153,10 @@ fn test_movq_mm0_m64() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0x0011223344556677,
-        "MOVQ MM0, [mem] should load from memory");
+    assert_eq!(
+        result, 0x0011223344556677,
+        "MOVQ MM0, [mem] should load from memory"
+    );
 }
 
 #[test]
@@ -162,17 +174,18 @@ fn test_movq_mm1_m64() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0x8877665544332211,
-        "MOVQ MM1, [mem] should load from memory");
+    assert_eq!(
+        result, 0x8877665544332211,
+        "MOVQ MM1, [mem] should load from memory"
+    );
 }
 
 #[test]
 fn test_movq_mm_m64_all_zeros() {
     // Test loading all zeros from memory
     let code = vec![
-        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xf4,
+        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00,
+        0x00, 0xf4,
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -181,17 +194,15 @@ fn test_movq_mm_m64_all_zeros() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0x0000000000000000,
-        "MOVQ should load all zeros");
+    assert_eq!(result, 0x0000000000000000, "MOVQ should load all zeros");
 }
 
 #[test]
 fn test_movq_mm_m64_all_ones() {
     // Test loading all ones from memory
     let code = vec![
-        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xf4,
+        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00,
+        0x00, 0xf4,
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -200,17 +211,15 @@ fn test_movq_mm_m64_all_ones() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0xFFFFFFFFFFFFFFFF,
-        "MOVQ should load all ones");
+    assert_eq!(result, 0xFFFFFFFFFFFFFFFF, "MOVQ should load all ones");
 }
 
 #[test]
 fn test_movq_mm_m64_alternating() {
     // Test loading alternating bit pattern
     let code = vec![
-        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xf4,
+        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00,
+        0x00, 0xf4,
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -219,8 +228,10 @@ fn test_movq_mm_m64_alternating() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0xAAAAAAAAAAAAAAAA,
-        "MOVQ should load alternating pattern");
+    assert_eq!(
+        result, 0xAAAAAAAAAAAAAAAA,
+        "MOVQ should load alternating pattern"
+    );
 }
 
 // ============================================================================
@@ -242,8 +253,10 @@ fn test_movq_m64_mm0() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3008);
-    assert_eq!(result, 0x123456789ABCDEF0,
-        "MOVQ [mem], MM0 should store to memory");
+    assert_eq!(
+        result, 0x123456789ABCDEF0,
+        "MOVQ [mem], MM0 should store to memory"
+    );
 }
 
 #[test]
@@ -261,17 +274,18 @@ fn test_movq_m64_mm7() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3010);
-    assert_eq!(result, 0xFEDCBA9876543210,
-        "MOVQ [mem], MM7 should store to memory");
+    assert_eq!(
+        result, 0xFEDCBA9876543210,
+        "MOVQ [mem], MM7 should store to memory"
+    );
 }
 
 #[test]
 fn test_movq_store_all_zeros() {
     // Test storing all zeros to memory
     let code = vec![
-        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xf4,
+        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00,
+        0x00, 0xf4,
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -281,17 +295,15 @@ fn test_movq_store_all_zeros() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0x0000000000000000,
-        "MOVQ should store all zeros");
+    assert_eq!(result, 0x0000000000000000, "MOVQ should store all zeros");
 }
 
 #[test]
 fn test_movq_store_all_ones() {
     // Test storing all ones to memory
     let code = vec![
-        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xf4,
+        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00,
+        0x00, 0xf4,
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -301,8 +313,7 @@ fn test_movq_store_all_ones() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0xFFFFFFFFFFFFFFFF,
-        "MOVQ should store all ones");
+    assert_eq!(result, 0xFFFFFFFFFFFFFFFF, "MOVQ should store all ones");
 }
 
 // ============================================================================
@@ -324,8 +335,10 @@ fn test_movq_mem_to_mem() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0xDEADBEEFCAFEBABE,
-        "MOVQ should transfer data from mem to mem via register");
+    assert_eq!(
+        result, 0xDEADBEEFCAFEBABE,
+        "MOVQ should transfer data from mem to mem via register"
+    );
 }
 
 #[test]
@@ -360,9 +373,9 @@ fn test_movq_register_chain() {
     // Test chain of register-to-register moves
     let code = vec![
         0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // MOVQ MM0, [0x2000]
-        0x0f, 0x6f, 0xc8,                               // MOVQ MM1, MM0
-        0x0f, 0x6f, 0xd1,                               // MOVQ MM2, MM1
-        0x0f, 0x6f, 0xda,                               // MOVQ MM3, MM2
+        0x0f, 0x6f, 0xc8, // MOVQ MM1, MM0
+        0x0f, 0x6f, 0xd1, // MOVQ MM2, MM1
+        0x0f, 0x6f, 0xda, // MOVQ MM3, MM2
         0x0f, 0x7f, 0x1c, 0x25, 0x00, 0x30, 0x00, 0x00, // MOVQ [0x3000], MM3
         0xf4,
     ];
@@ -373,8 +386,10 @@ fn test_movq_register_chain() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0xBEEFCAFEDEADC0DE,
-        "Value should propagate through register chain");
+    assert_eq!(
+        result, 0xBEEFCAFEDEADC0DE,
+        "Value should propagate through register chain"
+    );
 }
 
 #[test]
@@ -383,9 +398,9 @@ fn test_movq_circular_move() {
     let code = vec![
         0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // MOVQ MM0, [0x2000]
         0x0f, 0x6f, 0x0c, 0x25, 0x08, 0x20, 0x00, 0x00, // MOVQ MM1, [0x2008]
-        0x0f, 0x6f, 0xd0,                               // MOVQ MM2, MM0 (temp)
-        0x0f, 0x6f, 0xc1,                               // MOVQ MM0, MM1
-        0x0f, 0x6f, 0xca,                               // MOVQ MM1, MM2
+        0x0f, 0x6f, 0xd0, // MOVQ MM2, MM0 (temp)
+        0x0f, 0x6f, 0xc1, // MOVQ MM0, MM1
+        0x0f, 0x6f, 0xca, // MOVQ MM1, MM2
         0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // MOVQ [0x3000], MM0
         0x0f, 0x7f, 0x0c, 0x25, 0x08, 0x30, 0x00, 0x00, // MOVQ [0x3008], MM1
         0xf4,
@@ -412,9 +427,8 @@ fn test_movq_circular_move() {
 fn test_movq_high_bit_set() {
     // Test with high bit set (signed-looking value)
     let code = vec![
-        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xf4,
+        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00,
+        0x00, 0xf4,
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -423,17 +437,18 @@ fn test_movq_high_bit_set() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0x8000000000000000,
-        "MOVQ should handle high bit set");
+    assert_eq!(
+        result, 0x8000000000000000,
+        "MOVQ should handle high bit set"
+    );
 }
 
 #[test]
 fn test_movq_max_value() {
     // Test with maximum u64 value
     let code = vec![
-        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xf4,
+        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00,
+        0x00, 0xf4,
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -442,17 +457,15 @@ fn test_movq_max_value() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0xFFFFFFFFFFFFFFFF,
-        "MOVQ should handle max value");
+    assert_eq!(result, 0xFFFFFFFFFFFFFFFF, "MOVQ should handle max value");
 }
 
 #[test]
 fn test_movq_one() {
     // Test with value 1
     let code = vec![
-        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xf4,
+        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00,
+        0x00, 0xf4,
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -461,8 +474,7 @@ fn test_movq_one() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0x0000000000000001,
-        "MOVQ should handle value 1");
+    assert_eq!(result, 0x0000000000000001, "MOVQ should handle value 1");
 }
 
 #[test]
@@ -479,9 +491,8 @@ fn test_movq_power_of_two() {
 
     for (i, &value) in test_values.iter().enumerate() {
         let code = vec![
-            0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-            0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-            0xf4,
+            0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30,
+            0x00, 0x00, 0xf4,
         ];
 
         let (mut vcpu, mem) = setup_vm(&code, None);
@@ -490,8 +501,7 @@ fn test_movq_power_of_two() {
         run_until_hlt(&mut vcpu).unwrap();
 
         let result = read_mem_at_u64(&mem, 0x3000);
-        assert_eq!(result, value,
-            "MOVQ should handle power of two #{}", i);
+        assert_eq!(result, value, "MOVQ should handle power of two #{}", i);
     }
 }
 
@@ -503,9 +513,8 @@ fn test_movq_power_of_two() {
 fn test_movq_sequential_bytes() {
     // Test with sequential byte pattern
     let code = vec![
-        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xf4,
+        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00,
+        0x00, 0xf4,
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -514,17 +523,18 @@ fn test_movq_sequential_bytes() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0x0001020304050607,
-        "MOVQ should preserve sequential bytes");
+    assert_eq!(
+        result, 0x0001020304050607,
+        "MOVQ should preserve sequential bytes"
+    );
 }
 
 #[test]
 fn test_movq_repeating_bytes() {
     // Test with repeating byte pattern
     let code = vec![
-        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xf4,
+        0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00,
+        0x00, 0xf4,
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -533,8 +543,10 @@ fn test_movq_repeating_bytes() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0x1212121212121212,
-        "MOVQ should preserve repeating bytes");
+    assert_eq!(
+        result, 0x1212121212121212,
+        "MOVQ should preserve repeating bytes"
+    );
 }
 
 // ============================================================================
@@ -574,8 +586,12 @@ fn test_movq_all_registers() {
 
     for i in 0..8 {
         let result = read_mem_at_u64(&mem, 0x3000 + i * 8);
-        assert_eq!(result, 0x1111 * (i + 1) as u64,
-            "MM{} value should be preserved", i);
+        assert_eq!(
+            result,
+            0x1111 * (i + 1) as u64,
+            "MM{} value should be preserved",
+            i
+        );
     }
 }
 
@@ -589,7 +605,7 @@ fn test_movq_with_emms() {
     let code = vec![
         0x0f, 0x6f, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // MOVQ MM0, [0x2000]
         0x0f, 0x7f, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // MOVQ [0x3000], MM0
-        0x0f, 0x77,                                      // EMMS
+        0x0f, 0x77, // EMMS
         0xf4,
     ];
 
@@ -599,8 +615,10 @@ fn test_movq_with_emms() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0x123456789ABCDEF0,
-        "MOVQ should work correctly before EMMS");
+    assert_eq!(
+        result, 0x123456789ABCDEF0,
+        "MOVQ should work correctly before EMMS"
+    );
 }
 
 #[test]
@@ -620,8 +638,10 @@ fn test_movq_overwrite() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0x2222222222222222,
-        "Second MOVQ should overwrite first value");
+    assert_eq!(
+        result, 0x2222222222222222,
+        "Second MOVQ should overwrite first value"
+    );
 }
 
 #[test]

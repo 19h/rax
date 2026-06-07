@@ -13,7 +13,11 @@ pub fn scasb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     // SCAS operand is always ES:[RDI] (NOT segment-overridable). 0x67 selects
     // 32-bit addressing (EDI/ECX) in 64-bit mode.
     let addr32 = ctx.address_size_override && vcpu.sregs.cs.l;
-    let count = if is_rep { rep_count(vcpu.regs.rcx, addr32) } else { 1 };
+    let count = if is_rep {
+        rep_count(vcpu.regs.rcx, addr32)
+    } else {
+        1
+    };
     for _ in 0..count {
         if is_rep && rep_count(vcpu.regs.rcx, addr32) == 0 {
             break;
@@ -49,7 +53,11 @@ pub fn scas(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
     let delta = op_size as u64;
     let is_rep = ctx.rep_prefix.is_some();
     let addr32 = ctx.address_size_override && vcpu.sregs.cs.l;
-    let count = if is_rep { rep_count(vcpu.regs.rcx, addr32) } else { 1 };
+    let count = if is_rep {
+        rep_count(vcpu.regs.rcx, addr32)
+    } else {
+        1
+    };
     for _ in 0..count {
         if is_rep && rep_count(vcpu.regs.rcx, addr32) == 0 {
             break;

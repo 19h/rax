@@ -159,10 +159,7 @@ mod tests {
         let mut c = from_bytes(&[0x01, b's', b'a', 0x01, b'x']);
         let (guest, actions) = c.poll();
         assert_eq!(guest, b"a");
-        assert_eq!(
-            actions,
-            vec![ConsoleAction::Snapshot, ConsoleAction::Quit]
-        );
+        assert_eq!(actions, vec![ConsoleAction::Snapshot, ConsoleAction::Quit]);
     }
 
     #[test]

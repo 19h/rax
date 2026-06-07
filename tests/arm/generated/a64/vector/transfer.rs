@@ -25,7 +25,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_q_0_min_3800_0e003800()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -41,7 +46,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_q_1_max_3800_4e003800()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -57,7 +67,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_size_0_min_3800_0e00380
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -73,7 +88,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_size_1_poweroftwo_3800_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -89,7 +109,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_size_2_poweroftwo_3800_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -105,7 +130,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_size_3_max_3800_0ec0380
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -121,7 +151,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_rm_0_min_3800_0e003800(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -137,7 +172,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_rm_1_poweroftwo_3800_0e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -153,7 +193,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_rm_30_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -169,7 +214,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_rm_31_max_3800_0e1f3800
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -185,7 +235,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_op_0_min_3800_0e003800(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -201,7 +256,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_op_1_max_3800_0e007800(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -217,7 +277,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_rn_0_min_3800_0e003800(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -233,7 +298,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_rn_1_poweroftwo_3800_0e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -249,7 +319,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_rn_30_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -265,7 +340,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_rn_31_max_3800_0e003be0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -281,7 +361,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_rd_0_min_3800_0e003800(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -297,7 +382,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_rd_1_poweroftwo_3800_0e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -313,7 +403,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_rd_30_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -329,7 +424,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_field_rd_31_max_3800_0e00381f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -345,7 +445,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_0_3800_0e003800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -361,7 +466,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_1_3800_4e003800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -377,7 +487,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_2_3800_0e003800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -393,7 +508,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_3_3800_0e403800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -409,7 +529,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_4_3800_0e803800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -425,7 +550,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_5_3800_0ec03800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -441,7 +571,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_6_3800_0e003800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -457,7 +592,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_7_3800_0e013800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -473,7 +613,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_8_3800_0e1e3800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -489,7 +634,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_9_3800_0e1f3800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -505,7 +655,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_10_3800_0e003800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -521,7 +676,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_11_3800_0e007800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -537,7 +697,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_12_3800_0e003800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -553,7 +718,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_13_3800_0e003820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -569,7 +739,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_14_3800_0e003bc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -585,7 +760,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_15_3800_0e003be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -601,7 +781,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_16_3800_0e003800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -617,7 +802,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_17_3800_0e003801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -633,7 +823,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_18_3800_0e00381e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -649,7 +844,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_19_3800_0e00381f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -665,7 +865,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_20_3800_0e013820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -681,7 +886,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_21_3800_0e1f3be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -697,7 +907,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_22_3800_0e013801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -713,7 +928,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_23_3800_0e1f381f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -729,7 +949,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_24_3800_0e003821() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -745,7 +970,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_combo_25_3800_0e003bff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -761,7 +991,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_special_q_0_size_variant_0_14
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -777,7 +1012,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_special_q_1_size_variant_1_14
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -793,7 +1033,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_special_size_0_size_variant_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -809,7 +1054,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_special_size_1_size_variant_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -825,7 +1075,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_special_size_2_size_variant_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -841,7 +1096,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_special_size_3_size_variant_3
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -849,7 +1109,8 @@ fn test_aarch64_vector_transfer_vector_permute_zip_special_size_3_size_variant_3
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_zip_special_rn_31_stack_pointer_sp_may_require_alignment_14336_0e403be0() {
+fn test_aarch64_vector_transfer_vector_permute_zip_special_rn_31_stack_pointer_sp_may_require_alignment_14336_0e403be0()
+ {
     // Encoding: 0x0E403BE0
     // Test aarch64_vector_transfer_vector_permute_zip special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rn=31, Q=0, Rm=0, Rd=0, size=1, op=0
@@ -857,7 +1118,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_special_rn_31_stack_pointer_s
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -865,7 +1131,8 @@ fn test_aarch64_vector_transfer_vector_permute_zip_special_rn_31_stack_pointer_s
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_zip_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_14336_0e40381f() {
+fn test_aarch64_vector_transfer_vector_permute_zip_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_14336_0e40381f()
+ {
     // Encoding: 0x0E40381F
     // Test aarch64_vector_transfer_vector_permute_zip special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Q=0, Rn=0, Rd=31, op=0, size=1, Rm=0
@@ -873,7 +1140,12 @@ fn test_aarch64_vector_transfer_vector_permute_zip_special_rd_31_zero_register_x
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_zip
@@ -939,7 +1211,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_q_0_min_3c00_0e003c0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -955,7 +1232,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_q_1_max_3c00_4e003c0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -971,7 +1253,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_0_zero_3c00_0e0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -987,7 +1274,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_1_poweroftwo_3c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -995,7 +1287,8 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_1_poweroftwo_3c
 /// Requirement: FieldBoundary { field: "imm5", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_3_poweroftwominusone_3c00_0e033c00() {
+fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_3_poweroftwominusone_3c00_0e033c00()
+ {
     // Encoding: 0x0E033C00
     // Test aarch64_vector_transfer_integer_move_unsigned field imm5 = 3 (PowerOfTwoMinusOne)
     // Fields: Rn=0, Rd=0, imm5=3, Q=0
@@ -1003,7 +1296,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_3_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1019,7 +1317,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_4_poweroftwo_3c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1027,7 +1330,8 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_4_poweroftwo_3c
 /// Requirement: FieldBoundary { field: "imm5", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_7_poweroftwominusone_3c00_0e073c00() {
+fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_7_poweroftwominusone_3c00_0e073c00()
+ {
     // Encoding: 0x0E073C00
     // Test aarch64_vector_transfer_integer_move_unsigned field imm5 = 7 (PowerOfTwoMinusOne)
     // Fields: Rd=0, imm5=7, Rn=0, Q=0
@@ -1035,7 +1339,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_7_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1051,7 +1360,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_8_poweroftwo_3c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1059,7 +1373,8 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_8_poweroftwo_3c
 /// Requirement: FieldBoundary { field: "imm5", value: 15, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (15)
 #[test]
-fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_15_poweroftwominusone_3c00_0e0f3c00() {
+fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_15_poweroftwominusone_3c00_0e0f3c00()
+ {
     // Encoding: 0x0E0F3C00
     // Test aarch64_vector_transfer_integer_move_unsigned field imm5 = 15 (PowerOfTwoMinusOne)
     // Fields: Rn=0, Rd=0, imm5=15, Q=0
@@ -1067,7 +1382,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_15_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1083,7 +1403,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_16_poweroftwo_3
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1099,7 +1424,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_imm5_31_max_3c00_0e1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1115,7 +1445,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_rn_0_min_3c00_0e003c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1131,7 +1466,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_rn_1_poweroftwo_3c00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1139,7 +1479,8 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_rn_1_poweroftwo_3c00
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_transfer_integer_move_unsigned_field_rn_30_poweroftwominusone_3c00_0e003fc0() {
+fn test_aarch64_vector_transfer_integer_move_unsigned_field_rn_30_poweroftwominusone_3c00_0e003fc0()
+{
     // Encoding: 0x0E003FC0
     // Test aarch64_vector_transfer_integer_move_unsigned field Rn = 30 (PowerOfTwoMinusOne)
     // Fields: Q=0, Rd=0, imm5=0, Rn=30
@@ -1147,7 +1488,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_rn_30_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1163,7 +1509,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_rn_31_max_3c00_0e003
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1179,7 +1530,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_rd_0_min_3c00_0e003c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1195,7 +1551,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_rd_1_poweroftwo_3c00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1203,7 +1564,8 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_rd_1_poweroftwo_3c00
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_transfer_integer_move_unsigned_field_rd_30_poweroftwominusone_3c00_0e003c1e() {
+fn test_aarch64_vector_transfer_integer_move_unsigned_field_rd_30_poweroftwominusone_3c00_0e003c1e()
+{
     // Encoding: 0x0E003C1E
     // Test aarch64_vector_transfer_integer_move_unsigned field Rd = 30 (PowerOfTwoMinusOne)
     // Fields: imm5=0, Rd=30, Q=0, Rn=0
@@ -1211,7 +1573,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_rd_30_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1227,7 +1594,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_field_rd_31_max_3c00_0e003
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1243,7 +1615,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_0_3c00_0e003c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1259,7 +1636,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_1_3c00_4e003c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1275,7 +1657,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_2_3c00_0e003c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1291,7 +1678,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_3_3c00_0e013c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1307,7 +1699,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_4_3c00_0e033c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1323,7 +1720,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_5_3c00_0e043c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1339,7 +1741,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_6_3c00_0e073c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1355,7 +1762,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_7_3c00_0e083c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1371,7 +1783,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_8_3c00_0e0f3c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1387,7 +1804,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_9_3c00_0e103c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1403,7 +1825,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_10_3c00_0e1f3c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1419,7 +1846,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_11_3c00_0e003c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1435,7 +1867,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_12_3c00_0e003c20() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1451,7 +1888,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_13_3c00_0e003fc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1467,7 +1909,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_14_3c00_0e003fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1483,7 +1930,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_15_3c00_0e003c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1499,7 +1951,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_16_3c00_0e003c01() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1515,7 +1972,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_17_3c00_0e003c1e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1531,7 +1993,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_18_3c00_0e003c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1547,7 +2014,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_19_3c00_0e003c21() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1563,7 +2035,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_combo_20_3c00_0e003fff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1579,7 +2056,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_special_q_0_size_variant_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1595,7 +2077,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_special_q_1_size_variant_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1603,7 +2090,8 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_special_q_1_size_variant_1
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_transfer_integer_move_unsigned_special_rn_31_stack_pointer_sp_may_require_alignment_15360_0e013fe0() {
+fn test_aarch64_vector_transfer_integer_move_unsigned_special_rn_31_stack_pointer_sp_may_require_alignment_15360_0e013fe0()
+ {
     // Encoding: 0x0E013FE0
     // Test aarch64_vector_transfer_integer_move_unsigned special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rn=31, imm5=1, Q=0, Rd=0
@@ -1611,7 +2099,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_special_rn_31_stack_pointe
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1619,7 +2112,8 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_special_rn_31_stack_pointe
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_transfer_integer_move_unsigned_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_15360_0e013c1f() {
+fn test_aarch64_vector_transfer_integer_move_unsigned_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_15360_0e013c1f()
+ {
     // Encoding: 0x0E013C1F
     // Test aarch64_vector_transfer_integer_move_unsigned special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, Q=0, Rd=31, imm5=1
@@ -1627,7 +2121,12 @@ fn test_aarch64_vector_transfer_integer_move_unsigned_special_rd_31_zero_registe
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_unsigned
@@ -1693,7 +2192,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_q_0_min_2800_0e00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1709,7 +2213,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_q_1_max_2800_4e00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1725,7 +2234,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_size_0_min_2800_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1741,7 +2255,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_size_1_poweroftwo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1757,7 +2276,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_size_2_poweroftwo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1773,7 +2297,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_size_3_max_2800_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1789,7 +2318,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_rm_0_min_2800_0e0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1805,7 +2339,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_rm_1_poweroftwo_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1813,7 +2352,8 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_rm_1_poweroftwo_2
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_transpose_field_rm_30_poweroftwominusone_2800_0e1e2800() {
+fn test_aarch64_vector_transfer_vector_permute_transpose_field_rm_30_poweroftwominusone_2800_0e1e2800()
+ {
     // Encoding: 0x0E1E2800
     // Test aarch64_vector_transfer_vector_permute_transpose field Rm = 30 (PowerOfTwoMinusOne)
     // Fields: Rm=30, op=0, Q=0, Rn=0, size=0, Rd=0
@@ -1821,7 +2361,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_rm_30_poweroftwom
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1837,7 +2382,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_rm_31_max_2800_0e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1853,7 +2403,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_op_0_min_2800_0e0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1869,7 +2424,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_op_1_max_2800_0e0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1885,7 +2445,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_rn_0_min_2800_0e0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1901,7 +2466,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_rn_1_poweroftwo_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1909,7 +2479,8 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_rn_1_poweroftwo_2
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_transpose_field_rn_30_poweroftwominusone_2800_0e002bc0() {
+fn test_aarch64_vector_transfer_vector_permute_transpose_field_rn_30_poweroftwominusone_2800_0e002bc0()
+ {
     // Encoding: 0x0E002BC0
     // Test aarch64_vector_transfer_vector_permute_transpose field Rn = 30 (PowerOfTwoMinusOne)
     // Fields: Rn=30, Q=0, size=0, op=0, Rd=0, Rm=0
@@ -1917,7 +2488,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_rn_30_poweroftwom
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1933,7 +2509,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_rn_31_max_2800_0e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1949,7 +2530,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_rd_0_min_2800_0e0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1965,7 +2551,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_rd_1_poweroftwo_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1973,7 +2564,8 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_rd_1_poweroftwo_2
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_transpose_field_rd_30_poweroftwominusone_2800_0e00281e() {
+fn test_aarch64_vector_transfer_vector_permute_transpose_field_rd_30_poweroftwominusone_2800_0e00281e()
+ {
     // Encoding: 0x0E00281E
     // Test aarch64_vector_transfer_vector_permute_transpose field Rd = 30 (PowerOfTwoMinusOne)
     // Fields: op=0, Rd=30, Rn=0, Q=0, size=0, Rm=0
@@ -1981,7 +2573,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_rd_30_poweroftwom
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -1997,7 +2594,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_field_rd_31_max_2800_0e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2013,7 +2615,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_0_2800_0e002800()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2029,7 +2636,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_1_2800_4e002800()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2045,7 +2657,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_2_2800_0e002800()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2061,7 +2678,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_3_2800_0e402800()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2077,7 +2699,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_4_2800_0e802800()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2093,7 +2720,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_5_2800_0ec02800()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2109,7 +2741,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_6_2800_0e002800()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2125,7 +2762,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_7_2800_0e012800()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2141,7 +2783,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_8_2800_0e1e2800()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2157,7 +2804,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_9_2800_0e1f2800()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2173,7 +2825,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_10_2800_0e002800(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2189,7 +2846,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_11_2800_0e006800(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2205,7 +2867,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_12_2800_0e002800(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2221,7 +2888,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_13_2800_0e002820(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2237,7 +2909,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_14_2800_0e002bc0(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2253,7 +2930,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_15_2800_0e002be0(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2269,7 +2951,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_16_2800_0e002800(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2285,7 +2972,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_17_2800_0e002801(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2301,7 +2993,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_18_2800_0e00281e(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2317,7 +3014,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_19_2800_0e00281f(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2333,7 +3035,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_20_2800_0e012820(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2349,7 +3056,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_21_2800_0e1f2be0(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2365,7 +3077,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_22_2800_0e012801(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2381,7 +3098,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_23_2800_0e1f281f(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2397,7 +3119,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_24_2800_0e002821(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2413,7 +3140,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_25_2800_0e002bff(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2421,7 +3153,8 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_combo_25_2800_0e002bff(
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_transpose_special_q_0_size_variant_0_10240_0e402800() {
+fn test_aarch64_vector_transfer_vector_permute_transpose_special_q_0_size_variant_0_10240_0e402800()
+{
     // Encoding: 0x0E402800
     // Test aarch64_vector_transfer_vector_permute_transpose special value Q = 0 (Size variant 0)
     // Fields: size=1, Rn=0, op=0, Rd=0, Q=0, Rm=0
@@ -2429,7 +3162,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_special_q_0_size_varian
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2437,7 +3175,8 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_special_q_0_size_varian
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_transpose_special_q_1_size_variant_1_10240_4e402800() {
+fn test_aarch64_vector_transfer_vector_permute_transpose_special_q_1_size_variant_1_10240_4e402800()
+{
     // Encoding: 0x4E402800
     // Test aarch64_vector_transfer_vector_permute_transpose special value Q = 1 (Size variant 1)
     // Fields: op=0, Rn=0, size=1, Q=1, Rd=0, Rm=0
@@ -2445,7 +3184,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_special_q_1_size_varian
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2453,7 +3197,8 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_special_q_1_size_varian
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_0_size_variant_0_10240_0e002800() {
+fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_0_size_variant_0_10240_0e002800()
+ {
     // Encoding: 0x0E002800
     // Test aarch64_vector_transfer_vector_permute_transpose special value size = 0 (Size variant 0)
     // Fields: Rm=0, Rd=0, op=0, Rn=0, Q=0, size=0
@@ -2461,7 +3206,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_0_size_var
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2469,7 +3219,8 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_0_size_var
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_1_size_variant_1_10240_0e402800() {
+fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_1_size_variant_1_10240_0e402800()
+ {
     // Encoding: 0x0E402800
     // Test aarch64_vector_transfer_vector_permute_transpose special value size = 1 (Size variant 1)
     // Fields: Rd=0, Q=0, size=1, op=0, Rn=0, Rm=0
@@ -2477,7 +3228,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_1_size_var
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2485,7 +3241,8 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_1_size_var
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_2_size_variant_2_10240_0e802800() {
+fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_2_size_variant_2_10240_0e802800()
+ {
     // Encoding: 0x0E802800
     // Test aarch64_vector_transfer_vector_permute_transpose special value size = 2 (Size variant 2)
     // Fields: op=0, Q=0, Rd=0, size=2, Rm=0, Rn=0
@@ -2493,7 +3250,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_2_size_var
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2501,7 +3263,8 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_2_size_var
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_3_size_variant_3_10240_0ec02800() {
+fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_3_size_variant_3_10240_0ec02800()
+ {
     // Encoding: 0x0EC02800
     // Test aarch64_vector_transfer_vector_permute_transpose special value size = 3 (Size variant 3)
     // Fields: Q=0, size=3, op=0, Rd=0, Rn=0, Rm=0
@@ -2509,7 +3272,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_3_size_var
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2517,7 +3285,8 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_special_size_3_size_var
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_transpose_special_rn_31_stack_pointer_sp_may_require_alignment_10240_0e402be0() {
+fn test_aarch64_vector_transfer_vector_permute_transpose_special_rn_31_stack_pointer_sp_may_require_alignment_10240_0e402be0()
+ {
     // Encoding: 0x0E402BE0
     // Test aarch64_vector_transfer_vector_permute_transpose special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rn=31, size=1, Rm=0, Q=0, Rd=0, op=0
@@ -2525,7 +3294,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_special_rn_31_stack_poi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2533,7 +3307,8 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_special_rn_31_stack_poi
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_transpose_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_10240_0e40281f() {
+fn test_aarch64_vector_transfer_vector_permute_transpose_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_10240_0e40281f()
+ {
     // Encoding: 0x0E40281F
     // Test aarch64_vector_transfer_vector_permute_transpose special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Q=0, Rd=31, size=1, Rm=0, op=0, Rn=0
@@ -2541,7 +3316,12 @@ fn test_aarch64_vector_transfer_vector_permute_transpose_special_rd_31_zero_regi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_transpose
@@ -2607,7 +3387,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_q_0_min_2c00_0e002c00(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2623,7 +3408,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_q_1_max_2c00_4e002c00(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2639,7 +3429,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_0_zero_2c00_0e002
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2655,7 +3450,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_1_poweroftwo_2c00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2663,7 +3463,8 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_1_poweroftwo_2c00
 /// Requirement: FieldBoundary { field: "imm5", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_3_poweroftwominusone_2c00_0e032c00() {
+fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_3_poweroftwominusone_2c00_0e032c00()
+{
     // Encoding: 0x0E032C00
     // Test aarch64_vector_transfer_integer_move_signed field imm5 = 3 (PowerOfTwoMinusOne)
     // Fields: Rd=0, Rn=0, imm5=3, Q=0
@@ -2671,7 +3472,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_3_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2687,7 +3493,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_4_poweroftwo_2c00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2695,7 +3506,8 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_4_poweroftwo_2c00
 /// Requirement: FieldBoundary { field: "imm5", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_7_poweroftwominusone_2c00_0e072c00() {
+fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_7_poweroftwominusone_2c00_0e072c00()
+{
     // Encoding: 0x0E072C00
     // Test aarch64_vector_transfer_integer_move_signed field imm5 = 7 (PowerOfTwoMinusOne)
     // Fields: Rn=0, Q=0, Rd=0, imm5=7
@@ -2703,7 +3515,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_7_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2719,7 +3536,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_8_poweroftwo_2c00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2727,7 +3549,8 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_8_poweroftwo_2c00
 /// Requirement: FieldBoundary { field: "imm5", value: 15, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (15)
 #[test]
-fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_15_poweroftwominusone_2c00_0e0f2c00() {
+fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_15_poweroftwominusone_2c00_0e0f2c00()
+{
     // Encoding: 0x0E0F2C00
     // Test aarch64_vector_transfer_integer_move_signed field imm5 = 15 (PowerOfTwoMinusOne)
     // Fields: Q=0, Rn=0, Rd=0, imm5=15
@@ -2735,7 +3558,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_15_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2751,7 +3579,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_16_poweroftwo_2c0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2767,7 +3600,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_imm5_31_max_2c00_0e1f2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2783,7 +3621,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_rn_0_min_2c00_0e002c00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2799,7 +3642,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_rn_1_poweroftwo_2c00_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2815,7 +3663,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_rn_30_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2831,7 +3684,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_rn_31_max_2c00_0e002fe
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2847,7 +3705,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_rd_0_min_2c00_0e002c00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2863,7 +3726,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_rd_1_poweroftwo_2c00_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2879,7 +3747,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_rd_30_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2895,7 +3768,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_field_rd_31_max_2c00_0e002c1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2911,7 +3789,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_0_2c00_0e002c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2927,7 +3810,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_1_2c00_4e002c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2943,7 +3831,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_2_2c00_0e002c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2959,7 +3852,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_3_2c00_0e012c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2975,7 +3873,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_4_2c00_0e032c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -2991,7 +3894,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_5_2c00_0e042c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3007,7 +3915,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_6_2c00_0e072c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3023,7 +3936,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_7_2c00_0e082c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3039,7 +3957,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_8_2c00_0e0f2c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3055,7 +3978,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_9_2c00_0e102c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3071,7 +3999,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_10_2c00_0e1f2c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3087,7 +4020,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_11_2c00_0e002c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3103,7 +4041,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_12_2c00_0e002c20() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3119,7 +4062,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_13_2c00_0e002fc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3135,7 +4083,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_14_2c00_0e002fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3151,7 +4104,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_15_2c00_0e002c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3167,7 +4125,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_16_2c00_0e002c01() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3183,7 +4146,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_17_2c00_0e002c1e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3199,7 +4167,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_18_2c00_0e002c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3215,7 +4188,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_19_2c00_0e002c21() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3231,7 +4209,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_combo_20_2c00_0e002fff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3247,7 +4230,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_special_q_0_size_variant_0_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3263,7 +4251,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_special_q_1_size_variant_1_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3271,7 +4264,8 @@ fn test_aarch64_vector_transfer_integer_move_signed_special_q_1_size_variant_1_1
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_transfer_integer_move_signed_special_rn_31_stack_pointer_sp_may_require_alignment_11264_0e012fe0() {
+fn test_aarch64_vector_transfer_integer_move_signed_special_rn_31_stack_pointer_sp_may_require_alignment_11264_0e012fe0()
+ {
     // Encoding: 0x0E012FE0
     // Test aarch64_vector_transfer_integer_move_signed special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Q=0, Rn=31, imm5=1, Rd=0
@@ -3279,7 +4273,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_special_rn_31_stack_pointer_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3287,7 +4286,8 @@ fn test_aarch64_vector_transfer_integer_move_signed_special_rn_31_stack_pointer_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_transfer_integer_move_signed_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_11264_0e012c1f() {
+fn test_aarch64_vector_transfer_integer_move_signed_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_11264_0e012c1f()
+ {
     // Encoding: 0x0E012C1F
     // Test aarch64_vector_transfer_integer_move_signed special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, Rd=31, Q=0, imm5=1
@@ -3295,7 +4295,12 @@ fn test_aarch64_vector_transfer_integer_move_signed_special_rd_31_zero_register_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_move_signed
@@ -3361,7 +4366,12 @@ fn test_aarch64_vector_transfer_vector_table_field_q_0_min_0_0e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3377,7 +4387,12 @@ fn test_aarch64_vector_transfer_vector_table_field_q_1_max_0_4e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3393,7 +4408,12 @@ fn test_aarch64_vector_transfer_vector_table_field_rm_0_min_0_0e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3409,7 +4429,12 @@ fn test_aarch64_vector_transfer_vector_table_field_rm_1_poweroftwo_0_0e010000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3425,7 +4450,12 @@ fn test_aarch64_vector_transfer_vector_table_field_rm_30_poweroftwominusone_0_0e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3441,7 +4471,12 @@ fn test_aarch64_vector_transfer_vector_table_field_rm_31_max_0_0e1f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3457,7 +4492,12 @@ fn test_aarch64_vector_transfer_vector_table_field_len_0_min_0_0e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3473,7 +4513,12 @@ fn test_aarch64_vector_transfer_vector_table_field_len_1_poweroftwo_0_0e002000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3489,7 +4534,12 @@ fn test_aarch64_vector_transfer_vector_table_field_len_3_max_0_0e006000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3505,7 +4555,12 @@ fn test_aarch64_vector_transfer_vector_table_field_op_0_min_0_0e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3521,7 +4576,12 @@ fn test_aarch64_vector_transfer_vector_table_field_op_1_max_0_0e001000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3537,7 +4597,12 @@ fn test_aarch64_vector_transfer_vector_table_field_rn_0_min_0_0e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3553,7 +4618,12 @@ fn test_aarch64_vector_transfer_vector_table_field_rn_1_poweroftwo_0_0e000020() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3569,7 +4639,12 @@ fn test_aarch64_vector_transfer_vector_table_field_rn_30_poweroftwominusone_0_0e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3585,7 +4660,12 @@ fn test_aarch64_vector_transfer_vector_table_field_rn_31_max_0_0e0003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3601,7 +4681,12 @@ fn test_aarch64_vector_transfer_vector_table_field_rd_0_min_0_0e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3617,7 +4702,12 @@ fn test_aarch64_vector_transfer_vector_table_field_rd_1_poweroftwo_0_0e000001() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3633,7 +4723,12 @@ fn test_aarch64_vector_transfer_vector_table_field_rd_30_poweroftwominusone_0_0e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3649,7 +4744,12 @@ fn test_aarch64_vector_transfer_vector_table_field_rd_31_max_0_0e00001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3665,7 +4765,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_0_0_0e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3681,7 +4786,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_1_0_4e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3697,7 +4807,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_2_0_0e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3713,7 +4828,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_3_0_0e010000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3729,7 +4849,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_4_0_0e1e0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3745,7 +4870,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_5_0_0e1f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3761,7 +4891,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_6_0_0e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3777,7 +4912,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_7_0_0e002000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3793,7 +4933,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_8_0_0e006000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3809,7 +4954,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_9_0_0e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3825,7 +4975,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_10_0_0e001000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3841,7 +4996,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_11_0_0e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3857,7 +5017,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_12_0_0e000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3873,7 +5038,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_13_0_0e0003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3889,7 +5059,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_14_0_0e0003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3905,7 +5080,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_15_0_0e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3921,7 +5101,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_16_0_0e000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3937,7 +5122,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_17_0_0e00001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3953,7 +5143,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_18_0_0e00001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3969,7 +5164,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_19_0_0e010020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -3985,7 +5185,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_20_0_0e1f03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -4001,7 +5206,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_21_0_0e010001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -4017,7 +5227,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_22_0_0e1f001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -4033,7 +5248,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_23_0_0e000021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -4049,7 +5269,12 @@ fn test_aarch64_vector_transfer_vector_table_combo_24_0_0e0003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -4065,7 +5290,12 @@ fn test_aarch64_vector_transfer_vector_table_special_q_0_size_variant_0_0_0e0000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -4081,7 +5311,12 @@ fn test_aarch64_vector_transfer_vector_table_special_q_1_size_variant_1_0_4e0000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -4089,7 +5324,8 @@ fn test_aarch64_vector_transfer_vector_table_special_q_1_size_variant_1_0_4e0000
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_transfer_vector_table_special_rn_31_stack_pointer_sp_may_require_alignment_0_0e0003e0() {
+fn test_aarch64_vector_transfer_vector_table_special_rn_31_stack_pointer_sp_may_require_alignment_0_0e0003e0()
+ {
     // Encoding: 0x0E0003E0
     // Test aarch64_vector_transfer_vector_table special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rm=0, len=0, op=0, Rn=31, Rd=0, Q=0
@@ -4097,7 +5333,12 @@ fn test_aarch64_vector_transfer_vector_table_special_rn_31_stack_pointer_sp_may_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -4105,7 +5346,8 @@ fn test_aarch64_vector_transfer_vector_table_special_rn_31_stack_pointer_sp_may_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_transfer_vector_table_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_0e00001f() {
+fn test_aarch64_vector_transfer_vector_table_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_0e00001f()
+ {
     // Encoding: 0x0E00001F
     // Test aarch64_vector_transfer_vector_table special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: op=0, Rd=31, Q=0, Rm=0, Rn=0, len=0
@@ -4113,7 +5355,12 @@ fn test_aarch64_vector_transfer_vector_table_special_rd_31_zero_register_xzr_wzr
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_table
@@ -4179,7 +5426,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_q_0_min_0_2e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4195,7 +5447,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_q_1_max_0_6e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4211,7 +5468,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_rm_0_min_0_2e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4227,7 +5489,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_rm_1_poweroftwo_0_2e010000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4243,7 +5510,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_rm_30_poweroftwominusone_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4259,7 +5531,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_rm_31_max_0_2e1f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4275,7 +5552,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_imm4_0_zero_0_2e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4291,7 +5573,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_imm4_1_poweroftwo_0_2e00080
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4307,7 +5594,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_imm4_3_poweroftwominusone_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4323,7 +5615,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_imm4_4_poweroftwo_0_2e00200
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4339,7 +5636,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_imm4_7_poweroftwominusone_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4355,7 +5657,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_imm4_8_poweroftwo_0_2e00400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4371,7 +5678,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_imm4_15_max_0_2e007800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4387,7 +5699,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_rn_0_min_0_2e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4403,7 +5720,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_rn_1_poweroftwo_0_2e000020(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4419,7 +5741,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_rn_30_poweroftwominusone_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4435,7 +5762,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_rn_31_max_0_2e0003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4451,7 +5783,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_rd_0_min_0_2e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4467,7 +5804,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_rd_1_poweroftwo_0_2e000001(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4483,7 +5825,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_rd_30_poweroftwominusone_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4499,7 +5846,12 @@ fn test_aarch64_vector_transfer_vector_extract_field_rd_31_max_0_2e00001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4515,7 +5867,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_0_0_2e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4531,7 +5888,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_1_0_6e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4547,7 +5909,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_2_0_2e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4563,7 +5930,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_3_0_2e010000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4579,7 +5951,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_4_0_2e1e0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4595,7 +5972,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_5_0_2e1f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4611,7 +5993,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_6_0_2e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4627,7 +6014,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_7_0_2e000800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4643,7 +6035,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_8_0_2e001800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4659,7 +6056,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_9_0_2e002000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4675,7 +6077,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_10_0_2e003800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4691,7 +6098,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_11_0_2e004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4707,7 +6119,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_12_0_2e007800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4723,7 +6140,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_13_0_2e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4739,7 +6161,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_14_0_2e000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4755,7 +6182,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_15_0_2e0003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4771,7 +6203,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_16_0_2e0003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4787,7 +6224,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_17_0_2e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4803,7 +6245,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_18_0_2e000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4819,7 +6266,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_19_0_2e00001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4835,7 +6287,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_20_0_2e00001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4851,7 +6308,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_21_0_2e010020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4867,7 +6329,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_22_0_2e1f03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4883,7 +6350,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_23_0_2e010001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4899,7 +6371,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_24_0_2e1f001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4915,7 +6392,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_25_0_2e000021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4931,7 +6413,12 @@ fn test_aarch64_vector_transfer_vector_extract_combo_26_0_2e0003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4947,7 +6434,12 @@ fn test_aarch64_vector_transfer_vector_extract_special_q_0_size_variant_0_0_2e00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4963,7 +6455,12 @@ fn test_aarch64_vector_transfer_vector_extract_special_q_1_size_variant_1_0_6e00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4971,7 +6468,8 @@ fn test_aarch64_vector_transfer_vector_extract_special_q_1_size_variant_1_0_6e00
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_transfer_vector_extract_special_rn_31_stack_pointer_sp_may_require_alignment_0_2e000be0() {
+fn test_aarch64_vector_transfer_vector_extract_special_rn_31_stack_pointer_sp_may_require_alignment_0_2e000be0()
+ {
     // Encoding: 0x2E000BE0
     // Test aarch64_vector_transfer_vector_extract special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Q=0, Rn=31, Rm=0, imm4=1, Rd=0
@@ -4979,7 +6477,12 @@ fn test_aarch64_vector_transfer_vector_extract_special_rn_31_stack_pointer_sp_ma
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -4987,7 +6490,8 @@ fn test_aarch64_vector_transfer_vector_extract_special_rn_31_stack_pointer_sp_ma
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_transfer_vector_extract_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2e00081f() {
+fn test_aarch64_vector_transfer_vector_extract_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2e00081f()
+ {
     // Encoding: 0x2E00081F
     // Test aarch64_vector_transfer_vector_extract special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Q=0, Rn=0, Rd=31, imm4=1, Rm=0
@@ -4995,7 +6499,12 @@ fn test_aarch64_vector_transfer_vector_extract_special_rd_31_zero_register_xzr_w
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_extract
@@ -5061,7 +6570,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_imm5_0_zero_400_5e0004
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5077,7 +6591,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_imm5_1_poweroftwo_400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5093,7 +6612,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_imm5_3_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5109,7 +6633,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_imm5_4_poweroftwo_400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5125,7 +6654,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_imm5_7_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5141,7 +6675,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_imm5_8_poweroftwo_400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5149,7 +6688,8 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_imm5_8_poweroftwo_400_
 /// Requirement: FieldBoundary { field: "imm5", value: 15, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (15)
 #[test]
-fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_imm5_15_poweroftwominusone_400_5e0f0400() {
+fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_imm5_15_poweroftwominusone_400_5e0f0400()
+{
     // Encoding: 0x5E0F0400
     // Test aarch64_vector_transfer_vector_cpy_dup_sisd field imm5 = 15 (PowerOfTwoMinusOne)
     // Fields: imm5=15, Rd=0, Rn=0
@@ -5157,7 +6697,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_imm5_15_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5173,7 +6718,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_imm5_16_poweroftwo_400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5189,7 +6739,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_imm5_31_max_400_5e1f04
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5205,7 +6760,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_rn_0_min_400_5e000400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5221,7 +6781,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_rn_1_poweroftwo_400_5e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5237,7 +6802,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_rn_30_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5253,7 +6823,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_rn_31_max_400_5e0007e0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5269,7 +6844,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_rd_0_min_400_5e000400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5285,7 +6865,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_rd_1_poweroftwo_400_5e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5301,7 +6886,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_rd_30_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5317,7 +6907,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_field_rd_31_max_400_5e00041f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5333,7 +6928,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_0_400_5e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5349,7 +6949,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_1_400_5e010400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5365,7 +6970,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_2_400_5e030400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5381,7 +6991,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_3_400_5e040400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5397,7 +7012,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_4_400_5e070400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5413,7 +7033,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_5_400_5e080400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5429,7 +7054,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_6_400_5e0f0400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5445,7 +7075,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_7_400_5e100400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5461,7 +7096,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_8_400_5e1f0400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5477,7 +7117,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_9_400_5e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5493,7 +7138,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_10_400_5e000420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5509,7 +7159,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_11_400_5e0007c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5525,7 +7180,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_12_400_5e0007e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5541,7 +7201,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_13_400_5e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5557,7 +7222,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_14_400_5e000401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5573,7 +7243,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_15_400_5e00041e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5589,7 +7264,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_16_400_5e00041f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5605,7 +7285,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_17_400_5e000421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5621,7 +7306,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_18_400_5e0007ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5629,7 +7319,8 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_combo_18_400_5e0007ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_1024_5e0107e0() {
+fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_1024_5e0107e0()
+ {
     // Encoding: 0x5E0107E0
     // Test aarch64_vector_transfer_vector_cpy_dup_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: imm5=1, Rn=31, Rd=0
@@ -5637,7 +7328,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_special_rn_31_stack_pointer_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -5645,7 +7341,8 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_special_rn_31_stack_pointer_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_5e01041f() {
+fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_5e01041f()
+ {
     // Encoding: 0x5E01041F
     // Test aarch64_vector_transfer_vector_cpy_dup_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: imm5=1, Rn=0, Rd=31
@@ -5653,7 +7350,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_sisd_special_rd_31_zero_register_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5669,7 +7371,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_q_0_min_400_0e000400()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5685,7 +7392,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_q_1_max_400_4e000400()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5701,7 +7413,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_imm5_0_zero_400_0e0004
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5717,7 +7434,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_imm5_1_poweroftwo_400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5733,7 +7455,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_imm5_3_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5749,7 +7476,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_imm5_4_poweroftwo_400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5765,7 +7497,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_imm5_7_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5781,7 +7518,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_imm5_8_poweroftwo_400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5789,7 +7531,8 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_imm5_8_poweroftwo_400_
 /// Requirement: FieldBoundary { field: "imm5", value: 15, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (15)
 #[test]
-fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_imm5_15_poweroftwominusone_400_0e0f0400() {
+fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_imm5_15_poweroftwominusone_400_0e0f0400()
+{
     // Encoding: 0x0E0F0400
     // Test aarch64_vector_transfer_vector_cpy_dup_simd field imm5 = 15 (PowerOfTwoMinusOne)
     // Fields: imm5=15, Rn=0, Q=0, Rd=0
@@ -5797,7 +7540,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_imm5_15_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5813,7 +7561,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_imm5_16_poweroftwo_400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5829,7 +7582,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_imm5_31_max_400_0e1f04
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5845,7 +7603,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_rn_0_min_400_0e000400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5861,7 +7624,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_rn_1_poweroftwo_400_0e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5877,7 +7645,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_rn_30_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5893,7 +7666,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_rn_31_max_400_0e0007e0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5909,7 +7687,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_rd_0_min_400_0e000400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5925,7 +7708,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_rd_1_poweroftwo_400_0e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5941,7 +7729,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_rd_30_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5957,7 +7750,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_field_rd_31_max_400_0e00041f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5973,7 +7771,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_0_400_0e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -5989,7 +7792,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_1_400_4e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6005,7 +7813,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_2_400_0e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6021,7 +7834,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_3_400_0e010400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6037,7 +7855,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_4_400_0e030400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6053,7 +7876,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_5_400_0e040400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6069,7 +7897,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_6_400_0e070400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6085,7 +7918,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_7_400_0e080400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6101,7 +7939,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_8_400_0e0f0400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6117,7 +7960,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_9_400_0e100400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6133,7 +7981,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_10_400_0e1f0400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6149,7 +8002,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_11_400_0e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6165,7 +8023,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_12_400_0e000420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6181,7 +8044,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_13_400_0e0007c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6197,7 +8065,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_14_400_0e0007e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6213,7 +8086,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_15_400_0e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6229,7 +8107,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_16_400_0e000401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6245,7 +8128,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_17_400_0e00041e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6261,7 +8149,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_18_400_0e00041f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6277,7 +8170,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_19_400_0e000421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6293,7 +8191,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_combo_20_400_0e0007ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6309,7 +8212,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_special_q_0_size_variant_0_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6325,7 +8233,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_special_q_1_size_variant_1_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6333,7 +8246,8 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_special_q_1_size_variant_1_1
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_transfer_vector_cpy_dup_simd_special_rn_31_stack_pointer_sp_may_require_alignment_1024_0e0107e0() {
+fn test_aarch64_vector_transfer_vector_cpy_dup_simd_special_rn_31_stack_pointer_sp_may_require_alignment_1024_0e0107e0()
+ {
     // Encoding: 0x0E0107E0
     // Test aarch64_vector_transfer_vector_cpy_dup_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Q=0, Rn=31, imm5=1
@@ -6341,7 +8255,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_special_rn_31_stack_pointer_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_simd
@@ -6349,7 +8268,8 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_special_rn_31_stack_pointer_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_transfer_vector_cpy_dup_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_0e01041f() {
+fn test_aarch64_vector_transfer_vector_cpy_dup_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_0e01041f()
+ {
     // Encoding: 0x0E01041F
     // Test aarch64_vector_transfer_vector_cpy_dup_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, Q=0, Rn=0, imm5=1
@@ -6357,7 +8277,12 @@ fn test_aarch64_vector_transfer_vector_cpy_dup_simd_special_rd_31_zero_register_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_cpy_dup_sisd
@@ -6469,7 +8394,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_q_0_min_1800_0e001800
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6485,7 +8415,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_q_1_max_1800_4e001800
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6501,7 +8436,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_size_0_min_1800_0e001
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6517,7 +8457,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_size_1_poweroftwo_180
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6533,7 +8478,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_size_2_poweroftwo_180
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6549,7 +8499,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_size_3_max_1800_0ec01
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6565,7 +8520,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_rm_0_min_1800_0e00180
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6581,7 +8541,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_rm_1_poweroftwo_1800_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6589,7 +8554,8 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_rm_1_poweroftwo_1800_
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_unzip_field_rm_30_poweroftwominusone_1800_0e1e1800() {
+fn test_aarch64_vector_transfer_vector_permute_unzip_field_rm_30_poweroftwominusone_1800_0e1e1800()
+{
     // Encoding: 0x0E1E1800
     // Test aarch64_vector_transfer_vector_permute_unzip field Rm = 30 (PowerOfTwoMinusOne)
     // Fields: Rd=0, size=0, Rm=30, op=0, Q=0, Rn=0
@@ -6597,7 +8563,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_rm_30_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6613,7 +8584,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_rm_31_max_1800_0e1f18
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6629,7 +8605,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_op_0_min_1800_0e00180
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6645,7 +8626,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_op_1_max_1800_0e00580
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6661,7 +8647,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_rn_0_min_1800_0e00180
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6677,7 +8668,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_rn_1_poweroftwo_1800_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6685,7 +8681,8 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_rn_1_poweroftwo_1800_
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_unzip_field_rn_30_poweroftwominusone_1800_0e001bc0() {
+fn test_aarch64_vector_transfer_vector_permute_unzip_field_rn_30_poweroftwominusone_1800_0e001bc0()
+{
     // Encoding: 0x0E001BC0
     // Test aarch64_vector_transfer_vector_permute_unzip field Rn = 30 (PowerOfTwoMinusOne)
     // Fields: Rd=0, Rm=0, Rn=30, size=0, Q=0, op=0
@@ -6693,7 +8690,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_rn_30_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6709,7 +8711,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_rn_31_max_1800_0e001b
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6725,7 +8732,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_rd_0_min_1800_0e00180
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6741,7 +8753,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_rd_1_poweroftwo_1800_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6749,7 +8766,8 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_rd_1_poweroftwo_1800_
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_unzip_field_rd_30_poweroftwominusone_1800_0e00181e() {
+fn test_aarch64_vector_transfer_vector_permute_unzip_field_rd_30_poweroftwominusone_1800_0e00181e()
+{
     // Encoding: 0x0E00181E
     // Test aarch64_vector_transfer_vector_permute_unzip field Rd = 30 (PowerOfTwoMinusOne)
     // Fields: Rm=0, op=0, Rd=30, Rn=0, Q=0, size=0
@@ -6757,7 +8775,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_rd_30_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6773,7 +8796,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_field_rd_31_max_1800_0e0018
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6789,7 +8817,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_0_1800_0e001800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6805,7 +8838,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_1_1800_4e001800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6821,7 +8859,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_2_1800_0e001800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6837,7 +8880,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_3_1800_0e401800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6853,7 +8901,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_4_1800_0e801800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6869,7 +8922,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_5_1800_0ec01800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6885,7 +8943,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_6_1800_0e001800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6901,7 +8964,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_7_1800_0e011800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6917,7 +8985,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_8_1800_0e1e1800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6933,7 +9006,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_9_1800_0e1f1800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6949,7 +9027,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_10_1800_0e001800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6965,7 +9048,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_11_1800_0e005800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6981,7 +9069,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_12_1800_0e001800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -6997,7 +9090,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_13_1800_0e001820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7013,7 +9111,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_14_1800_0e001bc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7029,7 +9132,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_15_1800_0e001be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7045,7 +9153,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_16_1800_0e001800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7061,7 +9174,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_17_1800_0e001801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7077,7 +9195,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_18_1800_0e00181e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7093,7 +9216,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_19_1800_0e00181f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7109,7 +9237,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_20_1800_0e011820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7125,7 +9258,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_21_1800_0e1f1be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7141,7 +9279,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_22_1800_0e011801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7157,7 +9300,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_23_1800_0e1f181f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7173,7 +9321,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_24_1800_0e001821() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7189,7 +9342,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_combo_25_1800_0e001bff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7205,7 +9363,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_special_q_0_size_variant_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7221,7 +9384,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_special_q_1_size_variant_1_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7237,7 +9405,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_special_size_0_size_variant
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7253,7 +9426,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_special_size_1_size_variant
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7269,7 +9447,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_special_size_2_size_variant
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7285,7 +9468,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_special_size_3_size_variant
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7293,7 +9481,8 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_special_size_3_size_variant
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_unzip_special_rn_31_stack_pointer_sp_may_require_alignment_6144_0e401be0() {
+fn test_aarch64_vector_transfer_vector_permute_unzip_special_rn_31_stack_pointer_sp_may_require_alignment_6144_0e401be0()
+ {
     // Encoding: 0x0E401BE0
     // Test aarch64_vector_transfer_vector_permute_unzip special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rn=31, Rd=0, Q=0, size=1, Rm=0, op=0
@@ -7301,7 +9490,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_special_rn_31_stack_pointer
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7309,7 +9503,8 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_special_rn_31_stack_pointer
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_transfer_vector_permute_unzip_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_6144_0e40181f() {
+fn test_aarch64_vector_transfer_vector_permute_unzip_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_6144_0e40181f()
+ {
     // Encoding: 0x0E40181F
     // Test aarch64_vector_transfer_vector_permute_unzip special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, size=1, Rd=31, op=0, Rm=0, Q=0
@@ -7317,7 +9512,12 @@ fn test_aarch64_vector_transfer_vector_permute_unzip_special_rd_31_zero_register
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_permute_unzip
@@ -7383,7 +9583,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_imm5_0_zero_1c00_4e001c00()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7399,7 +9604,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_imm5_1_poweroftwo_1c00_4e01
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7415,7 +9625,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_imm5_3_poweroftwominusone_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7431,7 +9646,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_imm5_4_poweroftwo_1c00_4e04
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7447,7 +9667,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_imm5_7_poweroftwominusone_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7463,7 +9688,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_imm5_8_poweroftwo_1c00_4e08
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7479,7 +9709,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_imm5_15_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7495,7 +9730,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_imm5_16_poweroftwo_1c00_4e1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7511,7 +9751,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_imm5_31_max_1c00_4e1f1c00()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7527,7 +9772,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_rn_0_min_1c00_4e001c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7543,7 +9793,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_rn_1_poweroftwo_1c00_4e001c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7559,7 +9814,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_rn_30_poweroftwominusone_1c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7575,7 +9835,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_rn_31_max_1c00_4e001fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7591,7 +9856,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_rd_0_min_1c00_4e001c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7607,7 +9877,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_rd_1_poweroftwo_1c00_4e001c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7623,7 +9898,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_rd_30_poweroftwominusone_1c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7639,7 +9919,12 @@ fn test_aarch64_vector_transfer_integer_insert_field_rd_31_max_1c00_4e001c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7655,7 +9940,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_0_1c00_4e001c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7671,7 +9961,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_1_1c00_4e011c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7687,7 +9982,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_2_1c00_4e031c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7703,7 +10003,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_3_1c00_4e041c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7719,7 +10024,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_4_1c00_4e071c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7735,7 +10045,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_5_1c00_4e081c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7751,7 +10066,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_6_1c00_4e0f1c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7767,7 +10087,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_7_1c00_4e101c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7783,7 +10108,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_8_1c00_4e1f1c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7799,7 +10129,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_9_1c00_4e001c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7815,7 +10150,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_10_1c00_4e001c20() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7831,7 +10171,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_11_1c00_4e001fc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7847,7 +10192,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_12_1c00_4e001fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7863,7 +10213,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_13_1c00_4e001c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7879,7 +10234,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_14_1c00_4e001c01() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7895,7 +10255,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_15_1c00_4e001c1e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7911,7 +10276,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_16_1c00_4e001c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7927,7 +10297,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_17_1c00_4e001c21() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7943,7 +10318,12 @@ fn test_aarch64_vector_transfer_integer_insert_combo_18_1c00_4e001fff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7951,7 +10331,8 @@ fn test_aarch64_vector_transfer_integer_insert_combo_18_1c00_4e001fff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_transfer_integer_insert_special_rn_31_stack_pointer_sp_may_require_alignment_7168_4e011fe0() {
+fn test_aarch64_vector_transfer_integer_insert_special_rn_31_stack_pointer_sp_may_require_alignment_7168_4e011fe0()
+ {
     // Encoding: 0x4E011FE0
     // Test aarch64_vector_transfer_integer_insert special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Rn=31, imm5=1
@@ -7959,7 +10340,12 @@ fn test_aarch64_vector_transfer_integer_insert_special_rn_31_stack_pointer_sp_ma
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -7967,7 +10353,8 @@ fn test_aarch64_vector_transfer_integer_insert_special_rn_31_stack_pointer_sp_ma
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_transfer_integer_insert_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_7168_4e011c1f() {
+fn test_aarch64_vector_transfer_integer_insert_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_7168_4e011c1f()
+ {
     // Encoding: 0x4E011C1F
     // Test aarch64_vector_transfer_integer_insert special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: imm5=1, Rn=0, Rd=31
@@ -7975,7 +10362,12 @@ fn test_aarch64_vector_transfer_integer_insert_special_rd_31_zero_register_xzr_w
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_insert
@@ -8041,7 +10433,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm5_0_zero_400_6e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8057,7 +10454,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm5_1_poweroftwo_400_6e0104
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8073,7 +10475,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm5_3_poweroftwominusone_40
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8089,7 +10496,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm5_4_poweroftwo_400_6e0404
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8105,7 +10517,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm5_7_poweroftwominusone_40
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8121,7 +10538,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm5_8_poweroftwo_400_6e0804
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8137,7 +10559,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm5_15_poweroftwominusone_4
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8153,7 +10580,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm5_16_poweroftwo_400_6e100
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8169,7 +10601,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm5_31_max_400_6e1f0400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8185,7 +10622,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm4_0_zero_400_6e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8201,7 +10643,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm4_1_poweroftwo_400_6e000c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8217,7 +10664,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm4_3_poweroftwominusone_40
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8233,7 +10685,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm4_4_poweroftwo_400_6e0024
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8249,7 +10706,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm4_7_poweroftwominusone_40
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8265,7 +10727,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm4_8_poweroftwo_400_6e0044
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8281,7 +10748,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_imm4_15_max_400_6e007c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8297,7 +10769,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_rn_0_min_400_6e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8313,7 +10790,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_rn_1_poweroftwo_400_6e000420
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8329,7 +10811,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_rn_30_poweroftwominusone_400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8345,7 +10832,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_rn_31_max_400_6e0007e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8361,7 +10853,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_rd_0_min_400_6e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8377,7 +10874,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_rd_1_poweroftwo_400_6e000401
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8393,7 +10895,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_rd_30_poweroftwominusone_400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8409,7 +10916,12 @@ fn test_aarch64_vector_transfer_vector_insert_field_rd_31_max_400_6e00041f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8425,7 +10937,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_0_400_6e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8441,7 +10958,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_1_400_6e010400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8457,7 +10979,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_2_400_6e030400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8473,7 +11000,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_3_400_6e040400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8489,7 +11021,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_4_400_6e070400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8505,7 +11042,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_5_400_6e080400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8521,7 +11063,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_6_400_6e0f0400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8537,7 +11084,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_7_400_6e100400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8553,7 +11105,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_8_400_6e1f0400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8569,7 +11126,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_9_400_6e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8585,7 +11147,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_10_400_6e000c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8601,7 +11168,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_11_400_6e001c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8617,7 +11189,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_12_400_6e002400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8633,7 +11210,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_13_400_6e003c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8649,7 +11231,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_14_400_6e004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8665,7 +11252,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_15_400_6e007c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8681,7 +11273,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_16_400_6e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8697,7 +11294,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_17_400_6e000420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8713,7 +11315,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_18_400_6e0007c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8729,7 +11336,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_19_400_6e0007e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8745,7 +11357,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_20_400_6e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8761,7 +11378,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_21_400_6e000401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8777,7 +11399,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_22_400_6e00041e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8793,7 +11420,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_23_400_6e00041f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8809,7 +11441,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_24_400_6e000421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8825,7 +11462,12 @@ fn test_aarch64_vector_transfer_vector_insert_combo_25_400_6e0007ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8833,7 +11475,8 @@ fn test_aarch64_vector_transfer_vector_insert_combo_25_400_6e0007ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_transfer_vector_insert_special_rn_31_stack_pointer_sp_may_require_alignment_1024_6e010fe0() {
+fn test_aarch64_vector_transfer_vector_insert_special_rn_31_stack_pointer_sp_may_require_alignment_1024_6e010fe0()
+ {
     // Encoding: 0x6E010FE0
     // Test aarch64_vector_transfer_vector_insert special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, imm4=1, imm5=1, Rn=31
@@ -8841,7 +11484,12 @@ fn test_aarch64_vector_transfer_vector_insert_special_rn_31_stack_pointer_sp_may
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8849,7 +11497,8 @@ fn test_aarch64_vector_transfer_vector_insert_special_rn_31_stack_pointer_sp_may
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_transfer_vector_insert_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_6e010c1f() {
+fn test_aarch64_vector_transfer_vector_insert_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_6e010c1f()
+ {
     // Encoding: 0x6E010C1F
     // Test aarch64_vector_transfer_vector_insert special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: imm4=1, Rd=31, Rn=0, imm5=1
@@ -8857,7 +11506,12 @@ fn test_aarch64_vector_transfer_vector_insert_special_rd_31_zero_register_xzr_wz
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_vector_insert
@@ -8923,7 +11577,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_q_0_min_c00_0e000c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -8939,7 +11598,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_q_1_max_c00_4e000c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -8955,7 +11619,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_imm5_0_zero_c00_0e000c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -8971,7 +11640,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_imm5_1_poweroftwo_c00_0e010c00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -8987,7 +11661,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_imm5_3_poweroftwominusone_c00_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9003,7 +11682,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_imm5_4_poweroftwo_c00_0e040c00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9019,7 +11703,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_imm5_7_poweroftwominusone_c00_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9035,7 +11724,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_imm5_8_poweroftwo_c00_0e080c00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9051,7 +11745,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_imm5_15_poweroftwominusone_c00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9067,7 +11766,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_imm5_16_poweroftwo_c00_0e100c0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9083,7 +11787,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_imm5_31_max_c00_0e1f0c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9099,7 +11808,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_rn_0_min_c00_0e000c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9115,7 +11829,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_rn_1_poweroftwo_c00_0e000c20()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9131,7 +11850,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_rn_30_poweroftwominusone_c00_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9147,7 +11871,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_rn_31_max_c00_0e000fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9163,7 +11892,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_rd_0_min_c00_0e000c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9179,7 +11913,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_rd_1_poweroftwo_c00_0e000c01()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9195,7 +11934,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_rd_30_poweroftwominusone_c00_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9211,7 +11955,12 @@ fn test_aarch64_vector_transfer_integer_dup_field_rd_31_max_c00_0e000c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9227,7 +11976,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_0_c00_0e000c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9243,7 +11997,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_1_c00_4e000c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9259,7 +12018,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_2_c00_0e000c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9275,7 +12039,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_3_c00_0e010c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9291,7 +12060,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_4_c00_0e030c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9307,7 +12081,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_5_c00_0e040c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9323,7 +12102,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_6_c00_0e070c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9339,7 +12123,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_7_c00_0e080c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9355,7 +12144,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_8_c00_0e0f0c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9371,7 +12165,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_9_c00_0e100c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9387,7 +12186,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_10_c00_0e1f0c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9403,7 +12207,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_11_c00_0e000c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9419,7 +12228,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_12_c00_0e000c20() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9435,7 +12249,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_13_c00_0e000fc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9451,7 +12270,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_14_c00_0e000fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9467,7 +12291,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_15_c00_0e000c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9483,7 +12312,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_16_c00_0e000c01() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9499,7 +12333,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_17_c00_0e000c1e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9515,7 +12354,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_18_c00_0e000c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9531,7 +12375,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_19_c00_0e000c21() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9547,7 +12396,12 @@ fn test_aarch64_vector_transfer_integer_dup_combo_20_c00_0e000fff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9563,7 +12417,12 @@ fn test_aarch64_vector_transfer_integer_dup_special_q_0_size_variant_0_3072_0e01
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9579,7 +12438,12 @@ fn test_aarch64_vector_transfer_integer_dup_special_q_1_size_variant_1_3072_4e01
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9587,7 +12451,8 @@ fn test_aarch64_vector_transfer_integer_dup_special_q_1_size_variant_1_3072_4e01
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_transfer_integer_dup_special_rn_31_stack_pointer_sp_may_require_alignment_3072_0e010fe0() {
+fn test_aarch64_vector_transfer_integer_dup_special_rn_31_stack_pointer_sp_may_require_alignment_3072_0e010fe0()
+ {
     // Encoding: 0x0E010FE0
     // Test aarch64_vector_transfer_integer_dup special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: imm5=1, Rn=31, Q=0, Rd=0
@@ -9595,7 +12460,12 @@ fn test_aarch64_vector_transfer_integer_dup_special_rn_31_stack_pointer_sp_may_r
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9603,7 +12473,8 @@ fn test_aarch64_vector_transfer_integer_dup_special_rn_31_stack_pointer_sp_may_r
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_transfer_integer_dup_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_3072_0e010c1f() {
+fn test_aarch64_vector_transfer_integer_dup_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_3072_0e010c1f()
+ {
     // Encoding: 0x0E010C1F
     // Test aarch64_vector_transfer_integer_dup special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, imm5=1, Q=0, Rn=0
@@ -9611,7 +12482,12 @@ fn test_aarch64_vector_transfer_integer_dup_special_rd_31_zero_register_xzr_wzr_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_transfer_integer_dup
@@ -9659,4 +12535,3 @@ fn test_aarch64_vector_transfer_integer_dup_zr_rd_0e000c1f() {
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
     assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
 }
-

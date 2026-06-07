@@ -144,7 +144,10 @@ fn test_or_rm64_imm8_sign_extended() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx, 0xFFFFFFFFFFFFFFFF, "RBX: OR with -1 sets all bits");
+    assert_eq!(
+        regs.rbx, 0xFFFFFFFFFFFFFFFF,
+        "RBX: OR with -1 sets all bits"
+    );
 }
 
 // ============================================================================
@@ -442,7 +445,8 @@ fn test_or_byte_ptr_mem() {
 #[test]
 fn test_or_dword_ptr_mem() {
     let code = [
-        0x81, 0x0d, 0xf6, 0x0f, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, // OR DWORD PTR [rip+0x0FF6], 0x00FF0000
+        0x81, 0x0d, 0xf6, 0x0f, 0x00, 0x00, 0x00, 0x00, 0xFF,
+        0x00, // OR DWORD PTR [rip+0x0FF6], 0x00FF0000
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

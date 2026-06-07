@@ -98,7 +98,15 @@ fn test_vpcmpgtb_ymm0_ymm1_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42,
+            0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42,
+            0x42, 0x42, 0x42, 0x42,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -114,7 +122,8 @@ fn test_vpcmpgtb_ymm2_ymm3_mem_pattern() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let pattern: Vec<u8> = (0..32).collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -129,7 +138,15 @@ fn test_vpcmpgtb_ymm4_ymm5_mem_negative() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+            0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+            0x80, 0x80, 0x80, 0x80,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -222,7 +239,9 @@ fn test_vpcmpgtw_ymm0_ymm1_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = (0..16).flat_map(|i| (i as u16 * 0x1111).to_le_bytes()).collect();
+    let data: Vec<u8> = (0..16)
+        .flat_map(|i| (i as u16 * 0x1111).to_le_bytes())
+        .collect();
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -239,7 +258,8 @@ fn test_vpcmpgtw_ymm2_ymm3_mem_pattern() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let pattern: Vec<u8> = (0..16).flat_map(|i| (i as u16).to_le_bytes()).collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -254,7 +274,15 @@ fn test_vpcmpgtw_ymm4_ymm5_mem_negative() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+            0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+            0x80, 0x80, 0x80, 0x80,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -347,7 +375,9 @@ fn test_vpcmpgtd_ymm0_ymm1_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = (0..8).flat_map(|i| (i as u32 * 0x11111111).to_le_bytes()).collect();
+    let data: Vec<u8> = (0..8)
+        .flat_map(|i| (i as u32 * 0x11111111).to_le_bytes())
+        .collect();
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -364,7 +394,8 @@ fn test_vpcmpgtd_ymm2_ymm3_mem_pattern() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let pattern: Vec<u8> = (0..8).flat_map(|i| (i as u32).to_le_bytes()).collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -379,7 +410,15 @@ fn test_vpcmpgtd_ymm4_ymm5_mem_negative() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+            0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+            0x80, 0x80, 0x80, 0x80,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -472,7 +511,9 @@ fn test_vpcmpgtq_ymm0_ymm1_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = (0..4).flat_map(|i| (i as u64 * 0x1111111111111111).to_le_bytes()).collect();
+    let data: Vec<u8> = (0..4)
+        .flat_map(|i| (i as u64 * 0x1111111111111111).to_le_bytes())
+        .collect();
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -489,7 +530,8 @@ fn test_vpcmpgtq_ymm2_ymm3_mem_pattern() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let pattern: Vec<u8> = (0..4).flat_map(|i| (i as u64).to_le_bytes()).collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -504,7 +546,15 @@ fn test_vpcmpgtq_ymm4_ymm5_mem_negative() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+            0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+            0x80, 0x80, 0x80, 0x80,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -777,7 +827,13 @@ fn kgt_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
 fn pcmpgt_bytes(a: u128, b: u128) -> u128 {
     let (ab, bb) = (a.to_le_bytes(), b.to_le_bytes());
     let mut out = [0u8; 16];
-    for i in 0..16 { out[i] = if (ab[i] as i8) > (bb[i] as i8) { 0xFF } else { 0x00 }; }
+    for i in 0..16 {
+        out[i] = if (ab[i] as i8) > (bb[i] as i8) {
+            0xFF
+        } else {
+            0x00
+        };
+    }
     u128::from_le_bytes(out)
 }
 fn pcmpgt_words(a: u128, b: u128) -> u128 {
@@ -785,7 +841,9 @@ fn pcmpgt_words(a: u128, b: u128) -> u128 {
     for i in 0..8 {
         let av = ((a >> (i * 16)) & 0xFFFF) as u16 as i16;
         let bv = ((b >> (i * 16)) & 0xFFFF) as u16 as i16;
-        if av > bv { out |= 0xFFFFu128 << (i * 16); }
+        if av > bv {
+            out |= 0xFFFFu128 << (i * 16);
+        }
     }
     out
 }
@@ -794,14 +852,20 @@ fn pcmpgt_dwords(a: u128, b: u128) -> u128 {
     for i in 0..4 {
         let av = ((a >> (i * 32)) & 0xFFFF_FFFF) as u32 as i32;
         let bv = ((b >> (i * 32)) & 0xFFFF_FFFF) as u32 as i32;
-        if av > bv { out |= 0xFFFF_FFFFu128 << (i * 32); }
+        if av > bv {
+            out |= 0xFFFF_FFFFu128 << (i * 32);
+        }
     }
     out
 }
 fn pcmpgt_qwords(a: u128, b: u128) -> u128 {
     let mut out = 0u128;
-    if (a as u64 as i64) > (b as u64 as i64) { out |= 0xFFFF_FFFF_FFFF_FFFFu128; }
-    if ((a >> 64) as u64 as i64) > ((b >> 64) as u64 as i64) { out |= 0xFFFF_FFFF_FFFF_FFFFu128 << 64; }
+    if (a as u64 as i64) > (b as u64 as i64) {
+        out |= 0xFFFF_FFFF_FFFF_FFFFu128;
+    }
+    if ((a >> 64) as u64 as i64) > ((b >> 64) as u64 as i64) {
+        out |= 0xFFFF_FFFF_FFFF_FFFFu128 << 64;
+    }
     out
 }
 

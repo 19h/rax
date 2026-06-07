@@ -10,10 +10,10 @@
 
 #![cfg(test)]
 
-use rax::smir::lift::avx10::{Avx10Lifter, EvexPrefix};
 use rax::smir::lift::LiftContext;
-use rax::smir::lower::avx10::Avx10Lowerer;
+use rax::smir::lift::avx10::{Avx10Lifter, EvexPrefix};
 use rax::smir::lower::CodeBuffer;
+use rax::smir::lower::avx10::Avx10Lowerer;
 use rax::smir::ops::OpKind;
 use rax::smir::types::*;
 

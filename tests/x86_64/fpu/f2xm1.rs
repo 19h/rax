@@ -25,7 +25,8 @@ use vm_memory::{Bytes, GuestAddress};
 
 // Helper function to write f64 to memory
 fn write_f64(mem: &vm_memory::GuestMemoryMmap, addr: u64, val: f64) {
-    mem.write_slice(&val.to_le_bytes(), GuestAddress(addr)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), GuestAddress(addr))
+        .unwrap();
 }
 
 // Helper function to read f64 from memory
@@ -43,10 +44,10 @@ fn read_f64(mem: &vm_memory::GuestMemoryMmap, addr: u64) -> f64 {
 fn test_f2xm1_zero() {
     // 2^0 - 1 = 1 - 1 = 0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -62,10 +63,10 @@ fn test_f2xm1_zero() {
 fn test_f2xm1_positive_zero() {
     // Explicitly test +0.0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -82,10 +83,10 @@ fn test_f2xm1_positive_zero() {
 fn test_f2xm1_negative_zero() {
     // 2^(-0) - 1 = 1 - 1 = -0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -106,10 +107,10 @@ fn test_f2xm1_negative_zero() {
 fn test_f2xm1_one() {
     // 2^1 - 1 = 2 - 1 = 1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -129,10 +130,10 @@ fn test_f2xm1_one() {
 fn test_f2xm1_half() {
     // 2^0.5 - 1 = sqrt(2) - 1 ≈ 0.414
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -142,17 +143,20 @@ fn test_f2xm1_half() {
 
     let result = read_f64(&mem, 0x3000);
     let expected = 2.0f64.powf(0.5) - 1.0;
-    assert!((result - expected).abs() < 1e-10, "2^0.5 - 1 should be approximately 0.414");
+    assert!(
+        (result - expected).abs() < 1e-10,
+        "2^0.5 - 1 should be approximately 0.414"
+    );
 }
 
 #[test]
 fn test_f2xm1_quarter() {
     // 2^0.25 - 1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -169,10 +173,10 @@ fn test_f2xm1_quarter() {
 fn test_f2xm1_three_quarters() {
     // 2^0.75 - 1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -189,10 +193,10 @@ fn test_f2xm1_three_quarters() {
 fn test_f2xm1_small_positive() {
     // 2^0.1 - 1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -209,10 +213,10 @@ fn test_f2xm1_small_positive() {
 fn test_f2xm1_very_small_positive() {
     // 2^0.01 - 1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -233,10 +237,10 @@ fn test_f2xm1_very_small_positive() {
 fn test_f2xm1_negative_one() {
     // 2^(-1) - 1 = 0.5 - 1 = -0.5
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -252,10 +256,10 @@ fn test_f2xm1_negative_one() {
 fn test_f2xm1_negative_half() {
     // 2^(-0.5) - 1 = 1/sqrt(2) - 1 ≈ -0.293
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -265,17 +269,20 @@ fn test_f2xm1_negative_half() {
 
     let result = read_f64(&mem, 0x3000);
     let expected = 2.0f64.powf(-0.5) - 1.0;
-    assert!((result - expected).abs() < 1e-10, "2^(-0.5) - 1 calculation");
+    assert!(
+        (result - expected).abs() < 1e-10,
+        "2^(-0.5) - 1 calculation"
+    );
 }
 
 #[test]
 fn test_f2xm1_negative_quarter() {
     // 2^(-0.25) - 1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -285,17 +292,20 @@ fn test_f2xm1_negative_quarter() {
 
     let result = read_f64(&mem, 0x3000);
     let expected = 2.0f64.powf(-0.25) - 1.0;
-    assert!((result - expected).abs() < 1e-10, "2^(-0.25) - 1 calculation");
+    assert!(
+        (result - expected).abs() < 1e-10,
+        "2^(-0.25) - 1 calculation"
+    );
 }
 
 #[test]
 fn test_f2xm1_small_negative() {
     // 2^(-0.1) - 1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -305,17 +315,20 @@ fn test_f2xm1_small_negative() {
 
     let result = read_f64(&mem, 0x3000);
     let expected = 2.0f64.powf(-0.1) - 1.0;
-    assert!((result - expected).abs() < 1e-10, "2^(-0.1) - 1 calculation");
+    assert!(
+        (result - expected).abs() < 1e-10,
+        "2^(-0.1) - 1 calculation"
+    );
 }
 
 #[test]
 fn test_f2xm1_very_small_negative() {
     // 2^(-0.01) - 1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -325,7 +338,10 @@ fn test_f2xm1_very_small_negative() {
 
     let result = read_f64(&mem, 0x3000);
     let expected = 2.0f64.powf(-0.01) - 1.0;
-    assert!((result - expected).abs() < 1e-10, "2^(-0.01) - 1 calculation");
+    assert!(
+        (result - expected).abs() < 1e-10,
+        "2^(-0.01) - 1 calculation"
+    );
 }
 
 // ============================================================================
@@ -336,10 +352,10 @@ fn test_f2xm1_very_small_negative() {
 fn test_f2xm1_upper_limit() {
     // Test at upper limit of valid range (1.0)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -349,17 +365,20 @@ fn test_f2xm1_upper_limit() {
 
     let result = read_f64(&mem, 0x3000);
     let expected = 2.0f64.powf(1.0) - 1.0;
-    assert!((result - expected).abs() < 1e-10, "Upper limit: 2^1 - 1 = 1.0");
+    assert!(
+        (result - expected).abs() < 1e-10,
+        "Upper limit: 2^1 - 1 = 1.0"
+    );
 }
 
 #[test]
 fn test_f2xm1_lower_limit() {
     // Test at lower limit of valid range (-1.0)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -369,17 +388,20 @@ fn test_f2xm1_lower_limit() {
 
     let result = read_f64(&mem, 0x3000);
     let expected = 2.0f64.powf(-1.0) - 1.0;
-    assert!((result - expected).abs() < 1e-10, "Lower limit: 2^(-1) - 1 = -0.5");
+    assert!(
+        (result - expected).abs() < 1e-10,
+        "Lower limit: 2^(-1) - 1 = -0.5"
+    );
 }
 
 #[test]
 fn test_f2xm1_near_upper_limit() {
     // Test near upper limit
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -396,10 +418,10 @@ fn test_f2xm1_near_upper_limit() {
 fn test_f2xm1_near_lower_limit() {
     // Test near lower limit
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -409,7 +431,10 @@ fn test_f2xm1_near_lower_limit() {
 
     let result = read_f64(&mem, 0x3000);
     let expected = 2.0f64.powf(-0.99) - 1.0;
-    assert!((result - expected).abs() < 1e-10, "2^(-0.99) - 1 calculation");
+    assert!(
+        (result - expected).abs() < 1e-10,
+        "2^(-0.99) - 1 calculation"
+    );
 }
 
 // ============================================================================
@@ -419,16 +444,13 @@ fn test_f2xm1_near_lower_limit() {
 #[test]
 fn test_f2xm1_various_values() {
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
-    let test_values = vec![
-        -0.9, -0.75, -0.5, -0.25, -0.1,
-        0.1, 0.25, 0.5, 0.75, 0.9,
-    ];
+    let test_values = vec![-0.9, -0.75, -0.5, -0.25, -0.1, 0.1, 0.25, 0.5, 0.75, 0.9];
 
     for val in test_values {
         let (mut vcpu, mem) = setup_vm(&code, None);
@@ -438,7 +460,11 @@ fn test_f2xm1_various_values() {
 
         let result = read_f64(&mem, 0x3000);
         let expected = 2.0f64.powf(val) - 1.0;
-        assert!((result - expected).abs() < 1e-10, "2^{} - 1 should match", val);
+        assert!(
+            (result - expected).abs() < 1e-10,
+            "2^{} - 1 should match",
+            val
+        );
     }
 }
 
@@ -446,17 +472,13 @@ fn test_f2xm1_various_values() {
 fn test_f2xm1_symmetric_values() {
     // Test that F2XM1 works correctly for symmetric values
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
-    let test_pairs = vec![
-        (0.5, -0.5),
-        (0.25, -0.25),
-        (0.75, -0.75),
-    ];
+    let test_pairs = vec![(0.5, -0.5), (0.25, -0.25), (0.75, -0.75)];
 
     for (pos, neg) in test_pairs {
         let (mut vcpu_pos, mem_pos) = setup_vm(&code, None);
@@ -485,13 +507,13 @@ fn test_f2xm1_symmetric_values() {
 fn test_f2xm1_sequence() {
     // Test multiple F2XM1 operations in sequence
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00, // FLD qword [0x2008]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00, // FSTP qword [0x3008]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -517,10 +539,10 @@ fn test_f2xm1_sequence() {
 fn test_f2xm1_tiny_value() {
     // For very small x, 2^x - 1 ≈ x * ln(2)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -537,10 +559,10 @@ fn test_f2xm1_tiny_value() {
 fn test_f2xm1_precision_boundary() {
     // Test values at precision boundaries
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let test_values = vec![0.125, 0.375, 0.625, 0.875];
@@ -561,10 +583,10 @@ fn test_f2xm1_precision_boundary() {
 fn test_f2xm1_fractional_precision() {
     // Test various fractional values for precision
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xF0,                                  // F2XM1
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xF0, // F2XM1
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let test_values = vec![0.2, 0.3, 0.4, 0.6, 0.7, 0.8];
@@ -577,7 +599,11 @@ fn test_f2xm1_fractional_precision() {
 
         let result = read_f64(&mem, 0x3000);
         let expected = 2.0f64.powf(val) - 1.0;
-        assert!((result - expected).abs() < 1e-10, "2^{} - 1 should match", val);
+        assert!(
+            (result - expected).abs() < 1e-10,
+            "2^{} - 1 should match",
+            val
+        );
     }
 }
 
@@ -606,7 +632,10 @@ fn test_f2xm1_known_values() {
     assert!(kat_f2xm1(0.0).abs() < tol, "2^0 - 1 = 0");
     assert!((kat_f2xm1(1.0) - 1.0).abs() < tol, "2^1 - 1 = 1");
     assert!((kat_f2xm1(-1.0) + 0.5).abs() < tol, "2^-1 - 1 = -0.5");
-    assert!((kat_f2xm1(0.5) - (std::f64::consts::SQRT_2 - 1.0)).abs() < tol, "2^0.5 - 1");
+    assert!(
+        (kat_f2xm1(0.5) - (std::f64::consts::SQRT_2 - 1.0)).abs() < tol,
+        "2^0.5 - 1"
+    );
 }
 
 #[test]

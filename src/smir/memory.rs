@@ -306,7 +306,11 @@ impl SmirMemory for FlatMemory {
         // min/max sign-extend from `size` bits so e.g. AMOMAX.W compares the
         // 32-bit values as signed (not the zero-extended 64-bit values).
         let bits = size.bytes() * 8;
-        let mask = if bits >= 64 { u64::MAX } else { (1u64 << bits) - 1 };
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
         let o = operand & mask;
         let old_m = old & mask;
         let sext = |v: u64| -> i64 {

@@ -44,7 +44,9 @@ struct Out {
 
 fn which(prog: &str) -> Option<PathBuf> {
     let path = std::env::var_os("PATH")?;
-    std::env::split_paths(&path).map(|d| d.join(prog)).find(|c| c.is_file())
+    std::env::split_paths(&path)
+        .map(|d| d.join(prog))
+        .find(|c| c.is_file())
 }
 
 fn oracle_hvx() -> Option<PathBuf> {
@@ -159,13 +161,23 @@ fn assemble_one(case: &str) -> Option<Vec<u32>> {
     }
     let result = (|| {
         let mut child = Command::new("llvm-mc")
-            .args(["-triple=hexagon", "-mcpu=hexagonv69", "-mhvx", "-show-encoding"])
+            .args([
+                "-triple=hexagon",
+                "-mcpu=hexagonv69",
+                "-mhvx",
+                "-show-encoding",
+            ])
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
             .spawn()
             .ok()?;
-        child.stdin.take().unwrap().write_all(case.as_bytes()).ok()?;
+        child
+            .stdin
+            .take()
+            .unwrap()
+            .write_all(case.as_bytes())
+            .ok()?;
         let mut out = String::new();
         child.stdout.take().unwrap().read_to_string(&mut out).ok()?;
         if !child.wait().ok()?.success() {
@@ -196,7 +208,10 @@ fn assemble_one(case: &str) -> Option<Vec<u32>> {
         }
         (!words.is_empty()).then_some(words)
     })();
-    cache.lock().unwrap().insert(case.to_string(), result.clone());
+    cache
+        .lock()
+        .unwrap()
+        .insert(case.to_string(), result.clone());
     result
 }
 
@@ -220,10 +235,12 @@ fn run_rax(words: &[u32], c: &Case) -> Option<Out> {
     let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&regions).ok()?);
     let mut off = CODE_ADDR;
     for &w in words {
-        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64)).ok()?;
+        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64))
+            .ok()?;
         off += 4;
     }
-    mem.write_slice(&trap0_word().to_le_bytes(), GuestAddress(off as u64)).ok()?;
+    mem.write_slice(&trap0_word().to_le_bytes(), GuestAddress(off as u64))
+        .ok()?;
 
     let mut regs = HexagonRegisters::default();
     for i in 0..NREG {
@@ -322,7 +339,11 @@ fn run_family(name: &str, cases: &[(&str, &str)], n: usize, seed: u64) {
                 }
             }
             labels.push(*label);
-            batch.push(Case { words: words.clone(), st, v });
+            batch.push(Case {
+                words: words.clone(),
+                st,
+                v,
+            });
         }
     }
     let outs = match run_oracle(&bin, &batch) {
@@ -344,7 +365,9 @@ fn run_family(name: &str, cases: &[(&str, &str)], n: usize, seed: u64) {
         let mut diffs = Vec::new();
         for vr in 0..VREGS {
             if rax.v[vr] != outs[i].v[vr] {
-                let lane = (0..VWORDS).find(|&w| rax.v[vr][w] != outs[i].v[vr][w]).unwrap();
+                let lane = (0..VWORDS)
+                    .find(|&w| rax.v[vr][w] != outs[i].v[vr][w])
+                    .unwrap();
                 diffs.push(format!(
                     "v{vr}.w[{lane}]:rax={:#x},hw={:#x}",
                     rax.v[vr][lane], outs[i].v[vr][lane]
@@ -478,12 +501,7 @@ fn diff_hvx_shift_vector() {
 
 #[test]
 fn diff_hvx_ror() {
-    run_family(
-        "hvx_ror",
-        &[("vror", "{ v0 = vror(v1,r3) }")],
-        10,
-        0x7be1,
-    );
+    run_family("hvx_ror", &[("vror", "{ v0 = vror(v1,r3) }")], 10, 0x7be1);
 }
 
 #[test]
@@ -634,15 +652,42 @@ fn diff_hvx_cmp() {
     run_family(
         "hvx_cmp",
         &[
-            ("veqb", "{ q0 = vcmp.eq(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtb", "{ q0 = vcmp.gt(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtub", "{ q0 = vcmp.gt(v1.ub,v2.ub) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("veqh", "{ q0 = vcmp.eq(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgth", "{ q0 = vcmp.gt(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtuh", "{ q0 = vcmp.gt(v1.uh,v2.uh) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("veqw", "{ q0 = vcmp.eq(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtw", "{ q0 = vcmp.gt(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtuw", "{ q0 = vcmp.gt(v1.uw,v2.uw) }\n{ v0 = vmux(q0,v3,v4) }"),
+            (
+                "veqb",
+                "{ q0 = vcmp.eq(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtb",
+                "{ q0 = vcmp.gt(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtub",
+                "{ q0 = vcmp.gt(v1.ub,v2.ub) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "veqh",
+                "{ q0 = vcmp.eq(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgth",
+                "{ q0 = vcmp.gt(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtuh",
+                "{ q0 = vcmp.gt(v1.uh,v2.uh) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "veqw",
+                "{ q0 = vcmp.eq(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtw",
+                "{ q0 = vcmp.gt(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtuw",
+                "{ q0 = vcmp.gt(v1.uw,v2.uw) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
         ],
         8,
         0x6311,
@@ -656,11 +701,26 @@ fn diff_hvx_cmp_self() {
     run_family(
         "hvx_cmp_self",
         &[
-            ("veqb_self", "{ q0 = vcmp.eq(v1.b,v1.b) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtb_self", "{ q0 = vcmp.gt(v1.b,v1.b) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("veqh_self", "{ q0 = vcmp.eq(v1.h,v1.h) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtw_self", "{ q0 = vcmp.gt(v1.w,v1.w) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtuw_self", "{ q0 = vcmp.gt(v1.uw,v1.uw) }\n{ v0 = vmux(q0,v3,v4) }"),
+            (
+                "veqb_self",
+                "{ q0 = vcmp.eq(v1.b,v1.b) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtb_self",
+                "{ q0 = vcmp.gt(v1.b,v1.b) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "veqh_self",
+                "{ q0 = vcmp.eq(v1.h,v1.h) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtw_self",
+                "{ q0 = vcmp.gt(v1.w,v1.w) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtuw_self",
+                "{ q0 = vcmp.gt(v1.uw,v1.uw) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
         ],
         6,
         0x77a2,
@@ -713,10 +773,22 @@ fn diff_hvx_vand_bridge() {
     run_family(
         "hvx_vand_bridge",
         &[
-            ("vandvqv", "{ q0 = vcmp.gt(v1.b,v2.b) }\n{ v0 = vand(q0,v3) }"),
-            ("vandvnqv", "{ q0 = vcmp.gt(v1.b,v2.b) }\n{ v0 = vand(!q0,v3) }"),
-            ("vandqrt", "{ q0 = vcmp.gt(v1.b,v2.b) }\n{ v0 = vand(q0,r3) }"),
-            ("vandnqrt", "{ q0 = vcmp.gt(v1.b,v2.b) }\n{ v0 = vand(!q0,r3) }"),
+            (
+                "vandvqv",
+                "{ q0 = vcmp.gt(v1.b,v2.b) }\n{ v0 = vand(q0,v3) }",
+            ),
+            (
+                "vandvnqv",
+                "{ q0 = vcmp.gt(v1.b,v2.b) }\n{ v0 = vand(!q0,v3) }",
+            ),
+            (
+                "vandqrt",
+                "{ q0 = vcmp.gt(v1.b,v2.b) }\n{ v0 = vand(q0,r3) }",
+            ),
+            (
+                "vandnqrt",
+                "{ q0 = vcmp.gt(v1.b,v2.b) }\n{ v0 = vand(!q0,r3) }",
+            ),
             ("vandvrt", "{ q0 = vand(v1,r2) }\n{ v0 = vmux(q0,v3,v4) }"),
         ],
         8,
@@ -916,7 +988,10 @@ fn diff_hvx_cmpy() {
             ("vmpyowh", "{ v4.w = vmpyo(v2.w,v3.h):<<1:sat }"),
             ("vmpyowh_rnd", "{ v4.w = vmpyo(v2.w,v3.h):<<1:rnd:sat }"),
             ("vmpyowh_sacc", "{ v0.w += vmpyo(v2.w,v3.h):<<1:sat:shift }"),
-            ("vmpyowh_rnd_sacc", "{ v0.w += vmpyo(v2.w,v3.h):<<1:rnd:sat:shift }"),
+            (
+                "vmpyowh_rnd_sacc",
+                "{ v0.w += vmpyo(v2.w,v3.h):<<1:rnd:sat:shift }",
+            ),
             ("vmpyowh_64_acc", "{ v1:0 += vmpyo(v2.w,v3.h) }"),
         ],
         32,
@@ -1061,7 +1136,10 @@ fn diff_hvx_permx() {
             // per-word bit rotate right
             ("vrotr", "{ v0.uw = vrotr(v1.uw,v2.uw) }"),
             // Q-selected swap: produce Q0 in packet 1, consume in packet 2.
-            ("vswap", "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ v1:0 = vswap(q0,v3,v2) }"),
+            (
+                "vswap",
+                "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ v1:0 = vswap(q0,v3,v2) }",
+            ),
         ],
         12,
         0x9106,
@@ -1081,19 +1159,55 @@ fn diff_hvx_predop() {
         "hvx_predop",
         &[
             // if (Qv) Vx += Vu  /  if (!Qv) Vx += Vu  (byte/half/word)
-            ("vaddbq", "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ if (q0) v0.b += v1.b }"),
-            ("vaddbnq", "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ if (!q0) v0.b += v1.b }"),
-            ("vaddhq", "{ q0 = vcmp.gt(v5.h,v6.h) }\n{ if (q0) v0.h += v1.h }"),
-            ("vaddhnq", "{ q0 = vcmp.gt(v5.h,v6.h) }\n{ if (!q0) v0.h += v1.h }"),
-            ("vaddwq", "{ q0 = vcmp.gt(v5.w,v6.w) }\n{ if (q0) v0.w += v1.w }"),
-            ("vaddwnq", "{ q0 = vcmp.gt(v5.w,v6.w) }\n{ if (!q0) v0.w += v1.w }"),
+            (
+                "vaddbq",
+                "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ if (q0) v0.b += v1.b }",
+            ),
+            (
+                "vaddbnq",
+                "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ if (!q0) v0.b += v1.b }",
+            ),
+            (
+                "vaddhq",
+                "{ q0 = vcmp.gt(v5.h,v6.h) }\n{ if (q0) v0.h += v1.h }",
+            ),
+            (
+                "vaddhnq",
+                "{ q0 = vcmp.gt(v5.h,v6.h) }\n{ if (!q0) v0.h += v1.h }",
+            ),
+            (
+                "vaddwq",
+                "{ q0 = vcmp.gt(v5.w,v6.w) }\n{ if (q0) v0.w += v1.w }",
+            ),
+            (
+                "vaddwnq",
+                "{ q0 = vcmp.gt(v5.w,v6.w) }\n{ if (!q0) v0.w += v1.w }",
+            ),
             // if (Qv) Vx -= Vu  /  if (!Qv) Vx -= Vu
-            ("vsubbq", "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ if (q0) v0.b -= v1.b }"),
-            ("vsubbnq", "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ if (!q0) v0.b -= v1.b }"),
-            ("vsubhq", "{ q0 = vcmp.gt(v5.h,v6.h) }\n{ if (q0) v0.h -= v1.h }"),
-            ("vsubhnq", "{ q0 = vcmp.gt(v5.h,v6.h) }\n{ if (!q0) v0.h -= v1.h }"),
-            ("vsubwq", "{ q0 = vcmp.gt(v5.w,v6.w) }\n{ if (q0) v0.w -= v1.w }"),
-            ("vsubwnq", "{ q0 = vcmp.gt(v5.w,v6.w) }\n{ if (!q0) v0.w -= v1.w }"),
+            (
+                "vsubbq",
+                "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ if (q0) v0.b -= v1.b }",
+            ),
+            (
+                "vsubbnq",
+                "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ if (!q0) v0.b -= v1.b }",
+            ),
+            (
+                "vsubhq",
+                "{ q0 = vcmp.gt(v5.h,v6.h) }\n{ if (q0) v0.h -= v1.h }",
+            ),
+            (
+                "vsubhnq",
+                "{ q0 = vcmp.gt(v5.h,v6.h) }\n{ if (!q0) v0.h -= v1.h }",
+            ),
+            (
+                "vsubwq",
+                "{ q0 = vcmp.gt(v5.w,v6.w) }\n{ if (q0) v0.w -= v1.w }",
+            ),
+            (
+                "vsubwnq",
+                "{ q0 = vcmp.gt(v5.w,v6.w) }\n{ if (!q0) v0.w -= v1.w }",
+            ),
             // scalar-predicated move: if (Ps) Vd = Vu  /  vncmov: if (!Ps)
             ("vcmov", "{ if (p0) v0 = v1 }"),
             ("vncmov", "{ if (!p0) v0 = v1 }"),
@@ -1121,41 +1235,122 @@ fn diff_hvx_cmpacc() {
         "hvx_cmpacc",
         &[
             // ---- gt signed byte ----
-            ("vgtb_and", "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ q0 &= vcmp.gt(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtb_or", "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ q0 |= vcmp.gt(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtb_xor", "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ q0 ^= vcmp.gt(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }"),
+            (
+                "vgtb_and",
+                "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ q0 &= vcmp.gt(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtb_or",
+                "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ q0 |= vcmp.gt(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtb_xor",
+                "{ q0 = vcmp.gt(v5.b,v6.b) }\n{ q0 ^= vcmp.gt(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
             // ---- gt signed halfword ----
-            ("vgth_and", "{ q0 = vcmp.gt(v5.h,v6.h) }\n{ q0 &= vcmp.gt(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgth_or", "{ q0 = vcmp.gt(v5.h,v6.h) }\n{ q0 |= vcmp.gt(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgth_xor", "{ q0 = vcmp.gt(v5.h,v6.h) }\n{ q0 ^= vcmp.gt(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }"),
+            (
+                "vgth_and",
+                "{ q0 = vcmp.gt(v5.h,v6.h) }\n{ q0 &= vcmp.gt(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgth_or",
+                "{ q0 = vcmp.gt(v5.h,v6.h) }\n{ q0 |= vcmp.gt(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgth_xor",
+                "{ q0 = vcmp.gt(v5.h,v6.h) }\n{ q0 ^= vcmp.gt(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
             // ---- gt signed word ----
-            ("vgtw_and", "{ q0 = vcmp.gt(v5.w,v6.w) }\n{ q0 &= vcmp.gt(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtw_or", "{ q0 = vcmp.gt(v5.w,v6.w) }\n{ q0 |= vcmp.gt(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtw_xor", "{ q0 = vcmp.gt(v5.w,v6.w) }\n{ q0 ^= vcmp.gt(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }"),
+            (
+                "vgtw_and",
+                "{ q0 = vcmp.gt(v5.w,v6.w) }\n{ q0 &= vcmp.gt(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtw_or",
+                "{ q0 = vcmp.gt(v5.w,v6.w) }\n{ q0 |= vcmp.gt(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtw_xor",
+                "{ q0 = vcmp.gt(v5.w,v6.w) }\n{ q0 ^= vcmp.gt(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
             // ---- gt unsigned byte ----
-            ("vgtub_and", "{ q0 = vcmp.gt(v5.ub,v6.ub) }\n{ q0 &= vcmp.gt(v1.ub,v2.ub) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtub_or", "{ q0 = vcmp.gt(v5.ub,v6.ub) }\n{ q0 |= vcmp.gt(v1.ub,v2.ub) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtub_xor", "{ q0 = vcmp.gt(v5.ub,v6.ub) }\n{ q0 ^= vcmp.gt(v1.ub,v2.ub) }\n{ v0 = vmux(q0,v3,v4) }"),
+            (
+                "vgtub_and",
+                "{ q0 = vcmp.gt(v5.ub,v6.ub) }\n{ q0 &= vcmp.gt(v1.ub,v2.ub) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtub_or",
+                "{ q0 = vcmp.gt(v5.ub,v6.ub) }\n{ q0 |= vcmp.gt(v1.ub,v2.ub) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtub_xor",
+                "{ q0 = vcmp.gt(v5.ub,v6.ub) }\n{ q0 ^= vcmp.gt(v1.ub,v2.ub) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
             // ---- gt unsigned halfword ----
-            ("vgtuh_and", "{ q0 = vcmp.gt(v5.uh,v6.uh) }\n{ q0 &= vcmp.gt(v1.uh,v2.uh) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtuh_or", "{ q0 = vcmp.gt(v5.uh,v6.uh) }\n{ q0 |= vcmp.gt(v1.uh,v2.uh) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtuh_xor", "{ q0 = vcmp.gt(v5.uh,v6.uh) }\n{ q0 ^= vcmp.gt(v1.uh,v2.uh) }\n{ v0 = vmux(q0,v3,v4) }"),
+            (
+                "vgtuh_and",
+                "{ q0 = vcmp.gt(v5.uh,v6.uh) }\n{ q0 &= vcmp.gt(v1.uh,v2.uh) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtuh_or",
+                "{ q0 = vcmp.gt(v5.uh,v6.uh) }\n{ q0 |= vcmp.gt(v1.uh,v2.uh) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtuh_xor",
+                "{ q0 = vcmp.gt(v5.uh,v6.uh) }\n{ q0 ^= vcmp.gt(v1.uh,v2.uh) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
             // ---- gt unsigned word ----
-            ("vgtuw_and", "{ q0 = vcmp.gt(v5.uw,v6.uw) }\n{ q0 &= vcmp.gt(v1.uw,v2.uw) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtuw_or", "{ q0 = vcmp.gt(v5.uw,v6.uw) }\n{ q0 |= vcmp.gt(v1.uw,v2.uw) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("vgtuw_xor", "{ q0 = vcmp.gt(v5.uw,v6.uw) }\n{ q0 ^= vcmp.gt(v1.uw,v2.uw) }\n{ v0 = vmux(q0,v3,v4) }"),
+            (
+                "vgtuw_and",
+                "{ q0 = vcmp.gt(v5.uw,v6.uw) }\n{ q0 &= vcmp.gt(v1.uw,v2.uw) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtuw_or",
+                "{ q0 = vcmp.gt(v5.uw,v6.uw) }\n{ q0 |= vcmp.gt(v1.uw,v2.uw) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "vgtuw_xor",
+                "{ q0 = vcmp.gt(v5.uw,v6.uw) }\n{ q0 ^= vcmp.gt(v1.uw,v2.uw) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
             // ---- eq byte ----
-            ("veqb_and", "{ q0 = vcmp.eq(v5.b,v6.b) }\n{ q0 &= vcmp.eq(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("veqb_or", "{ q0 = vcmp.eq(v5.b,v6.b) }\n{ q0 |= vcmp.eq(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("veqb_xor", "{ q0 = vcmp.eq(v5.b,v6.b) }\n{ q0 ^= vcmp.eq(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }"),
+            (
+                "veqb_and",
+                "{ q0 = vcmp.eq(v5.b,v6.b) }\n{ q0 &= vcmp.eq(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "veqb_or",
+                "{ q0 = vcmp.eq(v5.b,v6.b) }\n{ q0 |= vcmp.eq(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "veqb_xor",
+                "{ q0 = vcmp.eq(v5.b,v6.b) }\n{ q0 ^= vcmp.eq(v1.b,v2.b) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
             // ---- eq halfword ----
-            ("veqh_and", "{ q0 = vcmp.eq(v5.h,v6.h) }\n{ q0 &= vcmp.eq(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("veqh_or", "{ q0 = vcmp.eq(v5.h,v6.h) }\n{ q0 |= vcmp.eq(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("veqh_xor", "{ q0 = vcmp.eq(v5.h,v6.h) }\n{ q0 ^= vcmp.eq(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }"),
+            (
+                "veqh_and",
+                "{ q0 = vcmp.eq(v5.h,v6.h) }\n{ q0 &= vcmp.eq(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "veqh_or",
+                "{ q0 = vcmp.eq(v5.h,v6.h) }\n{ q0 |= vcmp.eq(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "veqh_xor",
+                "{ q0 = vcmp.eq(v5.h,v6.h) }\n{ q0 ^= vcmp.eq(v1.h,v2.h) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
             // ---- eq word ----
-            ("veqw_and", "{ q0 = vcmp.eq(v5.w,v6.w) }\n{ q0 &= vcmp.eq(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("veqw_or", "{ q0 = vcmp.eq(v5.w,v6.w) }\n{ q0 |= vcmp.eq(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }"),
-            ("veqw_xor", "{ q0 = vcmp.eq(v5.w,v6.w) }\n{ q0 ^= vcmp.eq(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }"),
+            (
+                "veqw_and",
+                "{ q0 = vcmp.eq(v5.w,v6.w) }\n{ q0 &= vcmp.eq(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "veqw_or",
+                "{ q0 = vcmp.eq(v5.w,v6.w) }\n{ q0 |= vcmp.eq(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
+            (
+                "veqw_xor",
+                "{ q0 = vcmp.eq(v5.w,v6.w) }\n{ q0 ^= vcmp.eq(v1.w,v2.w) }\n{ v0 = vmux(q0,v3,v4) }",
+            ),
         ],
         8,
         0x2cac,
@@ -1260,18 +1455,12 @@ fn diff_hvx_carry() {
                 "{ q0 = vcmp.gt(v5.w,v6.w) }\n{ v3.w = vsub(v1.w,v2.w,q0):carry }\n{ v0 = vmux(q0,v8,v9) }",
             ),
             // carry-out only (separate Qe); Vd captured, then mux the produced q1.
-            (
-                "vaddcarryo_vd",
-                "{ v0.w,q1 = vadd(v1.w,v2.w):carry }",
-            ),
+            ("vaddcarryo_vd", "{ v0.w,q1 = vadd(v1.w,v2.w):carry }"),
             (
                 "vaddcarryo_qout",
                 "{ v3.w,q1 = vadd(v1.w,v2.w):carry }\n{ v0 = vmux(q1,v8,v9) }",
             ),
-            (
-                "vsubcarryo_vd",
-                "{ v0.w,q1 = vsub(v1.w,v2.w):carry }",
-            ),
+            ("vsubcarryo_vd", "{ v0.w,q1 = vsub(v1.w,v2.w):carry }"),
             (
                 "vsubcarryo_qout",
                 "{ v3.w,q1 = vsub(v1.w,v2.w):carry }\n{ v0 = vmux(q1,v8,v9) }",

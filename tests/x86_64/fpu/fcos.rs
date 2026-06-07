@@ -20,7 +20,8 @@ use vm_memory::{Bytes, GuestAddress};
 
 // Helper function to write f64 to memory
 fn write_f64(mem: &vm_memory::GuestMemoryMmap, addr: u64, val: f64) {
-    mem.write_slice(&val.to_le_bytes(), GuestAddress(addr)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), GuestAddress(addr))
+        .unwrap();
 }
 
 // Helper function to read f64 from memory
@@ -38,10 +39,10 @@ fn read_f64(mem: &vm_memory::GuestMemoryMmap, addr: u64) -> f64 {
 fn test_fcos_zero() {
     // cos(0) = 1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -50,17 +51,21 @@ fn test_fcos_zero() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!((result - 1.0).abs() < 1e-10, "cos(0) should be 1.0, got {}", result);
+    assert!(
+        (result - 1.0).abs() < 1e-10,
+        "cos(0) should be 1.0, got {}",
+        result
+    );
 }
 
 #[test]
 fn test_fcos_pi_over_2() {
     // cos(π/2) ≈ 0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -69,17 +74,21 @@ fn test_fcos_pi_over_2() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(result.abs() < 1e-10, "cos(π/2) should be ~0, got {}", result);
+    assert!(
+        result.abs() < 1e-10,
+        "cos(π/2) should be ~0, got {}",
+        result
+    );
 }
 
 #[test]
 fn test_fcos_pi() {
     // cos(π) = -1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -88,17 +97,21 @@ fn test_fcos_pi() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!((result + 1.0).abs() < 1e-10, "cos(π) should be -1.0, got {}", result);
+    assert!(
+        (result + 1.0).abs() < 1e-10,
+        "cos(π) should be -1.0, got {}",
+        result
+    );
 }
 
 #[test]
 fn test_fcos_two_pi() {
     // cos(2π) = 1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -107,17 +120,21 @@ fn test_fcos_two_pi() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!((result - 1.0).abs() < 1e-10, "cos(2π) should be 1.0, got {}", result);
+    assert!(
+        (result - 1.0).abs() < 1e-10,
+        "cos(2π) should be 1.0, got {}",
+        result
+    );
 }
 
 #[test]
 fn test_fcos_pi_over_4() {
     // cos(π/4) ≈ √2/2 ≈ 0.7071
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -127,17 +144,21 @@ fn test_fcos_pi_over_4() {
 
     let result = read_f64(&mem, 0x3000);
     let expected = 1.0 / 2.0_f64.sqrt();
-    assert!((result - expected).abs() < 1e-10, "cos(π/4) should be √2/2, got {}", result);
+    assert!(
+        (result - expected).abs() < 1e-10,
+        "cos(π/4) should be √2/2, got {}",
+        result
+    );
 }
 
 #[test]
 fn test_fcos_pi_over_3() {
     // cos(π/3) = 0.5
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -146,17 +167,21 @@ fn test_fcos_pi_over_3() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!((result - 0.5).abs() < 1e-10, "cos(π/3) should be 0.5, got {}", result);
+    assert!(
+        (result - 0.5).abs() < 1e-10,
+        "cos(π/3) should be 0.5, got {}",
+        result
+    );
 }
 
 #[test]
 fn test_fcos_pi_over_6() {
     // cos(π/6) ≈ √3/2 ≈ 0.866
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -166,7 +191,11 @@ fn test_fcos_pi_over_6() {
 
     let result = read_f64(&mem, 0x3000);
     let expected = 3.0_f64.sqrt() / 2.0;
-    assert!((result - expected).abs() < 1e-10, "cos(π/6) should be √3/2, got {}", result);
+    assert!(
+        (result - expected).abs() < 1e-10,
+        "cos(π/6) should be √3/2, got {}",
+        result
+    );
 }
 
 // ============================================================================
@@ -177,10 +206,10 @@ fn test_fcos_pi_over_6() {
 fn test_fcos_negative_pi_over_2() {
     // cos(-π/2) ≈ 0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -189,17 +218,21 @@ fn test_fcos_negative_pi_over_2() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(result.abs() < 1e-10, "cos(-π/2) should be ~0, got {}", result);
+    assert!(
+        result.abs() < 1e-10,
+        "cos(-π/2) should be ~0, got {}",
+        result
+    );
 }
 
 #[test]
 fn test_fcos_negative_pi() {
     // cos(-π) = -1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -208,17 +241,21 @@ fn test_fcos_negative_pi() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!((result + 1.0).abs() < 1e-10, "cos(-π) should be -1.0, got {}", result);
+    assert!(
+        (result + 1.0).abs() < 1e-10,
+        "cos(-π) should be -1.0, got {}",
+        result
+    );
 }
 
 #[test]
 fn test_fcos_negative_pi_over_4() {
     // cos(-π/4) = cos(π/4) ≈ √2/2
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -228,7 +265,11 @@ fn test_fcos_negative_pi_over_4() {
 
     let result = read_f64(&mem, 0x3000);
     let expected = 1.0 / 2.0_f64.sqrt();
-    assert!((result - expected).abs() < 1e-10, "cos(-π/4) should be √2/2, got {}", result);
+    assert!(
+        (result - expected).abs() < 1e-10,
+        "cos(-π/4) should be √2/2, got {}",
+        result
+    );
 }
 
 // ============================================================================
@@ -239,10 +280,10 @@ fn test_fcos_negative_pi_over_4() {
 fn test_fcos_small_positive() {
     // cos(0.1) ≈ 0.995
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -259,10 +300,10 @@ fn test_fcos_small_positive() {
 fn test_fcos_small_negative() {
     // cos(-0.1) ≈ 0.995
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -279,10 +320,10 @@ fn test_fcos_small_negative() {
 fn test_fcos_very_small() {
     // cos(0.001) ≈ 1.0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -303,10 +344,10 @@ fn test_fcos_very_small() {
 fn test_fcos_three_pi_over_2() {
     // cos(3π/2) ≈ 0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -315,17 +356,21 @@ fn test_fcos_three_pi_over_2() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(result.abs() < 1e-10, "cos(3π/2) should be ~0, got {}", result);
+    assert!(
+        result.abs() < 1e-10,
+        "cos(3π/2) should be ~0, got {}",
+        result
+    );
 }
 
 #[test]
 fn test_fcos_four_pi() {
     // cos(4π) = 1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -334,17 +379,21 @@ fn test_fcos_four_pi() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!((result - 1.0).abs() < 1e-10, "cos(4π) should be 1.0, got {}", result);
+    assert!(
+        (result - 1.0).abs() < 1e-10,
+        "cos(4π) should be 1.0, got {}",
+        result
+    );
 }
 
 #[test]
 fn test_fcos_six_pi() {
     // cos(6π) = 1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -353,7 +402,11 @@ fn test_fcos_six_pi() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!((result - 1.0).abs() < 1e-10, "cos(6π) should be 1.0, got {}", result);
+    assert!(
+        (result - 1.0).abs() < 1e-10,
+        "cos(6π) should be 1.0, got {}",
+        result
+    );
 }
 
 // ============================================================================
@@ -364,10 +417,10 @@ fn test_fcos_six_pi() {
 fn test_fcos_ten() {
     // cos(10)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -384,10 +437,10 @@ fn test_fcos_ten() {
 fn test_fcos_hundred() {
     // cos(100)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -404,10 +457,10 @@ fn test_fcos_hundred() {
 fn test_fcos_thousand() {
     // cos(1000)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -428,10 +481,10 @@ fn test_fcos_thousand() {
 fn test_fcos_symmetry_1() {
     // cos(x) = cos(-x)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let angle = 1.234;
@@ -448,17 +501,20 @@ fn test_fcos_symmetry_1() {
     run_until_hlt(&mut vcpu).unwrap();
     let result_neg = read_f64(&mem, 0x3000);
 
-    assert!((result_pos - result_neg).abs() < 1e-10, "cos(x) should equal cos(-x)");
+    assert!(
+        (result_pos - result_neg).abs() < 1e-10,
+        "cos(x) should equal cos(-x)"
+    );
 }
 
 #[test]
 fn test_fcos_symmetry_pi_3() {
     // cos(x) = cos(-x) for x = π/3
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let angle = std::f64::consts::FRAC_PI_3;
@@ -475,7 +531,10 @@ fn test_fcos_symmetry_pi_3() {
     run_until_hlt(&mut vcpu).unwrap();
     let result_neg = read_f64(&mem, 0x3000);
 
-    assert!((result_pos - result_neg).abs() < 1e-10, "cos(π/3) should equal cos(-π/3)");
+    assert!(
+        (result_pos - result_neg).abs() < 1e-10,
+        "cos(π/3) should equal cos(-π/3)"
+    );
 }
 
 // ============================================================================
@@ -488,10 +547,10 @@ fn test_fcos_result_in_range() {
     let test_values = vec![0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 10.0, -0.5, -1.0, -2.0];
 
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     for val in test_values {
@@ -500,8 +559,12 @@ fn test_fcos_result_in_range() {
         run_until_hlt(&mut vcpu).unwrap();
         let result = read_f64(&mem, 0x3000);
 
-        assert!(result >= -1.0 && result <= 1.0,
-                "cos({}) = {} should be in range [-1, 1]", val, result);
+        assert!(
+            result >= -1.0 && result <= 1.0,
+            "cos({}) = {} should be in range [-1, 1]",
+            val,
+            result
+        );
     }
 }
 
@@ -513,10 +576,10 @@ fn test_fcos_result_in_range() {
 fn test_fcos_quadrant_1() {
     // First quadrant: 0 to π/2, cosine decreases from 1 to 0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -531,10 +594,10 @@ fn test_fcos_quadrant_1() {
 fn test_fcos_quadrant_2() {
     // Second quadrant: π/2 to π, cosine decreases from 0 to -1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -542,17 +605,20 @@ fn test_fcos_quadrant_2() {
     run_until_hlt(&mut vcpu).unwrap();
     let result = read_f64(&mem, 0x3000);
 
-    assert!(result < 0.0 && result > -1.0, "cos(3π/4) should be in (-1, 0)");
+    assert!(
+        result < 0.0 && result > -1.0,
+        "cos(3π/4) should be in (-1, 0)"
+    );
 }
 
 #[test]
 fn test_fcos_quadrant_3() {
     // Third quadrant: π to 3π/2, cosine increases from -1 to 0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -560,17 +626,20 @@ fn test_fcos_quadrant_3() {
     run_until_hlt(&mut vcpu).unwrap();
     let result = read_f64(&mem, 0x3000);
 
-    assert!(result < 0.0 && result > -1.0, "cos(5π/4) should be in (-1, 0)");
+    assert!(
+        result < 0.0 && result > -1.0,
+        "cos(5π/4) should be in (-1, 0)"
+    );
 }
 
 #[test]
 fn test_fcos_quadrant_4() {
     // Fourth quadrant: 3π/2 to 2π, cosine increases from 0 to 1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -578,7 +647,10 @@ fn test_fcos_quadrant_4() {
     run_until_hlt(&mut vcpu).unwrap();
     let result = read_f64(&mem, 0x3000);
 
-    assert!(result > 0.0 && result < 1.0, "cos(7π/4) should be in (0, 1)");
+    assert!(
+        result > 0.0 && result < 1.0,
+        "cos(7π/4) should be in (0, 1)"
+    );
 }
 
 // ============================================================================
@@ -589,13 +661,13 @@ fn test_fcos_quadrant_4() {
 fn test_fcos_sequence() {
     // Test multiple FCOS operations
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00, // FLD qword [0x2008]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00, // FSTP qword [0x3008]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -614,11 +686,11 @@ fn test_fcos_sequence() {
 fn test_fcos_twice() {
     // cos(cos(x))
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xD9, 0xFF,                                  // FCOS (again)
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xD9, 0xFF, // FCOS (again)
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -639,10 +711,10 @@ fn test_fcos_twice() {
 fn test_fcos_positive_zero() {
     // cos(+0) = 1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -651,17 +723,20 @@ fn test_fcos_positive_zero() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!((result - 1.0).abs() < 1e-15, "cos(+0) should be exactly 1.0");
+    assert!(
+        (result - 1.0).abs() < 1e-15,
+        "cos(+0) should be exactly 1.0"
+    );
 }
 
 #[test]
 fn test_fcos_negative_zero() {
     // cos(-0) = 1
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -670,17 +745,20 @@ fn test_fcos_negative_zero() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!((result - 1.0).abs() < 1e-15, "cos(-0) should be exactly 1.0");
+    assert!(
+        (result - 1.0).abs() < 1e-15,
+        "cos(-0) should be exactly 1.0"
+    );
 }
 
 #[test]
 fn test_fcos_various_angles() {
     // Test a variety of angle values
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let test_angles = vec![0.25, 0.75, 1.25, 2.5, 3.5, 4.5, 5.5];
@@ -691,8 +769,13 @@ fn test_fcos_various_angles() {
         run_until_hlt(&mut vcpu).unwrap();
         let result = read_f64(&mem, 0x3000);
         let expected = angle.cos();
-        assert!((result - expected).abs() < 1e-10,
-                "cos({}) mismatch: expected {}, got {}", angle, expected, result);
+        assert!(
+            (result - expected).abs() < 1e-10,
+            "cos({}) mismatch: expected {}, got {}",
+            angle,
+            expected,
+            result
+        );
     }
 }
 
@@ -700,10 +783,10 @@ fn test_fcos_various_angles() {
 fn test_fcos_arbitrary_values() {
     // Test with arbitrary floating-point values
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFF,                                  // FCOS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFF, // FCOS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let test_values = vec![0.12345, 1.98765, 2.71828, 3.33333, 5.55555];
@@ -714,7 +797,6 @@ fn test_fcos_arbitrary_values() {
         run_until_hlt(&mut vcpu).unwrap();
         let result = read_f64(&mem, 0x3000);
         let expected = val.cos();
-        assert!((result - expected).abs() < 1e-10,
-                "cos({}) mismatch", val);
+        assert!((result - expected).abs() < 1e-10, "cos({}) mismatch", val);
     }
 }

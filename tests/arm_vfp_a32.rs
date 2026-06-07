@@ -2546,10 +2546,8 @@ fn neon_vabs_vneg_abs_and_negate_integer_and_float_lanes() {
         18,
         ((2.0f32.to_bits() as u64) << 32) | u64::from((-3.0f32).to_bits()),
     );
-    cpu.vfp.write_d_bits(
-        19,
-        ((0x7fc0_1111u64) << 32) | u64::from(0.0f32.to_bits()),
-    );
+    cpu.vfp
+        .write_d_bits(19, ((0x7fc0_1111u64) << 32) | u64::from(0.0f32.to_bits()));
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF3F9_07E2),
         ExecResult::Continue
@@ -3663,10 +3661,14 @@ fn neon_fp_pairwise_add_handles_f32_and_f16_lanes() {
         Mnemonic::UNDEFINED
     );
 
-    cpu.vfp
-        .write_d_bits(1, u64::from(2.5f32.to_bits()) << 32 | u64::from(1.25f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(2, u64::from(20.0f32.to_bits()) << 32 | u64::from(10.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        1,
+        u64::from(2.5f32.to_bits()) << 32 | u64::from(1.25f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from(20.0f32.to_bits()) << 32 | u64::from(10.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF301_0D02),
         ExecResult::Continue
@@ -3676,10 +3678,14 @@ fn neon_fp_pairwise_add_handles_f32_and_f16_lanes() {
         u64::from(30.0f32.to_bits()) << 32 | u64::from(3.75f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(5, u64::from(8.0f32.to_bits()) << 32 | u64::from(4.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(6, u64::from(64.0f32.to_bits()) << 32 | u64::from(32.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        5,
+        u64::from(8.0f32.to_bits()) << 32 | u64::from(4.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        6,
+        u64::from(64.0f32.to_bits()) << 32 | u64::from(32.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF305_4D06),
         ExecResult::Continue
@@ -3724,10 +3730,14 @@ fn neon_fp_pairwise_minmax_handle_f32_and_f16_lanes() {
         Mnemonic::UNDEFINED
     );
 
-    cpu.vfp
-        .write_d_bits(1, u64::from(7.5f32.to_bits()) << 32 | u64::from((-1.0f32).to_bits()));
-    cpu.vfp
-        .write_d_bits(2, u64::from(0.5f32.to_bits()) << 32 | u64::from(12.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        1,
+        u64::from(7.5f32.to_bits()) << 32 | u64::from((-1.0f32).to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from(0.5f32.to_bits()) << 32 | u64::from(12.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF301_0F02),
         ExecResult::Continue
@@ -3737,10 +3747,14 @@ fn neon_fp_pairwise_minmax_handle_f32_and_f16_lanes() {
         u64::from(12.0f32.to_bits()) << 32 | u64::from(7.5f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(5, u64::from(8.0f32.to_bits()) << 32 | u64::from((-4.0f32).to_bits()));
-    cpu.vfp
-        .write_d_bits(6, u64::from(64.0f32.to_bits()) << 32 | u64::from(32.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        5,
+        u64::from(8.0f32.to_bits()) << 32 | u64::from((-4.0f32).to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        6,
+        u64::from(64.0f32.to_bits()) << 32 | u64::from(32.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF325_4F06),
         ExecResult::Continue
@@ -4936,16 +4950,23 @@ fn neon_fp_convert_between_f32_and_i32_lanes() {
         u64::from(100.0f32.to_bits()) << 32 | u64::from(7.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(5, u64::from(9.75f32.to_bits()) << 32 | u64::from((-2.5f32).to_bits()));
+    cpu.vfp.write_d_bits(
+        5,
+        u64::from(9.75f32.to_bits()) << 32 | u64::from((-2.5f32).to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF3BB_4705),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.read_d_bits(4), (9u64 << 32) | u64::from((-2i32) as u32));
+    assert_eq!(
+        cpu.vfp.read_d_bits(4),
+        (9u64 << 32) | u64::from((-2i32) as u32)
+    );
 
-    cpu.vfp
-        .write_d_bits(7, u64::from(12.9f32.to_bits()) << 32 | u64::from(3.25f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        7,
+        u64::from(12.9f32.to_bits()) << 32 | u64::from(3.25f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF3BB_6787),
         ExecResult::Continue
@@ -4969,21 +4990,35 @@ fn neon_fp_convert_between_f32_and_i32_lanes() {
         u64::from(40.0f32.to_bits()) << 32 | u64::from((-30.0f32).to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(6, u64::from(4.75f32.to_bits()) << 32 | u64::from((-1.25f32).to_bits()));
-    cpu.vfp
-        .write_d_bits(7, u64::from(8.5f32.to_bits()) << 32 | u64::from((-6.5f32).to_bits()));
+    cpu.vfp.write_d_bits(
+        6,
+        u64::from(4.75f32.to_bits()) << 32 | u64::from((-1.25f32).to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        7,
+        u64::from(8.5f32.to_bits()) << 32 | u64::from((-6.5f32).to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF3BB_4746),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.read_d_bits(4), (4u64 << 32) | u64::from((-1i32) as u32));
-    assert_eq!(cpu.vfp.read_d_bits(5), (8u64 << 32) | u64::from((-6i32) as u32));
+    assert_eq!(
+        cpu.vfp.read_d_bits(4),
+        (4u64 << 32) | u64::from((-1i32) as u32)
+    );
+    assert_eq!(
+        cpu.vfp.read_d_bits(5),
+        (8u64 << 32) | u64::from((-6i32) as u32)
+    );
 
-    cpu.vfp
-        .write_d_bits(2, u64::from(2.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(3, u64::from((-4.0f32).to_bits()) << 32 | u64::from(0.5f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from(2.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        3,
+        u64::from((-4.0f32).to_bits()) << 32 | u64::from(0.5f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF3B6_0602),
         ExecResult::Continue
@@ -5060,8 +5095,10 @@ fn neon_fp_fixed_convert_between_f32_and_i32_lanes() {
         u64::from(4.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(5, u64::from((-2.25f32).to_bits()) << 32 | u64::from(1.5f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        5,
+        u64::from((-2.25f32).to_bits()) << 32 | u64::from(1.5f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF2B4_4F15),
         ExecResult::Continue
@@ -5071,8 +5108,10 @@ fn neon_fp_fixed_convert_between_f32_and_i32_lanes() {
         u64::from((-9216i32) as u32) << 32 | 6144
     );
 
-    cpu.vfp
-        .write_d_bits(7, u64::from(2.0f32.to_bits()) << 32 | u64::from(0.5f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        7,
+        u64::from(2.0f32.to_bits()) << 32 | u64::from(0.5f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF3B0_6F17),
         ExecResult::Continue
@@ -5096,15 +5135,22 @@ fn neon_fp_fixed_convert_between_f32_and_i32_lanes() {
         u64::from(16.0f32.to_bits()) << 32 | u64::from((-12.0f32).to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(6, u64::from(2.5f32.to_bits()) << 32 | u64::from((-1.25f32).to_bits()));
-    cpu.vfp
-        .write_d_bits(7, u64::from(8.0f32.to_bits()) << 32 | u64::from(0.75f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        6,
+        u64::from(2.5f32.to_bits()) << 32 | u64::from((-1.25f32).to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        7,
+        u64::from(8.0f32.to_bits()) << 32 | u64::from(0.75f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF2B4_4F56),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.read_d_bits(4), (10240u64 << 32) | u64::from((-5120i32) as u32));
+    assert_eq!(
+        cpu.vfp.read_d_bits(4),
+        (10240u64 << 32) | u64::from((-5120i32) as u32)
+    );
     assert_eq!(cpu.vfp.read_d_bits(5), (32768u64 << 32) | 3072);
 }
 
@@ -5208,8 +5254,7 @@ fn neon_widen_and_narrow_moves_convert_between_d_and_q_registers() {
         Aarch32Decoder::decode(0xF288_1A11).unwrap().mnemonic,
         Mnemonic::UNDEFINED
     );
-    let invalid_source =
-        DecodedInsn::new(Mnemonic::VMOVN, ExecutionState::Aarch32, 0xF3B2_0203, 4);
+    let invalid_source = DecodedInsn::new(Mnemonic::VMOVN, ExecutionState::Aarch32, 0xF3B2_0203, 4);
     assert!(matches!(
         Executor::new(&mut cpu, &mut mem).execute(&invalid_source),
         ExecResult::Undefined
@@ -5537,34 +5582,50 @@ fn neon_fp_compare_writes_f32_and_f16_lane_masks_and_handles_absolute_forms() {
         Mnemonic::VACGT
     );
 
-    cpu.vfp
-        .write_d_bits(1, ((-0.0f32).to_bits() as u64) << 32 | u64::from(1.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(2, u64::from(0.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        1,
+        ((-0.0f32).to_bits() as u64) << 32 | u64::from(1.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from(0.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF201_0E02),
         ExecResult::Continue
     ));
     assert_eq!(cpu.vfp.read_d_bits(0), 0xffff_ffff_ffff_ffff);
 
-    cpu.vfp
-        .write_d_bits(4, u64::from(f32::NAN.to_bits()) << 32 | u64::from((-1.0f32).to_bits()));
-    cpu.vfp
-        .write_d_bits(5, u64::from(1.0f32.to_bits()) << 32 | u64::from((-2.0f32).to_bits()));
+    cpu.vfp.write_d_bits(
+        4,
+        u64::from(f32::NAN.to_bits()) << 32 | u64::from((-1.0f32).to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        5,
+        u64::from(1.0f32.to_bits()) << 32 | u64::from((-2.0f32).to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF304_3E05),
         ExecResult::Continue
     ));
     assert_eq!(cpu.vfp.read_d_bits(3), 0x0000_0000_ffff_ffff);
 
-    cpu.vfp
-        .write_d_bits(12, u64::from(2.0f32.to_bits()) << 32 | u64::from(3.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(13, u64::from(f32::NAN.to_bits()) << 32 | u64::from((-1.0f32).to_bits()));
-    cpu.vfp
-        .write_d_bits(16, u64::from(2.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(17, u64::from(1.0f32.to_bits()) << 32 | u64::from((-2.0f32).to_bits()));
+    cpu.vfp.write_d_bits(
+        12,
+        u64::from(2.0f32.to_bits()) << 32 | u64::from(3.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        13,
+        u64::from(f32::NAN.to_bits()) << 32 | u64::from((-1.0f32).to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        16,
+        u64::from(2.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        17,
+        u64::from(1.0f32.to_bits()) << 32 | u64::from((-2.0f32).to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF32C_8E60),
         ExecResult::Continue
@@ -5572,24 +5633,36 @@ fn neon_fp_compare_writes_f32_and_f16_lane_masks_and_handles_absolute_forms() {
     assert_eq!(cpu.vfp.read_d_bits(8), 0x0000_0000_ffff_ffff);
     assert_eq!(cpu.vfp.read_d_bits(9), 0x0000_0000_ffff_ffff);
 
-    cpu.vfp
-        .write_d_bits(1, u64::from(1.0f32.to_bits()) << 32 | u64::from((-3.0f32).to_bits()));
-    cpu.vfp
-        .write_d_bits(2, u64::from((-2.0f32).to_bits()) << 32 | u64::from(2.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        1,
+        u64::from(1.0f32.to_bits()) << 32 | u64::from((-3.0f32).to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from((-2.0f32).to_bits()) << 32 | u64::from(2.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF301_0E12),
         ExecResult::Continue
     ));
     assert_eq!(cpu.vfp.read_d_bits(0), 0x0000_0000_ffff_ffff);
 
-    cpu.vfp
-        .write_d_bits(8, u64::from(4.0f32.to_bits()) << 32 | u64::from((-5.0f32).to_bits()));
-    cpu.vfp
-        .write_d_bits(9, u64::from(f32::NAN.to_bits()) << 32 | u64::from((-1.0f32).to_bits()));
-    cpu.vfp
-        .write_d_bits(12, u64::from((-4.0f32).to_bits()) << 32 | u64::from(4.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(13, u64::from(0.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        8,
+        u64::from(4.0f32.to_bits()) << 32 | u64::from((-5.0f32).to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        9,
+        u64::from(f32::NAN.to_bits()) << 32 | u64::from((-1.0f32).to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        12,
+        u64::from((-4.0f32).to_bits()) << 32 | u64::from(4.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        13,
+        u64::from(0.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF328_4E5C),
         ExecResult::Continue
@@ -5746,16 +5819,20 @@ fn neon_compare_zero_writes_integer_and_fp_lane_masks() {
     assert_eq!(cpu.vfp.read_d_bits(8), 0x0000_ff00_ff00_00ff);
     assert_eq!(cpu.vfp.read_d_bits(9), 0x0000_ff00_ff00_ff00);
 
-    cpu.vfp
-        .write_d_bits(1, u64::from(f32::NAN.to_bits()) << 32 | u64::from(1.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        1,
+        u64::from(f32::NAN.to_bits()) << 32 | u64::from(1.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF3B9_0401),
         ExecResult::Continue
     ));
     assert_eq!(cpu.vfp.read_d_bits(0), 0x0000_0000_ffff_ffff);
 
-    cpu.vfp
-        .write_d_bits(1, u64::from(0.0f32.to_bits()) << 32 | u64::from((-0.0f32).to_bits()));
+    cpu.vfp.write_d_bits(
+        1,
+        u64::from(0.0f32.to_bits()) << 32 | u64::from((-0.0f32).to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF3B9_0501),
         ExecResult::Continue
@@ -5966,10 +6043,14 @@ fn neon_recip_step_handles_f32_and_f16_fused_step_forms() {
         Mnemonic::VRSQRTS
     );
 
-    cpu.vfp
-        .write_d_bits(1, u64::from(f32::INFINITY.to_bits()) << 32 | u64::from(0.5f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(2, u64::from(0.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        1,
+        u64::from(f32::INFINITY.to_bits()) << 32 | u64::from(0.5f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from(0.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF201_0F12),
         ExecResult::Continue
@@ -5979,14 +6060,22 @@ fn neon_recip_step_handles_f32_and_f16_fused_step_forms() {
         u64::from(2.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(2, u64::from(4.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(3, u64::from(f32::NAN.to_bits()) << 32 | u64::from(0.25f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(4, u64::from(0.25f32.to_bits()) << 32 | u64::from(1.5f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(5, u64::from(1.0f32.to_bits()) << 32 | u64::from(0.5f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from(4.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        3,
+        u64::from(f32::NAN.to_bits()) << 32 | u64::from(0.25f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        4,
+        u64::from(0.25f32.to_bits()) << 32 | u64::from(1.5f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        5,
+        u64::from(1.0f32.to_bits()) << 32 | u64::from(0.5f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF202_0F54),
         ExecResult::Continue
@@ -6000,10 +6089,14 @@ fn neon_recip_step_handles_f32_and_f16_fused_step_forms() {
         u64::from(f32::NAN.to_bits()) << 32 | u64::from(1.875f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(4, u64::from(f32::INFINITY.to_bits()) << 32 | u64::from(1.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(5, u64::from(0.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        4,
+        u64::from(f32::INFINITY.to_bits()) << 32 | u64::from(1.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        5,
+        u64::from(0.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF224_3F15),
         ExecResult::Continue
@@ -6013,14 +6106,22 @@ fn neon_recip_step_handles_f32_and_f16_fused_step_forms() {
         u64::from(1.5f32.to_bits()) << 32 | u64::from(1.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(8, u64::from(0.5f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(9, u64::from(f32::NAN.to_bits()) << 32 | u64::from(2.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(12, u64::from(2.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(13, u64::from(1.0f32.to_bits()) << 32 | u64::from(0.5f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        8,
+        u64::from(0.5f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        9,
+        u64::from(f32::NAN.to_bits()) << 32 | u64::from(2.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        12,
+        u64::from(2.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        13,
+        u64::from(1.0f32.to_bits()) << 32 | u64::from(0.5f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF228_4F5C),
         ExecResult::Continue
@@ -6147,10 +6248,14 @@ fn neon_fp_multiply_accumulate_and_subtract_handle_f32_and_f16_lanes() {
         Mnemonic::UNDEFINED
     );
 
-    cpu.vfp
-        .write_d_bits(1, u64::from(3.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(2, u64::from(5.0f32.to_bits()) << 32 | u64::from(4.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        1,
+        u64::from(3.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from(5.0f32.to_bits()) << 32 | u64::from(4.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF301_0D12),
         ExecResult::Continue
@@ -6160,14 +6265,22 @@ fn neon_fp_multiply_accumulate_and_subtract_handle_f32_and_f16_lanes() {
         u64::from(15.0f32.to_bits()) << 32 | u64::from(8.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(2, u64::from(3.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(3, u64::from(5.0f32.to_bits()) << 32 | u64::from(4.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(4, u64::from(7.0f32.to_bits()) << 32 | u64::from(6.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(5, u64::from(9.0f32.to_bits()) << 32 | u64::from(8.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from(3.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        3,
+        u64::from(5.0f32.to_bits()) << 32 | u64::from(4.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        4,
+        u64::from(7.0f32.to_bits()) << 32 | u64::from(6.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        5,
+        u64::from(9.0f32.to_bits()) << 32 | u64::from(8.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF302_0D54),
         ExecResult::Continue
@@ -6181,10 +6294,14 @@ fn neon_fp_multiply_accumulate_and_subtract_handle_f32_and_f16_lanes() {
         u64::from(45.0f32.to_bits()) << 32 | u64::from(32.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(1, u64::from(3.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(2, u64::from(5.0f32.to_bits()) << 32 | u64::from(4.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        1,
+        u64::from(3.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from(5.0f32.to_bits()) << 32 | u64::from(4.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF2A1_0942),
         ExecResult::Continue
@@ -6194,12 +6311,18 @@ fn neon_fp_multiply_accumulate_and_subtract_handle_f32_and_f16_lanes() {
         u64::from(12.0f32.to_bits()) << 32 | u64::from(8.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(4, u64::from(20.0f32.to_bits()) << 32 | u64::from(10.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(5, u64::from(4.0f32.to_bits()) << 32 | u64::from(3.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(6, u64::from(2.0f32.to_bits()) << 32 | u64::from(5.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        4,
+        u64::from(20.0f32.to_bits()) << 32 | u64::from(10.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        5,
+        u64::from(4.0f32.to_bits()) << 32 | u64::from(3.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        6,
+        u64::from(2.0f32.to_bits()) << 32 | u64::from(5.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF205_4D16),
         ExecResult::Continue
@@ -6209,16 +6332,26 @@ fn neon_fp_multiply_accumulate_and_subtract_handle_f32_and_f16_lanes() {
         u64::from(28.0f32.to_bits()) << 32 | u64::from(25.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(0, u64::from(20.0f32.to_bits()) << 32 | u64::from(10.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(1, u64::from(40.0f32.to_bits()) << 32 | u64::from(30.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(2, u64::from(2.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(3, u64::from(4.0f32.to_bits()) << 32 | u64::from(3.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(4, u64::from(5.0f32.to_bits()) << 32 | u64::from(6.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        0,
+        u64::from(20.0f32.to_bits()) << 32 | u64::from(10.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        1,
+        u64::from(40.0f32.to_bits()) << 32 | u64::from(30.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from(2.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        3,
+        u64::from(4.0f32.to_bits()) << 32 | u64::from(3.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        4,
+        u64::from(5.0f32.to_bits()) << 32 | u64::from(6.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF3A2_0164),
         ExecResult::Continue
@@ -6232,18 +6365,30 @@ fn neon_fp_multiply_accumulate_and_subtract_handle_f32_and_f16_lanes() {
         u64::from(60.0f32.to_bits()) << 32 | u64::from(45.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(16, u64::from(200.0f32.to_bits()) << 32 | u64::from(100.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(17, u64::from(400.0f32.to_bits()) << 32 | u64::from(300.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(18, u64::from(4.0f32.to_bits()) << 32 | u64::from(3.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(19, u64::from(6.0f32.to_bits()) << 32 | u64::from(5.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(20, u64::from(2.0f32.to_bits()) << 32 | u64::from(7.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(21, u64::from(8.0f32.to_bits()) << 32 | u64::from(9.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        16,
+        u64::from(200.0f32.to_bits()) << 32 | u64::from(100.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        17,
+        u64::from(400.0f32.to_bits()) << 32 | u64::from(300.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        18,
+        u64::from(4.0f32.to_bits()) << 32 | u64::from(3.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        19,
+        u64::from(6.0f32.to_bits()) << 32 | u64::from(5.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        20,
+        u64::from(2.0f32.to_bits()) << 32 | u64::from(7.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        21,
+        u64::from(8.0f32.to_bits()) << 32 | u64::from(9.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF262_0DF4),
         ExecResult::Continue
@@ -6257,12 +6402,18 @@ fn neon_fp_multiply_accumulate_and_subtract_handle_f32_and_f16_lanes() {
         u64::from(352.0f32.to_bits()) << 32 | u64::from(255.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(0, u64::from(30.0f32.to_bits()) << 32 | u64::from(20.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(1, u64::from(3.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(2, u64::from(5.0f32.to_bits()) << 32 | u64::from(4.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        0,
+        u64::from(30.0f32.to_bits()) << 32 | u64::from(20.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        1,
+        u64::from(3.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from(5.0f32.to_bits()) << 32 | u64::from(4.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF2A1_0542),
         ExecResult::Continue
@@ -6272,12 +6423,18 @@ fn neon_fp_multiply_accumulate_and_subtract_handle_f32_and_f16_lanes() {
         u64::from(18.0f32.to_bits()) << 32 | u64::from(12.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(0, u64::from(50.0f32.to_bits()) << 32 | u64::from(10.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(1, u64::from(3.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(2, u64::from(5.0f32.to_bits()) << 32 | u64::from(4.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        0,
+        u64::from(50.0f32.to_bits()) << 32 | u64::from(10.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        1,
+        u64::from(3.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from(5.0f32.to_bits()) << 32 | u64::from(4.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF201_0C12),
         ExecResult::Continue
@@ -6287,12 +6444,18 @@ fn neon_fp_multiply_accumulate_and_subtract_handle_f32_and_f16_lanes() {
         u64::from(65.0f32.to_bits()) << 32 | u64::from(18.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(4, u64::from(80.0f32.to_bits()) << 32 | u64::from(50.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(5, u64::from(4.0f32.to_bits()) << 32 | u64::from(3.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(6, u64::from(2.0f32.to_bits()) << 32 | u64::from(5.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        4,
+        u64::from(80.0f32.to_bits()) << 32 | u64::from(50.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        5,
+        u64::from(4.0f32.to_bits()) << 32 | u64::from(3.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        6,
+        u64::from(2.0f32.to_bits()) << 32 | u64::from(5.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF225_4C16),
         ExecResult::Continue
@@ -6302,18 +6465,30 @@ fn neon_fp_multiply_accumulate_and_subtract_handle_f32_and_f16_lanes() {
         u64::from(72.0f32.to_bits()) << 32 | u64::from(35.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(0, u64::from(20.0f32.to_bits()) << 32 | u64::from(10.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(1, u64::from(40.0f32.to_bits()) << 32 | u64::from(30.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(2, u64::from(2.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(3, u64::from(4.0f32.to_bits()) << 32 | u64::from(3.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(4, u64::from(6.0f32.to_bits()) << 32 | u64::from(5.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(5, u64::from(8.0f32.to_bits()) << 32 | u64::from(7.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        0,
+        u64::from(20.0f32.to_bits()) << 32 | u64::from(10.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        1,
+        u64::from(40.0f32.to_bits()) << 32 | u64::from(30.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from(2.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        3,
+        u64::from(4.0f32.to_bits()) << 32 | u64::from(3.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        4,
+        u64::from(6.0f32.to_bits()) << 32 | u64::from(5.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        5,
+        u64::from(8.0f32.to_bits()) << 32 | u64::from(7.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF202_0C54),
         ExecResult::Continue
@@ -6327,18 +6502,30 @@ fn neon_fp_multiply_accumulate_and_subtract_handle_f32_and_f16_lanes() {
         u64::from(72.0f32.to_bits()) << 32 | u64::from(51.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(8, u64::from(120.0f32.to_bits()) << 32 | u64::from(100.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(9, u64::from(180.0f32.to_bits()) << 32 | u64::from(160.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(10, u64::from(2.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(11, u64::from(4.0f32.to_bits()) << 32 | u64::from(3.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(12, u64::from(6.0f32.to_bits()) << 32 | u64::from(5.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(13, u64::from(8.0f32.to_bits()) << 32 | u64::from(7.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        8,
+        u64::from(120.0f32.to_bits()) << 32 | u64::from(100.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        9,
+        u64::from(180.0f32.to_bits()) << 32 | u64::from(160.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        10,
+        u64::from(2.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        11,
+        u64::from(4.0f32.to_bits()) << 32 | u64::from(3.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        12,
+        u64::from(6.0f32.to_bits()) << 32 | u64::from(5.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        13,
+        u64::from(8.0f32.to_bits()) << 32 | u64::from(7.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF22A_8C5C),
         ExecResult::Continue
@@ -6542,10 +6729,14 @@ fn neon_fp_add_sub_handle_f32_and_f16_lanes() {
         Mnemonic::UNDEFINED
     );
 
-    cpu.vfp
-        .write_d_bits(1, u64::from(3.5f32.to_bits()) << 32 | u64::from(1.25f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(2, u64::from(4.5f32.to_bits()) << 32 | u64::from(2.75f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        1,
+        u64::from(3.5f32.to_bits()) << 32 | u64::from(1.25f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from(4.5f32.to_bits()) << 32 | u64::from(2.75f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF201_0D02),
         ExecResult::Continue
@@ -6555,14 +6746,22 @@ fn neon_fp_add_sub_handle_f32_and_f16_lanes() {
         u64::from(8.0f32.to_bits()) << 32 | u64::from(4.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(2, u64::from(4.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(3, u64::from(8.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(4, u64::from(40.0f32.to_bits()) << 32 | u64::from(10.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(5, u64::from(80.0f32.to_bits()) << 32 | u64::from(20.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        2,
+        u64::from(4.0f32.to_bits()) << 32 | u64::from(1.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        3,
+        u64::from(8.0f32.to_bits()) << 32 | u64::from(2.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        4,
+        u64::from(40.0f32.to_bits()) << 32 | u64::from(10.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        5,
+        u64::from(80.0f32.to_bits()) << 32 | u64::from(20.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF202_0D44),
         ExecResult::Continue
@@ -6576,10 +6775,14 @@ fn neon_fp_add_sub_handle_f32_and_f16_lanes() {
         u64::from(88.0f32.to_bits()) << 32 | u64::from(22.0f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(5, u64::from(9.0f32.to_bits()) << 32 | u64::from(7.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(6, u64::from(4.0f32.to_bits()) << 32 | u64::from(2.5f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        5,
+        u64::from(9.0f32.to_bits()) << 32 | u64::from(7.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        6,
+        u64::from(4.0f32.to_bits()) << 32 | u64::from(2.5f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF225_4D06),
         ExecResult::Continue
@@ -6589,14 +6792,22 @@ fn neon_fp_add_sub_handle_f32_and_f16_lanes() {
         u64::from(5.0f32.to_bits()) << 32 | u64::from(4.5f32.to_bits())
     );
 
-    cpu.vfp
-        .write_d_bits(10, u64::from(100.0f32.to_bits()) << 32 | u64::from(50.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(11, u64::from(200.0f32.to_bits()) << 32 | u64::from(150.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(12, u64::from(8.0f32.to_bits()) << 32 | u64::from(7.0f32.to_bits()));
-    cpu.vfp
-        .write_d_bits(13, u64::from(6.0f32.to_bits()) << 32 | u64::from(5.0f32.to_bits()));
+    cpu.vfp.write_d_bits(
+        10,
+        u64::from(100.0f32.to_bits()) << 32 | u64::from(50.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        11,
+        u64::from(200.0f32.to_bits()) << 32 | u64::from(150.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        12,
+        u64::from(8.0f32.to_bits()) << 32 | u64::from(7.0f32.to_bits()),
+    );
+    cpu.vfp.write_d_bits(
+        13,
+        u64::from(6.0f32.to_bits()) << 32 | u64::from(5.0f32.to_bits()),
+    );
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xF22A_8D4C),
         ExecResult::Continue

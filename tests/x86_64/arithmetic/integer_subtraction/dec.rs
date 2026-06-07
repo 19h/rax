@@ -25,7 +25,7 @@ use rax::cpu::Registers;
 fn test_dec_al_basic() {
     let code = [
         0xfe, 0xc8, // DEC AL (FE /1, ModRM=11_001_000)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x42;
@@ -61,7 +61,10 @@ fn test_dec_al_underflow() {
 
     assert_eq!(regs.rax & 0xFF, 0xFF, "DEC AL: 0 - 1 = 0xFF (underflow)");
     assert!(!zf_set(regs.rflags), "ZF should be clear");
-    assert!(sf_set(regs.rflags), "SF should be set (negative in signed interpretation)");
+    assert!(
+        sf_set(regs.rflags),
+        "SF should be set (negative in signed interpretation)"
+    );
 }
 
 #[test]
@@ -76,7 +79,10 @@ fn test_dec_al_signed_overflow() {
     assert_eq!(regs.rax & 0xFF, 0x7F, "DEC AL: 0x80 - 1 = 0x7F");
     assert!(!zf_set(regs.rflags), "ZF should be clear");
     assert!(!sf_set(regs.rflags), "SF should be clear (positive result)");
-    assert!(of_set(regs.rflags), "OF should be set (signed overflow: -128 - 1 = 127)");
+    assert!(
+        of_set(regs.rflags),
+        "OF should be set (signed overflow: -128 - 1 = 127)"
+    );
 }
 
 #[test]
@@ -118,14 +124,17 @@ fn test_dec_cf_independence_with_underflow() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0xFF, "Underflow: 0 - 1 = 0xFF");
-    assert!(!cf_set(regs.rflags), "CF should remain clear (DEC doesn't affect CF)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should remain clear (DEC doesn't affect CF)"
+    );
 }
 
 #[test]
 fn test_dec_bl_register() {
     let code = [
         0xfe, 0xcb, // DEC BL (FE /1, ModRM=11_001_011)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rbx = 0x10;
@@ -156,7 +165,11 @@ fn test_dec_preserves_high_bytes_8bit() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x77, "AL: 0x78 - 1 = 0x77");
-    assert_eq!(regs.rax & !0xFF, 0xDEADBEEF_12345600, "High bytes should be preserved");
+    assert_eq!(
+        regs.rax & !0xFF,
+        0xDEADBEEF_12345600,
+        "High bytes should be preserved"
+    );
 }
 
 // ============================================================================
@@ -167,7 +180,7 @@ fn test_dec_preserves_high_bytes_8bit() {
 fn test_dec_ax_basic() {
     let code = [
         0x66, 0xff, 0xc8, // DEC AX (66 FF /1, ModRM=11_001_000)
-        0xf4,             // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x1234;
@@ -246,7 +259,11 @@ fn test_dec_preserves_high_bytes_16bit() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0x5677);
-    assert_eq!(regs.rax & !0xFFFF, 0xDEADBEEF_12340000, "Upper bits preserved");
+    assert_eq!(
+        regs.rax & !0xFFFF,
+        0xDEADBEEF_12340000,
+        "Upper bits preserved"
+    );
 }
 
 // ============================================================================
@@ -257,7 +274,7 @@ fn test_dec_preserves_high_bytes_16bit() {
 fn test_dec_eax_basic() {
     let code = [
         0xff, 0xc8, // DEC EAX (FF /1, ModRM=11_001_000)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x12345678;
@@ -358,14 +375,17 @@ fn test_dec_edx_register() {
 fn test_dec_rax_basic() {
     let code = [
         0x48, 0xff, 0xc8, // DEC RAX (REX.W FF /1)
-        0xf4,             // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x1234567890ABCDEF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x1234567890ABCDEE, "DEC RAX: full 64-bit decrement");
+    assert_eq!(
+        regs.rax, 0x1234567890ABCDEE,
+        "DEC RAX: full 64-bit decrement"
+    );
 }
 
 #[test]
@@ -388,7 +408,10 @@ fn test_dec_rax_underflow() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "DEC RAX: 0 - 1 = 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "DEC RAX: 0 - 1 = 0xFFFFFFFFFFFFFFFF"
+    );
     assert!(sf_set(regs.rflags), "SF should be set");
 }
 
@@ -459,7 +482,7 @@ fn test_dec_r8b_extended_register() {
     // DEC R8B requires REX prefix (REX + FE /1)
     let code = [
         0x41, 0xfe, 0xc8, // DEC R8B (REX.B + FE /1, ModRM=11_001_000)
-        0xf4,             // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.r8 = 0x99;
@@ -533,8 +556,9 @@ fn test_dec_r15_to_zero() {
 #[test]
 fn test_dec_byte_ptr_mem() {
     let code = [
-        0xfe, 0x0d, 0xfa, 0x0f, 0x00, 0x00, // DEC BYTE PTR [rip+0x0FFA] (FE /1 with RIP-relative)
-        0xf4,                               // HLT
+        0xfe, 0x0d, 0xfa, 0x0f, 0x00,
+        0x00, // DEC BYTE PTR [rip+0x0FFA] (FE /1 with RIP-relative)
+        0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u8(&mem, 0x42);
@@ -572,7 +596,10 @@ fn test_dec_dword_ptr_mem() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
     let result = read_mem_u32(&mem);
 
-    assert_eq!(result, 0x12345677, "DEC dword [mem]: 0x12345678 - 1 = 0x12345677");
+    assert_eq!(
+        result, 0x12345677,
+        "DEC dword [mem]: 0x12345678 - 1 = 0x12345677"
+    );
 }
 
 #[test]
@@ -677,10 +704,10 @@ fn test_dec_as_loop_counter_with_multiprecision() {
     // The CF flag must be preserved across loop iterations
     let code = [
         // Iteration 1: ADC (sets CF)
-        0x48, 0x01, 0xc8,       // ADD RAX, RCX (might set CF)
-        0x49, 0xff, 0xca,       // DEC R10 (loop counter - must preserve CF!)
-        0x48, 0x11, 0xd3,       // ADC RBX, RDX (uses CF from previous ADD)
-        0xf4,                   // HLT
+        0x48, 0x01, 0xc8, // ADD RAX, RCX (might set CF)
+        0x49, 0xff, 0xca, // DEC R10 (loop counter - must preserve CF!)
+        0x48, 0x11, 0xd3, // ADC RBX, RDX (uses CF from previous ADD)
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0xFFFFFFFFFFFFFFFF; // Will cause carry

@@ -171,7 +171,13 @@ fn kpmb_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
 // Build a 128-bit value whose byte i has MSB set iff bit i of `mask` is set.
 fn bytes_from_mask16(mask: u16) -> u128 {
     let mut out = [0u8; 16];
-    for i in 0..16 { if (mask >> i) & 1 == 1 { out[i] = 0x80; } else { out[i] = 0x01; } }
+    for i in 0..16 {
+        if (mask >> i) & 1 == 1 {
+            out[i] = 0x80;
+        } else {
+            out[i] = 0x01;
+        }
+    }
     u128::from_le_bytes(out)
 }
 
@@ -195,7 +201,12 @@ fn test_vpmovmskb_ymm_value() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let lo_mask: u16 = 0b0000_1111_1111_0000;
     let hi_mask: u16 = 0b1100_0011_0101_1010;
-    kpmb_set(&mut vcpu, 1, bytes_from_mask16(lo_mask), bytes_from_mask16(hi_mask));
+    kpmb_set(
+        &mut vcpu,
+        1,
+        bytes_from_mask16(lo_mask),
+        bytes_from_mask16(hi_mask),
+    );
     let regs = run_until_hlt(&mut vcpu).unwrap();
     let expected = (lo_mask as u64) | ((hi_mask as u64) << 16);
     assert_eq!(regs.rax & 0xFFFF_FFFF, expected);

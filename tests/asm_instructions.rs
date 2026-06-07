@@ -102,7 +102,10 @@ fn test_adc_rm_r_32bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x80000001, "ADC EAX, ECX: 0x7FFFFFFF + 1 + 1 with 32-bit clears high bits");
+    assert_eq!(
+        regs.rax, 0x80000001,
+        "ADC EAX, ECX: 0x7FFFFFFF + 1 + 1 with 32-bit clears high bits"
+    );
 }
 
 #[test]
@@ -117,8 +120,14 @@ fn test_adc_rm_r_64bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 1, "ADC RAX, RCX: 0xFFFF...FFFF + 1 + 1 = 1 with overflow");
-    assert!(regs.rflags & flags::bits::CF != 0, "CF should be set on overflow");
+    assert_eq!(
+        regs.rax, 1,
+        "ADC RAX, RCX: 0xFFFF...FFFF + 1 + 1 = 1 with overflow"
+    );
+    assert!(
+        regs.rflags & flags::bits::CF != 0,
+        "CF should be set on overflow"
+    );
 }
 
 #[test]
@@ -204,7 +213,10 @@ fn test_dec_rm64() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 0, "DEC RCX: 1 - 1 = 0");
-    assert!(regs.rflags & flags::bits::ZF != 0, "ZF should be set when result is 0");
+    assert!(
+        regs.rflags & flags::bits::ZF != 0,
+        "ZF should be set when result is 0"
+    );
 }
 
 // ===== RCL/RCR (Rotate through Carry) Tests =====
@@ -223,7 +235,10 @@ fn test_rcl_rm8_1() {
     // Rotate: bit 7 goes to CF, old CF goes to bit 0
     // 0x80 with CF=1 -> result = 0x01 (CF rotated in), new CF = 1 (bit 7)
     assert_eq!(regs.rax & 0xFF, 0x01, "RCL AL, 1: 0x80 with CF=1 -> 0x01");
-    assert!(regs.rflags & flags::bits::CF != 0, "CF should be set (bit 7 was 1)");
+    assert!(
+        regs.rflags & flags::bits::CF != 0,
+        "CF should be set (bit 7 was 1)"
+    );
 }
 
 #[test]
@@ -240,7 +255,10 @@ fn test_rcr_rm8_1() {
     // Rotate right: bit 0 goes to CF, old CF goes to bit 7
     // 0x01 with CF=1 -> result = 0x80 (CF rotated in), new CF = 1 (bit 0)
     assert_eq!(regs.rax & 0xFF, 0x80, "RCR AL, 1: 0x01 with CF=1 -> 0x80");
-    assert!(regs.rflags & flags::bits::CF != 0, "CF should be set (bit 0 was 1)");
+    assert!(
+        regs.rflags & flags::bits::CF != 0,
+        "CF should be set (bit 0 was 1)"
+    );
 }
 
 #[test]
@@ -273,8 +291,14 @@ fn test_rcr_rm64_cl() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Rotate right: bit 0 (0) goes to CF, old CF (0) goes to bit 63
     // 0x8000...00 >> 1 = 0x4000...00
-    assert_eq!(regs.rax, 0x4000000000000000, "RCR RAX, 1 should shift right");
-    assert!(regs.rflags & flags::bits::CF == 0, "CF should be clear (bit 0 was 0)");
+    assert_eq!(
+        regs.rax, 0x4000000000000000,
+        "RCR RAX, 1 should shift right"
+    );
+    assert!(
+        regs.rflags & flags::bits::CF == 0,
+        "CF should be clear (bit 0 was 0)"
+    );
 }
 
 // ===== TZCNT/LZCNT Tests =====
@@ -302,7 +326,10 @@ fn test_tzcnt_zero() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 32, "TZCNT(0) = 32 (operand size in bits)");
-    assert!(regs.rflags & flags::bits::CF != 0, "CF set when source is 0");
+    assert!(
+        regs.rflags & flags::bits::CF != 0,
+        "CF set when source is 0"
+    );
 }
 
 #[test]
@@ -327,7 +354,10 @@ fn test_lzcnt_zero() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 32, "LZCNT(0) = 32");
-    assert!(regs.rflags & flags::bits::CF != 0, "CF set when source is 0");
+    assert!(
+        regs.rflags & flags::bits::CF != 0,
+        "CF set when source is 0"
+    );
 }
 
 #[test]
@@ -520,7 +550,10 @@ fn test_bsf_vs_tzcnt_on_zero() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert!(regs.rflags & flags::bits::ZF != 0, "BSF sets ZF when source is 0");
+    assert!(
+        regs.rflags & flags::bits::ZF != 0,
+        "BSF sets ZF when source is 0"
+    );
     // Dest is undefined, so we don't check RAX
 }
 
@@ -534,7 +567,10 @@ fn test_bsr_nonzero() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 15, "BSR(0x8000) = 15");
-    assert!(regs.rflags & flags::bits::ZF == 0, "ZF clear when source != 0");
+    assert!(
+        regs.rflags & flags::bits::ZF == 0,
+        "ZF clear when source != 0"
+    );
 }
 
 // ===== Chained arithmetic for flags testing =====
@@ -545,9 +581,9 @@ fn test_adc_chain() {
     // ADD EAX, ECX (low 32 bits)
     // ADC EBX, EDX (high 32 bits with carry)
     let code = [
-        0x01, 0xc8,       // ADD EAX, ECX
-        0x11, 0xd3,       // ADC EBX, EDX
-        0xf4,             // HLT
+        0x01, 0xc8, // ADD EAX, ECX
+        0x11, 0xd3, // ADC EBX, EDX
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     // Add 0xFFFFFFFF_00000001 + 0x00000000_00000001
@@ -568,9 +604,9 @@ fn test_adc_chain() {
 fn test_adc_chain_with_carry() {
     // Test ADC chaining with carry propagation
     let code = [
-        0x01, 0xc8,       // ADD EAX, ECX
-        0x11, 0xd3,       // ADC EBX, EDX
-        0xf4,             // HLT
+        0x01, 0xc8, // ADD EAX, ECX
+        0x11, 0xd3, // ADC EBX, EDX
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     // Add 0x00000000_FFFFFFFF + 0x00000000_00000001 = 0x00000001_00000000
@@ -630,7 +666,8 @@ fn test_inc_memory() {
 
     // Write initial value to memory
     let initial_value: u32 = 42;
-    mem.write_slice(&initial_value.to_le_bytes(), GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&initial_value.to_le_bytes(), GuestAddress(0x2000))
+        .unwrap();
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -653,7 +690,8 @@ fn test_xadd_memory() {
 
     // Write initial value
     let initial: u32 = 5;
-    mem.write_slice(&initial.to_le_bytes(), GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&initial.to_le_bytes(), GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -677,7 +715,10 @@ fn test_cmc_set_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert!(regs.rflags & flags::bits::CF != 0, "CMC should set CF when CF=0");
+    assert!(
+        regs.rflags & flags::bits::CF != 0,
+        "CMC should set CF when CF=0"
+    );
 }
 
 #[test]
@@ -689,7 +730,10 @@ fn test_cmc_clear_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert!(regs.rflags & flags::bits::CF == 0, "CMC should clear CF when CF=1");
+    assert!(
+        regs.rflags & flags::bits::CF == 0,
+        "CMC should clear CF when CF=1"
+    );
 }
 
 // ===== LAHF/SAHF Tests =====
@@ -724,9 +768,9 @@ fn test_sahf() {
     // b8 XX XX XX XX = MOV EAX, imm32
     // 9e = SAHF
     let code = [
-        0xb8, 0x00, 0xc1, 0x00, 0x00,  // MOV EAX, 0x0000C100
-        0x9e,                           // SAHF
-        0xf4                            // HLT
+        0xb8, 0x00, 0xc1, 0x00, 0x00, // MOV EAX, 0x0000C100
+        0x9e, // SAHF
+        0xf4, // HLT
     ];
     let regs = Registers::default();
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -754,7 +798,12 @@ fn test_rdtsc() {
     // Second RDTSC should return a value > first (saved in EBX)
     let first_tsc = regs.rbx & 0xFFFF_FFFF;
     let second_tsc = regs.rax & 0xFFFF_FFFF;
-    assert!(second_tsc > first_tsc, "RDTSC should increment: first={}, second={}", first_tsc, second_tsc);
+    assert!(
+        second_tsc > first_tsc,
+        "RDTSC should increment: first={}, second={}",
+        first_tsc,
+        second_tsc
+    );
 }
 
 // ===== PAUSE Test =====
@@ -821,11 +870,11 @@ fn test_loop_basic() {
     // E2 FB = LOOP -5 (back to INC)
     // F4 = HLT
     let code = [
-        0xB8, 0x00, 0x00, 0x00, 0x00,  // MOV EAX, 0
-        0xB9, 0x03, 0x00, 0x00, 0x00,  // MOV ECX, 3
-        0x48, 0xFF, 0xC0,              // INC RAX
-        0xE2, 0xFB,                    // LOOP -5
-        0xF4                           // HLT
+        0xB8, 0x00, 0x00, 0x00, 0x00, // MOV EAX, 0
+        0xB9, 0x03, 0x00, 0x00, 0x00, // MOV ECX, 3
+        0x48, 0xFF, 0xC0, // INC RAX
+        0xE2, 0xFB, // LOOP -5
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -842,10 +891,10 @@ fn test_loopz_exit_on_zf_clear() {
     // XOR EAX, EAX sets ZF=1
     // DEC EAX will clear ZF
     let code = [
-        0xB9, 0x03, 0x00, 0x00, 0x00,  // MOV ECX, 3
-        0x31, 0xC0,                    // XOR EAX, EAX (sets ZF=1)
-        0xE1, 0xFC,                    // LOOPZ -4 (back to XOR)
-        0xF4                           // HLT
+        0xB9, 0x03, 0x00, 0x00, 0x00, // MOV ECX, 3
+        0x31, 0xC0, // XOR EAX, EAX (sets ZF=1)
+        0xE1, 0xFC, // LOOPZ -4 (back to XOR)
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -860,11 +909,11 @@ fn test_loopnz_exit_on_zf_set() {
     // LOOPNZ exits when ZF becomes 1
     // INC RAX doesn't set ZF unless result is 0
     let code = [
-        0xB9, 0x03, 0x00, 0x00, 0x00,  // MOV ECX, 3
-        0xB8, 0x00, 0x00, 0x00, 0x00,  // MOV EAX, 0
-        0xFF, 0xC0,                    // INC EAX (ZF=0 unless result=0)
-        0xE0, 0xFC,                    // LOOPNZ -4 (back to INC)
-        0xF4                           // HLT
+        0xB9, 0x03, 0x00, 0x00, 0x00, // MOV ECX, 3
+        0xB8, 0x00, 0x00, 0x00, 0x00, // MOV EAX, 0
+        0xFF, 0xC0, // INC EAX (ZF=0 unless result=0)
+        0xE0, 0xFC, // LOOPNZ -4 (back to INC)
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -888,8 +937,16 @@ fn test_enter_basic() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // After ENTER: RBP = old RSP - 8, RSP = RBP - 16
-    assert_eq!(regs.rbp, 0x8000 - 8, "ENTER: RBP should point to saved old RBP");
-    assert_eq!(regs.rsp, regs.rbp - 16, "ENTER: RSP should be RBP - alloc_size");
+    assert_eq!(
+        regs.rbp,
+        0x8000 - 8,
+        "ENTER: RBP should point to saved old RBP"
+    );
+    assert_eq!(
+        regs.rsp,
+        regs.rbp - 16,
+        "ENTER: RSP should be RBP - alloc_size"
+    );
 }
 
 // ===== INT3 Test =====
@@ -906,7 +963,10 @@ fn test_int3_no_idt() {
     let result = vcpu.run();
     assert!(result.is_err(), "INT3 without IDT should return error");
     let err_msg = result.unwrap_err().to_string();
-    assert!(err_msg.contains("IDT entry 3 not present"), "Error should mention missing IDT entry");
+    assert!(
+        err_msg.contains("IDT entry 3 not present"),
+        "Error should mention missing IDT entry"
+    );
 }
 
 // ===== XLAT Test =====
@@ -918,7 +978,7 @@ fn test_xlat() {
     let code = [0xD7, 0xF4]; // XLAT, HLT
     let mut regs = Registers::default();
     regs.rbx = 0x2000; // Table base
-    regs.rax = 5;      // Index into table
+    regs.rax = 5; // Index into table
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
 
     // Write translation table: table[5] = 0x42

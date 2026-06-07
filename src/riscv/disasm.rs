@@ -524,12 +524,12 @@ impl Op {
             | FsgnjxH | FminH | FmaxH | FminmH | FmaxmH => Class::FBin,
             FmaddS | FmsubS | FnmsubS | FnmaddS | FmaddD | FmsubD | FnmsubD | FnmaddD | FmaddH
             | FmsubH | FnmsubH | FnmaddH => Class::FMA,
-            FeqS | FltS | FleS | FeqD | FltD | FleD | FleqS | FltqS | FleqD | FltqD | FeqH | FltH
-            | FleH | FleqH | FltqH => Class::FCmp,
+            FeqS | FltS | FleS | FeqD | FltD | FleD | FleqS | FltqS | FleqD | FltqD | FeqH
+            | FltH | FleH | FleqH | FltqH => Class::FCmp,
             FliS | FliD | FliH => Class::Fli,
             FcvtWS | FcvtWuS | FcvtLS | FcvtLuS | FmvXW | FclassS | FcvtWD | FcvtWuD | FcvtLD
-            | FcvtLuD | FmvXD | FclassD | FcvtmodWD | FcvtWH | FcvtWuH | FcvtLH | FcvtLuH | FmvXH
-            | FclassH => Class::FToX,
+            | FcvtLuD | FmvXD | FclassD | FcvtmodWD | FcvtWH | FcvtWuH | FcvtLH | FcvtLuH
+            | FmvXH | FclassH => Class::FToX,
             FcvtSW | FcvtSWu | FcvtSL | FcvtSLu | FmvWX | FcvtDW | FcvtDWu | FcvtDL | FcvtDLu
             | FmvDX | FcvtHW | FcvtHWu | FcvtHL | FcvtHLu | FmvHX => Class::XToF,
             FcvtSD | FcvtDS | FcvtSH | FcvtHS | FcvtDH | FcvtHD => Class::FToF,

@@ -171,7 +171,7 @@ fn test_out_imm8_al_preserves_flags() {
 
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { .. } => {},
+            VcpuExit::IoOut { .. } => {}
             VcpuExit::Hlt => break,
             _ => continue,
         }
@@ -797,10 +797,10 @@ fn test_out_dx_eax_preserves_rdx() {
 fn test_out_sequence_different_sizes() {
     // OUT 0x60, AL; OUT DX, AX; OUT 0x40, EAX
     let code = [
-        0xE6, 0x60,       // OUT 0x60, AL
-        0x66, 0xEF,       // OUT DX, AX
-        0xE7, 0x40,       // OUT 0x40, EAX
-        0xF4,             // HLT
+        0xE6, 0x60, // OUT 0x60, AL
+        0x66, 0xEF, // OUT DX, AX
+        0xE7, 0x40, // OUT 0x40, EAX
+        0xF4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rdx = 0x64;
@@ -829,11 +829,11 @@ fn test_out_loop_changing_value() {
     // Loop writing incrementing values
     // MOV AL, 0; OUT 0x80, AL; INC AL; OUT 0x80, AL; HLT
     let code = [
-        0xB0, 0x00,       // MOV AL, 0
-        0xE6, 0x80,       // OUT 0x80, AL
-        0xFE, 0xC0,       // INC AL
-        0xE6, 0x80,       // OUT 0x80, AL
-        0xF4,             // HLT
+        0xB0, 0x00, // MOV AL, 0
+        0xE6, 0x80, // OUT 0x80, AL
+        0xFE, 0xC0, // INC AL
+        0xE6, 0x80, // OUT 0x80, AL
+        0xF4, // HLT
     ];
     let mut regs = Registers::default();
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -858,11 +858,11 @@ fn test_out_loop_changing_port() {
     // Loop writing to incrementing ports
     // MOV DX, 0x100; OUT DX, AL; INC DX; OUT DX, AL; HLT
     let code = [
-        0x66, 0xBA, 0x00, 0x01,  // MOV DX, 0x100
-        0xEE,                     // OUT DX, AL
-        0x66, 0xFF, 0xC2,        // INC DX
-        0xEE,                     // OUT DX, AL
-        0xF4,                     // HLT
+        0x66, 0xBA, 0x00, 0x01, // MOV DX, 0x100
+        0xEE, // OUT DX, AL
+        0x66, 0xFF, 0xC2, // INC DX
+        0xEE, // OUT DX, AL
+        0xF4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x42;

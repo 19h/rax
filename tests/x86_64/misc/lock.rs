@@ -1,5 +1,9 @@
 // Module path for tests run via x86_64.rs
-use crate::common::{run_until_hlt, setup_vm, cf_set, zf_set, sf_set, of_set, pf_set, read_mem_at_u8, read_mem_at_u16, read_mem_at_u32, read_mem_at_u64, write_mem_at_u8, write_mem_at_u16, write_mem_at_u32, write_mem_at_u64};
+use crate::common::{
+    cf_set, of_set, pf_set, read_mem_at_u8, read_mem_at_u16, read_mem_at_u32, read_mem_at_u64,
+    run_until_hlt, setup_vm, sf_set, write_mem_at_u8, write_mem_at_u16, write_mem_at_u32,
+    write_mem_at_u64, zf_set,
+};
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
@@ -30,7 +34,11 @@ fn test_lock_add_byte() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x30, "Memory should contain 0x30");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x30,
+        "Memory should contain 0x30"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
     assert!(!cf_set(regs.rflags), "CF should not be set");
     assert!(!zf_set(regs.rflags), "ZF should not be set");
@@ -51,7 +59,11 @@ fn test_lock_add_word() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u16(&mem, 0x2000), 0x3000, "Memory should contain 0x3000");
+    assert_eq!(
+        read_mem_at_u16(&mem, 0x2000),
+        0x3000,
+        "Memory should contain 0x3000"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -70,7 +82,11 @@ fn test_lock_add_dword() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x2000), 0x23456789, "Memory should contain sum");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2000),
+        0x23456789,
+        "Memory should contain sum"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -89,7 +105,11 @@ fn test_lock_add_qword() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u64(&mem, 0x2000), 0x1100, "Memory should contain 0x1100");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x2000),
+        0x1100,
+        "Memory should contain 0x1100"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -108,7 +128,11 @@ fn test_lock_add_with_carry() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x0F, "Memory should wrap to 0x0F");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x0F,
+        "Memory should wrap to 0x0F"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
 }
 
@@ -129,7 +153,11 @@ fn test_lock_sub_byte() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x20, "Memory should contain 0x20");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x20,
+        "Memory should contain 0x20"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
     assert!(!cf_set(regs.rflags), "CF should not be set");
 }
@@ -149,7 +177,11 @@ fn test_lock_sub_dword() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x2000), 0x2000, "Memory should contain 0x2000");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2000),
+        0x2000,
+        "Memory should contain 0x2000"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -168,7 +200,11 @@ fn test_lock_sub_with_borrow() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0xF5, "Memory should wrap to 0xF5");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0xF5,
+        "Memory should wrap to 0xF5"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
 }
 
@@ -208,7 +244,11 @@ fn test_lock_and_byte() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x0F, "Memory should contain 0x0F");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x0F,
+        "Memory should contain 0x0F"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
     assert!(!cf_set(regs.rflags), "CF should be cleared");
     assert!(!of_set(regs.rflags), "OF should be cleared");
@@ -229,7 +269,11 @@ fn test_lock_and_dword() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x2000), 0x12005600, "Memory should contain ANDed result");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2000),
+        0x12005600,
+        "Memory should contain ANDed result"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -269,7 +313,11 @@ fn test_lock_or_byte() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0xFF, "Memory should contain 0xFF");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0xFF,
+        "Memory should contain 0xFF"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
     assert!(!cf_set(regs.rflags), "CF should be cleared");
     assert!(!of_set(regs.rflags), "OF should be cleared");
@@ -290,7 +338,11 @@ fn test_lock_or_dword() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x2000), 0xFFFFFFFF, "Memory should contain ORed result");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2000),
+        0xFFFFFFFF,
+        "Memory should contain ORed result"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -309,7 +361,11 @@ fn test_lock_or_no_change() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x42, "Memory should be unchanged");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x42,
+        "Memory should be unchanged"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -330,7 +386,11 @@ fn test_lock_xor_byte() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x55, "Memory should contain XORed result");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x55,
+        "Memory should contain XORed result"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
     assert!(!cf_set(regs.rflags), "CF should be cleared");
     assert!(!of_set(regs.rflags), "OF should be cleared");
@@ -351,7 +411,11 @@ fn test_lock_xor_dword() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x2000), 0xEDCBA987, "Memory should contain XORed result");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2000),
+        0xEDCBA987,
+        "Memory should contain XORed result"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -391,7 +455,11 @@ fn test_lock_inc_byte() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x42, "Memory should be incremented to 0x42");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x42,
+        "Memory should be incremented to 0x42"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -410,7 +478,11 @@ fn test_lock_inc_dword() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x2000), 0x12345679, "Memory should be incremented");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2000),
+        0x12345679,
+        "Memory should be incremented"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -429,7 +501,11 @@ fn test_lock_inc_overflow() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x00, "Memory should wrap to 0x00");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x00,
+        "Memory should wrap to 0x00"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set");
 }
 
@@ -450,7 +526,11 @@ fn test_lock_dec_byte() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x41, "Memory should be decremented to 0x41");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x41,
+        "Memory should be decremented to 0x41"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -469,7 +549,11 @@ fn test_lock_dec_dword() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x2000), 0x12345677, "Memory should be decremented");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2000),
+        0x12345677,
+        "Memory should be decremented"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -488,7 +572,11 @@ fn test_lock_dec_underflow() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0xFF, "Memory should wrap to 0xFF");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0xFF,
+        "Memory should wrap to 0xFF"
+    );
     assert!(sf_set(regs.rflags), "SF should be set");
 }
 
@@ -528,7 +616,11 @@ fn test_lock_neg_byte() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0xFB, "Memory should be negated");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0xFB,
+        "Memory should be negated"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
     assert!(cf_set(regs.rflags), "CF should be set");
 }
@@ -548,7 +640,11 @@ fn test_lock_neg_dword() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x2000), 0xFFFFFFFF, "Memory should be negated");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2000),
+        0xFFFFFFFF,
+        "Memory should be negated"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
 }
 
@@ -567,7 +663,11 @@ fn test_lock_neg_zero() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x00, "Memory should remain zero");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x00,
+        "Memory should remain zero"
+    );
     assert!(!cf_set(regs.rflags), "CF should not be set for zero");
     assert!(zf_set(regs.rflags), "ZF should be set");
 }
@@ -589,7 +689,11 @@ fn test_lock_not_byte() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x55, "Memory should be bitwise inverted");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x55,
+        "Memory should be bitwise inverted"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -608,7 +712,11 @@ fn test_lock_not_dword() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x2000), 0xEDCBA987, "Memory should be bitwise inverted");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2000),
+        0xEDCBA987,
+        "Memory should be bitwise inverted"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -648,7 +756,11 @@ fn test_lock_xchg_byte() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x42, "Memory should contain BL value");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x42,
+        "Memory should contain BL value"
+    );
     assert_eq!(regs.rbx & 0xFF, 0x99, "BL should contain memory value");
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
@@ -669,8 +781,16 @@ fn test_lock_xchg_dword() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x2000), 0x12345678, "Memory should contain EBX value");
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0xAABBCCDD, "EBX should contain memory value");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2000),
+        0x12345678,
+        "Memory should contain EBX value"
+    );
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0xAABBCCDD,
+        "EBX should contain memory value"
+    );
 }
 
 // LOCK with different addressing modes
@@ -690,7 +810,11 @@ fn test_lock_add_with_displacement() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2010), 0x15, "Memory should contain 0x15");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2010),
+        0x15,
+        "Memory should contain 0x15"
+    );
 }
 
 #[test]
@@ -710,7 +834,11 @@ fn test_lock_add_with_sib() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2040), 0x30, "Memory should contain 0x30");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2040),
+        0x30,
+        "Memory should contain 0x30"
+    );
     assert_eq!(regs.rbx, 0x10, "RBX should be unchanged");
 }
 
@@ -718,8 +846,8 @@ fn test_lock_add_with_sib() {
 fn test_lock_operations_sequential() {
     // Multiple sequential LOCK operations
     let code = [
-        0xf0, 0x80, 0x00, 0x10,       // LOCK ADD byte [rax], 0x10
-        0xf0, 0x80, 0x28, 0x05,       // LOCK SUB byte [rax], 0x05
+        0xf0, 0x80, 0x00, 0x10, // LOCK ADD byte [rax], 0x10
+        0xf0, 0x80, 0x28, 0x05, // LOCK SUB byte [rax], 0x05
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -731,7 +859,11 @@ fn test_lock_operations_sequential() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0x20 + 0x10 - 0x05 = 0x2B
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x2B, "Memory should contain 0x2B");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x2B,
+        "Memory should contain 0x2B"
+    );
 }
 
 #[test]
@@ -752,15 +884,23 @@ fn test_lock_with_different_bases() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x3000), 0x15, "Memory at RBX should be updated");
-    assert_eq!(read_mem_at_u8(&mem, 0x4000), 0x30, "Memory at RCX should be updated");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x3000),
+        0x15,
+        "Memory at RBX should be updated"
+    );
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x4000),
+        0x30,
+        "Memory at RCX should be updated"
+    );
 }
 
 #[test]
 fn test_lock_adc_byte() {
     // LOCK ADC byte [rax], 0x10 with carry
     let code = [
-        0xf9,                   // STC (set carry flag)
+        0xf9, // STC (set carry flag)
         0xf0, 0x80, 0x10, 0x10, // LOCK ADC byte [rax], 0x10
         0xf4,
     ];
@@ -773,14 +913,18 @@ fn test_lock_adc_byte() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0x20 + 0x10 + 1 (carry) = 0x31
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x31, "Memory should contain 0x31");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x31,
+        "Memory should contain 0x31"
+    );
 }
 
 #[test]
 fn test_lock_sbb_byte() {
     // LOCK SBB byte [rax], 0x10 with carry
     let code = [
-        0xf9,                   // STC (set carry flag)
+        0xf9, // STC (set carry flag)
         0xf0, 0x80, 0x18, 0x10, // LOCK SBB byte [rax], 0x10
         0xf4,
     ];
@@ -793,7 +937,11 @@ fn test_lock_sbb_byte() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0x30 - 0x10 - 1 (carry) = 0x1F
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x1F, "Memory should contain 0x1F");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x1F,
+        "Memory should contain 0x1F"
+    );
 }
 
 #[test]
@@ -811,6 +959,10 @@ fn test_lock_add_qword_with_r8() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u64(&mem, 0x8000), 0x6000, "Memory should contain 0x6000");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x8000),
+        0x6000,
+        "Memory should contain 0x6000"
+    );
     assert_eq!(regs.r8, 0x8000, "R8 should be unchanged");
 }

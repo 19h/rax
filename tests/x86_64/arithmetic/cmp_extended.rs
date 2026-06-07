@@ -120,7 +120,12 @@ fn test_cmp_all_8bit_registers() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert!(zf_set(regs.rflags), "ZF should be set for R{} - R{}", reg_num, reg_num);
+        assert!(
+            zf_set(regs.rflags),
+            "ZF should be set for R{} - R{}",
+            reg_num,
+            reg_num
+        );
     }
 }
 
@@ -618,7 +623,10 @@ fn test_cmp_signed_negative_comparison() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0xFE, "AL should not be modified");
-    assert!(cf_set(regs.rflags), "CF should be set (0xFE < 0xFF unsigned)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (0xFE < 0xFF unsigned)"
+    );
 }
 
 #[test]
@@ -629,7 +637,10 @@ fn test_cmp_preserves_all_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xDEADBEEF12345678, "RAX should be completely unchanged");
+    assert_eq!(
+        regs.rax, 0xDEADBEEF12345678,
+        "RAX should be completely unchanged"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set");
 }
 

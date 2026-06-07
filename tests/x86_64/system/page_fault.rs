@@ -14,7 +14,7 @@ use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
 use rax::backend::emulator::x86_64::X86_64Vcpu;
-use rax::cpu::{Registers, SystemRegisters, Segment, DescriptorTable, VCpu, VcpuExit};
+use rax::cpu::{DescriptorTable, Registers, Segment, SystemRegisters, VCpu, VcpuExit};
 
 /// Physical addresses for page table structures
 const PML4_ADDR: u64 = 0x1000;
@@ -24,7 +24,7 @@ const PT_ADDR: u64 = 0x4000;
 
 /// Code and data addresses (virtual)
 const CODE_VADDR: u64 = 0x10000;
-const CODE_PADDR: u64 = 0x10000;  // Identity mapped for simplicity
+const CODE_PADDR: u64 = 0x10000; // Identity mapped for simplicity
 const STACK_VADDR: u64 = 0x20000;
 const STACK_PADDR: u64 = 0x20000;
 const DATA_VADDR: u64 = 0x30000;
@@ -32,9 +32,9 @@ const DATA_PADDR: u64 = 0x30000;
 
 /// IDT and handler addresses
 const IDT_ADDR: u64 = 0x5000;
-const PF_HANDLER_ADDR: u64 = 0x6000;  // Page fault handler
-const DF_HANDLER_ADDR: u64 = 0x7000;  // Double fault handler
-const GP_HANDLER_ADDR: u64 = 0x8000;  // General protection handler
+const PF_HANDLER_ADDR: u64 = 0x6000; // Page fault handler
+const DF_HANDLER_ADDR: u64 = 0x7000; // Double fault handler
+const GP_HANDLER_ADDR: u64 = 0x8000; // General protection handler
 
 /// Test result storage (physical address)
 const RESULT_ADDR: u64 = 0x40000;
@@ -52,11 +52,11 @@ mod pte_flags {
 
 /// Page fault error code bits
 mod pf_error {
-    pub const P: u64 = 1 << 0;      // 0=non-present, 1=protection violation
-    pub const WR: u64 = 1 << 1;     // 0=read, 1=write
-    pub const US: u64 = 1 << 2;     // 0=supervisor, 1=user
-    pub const RSVD: u64 = 1 << 3;   // Reserved bit violation
-    pub const ID: u64 = 1 << 4;     // 0=data, 1=instruction fetch
+    pub const P: u64 = 1 << 0; // 0=non-present, 1=protection violation
+    pub const WR: u64 = 1 << 1; // 0=read, 1=write
+    pub const US: u64 = 1 << 2; // 0=supervisor, 1=user
+    pub const RSVD: u64 = 1 << 3; // Reserved bit violation
+    pub const ID: u64 = 1 << 4; // 0=data, 1=instruction fetch
 }
 
 /// Create guest memory with page tables and handlers
@@ -83,22 +83,26 @@ fn setup_page_tables(mem: &GuestMemoryMmap) {
 
     // PML4 entry 0 -> PDPT
     let pml4e = PDPT_ADDR | PRESENT | WRITABLE | USER;
-    mem.write_slice(&pml4e.to_le_bytes(), GuestAddress(PML4_ADDR)).unwrap();
+    mem.write_slice(&pml4e.to_le_bytes(), GuestAddress(PML4_ADDR))
+        .unwrap();
 
     // PDPT entry 0 -> PD
     let pdpte = PD_ADDR | PRESENT | WRITABLE | USER;
-    mem.write_slice(&pdpte.to_le_bytes(), GuestAddress(PDPT_ADDR)).unwrap();
+    mem.write_slice(&pdpte.to_le_bytes(), GuestAddress(PDPT_ADDR))
+        .unwrap();
 
     // PD entry 0 -> PT (4KB pages)
     let pde = PT_ADDR | PRESENT | WRITABLE | USER;
-    mem.write_slice(&pde.to_le_bytes(), GuestAddress(PD_ADDR)).unwrap();
+    mem.write_slice(&pde.to_le_bytes(), GuestAddress(PD_ADDR))
+        .unwrap();
 
     // PT entries: identity map pages 0-255 (1MB)
     for i in 0..256u64 {
         let paddr = i * 0x1000;
         let pte = paddr | PRESENT | WRITABLE | USER;
         let pt_offset = i * 8;
-        mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + pt_offset)).unwrap();
+        mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + pt_offset))
+            .unwrap();
     }
 }
 
@@ -163,9 +167,13 @@ fn setup_handlers(mem: &GuestMemoryMmap) {
     // We need to read error_code from [RSP]
     let pf_handler: &[u8] = &[
         // mov rax, [rsp]        ; Get error code from stack
-        0x48, 0x8b, 0x04, 0x24,
+        0x48,
+        0x8b,
+        0x04,
+        0x24,
         // mov [RESULT_ADDR], rax
-        0x48, 0xa3,
+        0x48,
+        0xa3,
         (RESULT_ADDR & 0xFF) as u8,
         ((RESULT_ADDR >> 8) & 0xFF) as u8,
         ((RESULT_ADDR >> 16) & 0xFF) as u8,
@@ -175,9 +183,12 @@ fn setup_handlers(mem: &GuestMemoryMmap) {
         ((RESULT_ADDR >> 48) & 0xFF) as u8,
         ((RESULT_ADDR >> 56) & 0xFF) as u8,
         // mov rax, cr2          ; Get faulting address
-        0x0f, 0x20, 0xd0,
+        0x0f,
+        0x20,
+        0xd0,
         // mov [RESULT_ADDR+8], rax
-        0x48, 0xa3,
+        0x48,
+        0xa3,
         ((RESULT_ADDR + 8) & 0xFF) as u8,
         (((RESULT_ADDR + 8) >> 8) & 0xFF) as u8,
         (((RESULT_ADDR + 8) >> 16) & 0xFF) as u8,
@@ -187,9 +198,16 @@ fn setup_handlers(mem: &GuestMemoryMmap) {
         (((RESULT_ADDR + 8) >> 48) & 0xFF) as u8,
         (((RESULT_ADDR + 8) >> 56) & 0xFF) as u8,
         // mov rax, 0x14         ; PF marker (0x14 = #PF vector)
-        0x48, 0xc7, 0xc0, 0x14, 0x00, 0x00, 0x00,
+        0x48,
+        0xc7,
+        0xc0,
+        0x14,
+        0x00,
+        0x00,
+        0x00,
         // mov [RESULT_ADDR+16], rax
-        0x48, 0xa3,
+        0x48,
+        0xa3,
         ((RESULT_ADDR + 16) & 0xFF) as u8,
         (((RESULT_ADDR + 16) >> 8) & 0xFF) as u8,
         (((RESULT_ADDR + 16) >> 16) & 0xFF) as u8,
@@ -201,14 +219,22 @@ fn setup_handlers(mem: &GuestMemoryMmap) {
         // hlt
         0xf4,
     ];
-    mem.write_slice(pf_handler, GuestAddress(PF_HANDLER_ADDR)).unwrap();
+    mem.write_slice(pf_handler, GuestAddress(PF_HANDLER_ADDR))
+        .unwrap();
 
     // Double fault handler - similar but with 0x08 marker
     let df_handler: &[u8] = &[
         // mov rax, 0x08         ; DF marker
-        0x48, 0xc7, 0xc0, 0x08, 0x00, 0x00, 0x00,
+        0x48,
+        0xc7,
+        0xc0,
+        0x08,
+        0x00,
+        0x00,
+        0x00,
         // mov [RESULT_ADDR+16], rax
-        0x48, 0xa3,
+        0x48,
+        0xa3,
         ((RESULT_ADDR + 16) & 0xFF) as u8,
         (((RESULT_ADDR + 16) >> 8) & 0xFF) as u8,
         (((RESULT_ADDR + 16) >> 16) & 0xFF) as u8,
@@ -220,14 +246,22 @@ fn setup_handlers(mem: &GuestMemoryMmap) {
         // hlt
         0xf4,
     ];
-    mem.write_slice(df_handler, GuestAddress(DF_HANDLER_ADDR)).unwrap();
+    mem.write_slice(df_handler, GuestAddress(DF_HANDLER_ADDR))
+        .unwrap();
 
     // GP handler
     let gp_handler: &[u8] = &[
         // mov rax, 0x0D         ; GP marker
-        0x48, 0xc7, 0xc0, 0x0D, 0x00, 0x00, 0x00,
+        0x48,
+        0xc7,
+        0xc0,
+        0x0D,
+        0x00,
+        0x00,
+        0x00,
         // mov [RESULT_ADDR+16], rax
-        0x48, 0xa3,
+        0x48,
+        0xa3,
         ((RESULT_ADDR + 16) & 0xFF) as u8,
         (((RESULT_ADDR + 16) >> 8) & 0xFF) as u8,
         (((RESULT_ADDR + 16) >> 16) & 0xFF) as u8,
@@ -239,7 +273,8 @@ fn setup_handlers(mem: &GuestMemoryMmap) {
         // hlt
         0xf4,
     ];
-    mem.write_slice(gp_handler, GuestAddress(GP_HANDLER_ADDR)).unwrap();
+    mem.write_slice(gp_handler, GuestAddress(GP_HANDLER_ADDR))
+        .unwrap();
 }
 
 /// Create a vCPU with paging enabled
@@ -249,21 +284,21 @@ fn create_paged_vcpu(mem: Arc<GuestMemoryMmap>) -> X86_64Vcpu {
     let mut sregs = SystemRegisters::default();
     // Enable protected mode and paging
     sregs.cr0 = 0x80050033; // PE + PG + other standard bits
-    sregs.cr3 = PML4_ADDR;  // Page table root
-    sregs.cr4 = 0x20;       // PAE (required for 4-level paging)
-    sregs.efer = 0x500;     // LME + LMA (long mode)
+    sregs.cr3 = PML4_ADDR; // Page table root
+    sregs.cr4 = 0x20; // PAE (required for 4-level paging)
+    sregs.efer = 0x500; // LME + LMA (long mode)
 
     // Set up code segment for 64-bit mode
     sregs.cs = Segment {
         base: 0,
         limit: 0xFFFFFFFF,
         selector: 0x08,
-        type_: 0x0B,  // Execute/Read, accessed
+        type_: 0x0B, // Execute/Read, accessed
         present: true,
         dpl: 0,
-        db: false,    // Must be 0 for 64-bit
-        s: true,      // Code/Data segment
-        l: true,      // 64-bit mode
+        db: false, // Must be 0 for 64-bit
+        s: true,   // Code/Data segment
+        l: true,   // 64-bit mode
         g: true,
         avl: false,
         unusable: false,
@@ -274,7 +309,7 @@ fn create_paged_vcpu(mem: Arc<GuestMemoryMmap>) -> X86_64Vcpu {
         base: 0,
         limit: 0xFFFFFFFF,
         selector: 0x10,
-        type_: 0x03,  // Read/Write, accessed
+        type_: 0x03, // Read/Write, accessed
         present: true,
         dpl: 0,
         db: true,
@@ -293,7 +328,7 @@ fn create_paged_vcpu(mem: Arc<GuestMemoryMmap>) -> X86_64Vcpu {
     // Set up IDT
     sregs.idt = DescriptorTable {
         base: IDT_ADDR,
-        limit: 256 * 16 - 1,  // 256 entries
+        limit: 256 * 16 - 1, // 256 entries
     };
 
     // Set up GDT (minimal - just needs valid selectors)
@@ -306,8 +341,8 @@ fn create_paged_vcpu(mem: Arc<GuestMemoryMmap>) -> X86_64Vcpu {
 
     // Set initial registers
     let mut regs = Registers::default();
-    regs.rsp = STACK_PADDR + 0x1000;  // Stack grows down
-    regs.rflags = 0x2;  // Reserved bit must be 1
+    regs.rsp = STACK_PADDR + 0x1000; // Stack grows down
+    regs.rflags = 0x2; // Reserved bit must be 1
     vcpu.set_regs(&regs).unwrap();
 
     vcpu
@@ -332,10 +367,12 @@ fn read_result(mem: &GuestMemoryMmap) -> (u64, u64, u64) {
     mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR)).unwrap();
     let error_code = u64::from_le_bytes(buf);
 
-    mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR + 8)).unwrap();
+    mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR + 8))
+        .unwrap();
     let cr2 = u64::from_le_bytes(buf);
 
-    mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR + 16)).unwrap();
+    mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR + 16))
+        .unwrap();
     let marker = u64::from_le_bytes(buf);
 
     (error_code, cr2, marker)
@@ -352,13 +389,13 @@ fn test_pf_read_non_present() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Clear PT entry for page at 0x80000 (index 128)
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))
+        .unwrap();
 
     // Code: read from 0x80000, then HLT
     let code: &[u8] = &[
         // mov rax, [0x80000]
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00,
-        // hlt (should not reach here)
+        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00, // hlt (should not reach here)
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -374,9 +411,17 @@ fn test_pf_read_non_present() {
     assert_eq!(marker, 0x14, "Should trigger #PF (vector 14)");
     assert_eq!(cr2, 0x80000, "CR2 should contain faulting address");
     // Error code: not present (P=0), read access (W/R=0), supervisor (U/S=0)
-    assert_eq!(error_code & pf_error::P, 0, "P bit should be 0 (non-present)");
+    assert_eq!(
+        error_code & pf_error::P,
+        0,
+        "P bit should be 0 (non-present)"
+    );
     assert_eq!(error_code & pf_error::WR, 0, "W/R bit should be 0 (read)");
-    assert_eq!(error_code & pf_error::US, 0, "U/S bit should be 0 (supervisor)");
+    assert_eq!(
+        error_code & pf_error::US,
+        0,
+        "U/S bit should be 0 (supervisor)"
+    );
 }
 
 /// Test write to non-present page
@@ -386,13 +431,13 @@ fn test_pf_write_non_present() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Clear PT entry for page at 0x80000
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))
+        .unwrap();
 
     // Code: write to 0x80000
     let code: &[u8] = &[
         // mov qword [0x80000], 0x12345678
-        0x48, 0xc7, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00, 0x78, 0x56, 0x34, 0x12,
-        // hlt
+        0x48, 0xc7, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00, 0x78, 0x56, 0x34, 0x12, // hlt
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -407,8 +452,16 @@ fn test_pf_write_non_present() {
 
     assert_eq!(marker, 0x14, "Should trigger #PF");
     assert_eq!(cr2, 0x80000, "CR2 should contain faulting address");
-    assert_eq!(error_code & pf_error::P, 0, "P bit should be 0 (non-present)");
-    assert_eq!(error_code & pf_error::WR, pf_error::WR, "W/R bit should be 1 (write)");
+    assert_eq!(
+        error_code & pf_error::P,
+        0,
+        "P bit should be 0 (non-present)"
+    );
+    assert_eq!(
+        error_code & pf_error::WR,
+        pf_error::WR,
+        "W/R bit should be 1 (write)"
+    );
 }
 
 /// Test write to read-only page (protection violation)
@@ -418,14 +471,14 @@ fn test_pf_write_to_readonly() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Make page at 0x80000 present but read-only
-    let pte = 0x80000u64 | pte_flags::PRESENT | pte_flags::USER;  // No WRITABLE flag
-    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8)).unwrap();
+    let pte = 0x80000u64 | pte_flags::PRESENT | pte_flags::USER; // No WRITABLE flag
+    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))
+        .unwrap();
 
     // Code: write to 0x80000
     let code: &[u8] = &[
         // mov qword [0x80000], 0x12345678
-        0x48, 0xc7, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00, 0x78, 0x56, 0x34, 0x12,
-        // hlt
+        0x48, 0xc7, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00, 0x78, 0x56, 0x34, 0x12, // hlt
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -440,8 +493,16 @@ fn test_pf_write_to_readonly() {
 
     assert_eq!(marker, 0x14, "Should trigger #PF");
     assert_eq!(cr2, 0x80000, "CR2 should contain faulting address");
-    assert_eq!(error_code & pf_error::P, pf_error::P, "P bit should be 1 (protection violation)");
-    assert_eq!(error_code & pf_error::WR, pf_error::WR, "W/R bit should be 1 (write)");
+    assert_eq!(
+        error_code & pf_error::P,
+        pf_error::P,
+        "P bit should be 1 (protection violation)"
+    );
+    assert_eq!(
+        error_code & pf_error::WR,
+        pf_error::WR,
+        "W/R bit should be 1 (write)"
+    );
 }
 
 /// Test read from read-only page (should succeed)
@@ -452,15 +513,25 @@ fn test_read_readonly_succeeds() {
 
     // Make page at 0x80000 present but read-only, and put data there
     let pte = 0x80000u64 | pte_flags::PRESENT | pte_flags::USER;
-    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8)).unwrap();
-    mem.write_slice(&0xDEADBEEFCAFEBABEu64.to_le_bytes(), GuestAddress(0x80000)).unwrap();
+    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))
+        .unwrap();
+    mem.write_slice(&0xDEADBEEFCAFEBABEu64.to_le_bytes(), GuestAddress(0x80000))
+        .unwrap();
 
     // Code: read from 0x80000 into rax, store at RESULT_ADDR, hlt
     let code: &[u8] = &[
         // mov rax, [0x80000]
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00,
+        0x48,
+        0x8b,
+        0x04,
+        0x25,
+        0x00,
+        0x00,
+        0x08,
+        0x00,
         // mov [RESULT_ADDR], rax
-        0x48, 0xa3,
+        0x48,
+        0xa3,
         (RESULT_ADDR & 0xFF) as u8,
         ((RESULT_ADDR >> 8) & 0xFF) as u8,
         ((RESULT_ADDR >> 16) & 0xFF) as u8,
@@ -485,7 +556,10 @@ fn test_read_readonly_succeeds() {
     mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR)).unwrap();
     let result = u64::from_le_bytes(buf);
 
-    assert_eq!(result, 0xDEADBEEFCAFEBABE, "Should successfully read from read-only page");
+    assert_eq!(
+        result, 0xDEADBEEFCAFEBABE,
+        "Should successfully read from read-only page"
+    );
 }
 
 /// Test instruction fetch from non-present page
@@ -495,13 +569,13 @@ fn test_pf_fetch_non_present() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Clear PT entry for page at 0x80000 where we'll try to execute
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))
+        .unwrap();
 
     // Code: jump to 0x80000
     let code: &[u8] = &[
         // mov rax, 0x80000
-        0x48, 0xc7, 0xc0, 0x00, 0x00, 0x08, 0x00,
-        // jmp rax
+        0x48, 0xc7, 0xc0, 0x00, 0x00, 0x08, 0x00, // jmp rax
         0xff, 0xe0,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -516,8 +590,16 @@ fn test_pf_fetch_non_present() {
 
     assert_eq!(marker, 0x14, "Should trigger #PF");
     assert_eq!(cr2, 0x80000, "CR2 should contain faulting address");
-    assert_eq!(error_code & pf_error::P, 0, "P bit should be 0 (non-present)");
-    assert_eq!(error_code & pf_error::ID, pf_error::ID, "I/D bit should be 1 (instruction fetch)");
+    assert_eq!(
+        error_code & pf_error::P,
+        0,
+        "P bit should be 0 (non-present)"
+    );
+    assert_eq!(
+        error_code & pf_error::ID,
+        pf_error::ID,
+        "I/D bit should be 1 (instruction fetch)"
+    );
 }
 
 /// Test page fault with various CR2 values (address within page)
@@ -527,13 +609,13 @@ fn test_pf_cr2_offset_within_page() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Clear PT entry for page at 0x80000
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))
+        .unwrap();
 
     // Code: read from 0x80123 (offset 0x123 within page)
     let code: &[u8] = &[
         // mov rax, [0x80123]
-        0x48, 0x8b, 0x04, 0x25, 0x23, 0x01, 0x08, 0x00,
-        // hlt
+        0x48, 0x8b, 0x04, 0x25, 0x23, 0x01, 0x08, 0x00, // hlt
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -547,7 +629,10 @@ fn test_pf_cr2_offset_within_page() {
     let (_error_code, cr2, marker) = read_result(&mem);
 
     assert_eq!(marker, 0x14, "Should trigger #PF");
-    assert_eq!(cr2, 0x80123, "CR2 should contain exact faulting address including offset");
+    assert_eq!(
+        cr2, 0x80123,
+        "CR2 should contain exact faulting address including offset"
+    );
 }
 
 /// Test page fault at PML4 level (address in non-canonical region would be #GP,
@@ -561,7 +646,8 @@ fn test_pf_missing_pml4_entry() {
     // Address using PML4 index 1: 0x8000000000 (512GB)
     // But this is too high for our 1MB memory, so we'll use a different approach:
     // Clear PML4 entry 0 to make all low addresses fault at PML4 level
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PML4_ADDR)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PML4_ADDR))
+        .unwrap();
 
     // We need code in a location that IS mapped (put code at physical address
     // that page tables can still reach temporarily)
@@ -570,7 +656,8 @@ fn test_pf_missing_pml4_entry() {
 
     // Re-enable PML4[0] so code can run
     let pml4e = PDPT_ADDR | pte_flags::PRESENT | pte_flags::WRITABLE | pte_flags::USER;
-    mem.write_slice(&pml4e.to_le_bytes(), GuestAddress(PML4_ADDR)).unwrap();
+    mem.write_slice(&pml4e.to_le_bytes(), GuestAddress(PML4_ADDR))
+        .unwrap();
 
     // But clear PDPT[1] - addresses in range 0x40000000-0x7FFFFFFF will fault
     // Actually PDPT[0] maps 0-1GB, PDPT[1] would be 1-2GB
@@ -585,8 +672,7 @@ fn test_pf_missing_pml4_entry() {
     // Code: read from 0x200000
     let code: &[u8] = &[
         // mov rax, [0x200000]
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x20, 0x00,
-        // hlt
+        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x20, 0x00, // hlt
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -601,7 +687,11 @@ fn test_pf_missing_pml4_entry() {
 
     assert_eq!(marker, 0x14, "Should trigger #PF");
     assert_eq!(cr2, 0x200000, "CR2 should contain faulting address");
-    assert_eq!(error_code & pf_error::P, 0, "P bit should be 0 (non-present at PD level)");
+    assert_eq!(
+        error_code & pf_error::P,
+        0,
+        "P bit should be 0 (non-present at PD level)"
+    );
 }
 
 /// Test that successfully mapped pages work correctly
@@ -611,14 +701,23 @@ fn test_mapped_page_access_succeeds() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Write test value to a mapped address
-    mem.write_slice(&0x123456789ABCDEFu64.to_le_bytes(), GuestAddress(0x50000)).unwrap();
+    mem.write_slice(&0x123456789ABCDEFu64.to_le_bytes(), GuestAddress(0x50000))
+        .unwrap();
 
     // Code: read from 0x50000, store in result, hlt
     let code: &[u8] = &[
         // mov rax, [0x50000]
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x05, 0x00,
+        0x48,
+        0x8b,
+        0x04,
+        0x25,
+        0x00,
+        0x00,
+        0x05,
+        0x00,
         // mov [RESULT_ADDR], rax
-        0x48, 0xa3,
+        0x48,
+        0xa3,
         (RESULT_ADDR & 0xFF) as u8,
         ((RESULT_ADDR >> 8) & 0xFF) as u8,
         ((RESULT_ADDR >> 16) & 0xFF) as u8,
@@ -642,7 +741,10 @@ fn test_mapped_page_access_succeeds() {
     mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR)).unwrap();
     let result = u64::from_le_bytes(buf);
 
-    assert_eq!(result, 0x123456789ABCDEF, "Should read correct value from mapped page");
+    assert_eq!(
+        result, 0x123456789ABCDEF,
+        "Should read correct value from mapped page"
+    );
 }
 
 /// Test write and read back through page tables
@@ -654,13 +756,41 @@ fn test_write_read_through_paging() {
     // Code: write value to 0x50000, read it back, store in result
     let code: &[u8] = &[
         // mov rax, 0xCAFEBABEDEADBEEF
-        0x48, 0xb8, 0xEF, 0xBE, 0xAD, 0xDE, 0xBE, 0xBA, 0xFE, 0xCA,
+        0x48,
+        0xb8,
+        0xEF,
+        0xBE,
+        0xAD,
+        0xDE,
+        0xBE,
+        0xBA,
+        0xFE,
+        0xCA,
         // mov [0x50000], rax
-        0x48, 0xa3, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x48,
+        0xa3,
+        0x00,
+        0x00,
+        0x05,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
         // mov rbx, [0x50000]
-        0x48, 0x8b, 0x1c, 0x25, 0x00, 0x00, 0x05, 0x00,
+        0x48,
+        0x8b,
+        0x1c,
+        0x25,
+        0x00,
+        0x00,
+        0x05,
+        0x00,
         // mov [RESULT_ADDR], rbx
-        0x48, 0x89, 0x1c, 0x25,
+        0x48,
+        0x89,
+        0x1c,
+        0x25,
         (RESULT_ADDR & 0xFF) as u8,
         ((RESULT_ADDR >> 8) & 0xFF) as u8,
         ((RESULT_ADDR >> 16) & 0xFF) as u8,
@@ -680,7 +810,10 @@ fn test_write_read_through_paging() {
     mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR)).unwrap();
     let result = u64::from_le_bytes(buf);
 
-    assert_eq!(result, 0xCAFEBABEDEADBEEF, "Write then read should return same value");
+    assert_eq!(
+        result, 0xCAFEBABEDEADBEEF,
+        "Write then read should return same value"
+    );
 }
 
 /// Test 2MB huge page mapping
@@ -700,18 +833,29 @@ fn test_2mb_huge_page() {
 
     // Modify PD entry 0 to be a 2MB huge page instead of pointing to PT
     // 2MB page at physical 0 (identity mapped)
-    let pde = 0u64 | pte_flags::PRESENT | pte_flags::WRITABLE | pte_flags::USER | pte_flags::HUGE_PAGE;
-    mem.write_slice(&pde.to_le_bytes(), GuestAddress(PD_ADDR)).unwrap();
+    let pde =
+        0u64 | pte_flags::PRESENT | pte_flags::WRITABLE | pte_flags::USER | pte_flags::HUGE_PAGE;
+    mem.write_slice(&pde.to_le_bytes(), GuestAddress(PD_ADDR))
+        .unwrap();
 
     // Write test value somewhere in the 2MB range (use 0x180000 = 1.5MB)
-    mem.write_slice(&0xDEADC0DEu64.to_le_bytes(), GuestAddress(0x180000)).unwrap();
+    mem.write_slice(&0xDEADC0DEu64.to_le_bytes(), GuestAddress(0x180000))
+        .unwrap();
 
     // Code: read from 0x180000 (1.5MB offset, within first 2MB page)
     let code: &[u8] = &[
         // mov rax, [0x180000]
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x18, 0x00,
+        0x48,
+        0x8b,
+        0x04,
+        0x25,
+        0x00,
+        0x00,
+        0x18,
+        0x00,
         // mov [RESULT_ADDR], rax
-        0x48, 0xa3,
+        0x48,
+        0xa3,
         (RESULT_ADDR & 0xFF) as u8,
         ((RESULT_ADDR >> 8) & 0xFF) as u8,
         ((RESULT_ADDR >> 16) & 0xFF) as u8,
@@ -747,14 +891,23 @@ fn test_page_crossing_access() {
     // Write 8 bytes across page boundary at 0x50FFC (last 4 bytes of page 0x50000,
     // first 4 bytes of page 0x51000)
     let value: u64 = 0x0102030405060708;
-    mem.write_slice(&value.to_le_bytes(), GuestAddress(0x50FFC)).unwrap();
+    mem.write_slice(&value.to_le_bytes(), GuestAddress(0x50FFC))
+        .unwrap();
 
     // Code: read 8 bytes from 0x50FFC
     let code: &[u8] = &[
         // mov rax, [0x50FFC]
-        0x48, 0x8b, 0x04, 0x25, 0xFC, 0x0F, 0x05, 0x00,
+        0x48,
+        0x8b,
+        0x04,
+        0x25,
+        0xFC,
+        0x0F,
+        0x05,
+        0x00,
         // mov [RESULT_ADDR], rax
-        0x48, 0xa3,
+        0x48,
+        0xa3,
         (RESULT_ADDR & 0xFF) as u8,
         ((RESULT_ADDR >> 8) & 0xFF) as u8,
         ((RESULT_ADDR >> 16) & 0xFF) as u8,
@@ -788,13 +941,13 @@ fn test_page_crossing_fault_on_second_page() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Clear PT entry for page 0x81000 (index 129)
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 129 * 8)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 129 * 8))
+        .unwrap();
 
     // Code: read 8 bytes from 0x80FFC (crosses into unmapped 0x81000)
     let code: &[u8] = &[
         // mov rax, [0x80FFC]
-        0x48, 0x8b, 0x04, 0x25, 0xFC, 0x0F, 0x08, 0x00,
-        // hlt
+        0x48, 0x8b, 0x04, 0x25, 0xFC, 0x0F, 0x08, 0x00, // hlt
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -809,9 +962,16 @@ fn test_page_crossing_fault_on_second_page() {
 
     assert_eq!(marker, 0x14, "Should trigger #PF");
     // CR2 should be the address in the second page (0x81000)
-    assert!(cr2 >= 0x81000 && cr2 < 0x82000,
-        "CR2 ({:#x}) should be in second page (0x81000)", cr2);
-    assert_eq!(error_code & pf_error::P, 0, "P bit should be 0 (non-present)");
+    assert!(
+        cr2 >= 0x81000 && cr2 < 0x82000,
+        "CR2 ({:#x}) should be in second page (0x81000)",
+        cr2
+    );
+    assert_eq!(
+        error_code & pf_error::P,
+        0,
+        "P bit should be 0 (non-present)"
+    );
 }
 
 /// Test TLB invalidation with INVLPG
@@ -828,26 +988,53 @@ fn test_invlpg() {
     // 4. Try to read again (should fault)
 
     // Write initial value
-    mem.write_slice(&0xAABBCCDDu64.to_le_bytes(), GuestAddress(0x80000)).unwrap();
+    mem.write_slice(&0xAABBCCDDu64.to_le_bytes(), GuestAddress(0x80000))
+        .unwrap();
 
-    let pt_entry_addr = PT_ADDR + 128 * 8;  // PTE for 0x80000
+    let pt_entry_addr = PT_ADDR + 128 * 8; // PTE for 0x80000
 
     // Code
     let code: &[u8] = &[
         // mov rax, [0x80000]  ; First read - populates TLB
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00,
+        0x48,
+        0x8b,
+        0x04,
+        0x25,
+        0x00,
+        0x00,
+        0x08,
+        0x00,
         // xor rbx, rbx        ; rbx = 0
-        0x48, 0x31, 0xdb,
+        0x48,
+        0x31,
+        0xdb,
         // mov [pt_entry_addr], rbx  ; Clear PTE
-        0x48, 0x89, 0x1c, 0x25,
+        0x48,
+        0x89,
+        0x1c,
+        0x25,
         (pt_entry_addr & 0xFF) as u8,
         ((pt_entry_addr >> 8) & 0xFF) as u8,
         ((pt_entry_addr >> 16) & 0xFF) as u8,
         ((pt_entry_addr >> 24) & 0xFF) as u8,
         // invlpg [0x80000]    ; Invalidate TLB entry
-        0x0f, 0x01, 0x3c, 0x25, 0x00, 0x00, 0x08, 0x00,
+        0x0f,
+        0x01,
+        0x3c,
+        0x25,
+        0x00,
+        0x00,
+        0x08,
+        0x00,
         // mov rax, [0x80000]  ; Second read - should fault
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00,
+        0x48,
+        0x8b,
+        0x04,
+        0x25,
+        0x00,
+        0x00,
+        0x08,
+        0x00,
         // hlt
         0xf4,
     ];
@@ -880,21 +1067,44 @@ fn test_cr3_flush() {
     // 4. Try to read again (should fault)
     let code: &[u8] = &[
         // mov rax, [0x80000]  ; First read
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00,
+        0x48,
+        0x8b,
+        0x04,
+        0x25,
+        0x00,
+        0x00,
+        0x08,
+        0x00,
         // xor rbx, rbx
-        0x48, 0x31, 0xdb,
+        0x48,
+        0x31,
+        0xdb,
         // mov [pt_entry_addr], rbx  ; Clear PTE
-        0x48, 0x89, 0x1c, 0x25,
+        0x48,
+        0x89,
+        0x1c,
+        0x25,
         (pt_entry_addr & 0xFF) as u8,
         ((pt_entry_addr >> 8) & 0xFF) as u8,
         ((pt_entry_addr >> 16) & 0xFF) as u8,
         ((pt_entry_addr >> 24) & 0xFF) as u8,
         // mov rax, cr3        ; Read CR3
-        0x0f, 0x20, 0xd8,
+        0x0f,
+        0x20,
+        0xd8,
         // mov cr3, rax        ; Write CR3 (flush TLB)
-        0x0f, 0x22, 0xd8,
+        0x0f,
+        0x22,
+        0xd8,
         // mov rax, [0x80000]  ; Second read - should fault
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00,
+        0x48,
+        0x8b,
+        0x04,
+        0x25,
+        0x00,
+        0x00,
+        0x08,
+        0x00,
         // hlt
         0xf4,
     ];
@@ -923,13 +1133,13 @@ fn test_pf_exact_page_boundary() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Unmap page at 0x80000
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))
+        .unwrap();
 
     // Access exactly at page boundary 0x80000
     let code: &[u8] = &[
         // mov al, [0x80000]  ; Single byte read at exact boundary
-        0xa0, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00,
-        // hlt
+        0xa0, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, // hlt
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -952,13 +1162,13 @@ fn test_pf_last_byte_of_page() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Unmap page at 0x80000
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))
+        .unwrap();
 
     // Access last byte of unmapped page (0x80FFF)
     let code: &[u8] = &[
         // mov al, [0x80FFF]
-        0xa0, 0xFF, 0x0F, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00,
-        // hlt
+        0xa0, 0xFF, 0x0F, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, // hlt
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -981,13 +1191,13 @@ fn test_pf_unaligned_qword_crossing() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Unmap page at 0x81000 (page after 0x80000)
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 129 * 8)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 129 * 8))
+        .unwrap();
 
     // 8-byte read starting at 0x80FFC crosses into unmapped 0x81000
     let code: &[u8] = &[
         // mov rax, [0x80FFC]  ; Unaligned qword crossing page boundary
-        0x48, 0x8b, 0x04, 0x25, 0xFC, 0x0F, 0x08, 0x00,
-        // hlt
+        0x48, 0x8b, 0x04, 0x25, 0xFC, 0x0F, 0x08, 0x00, // hlt
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -1001,7 +1211,11 @@ fn test_pf_unaligned_qword_crossing() {
     let (_error_code, cr2, marker) = read_result(&mem);
     assert_eq!(marker, 0x14);
     // CR2 should be in the unmapped page (0x81000-0x81003)
-    assert!(cr2 >= 0x81000 && cr2 < 0x82000, "CR2 ({:#x}) should be in unmapped page", cr2);
+    assert!(
+        cr2 >= 0x81000 && cr2 < 0x82000,
+        "CR2 ({:#x}) should be in unmapped page",
+        cr2
+    );
 }
 
 /// Test PUSH causing page fault (stack operation)
@@ -1041,7 +1255,8 @@ fn test_pf_rep_movsb_source_unmapped() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Unmap page at 0x81000
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 129 * 8)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 129 * 8))
+        .unwrap();
 
     // Code: REP MOVSB from 0x80FF0 (crosses into unmapped 0x81000)
     let code: &[u8] = &[
@@ -1050,12 +1265,9 @@ fn test_pf_rep_movsb_source_unmapped() {
         // mov rdi, 0x50000  ; Destination (mapped)
         0x48, 0xc7, 0xc7, 0x00, 0x00, 0x05, 0x00,
         // mov rcx, 32       ; Copy 32 bytes (crosses boundary)
-        0x48, 0xc7, 0xc1, 0x20, 0x00, 0x00, 0x00,
-        // cld
-        0xfc,
-        // rep movsb
-        0xf3, 0xa4,
-        // hlt
+        0x48, 0xc7, 0xc1, 0x20, 0x00, 0x00, 0x00, // cld
+        0xfc, // rep movsb
+        0xf3, 0xa4, // hlt
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -1068,8 +1280,16 @@ fn test_pf_rep_movsb_source_unmapped() {
 
     let (error_code, cr2, marker) = read_result(&mem);
     assert_eq!(marker, 0x14);
-    assert!(cr2 >= 0x81000, "CR2 ({:#x}) should be in unmapped source page", cr2);
-    assert_eq!(error_code & pf_error::WR, 0, "Source read should be read fault");
+    assert!(
+        cr2 >= 0x81000,
+        "CR2 ({:#x}) should be in unmapped source page",
+        cr2
+    );
+    assert_eq!(
+        error_code & pf_error::WR,
+        0,
+        "Source read should be read fault"
+    );
 }
 
 /// Test REP MOVSB crossing into unmapped page (destination)
@@ -1079,21 +1299,18 @@ fn test_pf_rep_movsb_dest_unmapped() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Unmap page at 0x81000
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 129 * 8)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 129 * 8))
+        .unwrap();
 
     // Code: REP MOVSB to 0x80FF0 (crosses into unmapped 0x81000)
     let code: &[u8] = &[
         // mov rsi, 0x50000  ; Source (mapped)
         0x48, 0xc7, 0xc6, 0x00, 0x00, 0x05, 0x00,
         // mov rdi, 0x80FF0  ; Destination near page end
-        0x48, 0xc7, 0xc7, 0xF0, 0x0F, 0x08, 0x00,
-        // mov rcx, 32
-        0x48, 0xc7, 0xc1, 0x20, 0x00, 0x00, 0x00,
-        // cld
-        0xfc,
-        // rep movsb
-        0xf3, 0xa4,
-        // hlt
+        0x48, 0xc7, 0xc7, 0xF0, 0x0F, 0x08, 0x00, // mov rcx, 32
+        0x48, 0xc7, 0xc1, 0x20, 0x00, 0x00, 0x00, // cld
+        0xfc, // rep movsb
+        0xf3, 0xa4, // hlt
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -1106,8 +1323,16 @@ fn test_pf_rep_movsb_dest_unmapped() {
 
     let (error_code, cr2, marker) = read_result(&mem);
     assert_eq!(marker, 0x14);
-    assert!(cr2 >= 0x81000, "CR2 ({:#x}) should be in unmapped dest page", cr2);
-    assert_eq!(error_code & pf_error::WR, pf_error::WR, "Destination write should be write fault");
+    assert!(
+        cr2 >= 0x81000,
+        "CR2 ({:#x}) should be in unmapped dest page",
+        cr2
+    );
+    assert_eq!(
+        error_code & pf_error::WR,
+        pf_error::WR,
+        "Destination write should be write fault"
+    );
 }
 
 /// Test multiple consecutive page faults handled correctly
@@ -1117,22 +1342,30 @@ fn test_multiple_consecutive_page_faults() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Unmap pages 0x80000 and 0x81000
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8)).unwrap();
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 129 * 8)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))
+        .unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 129 * 8))
+        .unwrap();
 
     // Extended page fault handler that increments a counter and IRETs
     // (allowing multiple faults to be handled)
     let pf_handler_multi: &[u8] = &[
         // inc qword [RESULT_ADDR + 24]  ; Increment fault counter
-        0x48, 0xff, 0x04, 0x25,
+        0x48,
+        0xff,
+        0x04,
+        0x25,
         ((RESULT_ADDR + 24) & 0xFF) as u8,
         (((RESULT_ADDR + 24) >> 8) & 0xFF) as u8,
         (((RESULT_ADDR + 24) >> 16) & 0xFF) as u8,
         (((RESULT_ADDR + 24) >> 24) & 0xFF) as u8,
         // mov rax, cr2
-        0x0f, 0x20, 0xd0,
+        0x0f,
+        0x20,
+        0xd0,
         // mov [RESULT_ADDR + 8], rax  ; Store last CR2
-        0x48, 0xa3,
+        0x48,
+        0xa3,
         ((RESULT_ADDR + 8) & 0xFF) as u8,
         (((RESULT_ADDR + 8) >> 8) & 0xFF) as u8,
         (((RESULT_ADDR + 8) >> 16) & 0xFF) as u8,
@@ -1142,29 +1375,43 @@ fn test_multiple_consecutive_page_faults() {
         (((RESULT_ADDR + 8) >> 48) & 0xFF) as u8,
         (((RESULT_ADDR + 8) >> 56) & 0xFF) as u8,
         // add rsp, 8  ; Pop error code
-        0x48, 0x83, 0xc4, 0x08,
+        0x48,
+        0x83,
+        0xc4,
+        0x08,
         // Add 2 to return RIP to skip faulting instruction
         // mov rax, [rsp]
-        0x48, 0x8b, 0x04, 0x24,
+        0x48,
+        0x8b,
+        0x04,
+        0x24,
         // add rax, 8  ; Skip mov rax, [addr] (8 bytes)
-        0x48, 0x83, 0xc0, 0x08,
+        0x48,
+        0x83,
+        0xc0,
+        0x08,
         // mov [rsp], rax
-        0x48, 0x89, 0x04, 0x24,
+        0x48,
+        0x89,
+        0x04,
+        0x24,
         // iretq
-        0x48, 0xcf,
+        0x48,
+        0xcf,
     ];
-    mem.write_slice(pf_handler_multi, GuestAddress(PF_HANDLER_ADDR)).unwrap();
+    mem.write_slice(pf_handler_multi, GuestAddress(PF_HANDLER_ADDR))
+        .unwrap();
 
     // Initialize fault counter to 0
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(RESULT_ADDR + 24)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(RESULT_ADDR + 24))
+        .unwrap();
 
     // Code: trigger faults on both pages
     let code: &[u8] = &[
         // mov rax, [0x80000]  ; First fault (8 bytes)
         0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00,
         // mov rax, [0x81000]  ; Second fault (8 bytes)
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x10, 0x08, 0x00,
-        // hlt
+        0x48, 0x8b, 0x04, 0x25, 0x00, 0x10, 0x08, 0x00, // hlt
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -1177,7 +1424,8 @@ fn test_multiple_consecutive_page_faults() {
 
     // Read fault counter
     let mut buf = [0u8; 8];
-    mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR + 24)).unwrap();
+    mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR + 24))
+        .unwrap();
     let fault_count = u64::from_le_bytes(buf);
 
     assert_eq!(fault_count, 2, "Should have handled exactly 2 page faults");
@@ -1193,15 +1441,15 @@ fn test_pf_readonly_at_pd_level() {
     // Make PD entry for page 0x80000 read-only (but keep PML4, PDPT writable for handler)
     // PD entry 0 covers 0-2MB, so we need a separate PD for test area
     // Instead, let's just make the specific PT entry read-only
-    let pte = 0x90000u64 | pte_flags::PRESENT | pte_flags::USER;  // No WRITABLE
+    let pte = 0x90000u64 | pte_flags::PRESENT | pte_flags::USER; // No WRITABLE
     let test_page = 144; // 0x90000 / 0x1000
-    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + test_page * 8)).unwrap();
+    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + test_page * 8))
+        .unwrap();
 
     // Try to write to 0x90000 (should fail at PT level due to no write permission)
     let code: &[u8] = &[
         // mov qword [0x90000], 0x12345678
-        0x48, 0xc7, 0x04, 0x25, 0x00, 0x00, 0x09, 0x00, 0x78, 0x56, 0x34, 0x12,
-        // hlt
+        0x48, 0xc7, 0x04, 0x25, 0x00, 0x00, 0x09, 0x00, 0x78, 0x56, 0x34, 0x12, // hlt
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -1215,8 +1463,16 @@ fn test_pf_readonly_at_pd_level() {
     let (error_code, cr2, marker) = read_result(&mem);
     assert_eq!(marker, 0x14);
     assert_eq!(cr2, 0x90000);
-    assert_eq!(error_code & pf_error::P, pf_error::P, "Should be protection violation");
-    assert_eq!(error_code & pf_error::WR, pf_error::WR, "Should be write fault");
+    assert_eq!(
+        error_code & pf_error::P,
+        pf_error::P,
+        "Should be protection violation"
+    );
+    assert_eq!(
+        error_code & pf_error::WR,
+        pf_error::WR,
+        "Should be write fault"
+    );
 }
 
 /// Test instruction fetch from read-only page (should succeed - NX not set)
@@ -1226,15 +1482,17 @@ fn test_execute_readonly_succeeds() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Make page at 0x80000 present but read-only
-    let pte = 0x80000u64 | pte_flags::PRESENT | pte_flags::USER;  // No WRITABLE
-    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8)).unwrap();
+    let pte = 0x80000u64 | pte_flags::PRESENT | pte_flags::USER; // No WRITABLE
+    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))
+        .unwrap();
 
     // Put code at 0x80000 (read-only page)
     // Use movabs rax, imm64 (0x48 0xB8) to avoid sign-extension issues
     let test_value: u64 = 0x123456789ABCDEF0;
     let target_code: &[u8] = &[
         // movabs rax, 0x123456789ABCDEF0
-        0x48, 0xb8,
+        0x48,
+        0xb8,
         (test_value & 0xFF) as u8,
         ((test_value >> 8) & 0xFF) as u8,
         ((test_value >> 16) & 0xFF) as u8,
@@ -1244,7 +1502,8 @@ fn test_execute_readonly_succeeds() {
         ((test_value >> 48) & 0xFF) as u8,
         ((test_value >> 56) & 0xFF) as u8,
         // mov [RESULT_ADDR], rax
-        0x48, 0xa3,
+        0x48,
+        0xa3,
         (RESULT_ADDR & 0xFF) as u8,
         ((RESULT_ADDR >> 8) & 0xFF) as u8,
         ((RESULT_ADDR >> 16) & 0xFF) as u8,
@@ -1269,7 +1528,10 @@ fn test_execute_readonly_succeeds() {
     mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR)).unwrap();
     let result = u64::from_le_bytes(buf);
 
-    assert_eq!(result, test_value, "Should execute code on read-only page (NX not set)");
+    assert_eq!(
+        result, test_value,
+        "Should execute code on read-only page (NX not set)"
+    );
 }
 
 /// Test single-byte access sizes (8, 16, 32, 64 bits) all trigger correct faults
@@ -1277,13 +1539,29 @@ fn test_execute_readonly_succeeds() {
 fn test_pf_various_access_sizes() {
     let sizes_and_ops: &[(u8, &[u8], &str)] = &[
         // 8-bit read
-        (1, &[0xa0, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00], "8-bit"),
+        (
+            1,
+            &[0xa0, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00],
+            "8-bit",
+        ),
         // 16-bit read: mov ax, [0x80000] with prefix
-        (2, &[0x66, 0xa1, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00], "16-bit"),
+        (
+            2,
+            &[0x66, 0xa1, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00],
+            "16-bit",
+        ),
         // 32-bit read: mov eax, [0x80000]
-        (4, &[0xa1, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00], "32-bit"),
+        (
+            4,
+            &[0xa1, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00],
+            "32-bit",
+        ),
         // 64-bit read: mov rax, [0x80000]
-        (8, &[0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00], "64-bit"),
+        (
+            8,
+            &[0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00],
+            "64-bit",
+        ),
     ];
 
     for (size, read_op, name) in sizes_and_ops {
@@ -1291,7 +1569,8 @@ fn test_pf_various_access_sizes() {
         let mut vcpu = create_paged_vcpu(mem.clone());
 
         // Unmap page at 0x80000
-        mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8)).unwrap();
+        mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))
+            .unwrap();
 
         // Build code: read instruction + hlt
         let mut code = read_op.to_vec();
@@ -1317,17 +1596,27 @@ fn test_access_first_byte_after_unmapped() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Unmap page at 0x80000 but keep 0x81000 mapped
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))
+        .unwrap();
 
     // Write test value at 0x81000
-    mem.write_slice(&0xCAFEBABEu64.to_le_bytes(), GuestAddress(0x81000)).unwrap();
+    mem.write_slice(&0xCAFEBABEu64.to_le_bytes(), GuestAddress(0x81000))
+        .unwrap();
 
     // Read from first byte of mapped page after unmapped
     let code: &[u8] = &[
         // mov rax, [0x81000]
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x10, 0x08, 0x00,
+        0x48,
+        0x8b,
+        0x04,
+        0x25,
+        0x00,
+        0x10,
+        0x08,
+        0x00,
         // mov [RESULT_ADDR], rax
-        0x48, 0xa3,
+        0x48,
+        0xa3,
         (RESULT_ADDR & 0xFF) as u8,
         ((RESULT_ADDR >> 8) & 0xFF) as u8,
         ((RESULT_ADDR >> 16) & 0xFF) as u8,
@@ -1351,7 +1640,10 @@ fn test_access_first_byte_after_unmapped() {
     mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR)).unwrap();
     let result = u64::from_le_bytes(buf);
 
-    assert_eq!(result, 0xCAFEBABE, "Should read from page after unmapped page");
+    assert_eq!(
+        result, 0xCAFEBABE,
+        "Should read from page after unmapped page"
+    );
 }
 
 /// Test XCHG instruction causing page fault (read-modify-write)
@@ -1361,19 +1653,20 @@ fn test_pf_xchg_rmw() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Make page at 0x80000 read-only
-    let pte = 0x80000u64 | pte_flags::PRESENT | pte_flags::USER;  // No WRITABLE
-    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8)).unwrap();
+    let pte = 0x80000u64 | pte_flags::PRESENT | pte_flags::USER; // No WRITABLE
+    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))
+        .unwrap();
 
     // Write initial value
-    mem.write_slice(&0x11111111u64.to_le_bytes(), GuestAddress(0x80000)).unwrap();
+    mem.write_slice(&0x11111111u64.to_le_bytes(), GuestAddress(0x80000))
+        .unwrap();
 
     // XCHG needs write access
     let code: &[u8] = &[
         // mov rax, 0x22222222
         0x48, 0xc7, 0xc0, 0x22, 0x22, 0x22, 0x22,
         // xchg [0x80000], rax  ; Atomic exchange - needs write
-        0x48, 0x87, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00,
-        // hlt
+        0x48, 0x87, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00, // hlt
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -1387,8 +1680,16 @@ fn test_pf_xchg_rmw() {
     let (error_code, cr2, marker) = read_result(&mem);
     assert_eq!(marker, 0x14);
     assert_eq!(cr2, 0x80000);
-    assert_eq!(error_code & pf_error::P, pf_error::P, "Should be protection violation");
-    assert_eq!(error_code & pf_error::WR, pf_error::WR, "XCHG requires write access");
+    assert_eq!(
+        error_code & pf_error::P,
+        pf_error::P,
+        "Should be protection violation"
+    );
+    assert_eq!(
+        error_code & pf_error::WR,
+        pf_error::WR,
+        "XCHG requires write access"
+    );
 }
 
 /// Test CMPXCHG instruction causing page fault
@@ -1399,19 +1700,18 @@ fn test_pf_cmpxchg() {
 
     // Make page at 0x80000 read-only
     let pte = 0x80000u64 | pte_flags::PRESENT | pte_flags::USER;
-    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8)).unwrap();
+    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))
+        .unwrap();
 
-    mem.write_slice(&0x11111111u64.to_le_bytes(), GuestAddress(0x80000)).unwrap();
+    mem.write_slice(&0x11111111u64.to_le_bytes(), GuestAddress(0x80000))
+        .unwrap();
 
     // CMPXCHG [mem], reg - always writes (either new value or old value)
     let code: &[u8] = &[
         // mov rax, 0x11111111  ; Expected value
-        0x48, 0xc7, 0xc0, 0x11, 0x11, 0x11, 0x11,
-        // mov rbx, 0x22222222  ; New value
-        0x48, 0xc7, 0xc3, 0x22, 0x22, 0x22, 0x22,
-        // lock cmpxchg [0x80000], rbx
-        0xf0, 0x48, 0x0f, 0xb1, 0x1c, 0x25, 0x00, 0x00, 0x08, 0x00,
-        // hlt
+        0x48, 0xc7, 0xc0, 0x11, 0x11, 0x11, 0x11, // mov rbx, 0x22222222  ; New value
+        0x48, 0xc7, 0xc3, 0x22, 0x22, 0x22, 0x22, // lock cmpxchg [0x80000], rbx
+        0xf0, 0x48, 0x0f, 0xb1, 0x1c, 0x25, 0x00, 0x00, 0x08, 0x00, // hlt
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -1424,7 +1724,11 @@ fn test_pf_cmpxchg() {
 
     let (error_code, _cr2, marker) = read_result(&mem);
     assert_eq!(marker, 0x14);
-    assert_eq!(error_code & pf_error::WR, pf_error::WR, "CMPXCHG requires write access");
+    assert_eq!(
+        error_code & pf_error::WR,
+        pf_error::WR,
+        "CMPXCHG requires write access"
+    );
 }
 
 /// Test page fault with address that wraps around (canonical check)
@@ -1449,8 +1753,7 @@ fn test_noncanonical_address_gp() {
         // mov rax, 0x0000800000000000
         0x48, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00,
         // mov rbx, [rax]  ; Access non-canonical address
-        0x48, 0x8b, 0x18,
-        // hlt
+        0x48, 0x8b, 0x18, // hlt
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -1463,5 +1766,8 @@ fn test_noncanonical_address_gp() {
 
     let (_error_code, _cr2, marker) = read_result(&mem);
     // Should be #GP (13), not #PF (14)
-    assert_eq!(marker, 0x0D, "Non-canonical address should trigger #GP, not #PF");
+    assert_eq!(
+        marker, 0x0D,
+        "Non-canonical address should trigger #GP, not #PF"
+    );
 }

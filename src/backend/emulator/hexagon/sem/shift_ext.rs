@@ -13,7 +13,7 @@
 //! and `sem/shift.rs` for the established pattern.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fimm_s, fimm_u, fld, SemCtx};
+use super::{SemCtx, fimm_s, fimm_u, fld};
 
 // ---- lane accessors (mirror fGET*/fSET* macros) ---------------------------
 
@@ -131,11 +131,7 @@ fn ashiftr_64(src: u64, shamt: u32) -> u64 {
 /// `fLSHIFTR(SRC,SHAMT,8_8)`: 64-bit logical right shift, `>=64 -> 0`.
 #[inline]
 fn lshiftr_64(src: u64, shamt: u32) -> u64 {
-    if shamt >= 64 {
-        0
-    } else {
-        src >> shamt
-    }
+    if shamt >= 64 { 0 } else { src >> shamt }
 }
 
 // ---- count leading sign bits (clb) ----------------------------------------
@@ -773,12 +769,18 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         // ---- S4 compound add/sub with immediate ----
         Opcode::S4_addaddi => {
             let imm = fimm_s(d, b'i', ctx.immext) as u32;
-            let v = ctx.r(rs()).wrapping_add(ctx.r(fld(d, b'u'))).wrapping_add(imm);
+            let v = ctx
+                .r(rs())
+                .wrapping_add(ctx.r(fld(d, b'u')))
+                .wrapping_add(imm);
             ctx.set_r(rd, v);
         }
         Opcode::S4_subaddi => {
             let imm = fimm_s(d, b'i', ctx.immext) as u32;
-            let v = ctx.r(rs()).wrapping_sub(ctx.r(fld(d, b'u'))).wrapping_add(imm);
+            let v = ctx
+                .r(rs())
+                .wrapping_sub(ctx.r(fld(d, b'u')))
+                .wrapping_add(imm);
             ctx.set_r(rd, v);
         }
 

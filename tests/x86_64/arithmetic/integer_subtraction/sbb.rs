@@ -55,7 +55,11 @@ fn test_sbb_al_imm8_borrow_propagation() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFF, 0xFF, "SBB AL, 0: 0 - 0 - 1 = 0xFF (borrow)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0xFF,
+        "SBB AL, 0: 0 - 0 - 1 = 0xFF (borrow)"
+    );
     assert!(cf_set(regs.rflags), "CF should be set (borrow out)");
     assert!(sf_set(regs.rflags), "SF should be set (result negative)");
 }
@@ -104,7 +108,11 @@ fn test_sbb_ax_imm16_no_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x4444, "SBB AX, 0x1234: 0x5678 - 0x1234 - 0");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x4444,
+        "SBB AX, 0x1234: 0x5678 - 0x1234 - 0"
+    );
 }
 
 #[test]
@@ -117,7 +125,11 @@ fn test_sbb_ax_imm16_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x4443, "SBB AX, 0x1234: 0x5678 - 0x1234 - 1 = 0x4443");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x4443,
+        "SBB AX, 0x1234: 0x5678 - 0x1234 - 1 = 0x4443"
+    );
 }
 
 #[test]
@@ -242,7 +254,11 @@ fn test_sbb_rm32_imm32_memory_with_carry() {
     write_mem_u32(&mem, 0x12345678);
 
     let _ = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_u32(&mem), 0x12344677, "SBB [RBX], 0x1000: with CF=1");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0x12344677,
+        "SBB [RBX], 0x1000: with CF=1"
+    );
 }
 
 // ============================================================================
@@ -288,7 +304,10 @@ fn test_sbb_rm64_imm8_sign_extended_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0x100000000, "SBB RCX, -1: with CF=1 results in same value");
+    assert_eq!(
+        regs.rcx, 0x100000000,
+        "SBB RCX, -1: with CF=1 results in same value"
+    );
 }
 
 // ============================================================================
@@ -371,7 +390,10 @@ fn test_sbb_rm32_r32_register_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x7FFFFFFF, "SBB EAX, ECX: 0x80000000 - 0 - 1 = 0x7FFFFFFF");
+    assert_eq!(
+        regs.rax, 0x7FFFFFFF,
+        "SBB EAX, ECX: 0x80000000 - 0 - 1 = 0x7FFFFFFF"
+    );
 }
 
 #[test]
@@ -386,7 +408,10 @@ fn test_sbb_rm64_r64_register_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "SBB RAX, RCX: 0 - 0 - 1 = max with borrow");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "SBB RAX, RCX: 0 - 0 - 1 = max with borrow"
+    );
     assert!(cf_set(regs.rflags), "CF should be set (borrow)");
 }
 
@@ -504,9 +529,9 @@ fn test_sbb_chain_64bit_subtraction() {
     // SUB EAX, ECX (low 32 bits)
     // SBB EBX, EDX (high 32 bits with borrow)
     let code = [
-        0x29, 0xc8,       // SUB EAX, ECX
-        0x19, 0xd3,       // SBB EBX, EDX
-        0xf4,             // HLT
+        0x29, 0xc8, // SUB EAX, ECX
+        0x19, 0xd3, // SBB EBX, EDX
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     // Subtract: 0x00000001_00000000 - 0x00000000_00000001
@@ -517,7 +542,10 @@ fn test_sbb_chain_64bit_subtraction() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFF, "Low 32 bits: 0 - 1 = 0xFFFFFFFF (borrow)");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFF,
+        "Low 32 bits: 0 - 1 = 0xFFFFFFFF (borrow)"
+    );
     assert_eq!(regs.rbx, 0, "High 32 bits: 1 - 0 - 1 (borrow) = 0");
 }
 
@@ -527,9 +555,9 @@ fn test_sbb_chain_with_borrow_propagation() {
     // SUB EAX, ECX (low, produces borrow)
     // SBB EBX, EDX (high, receives borrow)
     let code = [
-        0x29, 0xc8,       // SUB EAX, ECX
-        0x19, 0xd3,       // SBB EBX, EDX
-        0xf4,             // HLT
+        0x29, 0xc8, // SUB EAX, ECX
+        0x19, 0xd3, // SBB EBX, EDX
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     // Subtract: 0x00000001_00000000 - 0x00000000_00000001 = 0x00000000_FFFFFFFF
@@ -636,5 +664,8 @@ fn test_sbb_r15_extended_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r15, 0x1FFF, "SBB R15, RAX: 0x3000 - 0x1000 - 1 = 0x1FFF");
+    assert_eq!(
+        regs.r15, 0x1FFF,
+        "SBB R15, RAX: 0x3000 - 0x1000 - 1 = 0x1FFF"
+    );
 }

@@ -1,4 +1,6 @@
-use crate::common::{setup_vm_legacy as setup_vm, run_until_hlt_legacy as run_until_hlt, VM, Bytes};
+use crate::common::{
+    Bytes, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+};
 
 // CMPS/CMPSB/CMPSW/CMPSD/CMPSQ - Compare String
 // Compares [RSI] with [RDI], sets flags, increments/decrements both based on DF
@@ -440,7 +442,11 @@ fn test_cmpsb_fs_segment_override_source() {
     let mut vm = setup_vm(&code);
     vm = run_until_hlt(vm);
     // FS:[RSI]=0x42 == ES:[RDI]=0x42 -> ZF set.
-    assert_ne!(vm.rflags & ZF, 0, "ZF should be set (FS source byte 0x42 == dest 0x42)");
+    assert_ne!(
+        vm.rflags & ZF,
+        0,
+        "ZF should be set (FS source byte 0x42 == dest 0x42)"
+    );
     assert_eq!(vm.rsi, 0x5001);
     assert_eq!(vm.rdi, 0x4001);
 }

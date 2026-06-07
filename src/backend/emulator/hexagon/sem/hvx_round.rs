@@ -17,7 +17,7 @@
 //! here for completeness but cannot be differentially verified at v68.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fld, SemCtx};
+use super::{SemCtx, fld};
 
 type Bytes = [u8; 128];
 
@@ -101,14 +101,10 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                 // half -> byte
                 Opcode::V6_vroundhb => round_hb(ctx, &vu, &vv, &mut out, get_h, NarrowKind::Hb),
                 Opcode::V6_vroundhub => round_hb(ctx, &vu, &vv, &mut out, get_h, NarrowKind::Hub),
-                Opcode::V6_vrounduhub => {
-                    round_hb(ctx, &vu, &vv, &mut out, get_uh, NarrowKind::Hub)
-                }
+                Opcode::V6_vrounduhub => round_hb(ctx, &vu, &vv, &mut out, get_uh, NarrowKind::Hub),
                 // word -> half
                 Opcode::V6_vroundwh => round_wh(ctx, &vu, &vv, &mut out, get_w, NarrowKind::Wh),
-                Opcode::V6_vroundwuh => {
-                    round_wh(ctx, &vu, &vv, &mut out, get_w, NarrowKind::Wuh)
-                }
+                Opcode::V6_vroundwuh => round_wh(ctx, &vu, &vv, &mut out, get_w, NarrowKind::Wuh),
                 // V6_vrounduwuh
                 _ => round_wh(ctx, &vu, &vv, &mut out, get_uw, NarrowKind::Wuh),
             }
@@ -126,13 +122,21 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                 Opcode::V6_vsathub => {
                     for i in 0..64 {
                         set_b(&mut out, 2 * i, satb(ctx, get_h(&vv, i), NarrowKind::Hub));
-                        set_b(&mut out, 2 * i + 1, satb(ctx, get_h(&vu, i), NarrowKind::Hub));
+                        set_b(
+                            &mut out,
+                            2 * i + 1,
+                            satb(ctx, get_h(&vu, i), NarrowKind::Hub),
+                        );
                     }
                 }
                 // word -> signed half
                 Opcode::V6_vsatwh => {
                     for i in 0..32 {
-                        set_h(&mut out, 2 * i, sath(ctx, get_w(&vv, i), NarrowKind::Wh) as u16);
+                        set_h(
+                            &mut out,
+                            2 * i,
+                            sath(ctx, get_w(&vv, i), NarrowKind::Wh) as u16,
+                        );
                         set_h(
                             &mut out,
                             2 * i + 1,
@@ -291,7 +295,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                     0
                 } else if count < 0 {
                     let n = (-count) as u32;
-                    (((shift as i64) << n)) | (mask & (lomask << n))
+                    ((shift as i64) << n) | (mask & (lomask << n))
                 } else {
                     let n = count as u32;
                     ((shift as i64) >> n) | (mask & ((lomask as u64 >> n) as i64))

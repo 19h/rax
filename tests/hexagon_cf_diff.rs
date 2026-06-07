@@ -118,7 +118,9 @@ fn oracle_path() -> Option<(PathBuf, u32)> {
         return None;
     }
     // Read the `testslot` address from the ELF symbol table.
-    let nm = which("llvm-nm").map(|_| "llvm-nm").or(which("nm").map(|_| "nm"))?;
+    let nm = which("llvm-nm")
+        .map(|_| "llvm-nm")
+        .or(which("nm").map(|_| "nm"))?;
     let out = Command::new(nm).arg(&bin).output().ok()?;
     let text = String::from_utf8_lossy(&out.stdout);
     let addr = text.lines().find_map(|l| {
@@ -320,14 +322,16 @@ fn run_rax(words: &[u32], st: &HexState) -> Option<HexState> {
 
     let mut off = CODE_ADDR;
     for &w in words {
-        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64)).ok()?;
+        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64))
+            .ok()?;
         off += 4;
     }
     mem.write_slice(&trap0_word().to_le_bytes(), GuestAddress(off as u64))
         .ok()?;
 
     let mut vcpu = HexagonVcpu::new(0, mem.clone(), HexagonIsa::V68, Endianness::Little);
-    vcpu.set_state(&CpuState::hexagon(rax_regs_from_state(st))).ok()?;
+    vcpu.set_state(&CpuState::hexagon(rax_regs_from_state(st)))
+        .ok()?;
 
     // Hardware loops run the body many times; allow generous packet budget.
     let mut iters = 0;
@@ -416,13 +420,22 @@ fn diff_state(
         ));
     }
     if rax.w[I_USR] != hw.w[I_USR] {
-        diffs.push(format!("USR: rax={:#010x} hw={:#010x}", rax.w[I_USR], hw.w[I_USR]));
+        diffs.push(format!(
+            "USR: rax={:#010x} hw={:#010x}",
+            rax.w[I_USR], hw.w[I_USR]
+        ));
     }
     if rax.w[I_LC0] != hw.w[I_LC0] {
-        diffs.push(format!("LC0: rax={:#010x} hw={:#010x}", rax.w[I_LC0], hw.w[I_LC0]));
+        diffs.push(format!(
+            "LC0: rax={:#010x} hw={:#010x}",
+            rax.w[I_LC0], hw.w[I_LC0]
+        ));
     }
     if rax.w[I_LC1] != hw.w[I_LC1] {
-        diffs.push(format!("LC1: rax={:#010x} hw={:#010x}", rax.w[I_LC1], hw.w[I_LC1]));
+        diffs.push(format!(
+            "LC1: rax={:#010x} hw={:#010x}",
+            rax.w[I_LC1], hw.w[I_LC1]
+        ));
     }
     for (idx, name) in [(I_SA0, "SA0"), (I_SA1, "SA1")] {
         // An SA register the fragment never set retains its (zero) input value
@@ -597,9 +610,17 @@ fn run_family(
         }
         eprintln!("-- first 25 examples --");
         for m in mismatches.iter().take(25) {
-            eprintln!("  [{}] {}\n        {}", m.label, m.src.replace('\n', " ; "), m.detail);
+            eprintln!(
+                "  [{}] {}\n        {}",
+                m.label,
+                m.src.replace('\n', " ; "),
+                m.detail
+            );
         }
-        panic!("{name}: {} divergences vs hardware oracle", mismatches.len());
+        panic!(
+            "{name}: {} divergences vs hardware oracle",
+            mismatches.len()
+        );
     }
 }
 
@@ -622,9 +643,18 @@ fn run_family(
 // software-pipelined `sp*loop0` loops, jumpset/hintjr and `pause`
 // (see `diff_cf_calls_loops`).
 
-const AF_NONE: AddrFields = AddrFields { sa: false, lr: false };
-const AF_SA: AddrFields = AddrFields { sa: true, lr: false };
-const AF_LR: AddrFields = AddrFields { sa: false, lr: true };
+const AF_NONE: AddrFields = AddrFields {
+    sa: false,
+    lr: false,
+};
+const AF_SA: AddrFields = AddrFields {
+    sa: true,
+    lr: false,
+};
+const AF_LR: AddrFields = AddrFields {
+    sa: false,
+    lr: true,
+};
 
 /// J2_loop0i + J2_endloop0: immediate trip count. Verifies the body ran exactly
 /// `count` times (accumulator), SA0 = body address (base-normalised), and LC0
@@ -1401,4 +1431,3 @@ fn cf_loop_with_branch() {
     )];
     run_family("loop_with_branch", cases, 6, 0xC0F6, true, AF_SA);
 }
-

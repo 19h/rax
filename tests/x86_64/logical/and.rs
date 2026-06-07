@@ -1,5 +1,5 @@
-use crate::common::{run_until_hlt, setup_vm};
 use crate::common::*;
+use crate::common::{run_until_hlt, setup_vm};
 use rax::backend::emulator::x86_64::flags;
 use rax::cpu::Registers;
 
@@ -351,7 +351,10 @@ fn test_and_rm64_imm8_sign_ext() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x123456789ABCDEF0, "RAX: align to 16-byte boundary");
+    assert_eq!(
+        regs.rax, 0x123456789ABCDEF0,
+        "RAX: align to 16-byte boundary"
+    );
 }
 
 // ============================================================================
@@ -596,7 +599,8 @@ fn test_and_byte_ptr_imm8() {
 #[test]
 fn test_and_word_ptr_imm16() {
     let code = [
-        0x66, 0x81, 0x25, 0xf7, 0x0f, 0x00, 0x00, 0xF0, 0x0F, // AND WORD PTR [rip+0x0FF7], 0x0FF0
+        0x66, 0x81, 0x25, 0xf7, 0x0f, 0x00, 0x00, 0xF0,
+        0x0F, // AND WORD PTR [rip+0x0FF7], 0x0FF0
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -611,7 +615,8 @@ fn test_and_word_ptr_imm16() {
 #[test]
 fn test_and_dword_ptr_imm32() {
     let code = [
-        0x81, 0x25, 0xf6, 0x0f, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, // AND DWORD PTR [rip+0x0FF6], 0x000000FF
+        0x81, 0x25, 0xf6, 0x0f, 0x00, 0x00, 0xFF, 0x00, 0x00,
+        0x00, // AND DWORD PTR [rip+0x0FF6], 0x000000FF
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -626,7 +631,8 @@ fn test_and_dword_ptr_imm32() {
 #[test]
 fn test_and_qword_ptr_imm32() {
     let code = [
-        0x48, 0x81, 0x25, 0xf5, 0x0f, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, // AND QWORD PTR [rip+0x0FF5], 0x0000FFFF
+        0x48, 0x81, 0x25, 0xf5, 0x0f, 0x00, 0x00, 0xFF, 0xFF, 0x00,
+        0x00, // AND QWORD PTR [rip+0x0FF5], 0x0000FFFF
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -732,7 +738,10 @@ fn test_strict_and_zero_result_full_flags() {
     assert!(zf_set(regs.rflags), "ZF set");
     assert!(!sf_set(regs.rflags), "SF clear");
     assert!(pf_set(regs.rflags), "PF set (0)");
-    assert!(!cf_set(regs.rflags) && !of_set(regs.rflags), "CF/OF cleared");
+    assert!(
+        !cf_set(regs.rflags) && !of_set(regs.rflags),
+        "CF/OF cleared"
+    );
 }
 
 #[test]
@@ -744,7 +753,10 @@ fn test_strict_and_r32_zero_extends() {
     regs.rbx = 0x0000_0000_0F0F_0F0F;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000_0000_000F_000F, "32-bit AND zero-extends upper RAX");
+    assert_eq!(
+        regs.rax, 0x0000_0000_000F_000F,
+        "32-bit AND zero-extends upper RAX"
+    );
 }
 
 #[test]
@@ -757,5 +769,9 @@ fn test_strict_and_mem_operand() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     write_mem_at_u64(&mem, DATA_ADDR, 0xFFFF_FFFF_FFFF_FFFF);
     let _ = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_at_u64(&mem, DATA_ADDR), 0x00FF_00FF_00FF_00FF, "AND applied to memory");
+    assert_eq!(
+        read_mem_at_u64(&mem, DATA_ADDR),
+        0x00FF_00FF_00FF_00FF,
+        "AND applied to memory"
+    );
 }

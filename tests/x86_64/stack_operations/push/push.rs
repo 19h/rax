@@ -43,7 +43,11 @@ fn test_push_rbx() {
     let mut stack_val = [0u8; 8];
     vm.read_slice(&mut stack_val, GuestAddress(0x1FF8)).unwrap();
     // MOV r64, imm32 sign-extends: 0xDDCCBBAA (bit 31 set) -> 0xFFFFFFFFDDCCBBAA
-    assert_eq!(u64::from_le_bytes(stack_val), 0xFFFFFFFFDDCCBBAA, "RBX value on stack");
+    assert_eq!(
+        u64::from_le_bytes(stack_val),
+        0xFFFFFFFFDDCCBBAA,
+        "RBX value on stack"
+    );
 }
 
 #[test]
@@ -363,9 +367,11 @@ fn test_push_chain_order() {
     assert_eq!(u64::from_le_bytes(val), 40, "Top of stack");
     vm.read_slice(&mut val, GuestAddress(regs.rsp + 8)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 30);
-    vm.read_slice(&mut val, GuestAddress(regs.rsp + 16)).unwrap();
+    vm.read_slice(&mut val, GuestAddress(regs.rsp + 16))
+        .unwrap();
     assert_eq!(u64::from_le_bytes(val), 20);
-    vm.read_slice(&mut val, GuestAddress(regs.rsp + 24)).unwrap();
+    vm.read_slice(&mut val, GuestAddress(regs.rsp + 24))
+        .unwrap();
     assert_eq!(u64::from_le_bytes(val), 10, "Bottom of our pushes");
 }
 
@@ -418,7 +424,11 @@ fn test_strict_push_r64_rsp_delta_and_bytes() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rsp, 0x4000 - 8, "PUSH r64 decrements RSP by 8");
-    assert_eq!(read_mem_at_u64(&mem, 0x4000 - 8), 0x1122_3344_5566_7788, "exact value at TOS");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x4000 - 8),
+        0x1122_3344_5566_7788,
+        "exact value at TOS"
+    );
 }
 
 #[test]
@@ -430,7 +440,11 @@ fn test_strict_push_imm32_sign_extended() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rsp, 0x4000 - 8, "PUSH imm32 decrements RSP by 8");
-    assert_eq!(read_mem_at_u64(&mem, 0x4000 - 8), 0xFFFF_FFFF_FFFF_FFFF, "imm32 sign-extended on stack");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x4000 - 8),
+        0xFFFF_FFFF_FFFF_FFFF,
+        "imm32 sign-extended on stack"
+    );
 }
 
 #[test]
@@ -442,7 +456,11 @@ fn test_strict_push_imm8_sign_extended() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rsp, 0x4000 - 8);
-    assert_eq!(read_mem_at_u64(&mem, 0x4000 - 8), 0xFFFF_FFFF_FFFF_FF80, "imm8 sign-extended");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x4000 - 8),
+        0xFFFF_FFFF_FFFF_FF80,
+        "imm8 sign-extended"
+    );
 }
 
 #[test]
@@ -456,7 +474,11 @@ fn test_strict_push_mem64() {
     write_mem_at_u64(&mem, DATA_ADDR, 0xABCD_1234_5678_9ABC);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rsp, 0x4000 - 8);
-    assert_eq!(read_mem_at_u64(&mem, 0x4000 - 8), 0xABCD_1234_5678_9ABC, "memory value pushed");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x4000 - 8),
+        0xABCD_1234_5678_9ABC,
+        "memory value pushed"
+    );
 }
 
 #[test]
@@ -469,7 +491,11 @@ fn test_strict_push_r16_operand_size() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rsp, 0x4000 - 2, "16-bit PUSH decrements RSP by 2");
-    assert_eq!(read_mem_at_u16(&mem, 0x4000 - 2), 0xBEEF, "exact 16-bit value at TOS");
+    assert_eq!(
+        read_mem_at_u16(&mem, 0x4000 - 2),
+        0xBEEF,
+        "exact 16-bit value at TOS"
+    );
 }
 
 #[test]
@@ -482,5 +508,9 @@ fn test_strict_push_extended_reg_r12() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rsp, 0x4000 - 8);
-    assert_eq!(read_mem_at_u64(&mem, 0x4000 - 8), 0xFEED_FACE_DEAD_C0DE, "R12 pushed");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x4000 - 8),
+        0xFEED_FACE_DEAD_C0DE,
+        "R12 pushed"
+    );
 }

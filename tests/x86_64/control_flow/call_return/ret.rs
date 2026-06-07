@@ -1,4 +1,6 @@
-use crate::common::{setup_vm_legacy as setup_vm, run_until_hlt_legacy as run_until_hlt, VM, CODE_ADDR};
+use crate::common::{
+    CODE_ADDR, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+};
 
 // RET - Return from Procedure
 // Pops return address from stack and jumps to it
@@ -291,8 +293,7 @@ fn test_ret_imm16_with_32_bytes() {
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x20, 0x00, 0x00, // MOV RSP, 0x2000
         // Push 4 arguments (32 bytes)
-        0x50, 0x50, 0x50, 0x50,
-        0xe8, 0x04, 0x00, 0x00, 0x00, // CALL function
+        0x50, 0x50, 0x50, 0x50, 0xe8, 0x04, 0x00, 0x00, 0x00, // CALL function
         // return point:
         0x48, 0x89, 0xe3, // MOV RBX, RSP
         0xf4, // HLT

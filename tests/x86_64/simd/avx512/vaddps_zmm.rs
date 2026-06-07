@@ -381,7 +381,8 @@ fn test_vaddps_zmm0_zmm1_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -399,7 +400,8 @@ fn test_vaddps_zmm7_zmm6_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -417,7 +419,8 @@ fn test_vaddps_zmm15_zmm14_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -435,7 +438,8 @@ fn test_vaddps_zmm31_zmm30_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -567,7 +571,8 @@ fn test_vaddps_mem_base_displacement() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -585,7 +590,8 @@ fn test_vaddps_mem_with_rbx_base() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -603,7 +609,8 @@ fn test_vaddps_mem_with_rcx_base() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -621,7 +628,8 @@ fn test_vaddps_mem_with_rdx_base() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -717,7 +725,8 @@ fn test_vaddps_uses_inverted_vvvv_src1() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let mut result = [0u8; 64];
-    mem.read_slice(&mut result, GuestAddress(REG_RESULT)).unwrap();
+    mem.read_slice(&mut result, GuestAddress(REG_RESULT))
+        .unwrap();
     for i in 0..16 {
         let expected = (i as f32) + 1.0 + 100.0; // src1 + src2, NOT poison
         assert_eq!(
@@ -760,7 +769,8 @@ fn test_vaddpd_computes_f64_not_16xf32() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let mut result = [0u8; 64];
-    mem.read_slice(&mut result, GuestAddress(REG_RESULT)).unwrap();
+    mem.read_slice(&mut result, GuestAddress(REG_RESULT))
+        .unwrap();
     for i in 0..8 {
         let expected = (1.0e300 + (i as f64)) + 2.5e300;
         assert_eq!(read_f64_lane(&result, i), expected, "f64 lane {}", i);
@@ -808,7 +818,8 @@ fn test_vaddps_merge_masking() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let mut result = [0u8; 64];
-    mem.read_slice(&mut result, GuestAddress(REG_RESULT)).unwrap();
+    mem.read_slice(&mut result, GuestAddress(REG_RESULT))
+        .unwrap();
     for i in 0..16 {
         let active = (5u64 >> i) & 1 != 0; // lanes 0 and 2
         let expected = if active { 30.0 } else { 7.0 };
@@ -830,7 +841,8 @@ fn test_vaddps_zeroing_masking() {
     code.extend_from_slice(&[
         0xb8, 0x05, 0x00, 0x00, 0x00, // MOV EAX, 5
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-        0x62, 0xf1, 0x7c, 0x48, 0x10, 0x06, // VMOVUPS ZMM0, [RSI] (dest preload, must be zeroed)
+        0x62, 0xf1, 0x7c, 0x48, 0x10,
+        0x06, // VMOVUPS ZMM0, [RSI] (dest preload, must be zeroed)
     ]);
     // Reload RAX (clobbered by the 32-bit MOV EAX above).
     code.extend_from_slice(&[0x48, 0xc7, 0xc0]);
@@ -860,7 +872,8 @@ fn test_vaddps_zeroing_masking() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let mut result = [0u8; 64];
-    mem.read_slice(&mut result, GuestAddress(REG_RESULT)).unwrap();
+    mem.read_slice(&mut result, GuestAddress(REG_RESULT))
+        .unwrap();
     for i in 0..16 {
         let active = (5u64 >> i) & 1 != 0;
         let expected = if active { 30.0 } else { 0.0 };

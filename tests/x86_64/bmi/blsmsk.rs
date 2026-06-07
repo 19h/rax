@@ -23,9 +23,19 @@ fn test_blsmsk_eax_ebx_bit_0() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_0001, "EAX should contain mask up to bit 0");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (source is non-zero)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (source is non-zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0000_0001,
+        "EAX should contain mask up to bit 0"
+    );
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (source is non-zero)"
+    );
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (source is non-zero)"
+    );
 }
 
 #[test]
@@ -40,7 +50,11 @@ fn test_blsmsk_eax_ebx_bit_3() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_1111, "EAX should contain mask up to bit 3 (bits 0-3)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0000_1111,
+        "EAX should contain mask up to bit 3 (bits 0-3)"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
     assert!(!cf_set(regs.rflags), "CF should be clear");
 }
@@ -57,7 +71,11 @@ fn test_blsmsk_eax_ebx_bit_7() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x000000FF, "EAX should contain bits 0-7 mask");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x000000FF,
+        "EAX should contain bits 0-7 mask"
+    );
 }
 
 #[test]
@@ -72,7 +90,10 @@ fn test_blsmsk_rax_rbx_bit_0() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0000_0000_0000_0001, "RAX should contain mask up to bit 0");
+    assert_eq!(
+        regs.rax, 0x0000_0000_0000_0001,
+        "RAX should contain mask up to bit 0"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
     assert!(!cf_set(regs.rflags), "CF should be clear");
 }
@@ -89,8 +110,15 @@ fn test_blsmsk_zero_source() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX should contain all 1s for zero source");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (BLSMSK clears ZF)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX should contain all 1s for zero source"
+    );
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (BLSMSK clears ZF)"
+    );
     assert!(cf_set(regs.rflags), "CF should be set (source is zero)");
 }
 
@@ -106,7 +134,11 @@ fn test_blsmsk_multiple_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_1111, "EAX should contain bits 0-3 mask");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0000_1111,
+        "EAX should contain bits 0-3 mask"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -122,7 +154,11 @@ fn test_blsmsk_all_bits_set() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000001, "EAX should contain bit 0 mask");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000001,
+        "EAX should contain bit 0 mask"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -138,7 +174,11 @@ fn test_blsmsk_alternating_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b00000011, "EAX should contain bits 0-1 mask");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b00000011,
+        "EAX should contain bits 0-1 mask"
+    );
 }
 
 #[test]
@@ -153,7 +193,11 @@ fn test_blsmsk_alternating_pattern_inverted() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000001, "EAX should contain bit 0 mask");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000001,
+        "EAX should contain bit 0 mask"
+    );
 }
 
 #[test]
@@ -170,7 +214,12 @@ fn test_blsmsk_single_bit_positions_32bit() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = (1u64 << (bit_pos + 1)) - 1;
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "EAX should contain mask for bit {}", bit_pos);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "EAX should contain mask for bit {}",
+            bit_pos
+        );
     }
 }
 
@@ -187,8 +236,16 @@ fn test_blsmsk_single_bit_positions_64bit() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        let expected = if bit_pos == 63 { u64::MAX } else { (1u64 << (bit_pos + 1)) - 1 };
-        assert_eq!(regs.rax, expected, "RAX should contain mask for bit {}", bit_pos);
+        let expected = if bit_pos == 63 {
+            u64::MAX
+        } else {
+            (1u64 << (bit_pos + 1)) - 1
+        };
+        assert_eq!(
+            regs.rax, expected,
+            "RAX should contain mask for bit {}",
+            bit_pos
+        );
     }
 }
 
@@ -218,7 +275,11 @@ fn test_blsmsk_mem32() {
     write_mem_u32(&mem, 0x00001000); // bit 12 set
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00001FFF, "EAX should contain bits 0-12 mask");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00001FFF,
+        "EAX should contain bits 0-12 mask"
+    );
 }
 
 #[test]
@@ -232,7 +293,10 @@ fn test_blsmsk_mem64() {
     write_mem_u64(&mem, 0x100_0000_0000); // bit 40 set
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x1FF_FFFF_FFFF, "RAX should contain bits 0-40 mask");
+    assert_eq!(
+        regs.rax, 0x1FF_FFFF_FFFF,
+        "RAX should contain bits 0-40 mask"
+    );
 }
 
 #[test]
@@ -247,7 +311,11 @@ fn test_blsmsk_trailing_zeros() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00001FFF, "EAX should contain bits 0-12 mask");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00001FFF,
+        "EAX should contain bits 0-12 mask"
+    );
 }
 
 #[test]
@@ -262,7 +330,11 @@ fn test_blsmsk_sparse_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00001FFF, "EAX should contain bits 0-12 mask");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00001FFF,
+        "EAX should contain bits 0-12 mask"
+    );
 }
 
 #[test]
@@ -294,7 +366,11 @@ fn test_blsmsk_vs_xor_sub() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let expected = value ^ value.wrapping_sub(1);
-    assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "BLSMSK should equal src ^ (src - 1)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        expected as u64,
+        "BLSMSK should equal src ^ (src - 1)"
+    );
 }
 
 #[test]
@@ -327,7 +403,11 @@ fn test_blsmsk_consecutive_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0001FFFF, "EAX should contain bits 0-16 mask");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x0001FFFF,
+        "EAX should contain bits 0-16 mask"
+    );
 }
 
 #[test]
@@ -342,7 +422,11 @@ fn test_blsmsk_sign_bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX should contain all 1s");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX should contain all 1s"
+    );
 }
 
 #[test]
@@ -357,7 +441,10 @@ fn test_blsmsk_high_bits_64() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0FFF_FFFF_FFFF_FFFF, "RAX should contain bits 0-59 mask");
+    assert_eq!(
+        regs.rax, 0x0FFF_FFFF_FFFF_FFFF,
+        "RAX should contain bits 0-59 mask"
+    );
 }
 
 #[test]
@@ -388,7 +475,10 @@ fn test_blsmsk_flags_cf() {
     regs.rbx = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert!(!cf_set(regs.rflags), "CF should be clear for non-zero source");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear for non-zero source"
+    );
 
     // Test zero
     let mut regs = Registers::default();
@@ -411,7 +501,11 @@ fn test_blsmsk_practical_mask_creation() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Should create mask for bits 0-8
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x000001FF, "Should create mask for lower bits");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x000001FF,
+        "Should create mask for lower bits"
+    );
 }
 
 #[test]
@@ -435,7 +529,13 @@ fn test_blsmsk_byte_boundaries_32bit() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, *expected as u64, "BLSMSK({:08x}) should be {:08x}", input, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "BLSMSK({:08x}) should be {:08x}",
+            input,
+            expected
+        );
     }
 }
 
@@ -449,8 +549,8 @@ fn test_blsmsk_64bit_comprehensive() {
     let test_cases = [
         (0x0000_0000_0000_0001u64, 0x0000_0000_0000_0001u64), // bit 0
         (0x0000_0000_0000_0100u64, 0x0000_0000_0000_01FFu64), // bit 8
-        (0x0000_0001_0000_0000u64, 0x0000_0001_FFFFFFFFu64), // bit 32
-        (0x8000_0000_0000_0000u64, 0xFFFFFFFFFFFFFFFFu64), // bit 63
+        (0x0000_0001_0000_0000u64, 0x0000_0001_FFFFFFFFu64),  // bit 32
+        (0x8000_0000_0000_0000u64, 0xFFFFFFFFFFFFFFFFu64),    // bit 63
     ];
 
     for (input, expected) in &test_cases {
@@ -459,6 +559,10 @@ fn test_blsmsk_64bit_comprehensive() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax, *expected, "BLSMSK({:016x}) should be {:016x}", input, expected);
+        assert_eq!(
+            regs.rax, *expected,
+            "BLSMSK({:016x}) should be {:016x}",
+            input, expected
+        );
     }
 }

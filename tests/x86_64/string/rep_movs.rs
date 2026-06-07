@@ -672,7 +672,10 @@ fn test_rep_movsq_large() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..32 {
-        assert_eq!(read_mem_at_u64(&mem, 0x4000 + i * 8), 0xBB00000000000000 | i as u64);
+        assert_eq!(
+            read_mem_at_u64(&mem, 0x4000 + i * 8),
+            0xBB00000000000000 | i as u64
+        );
     }
 
     assert_eq!(regs.rcx, 0);
@@ -854,7 +857,8 @@ fn test_rep_movsd_memcpy_pattern() {
         assert_eq!(
             read_mem_at_u8(&mem, 0x5000 + i),
             (i ^ 0xAA) as u8,
-            "Mismatch at offset {}", i
+            "Mismatch at offset {}",
+            i
         );
     }
 

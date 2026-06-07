@@ -38,17 +38,19 @@ fn test_movdir64b_basic() {
 
     // Verify all 64 bytes were copied
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), i as u8, "Byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            i as u8,
+            "Byte {} should be copied",
+            i
+        );
     }
 }
 
 #[test]
 fn test_movdir64b_all_zeros() {
     // MOVDIR64B with all zeros
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = SRC_ADDR;
@@ -58,17 +60,19 @@ fn test_movdir64b_all_zeros() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), 0, "Byte {} should be zero", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            0,
+            "Byte {} should be zero",
+            i
+        );
     }
 }
 
 #[test]
 fn test_movdir64b_all_ones() {
     // MOVDIR64B with all ones
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = SRC_ADDR;
@@ -82,17 +86,19 @@ fn test_movdir64b_all_ones() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), 0xFF, "Byte {} should be 0xFF", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            0xFF,
+            "Byte {} should be 0xFF",
+            i
+        );
     }
 }
 
 #[test]
 fn test_movdir64b_alternating_pattern() {
     // MOVDIR64B with alternating byte pattern
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = SRC_ADDR;
@@ -107,17 +113,20 @@ fn test_movdir64b_alternating_pattern() {
 
     for i in 0..64 {
         let expected = if i % 2 == 0 { 0xAA } else { 0x55 };
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), expected, "Byte {} should be {}", i, expected);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            expected,
+            "Byte {} should be {}",
+            i,
+            expected
+        );
     }
 }
 
 #[test]
 fn test_movdir64b_sequential_bytes() {
     // MOVDIR64B with sequential byte values
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = SRC_ADDR;
@@ -131,7 +140,12 @@ fn test_movdir64b_sequential_bytes() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), (i * 4) as u8, "Byte {} should match", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            (i * 4) as u8,
+            "Byte {} should match",
+            i
+        );
     }
 }
 
@@ -156,7 +170,12 @@ fn test_movdir64b_with_rbx() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), i as u8, "Byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            i as u8,
+            "Byte {} should be copied",
+            i
+        );
     }
 }
 
@@ -179,7 +198,12 @@ fn test_movdir64b_with_rcx() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), (i ^ 0xFF) as u8, "Byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            (i ^ 0xFF) as u8,
+            "Byte {} should be copied",
+            i
+        );
     }
 }
 
@@ -202,7 +226,12 @@ fn test_movdir64b_with_rdx() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), ((i * 3) & 0xFF) as u8, "Byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            ((i * 3) & 0xFF) as u8,
+            "Byte {} should be copied",
+            i
+        );
     }
 }
 
@@ -225,7 +254,12 @@ fn test_movdir64b_with_r8() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), i as u8, "Byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            i as u8,
+            "Byte {} should be copied",
+            i
+        );
     }
 }
 
@@ -248,7 +282,12 @@ fn test_movdir64b_with_r15() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), ((i * 2) & 0xFF) as u8, "Byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            ((i * 2) & 0xFF) as u8,
+            "Byte {} should be copied",
+            i
+        );
     }
 }
 
@@ -271,7 +310,12 @@ fn test_movdir64b_source_in_rbx() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), i as u8, "Byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            i as u8,
+            "Byte {} should be copied",
+            i
+        );
     }
 }
 
@@ -294,7 +338,12 @@ fn test_movdir64b_source_in_r9() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), ((i + 10) & 0xFF) as u8, "Byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            ((i + 10) & 0xFF) as u8,
+            "Byte {} should be copied",
+            i
+        );
     }
 }
 
@@ -304,10 +353,7 @@ fn test_movdir64b_source_in_r9() {
 fn test_movdir64b_aligned_64byte() {
     // MOVDIR64B with 64-byte aligned destination
     let aligned_dst = 0x4000u64; // 64-byte aligned
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = aligned_dst;
     regs.rsi = SRC_ADDR;
@@ -320,7 +366,12 @@ fn test_movdir64b_aligned_64byte() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, aligned_dst + i), i as u8, "Byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, aligned_dst + i),
+            i as u8,
+            "Byte {} should be copied",
+            i
+        );
     }
 }
 
@@ -328,10 +379,7 @@ fn test_movdir64b_aligned_64byte() {
 fn test_movdir64b_aligned_128byte() {
     // MOVDIR64B with 128-byte aligned destination (also 64-byte aligned)
     let aligned_dst = 0x4080u64; // 128-byte aligned
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = aligned_dst;
     regs.rsi = SRC_ADDR;
@@ -344,7 +392,12 @@ fn test_movdir64b_aligned_128byte() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, aligned_dst + i), ((i * 5) & 0xFF) as u8, "Byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, aligned_dst + i),
+            ((i * 5) & 0xFF) as u8,
+            "Byte {} should be copied",
+            i
+        );
     }
 }
 
@@ -352,10 +405,7 @@ fn test_movdir64b_aligned_128byte() {
 fn test_movdir64b_source_alignment_not_required() {
     // Source address does not need to be aligned
     let unaligned_src = 0x3001u64; // Not aligned
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = unaligned_src;
@@ -368,7 +418,12 @@ fn test_movdir64b_source_alignment_not_required() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), i as u8, "Byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            i as u8,
+            "Byte {} should be copied",
+            i
+        );
     }
 }
 
@@ -377,10 +432,7 @@ fn test_movdir64b_source_alignment_not_required() {
 #[test]
 fn test_movdir64b_8byte_values() {
     // Test with 8 qwords (64 bytes)
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = SRC_ADDR;
@@ -396,17 +448,19 @@ fn test_movdir64b_8byte_values() {
 
     for i in 0..8 {
         let expected = 0x0011223344556677u64 + (i * 0x1111111111111111);
-        assert_eq!(read_mem_at_u64(&mem, DST_ADDR + (i * 8)), expected, "Qword {} should match", i);
+        assert_eq!(
+            read_mem_at_u64(&mem, DST_ADDR + (i * 8)),
+            expected,
+            "Qword {} should match",
+            i
+        );
     }
 }
 
 #[test]
 fn test_movdir64b_16byte_values() {
     // Test with 4 128-bit values (represented as pairs of 64-bit)
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = SRC_ADDR;
@@ -425,18 +479,25 @@ fn test_movdir64b_16byte_values() {
     for i in 0..4 {
         let expected_low = 0xFEDCBA9876543210u64 + i;
         let expected_high = 0x0123456789ABCDEFu64 + i;
-        assert_eq!(read_mem_at_u64(&mem, DST_ADDR + (i * 16)), expected_low, "Low qword of pair {} should match", i);
-        assert_eq!(read_mem_at_u64(&mem, DST_ADDR + (i * 16) + 8), expected_high, "High qword of pair {} should match", i);
+        assert_eq!(
+            read_mem_at_u64(&mem, DST_ADDR + (i * 16)),
+            expected_low,
+            "Low qword of pair {} should match",
+            i
+        );
+        assert_eq!(
+            read_mem_at_u64(&mem, DST_ADDR + (i * 16) + 8),
+            expected_high,
+            "High qword of pair {} should match",
+            i
+        );
     }
 }
 
 #[test]
 fn test_movdir64b_mixed_data() {
     // Test with mixed data patterns
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = SRC_ADDR;
@@ -467,10 +528,7 @@ fn test_movdir64b_mixed_data() {
 #[test]
 fn test_movdir64b_ascii_data() {
     // Test with ASCII-like data
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = SRC_ADDR;
@@ -485,7 +543,12 @@ fn test_movdir64b_ascii_data() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), test_string[i as usize], "Byte {} should match", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            test_string[i as usize],
+            "Byte {} should match",
+            i
+        );
     }
 }
 
@@ -494,10 +557,7 @@ fn test_movdir64b_ascii_data() {
 #[test]
 fn test_movdir64b_preserves_registers() {
     // MOVDIR64B should not modify registers
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = SRC_ADDR;
@@ -520,10 +580,7 @@ fn test_movdir64b_preserves_registers() {
 #[test]
 fn test_movdir64b_does_not_modify_flags() {
     // MOVDIR64B does not modify any flags
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = SRC_ADDR;
@@ -545,10 +602,7 @@ fn test_movdir64b_same_cacheline() {
     // Test moving data within same cache line range
     let src = 0x3000u64;
     let dst = 0x3100u64; // Different but nearby
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = dst;
     regs.rsi = src;
@@ -561,7 +615,12 @@ fn test_movdir64b_same_cacheline() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, dst + i), ((i * 7) & 0xFF) as u8, "Byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, dst + i),
+            ((i * 7) & 0xFF) as u8,
+            "Byte {} should be copied",
+            i
+        );
     }
 }
 
@@ -570,10 +629,7 @@ fn test_movdir64b_high_memory() {
     // Test with higher memory addresses
     let src = 0x10000u64;
     let dst = 0x20000u64;
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = dst;
     regs.rsi = src;
@@ -586,7 +642,12 @@ fn test_movdir64b_high_memory() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, dst + i), ((i + 100) & 0xFF) as u8, "Byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, dst + i),
+            ((i + 100) & 0xFF) as u8,
+            "Byte {} should be copied",
+            i
+        );
     }
 }
 
@@ -624,22 +685,29 @@ fn test_movdir64b_sequential_operations() {
 
     // Verify first destination
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, dst1 + i), i as u8, "First dst byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, dst1 + i),
+            i as u8,
+            "First dst byte {} should be copied",
+            i
+        );
     }
 
     // Verify second destination
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, dst2 + i), (63 - i) as u8, "Second dst byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, dst2 + i),
+            (63 - i) as u8,
+            "Second dst byte {} should be copied",
+            i
+        );
     }
 }
 
 #[test]
 fn test_movdir64b_overwrite_existing_data() {
     // Test that MOVDIR64B overwrites existing data
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = SRC_ADDR;
@@ -659,17 +727,19 @@ fn test_movdir64b_overwrite_existing_data() {
 
     // Verify source data overwrote destination
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), i as u8, "Byte {} should be overwritten", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            i as u8,
+            "Byte {} should be overwritten",
+            i
+        );
     }
 }
 
 #[test]
 fn test_movdir64b_byte_order_preserved() {
     // Verify that byte order is preserved (no endianness conversion)
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = SRC_ADDR;
@@ -717,17 +787,19 @@ fn test_movdir64b_32bit_register() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), ((i * 11) & 0xFF) as u8, "Byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            ((i * 11) & 0xFF) as u8,
+            "Byte {} should be copied",
+            i
+        );
     }
 }
 
 #[test]
 fn test_movdir64b_power_of_two_pattern() {
     // Test with power of two pattern
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = SRC_ADDR;
@@ -740,17 +812,19 @@ fn test_movdir64b_power_of_two_pattern() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..8 {
-        assert_eq!(read_mem_at_u64(&mem, DST_ADDR + (i * 8)), 1u64 << i, "Qword {} should match power of 2 pattern", i);
+        assert_eq!(
+            read_mem_at_u64(&mem, DST_ADDR + (i * 8)),
+            1u64 << i,
+            "Qword {} should match power of 2 pattern",
+            i
+        );
     }
 }
 
 #[test]
 fn test_movdir64b_negative_signed_values() {
     // Test with negative signed values
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = SRC_ADDR;
@@ -783,10 +857,7 @@ fn test_movdir64b_partial_overlap_prevention() {
     // Test that source and destination don't overlap
     let src = 0x3000u64;
     let dst = 0x3080u64; // 128 bytes apart, no overlap with 64-byte blocks
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = dst;
     regs.rsi = src;
@@ -800,22 +871,29 @@ fn test_movdir64b_partial_overlap_prevention() {
 
     // Verify destination
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, dst + i), i as u8, "Dst byte {} should be copied", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, dst + i),
+            i as u8,
+            "Dst byte {} should be copied",
+            i
+        );
     }
 
     // Verify source is unchanged
     for i in 0..64 {
-        assert_eq!(read_mem_at_u8(&mem, src + i), i as u8, "Src byte {} should be unchanged", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, src + i),
+            i as u8,
+            "Src byte {} should be unchanged",
+            i
+        );
     }
 }
 
 #[test]
 fn test_movdir64b_cache_line_crossing() {
     // Test data that crosses cache line boundaries (64-byte blocks)
-    let code = [
-        0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06,
-        0xf4,
-    ];
+    let code = [0x66, 0x48, 0x0f, 0x38, 0xf8, 0x06, 0xf4];
     let mut regs = Registers::default();
     regs.rax = DST_ADDR;
     regs.rsi = SRC_ADDR;
@@ -833,10 +911,20 @@ fn test_movdir64b_cache_line_crossing() {
 
     // Verify first half
     for i in 0..32 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), 0xAA, "First half byte {} should be 0xAA", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            0xAA,
+            "First half byte {} should be 0xAA",
+            i
+        );
     }
     // Verify second half
     for i in 32..64 {
-        assert_eq!(read_mem_at_u8(&mem, DST_ADDR + i), 0x55, "Second half byte {} should be 0x55", i);
+        assert_eq!(
+            read_mem_at_u8(&mem, DST_ADDR + i),
+            0x55,
+            "Second half byte {} should be 0x55",
+            i
+        );
     }
 }

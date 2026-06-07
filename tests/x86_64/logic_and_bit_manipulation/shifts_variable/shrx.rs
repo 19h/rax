@@ -41,7 +41,11 @@ fn test_shrx_32bit_shift_by_0() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "Shift by 0 should preserve value");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "Shift by 0 should preserve value"
+    );
 }
 
 #[test]
@@ -118,7 +122,11 @@ fn test_shrx_32bit_shift_to_zero() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000001, "High bit shifted to bit 0");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000001,
+        "High bit shifted to bit 0"
+    );
 }
 
 #[test]
@@ -209,7 +217,10 @@ fn test_shrx_64bit_shift_by_0() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x123456789ABCDEF0, "Shift by 0 should preserve value");
+    assert_eq!(
+        regs.rax, 0x123456789ABCDEF0,
+        "Shift by 0 should preserve value"
+    );
 }
 
 #[test]
@@ -323,7 +334,7 @@ fn test_shrx_64bit_shift_by_32() {
 fn test_shrx_32bit_does_not_modify_cf() {
     // SHRX should not modify CF even when bits shift out
     let code = [
-        0xf9,                         // STC (set CF)
+        0xf9, // STC (set CF)
         0xc4, 0xe2, 0x73, 0xf7, 0xc3, // SHRX EAX, EBX, ECX
         0xf4,
     ];
@@ -341,7 +352,7 @@ fn test_shrx_32bit_does_not_modify_cf() {
 fn test_shrx_32bit_does_not_clear_cf() {
     // SHRX should not clear CF
     let code = [
-        0xf9,                         // STC (set CF)
+        0xf9, // STC (set CF)
         0xc4, 0xe2, 0x73, 0xf7, 0xc3, // SHRX EAX, EBX, ECX
         0xf4,
     ];
@@ -359,8 +370,8 @@ fn test_shrx_64bit_preserves_all_flags() {
     // Set various flags, then SHRX should preserve them
     let code = [
         0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
-        0x48, 0x83, 0xe8, 0x02,                   // SUB RAX, 2 (sets CF, SF, AF)
-        0xc4, 0xe2, 0xf3, 0xf7, 0xc3,             // SHRX RAX, RBX, RCX
+        0x48, 0x83, 0xe8, 0x02, // SUB RAX, 2 (sets CF, SF, AF)
+        0xc4, 0xe2, 0xf3, 0xf7, 0xc3, // SHRX RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -411,7 +422,11 @@ fn test_shrx_32bit_all_ones() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00FFFFFF, "All ones shifted right by 8");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00FFFFFF,
+        "All ones shifted right by 8"
+    );
 }
 
 #[test]
@@ -469,7 +484,10 @@ fn test_shrx_64bit_memory_operand() {
     write_mem_u64(&mem, 0x1234567800000000);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0012345678000000, "64-bit memory operand shifted");
+    assert_eq!(
+        regs.rax, 0x0012345678000000,
+        "64-bit memory operand shifted"
+    );
 }
 
 // ============================================================================
@@ -554,7 +572,7 @@ fn test_shrx_consecutive_shifts() {
     // Multiple SHRX operations
     let code = [
         0xc4, 0xe2, 0x73, 0xf7, 0xc3, // SHRX EAX, EBX, ECX
-        0x48, 0x89, 0xc3,             // MOV RBX, RAX
+        0x48, 0x89, 0xc3, // MOV RBX, RAX
         0xc4, 0xe2, 0x73, 0xf7, 0xc3, // SHRX EAX, EBX, ECX
         0xf4,
     ];
@@ -566,7 +584,11 @@ fn test_shrx_consecutive_shifts() {
 
     // First: 0x01000000 >> 4 = 0x00100000
     // Second: 0x00100000 >> 4 = 0x00010000
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00010000, "Consecutive shifts accumulate");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00010000,
+        "Consecutive shifts accumulate"
+    );
 }
 
 #[test]

@@ -25,7 +25,10 @@ fn test_tzcnt_bit_0() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0, "0 trailing zeros");
-    assert!(!cf_set(regs.rflags), "CF should be clear (source is non-zero)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (source is non-zero)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set (result is zero)");
 }
 
@@ -73,9 +76,16 @@ fn test_tzcnt_zero_source_32bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 32, "32 trailing zeros for zero source");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        32,
+        "32 trailing zeros for zero source"
+    );
     assert!(cf_set(regs.rflags), "CF should be set (source is zero)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (result is non-zero)"
+    );
 }
 
 #[test]
@@ -124,7 +134,10 @@ fn test_tzcnt_zero_source_64bit() {
 
     assert_eq!(regs.rax, 64, "64 trailing zeros for zero source");
     assert!(cf_set(regs.rflags), "CF should be set");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (result is non-zero)"
+    );
 }
 
 #[test]
@@ -172,8 +185,17 @@ fn test_tzcnt_single_bit_positions_32bit() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, bit_pos as u64, "TZCNT for bit {}", bit_pos);
-        assert!(!cf_set(regs.rflags), "CF should be clear for bit {}", bit_pos);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            bit_pos as u64,
+            "TZCNT for bit {}",
+            bit_pos
+        );
+        assert!(
+            !cf_set(regs.rflags),
+            "CF should be clear for bit {}",
+            bit_pos
+        );
     }
 }
 
@@ -191,7 +213,11 @@ fn test_tzcnt_single_bit_positions_64bit() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(regs.rax, bit_pos as u64, "TZCNT for bit {}", bit_pos);
-        assert!(!cf_set(regs.rflags), "CF should be clear for bit {}", bit_pos);
+        assert!(
+            !cf_set(regs.rflags),
+            "CF should be clear for bit {}",
+            bit_pos
+        );
     }
 }
 
@@ -364,7 +390,13 @@ fn test_tzcnt_byte_boundaries() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, *expected as u64, "TZCNT({:08x}) = {}", input, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "TZCNT({:08x}) = {}",
+            input,
+            expected
+        );
     }
 }
 
@@ -400,7 +432,12 @@ fn test_tzcnt_odd_numbers() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, 0, "TZCNT({}) = 0 (odd number)", value);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            0,
+            "TZCNT({}) = 0 (odd number)",
+            value
+        );
     }
 }
 
@@ -428,7 +465,13 @@ fn test_tzcnt_even_numbers() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, *expected as u64, "TZCNT({}) = {}", value, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "TZCNT({}) = {}",
+            value,
+            expected
+        );
     }
 }
 
@@ -459,7 +502,11 @@ fn test_tzcnt_multiple_set_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 12, "12 trailing zeros (first set bit)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        12,
+        "12 trailing zeros (first set bit)"
+    );
 }
 
 #[test]
@@ -508,7 +555,12 @@ fn test_tzcnt_combined_with_blsi() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = value.trailing_zeros();
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "TZCNT({:04x})", value);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected as u64,
+            "TZCNT({:04x})",
+            value
+        );
     }
 }
 
@@ -531,8 +583,8 @@ fn test_tzcnt_bitboard_applications() {
 fn test_tzcnt_alignment_check() {
     // Use TZCNT to check alignment
     let test_cases = [
-        (0x1000u32, 12u32), // 4KB aligned
-        (0x2000u32, 13u32), // 8KB aligned
+        (0x1000u32, 12u32),  // 4KB aligned
+        (0x2000u32, 13u32),  // 8KB aligned
         (0x10000u32, 16u32), // 64KB aligned
     ];
 
@@ -546,7 +598,12 @@ fn test_tzcnt_alignment_check() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, *expected as u64, "Alignment of {:04x}", value);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "Alignment of {:04x}",
+            value
+        );
     }
 }
 
@@ -594,7 +651,10 @@ fn test_tzcnt_16bit_zero() {
 
     assert_eq!(regs.rax & 0xFFFF, 16, "16 trailing zeros for zero (16-bit)");
     assert!(cf_set(regs.rflags), "CF should be set");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (result is non-zero)"
+    );
 }
 
 #[test]
@@ -626,14 +686,24 @@ fn test_tzcnt_iterative_bit_scan() {
             0xf4,
         ];
         let mut regs = Registers::default();
-        regs.rbx = (value >> expected_positions.iter().position(|&p| p == expected_pos).unwrap()) as u64;
+        regs.rbx = (value
+            >> expected_positions
+                .iter()
+                .position(|&p| p == expected_pos)
+                .unwrap()) as u64;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         // Each iteration should find the next set bit
-        let shift_amount = expected_positions.iter().position(|&p| p == expected_pos).unwrap();
+        let shift_amount = expected_positions
+            .iter()
+            .position(|&p| p == expected_pos)
+            .unwrap();
         let shifted_value = value >> shift_amount;
-        assert_eq!(regs.rax & 0xFFFFFFFF, (shifted_value.trailing_zeros()) as u64);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            (shifted_value.trailing_zeros()) as u64
+        );
     }
 }
 
@@ -743,9 +813,9 @@ fn test_tzcnt_binary_search_helper() {
 fn test_tzcnt_modulo_power_of_two() {
     // TZCNT can help determine divisibility by powers of 2
     let test_cases = [
-        (8u32, 3u32),   // divisible by 2^3
-        (16u32, 4u32),  // divisible by 2^4
-        (32u32, 5u32),  // divisible by 2^5
+        (8u32, 3u32),     // divisible by 2^3
+        (16u32, 4u32),    // divisible by 2^4
+        (32u32, 5u32),    // divisible by 2^5
         (1024u32, 10u32), // divisible by 2^10
     ];
 
@@ -759,7 +829,13 @@ fn test_tzcnt_modulo_power_of_two() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, *expected as u64, "{} is divisible by 2^{}", value, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "{} is divisible by 2^{}",
+            value,
+            expected
+        );
     }
 }
 

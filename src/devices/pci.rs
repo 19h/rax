@@ -142,11 +142,7 @@ impl Bar {
 /// Mask covering the low type bits that are never part of the address: bits
 /// [1:0] for I/O BARs, bits [3:0] for memory BARs.
 fn low_bits_mask(io: bool) -> u32 {
-    if io {
-        0b11
-    } else {
-        0b1111
-    }
+    if io { 0b11 } else { 0b1111 }
 }
 
 /// A single PCI function's 256-byte configuration space plus BAR metadata used
@@ -167,12 +163,7 @@ impl ConfigSpace {
     }
 
     /// Build a typical header-type-0 device config space.
-    pub fn device(
-        vendor_id: u16,
-        device_id: u16,
-        class_code: u32,
-        header_type: u8,
-    ) -> Self {
+    pub fn device(vendor_id: u16, device_id: u16, class_code: u32, header_type: u8) -> Self {
         let mut cs = ConfigSpace::new();
         cs.set_u16(0x00, vendor_id);
         cs.set_u16(0x02, device_id);
@@ -376,7 +367,11 @@ impl PciStub {
                 None => (0, 0),
             };
             // COMMAND bit 0 = I/O decode enable, bit 1 = memory decode enable.
-            let decode = if ep.io { cmd & 0x1 != 0 } else { cmd & 0x2 != 0 };
+            let decode = if ep.io {
+                cmd & 0x1 != 0
+            } else {
+                cmd & 0x2 != 0
+            };
             let low = low_bits_mask(ep.io);
             let size = ep.bar_size.max(1) as u32;
             let addr_mask = !(size.wrapping_sub(1));
@@ -762,7 +757,10 @@ mod tests {
         assert_eq!(read_data_dword(&mut pci), 0xffff_ffff);
 
         // Reads with the enable bit clear also report all-ones.
-        set_address(&mut pci, make_address(0, 0, 0, 0x00) & !CONFIG_ADDRESS_ENABLE);
+        set_address(
+            &mut pci,
+            make_address(0, 0, 0, 0x00) & !CONFIG_ADDRESS_ENABLE,
+        );
         assert_eq!(read_data_dword(&mut pci), 0xffff_ffff);
     }
 
@@ -782,8 +780,8 @@ mod tests {
     fn bar_sizing_mem32() {
         let mut pci = PciStub::new();
         // 64 KiB 32-bit memory BAR at BAR0.
-        let dev = ConfigSpace::device(0x1af4, 0x1000, 0x02_00_00, 0x00)
-            .with_bar(0, Bar::mem32(0x1_0000));
+        let dev =
+            ConfigSpace::device(0x1af4, 0x1000, 0x02_00_00, 0x00).with_bar(0, Bar::mem32(0x1_0000));
         pci.add_function(0, 4, 0, dev);
 
         // Before probing, BAR0 reads back with just the type bits (memory,
@@ -807,8 +805,7 @@ mod tests {
     fn bar_sizing_io() {
         let mut pci = PciStub::new();
         // 256-byte I/O BAR at BAR1.
-        let dev = ConfigSpace::device(0x1af4, 0x1000, 0x02_00_00, 0x00)
-            .with_bar(1, Bar::io(0x100));
+        let dev = ConfigSpace::device(0x1af4, 0x1000, 0x02_00_00, 0x00).with_bar(1, Bar::io(0x100));
         pci.add_function(0, 6, 0, dev);
 
         let bar1_off = (BAR0_OFFSET + 4) as u8;

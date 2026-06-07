@@ -66,7 +66,11 @@ fn test_aaa_adjustment_needed_low_nibble() {
 
     // AX = 0x000A + 0x0106 = 0x0110, then AL masked to 0x0F -> 0x00
     assert_eq!(regs.rax & 0xFF, 0x00, "AL should be 0 after masking");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0x01, "AH should be incremented to 1");
+    assert_eq!(
+        (regs.rax >> 8) & 0xFF,
+        0x01,
+        "AH should be incremented to 1"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -98,8 +102,16 @@ fn test_aaa_all_digits_0_through_9() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(regs.rax & 0xFF, digit, "AL should remain {}", digit);
-        assert!(!cf_set(regs.rflags), "CF should be clear for digit {}", digit);
-        assert!(!af_set(regs.rflags), "AF should be clear for digit {}", digit);
+        assert!(
+            !cf_set(regs.rflags),
+            "CF should be clear for digit {}",
+            digit
+        );
+        assert!(
+            !af_set(regs.rflags),
+            "AF should be clear for digit {}",
+            digit
+        );
     }
 }
 
@@ -113,10 +125,28 @@ fn test_aaa_values_0a_through_0f() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected_al = val.wrapping_add(6) & 0x0F;
-        assert_eq!(regs.rax & 0xFF, expected_al, "AL should be masked for value 0x{:02X}", val);
-        assert_eq!((regs.rax >> 8) & 0xFF, 0x01, "AH should be 1 for value 0x{:02X}", val);
-        assert!(cf_set(regs.rflags), "CF should be set for value 0x{:02X}", val);
-        assert!(af_set(regs.rflags), "AF should be set for value 0x{:02X}", val);
+        assert_eq!(
+            regs.rax & 0xFF,
+            expected_al,
+            "AL should be masked for value 0x{:02X}",
+            val
+        );
+        assert_eq!(
+            (regs.rax >> 8) & 0xFF,
+            0x01,
+            "AH should be 1 for value 0x{:02X}",
+            val
+        );
+        assert!(
+            cf_set(regs.rflags),
+            "CF should be set for value 0x{:02X}",
+            val
+        );
+        assert!(
+            af_set(regs.rflags),
+            "AF should be set for value 0x{:02X}",
+            val
+        );
     }
 }
 
@@ -158,7 +188,11 @@ fn test_aaa_preserves_high_bits() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Only AX (lower 16 bits) should be modified
-    assert_eq!(regs.rax >> 16, 0xDEADBEEF_1234, "High bits should be preserved");
+    assert_eq!(
+        regs.rax >> 16,
+        0xDEADBEEF_1234,
+        "High bits should be preserved"
+    );
 }
 
 #[test]
@@ -222,7 +256,11 @@ fn test_aas_adjustment_needed_low_nibble() {
     // AL = AL - 6 = 0x0F - 6 = 0x09, then masked to 0x0F -> 0x09
     // AH = AH - 1 = 0x00 - 1 = 0xFF
     assert_eq!(regs.rax & 0xFF, 0x09, "AL should be 9");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0xFF, "AH should be 0xFF (decremented)");
+    assert_eq!(
+        (regs.rax >> 8) & 0xFF,
+        0xFF,
+        "AH should be 0xFF (decremented)"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -240,7 +278,11 @@ fn test_aas_adjustment_needed_af_set() {
     // AL = AL - 6 = 5 - 6 = -1 = 0xFF, masked to 0x0F -> 0x0F
     // AH borrows from AL subtraction, then decrements by 1
     assert_eq!(regs.rax & 0xFF, 0x0F, "AL should be 0x0F");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0xFE, "AH should be decremented with borrow");
+    assert_eq!(
+        (regs.rax >> 8) & 0xFF,
+        0xFE,
+        "AH should be decremented with borrow"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -255,8 +297,16 @@ fn test_aas_all_digits_0_through_9() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(regs.rax & 0xFF, digit, "AL should remain {}", digit);
-        assert!(!cf_set(regs.rflags), "CF should be clear for digit {}", digit);
-        assert!(!af_set(regs.rflags), "AF should be clear for digit {}", digit);
+        assert!(
+            !cf_set(regs.rflags),
+            "CF should be clear for digit {}",
+            digit
+        );
+        assert!(
+            !af_set(regs.rflags),
+            "AF should be clear for digit {}",
+            digit
+        );
     }
 }
 
@@ -270,10 +320,28 @@ fn test_aas_values_0a_through_0f() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected_al = ((val as i8 - 6) as u8) & 0x0F;
-        assert_eq!(regs.rax & 0xFF, expected_al as u64, "AL should be adjusted for value 0x{:02X}", val);
-        assert_eq!((regs.rax >> 8) & 0xFF, 0xFF, "AH should be 0xFF for value 0x{:02X}", val);
-        assert!(cf_set(regs.rflags), "CF should be set for value 0x{:02X}", val);
-        assert!(af_set(regs.rflags), "AF should be set for value 0x{:02X}", val);
+        assert_eq!(
+            regs.rax & 0xFF,
+            expected_al as u64,
+            "AL should be adjusted for value 0x{:02X}",
+            val
+        );
+        assert_eq!(
+            (regs.rax >> 8) & 0xFF,
+            0xFF,
+            "AH should be 0xFF for value 0x{:02X}",
+            val
+        );
+        assert!(
+            cf_set(regs.rflags),
+            "CF should be set for value 0x{:02X}",
+            val
+        );
+        assert!(
+            af_set(regs.rflags),
+            "AF should be set for value 0x{:02X}",
+            val
+        );
     }
 }
 
@@ -317,7 +385,11 @@ fn test_aas_preserves_high_bits() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Only AX (lower 16 bits) should be modified
-    assert_eq!(regs.rax >> 16, 0xDEADBEEF_1234, "High bits should be preserved");
+    assert_eq!(
+        regs.rax >> 16,
+        0xDEADBEEF_1234,
+        "High bits should be preserved"
+    );
 }
 
 #[test]

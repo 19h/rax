@@ -7,7 +7,6 @@
 #[path = "x86_64/common/mod.rs"]
 mod common;
 
-
 // Arithmetic
 #[path = "x86_64/arithmetic/aaa_aas.rs"]
 mod x86_64_arithmetic_aaa_aas;
@@ -59,6 +58,8 @@ mod x86_64_arithmetic_integer_division_idiv;
 mod x86_64_arithmetic_integer_multiplication_imul;
 #[path = "x86_64/arithmetic/integer_multiplication/mul.rs"]
 mod x86_64_arithmetic_integer_multiplication_mul;
+#[path = "x86_64/arithmetic/integer_subtraction_base/sub.rs"]
+mod x86_64_arithmetic_integer_subtraction_base_sub;
 #[path = "x86_64/arithmetic/integer_subtraction/dec.rs"]
 mod x86_64_arithmetic_integer_subtraction_dec;
 #[path = "x86_64/arithmetic/integer_subtraction/inc.rs"]
@@ -67,8 +68,6 @@ mod x86_64_arithmetic_integer_subtraction_inc;
 mod x86_64_arithmetic_integer_subtraction_neg;
 #[path = "x86_64/arithmetic/integer_subtraction/sbb.rs"]
 mod x86_64_arithmetic_integer_subtraction_sbb;
-#[path = "x86_64/arithmetic/integer_subtraction_base/sub.rs"]
-mod x86_64_arithmetic_integer_subtraction_base_sub;
 #[path = "x86_64/arithmetic/mul.rs"]
 mod x86_64_arithmetic_mul;
 #[path = "x86_64/arithmetic/neg.rs"]
@@ -287,10 +286,10 @@ mod x86_64_data_movement_conditional_move_cmovl;
 mod x86_64_data_movement_conditional_move_cmovne;
 #[path = "x86_64/data_movement/conditional_move/cmovs.rs"]
 mod x86_64_data_movement_conditional_move_cmovs;
-#[path = "x86_64/data_movement/exchange/xchg.rs"]
-mod x86_64_data_movement_exchange_xchg;
 #[path = "x86_64/data_movement/exchange_add/xadd.rs"]
 mod x86_64_data_movement_exchange_add_xadd;
+#[path = "x86_64/data_movement/exchange/xchg.rs"]
+mod x86_64_data_movement_exchange_xchg;
 #[path = "x86_64/data_movement/extend_move/movsx.rs"]
 mod x86_64_data_movement_extend_move_movsx;
 #[path = "x86_64/data_movement/extend_move/movzx.rs"]
@@ -663,6 +662,188 @@ mod x86_64_segment_mov_segment;
 mod x86_64_segment_push_pop_segment;
 
 // Simd
+#[path = "x86_64/simd/avx512/vcompress_vexpand.rs"]
+mod simd_avx512_compress_expand;
+#[path = "x86_64/simd/avx2/vbroadcasti128.rs"]
+mod x86_64_simd_avx2_vbroadcasti128;
+#[path = "x86_64/simd/avx2/vextracti128.rs"]
+mod x86_64_simd_avx2_vextracti128;
+#[path = "x86_64/simd/avx2/vgatherdps_vgatherdpd.rs"]
+mod x86_64_simd_avx2_vgatherdps_vgatherdpd;
+#[path = "x86_64/simd/avx2/vgatherqps_vgatherqpd.rs"]
+mod x86_64_simd_avx2_vgatherqps_vgatherqpd;
+#[path = "x86_64/simd/avx2/vinserti128.rs"]
+mod x86_64_simd_avx2_vinserti128;
+#[path = "x86_64/simd/avx2/vmpsadbw.rs"]
+mod x86_64_simd_avx2_vmpsadbw;
+#[path = "x86_64/simd/avx2/vpabsb_vpabsw_vpabsd.rs"]
+mod x86_64_simd_avx2_vpabsb_vpabsw_vpabsd;
+#[path = "x86_64/simd/avx2/vpacksswb_vpackssdw.rs"]
+mod x86_64_simd_avx2_vpacksswb_vpackssdw;
+#[path = "x86_64/simd/avx2/vpackuswb_vpackusdw.rs"]
+mod x86_64_simd_avx2_vpackuswb_vpackusdw;
+#[path = "x86_64/simd/avx2/vpaddb_vpaddw_vpaddd_vpaddq.rs"]
+mod x86_64_simd_avx2_vpaddb_vpaddw_vpaddd_vpaddq;
+#[path = "x86_64/simd/avx2/vpaddsb.rs"]
+mod x86_64_simd_avx2_vpaddsb;
+#[path = "x86_64/simd/avx2/vpaddsw.rs"]
+mod x86_64_simd_avx2_vpaddsw;
+#[path = "x86_64/simd/avx2/vpaddusb.rs"]
+mod x86_64_simd_avx2_vpaddusb;
+#[path = "x86_64/simd/avx2/vpaddusw.rs"]
+mod x86_64_simd_avx2_vpaddusw;
+#[path = "x86_64/simd/avx2/vpalignr.rs"]
+mod x86_64_simd_avx2_vpalignr;
+#[path = "x86_64/simd/avx2/vpand_vpor_vpxor.rs"]
+mod x86_64_simd_avx2_vpand_vpor_vpxor;
+#[path = "x86_64/simd/avx2/vpandn.rs"]
+mod x86_64_simd_avx2_vpandn;
+#[path = "x86_64/simd/avx2/vpavgb_vpavgw.rs"]
+mod x86_64_simd_avx2_vpavgb_vpavgw;
+#[path = "x86_64/simd/avx2/vpblendd.rs"]
+mod x86_64_simd_avx2_vpblendd;
+#[path = "x86_64/simd/avx2/vpblendvb.rs"]
+mod x86_64_simd_avx2_vpblendvb;
+#[path = "x86_64/simd/avx2/vpblendw.rs"]
+mod x86_64_simd_avx2_vpblendw;
+#[path = "x86_64/simd/avx2/vpbroadcastb_vpbroadcastw.rs"]
+mod x86_64_simd_avx2_vpbroadcastb_vpbroadcastw;
+#[path = "x86_64/simd/avx2/vpbroadcastd_vpbroadcastq.rs"]
+mod x86_64_simd_avx2_vpbroadcastd_vpbroadcastq;
+#[path = "x86_64/simd/avx2/vpcmpeqb_vpcmpeqw_vpcmpeqd_vpcmpeqq.rs"]
+mod x86_64_simd_avx2_vpcmpeqb_vpcmpeqw_vpcmpeqd_vpcmpeqq;
+#[path = "x86_64/simd/avx2/vpcmpgtb_vpcmpgtw_vpcmpgtd_vpcmpgtq.rs"]
+mod x86_64_simd_avx2_vpcmpgtb_vpcmpgtw_vpcmpgtd_vpcmpgtq;
+#[path = "x86_64/simd/avx2/vperm2i128.rs"]
+mod x86_64_simd_avx2_vperm2i128;
+#[path = "x86_64/simd/avx2/vpermd_vpermq.rs"]
+mod x86_64_simd_avx2_vpermd_vpermq;
+#[path = "x86_64/simd/avx2/vpermpd.rs"]
+mod x86_64_simd_avx2_vpermpd;
+#[path = "x86_64/simd/avx2/vpermps.rs"]
+mod x86_64_simd_avx2_vpermps;
+#[path = "x86_64/simd/avx2/vpgatherdd_vpgatherdq.rs"]
+mod x86_64_simd_avx2_vpgatherdd_vpgatherdq;
+#[path = "x86_64/simd/avx2/vpgatherqd_vpgatherqq.rs"]
+mod x86_64_simd_avx2_vpgatherqd_vpgatherqq;
+#[path = "x86_64/simd/avx2/vphaddsw_vphsubsw.rs"]
+mod x86_64_simd_avx2_vphaddsw_vphsubsw;
+#[path = "x86_64/simd/avx2/vphaddw_vphaddd.rs"]
+mod x86_64_simd_avx2_vphaddw_vphaddd;
+#[path = "x86_64/simd/avx2/vphminposuw.rs"]
+mod x86_64_simd_avx2_vphminposuw;
+#[path = "x86_64/simd/avx2/vphsubw_vphsubd.rs"]
+mod x86_64_simd_avx2_vphsubw_vphsubd;
+#[path = "x86_64/simd/avx2/vpmaddubsw.rs"]
+mod x86_64_simd_avx2_vpmaddubsw;
+#[path = "x86_64/simd/avx2/vpmaddwd.rs"]
+mod x86_64_simd_avx2_vpmaddwd;
+#[path = "x86_64/simd/avx2/vpmaskmovd_vpmaskmovq.rs"]
+mod x86_64_simd_avx2_vpmaskmovd_vpmaskmovq;
+#[path = "x86_64/simd/avx2/vpmaxsb_vpmaxsw_vpmaxsd.rs"]
+mod x86_64_simd_avx2_vpmaxsb_vpmaxsw_vpmaxsd;
+#[path = "x86_64/simd/avx2/vpmaxub_vpmaxuw_vpmaxud.rs"]
+mod x86_64_simd_avx2_vpmaxub_vpmaxuw_vpmaxud;
+#[path = "x86_64/simd/avx2/vpminsb_vpminsw_vpminsd.rs"]
+mod x86_64_simd_avx2_vpminsb_vpminsw_vpminsd;
+#[path = "x86_64/simd/avx2/vpminub_vpminuw_vpminud.rs"]
+mod x86_64_simd_avx2_vpminub_vpminuw_vpminud;
+#[path = "x86_64/simd/avx2/vpmovmskb.rs"]
+mod x86_64_simd_avx2_vpmovmskb;
+#[path = "x86_64/simd/avx2/vpmovsx_variants.rs"]
+mod x86_64_simd_avx2_vpmovsx_variants;
+#[path = "x86_64/simd/avx2/vpmovsxbw_vpmovsxbd_vpmovsxbq.rs"]
+mod x86_64_simd_avx2_vpmovsxbw_vpmovsxbd_vpmovsxbq;
+#[path = "x86_64/simd/avx2/vpmovzxbw_vpmovzxbd_vpmovzxbq.rs"]
+mod x86_64_simd_avx2_vpmovzxbw_vpmovzxbd_vpmovzxbq;
+#[path = "x86_64/simd/avx2/vpmovzxwd_vpmovzxwq_vpmovzxdq.rs"]
+mod x86_64_simd_avx2_vpmovzxwd_vpmovzxwq_vpmovzxdq;
+#[path = "x86_64/simd/avx2/vpmuldq.rs"]
+mod x86_64_simd_avx2_vpmuldq;
+#[path = "x86_64/simd/avx2/vpmulhrsw.rs"]
+mod x86_64_simd_avx2_vpmulhrsw;
+#[path = "x86_64/simd/avx2/vpmulhw_vpmulhuw.rs"]
+mod x86_64_simd_avx2_vpmulhw_vpmulhuw;
+#[path = "x86_64/simd/avx2/vpmullw_vpmulld.rs"]
+mod x86_64_simd_avx2_vpmullw_vpmulld;
+#[path = "x86_64/simd/avx2/vpmuludq.rs"]
+mod x86_64_simd_avx2_vpmuludq;
+#[path = "x86_64/simd/avx2/vpsadbw.rs"]
+mod x86_64_simd_avx2_vpsadbw;
+#[path = "x86_64/simd/avx2/vpshufb.rs"]
+mod x86_64_simd_avx2_vpshufb;
+#[path = "x86_64/simd/avx2/vpshufd.rs"]
+mod x86_64_simd_avx2_vpshufd;
+#[path = "x86_64/simd/avx2/vpshufhw.rs"]
+mod x86_64_simd_avx2_vpshufhw;
+#[path = "x86_64/simd/avx2/vpshuflw.rs"]
+mod x86_64_simd_avx2_vpshuflw;
+#[path = "x86_64/simd/avx2/vpsignb_vpsignw_vpsignd.rs"]
+mod x86_64_simd_avx2_vpsignb_vpsignw_vpsignd;
+#[path = "x86_64/simd/avx2/vpslldq.rs"]
+mod x86_64_simd_avx2_vpslldq;
+#[path = "x86_64/simd/avx2/vpsllvd_vpsllvq.rs"]
+mod x86_64_simd_avx2_vpsllvd_vpsllvq;
+#[path = "x86_64/simd/avx2/vpsllw_vpslld_vpsllq.rs"]
+mod x86_64_simd_avx2_vpsllw_vpslld_vpsllq;
+#[path = "x86_64/simd/avx2/vpsravd.rs"]
+mod x86_64_simd_avx2_vpsravd;
+#[path = "x86_64/simd/avx2/vpsraw_vpsrad.rs"]
+mod x86_64_simd_avx2_vpsraw_vpsrad;
+#[path = "x86_64/simd/avx2/vpsrldq.rs"]
+mod x86_64_simd_avx2_vpsrldq;
+#[path = "x86_64/simd/avx2/vpsrlvd_vpsrlvq.rs"]
+mod x86_64_simd_avx2_vpsrlvd_vpsrlvq;
+#[path = "x86_64/simd/avx2/vpsrlw_vpsrld_vpsrlq.rs"]
+mod x86_64_simd_avx2_vpsrlw_vpsrld_vpsrlq;
+#[path = "x86_64/simd/avx2/vpsubb_vpsubw_vpsubd_vpsubq.rs"]
+mod x86_64_simd_avx2_vpsubb_vpsubw_vpsubd_vpsubq;
+#[path = "x86_64/simd/avx2/vpsubsb.rs"]
+mod x86_64_simd_avx2_vpsubsb;
+#[path = "x86_64/simd/avx2/vpsubsw.rs"]
+mod x86_64_simd_avx2_vpsubsw;
+#[path = "x86_64/simd/avx2/vpsubusb.rs"]
+mod x86_64_simd_avx2_vpsubusb;
+#[path = "x86_64/simd/avx2/vpsubusw.rs"]
+mod x86_64_simd_avx2_vpsubusw;
+#[path = "x86_64/simd/avx2/vptest.rs"]
+mod x86_64_simd_avx2_vptest;
+#[path = "x86_64/simd/avx2/vpunpckhbw_vpunpckhwd_vpunpckhdq_vpunpckhqdq.rs"]
+mod x86_64_simd_avx2_vpunpckhbw_vpunpckhwd_vpunpckhdq_vpunpckhqdq;
+#[path = "x86_64/simd/avx2/vpunpcklbw_vpunpcklwd_vpunpckldq_vpunpcklqdq.rs"]
+mod x86_64_simd_avx2_vpunpcklbw_vpunpcklwd_vpunpckldq_vpunpcklqdq;
+#[path = "x86_64/simd/avx512_extended.rs"]
+mod x86_64_simd_avx512_extended;
+#[path = "x86_64/simd/avx512/kadd_mask.rs"]
+mod x86_64_simd_avx512_kadd_mask;
+#[path = "x86_64/simd/avx512/kand_kor_kxor.rs"]
+mod x86_64_simd_avx512_kand_kor_kxor;
+#[path = "x86_64/simd/avx512/kandn_knot_mask.rs"]
+mod x86_64_simd_avx512_kandn_knot_mask;
+#[path = "x86_64/simd/avx512/kmov.rs"]
+mod x86_64_simd_avx512_kmov;
+#[path = "x86_64/simd/avx512/ktest_kunpck_kshift.rs"]
+mod x86_64_simd_avx512_ktest_kunpck_kshift;
+#[path = "x86_64/simd/avx512_mask_ops.rs"]
+mod x86_64_simd_avx512_mask_ops;
+#[path = "x86_64/simd/avx512/vaddph_vsubph_vmulph_vdivph.rs"]
+mod x86_64_simd_avx512_vaddph_vsubph_vmulph_vdivph;
+#[path = "x86_64/simd/avx512/vaddps_zmm.rs"]
+mod x86_64_simd_avx512_vaddps_zmm;
+#[path = "x86_64/simd/avx512/valign_vprol_vpror_vpternlog.rs"]
+mod x86_64_simd_avx512_valign_vprol_vpror_vpternlog;
+#[path = "x86_64/simd/avx512/vdbpsadbw_vplzcnt_vpshld.rs"]
+mod x86_64_simd_avx512_vdbpsadbw_vplzcnt_vpshld;
+#[path = "x86_64/simd/avx512/vdivps_zmm.rs"]
+mod x86_64_simd_avx512_vdivps_zmm;
+#[path = "x86_64/simd/avx512/vmovaps_zmm.rs"]
+mod x86_64_simd_avx512_vmovaps_zmm;
+#[path = "x86_64/simd/avx512/vmovups_zmm.rs"]
+mod x86_64_simd_avx512_vmovups_zmm;
+#[path = "x86_64/simd/avx512/vmulps_zmm.rs"]
+mod x86_64_simd_avx512_vmulps_zmm;
+#[path = "x86_64/simd/avx512/vsubps_zmm.rs"]
+mod x86_64_simd_avx512_vsubps_zmm;
 #[path = "x86_64/simd/avx/vaddps_vaddpd.rs"]
 mod x86_64_simd_avx_vaddps_vaddpd;
 #[path = "x86_64/simd/avx/vaddss_vaddsd.rs"]
@@ -861,188 +1042,6 @@ mod x86_64_simd_avx_vunpcklps_vunpcklpd;
 mod x86_64_simd_avx_vxorps_vxorpd;
 #[path = "x86_64/simd/avx/vzeroupper_vzeroall.rs"]
 mod x86_64_simd_avx_vzeroupper_vzeroall;
-#[path = "x86_64/simd/avx2/vbroadcasti128.rs"]
-mod x86_64_simd_avx2_vbroadcasti128;
-#[path = "x86_64/simd/avx2/vextracti128.rs"]
-mod x86_64_simd_avx2_vextracti128;
-#[path = "x86_64/simd/avx2/vgatherdps_vgatherdpd.rs"]
-mod x86_64_simd_avx2_vgatherdps_vgatherdpd;
-#[path = "x86_64/simd/avx2/vgatherqps_vgatherqpd.rs"]
-mod x86_64_simd_avx2_vgatherqps_vgatherqpd;
-#[path = "x86_64/simd/avx2/vinserti128.rs"]
-mod x86_64_simd_avx2_vinserti128;
-#[path = "x86_64/simd/avx2/vmpsadbw.rs"]
-mod x86_64_simd_avx2_vmpsadbw;
-#[path = "x86_64/simd/avx2/vpabsb_vpabsw_vpabsd.rs"]
-mod x86_64_simd_avx2_vpabsb_vpabsw_vpabsd;
-#[path = "x86_64/simd/avx2/vpacksswb_vpackssdw.rs"]
-mod x86_64_simd_avx2_vpacksswb_vpackssdw;
-#[path = "x86_64/simd/avx2/vpackuswb_vpackusdw.rs"]
-mod x86_64_simd_avx2_vpackuswb_vpackusdw;
-#[path = "x86_64/simd/avx2/vpaddb_vpaddw_vpaddd_vpaddq.rs"]
-mod x86_64_simd_avx2_vpaddb_vpaddw_vpaddd_vpaddq;
-#[path = "x86_64/simd/avx2/vpaddsb.rs"]
-mod x86_64_simd_avx2_vpaddsb;
-#[path = "x86_64/simd/avx2/vpaddsw.rs"]
-mod x86_64_simd_avx2_vpaddsw;
-#[path = "x86_64/simd/avx2/vpaddusb.rs"]
-mod x86_64_simd_avx2_vpaddusb;
-#[path = "x86_64/simd/avx2/vpaddusw.rs"]
-mod x86_64_simd_avx2_vpaddusw;
-#[path = "x86_64/simd/avx2/vpalignr.rs"]
-mod x86_64_simd_avx2_vpalignr;
-#[path = "x86_64/simd/avx2/vpand_vpor_vpxor.rs"]
-mod x86_64_simd_avx2_vpand_vpor_vpxor;
-#[path = "x86_64/simd/avx2/vpandn.rs"]
-mod x86_64_simd_avx2_vpandn;
-#[path = "x86_64/simd/avx2/vpavgb_vpavgw.rs"]
-mod x86_64_simd_avx2_vpavgb_vpavgw;
-#[path = "x86_64/simd/avx2/vpblendd.rs"]
-mod x86_64_simd_avx2_vpblendd;
-#[path = "x86_64/simd/avx2/vpblendvb.rs"]
-mod x86_64_simd_avx2_vpblendvb;
-#[path = "x86_64/simd/avx2/vpblendw.rs"]
-mod x86_64_simd_avx2_vpblendw;
-#[path = "x86_64/simd/avx2/vpbroadcastb_vpbroadcastw.rs"]
-mod x86_64_simd_avx2_vpbroadcastb_vpbroadcastw;
-#[path = "x86_64/simd/avx2/vpbroadcastd_vpbroadcastq.rs"]
-mod x86_64_simd_avx2_vpbroadcastd_vpbroadcastq;
-#[path = "x86_64/simd/avx2/vpcmpeqb_vpcmpeqw_vpcmpeqd_vpcmpeqq.rs"]
-mod x86_64_simd_avx2_vpcmpeqb_vpcmpeqw_vpcmpeqd_vpcmpeqq;
-#[path = "x86_64/simd/avx2/vpcmpgtb_vpcmpgtw_vpcmpgtd_vpcmpgtq.rs"]
-mod x86_64_simd_avx2_vpcmpgtb_vpcmpgtw_vpcmpgtd_vpcmpgtq;
-#[path = "x86_64/simd/avx2/vperm2i128.rs"]
-mod x86_64_simd_avx2_vperm2i128;
-#[path = "x86_64/simd/avx2/vpermd_vpermq.rs"]
-mod x86_64_simd_avx2_vpermd_vpermq;
-#[path = "x86_64/simd/avx2/vpermpd.rs"]
-mod x86_64_simd_avx2_vpermpd;
-#[path = "x86_64/simd/avx2/vpermps.rs"]
-mod x86_64_simd_avx2_vpermps;
-#[path = "x86_64/simd/avx2/vpgatherdd_vpgatherdq.rs"]
-mod x86_64_simd_avx2_vpgatherdd_vpgatherdq;
-#[path = "x86_64/simd/avx2/vpgatherqd_vpgatherqq.rs"]
-mod x86_64_simd_avx2_vpgatherqd_vpgatherqq;
-#[path = "x86_64/simd/avx2/vphaddsw_vphsubsw.rs"]
-mod x86_64_simd_avx2_vphaddsw_vphsubsw;
-#[path = "x86_64/simd/avx2/vphaddw_vphaddd.rs"]
-mod x86_64_simd_avx2_vphaddw_vphaddd;
-#[path = "x86_64/simd/avx2/vphminposuw.rs"]
-mod x86_64_simd_avx2_vphminposuw;
-#[path = "x86_64/simd/avx2/vphsubw_vphsubd.rs"]
-mod x86_64_simd_avx2_vphsubw_vphsubd;
-#[path = "x86_64/simd/avx2/vpmaddubsw.rs"]
-mod x86_64_simd_avx2_vpmaddubsw;
-#[path = "x86_64/simd/avx2/vpmaddwd.rs"]
-mod x86_64_simd_avx2_vpmaddwd;
-#[path = "x86_64/simd/avx2/vpmaskmovd_vpmaskmovq.rs"]
-mod x86_64_simd_avx2_vpmaskmovd_vpmaskmovq;
-#[path = "x86_64/simd/avx2/vpmaxsb_vpmaxsw_vpmaxsd.rs"]
-mod x86_64_simd_avx2_vpmaxsb_vpmaxsw_vpmaxsd;
-#[path = "x86_64/simd/avx2/vpmaxub_vpmaxuw_vpmaxud.rs"]
-mod x86_64_simd_avx2_vpmaxub_vpmaxuw_vpmaxud;
-#[path = "x86_64/simd/avx2/vpminsb_vpminsw_vpminsd.rs"]
-mod x86_64_simd_avx2_vpminsb_vpminsw_vpminsd;
-#[path = "x86_64/simd/avx2/vpminub_vpminuw_vpminud.rs"]
-mod x86_64_simd_avx2_vpminub_vpminuw_vpminud;
-#[path = "x86_64/simd/avx2/vpmovmskb.rs"]
-mod x86_64_simd_avx2_vpmovmskb;
-#[path = "x86_64/simd/avx2/vpmovsx_variants.rs"]
-mod x86_64_simd_avx2_vpmovsx_variants;
-#[path = "x86_64/simd/avx2/vpmovsxbw_vpmovsxbd_vpmovsxbq.rs"]
-mod x86_64_simd_avx2_vpmovsxbw_vpmovsxbd_vpmovsxbq;
-#[path = "x86_64/simd/avx2/vpmovzxbw_vpmovzxbd_vpmovzxbq.rs"]
-mod x86_64_simd_avx2_vpmovzxbw_vpmovzxbd_vpmovzxbq;
-#[path = "x86_64/simd/avx2/vpmovzxwd_vpmovzxwq_vpmovzxdq.rs"]
-mod x86_64_simd_avx2_vpmovzxwd_vpmovzxwq_vpmovzxdq;
-#[path = "x86_64/simd/avx2/vpmuldq.rs"]
-mod x86_64_simd_avx2_vpmuldq;
-#[path = "x86_64/simd/avx2/vpmulhrsw.rs"]
-mod x86_64_simd_avx2_vpmulhrsw;
-#[path = "x86_64/simd/avx2/vpmulhw_vpmulhuw.rs"]
-mod x86_64_simd_avx2_vpmulhw_vpmulhuw;
-#[path = "x86_64/simd/avx2/vpmullw_vpmulld.rs"]
-mod x86_64_simd_avx2_vpmullw_vpmulld;
-#[path = "x86_64/simd/avx2/vpmuludq.rs"]
-mod x86_64_simd_avx2_vpmuludq;
-#[path = "x86_64/simd/avx2/vpsadbw.rs"]
-mod x86_64_simd_avx2_vpsadbw;
-#[path = "x86_64/simd/avx2/vpshufb.rs"]
-mod x86_64_simd_avx2_vpshufb;
-#[path = "x86_64/simd/avx2/vpshufd.rs"]
-mod x86_64_simd_avx2_vpshufd;
-#[path = "x86_64/simd/avx2/vpshufhw.rs"]
-mod x86_64_simd_avx2_vpshufhw;
-#[path = "x86_64/simd/avx2/vpshuflw.rs"]
-mod x86_64_simd_avx2_vpshuflw;
-#[path = "x86_64/simd/avx2/vpsignb_vpsignw_vpsignd.rs"]
-mod x86_64_simd_avx2_vpsignb_vpsignw_vpsignd;
-#[path = "x86_64/simd/avx2/vpslldq.rs"]
-mod x86_64_simd_avx2_vpslldq;
-#[path = "x86_64/simd/avx2/vpsllvd_vpsllvq.rs"]
-mod x86_64_simd_avx2_vpsllvd_vpsllvq;
-#[path = "x86_64/simd/avx2/vpsllw_vpslld_vpsllq.rs"]
-mod x86_64_simd_avx2_vpsllw_vpslld_vpsllq;
-#[path = "x86_64/simd/avx2/vpsravd.rs"]
-mod x86_64_simd_avx2_vpsravd;
-#[path = "x86_64/simd/avx2/vpsraw_vpsrad.rs"]
-mod x86_64_simd_avx2_vpsraw_vpsrad;
-#[path = "x86_64/simd/avx2/vpsrldq.rs"]
-mod x86_64_simd_avx2_vpsrldq;
-#[path = "x86_64/simd/avx2/vpsrlvd_vpsrlvq.rs"]
-mod x86_64_simd_avx2_vpsrlvd_vpsrlvq;
-#[path = "x86_64/simd/avx2/vpsrlw_vpsrld_vpsrlq.rs"]
-mod x86_64_simd_avx2_vpsrlw_vpsrld_vpsrlq;
-#[path = "x86_64/simd/avx2/vpsubb_vpsubw_vpsubd_vpsubq.rs"]
-mod x86_64_simd_avx2_vpsubb_vpsubw_vpsubd_vpsubq;
-#[path = "x86_64/simd/avx2/vpsubsb.rs"]
-mod x86_64_simd_avx2_vpsubsb;
-#[path = "x86_64/simd/avx2/vpsubsw.rs"]
-mod x86_64_simd_avx2_vpsubsw;
-#[path = "x86_64/simd/avx2/vpsubusb.rs"]
-mod x86_64_simd_avx2_vpsubusb;
-#[path = "x86_64/simd/avx2/vpsubusw.rs"]
-mod x86_64_simd_avx2_vpsubusw;
-#[path = "x86_64/simd/avx2/vptest.rs"]
-mod x86_64_simd_avx2_vptest;
-#[path = "x86_64/simd/avx2/vpunpckhbw_vpunpckhwd_vpunpckhdq_vpunpckhqdq.rs"]
-mod x86_64_simd_avx2_vpunpckhbw_vpunpckhwd_vpunpckhdq_vpunpckhqdq;
-#[path = "x86_64/simd/avx2/vpunpcklbw_vpunpcklwd_vpunpckldq_vpunpcklqdq.rs"]
-mod x86_64_simd_avx2_vpunpcklbw_vpunpcklwd_vpunpckldq_vpunpcklqdq;
-#[path = "x86_64/simd/avx512/kadd_mask.rs"]
-mod x86_64_simd_avx512_kadd_mask;
-#[path = "x86_64/simd/avx512/kand_kor_kxor.rs"]
-mod x86_64_simd_avx512_kand_kor_kxor;
-#[path = "x86_64/simd/avx512/kandn_knot_mask.rs"]
-mod x86_64_simd_avx512_kandn_knot_mask;
-#[path = "x86_64/simd/avx512/kmov.rs"]
-mod x86_64_simd_avx512_kmov;
-#[path = "x86_64/simd/avx512/ktest_kunpck_kshift.rs"]
-mod x86_64_simd_avx512_ktest_kunpck_kshift;
-#[path = "x86_64/simd/avx512/vaddph_vsubph_vmulph_vdivph.rs"]
-mod x86_64_simd_avx512_vaddph_vsubph_vmulph_vdivph;
-#[path = "x86_64/simd/avx512/vaddps_zmm.rs"]
-mod x86_64_simd_avx512_vaddps_zmm;
-#[path = "x86_64/simd/avx512/valign_vprol_vpror_vpternlog.rs"]
-mod x86_64_simd_avx512_valign_vprol_vpror_vpternlog;
-#[path = "x86_64/simd/avx512/vcompress_vexpand.rs"]
-mod simd_avx512_compress_expand;
-#[path = "x86_64/simd/avx512/vdbpsadbw_vplzcnt_vpshld.rs"]
-mod x86_64_simd_avx512_vdbpsadbw_vplzcnt_vpshld;
-#[path = "x86_64/simd/avx512/vdivps_zmm.rs"]
-mod x86_64_simd_avx512_vdivps_zmm;
-#[path = "x86_64/simd/avx512/vmovaps_zmm.rs"]
-mod x86_64_simd_avx512_vmovaps_zmm;
-#[path = "x86_64/simd/avx512/vmovups_zmm.rs"]
-mod x86_64_simd_avx512_vmovups_zmm;
-#[path = "x86_64/simd/avx512/vmulps_zmm.rs"]
-mod x86_64_simd_avx512_vmulps_zmm;
-#[path = "x86_64/simd/avx512/vsubps_zmm.rs"]
-mod x86_64_simd_avx512_vsubps_zmm;
-#[path = "x86_64/simd/avx512_extended.rs"]
-mod x86_64_simd_avx512_extended;
-#[path = "x86_64/simd/avx512_mask_ops.rs"]
-mod x86_64_simd_avx512_mask_ops;
 #[path = "x86_64/simd/fma/vfmadd132pd_vfmadd213pd_vfmadd231pd.rs"]
 mod x86_64_simd_fma_vfmadd132pd_vfmadd213pd_vfmadd231pd;
 #[path = "x86_64/simd/fma/vfmadd132ps_vfmadd213ps_vfmadd231ps.rs"]
@@ -1471,68 +1470,68 @@ mod x86_64_simd_sse_unpcklps;
 mod x86_64_simd_sse_xorps_xorpd;
 
 // AVX10.1 Tests
-#[path = "x86_64/simd/avx10/vnni.rs"]
-mod x86_64_simd_avx10_vnni;
+#[path = "x86_64/simd/avx10/bf16.rs"]
+mod x86_64_simd_avx10_bf16;
+#[path = "x86_64/simd/avx10/bitalg.rs"]
+mod x86_64_simd_avx10_bitalg;
 #[path = "x86_64/simd/avx10/ifma.rs"]
 mod x86_64_simd_avx10_ifma;
 #[path = "x86_64/simd/avx10/vbmi.rs"]
 mod x86_64_simd_avx10_vbmi;
+#[path = "x86_64/simd/avx10/vnni.rs"]
+mod x86_64_simd_avx10_vnni;
 #[path = "x86_64/simd/avx10/vpopcntdq.rs"]
 mod x86_64_simd_avx10_vpopcntdq;
-#[path = "x86_64/simd/avx10/bitalg.rs"]
-mod x86_64_simd_avx10_bitalg;
-#[path = "x86_64/simd/avx10/bf16.rs"]
-mod x86_64_simd_avx10_bf16;
 #[path = "x86_64/simd/avx10/ymm_embedded_rounding.rs"]
 mod x86_64_simd_avx10_ymm_embedded_rounding;
 
 // AVX10.2 Tests
-#[path = "x86_64/simd/avx10/minmax.rs"]
-mod x86_64_simd_avx10_minmax;
-#[path = "x86_64/simd/avx10/saturation_convert.rs"]
-mod x86_64_simd_avx10_saturation_convert;
-#[path = "x86_64/simd/avx10/media_accel.rs"]
-mod x86_64_simd_avx10_media_accel;
-#[path = "x86_64/simd/avx10/vmpsadbw.rs"]
-mod x86_64_simd_avx10_vmpsadbw;
 #[path = "x86_64/simd/avx10/compare_bf16.rs"]
 mod x86_64_simd_avx10_compare_bf16;
 #[path = "x86_64/simd/avx10/copy_sign.rs"]
 mod x86_64_simd_avx10_copy_sign;
+#[path = "x86_64/simd/avx10/media_accel.rs"]
+mod x86_64_simd_avx10_media_accel;
+#[path = "x86_64/simd/avx10/minmax.rs"]
+mod x86_64_simd_avx10_minmax;
+#[path = "x86_64/simd/avx10/saturation_convert.rs"]
+mod x86_64_simd_avx10_saturation_convert;
+#[path = "x86_64/simd/avx10/vmpsadbw.rs"]
+mod x86_64_simd_avx10_vmpsadbw;
 
 // APX (Advanced Performance Extensions)
+#[path = "x86_64/apx/ccmp_ctest.rs"]
+mod x86_64_apx_ccmp_ctest;
+#[path = "x86_64/apx/combined.rs"]
+mod x86_64_apx_combined;
 #[path = "x86_64/apx/egpr.rs"]
 mod x86_64_apx_egpr;
-#[path = "x86_64/apx/rex2.rs"]
-mod x86_64_apx_rex2;
 #[path = "x86_64/apx/ndd.rs"]
 mod x86_64_apx_ndd;
 #[path = "x86_64/apx/nf.rs"]
 mod x86_64_apx_nf;
-#[path = "x86_64/apx/ccmp_ctest.rs"]
-mod x86_64_apx_ccmp_ctest;
 #[path = "x86_64/apx/push2_pop2.rs"]
 mod x86_64_apx_push2_pop2;
+#[path = "x86_64/apx/rex2.rs"]
+mod x86_64_apx_rex2;
 #[path = "x86_64/apx/zu.rs"]
 mod x86_64_apx_zu;
-#[path = "x86_64/apx/combined.rs"]
-mod x86_64_apx_combined;
 
 // Stack Operations
 #[path = "x86_64/stack_operations/enter_extended.rs"]
 mod x86_64_stack_operations_enter_extended;
 #[path = "x86_64/stack_operations/leave_extended.rs"]
 mod x86_64_stack_operations_leave_extended;
-#[path = "x86_64/stack_operations/pop/pop.rs"]
-mod x86_64_stack_operations_pop_pop;
 #[path = "x86_64/stack_operations/pop_mem.rs"]
 mod x86_64_stack_operations_pop_mem;
-#[path = "x86_64/stack_operations/push/push.rs"]
-mod x86_64_stack_operations_push_push;
+#[path = "x86_64/stack_operations/pop/pop.rs"]
+mod x86_64_stack_operations_pop_pop;
 #[path = "x86_64/stack_operations/push_imm.rs"]
 mod x86_64_stack_operations_push_imm;
 #[path = "x86_64/stack_operations/push_mem.rs"]
 mod x86_64_stack_operations_push_mem;
+#[path = "x86_64/stack_operations/push/push.rs"]
+mod x86_64_stack_operations_push_push;
 #[path = "x86_64/stack_operations/pusha_popa.rs"]
 mod x86_64_stack_operations_pusha_popa;
 #[path = "x86_64/stack_operations/pushf_popf_extended.rs"]
@@ -1627,12 +1626,12 @@ mod x86_64_system_lmsw_smsw;
 mod x86_64_system_lsl;
 #[path = "x86_64/system/ltr.rs"]
 mod x86_64_system_ltr;
+#[path = "x86_64/system/mmu.rs"]
+mod x86_64_system_mmu;
 #[path = "x86_64/system/mov_cr.rs"]
 mod x86_64_system_mov_cr;
 #[path = "x86_64/system/mov_dr.rs"]
 mod x86_64_system_mov_dr;
-#[path = "x86_64/system/mmu.rs"]
-mod x86_64_system_mmu;
 #[path = "x86_64/system/page_fault.rs"]
 mod x86_64_system_page_fault;
 #[path = "x86_64/system/protection_keys.rs"]

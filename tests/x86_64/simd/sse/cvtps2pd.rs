@@ -143,7 +143,8 @@ fn test_cvtps2pd_mem_to_xmm0() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -168,7 +169,8 @@ fn test_cvtps2pd_mem_to_xmm1() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -193,7 +195,8 @@ fn test_cvtps2pd_mem_to_xmm7() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -218,7 +221,8 @@ fn test_cvtps2pd_mem_to_xmm8() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -243,7 +247,8 @@ fn test_cvtps2pd_mem_to_xmm15() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -272,7 +277,8 @@ fn test_cvtps2pd_positive_zero() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -297,7 +303,8 @@ fn test_cvtps2pd_negative_zero() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -322,7 +329,8 @@ fn test_cvtps2pd_mixed_zeros() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -351,7 +359,8 @@ fn test_cvtps2pd_positive_infinity() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -376,7 +385,8 @@ fn test_cvtps2pd_negative_infinity() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -401,7 +411,8 @@ fn test_cvtps2pd_both_infinity() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -430,7 +441,8 @@ fn test_cvtps2pd_quiet_nan() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -457,7 +469,8 @@ fn test_cvtps2pd_signaling_nan() {
     data.extend_from_slice(&snan.to_le_bytes());
     data.extend_from_slice(&normal.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -482,7 +495,8 @@ fn test_cvtps2pd_both_nan() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -513,7 +527,8 @@ fn test_cvtps2pd_denormal_positive() {
     data.extend_from_slice(&denorm.to_le_bytes());
     data.extend_from_slice(&normal.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -540,7 +555,8 @@ fn test_cvtps2pd_denormal_negative() {
     data.extend_from_slice(&denorm.to_le_bytes());
     data.extend_from_slice(&normal.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -567,7 +583,8 @@ fn test_cvtps2pd_denormal_largest() {
     data.extend_from_slice(&denorm.to_le_bytes());
     data.extend_from_slice(&normal.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -596,7 +613,8 @@ fn test_cvtps2pd_small_values() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -621,7 +639,8 @@ fn test_cvtps2pd_large_values() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -646,7 +665,8 @@ fn test_cvtps2pd_fractional_values() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -671,7 +691,8 @@ fn test_cvtps2pd_powers_of_two() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -696,7 +717,8 @@ fn test_cvtps2pd_mixed_signs() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -725,7 +747,8 @@ fn test_cvtps2pd_with_displacement() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -750,7 +773,8 @@ fn test_cvtps2pd_with_negative_displacement() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -793,7 +817,8 @@ fn test_cvtps2pd_multiple_conversions() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -802,7 +827,8 @@ fn test_cvtps2pd_chain_registers() {
     // Chain conversions through different registers
     let code = [
         0x0f, 0x5a, 0xc8, // CVTPS2PD XMM1, XMM0
-        0x0f, 0x5a, 0xd1, // CVTPS2PD XMM2, XMM1 (XMM1[63:0] are now f64, this tests upper bits)
+        0x0f, 0x5a,
+        0xd1, // CVTPS2PD XMM2, XMM1 (XMM1[63:0] are now f64, this tests upper bits)
         0xf4, // HLT
     ];
 
@@ -835,7 +861,8 @@ fn test_cvtps2pd_max_float32() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -860,7 +887,8 @@ fn test_cvtps2pd_min_positive_float32() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -885,6 +913,7 @@ fn test_cvtps2pd_one_and_minus_one() {
     data.extend_from_slice(&f1.to_le_bytes());
     data.extend_from_slice(&f2.to_le_bytes());
 
-    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

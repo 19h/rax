@@ -13,7 +13,7 @@ use vm_memory::{Bytes, GuestAddress};
 // F3 0F 7F /r    MOVDQU xmm2/m128, xmm1    - Move unaligned packed integer from xmm1 to xmm2/mem
 
 const UNALIGNED_ADDR: u64 = 0x3001; // Intentionally unaligned (offset by 1)
-const ALIGNED_ADDR: u64 = 0x3000;   // 16-byte aligned (MOVDQU works with aligned too)
+const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned (MOVDQU works with aligned too)
 
 // ============================================================================
 // Register to Register Tests
@@ -149,9 +149,14 @@ fn test_movdqu_unaligned_mem_to_xmm0() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     // Write test data (128-bit integer)
-    mem.write_slice(&[0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-                      0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10],
-                     GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E,
+            0x0F, 0x10,
+        ],
+        GuestAddress(UNALIGNED_ADDR),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -170,7 +175,14 @@ fn test_movdqu_unaligned_offset_1() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR + 1)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF,
+        ],
+        GuestAddress(ALIGNED_ADDR + 1),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -188,7 +200,14 @@ fn test_movdqu_unaligned_offset_2() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA], GuestAddress(ALIGNED_ADDR + 2)).unwrap();
+    mem.write_slice(
+        &[
+            0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
+            0xAA, 0xAA,
+        ],
+        GuestAddress(ALIGNED_ADDR + 2),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -206,7 +225,14 @@ fn test_movdqu_unaligned_offset_3() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55], GuestAddress(ALIGNED_ADDR + 3)).unwrap();
+    mem.write_slice(
+        &[
+            0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55,
+            0x55, 0x55,
+        ],
+        GuestAddress(ALIGNED_ADDR + 3),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -224,7 +250,14 @@ fn test_movdqu_unaligned_offset_7() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33], GuestAddress(ALIGNED_ADDR + 7)).unwrap();
+    mem.write_slice(
+        &[
+            0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33,
+            0x33, 0x33,
+        ],
+        GuestAddress(ALIGNED_ADDR + 7),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -242,7 +275,14 @@ fn test_movdqu_unaligned_offset_15() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77], GuestAddress(ALIGNED_ADDR + 15)).unwrap();
+    mem.write_slice(
+        &[
+            0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77,
+            0x77, 0x77,
+        ],
+        GuestAddress(ALIGNED_ADDR + 15),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -260,7 +300,14 @@ fn test_movdqu_aligned_mem_to_xmm1() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB,
+            0xBB, 0xBB,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -278,7 +325,14 @@ fn test_movdqu_mem_to_xmm8_unaligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC], GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC,
+            0xCC, 0xCC,
+        ],
+        GuestAddress(UNALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -296,7 +350,14 @@ fn test_movdqu_mem_to_xmm15_unaligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD], GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+            0xDD, 0xDD,
+        ],
+        GuestAddress(UNALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -322,7 +383,8 @@ fn test_movdqu_xmm0_to_unaligned_mem() {
 
     // Verify data was written
     let mut result = [0u8; 16];
-    mem.read_slice(&mut result, GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.read_slice(&mut result, GuestAddress(UNALIGNED_ADDR))
+        .unwrap();
 }
 
 #[test]
@@ -413,9 +475,12 @@ fn test_movdqu_data_integrity_offset_1() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    let test_data = [0x10, 0x32, 0x54, 0x76, 0x98, 0xBA, 0xDC, 0xFE,
-                     0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF];
-    mem.write_slice(&test_data, GuestAddress(test_addr)).unwrap();
+    let test_data = [
+        0x10, 0x32, 0x54, 0x76, 0x98, 0xBA, 0xDC, 0xFE, 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD,
+        0xEF,
+    ];
+    mem.write_slice(&test_data, GuestAddress(test_addr))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -436,9 +501,12 @@ fn test_movdqu_data_integrity_offset_4() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    let test_data = [0xF0, 0xE1, 0xD2, 0xC3, 0xB4, 0xA5, 0x96, 0x87,
-                     0x78, 0x69, 0x5A, 0x4B, 0x3C, 0x2D, 0x1E, 0x0F];
-    mem.write_slice(&test_data, GuestAddress(test_addr)).unwrap();
+    let test_data = [
+        0xF0, 0xE1, 0xD2, 0xC3, 0xB4, 0xA5, 0x96, 0x87, 0x78, 0x69, 0x5A, 0x4B, 0x3C, 0x2D, 0x1E,
+        0x0F,
+    ];
+    mem.write_slice(&test_data, GuestAddress(test_addr))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -459,9 +527,12 @@ fn test_movdqu_data_integrity_offset_8() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    let test_data = [0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
-                     0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00];
-    mem.write_slice(&test_data, GuestAddress(test_addr)).unwrap();
+    let test_data = [
+        0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF,
+        0x00,
+    ];
+    mem.write_slice(&test_data, GuestAddress(test_addr))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -483,7 +554,14 @@ fn test_movdqu_all_zeros_unaligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00,
+        ],
+        GuestAddress(UNALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -500,7 +578,14 @@ fn test_movdqu_all_ones_unaligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF,
+        ],
+        GuestAddress(UNALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -517,9 +602,14 @@ fn test_movdqu_alternating_pattern_unaligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55,
-                      0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55],
-                     GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55,
+            0xAA, 0x55,
+        ],
+        GuestAddress(UNALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -537,8 +627,11 @@ fn test_movdqu_packed_bytes_unaligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-                     GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        GuestAddress(UNALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -557,13 +650,16 @@ fn test_movdqu_packed_words_unaligned() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    let words: [u16; 8] = [0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888];
+    let words: [u16; 8] = [
+        0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888,
+    ];
     let mut data = Vec::new();
     for word in &words {
         data.extend_from_slice(&word.to_le_bytes());
     }
 
-    mem.write_slice(&data, GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, GuestAddress(UNALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -588,7 +684,8 @@ fn test_movdqu_packed_dwords_unaligned() {
         data.extend_from_slice(&dword.to_le_bytes());
     }
 
-    mem.write_slice(&data, GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, GuestAddress(UNALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -613,7 +710,8 @@ fn test_movdqu_packed_qwords_unaligned() {
         data.extend_from_slice(&qword.to_le_bytes());
     }
 
-    mem.write_slice(&data, GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, GuestAddress(UNALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -637,9 +735,12 @@ fn test_movdqu_roundtrip_unaligned() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    let test_data = [0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0,
-                     0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88];
-    mem.write_slice(&test_data, GuestAddress(UNALIGNED_ADDR)).unwrap();
+    let test_data = [
+        0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+        0x88,
+    ];
+    mem.write_slice(&test_data, GuestAddress(UNALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -663,7 +764,14 @@ fn test_movdqu_chain_with_different_offsets() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE], GuestAddress(ALIGNED_ADDR + 1)).unwrap();
+    mem.write_slice(
+        &[
+            0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE,
+            0xEE, 0xEE,
+        ],
+        GuestAddress(ALIGNED_ADDR + 1),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -684,7 +792,14 @@ fn test_movdqu_base_displacement_unaligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99], GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99,
+            0x99, 0x99,
+        ],
+        GuestAddress(UNALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -701,7 +816,14 @@ fn test_movdqu_with_rbx_base_unaligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88], GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88,
+            0x88, 0x88,
+        ],
+        GuestAddress(UNALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -721,7 +843,15 @@ fn test_movdqu_sequential_operations() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+            0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+            0x11, 0x11, 0x11, 0x11,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -747,6 +877,7 @@ fn test_movdqu_max_values_unaligned() {
         data.extend_from_slice(&qword.to_le_bytes());
     }
 
-    mem.write_slice(&data, GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, GuestAddress(UNALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

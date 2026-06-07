@@ -10,7 +10,7 @@
 //! skipping `set_r`/`set_rp` on the false path realises the cancel.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fimm_s, fimm_u, fld, SemCtx};
+use super::{SemCtx, fimm_s, fimm_u, fld};
 
 /// Execute an `alu_pred`-class opcode. Returns `false` if `op` is not in this class.
 pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
@@ -361,11 +361,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
 #[inline]
 fn rndn(a: u32, n: u32) -> i64 {
     let a = a as i32 as i64;
-    if n == 0 {
-        a
-    } else {
-        a + (1i64 << (n - 1))
-    }
+    if n == 0 { a } else { a + (1i64 << (n - 1)) }
 }
 
 /// `fADDSAT64(DST, A, B)` — signed 64-bit saturating add. Sets the sticky

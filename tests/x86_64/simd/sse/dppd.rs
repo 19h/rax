@@ -30,7 +30,8 @@ fn test_dppd_xmm0_xmm1_mask_0x33() {
 #[test]
 fn test_dppd_xmm0_xmm1_mask_0x30() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x41, 0xc1, 0x30, // DPPD XMM0, XMM1, 0x30 (multiply all, write none)
+        0x66, 0x0f, 0x3a, 0x41, 0xc1,
+        0x30, // DPPD XMM0, XMM1, 0x30 (multiply all, write none)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -41,7 +42,8 @@ fn test_dppd_xmm0_xmm1_mask_0x30() {
 #[test]
 fn test_dppd_xmm0_xmm1_mask_0x31() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x41, 0xc1, 0x31, // DPPD XMM0, XMM1, 0x31 (multiply all, write element 0)
+        0x66, 0x0f, 0x3a, 0x41, 0xc1,
+        0x31, // DPPD XMM0, XMM1, 0x31 (multiply all, write element 0)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -52,7 +54,8 @@ fn test_dppd_xmm0_xmm1_mask_0x31() {
 #[test]
 fn test_dppd_xmm0_xmm1_mask_0x32() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x41, 0xc1, 0x32, // DPPD XMM0, XMM1, 0x32 (multiply all, write element 1)
+        0x66, 0x0f, 0x3a, 0x41, 0xc1,
+        0x32, // DPPD XMM0, XMM1, 0x32 (multiply all, write element 1)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -63,7 +66,8 @@ fn test_dppd_xmm0_xmm1_mask_0x32() {
 #[test]
 fn test_dppd_xmm0_xmm1_mask_0x13() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x41, 0xc1, 0x13, // DPPD XMM0, XMM1, 0x13 (multiply element 0, write all)
+        0x66, 0x0f, 0x3a, 0x41, 0xc1,
+        0x13, // DPPD XMM0, XMM1, 0x13 (multiply element 0, write all)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -74,7 +78,8 @@ fn test_dppd_xmm0_xmm1_mask_0x13() {
 #[test]
 fn test_dppd_xmm0_xmm1_mask_0x23() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x41, 0xc1, 0x23, // DPPD XMM0, XMM1, 0x23 (multiply element 1, write all)
+        0x66, 0x0f, 0x3a, 0x41, 0xc1,
+        0x23, // DPPD XMM0, XMM1, 0x23 (multiply element 1, write all)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -226,7 +231,8 @@ fn test_dppd_xmm0_mem_mask_0x33() {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f, // 1.0
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, // 2.0
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -248,7 +254,8 @@ fn test_dppd_xmm1_mem_mask_0x31() {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f, // 1.0
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f, // 1.0
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -269,7 +276,8 @@ fn test_dppd_xmm2_mem_mask_0x32() {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, // 2.0
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x40, // 3.0
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -290,7 +298,8 @@ fn test_dppd_xmm3_mem_mask_0x13() {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f, // 1.0
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0.0
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -311,7 +320,8 @@ fn test_dppd_xmm4_mem_mask_0x23() {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0.0
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f, // 1.0
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -367,7 +377,8 @@ fn test_dppd_mem_displacement() {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f, // 1.0
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f, // 1.0
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -515,7 +526,6 @@ fn test_dppd_xmm5_xmm7_mask_0x11() {
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
-
 
 // ============================================================================
 // Known-answer value tests (register-to-register via set_xmm/get_xmm)

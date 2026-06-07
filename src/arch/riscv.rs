@@ -64,7 +64,11 @@ impl Riscv64Arch {
             if file_end > buf.len() {
                 return Err(Error::KernelLoad("ELF segment out of range".to_string()));
             }
-            let load_addr = if ph.p_paddr != 0 { ph.p_paddr } else { ph.p_vaddr };
+            let load_addr = if ph.p_paddr != 0 {
+                ph.p_paddr
+            } else {
+                ph.p_vaddr
+            };
             mem.write_slice(&buf[file_start..file_end], GuestAddress(load_addr))?;
             min_addr = min_addr.min(load_addr);
             max_addr = max_addr.max(load_addr + ph.p_memsz);

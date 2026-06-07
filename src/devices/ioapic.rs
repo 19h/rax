@@ -126,8 +126,7 @@ impl IoApic {
             // Arbitration ID mirrors the APIC ID field (bits 24-27).
             REG_ARB => self.id,
             idx if idx >= REG_REDTBL_BASE
-                && (idx as usize)
-                    < REG_REDTBL_BASE as usize + IOAPIC_NUM_RTE * 2 =>
+                && (idx as usize) < REG_REDTBL_BASE as usize + IOAPIC_NUM_RTE * 2 =>
             {
                 let offset = (idx - REG_REDTBL_BASE) as usize;
                 let entry = offset / 2;
@@ -152,8 +151,7 @@ impl IoApic {
             // Version and arbitration registers are read-only.
             REG_VER | REG_ARB => {}
             idx if idx >= REG_REDTBL_BASE
-                && (idx as usize)
-                    < REG_REDTBL_BASE as usize + IOAPIC_NUM_RTE * 2 =>
+                && (idx as usize) < REG_REDTBL_BASE as usize + IOAPIC_NUM_RTE * 2 =>
             {
                 let offset = (idx - REG_REDTBL_BASE) as usize;
                 let entry = offset / 2;

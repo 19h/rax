@@ -545,7 +545,11 @@ mod tests {
         let mut rtc = make_rtc();
         rtc.write(RTC_ADDRESS, REG_D);
         rtc.write(RTC_DATA, 0x00);
-        assert_ne!(rtc.read(RTC_DATA) & REG_D_VRT, 0, "VRT still set after write");
+        assert_ne!(
+            rtc.read(RTC_DATA) & REG_D_VRT,
+            0,
+            "VRT still set after write"
+        );
     }
 
     #[test]
@@ -703,7 +707,11 @@ mod tests {
 
         rtc.write(RTC_ADDRESS, REG_C);
         let value = rtc.read(RTC_DATA);
-        assert_eq!(value, REG_C_IRQF | REG_C_PF | REG_C_UF, "read returns flags");
+        assert_eq!(
+            value,
+            REG_C_IRQF | REG_C_PF | REG_C_UF,
+            "read returns flags"
+        );
 
         // A subsequent read must come back clear.
         rtc.write(RTC_ADDRESS, REG_C);
@@ -866,7 +874,10 @@ mod tests {
 
         rtc.write(RTC_ADDRESS, REG_MONTH);
         let month = rtc.read(RTC_DATA);
-        assert!(month >= 0x01 && month <= 0x12, "month BCD 1-12, got {month:#x}");
+        assert!(
+            month >= 0x01 && month <= 0x12,
+            "month BCD 1-12, got {month:#x}"
+        );
     }
 
     #[test]

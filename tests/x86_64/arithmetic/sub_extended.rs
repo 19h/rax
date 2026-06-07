@@ -127,7 +127,13 @@ fn test_sub_all_8bit_registers() {
             _ => unreachable!(),
         };
 
-        assert_eq!(result & 0xFF, 0x00, "R{} - R{} should be 0", reg_num, reg_num);
+        assert_eq!(
+            result & 0xFF,
+            0x00,
+            "R{} - R{} should be 0",
+            reg_num,
+            reg_num
+        );
     }
 }
 
@@ -483,7 +489,11 @@ fn test_sub_preserves_high_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax >> 8, 0xDEADBEEF123456, "High bits should be preserved");
+    assert_eq!(
+        regs.rax >> 8,
+        0xDEADBEEF123456,
+        "High bits should be preserved"
+    );
 }
 
 #[test]

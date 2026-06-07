@@ -245,7 +245,8 @@ fn test_blendvps_xmm7_mem() {
 fn test_blendvps_xmm15_mem() {
     // BLENDVPS XMM15, [ALIGNED_ADDR]
     let code = [
-        0x66, 0x44, 0x0f, 0x38, 0x14, 0x3c, 0x25, 0x00, 0x30, 0x00, 0x00, // BLENDVPS XMM15, [0x3000]
+        0x66, 0x44, 0x0f, 0x38, 0x14, 0x3c, 0x25, 0x00, 0x30, 0x00,
+        0x00, // BLENDVPS XMM15, [0x3000]
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -525,7 +526,8 @@ fn test_blendvpd_xmm7_mem() {
 fn test_blendvpd_xmm15_mem() {
     // BLENDVPD XMM15, [ALIGNED_ADDR]
     let code = [
-        0x66, 0x44, 0x0f, 0x38, 0x15, 0x3c, 0x25, 0x00, 0x30, 0x00, 0x00, // BLENDVPD XMM15, [0x3000]
+        0x66, 0x44, 0x0f, 0x38, 0x15, 0x3c, 0x25, 0x00, 0x30, 0x00,
+        0x00, // BLENDVPD XMM15, [0x3000]
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -565,7 +567,6 @@ fn test_blendvpd_mask_alternating() {
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
-
 
 // ============================================================================
 // Known-answer value tests (register-to-register via set_xmm/get_xmm)

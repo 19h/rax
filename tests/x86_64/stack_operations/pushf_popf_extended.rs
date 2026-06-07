@@ -305,7 +305,10 @@ fn test_pushfq_popfq_nested() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(cf_set(regs.rflags), "CF should be restored from first PUSHFQ");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be restored from first PUSHFQ"
+    );
     assert_eq!(regs.rsp, 0x1000, "Stack should be balanced");
 }
 
@@ -346,7 +349,10 @@ fn test_pushfq_modify_on_stack() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(cf_set(regs.rflags), "CF should be set from modified stack value");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set from modified stack value"
+    );
 }
 
 #[test]
@@ -437,7 +443,8 @@ fn test_popfq_from_prepared_stack() {
     // Prepare flags on stack with CF set
     let flags_with_cf = 0x0001u64;
     let flags_bytes = flags_with_cf.to_le_bytes();
-    vm.write_slice(&flags_bytes, vm_memory::GuestAddress(0x3000)).unwrap();
+    vm.write_slice(&flags_bytes, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert!(cf_set(regs.rflags), "CF should be set from stack");
@@ -457,7 +464,8 @@ fn test_pushfq_popfq_preserves_reserved_bits() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut stack_val = [0u8; 8];
-    vm.read_slice(&mut stack_val, GuestAddress(regs.rsp)).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(regs.rsp))
+        .unwrap();
     let pushed_flags = u64::from_le_bytes(stack_val);
 
     // Bit 1 should always be set (reserved)
@@ -587,7 +595,11 @@ fn test_pushfq_after_comparison() {
     let pushed_flags = u64::from_le_bytes(stack_val);
     assert_eq!(pushed_flags & 0x01, 0, "CF should be clear (10 >= 5)");
     assert_eq!(pushed_flags & 0x40, 0, "ZF should be clear (10 != 5)");
-    assert_eq!(pushed_flags & 0x80, 0, "SF should be clear (positive result)");
+    assert_eq!(
+        pushed_flags & 0x80,
+        0,
+        "SF should be clear (positive result)"
+    );
 }
 
 #[test]
@@ -608,7 +620,10 @@ fn test_popfq_after_comparison() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(cf_set(regs.rflags), "CF should be restored from first comparison");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be restored from first comparison"
+    );
 }
 
 #[test]
@@ -635,7 +650,10 @@ fn test_pushfq_popfq_in_loop_simulation() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(cf_set(regs.rflags), "CF should be preserved through multiple save/restore");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be preserved through multiple save/restore"
+    );
     assert_eq!(regs.rsp, 0x1000, "Stack should be balanced");
 }
 
@@ -763,7 +781,11 @@ fn test_strict_pushfq_popfq_round_trip() {
     let before = regs.rflags & 0x8D5;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let out = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(out.rflags & 0x8D5, before, "status flags survive PUSHFQ/POPFQ round trip");
+    assert_eq!(
+        out.rflags & 0x8D5,
+        before,
+        "status flags survive PUSHFQ/POPFQ round trip"
+    );
     assert_eq!(out.rsp, 0x4000, "RSP restored after round trip");
 }
 
@@ -777,5 +799,9 @@ fn test_strict_pushf_16bit_rsp_delta() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let out = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(out.rsp, 0x4000 - 2, "16-bit PUSHF decrements RSP by 2");
-    assert_eq!(read_mem_at_u16(&mem, 0x4000 - 2) & 0x1, 0x1, "CF in 16-bit flag image");
+    assert_eq!(
+        read_mem_at_u16(&mem, 0x4000 - 2) & 0x1,
+        0x1,
+        "CF in 16-bit flag image"
+    );
 }

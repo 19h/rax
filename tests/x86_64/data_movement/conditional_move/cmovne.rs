@@ -19,7 +19,11 @@ fn test_cmovne_eax_ebx_zf_clear() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved from EBX when ZF=0");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved from EBX when ZF=0"
+    );
 }
 
 // CMOVNE when ZF is set (should not move)
@@ -36,7 +40,11 @@ fn test_cmovne_eax_ebx_zf_set() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000000, "EAX should not be moved when ZF=1");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000000,
+        "EAX should not be moved when ZF=1"
+    );
 }
 
 // CMOVNZ (same as CMOVNE) when ZF is clear
@@ -53,7 +61,11 @@ fn test_cmovnz_edx_ecx_zf_clear() {
     regs.rcx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x44444444, "EDX should be moved from ECX when ZF=0");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x44444444,
+        "EDX should be moved from ECX when ZF=0"
+    );
 }
 
 // Test 16-bit operand
@@ -70,7 +82,11 @@ fn test_cmovne_ax_bx_zf_clear() {
     regs.rbx = 0x2222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x2222, "AX should be moved from BX when ZF=0");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x2222,
+        "AX should be moved from BX when ZF=0"
+    );
 }
 
 // Test 64-bit operand
@@ -87,7 +103,10 @@ fn test_cmovne_rax_rbx_zf_clear() {
     regs.rbx = 0x2222222222222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x2222222222222222, "RAX should be moved from RBX when ZF=0");
+    assert_eq!(
+        regs.rax, 0x2222222222222222,
+        "RAX should be moved from RBX when ZF=0"
+    );
 }
 
 // Test with extended registers
@@ -104,7 +123,11 @@ fn test_cmovne_r8d_r9d_zf_clear() {
     regs.r9 = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0x22222222, "R8D should be moved from R9D when ZF=0");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0x22222222,
+        "R8D should be moved from R9D when ZF=0"
+    );
 }
 
 #[test]
@@ -120,7 +143,10 @@ fn test_cmovne_rax_r10_zf_clear() {
     regs.r10 = 0x3333333333333333;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x3333333333333333, "RAX should be moved from R10 when ZF=0");
+    assert_eq!(
+        regs.rax, 0x3333333333333333,
+        "RAX should be moved from R10 when ZF=0"
+    );
 }
 
 // Test that flags are preserved
@@ -154,7 +180,11 @@ fn test_cmovne_esi_edi_zf_clear() {
     regs.rdi = 0x66666666;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rsi & 0xFFFFFFFF, 0x66666666, "ESI should be moved from EDI when ZF=0");
+    assert_eq!(
+        regs.rsi & 0xFFFFFFFF,
+        0x66666666,
+        "ESI should be moved from EDI when ZF=0"
+    );
 }
 
 // Test moving zero value
@@ -205,7 +235,10 @@ fn test_cmovne_eax_ebx_zeros_upper_32() {
     regs.rbx = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000012345678, "Upper 32 bits should be zeroed");
+    assert_eq!(
+        regs.rax, 0x0000000012345678,
+        "Upper 32 bits should be zeroed"
+    );
 }
 
 // Test chaining multiple conditional moves
@@ -245,7 +278,11 @@ fn test_cmovne_practical_conditional_assignment() {
     regs.rbx = 0x22222222; // value (new value)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x22222222, "result should be updated");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x22222222,
+        "result should be updated"
+    );
 }
 
 #[test]
@@ -262,7 +299,11 @@ fn test_cmovne_practical_conditional_assignment_no_move() {
     regs.rbx = 0x22222222; // value (new value)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x11111111, "result should stay the same");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x11111111,
+        "result should stay the same"
+    );
 }
 
 // Test with comparison instruction
@@ -280,7 +321,11 @@ fn test_cmovne_after_cmp_not_equal() {
     regs.rcx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x44444444, "EDX should be moved when RAX != RBX");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x44444444,
+        "EDX should be moved when RAX != RBX"
+    );
 }
 
 #[test]
@@ -297,7 +342,11 @@ fn test_cmovne_after_cmp_equal() {
     regs.rcx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x33333333, "EDX should not be moved when RAX == RBX");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x33333333,
+        "EDX should not be moved when RAX == RBX"
+    );
 }
 
 // Test with all registers to verify encoding
@@ -314,7 +363,11 @@ fn test_cmovne_all_gp_registers() {
     regs.rbx = 0xBBBBBBBB;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdi & 0xFFFFFFFF, 0xBBBBBBBB, "EDI should be moved from EBX");
+    assert_eq!(
+        regs.rdi & 0xFFFFFFFF,
+        0xBBBBBBBB,
+        "EDI should be moved from EBX"
+    );
 }
 
 // Test edge case: source and destination are the same register
@@ -330,7 +383,10 @@ fn test_cmovne_same_register() {
     regs.rax = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000012345678, "RAX upper bits should be zeroed even for same-reg move");
+    assert_eq!(
+        regs.rax, 0x0000000012345678,
+        "RAX upper bits should be zeroed even for same-reg move"
+    );
 }
 
 // Test alternating CMOVE/CMOVNE usage
@@ -351,6 +407,14 @@ fn test_cmovne_alternating_with_cmove() {
     regs.rsi = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved by CMOVE");
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x44444444, "EDX should be moved by CMOVNE");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved by CMOVE"
+    );
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x44444444,
+        "EDX should be moved by CMOVNE"
+    );
 }

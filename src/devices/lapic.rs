@@ -359,7 +359,11 @@ impl LocalApic {
             "LAPIC IPI: vector={:#x}, delivery_mode={}, dest_mode={}, shorthand={}, dest={:#x}, level_assert={}",
             vector,
             delivery_mode,
-            if dest_mode_logical { "logical" } else { "physical" },
+            if dest_mode_logical {
+                "logical"
+            } else {
+                "physical"
+            },
             shorthand,
             dest_field,
             level_assert
@@ -529,27 +533,15 @@ impl LocalApic {
             LAPIC_SVR => self.svr,
             o if o >= LAPIC_ISR_BASE && o < LAPIC_ISR_BASE + 0x80 => {
                 let idx = ((o - LAPIC_ISR_BASE) / 0x10) as usize;
-                if idx < 8 {
-                    self.isr[idx]
-                } else {
-                    0
-                }
+                if idx < 8 { self.isr[idx] } else { 0 }
             }
             o if o >= LAPIC_TMR_BASE && o < LAPIC_TMR_BASE + 0x80 => {
                 let idx = ((o - LAPIC_TMR_BASE) / 0x10) as usize;
-                if idx < 8 {
-                    self.tmr[idx]
-                } else {
-                    0
-                }
+                if idx < 8 { self.tmr[idx] } else { 0 }
             }
             o if o >= LAPIC_IRR_BASE && o < LAPIC_IRR_BASE + 0x80 => {
                 let idx = ((o - LAPIC_IRR_BASE) / 0x10) as usize;
-                if idx < 8 {
-                    self.irr[idx]
-                } else {
-                    0
-                }
+                if idx < 8 { self.irr[idx] } else { 0 }
             }
             LAPIC_ESR => self.esr,
             LAPIC_ICR_LOW => self.icr as u32,

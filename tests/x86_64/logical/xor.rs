@@ -1,5 +1,5 @@
-use crate::common::{run_until_hlt, setup_vm};
 use crate::common::*;
+use crate::common::{run_until_hlt, setup_vm};
 use rax::backend::emulator::x86_64::flags;
 use rax::cpu::Registers;
 
@@ -461,7 +461,8 @@ fn test_xor_byte_ptr_imm8() {
 #[test]
 fn test_xor_word_ptr_imm16() {
     let code = [
-        0x66, 0x81, 0x35, 0xf7, 0x0f, 0x00, 0x00, 0xFF, 0xFF, // XOR WORD PTR [rip+0x0FF7], 0xFFFF
+        0x66, 0x81, 0x35, 0xf7, 0x0f, 0x00, 0x00, 0xFF,
+        0xFF, // XOR WORD PTR [rip+0x0FF7], 0xFFFF
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -476,7 +477,8 @@ fn test_xor_word_ptr_imm16() {
 #[test]
 fn test_xor_dword_ptr_imm32() {
     let code = [
-        0x81, 0x35, 0xf6, 0x0f, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, // XOR DWORD PTR [rip+0x0FF6], 0x0000FFFF
+        0x81, 0x35, 0xf6, 0x0f, 0x00, 0x00, 0xFF, 0xFF, 0x00,
+        0x00, // XOR DWORD PTR [rip+0x0FF6], 0x0000FFFF
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -491,7 +493,8 @@ fn test_xor_dword_ptr_imm32() {
 #[test]
 fn test_xor_qword_ptr_imm32() {
     let code = [
-        0x48, 0x81, 0x35, 0xf5, 0x0f, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, // XOR QWORD PTR [rip+0x0FF5], 0xFFFFFFFF
+        0x48, 0x81, 0x35, 0xf5, 0x0f, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
+        0xFF, // XOR QWORD PTR [rip+0x0FF5], 0xFFFFFFFF
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -542,7 +545,11 @@ fn test_xor_toggle_bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0x0F, "Toggle bit 4 off: 0x1F ^ 0x10 = 0x0F");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x0F,
+        "Toggle bit 4 off: 0x1F ^ 0x10 = 0x0F"
+    );
 }
 
 #[test]
@@ -629,7 +636,10 @@ fn test_strict_xor_self_zeroes_and_flags() {
     assert!(zf_set(regs.rflags), "ZF set");
     assert!(!sf_set(regs.rflags), "SF clear");
     assert!(pf_set(regs.rflags), "PF set (0 even parity)");
-    assert!(!cf_set(regs.rflags) && !of_set(regs.rflags), "CF/OF cleared");
+    assert!(
+        !cf_set(regs.rflags) && !of_set(regs.rflags),
+        "CF/OF cleared"
+    );
 }
 
 #[test]
@@ -646,7 +656,10 @@ fn test_strict_xor_r64_result_and_flags() {
     assert!(sf_set(regs.rflags), "SF set");
     assert!(!zf_set(regs.rflags), "ZF clear");
     assert!(pf_set(regs.rflags), "PF set (0xFF even parity)");
-    assert!(!cf_set(regs.rflags) && !of_set(regs.rflags), "CF/OF cleared");
+    assert!(
+        !cf_set(regs.rflags) && !of_set(regs.rflags),
+        "CF/OF cleared"
+    );
 }
 
 #[test]
@@ -670,5 +683,8 @@ fn test_strict_xor_r32_zero_extends() {
     regs.rbx = 0x0000_0000_5555_5555;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000_0000_FFFF_FFFF, "32-bit XOR zero-extends upper");
+    assert_eq!(
+        regs.rax, 0x0000_0000_FFFF_FFFF,
+        "32-bit XOR zero-extends upper"
+    );
 }

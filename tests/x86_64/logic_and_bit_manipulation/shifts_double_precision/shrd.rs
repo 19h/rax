@@ -20,8 +20,8 @@
 // - Count is 0: No flags affected
 
 use crate::common::*;
-use rax::cpu::Registers;
 use rax::backend::emulator::x86_64::flags;
+use rax::cpu::Registers;
 use std::sync::Arc;
 
 // ============================================================================
@@ -44,7 +44,11 @@ fn test_shrd_ax_bx_imm8() {
     // AX: 0001_0010_0011_0100 shifted right by 4
     // Bits from BX (1010_1011_1100_1101) fill from left
     // Result: 1101_0001_0010_0011
-    assert_eq!(regs.rax & 0xFFFF, 0xD123, "AX: 0x1234 SHRD 4 from 0xABCD = 0xD123");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0xD123,
+        "AX: 0x1234 SHRD 4 from 0xABCD = 0xD123"
+    );
     assert!(!cf_set(regs.rflags), "CF: bit shifted out was 0");
 }
 
@@ -64,7 +68,11 @@ fn test_shrd_ax_bx_cl() {
 
     // Shift AX right by 8, fill with 8 bits from BX
     // AX low byte = 0x12, fill with BX low byte = 0xCD
-    assert_eq!(regs.rax & 0xFFFF, 0xCD12, "AX: 0x1234 SHRD 8 from 0xABCD = 0xCD12");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0xCD12,
+        "AX: 0x1234 SHRD 8 from 0xABCD = 0xCD12"
+    );
 }
 
 #[test]
@@ -119,7 +127,11 @@ fn test_shrd_eax_ebx_imm8() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Shift EAX right by 4, fill with low 4 bits from EBX
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x11234567, "EAX: 0x12345678 SHRD 4 from 0xABCDEF01");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x11234567,
+        "EAX: 0x12345678 SHRD 4 from 0xABCDEF01"
+    );
 }
 
 #[test]
@@ -136,7 +148,11 @@ fn test_shrd_eax_ebx_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x01123456, "EAX: 0x12345678 SHRD 8 from 0xABCDEF01");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x01123456,
+        "EAX: 0x12345678 SHRD 8 from 0xABCDEF01"
+    );
 }
 
 #[test]
@@ -260,7 +276,10 @@ fn test_shrd_rax_full_width() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x123456789ABCDEF0, "RAX: unchanged when count masks to 0");
+    assert_eq!(
+        regs.rax, 0x123456789ABCDEF0,
+        "RAX: unchanged when count masks to 0"
+    );
 }
 
 // ============================================================================
@@ -324,7 +343,11 @@ fn test_shrd_r14_r15_imm8() {
 fn test_shrd_word_ptr_imm8() {
     // SHRD word ptr [DATA_ADDR], BX, imm8
     let code = [
-        0x66, 0x0f, 0xac, 0x1c, 0x25, // SHRD word ptr [DATA_ADDR], BX, imm8
+        0x66,
+        0x0f,
+        0xac,
+        0x1c,
+        0x25, // SHRD word ptr [DATA_ADDR], BX, imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -347,7 +370,10 @@ fn test_shrd_word_ptr_imm8() {
 fn test_shrd_dword_ptr_cl() {
     // SHRD dword ptr [DATA_ADDR], EBX, CL
     let code = [
-        0x0f, 0xad, 0x1c, 0x25, // SHRD dword ptr [DATA_ADDR], EBX, CL
+        0x0f,
+        0xad,
+        0x1c,
+        0x25, // SHRD dword ptr [DATA_ADDR], EBX, CL
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -363,14 +389,21 @@ fn test_shrd_dword_ptr_cl() {
     run_until_hlt(&mut vcpu).unwrap();
     let result = read_mem_u32(&mem);
 
-    assert_eq!(result, 0x01123456, "Memory: 0x12345678 SHRD 8 from 0xABCDEF01");
+    assert_eq!(
+        result, 0x01123456,
+        "Memory: 0x12345678 SHRD 8 from 0xABCDEF01"
+    );
 }
 
 #[test]
 fn test_shrd_qword_ptr_imm8() {
     // SHRD qword ptr [DATA_ADDR], RBX, imm8
     let code = [
-        0x48, 0x0f, 0xac, 0x1c, 0x25, // SHRD qword ptr [DATA_ADDR], RBX, imm8
+        0x48,
+        0x0f,
+        0xac,
+        0x1c,
+        0x25, // SHRD qword ptr [DATA_ADDR], RBX, imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -413,7 +446,10 @@ fn test_shrd_multi_precision_shift() {
     // After SHRD RBX, RAX, 4: RBX gets low 4 bits of RAX
     // RAX: 0x123456789ABCDEF0, low 4 bits = 0x0
     // RBX: 0xFEDCBA9876543210 >> 4 with 0x0 from top = 0x0FEDCBA987654321
-    assert_eq!(regs.rbx, 0x0FEDCBA987654321, "RBX: low 64 bits with fill from RAX");
+    assert_eq!(
+        regs.rbx, 0x0FEDCBA987654321,
+        "RBX: low 64 bits with fill from RAX"
+    );
     assert_eq!(regs.rax, 0x0123456789ABCDEF, "RAX: high 64 bits shifted");
 }
 
@@ -430,7 +466,11 @@ fn test_shrd_extract_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xABCD0000, "EAX: extracted low 16 bits from EBX");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xABCD0000,
+        "EAX: extracted low 16 bits from EBX"
+    );
 }
 
 #[test]
@@ -446,7 +486,11 @@ fn test_shrd_flag_behavior() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000000, "EAX: 0x00000001 SHRD 1 = 0x00000000");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000000,
+        "EAX: 0x00000001 SHRD 1 = 0x00000000"
+    );
     assert!(cf_set(regs.rflags), "CF: bit shifted out was 1");
     // OF: sign changed from positive to negative? No, result is still positive
     assert!(!of_set(regs.rflags), "OF: no sign change");
@@ -467,7 +511,11 @@ fn test_shrd_concatenate_values() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000000, "EAX: concatenated result");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000000,
+        "EAX: concatenated result"
+    );
 }
 
 #[test]

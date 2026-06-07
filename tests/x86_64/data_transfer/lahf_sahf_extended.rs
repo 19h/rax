@@ -32,7 +32,10 @@ fn test_lahf_basic() {
 
     // AH should contain SF:ZF:0:AF:0:PF:1:CF
     let ah = ((regs.rax >> 8) & 0xFF) as u8;
-    assert_eq!(ah, 0x87, "AH should contain flags: SF=1, ZF=0, AF=0, PF=1, CF=1");
+    assert_eq!(
+        ah, 0x87,
+        "AH should contain flags: SF=1, ZF=0, AF=0, PF=1, CF=1"
+    );
 }
 
 #[test]
@@ -162,7 +165,11 @@ fn test_lahf_preserves_rax_lower_byte() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x42, "AL should be preserved");
-    assert_eq!(regs.rax & 0xFFFFFFFFFFFF0000, 0x12345678ABCD0000, "Upper bytes preserved");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFFFFFF0000,
+        0x12345678ABCD0000,
+        "Upper bytes preserved"
+    );
 }
 
 #[test]
@@ -244,11 +251,11 @@ fn test_lahf_sahf_save_restore_pattern() {
 fn test_lahf_individual_flags() {
     // Test individual flag patterns
     let test_cases = vec![
-        (0x01, "CF only"),     // 00000001
-        (0x04, "PF only"),     // 00000100
-        (0x10, "AF only"),     // 00010000
-        (0x40, "ZF only"),     // 01000000
-        (0x80, "SF only"),     // 10000000
+        (0x01, "CF only"), // 00000001
+        (0x04, "PF only"), // 00000100
+        (0x10, "AF only"), // 00010000
+        (0x40, "ZF only"), // 01000000
+        (0x80, "SF only"), // 10000000
     ];
 
     for (flags, description) in test_cases {
@@ -288,7 +295,12 @@ fn test_sahf_individual_flags() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rflags & 0xD5, ah_value as u64, "SAHF failed for {}", description);
+        assert_eq!(
+            regs.rflags & 0xD5,
+            ah_value as u64,
+            "SAHF failed for {}",
+            description
+        );
     }
 }
 
@@ -363,15 +375,17 @@ fn test_lahf_sahf_multiple_times() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rflags & 0xD5, expected, "Flags should be preserved through multiple LAHF/SAHF");
+    assert_eq!(
+        regs.rflags & 0xD5,
+        expected,
+        "Flags should be preserved through multiple LAHF/SAHF"
+    );
 }
 
 #[test]
 fn test_sahf_with_different_ah_values() {
     // Test various AH values
-    let test_cases = vec![
-        0x00, 0x02, 0xFF, 0xAA, 0x55, 0xC7, 0x85, 0x47
-    ];
+    let test_cases = vec![0x00, 0x02, 0xFF, 0xAA, 0x55, 0xC7, 0x85, 0x47];
 
     for ah_val in test_cases {
         let code = [
@@ -384,7 +398,12 @@ fn test_sahf_with_different_ah_values() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rflags & 0xD5, (ah_val as u64) & 0xD5, "SAHF with AH={:#x}", ah_val);
+        assert_eq!(
+            regs.rflags & 0xD5,
+            (ah_val as u64) & 0xD5,
+            "SAHF with AH={:#x}",
+            ah_val
+        );
     }
 }
 
@@ -400,7 +419,11 @@ fn test_lahf_preserves_upper_rax() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFFFFFF00FF, 0x123456789ABC0000, "Upper and lower bytes preserved");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFFFFFF00FF,
+        0x123456789ABC0000,
+        "Upper and lower bytes preserved"
+    );
 }
 
 #[test]
@@ -420,5 +443,9 @@ fn test_lahf_sahf_compatibility() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rflags & 0xD5, expected, "Flags preserved through save/restore");
+    assert_eq!(
+        regs.rflags & 0xD5,
+        expected,
+        "Flags preserved through save/restore"
+    );
 }

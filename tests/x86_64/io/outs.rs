@@ -11,8 +11,8 @@
 //! Reference: docs/outs:outsb:outsw:outsd.txt
 
 use crate::common::*;
-use rax::cpu::{Registers, VcpuExit};
 use rax::backend::emulator::x86_64::flags;
+use rax::cpu::{Registers, VcpuExit};
 
 // ============================================================================
 // OUTSB (opcode 6E) - Output byte string
@@ -65,7 +65,7 @@ fn test_outsb_df_clear_increment() {
 
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { .. } => {},
+            VcpuExit::IoOut { .. } => {}
             VcpuExit::Hlt => break,
             _ => continue,
         }
@@ -89,7 +89,7 @@ fn test_outsb_df_set_decrement() {
 
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { .. } => {},
+            VcpuExit::IoOut { .. } => {}
             VcpuExit::Hlt => break,
             _ => continue,
         }
@@ -114,14 +114,18 @@ fn test_outsb_preserves_flags() {
 
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { .. } => {},
+            VcpuExit::IoOut { .. } => {}
             VcpuExit::Hlt => break,
             _ => continue,
         }
     }
 
     let regs = vcpu.get_regs().unwrap();
-    assert_eq!(regs.rflags & 0xFFF, initial_flags & 0xFFF, "Flags should be preserved");
+    assert_eq!(
+        regs.rflags & 0xFFF,
+        initial_flags & 0xFFF,
+        "Flags should be preserved"
+    );
 }
 
 #[test]
@@ -187,7 +191,11 @@ fn test_outsw_basic() {
     }
 
     let regs = vcpu.get_regs().unwrap();
-    assert_eq!(captured_value, Some(0x1234), "Should output word from [RSI]");
+    assert_eq!(
+        captured_value,
+        Some(0x1234),
+        "Should output word from [RSI]"
+    );
     assert_eq!(regs.rsi, DATA_ADDR + 2, "RSI should increment by 2");
 }
 
@@ -205,7 +213,7 @@ fn test_outsw_df_clear_increment() {
 
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { .. } => {},
+            VcpuExit::IoOut { .. } => {}
             VcpuExit::Hlt => break,
             _ => continue,
         }
@@ -229,7 +237,7 @@ fn test_outsw_df_set_decrement() {
 
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { .. } => {},
+            VcpuExit::IoOut { .. } => {}
             VcpuExit::Hlt => break,
             _ => continue,
         }
@@ -301,7 +309,11 @@ fn test_outsd_basic() {
     }
 
     let regs = vcpu.get_regs().unwrap();
-    assert_eq!(captured_value, Some(0x12345678), "Should output dword from [RSI]");
+    assert_eq!(
+        captured_value,
+        Some(0x12345678),
+        "Should output dword from [RSI]"
+    );
     assert_eq!(regs.rsi, DATA_ADDR + 4, "RSI should increment by 4");
 }
 
@@ -319,7 +331,7 @@ fn test_outsd_df_clear_increment() {
 
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { .. } => {},
+            VcpuExit::IoOut { .. } => {}
             VcpuExit::Hlt => break,
             _ => continue,
         }
@@ -343,7 +355,7 @@ fn test_outsd_df_set_decrement() {
 
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { .. } => {},
+            VcpuExit::IoOut { .. } => {}
             VcpuExit::Hlt => break,
             _ => continue,
         }
@@ -519,7 +531,11 @@ fn test_rep_outsw_basic() {
     assert_eq!(values, vec![0x1000, 0x2000, 0x3000, 0x4000]);
     let regs = vcpu.get_regs().unwrap();
     assert_eq!(regs.rcx, 0);
-    assert_eq!(regs.rsi, DATA_ADDR + 8, "RSI should increment by 8 (4 words)");
+    assert_eq!(
+        regs.rsi,
+        DATA_ADDR + 8,
+        "RSI should increment by 8 (4 words)"
+    );
 }
 
 #[test]
@@ -576,7 +592,11 @@ fn test_rep_outsw_df_set() {
     assert_eq!(count, 3);
     let regs = vcpu.get_regs().unwrap();
     assert_eq!(regs.rcx, 0);
-    assert_eq!(regs.rsi, DATA_ADDR + 100 - 6, "RSI should decrement by 6 (3 words)");
+    assert_eq!(
+        regs.rsi,
+        DATA_ADDR + 100 - 6,
+        "RSI should decrement by 6 (3 words)"
+    );
 }
 
 // ============================================================================
@@ -615,7 +635,11 @@ fn test_rep_outsd_basic() {
     assert_eq!(values, vec![0x10000000, 0x20000000, 0x30000000]);
     let regs = vcpu.get_regs().unwrap();
     assert_eq!(regs.rcx, 0);
-    assert_eq!(regs.rsi, DATA_ADDR + 12, "RSI should increment by 12 (3 dwords)");
+    assert_eq!(
+        regs.rsi,
+        DATA_ADDR + 12,
+        "RSI should increment by 12 (3 dwords)"
+    );
 }
 
 #[test]
@@ -671,7 +695,11 @@ fn test_rep_outsd_df_set() {
     assert_eq!(count, 2);
     let regs = vcpu.get_regs().unwrap();
     assert_eq!(regs.rcx, 0);
-    assert_eq!(regs.rsi, DATA_ADDR + 200 - 8, "RSI should decrement by 8 (2 dwords)");
+    assert_eq!(
+        regs.rsi,
+        DATA_ADDR + 200 - 8,
+        "RSI should decrement by 8 (2 dwords)"
+    );
 }
 
 // ============================================================================

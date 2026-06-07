@@ -17,7 +17,11 @@ fn test_xadd_eax_ebx() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFFFFFFFF, 0x1E, "EAX should be 10 + 20 = 30");
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x0A, "EBX should have old EAX value (10)");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0x0A,
+        "EBX should have old EAX value (10)"
+    );
 }
 
 // Test that flags are set correctly
@@ -32,7 +36,11 @@ fn test_xadd_sets_flags() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should be 0 (overflow)");
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0xFFFFFFFF, "EBX should have old EAX value");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EBX should have old EAX value"
+    );
     assert!(regs.rflags & 0x40 != 0, "ZF should be set (result is zero)");
     assert!(regs.rflags & 0x01 != 0, "CF should be set (carry occurred)");
 }
@@ -199,7 +207,11 @@ fn test_xadd_signed_negative() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFD, "EAX should be -1 + -2 = -3");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFD,
+        "EAX should be -1 + -2 = -3"
+    );
     assert_eq!(regs.rbx & 0xFFFFFFFF, 0xFFFFFFFF, "EBX should be -1");
 }
 
@@ -207,8 +219,10 @@ fn test_xadd_signed_negative() {
 #[test]
 fn test_xadd_32bit_zeros_upper() {
     let code = [
-        0x48, 0xb8, 0xef, 0xbe, 0xad, 0xde, 0xef, 0xbe, 0xad, 0xde, // MOV RAX, 0xDEADBEEFDEADBEEF
-        0x48, 0xbb, 0xef, 0xbe, 0xad, 0xde, 0xef, 0xbe, 0xad, 0xde, // MOV RBX, 0xDEADBEEFDEADBEEF
+        0x48, 0xb8, 0xef, 0xbe, 0xad, 0xde, 0xef, 0xbe, 0xad,
+        0xde, // MOV RAX, 0xDEADBEEFDEADBEEF
+        0x48, 0xbb, 0xef, 0xbe, 0xad, 0xde, 0xef, 0xbe, 0xad,
+        0xde, // MOV RBX, 0xDEADBEEFDEADBEEF
         0x48, 0xc7, 0xc0, 0x0a, 0x00, 0x00, 0x00, // MOV RAX, 10
         0x48, 0xc7, 0xc3, 0x14, 0x00, 0x00, 0x00, // MOV RBX, 20
         0x0f, 0xc1, 0xd8, // XADD EAX, EBX
@@ -216,8 +230,14 @@ fn test_xadd_32bit_zeros_upper() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x000000000000001E, "RAX upper bits should be zeroed");
-    assert_eq!(regs.rbx, 0x000000000000000A, "RBX upper bits should be zeroed");
+    assert_eq!(
+        regs.rax, 0x000000000000001E,
+        "RAX upper bits should be zeroed"
+    );
+    assert_eq!(
+        regs.rbx, 0x000000000000000A,
+        "RBX upper bits should be zeroed"
+    );
 }
 
 // Test sign flag
@@ -231,8 +251,15 @@ fn test_xadd_sign_flag() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000001, "EAX should be 0x80000001");
-    assert!(regs.rflags & 0x80 != 0, "SF should be set (negative result)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000001,
+        "EAX should be 0x80000001"
+    );
+    assert!(
+        regs.rflags & 0x80 != 0,
+        "SF should be set (negative result)"
+    );
 }
 
 // Test overflow flag
@@ -247,7 +274,10 @@ fn test_xadd_overflow_flag() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX should overflow");
-    assert!(regs.rflags & 0x800 != 0, "OF should be set (signed overflow)");
+    assert!(
+        regs.rflags & 0x800 != 0,
+        "OF should be set (signed overflow)"
+    );
 }
 
 // Test parity flag
@@ -262,7 +292,10 @@ fn test_xadd_parity_flag() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFFFFFFFF, 3, "EAX should be 3");
-    assert!(regs.rflags & 0x04 != 0, "PF should be set (even parity in low byte)");
+    assert!(
+        regs.rflags & 0x04 != 0,
+        "PF should be set (even parity in low byte)"
+    );
 }
 
 // Test auxiliary carry flag
@@ -309,8 +342,16 @@ fn test_xadd_max_values() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFE, "EAX should be 0xFFFFFFFE");
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0xFFFFFFFF, "EBX should be 0xFFFFFFFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFE,
+        "EAX should be 0xFFFFFFFE"
+    );
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EBX should be 0xFFFFFFFF"
+    );
     assert!(regs.rflags & 0x01 != 0, "CF should be set (carry out)");
 }
 

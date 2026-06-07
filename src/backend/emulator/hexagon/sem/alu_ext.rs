@@ -15,7 +15,7 @@
 //! See `sem/alu.rs` and `sem/mpy.rs` for the established pattern.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fimm_s, fimm_u, fld, SemCtx};
+use super::{SemCtx, fimm_s, fimm_u, fld};
 
 // --- macro-equivalent lane helpers (mirror imported/macros.def) -------------
 //   fGETHALF(N,SRC)  = (size2s_t)((SRC>>(N*16))&0xffff)   signed 16
@@ -70,11 +70,7 @@ fn set_byte(dst: u64, n: u32, val: i64) -> u64 {
 /// f8BITSOF(VAL) = VAL ? 0xff : 0x00.
 #[inline]
 fn bits8of(cond: bool) -> u8 {
-    if cond {
-        0xff
-    } else {
-        0x00
-    }
+    if cond { 0xff } else { 0x00 }
 }
 
 /// `conv_round(a, n)` — convergent (".5 rounds toward even") rounding to a
@@ -141,11 +137,13 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         // ============ halfword add with placement (A2_addh_*) ============
         // l16: RdV = fSXTN(16,32, half(Rt) + half(Rs))   (result in low half, sign-ext)
         Opcode::A2_addh_l16_ll => {
-            let v = ((get_half(t(ctx) as u64, 0) + get_half(s(ctx) as u64, 0)) as i16 as i32) as u32;
+            let v =
+                ((get_half(t(ctx) as u64, 0) + get_half(s(ctx) as u64, 0)) as i16 as i32) as u32;
             ctx.set_r(rd, v);
         }
         Opcode::A2_addh_l16_hl => {
-            let v = ((get_half(t(ctx) as u64, 0) + get_half(s(ctx) as u64, 1)) as i16 as i32) as u32;
+            let v =
+                ((get_half(t(ctx) as u64, 0) + get_half(s(ctx) as u64, 1)) as i16 as i32) as u32;
             ctx.set_r(rd, v);
         }
         // l16:sat: RdV = fSATH(half(Rt) + half(Rs))
@@ -176,30 +174,36 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         }
         // h16:sat: RdV = fSATH(half(Rt) + half(Rs)) << 16
         Opcode::A2_addh_h16_sat_ll => {
-            let v = (ctx.sat_n(get_half(t(ctx) as u64, 0) + get_half(s(ctx) as u64, 0), 16) as u32) << 16;
+            let v = (ctx.sat_n(get_half(t(ctx) as u64, 0) + get_half(s(ctx) as u64, 0), 16) as u32)
+                << 16;
             ctx.set_r(rd, v);
         }
         Opcode::A2_addh_h16_sat_lh => {
-            let v = (ctx.sat_n(get_half(t(ctx) as u64, 0) + get_half(s(ctx) as u64, 1), 16) as u32) << 16;
+            let v = (ctx.sat_n(get_half(t(ctx) as u64, 0) + get_half(s(ctx) as u64, 1), 16) as u32)
+                << 16;
             ctx.set_r(rd, v);
         }
         Opcode::A2_addh_h16_sat_hl => {
-            let v = (ctx.sat_n(get_half(t(ctx) as u64, 1) + get_half(s(ctx) as u64, 0), 16) as u32) << 16;
+            let v = (ctx.sat_n(get_half(t(ctx) as u64, 1) + get_half(s(ctx) as u64, 0), 16) as u32)
+                << 16;
             ctx.set_r(rd, v);
         }
         Opcode::A2_addh_h16_sat_hh => {
-            let v = (ctx.sat_n(get_half(t(ctx) as u64, 1) + get_half(s(ctx) as u64, 1), 16) as u32) << 16;
+            let v = (ctx.sat_n(get_half(t(ctx) as u64, 1) + get_half(s(ctx) as u64, 1), 16) as u32)
+                << 16;
             ctx.set_r(rd, v);
         }
 
         // ============ halfword sub with placement (A2_subh_*) ============
         // l16: RdV = fSXTN(16,32, half(Rt) - half(Rs))
         Opcode::A2_subh_l16_ll => {
-            let v = ((get_half(t(ctx) as u64, 0) - get_half(s(ctx) as u64, 0)) as i16 as i32) as u32;
+            let v =
+                ((get_half(t(ctx) as u64, 0) - get_half(s(ctx) as u64, 0)) as i16 as i32) as u32;
             ctx.set_r(rd, v);
         }
         Opcode::A2_subh_l16_hl => {
-            let v = ((get_half(t(ctx) as u64, 0) - get_half(s(ctx) as u64, 1)) as i16 as i32) as u32;
+            let v =
+                ((get_half(t(ctx) as u64, 0) - get_half(s(ctx) as u64, 1)) as i16 as i32) as u32;
             ctx.set_r(rd, v);
         }
         Opcode::A2_subh_l16_sat_ll => {
@@ -228,19 +232,23 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             ctx.set_r(rd, v);
         }
         Opcode::A2_subh_h16_sat_ll => {
-            let v = (ctx.sat_n(get_half(t(ctx) as u64, 0) - get_half(s(ctx) as u64, 0), 16) as u32) << 16;
+            let v = (ctx.sat_n(get_half(t(ctx) as u64, 0) - get_half(s(ctx) as u64, 0), 16) as u32)
+                << 16;
             ctx.set_r(rd, v);
         }
         Opcode::A2_subh_h16_sat_lh => {
-            let v = (ctx.sat_n(get_half(t(ctx) as u64, 0) - get_half(s(ctx) as u64, 1), 16) as u32) << 16;
+            let v = (ctx.sat_n(get_half(t(ctx) as u64, 0) - get_half(s(ctx) as u64, 1), 16) as u32)
+                << 16;
             ctx.set_r(rd, v);
         }
         Opcode::A2_subh_h16_sat_hl => {
-            let v = (ctx.sat_n(get_half(t(ctx) as u64, 1) - get_half(s(ctx) as u64, 0), 16) as u32) << 16;
+            let v = (ctx.sat_n(get_half(t(ctx) as u64, 1) - get_half(s(ctx) as u64, 0), 16) as u32)
+                << 16;
             ctx.set_r(rd, v);
         }
         Opcode::A2_subh_h16_sat_hh => {
-            let v = (ctx.sat_n(get_half(t(ctx) as u64, 1) - get_half(s(ctx) as u64, 1), 16) as u32) << 16;
+            let v = (ctx.sat_n(get_half(t(ctx) as u64, 1) - get_half(s(ctx) as u64, 1), 16) as u32)
+                << 16;
             ctx.set_r(rd, v);
         }
 
@@ -759,7 +767,11 @@ fn vr_minmax_half(ctx: &mut SemCtx, rss: u8, ru: u32, rx: u8, is_max: bool, uns:
     };
     let mut addr: i64 = get_word(acc, 1);
     for i in 0..4u32 {
-        let lane = if uns { get_uhalf(src, i) } else { get_half(src, i) };
+        let lane = if uns {
+            get_uhalf(src, i)
+        } else {
+            get_half(src, i)
+        };
         let better = if is_max { best < lane } else { best > lane };
         if better {
             best = lane;

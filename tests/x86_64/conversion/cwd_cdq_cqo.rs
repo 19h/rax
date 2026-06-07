@@ -31,7 +31,11 @@ fn test_cwd_positive_value() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0x1234, "AX should remain 0x1234");
-    assert_eq!(regs.rdx & 0xFFFF, 0x0000, "DX should be 0x0000 (sign-extended from positive)");
+    assert_eq!(
+        regs.rdx & 0xFFFF,
+        0x0000,
+        "DX should be 0x0000 (sign-extended from positive)"
+    );
 }
 
 #[test]
@@ -48,7 +52,11 @@ fn test_cwd_negative_value() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0x8000, "AX should remain 0x8000");
-    assert_eq!(regs.rdx & 0xFFFF, 0xFFFF, "DX should be 0xFFFF (sign-extended from negative)");
+    assert_eq!(
+        regs.rdx & 0xFFFF,
+        0xFFFF,
+        "DX should be 0xFFFF (sign-extended from negative)"
+    );
 }
 
 #[test]
@@ -64,7 +72,11 @@ fn test_cwd_zero() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0x0000, "AX should be 0");
-    assert_eq!(regs.rdx & 0xFFFF, 0x0000, "DX should be 0 (sign-extended from 0)");
+    assert_eq!(
+        regs.rdx & 0xFFFF,
+        0x0000,
+        "DX should be 0 (sign-extended from 0)"
+    );
 }
 
 #[test]
@@ -181,7 +193,11 @@ fn test_cwd_preserves_upper_bits_rax() {
 
     // AX should stay 0x1234, upper bits should be preserved
     assert_eq!(regs.rax & 0xFFFF, 0x1234, "AX unchanged");
-    assert_eq!(regs.rax >> 16, 0x12345678_9ABC, "Upper bits of RAX preserved");
+    assert_eq!(
+        regs.rax >> 16,
+        0x12345678_9ABC,
+        "Upper bits of RAX preserved"
+    );
 }
 
 #[test]
@@ -198,7 +214,11 @@ fn test_cwd_preserves_upper_bits_rdx() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rdx & 0xFFFF, 0x0000, "DX should be 0");
-    assert_eq!(regs.rdx >> 16, 0xDEADBEEF_CAFE, "Upper bits of RDX preserved");
+    assert_eq!(
+        regs.rdx >> 16,
+        0xDEADBEEF_CAFE,
+        "Upper bits of RDX preserved"
+    );
 }
 
 #[test]
@@ -235,8 +255,16 @@ fn test_cdq_positive_value() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX should remain 0x12345678");
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x00000000, "EDX should be 0x00000000");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX should remain 0x12345678"
+    );
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x00000000,
+        "EDX should be 0x00000000"
+    );
 }
 
 #[test]
@@ -252,8 +280,16 @@ fn test_cdq_negative_value() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX should remain 0x80000000");
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0xFFFFFFFF, "EDX should be 0xFFFFFFFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX should remain 0x80000000"
+    );
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EDX should be 0xFFFFFFFF"
+    );
 }
 
 #[test]
@@ -285,7 +321,11 @@ fn test_cdq_max_positive() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x7FFFFFFF, "EAX should be 0x7FFFFFFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x7FFFFFFF,
+        "EAX should be 0x7FFFFFFF"
+    );
     assert_eq!(regs.rdx & 0xFFFFFFFF, 0x00000000, "EDX should be 0");
 }
 
@@ -302,8 +342,16 @@ fn test_cdq_min_negative() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX should be 0x80000000");
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0xFFFFFFFF, "EDX should be 0xFFFFFFFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX should be 0x80000000"
+    );
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EDX should be 0xFFFFFFFF"
+    );
 }
 
 #[test]
@@ -334,8 +382,16 @@ fn test_cdq_minus_one() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX should be 0xFFFFFFFF");
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0xFFFFFFFF, "EDX should be 0xFFFFFFFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX should be 0xFFFFFFFF"
+    );
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EDX should be 0xFFFFFFFF"
+    );
 }
 
 #[test]
@@ -351,7 +407,11 @@ fn test_cdq_sign_boundary_positive() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x7FFFFFFE, "EAX should be 0x7FFFFFFE");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x7FFFFFFE,
+        "EAX should be 0x7FFFFFFE"
+    );
     assert_eq!(regs.rdx & 0xFFFFFFFF, 0x00000000, "EDX should be 0");
 }
 
@@ -368,8 +428,16 @@ fn test_cdq_sign_boundary_negative() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000001, "EAX should be 0x80000001");
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0xFFFFFFFF, "EDX should be 0xFFFFFFFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000001,
+        "EAX should be 0x80000001"
+    );
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EDX should be 0xFFFFFFFF"
+    );
 }
 
 #[test]
@@ -388,7 +456,10 @@ fn test_cdq_clears_upper_bits_rax() {
     // RAX is NOT modified by CDQ - only EDX/RDX is written
     assert_eq!(regs.rax, 0xDEADBEEF_12345678, "RAX should be unchanged");
     // EDX = 0 because EAX[31] = 0, and writing to EDX clears upper 32 bits of RDX
-    assert_eq!(regs.rdx, 0x00000000, "RDX should be 0 (sign extension of positive EAX)");
+    assert_eq!(
+        regs.rdx, 0x00000000,
+        "RDX should be 0 (sign extension of positive EAX)"
+    );
 }
 
 #[test]
@@ -404,7 +475,10 @@ fn test_cdq_clears_upper_bits_rdx() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rdx, 0xFFFFFFFF, "RDX should be 0xFFFFFFFF (upper bits cleared)");
+    assert_eq!(
+        regs.rdx, 0xFFFFFFFF,
+        "RDX should be 0xFFFFFFFF (upper bits cleared)"
+    );
 }
 
 #[test]
@@ -459,7 +533,10 @@ fn test_cqo_negative_value() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax, 0x8000000000000000, "RAX should remain unchanged");
-    assert_eq!(regs.rdx, 0xFFFFFFFFFFFFFFFF, "RDX should be 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(
+        regs.rdx, 0xFFFFFFFFFFFFFFFF,
+        "RDX should be 0xFFFFFFFFFFFFFFFF"
+    );
 }
 
 #[test]
@@ -491,7 +568,10 @@ fn test_cqo_max_positive() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x7FFFFFFFFFFFFFFF, "RAX should be 0x7FFFFFFFFFFFFFFF");
+    assert_eq!(
+        regs.rax, 0x7FFFFFFFFFFFFFFF,
+        "RAX should be 0x7FFFFFFFFFFFFFFF"
+    );
     assert_eq!(regs.rdx, 0x0000000000000000, "RDX should be 0");
 }
 
@@ -508,8 +588,14 @@ fn test_cqo_min_negative() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x8000000000000000, "RAX should be 0x8000000000000000");
-    assert_eq!(regs.rdx, 0xFFFFFFFFFFFFFFFF, "RDX should be 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(
+        regs.rax, 0x8000000000000000,
+        "RAX should be 0x8000000000000000"
+    );
+    assert_eq!(
+        regs.rdx, 0xFFFFFFFFFFFFFFFF,
+        "RDX should be 0xFFFFFFFFFFFFFFFF"
+    );
 }
 
 #[test]
@@ -540,8 +626,14 @@ fn test_cqo_minus_one() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "RAX should be 0xFFFFFFFFFFFFFFFF");
-    assert_eq!(regs.rdx, 0xFFFFFFFFFFFFFFFF, "RDX should be 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "RAX should be 0xFFFFFFFFFFFFFFFF"
+    );
+    assert_eq!(
+        regs.rdx, 0xFFFFFFFFFFFFFFFF,
+        "RDX should be 0xFFFFFFFFFFFFFFFF"
+    );
 }
 
 #[test]
@@ -557,7 +649,10 @@ fn test_cqo_sign_boundary_positive() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x7FFFFFFFFFFFFFFE, "RAX should be 0x7FFFFFFFFFFFFFFE");
+    assert_eq!(
+        regs.rax, 0x7FFFFFFFFFFFFFFE,
+        "RAX should be 0x7FFFFFFFFFFFFFFE"
+    );
     assert_eq!(regs.rdx, 0x0000000000000000, "RDX should be 0");
 }
 
@@ -574,8 +669,14 @@ fn test_cqo_sign_boundary_negative() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x8000000000000001, "RAX should be 0x8000000000000001");
-    assert_eq!(regs.rdx, 0xFFFFFFFFFFFFFFFF, "RDX should be 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(
+        regs.rax, 0x8000000000000001,
+        "RAX should be 0x8000000000000001"
+    );
+    assert_eq!(
+        regs.rdx, 0xFFFFFFFFFFFFFFFF,
+        "RDX should be 0xFFFFFFFFFFFFFFFF"
+    );
 }
 
 #[test]
@@ -592,7 +693,10 @@ fn test_cqo_overwrites_rdx() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax, 0x1234567890ABCDEF, "RAX unchanged");
-    assert_eq!(regs.rdx, 0x0000000000000000, "RDX completely overwritten to 0");
+    assert_eq!(
+        regs.rdx, 0x0000000000000000,
+        "RDX completely overwritten to 0"
+    );
 }
 
 #[test]
@@ -629,7 +733,10 @@ fn test_cqo_multiple_calls() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "RAX unchanged after multiple CQO");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "RAX unchanged after multiple CQO"
+    );
     assert_eq!(regs.rdx, 0xFFFFFFFFFFFFFFFF, "RDX still sign-extended");
 }
 
@@ -646,7 +753,11 @@ fn test_cdq_multiple_calls() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX unchanged after multiple CDQ");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX unchanged after multiple CDQ"
+    );
     assert_eq!(regs.rdx & 0xFFFFFFFF, 0xFFFFFFFF, "EDX still sign-extended");
 }
 
@@ -655,7 +766,7 @@ fn test_cwd_after_arithmetic() {
     // CWD used after arithmetic operation (common in division setup)
     let code = [
         0x66, 0xb8, 0x00, 0x80, // MOV AX, 0x8000
-        0x66, 0x99,              // CWD
+        0x66, 0x99, // CWD
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -670,29 +781,44 @@ fn test_cdq_after_arithmetic() {
     // CDQ used after arithmetic operation
     let code = [
         0xb8, 0x00, 0x00, 0x00, 0x80, // MOV EAX, 0x80000000
-        0x99,                          // CDQ
+        0x99, // CDQ
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX should be 0x80000000");
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0xFFFFFFFF, "EDX should be 0xFFFFFFFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX should be 0x80000000"
+    );
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EDX should be 0xFFFFFFFF"
+    );
 }
 
 #[test]
 fn test_cqo_after_arithmetic() {
     // CQO used after arithmetic operation
     let code = [
-        0x48, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, // MOV RAX, 0x8000000000000000
+        0x48, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x80, // MOV RAX, 0x8000000000000000
         0x48, 0x99, // CQO
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x8000000000000000, "RAX should be 0x8000000000000000");
-    assert_eq!(regs.rdx, 0xFFFFFFFFFFFFFFFF, "RDX should be 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(
+        regs.rax, 0x8000000000000000,
+        "RAX should be 0x8000000000000000"
+    );
+    assert_eq!(
+        regs.rdx, 0xFFFFFFFFFFFFFFFF,
+        "RDX should be 0xFFFFFFFFFFFFFFFF"
+    );
 }
 
 #[test]

@@ -101,7 +101,8 @@ fn test_vblendvps_xmm15_xmm0_xmm1_xmm2() {
 #[test]
 fn test_vblendvps_xmm0_xmm1_mem_xmm3() {
     let code = [
-        0xc4, 0xe3, 0x71, 0x4a, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, 0x30, // VBLENDVPS XMM0, XMM1, [0x3000], XMM3
+        0xc4, 0xe3, 0x71, 0x4a, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
+        0x30, // VBLENDVPS XMM0, XMM1, [0x3000], XMM3
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -170,7 +171,8 @@ fn test_vblendvps_ymm7_ymm0_ymm1_ymm2() {
 fn test_vblendvps_all_from_first() {
     // Mask selects all from first operand (mask all zeros)
     let code = [
-        0xc4, 0xe3, 0x71, 0x4a, 0xc2, 0x00, // VBLENDVPS XMM0, XMM1, XMM2, XMM0 (assuming XMM0 is zeros)
+        0xc4, 0xe3, 0x71, 0x4a, 0xc2,
+        0x00, // VBLENDVPS XMM0, XMM1, XMM2, XMM0 (assuming XMM0 is zeros)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -263,7 +265,11 @@ fn blendv_ps(s1: u128, s2: u128, mask: u128) -> u128 {
     let mut out = 0u128;
     for i in 0..4 {
         let m = (mask >> (i * 32 + 31)) & 1;
-        let v = if m == 1 { (s2 >> (i * 32)) & 0xFFFF_FFFF } else { (s1 >> (i * 32)) & 0xFFFF_FFFF };
+        let v = if m == 1 {
+            (s2 >> (i * 32)) & 0xFFFF_FFFF
+        } else {
+            (s1 >> (i * 32)) & 0xFFFF_FFFF
+        };
         out |= v << (i * 32);
     }
     out

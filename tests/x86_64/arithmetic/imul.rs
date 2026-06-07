@@ -34,7 +34,7 @@ use rax::cpu::{Registers, VCpu};
 fn test_imul_al_positive_basic() {
     let code = [
         0xf6, 0xeb, // IMUL BL (F6 /5, ModRM=11_101_011)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x05; // AL = 5
@@ -58,7 +58,10 @@ fn test_imul_al_negative_by_positive() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0xFFF1, "-5 * 3 = -15 (0xFFF1)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (fits in sign-extended AL)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (fits in sign-extended AL)"
+    );
 }
 
 #[test]
@@ -81,12 +84,15 @@ fn test_imul_al_overflow() {
     let code = [0xf6, 0xeb, 0xf4]; // IMUL BL
     let mut regs = Registers::default();
     regs.rax = 100; // AL = 100
-    regs.rbx = 2;   // BL = 2
+    regs.rbx = 2; // BL = 2
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0x00C8, "100 * 2 = 200");
-    assert!(cf_set(regs.rflags), "CF should be set (doesn't fit in i8 range)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (doesn't fit in i8 range)"
+    );
     assert!(of_set(regs.rflags), "OF should be set");
 }
 
@@ -96,7 +102,7 @@ fn test_imul_al_max_positive() {
     let code = [0xf6, 0xeb, 0xf4]; // IMUL BL
     let mut regs = Registers::default();
     regs.rax = 127; // AL = 127 (max i8)
-    regs.rbx = 1;   // BL = 1
+    regs.rbx = 1; // BL = 1
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -110,7 +116,7 @@ fn test_imul_al_min_negative() {
     let code = [0xf6, 0xeb, 0xf4]; // IMUL BL
     let mut regs = Registers::default();
     regs.rax = 0x80; // AL = -128 (min i8)
-    regs.rbx = 1;    // BL = 1
+    regs.rbx = 1; // BL = 1
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -124,7 +130,7 @@ fn test_imul_al_overflow_negative() {
     let code = [0xf6, 0xeb, 0xf4]; // IMUL BL
     let mut regs = Registers::default();
     regs.rax = 0x80; // AL = -128
-    regs.rbx = 2;    // BL = 2
+    regs.rbx = 2; // BL = 2
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -157,7 +163,7 @@ fn test_imul_ax_positive_basic() {
     ];
     let mut regs = Registers::default();
     regs.rax = 100; // AX = 100
-    regs.rbx = 50;  // BX = 50
+    regs.rbx = 50; // BX = 50
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -178,7 +184,10 @@ fn test_imul_ax_negative_by_positive() {
 
     assert_eq!(regs.rax & 0xFFFF, 0xEC78, "AX (low word)");
     assert_eq!(regs.rdx & 0xFFFF, 0xFFFF, "DX (high word, sign extension)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (fits in sign-extended)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (fits in sign-extended)"
+    );
 }
 
 #[test]
@@ -355,7 +364,7 @@ fn test_imul_two_op_16bit_basic() {
     ];
     let mut regs = Registers::default();
     regs.rax = 100; // AX = 100
-    regs.rbx = 50;  // BX = 50 (will be overwritten with result)
+    regs.rbx = 50; // BX = 50 (will be overwritten with result)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -388,7 +397,10 @@ fn test_imul_two_op_16bit_overflow() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rbx & 0xFFFF, 0x86A0, "BX = truncated result");
-    assert!(cf_set(regs.rflags), "CF should be set (truncation occurred)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (truncation occurred)"
+    );
     assert!(of_set(regs.rflags), "OF should be set");
 }
 
@@ -491,7 +503,7 @@ fn test_imul_three_op_imm8_basic() {
     ];
     let mut regs = Registers::default();
     regs.rax = 50; // AX = 50
-    regs.rbx = 0;  // BX will be set to AX * 10
+    regs.rbx = 0; // BX will be set to AX * 10
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -629,7 +641,7 @@ fn test_imul_r8_one_operand() {
     ];
     let mut regs = Registers::default();
     regs.rax = 20; // AL = 20
-    regs.r8 = 5;   // R8B = 5
+    regs.r8 = 5; // R8B = 5
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 

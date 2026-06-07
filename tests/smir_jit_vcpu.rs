@@ -463,10 +463,18 @@ fn jit_loop_with_internal_if_matches_interp() {
     let ir = interp.get_regs().unwrap();
 
     assert_eq!(jr.rax & 0xffff_ffff, ir.rax & 0xffff_ffff, "eax");
-    assert_eq!(jr.rbx & 0xffff_ffff, ir.rbx & 0xffff_ffff, "ebx (conditional accumulation)");
+    assert_eq!(
+        jr.rbx & 0xffff_ffff,
+        ir.rbx & 0xffff_ffff,
+        "ebx (conditional accumulation)"
+    );
     assert_eq!(jr.rcx & 0xffff_ffff, ir.rcx & 0xffff_ffff, "ecx");
     assert_eq!(jr.rax & 0xffff_ffff, 20, "ran all 20 iterations");
-    assert_eq!(jr.rbx & 0xffff_ffff, 110, "ebx += 10 for each eax>=10 (iterations 10..=20)");
+    assert_eq!(
+        jr.rbx & 0xffff_ffff,
+        110,
+        "ebx += 10 for each eax>=10 (iterations 10..=20)"
+    );
 }
 
 /// General-exit lowering: a hot loop that exits to a NON-HLT continuation runs
@@ -478,9 +486,9 @@ fn jit_general_exit_matches_interp_at_handoff() {
     use rax::smir::ir::Terminator;
     use rax::smir::lift::x86_64::X86_64Lifter;
     use rax::smir::lift::{LiftContext, MemoryReader, SmirLifter};
-    use rax::smir::lower::runtime::{is_native_clobber_safe, ExecMem, GuestRegs};
-    use rax::smir::lower::x86_64::X86_64Lowerer;
     use rax::smir::lower::SmirLowerer;
+    use rax::smir::lower::runtime::{ExecMem, GuestRegs, is_native_clobber_safe};
+    use rax::smir::lower::x86_64::X86_64Lowerer;
     use rax::smir::memory::MemoryError;
     use rax::smir::types::SourceArch;
     use std::collections::HashMap;
@@ -511,10 +519,15 @@ fn jit_general_exit_matches_interp_at_handoff() {
             Ok(self.bytes[off..off + n].to_vec())
         }
     }
-    let reader = Win { base: LOAD_ADDR, bytes: code.clone() };
+    let reader = Win {
+        base: LOAD_ADDR,
+        bytes: code.clone(),
+    };
     let mut lifter = X86_64Lifter::strict();
     let mut lctx = LiftContext::new(SourceArch::X86_64);
-    let func = lifter.lift_function(LOAD_ADDR, &reader, &mut lctx).expect("lift_function");
+    let func = lifter
+        .lift_function(LOAD_ADDR, &reader, &mut lctx)
+        .expect("lift_function");
 
     // Mark every "frontier" terminal (the JIT can't continue through it) as a
     // native-exit recording the block's guest_pc — the JIT runs up to but NOT
@@ -574,9 +587,17 @@ fn jit_general_exit_matches_interp_at_handoff() {
     assert_eq!(gr.exit_pc, cont_addr, "exit stub recorded the loop-exit PC");
     assert_eq!(gr.gpr[0] & 0xffff_ffff, ir.rax & 0xffff_ffff, "eax");
     assert_eq!(gr.gpr[1] & 0xffff_ffff, ir.rcx & 0xffff_ffff, "ecx");
-    assert_eq!(gr.gpr[3] & 0xffff_ffff, ir.rbx & 0xffff_ffff, "ebx (continuation NOT run)");
+    assert_eq!(
+        gr.gpr[3] & 0xffff_ffff,
+        ir.rbx & 0xffff_ffff,
+        "ebx (continuation NOT run)"
+    );
     assert_eq!(gr.gpr[0] & 0xffff_ffff, 20, "eax = 2*10");
-    assert_eq!(gr.gpr[3] & 0xffff_ffff, 0x1111, "ebx unchanged — exit block skipped");
+    assert_eq!(
+        gr.gpr[3] & 0xffff_ffff,
+        0x1111,
+        "ebx unchanged — exit block skipped"
+    );
 }
 
 /// THE M5c GOAL: `run()` itself auto-detects the hot loop, compiles it, and
@@ -600,7 +621,11 @@ fn run_auto_jits_hot_loop() {
     }
     let r = vcpu.get_regs().unwrap();
     assert_eq!(r.rcx & 0xffff_ffff, 0, "the hot loop drained under run()");
-    assert_eq!(r.rax & 0xffff_ffff, (2 * n as u64) & 0xffff_ffff, "eax = 2*n (correct result)");
+    assert_eq!(
+        r.rax & 0xffff_ffff,
+        (2 * n as u64) & 0xffff_ffff,
+        "eax = 2*n (correct result)"
+    );
     // The auto-trigger must have fired: at least one region was compiled.
     assert!(
         vcpu.jit_region_count() >= 1,
@@ -754,8 +779,10 @@ fn jit_mem_load_store_loop_matches_interpreter() {
     let seed: [u64; 4] = [0x1111_2222_3333_4444, 0xAAAA_BBBB_CCCC_DDDD, 7, 0xDEAD_BEEF];
     let setup = |mem: &Arc<GuestMemoryMmap>| {
         for (i, &val) in seed.iter().enumerate() {
-            mem.write_obj(val, GuestAddress(SCRATCH + (i as u64) * 8)).unwrap();
-            mem.write_obj(0u64, GuestAddress(DST + (i as u64) * 8)).unwrap();
+            mem.write_obj(val, GuestAddress(SCRATCH + (i as u64) * 8))
+                .unwrap();
+            mem.write_obj(0u64, GuestAddress(DST + (i as u64) * 8))
+                .unwrap();
         }
     };
 
@@ -829,7 +856,10 @@ fn jit_mem_memset_loop_matches_interpreter() {
     run_interp(&mut jit);
     let jr = jit.get_regs().unwrap();
 
-    assert_eq!(jr.rcx, ir.rcx, "rcx (loop count) — overrun if flags clobbered");
+    assert_eq!(
+        jr.rcx, ir.rcx,
+        "rcx (loop count) — overrun if flags clobbered"
+    );
     assert_eq!(jr.rcx, 0, "loop ran exactly N times");
     assert_eq!(jr.rdi, ir.rdi, "rdi");
     assert_eq!(jr.rdi, SCRATCH + (N as u64) * 16, "rdi walked N*16 bytes");
@@ -838,7 +868,9 @@ fn jit_mem_memset_loop_matches_interpreter() {
         let got: u64 = jmem.read_obj(GuestAddress(SCRATCH + i * 8)).unwrap();
         assert_eq!(got, val, "slot {i} stored");
     }
-    let past: u64 = jmem.read_obj(GuestAddress(SCRATCH + (N as u64) * 16)).unwrap();
+    let past: u64 = jmem
+        .read_obj(GuestAddress(SCRATCH + (N as u64) * 16))
+        .unwrap();
     assert_eq!(past, 0, "no overrun past the memset region");
 }
 
@@ -872,8 +904,10 @@ fn jit_mem_indexed_copy_loop_matches_interpreter() {
     let seed: [u64; 6] = [10, 20, 30, 40, 50, 60];
     let setup = |mem: &Arc<GuestMemoryMmap>| {
         for (i, &v) in seed.iter().enumerate() {
-            mem.write_obj(v, GuestAddress(SRC + (i as u64) * 8)).unwrap();
-            mem.write_obj(0u64, GuestAddress(DST + (i as u64) * 8)).unwrap();
+            mem.write_obj(v, GuestAddress(SRC + (i as u64) * 8))
+                .unwrap();
+            mem.write_obj(0u64, GuestAddress(DST + (i as u64) * 8))
+                .unwrap();
         }
     };
 
@@ -885,7 +919,10 @@ fn jit_mem_indexed_copy_loop_matches_interpreter() {
     let (mut jit, jmem) = make_vcpu_mem(&code);
     jit.set_jit_mem(true);
     setup(&jmem);
-    assert!(jit.jit_try_block().expect("jit_try_block"), "indexed copy should JIT");
+    assert!(
+        jit.jit_try_block().expect("jit_try_block"),
+        "indexed copy should JIT"
+    );
     run_interp(&mut jit);
     let jr = jit.get_regs().unwrap();
 
@@ -943,7 +980,10 @@ fn jit_mem_partial_and_imm_stores_match_interpreter() {
     for i in 0..(N as u64) * STRIDE {
         jmem.write_obj(0u8, GuestAddress(DST + i)).unwrap();
     }
-    assert!(jit.jit_try_block().expect("jit_try_block"), "partial-store loop should JIT");
+    assert!(
+        jit.jit_try_block().expect("jit_try_block"),
+        "partial-store loop should JIT"
+    );
     run_interp(&mut jit);
 
     // Compare the whole written region byte-for-byte against the interpreter.
@@ -954,11 +994,31 @@ fn jit_mem_partial_and_imm_stores_match_interpreter() {
     }
     // Spot-check the expected pattern in the first record.
     assert_eq!(jmem.read_obj::<u8>(GuestAddress(DST)).unwrap(), 0x22, "al");
-    assert_eq!(jmem.read_obj::<u16>(GuestAddress(DST + 1)).unwrap(), 0x1122, "ax");
-    assert_eq!(jmem.read_obj::<u32>(GuestAddress(DST + 4)).unwrap(), 0xEEFF_1122, "eax");
-    assert_eq!(jmem.read_obj::<u64>(GuestAddress(DST + 8)).unwrap(), rax_val, "rax");
-    assert_eq!(jmem.read_obj::<u8>(GuestAddress(DST + 16)).unwrap(), 0x55, "imm8");
-    assert_eq!(jmem.read_obj::<u32>(GuestAddress(DST + 20)).unwrap(), 0x1234_5678, "imm32");
+    assert_eq!(
+        jmem.read_obj::<u16>(GuestAddress(DST + 1)).unwrap(),
+        0x1122,
+        "ax"
+    );
+    assert_eq!(
+        jmem.read_obj::<u32>(GuestAddress(DST + 4)).unwrap(),
+        0xEEFF_1122,
+        "eax"
+    );
+    assert_eq!(
+        jmem.read_obj::<u64>(GuestAddress(DST + 8)).unwrap(),
+        rax_val,
+        "rax"
+    );
+    assert_eq!(
+        jmem.read_obj::<u8>(GuestAddress(DST + 16)).unwrap(),
+        0x55,
+        "imm8"
+    );
+    assert_eq!(
+        jmem.read_obj::<u32>(GuestAddress(DST + 20)).unwrap(),
+        0x1234_5678,
+        "imm32"
+    );
 }
 
 /// RIP-relative memory access — the addressing mode kernel code uses for static
@@ -998,7 +1058,10 @@ fn jit_mem_riprel_store_loop_matches_interpreter() {
     let (mut jit, jmem) = make_vcpu_mem(&code);
     jit.set_jit_mem(true);
     jmem.write_obj(0u64, GuestAddress(SCRATCH)).unwrap();
-    assert!(jit.jit_try_block().expect("jit_try_block"), "rip-rel loop should JIT");
+    assert!(
+        jit.jit_try_block().expect("jit_try_block"),
+        "rip-rel loop should JIT"
+    );
     run_interp(&mut jit);
     let jr = jit.get_regs().unwrap();
     let jv: u64 = jmem.read_obj(GuestAddress(SCRATCH)).unwrap();
@@ -1048,7 +1111,10 @@ fn jit_mem_sib_scale1_disp_matches_interpreter() {
     let (mut jit, jmem) = make_vcpu_mem(&code);
     jit.set_jit_mem(true);
     setup(&jmem);
-    assert!(jit.jit_try_block().expect("jit_try_block"), "sib-disp loop should JIT");
+    assert!(
+        jit.jit_try_block().expect("jit_try_block"),
+        "sib-disp loop should JIT"
+    );
     run_interp(&mut jit);
     let jv: u64 = jmem.read_obj(GuestAddress(DST)).unwrap();
 
@@ -1090,8 +1156,10 @@ fn jit_mem_extended_regs_copy_matches_interpreter() {
     let seed: [u64; 8] = [1, 2, 3, 4, 5, 6, 7, 8];
     let setup = |mem: &Arc<GuestMemoryMmap>| {
         for (i, &x) in seed.iter().enumerate() {
-            mem.write_obj(x, GuestAddress(SRC + (i as u64) * 8)).unwrap();
-            mem.write_obj(0u64, GuestAddress(DST + (i as u64) * 8)).unwrap();
+            mem.write_obj(x, GuestAddress(SRC + (i as u64) * 8))
+                .unwrap();
+            mem.write_obj(0u64, GuestAddress(DST + (i as u64) * 8))
+                .unwrap();
         }
     };
 
@@ -1102,7 +1170,10 @@ fn jit_mem_extended_regs_copy_matches_interpreter() {
     let (mut jit, jmem) = make_vcpu_mem(&code);
     jit.set_jit_mem(true);
     setup(&jmem);
-    assert!(jit.jit_try_block().expect("jit_try_block"), "r8-15 copy should JIT");
+    assert!(
+        jit.jit_try_block().expect("jit_try_block"),
+        "r8-15 copy should JIT"
+    );
     run_interp(&mut jit);
 
     for i in 0..8u64 {
@@ -1144,7 +1215,8 @@ fn jit_mem_overlapping_memmove_matches_interpreter() {
     let seed: [u64; 5] = [10, 20, 30, 40, 50];
     let setup = |mem: &Arc<GuestMemoryMmap>| {
         for (i, &x) in seed.iter().enumerate() {
-            mem.write_obj(x, GuestAddress(SRC + (i as u64) * 8)).unwrap();
+            mem.write_obj(x, GuestAddress(SRC + (i as u64) * 8))
+                .unwrap();
         }
     };
 
@@ -1155,7 +1227,10 @@ fn jit_mem_overlapping_memmove_matches_interpreter() {
     let (mut jit, jmem) = make_vcpu_mem(&code);
     jit.set_jit_mem(true);
     setup(&jmem);
-    assert!(jit.jit_try_block().expect("jit_try_block"), "overlapping memmove should JIT");
+    assert!(
+        jit.jit_try_block().expect("jit_try_block"),
+        "overlapping memmove should JIT"
+    );
     run_interp(&mut jit);
 
     for i in 0..5u64 {
@@ -1164,8 +1239,16 @@ fn jit_mem_overlapping_memmove_matches_interpreter() {
         assert_eq!(jb, ib, "SRC[{i}] jit vs interp (overlapping memmove)");
     }
     // Expected memmove(SRC+8, SRC, 32): [10, 10, 20, 30, 40].
-    assert_eq!(jmem.read_obj::<u64>(GuestAddress(SRC + 8)).unwrap(), 10, "moved[1]");
-    assert_eq!(jmem.read_obj::<u64>(GuestAddress(SRC + 32)).unwrap(), 40, "moved[4]");
+    assert_eq!(
+        jmem.read_obj::<u64>(GuestAddress(SRC + 8)).unwrap(),
+        10,
+        "moved[1]"
+    );
+    assert_eq!(
+        jmem.read_obj::<u64>(GuestAddress(SRC + 32)).unwrap(),
+        40,
+        "moved[4]"
+    );
 }
 
 /// Exact reconstruction of the kernel-boot memmove block-0: a 32-byte backwards
@@ -1207,7 +1290,8 @@ fn jit_mem_boot_memcpy_block0_matches_interpreter() {
 
     let setup = |mem: &Arc<GuestMemoryMmap>| {
         for i in 0..(BYTES / 8) {
-            mem.write_obj(0x1000 + i, GuestAddress(SRC + i * 8)).unwrap();
+            mem.write_obj(0x1000 + i, GuestAddress(SRC + i * 8))
+                .unwrap();
             mem.write_obj(0u64, GuestAddress(DST + i * 8)).unwrap();
         }
     };
@@ -1220,7 +1304,10 @@ fn jit_mem_boot_memcpy_block0_matches_interpreter() {
     let (mut jit, jmem) = make_vcpu_mem(&code);
     jit.set_jit_mem(true);
     setup(&jmem);
-    assert!(jit.jit_try_block().expect("jit_try_block"), "block0 memcpy should JIT");
+    assert!(
+        jit.jit_try_block().expect("jit_try_block"),
+        "block0 memcpy should JIT"
+    );
     run_interp(&mut jit);
     let jr = jit.get_regs().unwrap();
 
@@ -1268,7 +1355,8 @@ fn jit_mem_boot_memmove_overlap24_matches_interpreter() {
 
     let setup = |mem: &Arc<GuestMemoryMmap>| {
         for i in 0..0x60u64 {
-            mem.write_obj(0x100000 + i, GuestAddress(BASE + i * 8)).unwrap();
+            mem.write_obj(0x100000 + i, GuestAddress(BASE + i * 8))
+                .unwrap();
         }
     };
 
@@ -1279,7 +1367,10 @@ fn jit_mem_boot_memmove_overlap24_matches_interpreter() {
     let (mut jit, jmem) = make_vcpu_mem(&code);
     jit.set_jit_mem(true);
     setup(&jmem);
-    assert!(jit.jit_try_block().expect("jit_try_block"), "overlap-24 memmove should JIT");
+    assert!(
+        jit.jit_try_block().expect("jit_try_block"),
+        "overlap-24 memmove should JIT"
+    );
     run_interp(&mut jit);
 
     for i in 0..0x60u64 {
@@ -1310,8 +1401,11 @@ fn jit_mem_byte_copy_loop_long() {
     ];
     let setup = |v: &mut X86_64Vcpu, mem: &Arc<GuestMemoryMmap>| {
         for i in 0..N {
-            mem.write_obj((i as u8).wrapping_mul(7).wrapping_add(3), GuestAddress(SRC + i))
-                .unwrap();
+            mem.write_obj(
+                (i as u8).wrapping_mul(7).wrapping_add(3),
+                GuestAddress(SRC + i),
+            )
+            .unwrap();
         }
         let mut r = v.get_regs().unwrap();
         r.rsi = SRC;
@@ -1327,10 +1421,17 @@ fn jit_mem_byte_copy_loop_long() {
     let (mut jit, jm) = make_vcpu_mem(code);
     setup(&mut jit, &jm);
     jit.set_jit_mem(true);
-    assert!(jit.jit_try_block().expect("jit_try_block"), "region should JIT");
+    assert!(
+        jit.jit_try_block().expect("jit_try_block"),
+        "region should JIT"
+    );
     run_interp(&mut jit);
 
-    assert_eq!(jit.get_regs().unwrap().rsp, interp.get_regs().unwrap().rsp, "RSP drift");
+    assert_eq!(
+        jit.get_regs().unwrap().rsp,
+        interp.get_regs().unwrap().rsp,
+        "RSP drift"
+    );
     assert_eq!(jit.get_regs().unwrap().rcx, 0, "rcx");
     for i in 0..N {
         let ib: u8 = im.read_obj(GuestAddress(DST + i)).unwrap();
@@ -1352,7 +1453,12 @@ fn seg_jit_vs_interp(
     fs_base: u64,
     gs_base: u64,
     setup: impl Fn(&mut X86_64Vcpu, &Arc<GuestMemoryMmap>),
-) -> (X86_64Vcpu, Arc<GuestMemoryMmap>, X86_64Vcpu, Arc<GuestMemoryMmap>) {
+) -> (
+    X86_64Vcpu,
+    Arc<GuestMemoryMmap>,
+    X86_64Vcpu,
+    Arc<GuestMemoryMmap>,
+) {
     let prep = |v: &mut X86_64Vcpu, m: &Arc<GuestMemoryMmap>| {
         let mut s = v.get_sregs().unwrap();
         s.fs.base = fs_base;
@@ -1398,8 +1504,16 @@ fn jit_mem_gs_relative_base_disp() {
         v.set_regs(&r).unwrap();
     };
     let (interp, _im, jit, _jm) = seg_jit_vs_interp(code, 0, GSB, setup);
-    assert_eq!(jit.get_regs().unwrap().rax, interp.get_regs().unwrap().rax, "rax jit vs interp");
-    assert_eq!(jit.get_regs().unwrap().rax, 0xCAFE, "must read [gs.base+rbx+8], not sentinel");
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        interp.get_regs().unwrap().rax,
+        "rax jit vs interp"
+    );
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        0xCAFE,
+        "must read [gs.base+rbx+8], not sentinel"
+    );
 }
 
 /// `mov rax, gs:[0x1234]` — disp-only (the kernel `this_cpu` per-CPU pattern).
@@ -1417,8 +1531,16 @@ fn jit_mem_gs_relative_disp_only() {
         v.set_regs(&r).unwrap();
     };
     let (interp, _im, jit, _jm) = seg_jit_vs_interp(code, 0, GSB, setup);
-    assert_eq!(jit.get_regs().unwrap().rax, interp.get_regs().unwrap().rax, "rax jit vs interp");
-    assert_eq!(jit.get_regs().unwrap().rax, 0xDEAD, "must read [gs.base+0x1234]");
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        interp.get_regs().unwrap().rax,
+        "rax jit vs interp"
+    );
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        0xDEAD,
+        "must read [gs.base+0x1234]"
+    );
 }
 
 /// `mov rax, fs:[rbx]` — FS base added (TLS).
@@ -1435,8 +1557,16 @@ fn jit_mem_fs_relative() {
         v.set_regs(&r).unwrap();
     };
     let (interp, _im, jit, _jm) = seg_jit_vs_interp(code, FSB, 0, setup);
-    assert_eq!(jit.get_regs().unwrap().rax, interp.get_regs().unwrap().rax, "rax jit vs interp");
-    assert_eq!(jit.get_regs().unwrap().rax, 0xF00D, "must read [fs.base+rbx]");
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        interp.get_regs().unwrap().rax,
+        "rax jit vs interp"
+    );
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        0xF00D,
+        "must read [fs.base+rbx]"
+    );
 }
 
 /// `mov gs:[rbx], rax` — STORE to a GS-relative address.
@@ -1455,7 +1585,10 @@ fn jit_mem_gs_relative_store() {
     };
     let (_interp, _im, _jit, jm) = seg_jit_vs_interp(code, 0, GSB, setup);
     let stored: u64 = jm.read_obj(GuestAddress(GSB + 0x900)).unwrap();
-    assert_eq!(stored, 0x1234_5678_9ABC_DEF0, "store must hit [gs.base+rbx]");
+    assert_eq!(
+        stored, 0x1234_5678_9ABC_DEF0,
+        "store must hit [gs.base+rbx]"
+    );
     let sentinel: u64 = jm.read_obj(GuestAddress(0x900)).unwrap();
     assert_eq!(sentinel, 0, "store must NOT hit the un-segmented address");
 }
@@ -1465,7 +1598,9 @@ fn jit_mem_gs_relative_store() {
 #[test]
 fn jit_mem_gs_relative_index_scale() {
     // loop: mov rax, gs:[rbx+rcx*8]; dec rdx; jne loop; hlt
-    let code: &[u8] = &[0x65, 0x48, 0x8b, 0x04, 0xcb, 0x48, 0xff, 0xca, 0x75, 0xf6, 0xf4];
+    let code: &[u8] = &[
+        0x65, 0x48, 0x8b, 0x04, 0xcb, 0x48, 0xff, 0xca, 0x75, 0xf6, 0xf4,
+    ];
     let setup = |v: &mut X86_64Vcpu, m: &Arc<GuestMemoryMmap>| {
         // rbx=0x1000, rcx=3 → gs.base + 0x1000 + 3*8 = gs.base + 0x1018
         m.write_obj(0xBEEFu64, GuestAddress(GSB + 0x1018)).unwrap();
@@ -1477,8 +1612,16 @@ fn jit_mem_gs_relative_index_scale() {
         v.set_regs(&r).unwrap();
     };
     let (interp, _im, jit, _jm) = seg_jit_vs_interp(code, 0, GSB, setup);
-    assert_eq!(jit.get_regs().unwrap().rax, interp.get_regs().unwrap().rax, "rax jit vs interp");
-    assert_eq!(jit.get_regs().unwrap().rax, 0xBEEF, "must read [gs.base+rbx+rcx*8]");
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        interp.get_regs().unwrap().rax,
+        "rax jit vs interp"
+    );
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        0xBEEF,
+        "must read [gs.base+rbx+rcx*8]"
+    );
 }
 
 /// `mov al, gs:[rbx]` (B1) — a partial-register write: x86 `mov r8, r/m8`
@@ -1498,7 +1641,11 @@ fn jit_mem_gs_relative_byte_partial_write() {
         v.set_regs(&r).unwrap();
     };
     let (interp, _im, jit, _jm) = seg_jit_vs_interp(code, 0, GSB, setup);
-    assert_eq!(jit.get_regs().unwrap().rax, interp.get_regs().unwrap().rax, "rax jit vs interp");
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        interp.get_regs().unwrap().rax,
+        "rax jit vs interp"
+    );
     assert_eq!(
         jit.get_regs().unwrap().rax,
         0xDEAD_BEEF_0000_0042,
@@ -1520,7 +1667,11 @@ fn jit_mem_gs_relative_word_partial_write() {
         v.set_regs(&r).unwrap();
     };
     let (interp, _im, jit, _jm) = seg_jit_vs_interp(code, 0, GSB, setup);
-    assert_eq!(jit.get_regs().unwrap().rax, interp.get_regs().unwrap().rax, "rax jit vs interp");
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        interp.get_regs().unwrap().rax,
+        "rax jit vs interp"
+    );
     assert_eq!(
         jit.get_regs().unwrap().rax,
         0xFFFF_FFFF_FFFF_1234,
@@ -1535,7 +1686,8 @@ fn jit_mem_gs_relative_dword_zero_extend() {
     // loop: mov eax, gs:[rbx]; dec rcx; jne loop; hlt
     let code: &[u8] = &[0x65, 0x8b, 0x03, 0x48, 0xff, 0xc9, 0x75, 0xf8, 0xf4];
     let setup = |v: &mut X86_64Vcpu, m: &Arc<GuestMemoryMmap>| {
-        m.write_obj(0x1234_5678u32, GuestAddress(GSB + 0x680)).unwrap();
+        m.write_obj(0x1234_5678u32, GuestAddress(GSB + 0x680))
+            .unwrap();
         let mut r = v.get_regs().unwrap();
         r.rbx = 0x680;
         r.rcx = 1;
@@ -1543,7 +1695,11 @@ fn jit_mem_gs_relative_dword_zero_extend() {
         v.set_regs(&r).unwrap();
     };
     let (interp, _im, jit, _jm) = seg_jit_vs_interp(code, 0, GSB, setup);
-    assert_eq!(jit.get_regs().unwrap().rax, interp.get_regs().unwrap().rax, "rax jit vs interp");
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        interp.get_regs().unwrap().rax,
+        "rax jit vs interp"
+    );
     assert_eq!(
         jit.get_regs().unwrap().rax,
         0x0000_0000_1234_5678,
@@ -1555,17 +1711,28 @@ fn jit_mem_gs_relative_dword_zero_extend() {
 #[test]
 fn jit_mem_gs_relative_negative_disp() {
     // loop: mov rax, gs:[rbx-8]; dec rcx; jne loop; hlt
-    let code: &[u8] = &[0x65, 0x48, 0x8b, 0x43, 0xf8, 0x48, 0xff, 0xc9, 0x75, 0xf6, 0xf4];
+    let code: &[u8] = &[
+        0x65, 0x48, 0x8b, 0x43, 0xf8, 0x48, 0xff, 0xc9, 0x75, 0xf6, 0xf4,
+    ];
     let setup = |v: &mut X86_64Vcpu, m: &Arc<GuestMemoryMmap>| {
-        m.write_obj(0xC0DEu64, GuestAddress(GSB + 0x1000 - 8)).unwrap(); // gs.base + rbx - 8
+        m.write_obj(0xC0DEu64, GuestAddress(GSB + 0x1000 - 8))
+            .unwrap(); // gs.base + rbx - 8
         let mut r = v.get_regs().unwrap();
         r.rbx = 0x1000;
         r.rcx = 1;
         v.set_regs(&r).unwrap();
     };
     let (interp, _im, jit, _jm) = seg_jit_vs_interp(code, 0, GSB, setup);
-    assert_eq!(jit.get_regs().unwrap().rax, interp.get_regs().unwrap().rax, "rax jit vs interp");
-    assert_eq!(jit.get_regs().unwrap().rax, 0xC0DE, "must read [gs.base+rbx-8]");
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        interp.get_regs().unwrap().rax,
+        "rax jit vs interp"
+    );
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        0xC0DE,
+        "must read [gs.base+rbx-8]"
+    );
 }
 
 /// `mov fs:[rbx+rcx*4+0x10], rax` — FS store with base + index*scale + disp.
@@ -1587,7 +1754,10 @@ fn jit_mem_fs_relative_store_index_disp() {
     };
     let (_interp, _im, _jit, jm) = seg_jit_vs_interp(code, FSB, 0, setup);
     let stored: u64 = jm.read_obj(GuestAddress(FSB + 0x118)).unwrap();
-    assert_eq!(stored, 0xABCD_1234_5678_9ABC, "store must hit [fs.base+rbx+rcx*4+0x10]");
+    assert_eq!(
+        stored, 0xABCD_1234_5678_9ABC,
+        "store must hit [fs.base+rbx+rcx*4+0x10]"
+    );
 }
 
 /// `lea rax, fs:[rbx]` — LEA computes the OFFSET and must IGNORE the segment
@@ -1605,15 +1775,25 @@ fn jit_mem_lea_ignores_segment() {
         v.set_regs(&r).unwrap();
     };
     let (interp, _im, jit, _jm) = seg_jit_vs_interp(code, FSB, 0, setup);
-    assert_eq!(jit.get_regs().unwrap().rax, interp.get_regs().unwrap().rax, "rax jit vs interp");
-    assert_eq!(jit.get_regs().unwrap().rax, 0x1234, "LEA must ignore fs.base (yield the offset rbx)");
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        interp.get_regs().unwrap().rax,
+        "rax jit vs interp"
+    );
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        0x1234,
+        "LEA must ignore fs.base (yield the offset rbx)"
+    );
 }
 
 /// `mov gs:[rbx+rcx*4], rax` — GS STORE with base + index*scale.
 #[test]
 fn jit_mem_gs_relative_store_index_scale() {
     // loop: mov gs:[rbx+rcx*4], rax; dec rdx; jne loop; hlt  (rdx counter; rcx is index)
-    let code: &[u8] = &[0x65, 0x48, 0x89, 0x04, 0x8b, 0x48, 0xff, 0xca, 0x75, 0xf6, 0xf4];
+    let code: &[u8] = &[
+        0x65, 0x48, 0x89, 0x04, 0x8b, 0x48, 0xff, 0xca, 0x75, 0xf6, 0xf4,
+    ];
     let setup = |v: &mut X86_64Vcpu, m: &Arc<GuestMemoryMmap>| {
         m.write_obj(0u64, GuestAddress(GSB + 0x1008)).unwrap(); // gs.base + 0x1000 + 2*4
         let mut r = v.get_regs().unwrap();
@@ -1625,7 +1805,10 @@ fn jit_mem_gs_relative_store_index_scale() {
     };
     let (_interp, _im, _jit, jm) = seg_jit_vs_interp(code, 0, GSB, setup);
     let stored: u64 = jm.read_obj(GuestAddress(GSB + 0x1008)).unwrap();
-    assert_eq!(stored, 0xCAFE_BABE_DEAD_BEEF, "store must hit [gs.base+rbx+rcx*4]");
+    assert_eq!(
+        stored, 0xCAFE_BABE_DEAD_BEEF,
+        "store must hit [gs.base+rbx+rcx*4]"
+    );
 }
 
 /// `movzx ecx, dil` (REX-prefixed `40 0f b6 cf`) wedged BETWEEN two loads, as in
@@ -1661,13 +1844,24 @@ fn jit_mem_movzx_dil_between_loads() {
     let (mut jit, jm) = make_vcpu_mem(&code);
     setup(&mut jit, &jm);
     jit.set_jit_mem(true);
-    assert!(jit.jit_try_block().expect("jit_try_block"), "region should JIT");
+    assert!(
+        jit.jit_try_block().expect("jit_try_block"),
+        "region should JIT"
+    );
     run_interp(&mut jit);
 
     assert_eq!(interp.get_regs().unwrap().rcx, 1, "interp rcx (movzx dil)");
-    assert_eq!(jit.get_regs().unwrap().rcx, 1, "jit rcx (movzx must not be dropped)");
+    assert_eq!(
+        jit.get_regs().unwrap().rcx,
+        1,
+        "jit rcx (movzx must not be dropped)"
+    );
     assert_eq!(interp.get_regs().unwrap().rax, 0x8580, "interp rax");
-    assert_eq!(jit.get_regs().unwrap().rax, 0x8580, "jit rax (depends on rcx=1)");
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        0x8580,
+        "jit rax (depends on rcx=1)"
+    );
 }
 
 /// BaseIndexScale loads with scale=4 and 32-bit (B4) width — the shape in the
@@ -1704,11 +1898,18 @@ fn jit_mem_baseindexscale_scale4_b4_and_dependent() {
     let (mut jit, jm) = make_vcpu_mem(&code);
     setup(&mut jit, &jm);
     jit.set_jit_mem(true);
-    assert!(jit.jit_try_block().expect("jit_try_block"), "region should JIT");
+    assert!(
+        jit.jit_try_block().expect("jit_try_block"),
+        "region should JIT"
+    );
     run_interp(&mut jit);
 
     assert_eq!(interp.get_regs().unwrap().rax, 0x8580, "interp rax");
-    assert_eq!(jit.get_regs().unwrap().rax, 0x8580, "jit rax (scale4/B4 dependent load)");
+    assert_eq!(
+        jit.get_regs().unwrap().rax,
+        0x8580,
+        "jit rax (scale4/B4 dependent load)"
+    );
 }
 
 /// Reconstruction of kernel region 0x8173fd10 (a memchr/scan helper) which the
@@ -1758,7 +1959,10 @@ fn jit_mem_xor_flags_at_frontier_exit() {
     let (mut jit, jm) = make_vcpu_mem(region);
     setup(&mut jit, &jm);
     jit.set_jit_mem(true);
-    assert!(jit.jit_try_block().expect("jit_try_block"), "region should JIT");
+    assert!(
+        jit.jit_try_block().expect("jit_try_block"),
+        "region should JIT"
+    );
     run_interp(&mut jit);
 
     let ir = interp.get_regs().unwrap();
@@ -1813,7 +2017,10 @@ fn jit_mem_two_baseindexscale_loads_distinct_disp() {
     let (mut jit, jmem) = make_vcpu_mem(&code);
     setup(&mut jit, &jmem);
     jit.set_jit_mem(true);
-    assert!(jit.jit_try_block().expect("jit_try_block"), "region should JIT");
+    assert!(
+        jit.jit_try_block().expect("jit_try_block"),
+        "region should JIT"
+    );
     run_interp(&mut jit);
 
     for (off, want) in [(0x10u64, 0x1111u64), (0x18, 0x2222)] {

@@ -1,6 +1,6 @@
 use rax::cpu::Registers;
 
-use crate::common::{run_until_hlt, setup_vm, write_mem_at_u16, zf_set, DATA_ADDR};
+use crate::common::{DATA_ADDR, run_until_hlt, setup_vm, write_mem_at_u16, zf_set};
 
 // VERR - Verify a Segment for Reading
 // Opcode: 0F 00 /4
@@ -378,7 +378,11 @@ fn test_verr_preserves_source() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0x0008, "Source register should be preserved");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x0008,
+        "Source register should be preserved"
+    );
 }
 
 // VERW preserves source register
@@ -392,15 +396,21 @@ fn test_verw_preserves_source() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx & 0xFFFF, 0x0010, "Source register should be preserved");
+    assert_eq!(
+        regs.rbx & 0xFFFF,
+        0x0010,
+        "Source register should be preserved"
+    );
 }
 
 // VERR preserves other registers
 #[test]
 fn test_verr_preserves_registers() {
     let code = [
-        0x48, 0xbb, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, // MOV RBX, 0x1111111111111111
-        0x48, 0xb9, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, // MOV RCX, 0x2222222222222222
+        0x48, 0xbb, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+        0x11, // MOV RBX, 0x1111111111111111
+        0x48, 0xb9, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
+        0x22, // MOV RCX, 0x2222222222222222
         0x66, 0xb8, 0x08, 0x00, // MOV AX, 0x0008
         0x0f, 0x00, 0xe0, // VERR AX
         0xf4, // HLT
@@ -416,8 +426,10 @@ fn test_verr_preserves_registers() {
 #[test]
 fn test_verw_preserves_registers() {
     let code = [
-        0x48, 0xb8, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, // MOV RAX, 0x3333333333333333
-        0x48, 0xb9, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, // MOV RCX, 0x4444444444444444
+        0x48, 0xb8, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33,
+        0x33, // MOV RAX, 0x3333333333333333
+        0x48, 0xb9, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
+        0x44, // MOV RCX, 0x4444444444444444
         0x66, 0xbb, 0x10, 0x00, // MOV BX, 0x0010
         0x0f, 0x00, 0xeb, // VERW BX
         0xf4, // HLT

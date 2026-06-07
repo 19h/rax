@@ -36,7 +36,7 @@ fn test_aam_zero() {
     // AL = 0, result: AH = 0, AL = 0
     let code = [
         0xd4, 0x0a, // AAM
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x00;
@@ -170,11 +170,11 @@ fn test_aam_99() {
 fn test_aam_after_mul_3_times_4() {
     // Simulate: 3 * 4 = 12
     let code = [
-        0xb0, 0x03,       // MOV AL, 3
-        0xb3, 0x04,       // MOV BL, 4
-        0xf6, 0xe3,       // MUL BL
-        0xd4, 0x0a,       // AAM
-        0xf4,             // HLT
+        0xb0, 0x03, // MOV AL, 3
+        0xb3, 0x04, // MOV BL, 4
+        0xf6, 0xe3, // MUL BL
+        0xd4, 0x0a, // AAM
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -187,11 +187,11 @@ fn test_aam_after_mul_3_times_4() {
 fn test_aam_after_mul_5_times_6() {
     // Simulate: 5 * 6 = 30
     let code = [
-        0xb0, 0x05,       // MOV AL, 5
-        0xb3, 0x06,       // MOV BL, 6
-        0xf6, 0xe3,       // MUL BL
-        0xd4, 0x0a,       // AAM
-        0xf4,             // HLT
+        0xb0, 0x05, // MOV AL, 5
+        0xb3, 0x06, // MOV BL, 6
+        0xf6, 0xe3, // MUL BL
+        0xd4, 0x0a, // AAM
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -204,11 +204,11 @@ fn test_aam_after_mul_5_times_6() {
 fn test_aam_after_mul_7_times_8() {
     // Simulate: 7 * 8 = 56
     let code = [
-        0xb0, 0x07,       // MOV AL, 7
-        0xb3, 0x08,       // MOV BL, 8
-        0xf6, 0xe3,       // MUL BL
-        0xd4, 0x0a,       // AAM
-        0xf4,             // HLT
+        0xb0, 0x07, // MOV AL, 7
+        0xb3, 0x08, // MOV BL, 8
+        0xf6, 0xe3, // MUL BL
+        0xd4, 0x0a, // AAM
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -221,11 +221,11 @@ fn test_aam_after_mul_7_times_8() {
 fn test_aam_after_mul_9_times_9() {
     // Simulate: 9 * 9 = 81
     let code = [
-        0xb0, 0x09,       // MOV AL, 9
-        0xb3, 0x09,       // MOV BL, 9
-        0xf6, 0xe3,       // MUL BL
-        0xd4, 0x0a,       // AAM
-        0xf4,             // HLT
+        0xb0, 0x09, // MOV AL, 9
+        0xb3, 0x09, // MOV BL, 9
+        0xf6, 0xe3, // MUL BL
+        0xd4, 0x0a, // AAM
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -238,11 +238,11 @@ fn test_aam_after_mul_9_times_9() {
 fn test_aam_after_mul_8_times_7() {
     // Simulate: 8 * 7 = 56
     let code = [
-        0xb0, 0x08,       // MOV AL, 8
-        0xb3, 0x07,       // MOV BL, 7
-        0xf6, 0xe3,       // MUL BL
-        0xd4, 0x0a,       // AAM
-        0xf4,             // HLT
+        0xb0, 0x08, // MOV AL, 8
+        0xb3, 0x07, // MOV BL, 7
+        0xf6, 0xe3, // MUL BL
+        0xd4, 0x0a, // AAM
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -316,7 +316,7 @@ fn test_aam_base_2() {
     // AL = 5, base 2: AH = 2, AL = 1 (5 = 2*2 + 1)
     let code = [
         0xd4, 0x02, // AAM 2
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x05;
@@ -332,7 +332,7 @@ fn test_aam_base_8_octal() {
     // AL = 25 (0x19), base 8: AH = 3, AL = 1 (25 = 3*8 + 1)
     let code = [
         0xd4, 0x08, // AAM 8 (octal)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x19;
@@ -348,7 +348,7 @@ fn test_aam_base_12() {
     // AL = 37 (0x25), base 12: AH = 3, AL = 1 (37 = 3*12 + 1)
     let code = [
         0xd4, 0x0c, // AAM 12
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x25;
@@ -364,7 +364,7 @@ fn test_aam_base_16_hex() {
     // AL = 0xAB (171), base 16: AH = 10, AL = 11
     let code = [
         0xd4, 0x10, // AAM 16 (hex)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0xAB;
@@ -380,7 +380,7 @@ fn test_aam_base_7() {
     // AL = 50 (0x32), base 7: AH = 7, AL = 1 (50 = 7*7 + 1)
     let code = [
         0xd4, 0x07, // AAM 7
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x32;
@@ -461,7 +461,11 @@ fn test_aam_preserves_high_rax() {
     let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax >> 16, 0x1234_5678_DEAD, "High bits of RAX should be preserved");
+    assert_eq!(
+        regs.rax >> 16,
+        0x1234_5678_DEAD,
+        "High bits of RAX should be preserved"
+    );
     assert_eq!(regs.rax & 0xFF, 0x05, "AL should be 5");
     assert_eq!((regs.rax >> 8) & 0xFF, 0x02, "AH should be 2");
 }
@@ -476,8 +480,17 @@ fn test_aam_all_single_digits() {
         let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFF, val, "AL should remain {} for single digit", val);
-        assert_eq!((regs.rax >> 8) & 0xFF, 0x00, "AH should be 0 for single digit");
+        assert_eq!(
+            regs.rax & 0xFF,
+            val,
+            "AL should remain {} for single digit",
+            val
+        );
+        assert_eq!(
+            (regs.rax >> 8) & 0xFF,
+            0x00,
+            "AH should be 0 for single digit"
+        );
     }
 }
 
@@ -493,7 +506,13 @@ fn test_aam_multiples_of_10() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(regs.rax & 0xFF, 0x00, "AL should be 0 for {}", val);
-        assert_eq!((regs.rax >> 8) & 0xFF, mult as u64, "AH should be {} for {}", mult, val);
+        assert_eq!(
+            (regs.rax >> 8) & 0xFF,
+            mult as u64,
+            "AH should be {} for {}",
+            mult,
+            val
+        );
     }
 }
 
@@ -509,8 +528,20 @@ fn test_aam_sequential_values() {
 
         let expected_ah = val / 10;
         let expected_al = val % 10;
-        assert_eq!(regs.rax & 0xFF, expected_al, "AL should be {} for input {}", expected_al, val);
-        assert_eq!((regs.rax >> 8) & 0xFF, expected_ah, "AH should be {} for input {}", expected_ah, val);
+        assert_eq!(
+            regs.rax & 0xFF,
+            expected_al,
+            "AL should be {} for input {}",
+            expected_al,
+            val
+        );
+        assert_eq!(
+            (regs.rax >> 8) & 0xFF,
+            expected_ah,
+            "AH should be {} for input {}",
+            expected_ah,
+            val
+        );
     }
 }
 
@@ -531,12 +562,12 @@ fn test_aam_ignores_initial_ah() {
 fn test_aam_with_different_bases_comprehensive() {
     // Test various bases with value 100
     let test_cases = [
-        (2, 0, 100 / 2),    // base 2
-        (3, 1, 100 / 3),    // base 3
-        (5, 0, 100 / 5),    // base 5
-        (10, 0, 10),        // base 10
-        (11, 1, 100 / 11),  // base 11
-        (20, 0, 5),         // base 20
+        (2, 0, 100 / 2),   // base 2
+        (3, 1, 100 / 3),   // base 3
+        (5, 0, 100 / 5),   // base 5
+        (10, 0, 10),       // base 10
+        (11, 1, 100 / 11), // base 11
+        (20, 0, 5),        // base 20
     ];
 
     for (base, expected_al, expected_ah) in test_cases.iter() {
@@ -546,7 +577,17 @@ fn test_aam_with_different_bases_comprehensive() {
         let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFF, *expected_al as u64, "AL incorrect for base {}", base);
-        assert_eq!((regs.rax >> 8) & 0xFF, *expected_ah as u64, "AH incorrect for base {}", base);
+        assert_eq!(
+            regs.rax & 0xFF,
+            *expected_al as u64,
+            "AL incorrect for base {}",
+            base
+        );
+        assert_eq!(
+            (regs.rax >> 8) & 0xFF,
+            *expected_ah as u64,
+            "AH incorrect for base {}",
+            base
+        );
     }
 }

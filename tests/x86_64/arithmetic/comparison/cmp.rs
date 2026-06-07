@@ -42,7 +42,10 @@ fn test_cmp_al_imm8_greater() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert!(!zf_set(regs.rflags), "ZF should be clear (not equal)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (no borrow, first >= second)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (no borrow, first >= second)"
+    );
     assert!(!sf_set(regs.rflags), "SF should be clear (positive result)");
 }
 
@@ -56,7 +59,10 @@ fn test_cmp_al_imm8_less() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert!(!zf_set(regs.rflags), "ZF should be clear (not equal)");
-    assert!(cf_set(regs.rflags), "CF should be set (borrow, first < second)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (borrow, first < second)"
+    );
     assert!(sf_set(regs.rflags), "SF should be set (negative result)");
 }
 
@@ -220,7 +226,10 @@ fn test_cmp_rm32_imm8_negative() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // 100 compared to -10 (as unsigned: 0xFFFFFFF6)
     // 100 - 0xFFFFFFF6 produces borrow
-    assert!(cf_set(regs.rflags), "CF should be set (100 < 0xFFFFFFF6 unsigned)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (100 < 0xFFFFFFF6 unsigned)"
+    );
 }
 
 // ============================================================================
@@ -302,7 +311,10 @@ fn test_cmp_rm64_r64_register() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert!(!cf_set(regs.rflags), "CF should be clear (RAX > RCX unsigned)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (RAX > RCX unsigned)"
+    );
 }
 
 // ============================================================================

@@ -51,7 +51,8 @@ fn test_iret_basic_16bit() {
     write_iret_frame(&mem, 0x8000, 2, 0x2000, 0x08, 0x2);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2001);
@@ -74,7 +75,8 @@ fn test_iret_pops_ip_cs_flags() {
         0x48, 0x89, 0xe0, // MOV RAX, RSP (check stack restored)
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // RSP should be restored to 0x7000
@@ -97,7 +99,8 @@ fn test_iretd_basic_32bit() {
     write_iret_frame(&mem, 0x8000, 4, 0x2000, 0x08, 0x2);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2001);
@@ -121,7 +124,8 @@ fn test_iretd_restores_eflags() {
         0x58, // POP RAX
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Check DF (bit 10) is set in restored flags
@@ -144,7 +148,8 @@ fn test_iretq_basic_64bit() {
     write_iret_frame(&mem, 0x8000, 8, 0x2000, 0x08, 0x2);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2001);
@@ -168,7 +173,8 @@ fn test_iretq_restores_rflags() {
         0x58, // POP RAX (get restored flags)
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x4000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x4000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Check ZF (bit 6), PF (bit 2) are set in restored flags (0x246 = ZF|PF|IF|reserved)
@@ -195,7 +201,8 @@ fn test_iret_same_privilege_level() {
         0x48, 0xc7, 0xc0, 0xaa, 0x00, 0x00, 0x00, // MOV RAX, 0xAA
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0xaa);
@@ -216,7 +223,8 @@ fn test_iret_to_outer_privilege_level() {
         0x48, 0xc7, 0xc1, 0xbb, 0x00, 0x00, 0x00, // MOV RCX, 0xBB
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 0xbb);
@@ -237,7 +245,8 @@ fn test_iret_restores_outer_stack() {
         0x48, 0x89, 0xe2, // MOV RDX, RSP (check restored stack)
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rdx, 0xb000);
@@ -263,7 +272,8 @@ fn test_iret_restores_carry_flag() {
         0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 1); // CF was set
@@ -285,7 +295,8 @@ fn test_iret_restores_zero_flag() {
         0x48, 0xc7, 0xc0, 0x02, 0x00, 0x00, 0x00, // MOV RAX, 2
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 2); // ZF was set
@@ -303,11 +314,11 @@ fn test_iret_restores_sign_flag() {
 
     let target_code = [
         0x78, 0x05, // JS +5 (jump if sign)
-        0xf4, 0xf4, 0xf4, 0xf4, 0xf4,
-        0x48, 0xc7, 0xc0, 0x03, 0x00, 0x00, 0x00, // MOV RAX, 3
+        0xf4, 0xf4, 0xf4, 0xf4, 0xf4, 0x48, 0xc7, 0xc0, 0x03, 0x00, 0x00, 0x00, // MOV RAX, 3
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 3); // SF was set
@@ -325,11 +336,11 @@ fn test_iret_restores_overflow_flag() {
 
     let target_code = [
         0x70, 0x05, // JO +5 (jump if overflow)
-        0xf4, 0xf4, 0xf4, 0xf4, 0xf4,
-        0x48, 0xc7, 0xc0, 0x04, 0x00, 0x00, 0x00, // MOV RAX, 4
+        0xf4, 0xf4, 0xf4, 0xf4, 0xf4, 0x48, 0xc7, 0xc0, 0x04, 0x00, 0x00, 0x00, // MOV RAX, 4
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 4); // OF was set
@@ -353,7 +364,8 @@ fn test_iret_restores_direction_flag() {
         0x58, // POP RAX (check DF)
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // DF (bit 10) should be set in restored flags
@@ -378,7 +390,8 @@ fn test_iret_restores_interrupt_flag() {
         0x58, // POP RAX
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // IF (bit 9) should be set in restored flags
@@ -450,7 +463,8 @@ fn test_iret_to_data_segment() {
         0x48, 0xc7, 0xc0, 0x04, 0x00, 0x00, 0x00, // MOV RAX, 4
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 4);
@@ -494,14 +508,16 @@ fn test_iret_nested_interrupts() {
         0xcf, // IRET to level 2
         0xf4,
     ];
-    mem.write_slice(&level1, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&level1, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     // Level 2 handler
     let level2 = [
         0x48, 0xc7, 0xc0, 0x77, 0x00, 0x00, 0x00, // MOV RAX, 0x77
         0xf4,
     ];
-    mem.write_slice(&level2, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&level2, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x77);
@@ -524,7 +540,8 @@ fn test_iret_preserves_general_registers() {
     write_iret_frame(&mem, 0x8000, 4, 0x2000, 0x08, 0x2);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x1111);
@@ -545,7 +562,8 @@ fn test_iret_modifies_cs_rip_rflags() {
         0x48, 0x89, 0xe5, // MOV RBP, RSP
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2004);
@@ -567,7 +585,8 @@ fn test_iret_vm_flag() {
     write_iret_frame(&mem, 0x8000, 4, 0x2000, 0x08, 0x0002_0002);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // VM flag handling
@@ -585,7 +604,8 @@ fn test_iret_iopl_levels() {
     write_iret_frame(&mem, 0x8000, 4, 0x2000, 0x08, 0x0000_3002);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // IOPL should be restored
@@ -606,7 +626,8 @@ fn test_iret_to_zero_address() {
     write_iret_frame(&mem, 0x8000, 4, 0x0000, 0x08, 0x2);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x0000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x0000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x0001);
@@ -623,7 +644,8 @@ fn test_iret_to_max_address() {
     write_iret_frame(&mem, 0x8000, 4, 0xFFFF, 0x08, 0x2);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0xFFFF)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0xFFFF))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x10000);
@@ -640,7 +662,8 @@ fn test_iret_aligned_address() {
     write_iret_frame(&mem, 0x8000, 4, 0x3000, 0x08, 0x2);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3001);
@@ -657,7 +680,8 @@ fn test_iret_unaligned_address() {
     write_iret_frame(&mem, 0x8000, 4, 0x3003, 0x08, 0x2);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3003)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3003))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3004);
@@ -686,7 +710,8 @@ fn test_iret_interrupt_handler_pattern() {
         0x58, // POP RAX (restore registers)
         0xf4,
     ];
-    mem.write_slice(&handler, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&handler, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // RAX should be restored to 0 (original value) after POP
@@ -708,7 +733,8 @@ fn test_iretd_iretq_difference() {
         0x48, 0xc7, 0xc0, 0xab, 0xcd, 0x00, 0x00, // MOV RAX, 0xCDAB
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0xcdab);

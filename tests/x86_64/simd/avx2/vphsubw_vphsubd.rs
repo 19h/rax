@@ -342,7 +342,14 @@ fn test_vphsubd_ymm4_ymm5_mem_alternating() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data: Vec<u8> = (0..8)
-        .flat_map(|i| if i % 2 == 0 { 0xAAAAAAAAu32 } else { 0x55555555u32 }.to_le_bytes())
+        .flat_map(|i| {
+            if i % 2 == 0 {
+                0xAAAAAAAAu32
+            } else {
+                0x55555555u32
+            }
+            .to_le_bytes()
+        })
         .collect();
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
@@ -360,8 +367,7 @@ fn test_vphsubd_ymm6_ymm7_mem_negative() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data: Vec<u8> = vec![
-        -100i32, -200i32, -300i32, -400i32,
-        -500i32, -600i32, -700i32, -800i32,
+        -100i32, -200i32, -300i32, -400i32, -500i32, -600i32, -700i32, -800i32,
     ]
     .into_iter()
     .flat_map(|v| (v as u32).to_le_bytes())

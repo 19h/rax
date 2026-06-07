@@ -505,7 +505,7 @@ impl VCpu for HvfArm64Vcpu {
             _ => {
                 return Err(Error::InvalidConfig(
                     "ARM64 HVF backend requires aarch64 state".to_string(),
-                ))
+                ));
             }
         };
 

@@ -8,7 +8,7 @@
 
 use super::crypto;
 use super::csr::Csr;
-use super::decode::{decode_at, DecodeError, Insn, Op};
+use super::decode::{DecodeError, Insn, Op, decode_at};
 use super::float::RoundingMode;
 use super::memory::{MemError, Memory};
 use super::{Isa, Xlen};
@@ -763,40 +763,193 @@ impl RiscVCpu {
             }
 
             // ---- V: vector data path ----
-            Op::Vle | Op::Vse | Op::Vlse | Op::Vsse | Op::Vlxei | Op::Vsxei | Op::Vlm | Op::Vsm
-            | Op::Vlre | Op::Vsre | Op::Vlseg | Op::Vsseg | Op::Vleff | Op::Vadd | Op::Vsub
-            | Op::Vrsub | Op::Vand | Op::Vor | Op::Vxor
-            | Op::Vminu | Op::Vmin | Op::Vmaxu | Op::Vmax | Op::Vsll | Op::Vsrl | Op::Vsra
-            | Op::Vmerge | Op::Vmseq | Op::Vmsne | Op::Vmsltu | Op::Vmslt | Op::Vmsleu
-            | Op::Vmsle | Op::Vmsgtu | Op::Vmsgt | Op::Vmul | Op::Vmulh | Op::Vmulhu
-            | Op::Vmulhsu | Op::Vdivu | Op::Vdiv | Op::Vremu | Op::Vrem | Op::Vfadd
-            | Op::Vfsub | Op::Vfrsub | Op::Vfmul | Op::Vfdiv | Op::Vfrdiv | Op::Vfsqrt
-            | Op::Vfmin | Op::Vfmax | Op::Vfsgnj | Op::Vfsgnjn | Op::Vfsgnjx | Op::Vmfeq
-            | Op::Vmfne | Op::Vmflt | Op::Vmfle | Op::Vmfgt | Op::Vmfge | Op::Vfmacc
-            | Op::Vfnmacc | Op::Vfmsac | Op::Vfnmsac | Op::Vfmadd | Op::Vfnmadd | Op::Vfmsub
-            | Op::Vfnmsub | Op::Vredsum | Op::Vredand | Op::Vredor | Op::Vredxor
-            | Op::Vredminu | Op::Vredmin | Op::Vredmaxu | Op::Vredmax | Op::Vfredusum
-            | Op::Vfredosum | Op::Vfredmin | Op::Vfredmax | Op::VmvXS | Op::VmvSX
-            | Op::VfmvFS | Op::VfmvSF | Op::Vmand | Op::Vmnand | Op::Vmandn | Op::Vmxor
-            | Op::Vmor | Op::Vmnor | Op::Vmorn | Op::Vmxnor | Op::VzextVf2 | Op::VsextVf2
-            | Op::VzextVf4 | Op::VsextVf4 | Op::VzextVf8 | Op::VsextVf8 | Op::Vcpop
-            | Op::Vfirst | Op::Vmsbf | Op::Vmsof | Op::Vmsif | Op::Viota | Op::Vid
-            | Op::Vslideup | Op::Vslidedown | Op::Vslide1up | Op::Vslide1down
-            | Op::Vfslide1up | Op::Vfslide1down | Op::Vrgather | Op::Vrgatherei16
-            | Op::Vcompress | Op::Vadc | Op::Vmadc | Op::Vsbc | Op::Vmsbc | Op::Vsaddu
-            | Op::Vsadd | Op::Vssubu | Op::Vssub | Op::Vaaddu | Op::Vaadd | Op::Vasubu
-            | Op::Vasub | Op::Vssrl | Op::Vssra | Op::Vsmul | Op::Vwaddu | Op::Vwadd
-            | Op::Vwsubu | Op::Vwsub | Op::VwadduW | Op::VwaddW | Op::VwsubuW | Op::VwsubW
-            | Op::Vwmulu | Op::Vwmulsu | Op::Vwmul | Op::Vwmaccu | Op::Vwmacc | Op::Vwmaccsu
-            | Op::Vwmaccus | Op::Vnsrl | Op::Vnsra | Op::Vnclipu | Op::Vnclip | Op::VfcvtXuF
-            | Op::VfcvtXF | Op::VfcvtFXu | Op::VfcvtFX | Op::VfcvtRtzXuF | Op::VfcvtRtzXF
-            | Op::VfwcvtXuF | Op::VfwcvtXF | Op::VfwcvtFXu | Op::VfwcvtFX | Op::VfwcvtFF
-            | Op::VfwcvtRtzXuF | Op::VfwcvtRtzXF | Op::VfncvtXuF | Op::VfncvtXF | Op::VfncvtFXu
-            | Op::VfncvtFX | Op::VfncvtFF | Op::VfncvtRodFF | Op::VfncvtRtzXuF
-            | Op::VfncvtRtzXF | Op::Vfwadd | Op::Vfwsub | Op::Vfwmul | Op::VfwaddW
-            | Op::VfwsubW | Op::Vfwmacc | Op::Vfwnmacc | Op::Vfwmsac | Op::Vfwnmsac
-            | Op::Vwredsumu | Op::Vwredsum | Op::Vfwredusum | Op::Vfwredosum | Op::Vfclass
-            | Op::Vmvr | Op::Vfrsqrt7 | Op::Vfrec7 => self.exec_vector(insn)?,
+            Op::Vle
+            | Op::Vse
+            | Op::Vlse
+            | Op::Vsse
+            | Op::Vlxei
+            | Op::Vsxei
+            | Op::Vlm
+            | Op::Vsm
+            | Op::Vlre
+            | Op::Vsre
+            | Op::Vlseg
+            | Op::Vsseg
+            | Op::Vleff
+            | Op::Vadd
+            | Op::Vsub
+            | Op::Vrsub
+            | Op::Vand
+            | Op::Vor
+            | Op::Vxor
+            | Op::Vminu
+            | Op::Vmin
+            | Op::Vmaxu
+            | Op::Vmax
+            | Op::Vsll
+            | Op::Vsrl
+            | Op::Vsra
+            | Op::Vmerge
+            | Op::Vmseq
+            | Op::Vmsne
+            | Op::Vmsltu
+            | Op::Vmslt
+            | Op::Vmsleu
+            | Op::Vmsle
+            | Op::Vmsgtu
+            | Op::Vmsgt
+            | Op::Vmul
+            | Op::Vmulh
+            | Op::Vmulhu
+            | Op::Vmulhsu
+            | Op::Vdivu
+            | Op::Vdiv
+            | Op::Vremu
+            | Op::Vrem
+            | Op::Vfadd
+            | Op::Vfsub
+            | Op::Vfrsub
+            | Op::Vfmul
+            | Op::Vfdiv
+            | Op::Vfrdiv
+            | Op::Vfsqrt
+            | Op::Vfmin
+            | Op::Vfmax
+            | Op::Vfsgnj
+            | Op::Vfsgnjn
+            | Op::Vfsgnjx
+            | Op::Vmfeq
+            | Op::Vmfne
+            | Op::Vmflt
+            | Op::Vmfle
+            | Op::Vmfgt
+            | Op::Vmfge
+            | Op::Vfmacc
+            | Op::Vfnmacc
+            | Op::Vfmsac
+            | Op::Vfnmsac
+            | Op::Vfmadd
+            | Op::Vfnmadd
+            | Op::Vfmsub
+            | Op::Vfnmsub
+            | Op::Vredsum
+            | Op::Vredand
+            | Op::Vredor
+            | Op::Vredxor
+            | Op::Vredminu
+            | Op::Vredmin
+            | Op::Vredmaxu
+            | Op::Vredmax
+            | Op::Vfredusum
+            | Op::Vfredosum
+            | Op::Vfredmin
+            | Op::Vfredmax
+            | Op::VmvXS
+            | Op::VmvSX
+            | Op::VfmvFS
+            | Op::VfmvSF
+            | Op::Vmand
+            | Op::Vmnand
+            | Op::Vmandn
+            | Op::Vmxor
+            | Op::Vmor
+            | Op::Vmnor
+            | Op::Vmorn
+            | Op::Vmxnor
+            | Op::VzextVf2
+            | Op::VsextVf2
+            | Op::VzextVf4
+            | Op::VsextVf4
+            | Op::VzextVf8
+            | Op::VsextVf8
+            | Op::Vcpop
+            | Op::Vfirst
+            | Op::Vmsbf
+            | Op::Vmsof
+            | Op::Vmsif
+            | Op::Viota
+            | Op::Vid
+            | Op::Vslideup
+            | Op::Vslidedown
+            | Op::Vslide1up
+            | Op::Vslide1down
+            | Op::Vfslide1up
+            | Op::Vfslide1down
+            | Op::Vrgather
+            | Op::Vrgatherei16
+            | Op::Vcompress
+            | Op::Vadc
+            | Op::Vmadc
+            | Op::Vsbc
+            | Op::Vmsbc
+            | Op::Vsaddu
+            | Op::Vsadd
+            | Op::Vssubu
+            | Op::Vssub
+            | Op::Vaaddu
+            | Op::Vaadd
+            | Op::Vasubu
+            | Op::Vasub
+            | Op::Vssrl
+            | Op::Vssra
+            | Op::Vsmul
+            | Op::Vwaddu
+            | Op::Vwadd
+            | Op::Vwsubu
+            | Op::Vwsub
+            | Op::VwadduW
+            | Op::VwaddW
+            | Op::VwsubuW
+            | Op::VwsubW
+            | Op::Vwmulu
+            | Op::Vwmulsu
+            | Op::Vwmul
+            | Op::Vwmaccu
+            | Op::Vwmacc
+            | Op::Vwmaccsu
+            | Op::Vwmaccus
+            | Op::Vnsrl
+            | Op::Vnsra
+            | Op::Vnclipu
+            | Op::Vnclip
+            | Op::VfcvtXuF
+            | Op::VfcvtXF
+            | Op::VfcvtFXu
+            | Op::VfcvtFX
+            | Op::VfcvtRtzXuF
+            | Op::VfcvtRtzXF
+            | Op::VfwcvtXuF
+            | Op::VfwcvtXF
+            | Op::VfwcvtFXu
+            | Op::VfwcvtFX
+            | Op::VfwcvtFF
+            | Op::VfwcvtRtzXuF
+            | Op::VfwcvtRtzXF
+            | Op::VfncvtXuF
+            | Op::VfncvtXF
+            | Op::VfncvtFXu
+            | Op::VfncvtFX
+            | Op::VfncvtFF
+            | Op::VfncvtRodFF
+            | Op::VfncvtRtzXuF
+            | Op::VfncvtRtzXF
+            | Op::Vfwadd
+            | Op::Vfwsub
+            | Op::Vfwmul
+            | Op::VfwaddW
+            | Op::VfwsubW
+            | Op::Vfwmacc
+            | Op::Vfwnmacc
+            | Op::Vfwmsac
+            | Op::Vfwnmsac
+            | Op::Vwredsumu
+            | Op::Vwredsum
+            | Op::Vfwredusum
+            | Op::Vfwredosum
+            | Op::Vfclass
+            | Op::Vmvr
+            | Op::Vfrsqrt7
+            | Op::Vfrec7 => self.exec_vector(insn)?,
 
             Op::Illegal => return Err(Trap::illegal(insn.raw)),
 
@@ -817,14 +970,7 @@ impl RiscVCpu {
         }
     }
 
-    fn load(
-        &mut self,
-        rd: u8,
-        base: u64,
-        imm: u64,
-        size: usize,
-        signed: bool,
-    ) -> Result<(), Trap> {
+    fn load(&mut self, rd: u8, base: u64, imm: u64, size: usize, signed: bool) -> Result<(), Trap> {
         let addr = base.wrapping_add(imm) & self.xmask();
         let mut buf = [0u8; 8];
         self.mem.read(addr, &mut buf[..size]).map_err(|_| Trap {
@@ -974,11 +1120,7 @@ impl RiscVCpu {
             let (x, y) = (a as u32, b as u32);
             (if y == 0 { u32::MAX } else { x / y }) as u64
         } else {
-            if b == 0 {
-                u64::MAX
-            } else {
-                a / b
-            }
+            if b == 0 { u64::MAX } else { a / b }
         }
     }
     fn rem(&self, a: u64, b: u64) -> u64 {
@@ -1009,11 +1151,7 @@ impl RiscVCpu {
             let (x, y) = (a as u32, b as u32);
             (if y == 0 { x } else { x % y }) as u64
         } else {
-            if b == 0 {
-                a
-            } else {
-                a % b
-            }
+            if b == 0 { a } else { a % b }
         }
     }
 
@@ -1031,16 +1169,25 @@ impl RiscVCpu {
             } else {
                 cause::LOAD_MISALIGNED
             };
-            return Err(Trap { cause: c, tval: addr });
+            return Err(Trap {
+                cause: c,
+                tval: addr,
+            });
         }
         match insn.op {
             Op::LrW => {
-                let v = self.mem.read_u32(addr).map_err(|_| acc_fault(false, addr))?;
+                let v = self
+                    .mem
+                    .read_u32(addr)
+                    .map_err(|_| acc_fault(false, addr))?;
                 self.reservation = Some(addr);
                 self.set_x(insn.rd, v as i32 as i64 as u64);
             }
             Op::LrD => {
-                let v = self.mem.read_u64(addr).map_err(|_| acc_fault(false, addr))?;
+                let v = self
+                    .mem
+                    .read_u64(addr)
+                    .map_err(|_| acc_fault(false, addr))?;
                 self.reservation = Some(addr);
                 self.set_x(insn.rd, v);
             }
@@ -1092,14 +1239,24 @@ impl RiscVCpu {
             });
         }
         if is_d {
-            let old = self.mem.read_u64(addr).map_err(|_| acc_fault(false, addr))?;
+            let old = self
+                .mem
+                .read_u64(addr)
+                .map_err(|_| acc_fault(false, addr))?;
             let new = amo_compute64(insn.op, old, src);
-            self.mem.write_u64(addr, new).map_err(|_| acc_fault(true, addr))?;
+            self.mem
+                .write_u64(addr, new)
+                .map_err(|_| acc_fault(true, addr))?;
             self.set_x(insn.rd, old);
         } else {
-            let old = self.mem.read_u32(addr).map_err(|_| acc_fault(false, addr))?;
+            let old = self
+                .mem
+                .read_u32(addr)
+                .map_err(|_| acc_fault(false, addr))?;
             let new = amo_compute32(insn.op, old, src as u32);
-            self.mem.write_u32(addr, new).map_err(|_| acc_fault(true, addr))?;
+            self.mem
+                .write_u32(addr, new)
+                .map_err(|_| acc_fault(true, addr))?;
             self.set_x(insn.rd, old as i32 as i64 as u64);
         }
         Ok(())
@@ -1581,8 +1738,19 @@ impl RiscVCpu {
                     self.set_velem(vd, e, eb, r & mask);
                 }
             }
-            Op::Vadd | Op::Vsub | Op::Vrsub | Op::Vand | Op::Vor | Op::Vxor | Op::Vminu
-            | Op::Vmin | Op::Vmaxu | Op::Vmax | Op::Vsll | Op::Vsrl | Op::Vsra => {
+            Op::Vadd
+            | Op::Vsub
+            | Op::Vrsub
+            | Op::Vand
+            | Op::Vor
+            | Op::Vxor
+            | Op::Vminu
+            | Op::Vmin
+            | Op::Vmaxu
+            | Op::Vmax
+            | Op::Vsll
+            | Op::Vsrl
+            | Op::Vsra => {
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 let bits = (eb * 8) as u32;
@@ -1642,7 +1810,13 @@ impl RiscVCpu {
                     self.set_velem(vd, e, eb, r & mask);
                 }
             }
-            Op::Vmul | Op::Vmulh | Op::Vmulhu | Op::Vmulhsu | Op::Vdivu | Op::Vdiv | Op::Vremu
+            Op::Vmul
+            | Op::Vmulh
+            | Op::Vmulhu
+            | Op::Vmulhsu
+            | Op::Vdivu
+            | Op::Vdiv
+            | Op::Vremu
             | Op::Vrem => {
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
@@ -1685,8 +1859,14 @@ impl RiscVCpu {
                     self.set_velem(vd, e, eb, r & mask);
                 }
             }
-            Op::Vredsum | Op::Vredand | Op::Vredor | Op::Vredxor | Op::Vredminu | Op::Vredmin
-            | Op::Vredmaxu | Op::Vredmax => {
+            Op::Vredsum
+            | Op::Vredand
+            | Op::Vredor
+            | Op::Vredxor
+            | Op::Vredminu
+            | Op::Vredmin
+            | Op::Vredmaxu
+            | Op::Vredmax => {
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 // Accumulator seeds from vs1[0]; fold in active vs2 elements.
@@ -1704,10 +1884,18 @@ impl RiscVCpu {
                         Op::Vredminu => acc.min(x),
                         Op::Vredmaxu => acc.max(x),
                         Op::Vredmin => {
-                            if sext_sew(x, eb) < sext_sew(acc, eb) { x } else { acc }
+                            if sext_sew(x, eb) < sext_sew(acc, eb) {
+                                x
+                            } else {
+                                acc
+                            }
                         }
                         Op::Vredmax => {
-                            if sext_sew(x, eb) > sext_sew(acc, eb) { x } else { acc }
+                            if sext_sew(x, eb) > sext_sew(acc, eb) {
+                                x
+                            } else {
+                                acc
+                            }
                         }
                         _ => unreachable!(),
                     } & mask;
@@ -1717,8 +1905,14 @@ impl RiscVCpu {
                     self.set_velem(vd, 0, eb, acc & mask);
                 }
             }
-            Op::Vmseq | Op::Vmsne | Op::Vmsltu | Op::Vmslt | Op::Vmsleu | Op::Vmsle
-            | Op::Vmsgtu | Op::Vmsgt => {
+            Op::Vmseq
+            | Op::Vmsne
+            | Op::Vmsltu
+            | Op::Vmslt
+            | Op::Vmsleu
+            | Op::Vmsle
+            | Op::Vmsgtu
+            | Op::Vmsgt => {
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 let scalar = match insn.funct3 {
@@ -1751,8 +1945,17 @@ impl RiscVCpu {
                     self.set_vmask_bit(vd, e, r);
                 }
             }
-            Op::Vfadd | Op::Vfsub | Op::Vfrsub | Op::Vfmul | Op::Vfdiv | Op::Vfrdiv
-            | Op::Vfmin | Op::Vfmax | Op::Vfsgnj | Op::Vfsgnjn | Op::Vfsgnjx
+            Op::Vfadd
+            | Op::Vfsub
+            | Op::Vfrsub
+            | Op::Vfmul
+            | Op::Vfdiv
+            | Op::Vfrdiv
+            | Op::Vfmin
+            | Op::Vfmax
+            | Op::Vfsgnj
+            | Op::Vfsgnjn
+            | Op::Vfsgnjx
             | Op::Vfsqrt => {
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
@@ -1772,15 +1975,25 @@ impl RiscVCpu {
                     let r = if insn.op == Op::Vfsqrt {
                         super::float::sf_sqrt(fmt_eb(eb), a, rm, &mut flags)
                     } else {
-                        let b = if is_vv { self.velem(insn.rs1, e, eb) } else { scalar };
+                        let b = if is_vv {
+                            self.velem(insn.rs1, e, eb)
+                        } else {
+                            scalar
+                        };
                         vfp_bin(insn.op, eb, a, b, rm, &mut flags)
                     };
                     self.set_velem(vd, e, eb, r & mask);
                 }
                 self.accrue(flags);
             }
-            Op::Vfmacc | Op::Vfnmacc | Op::Vfmsac | Op::Vfnmsac | Op::Vfmadd | Op::Vfnmadd
-            | Op::Vfmsub | Op::Vfnmsub => {
+            Op::Vfmacc
+            | Op::Vfnmacc
+            | Op::Vfmsac
+            | Op::Vfnmsac
+            | Op::Vfmadd
+            | Op::Vfnmadd
+            | Op::Vfmsub
+            | Op::Vfnmsub => {
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 let rm = RoundingMode::from_bits(self.frm()).unwrap_or(RoundingMode::Rne);
@@ -1795,7 +2008,11 @@ impl RiscVCpu {
                     if !vm && !self.vmask_bit(e) {
                         continue;
                     }
-                    let src = if is_vv { self.velem(insn.rs1, e, eb) } else { scalar };
+                    let src = if is_vv {
+                        self.velem(insn.rs1, e, eb)
+                    } else {
+                        scalar
+                    };
                     let vs2e = self.velem(vs2, e, eb);
                     let vde = self.velem(vd, e, eb);
                     let r = vfp_fma(insn.op, eb, src, vs2e, vde, rm, &mut flags);
@@ -1826,7 +2043,11 @@ impl RiscVCpu {
                 }
                 self.accrue(flags);
             }
-            Op::VfcvtXuF | Op::VfcvtXF | Op::VfcvtFXu | Op::VfcvtFX | Op::VfcvtRtzXuF
+            Op::VfcvtXuF
+            | Op::VfcvtXF
+            | Op::VfcvtFXu
+            | Op::VfcvtFX
+            | Op::VfcvtRtzXuF
             | Op::VfcvtRtzXF => {
                 // Single-width FP <-> integer conversions at SEW.
                 let eb = self.sew_bytes();
@@ -1954,10 +2175,25 @@ impl RiscVCpu {
                     if !vm && !self.vmask_bit(e) {
                         continue;
                     }
-                    let s_narrow = if is_vv { self.velem(insn.rs1, e, eb) } else { scalar };
-                    let src = super::float::fcvt_round(fmt_eb(eb), fmt_eb(web), s_narrow, frm, &mut flags);
-                    let v2 =
-                        super::float::fcvt_round(fmt_eb(eb), fmt_eb(web), self.velem(vs2, e, eb), frm, &mut flags);
+                    let s_narrow = if is_vv {
+                        self.velem(insn.rs1, e, eb)
+                    } else {
+                        scalar
+                    };
+                    let src = super::float::fcvt_round(
+                        fmt_eb(eb),
+                        fmt_eb(web),
+                        s_narrow,
+                        frm,
+                        &mut flags,
+                    );
+                    let v2 = super::float::fcvt_round(
+                        fmt_eb(eb),
+                        fmt_eb(web),
+                        self.velem(vs2, e, eb),
+                        frm,
+                        &mut flags,
+                    );
                     let vde = self.velem(vd, e, web);
                     let r = vfp_fma(base, web, src, v2, vde, frm, &mut flags);
                     self.set_velem(vd, e, web, r & wmask);
@@ -1995,19 +2231,33 @@ impl RiscVCpu {
                             &mut flags,
                         )
                     };
-                    let braw = if is_vv { self.velem(insn.rs1, e, eb) } else { scalar };
-                    let bw = super::float::fcvt_round(fmt_eb(eb), fmt_eb(web), braw, frm, &mut flags);
+                    let braw = if is_vv {
+                        self.velem(insn.rs1, e, eb)
+                    } else {
+                        scalar
+                    };
+                    let bw =
+                        super::float::fcvt_round(fmt_eb(eb), fmt_eb(web), braw, frm, &mut flags);
                     let r = match insn.op {
-                        Op::Vfwadd | Op::VfwaddW => vfp_bin(Op::Vfadd, web, aw, bw, frm, &mut flags),
-                        Op::Vfwsub | Op::VfwsubW => vfp_bin(Op::Vfsub, web, aw, bw, frm, &mut flags),
+                        Op::Vfwadd | Op::VfwaddW => {
+                            vfp_bin(Op::Vfadd, web, aw, bw, frm, &mut flags)
+                        }
+                        Op::Vfwsub | Op::VfwsubW => {
+                            vfp_bin(Op::Vfsub, web, aw, bw, frm, &mut flags)
+                        }
                         _ => vfp_bin(Op::Vfmul, web, aw, bw, frm, &mut flags),
                     };
                     self.set_velem(vd, e, web, r & wmask);
                 }
                 self.accrue(flags);
             }
-            Op::VfwcvtXuF | Op::VfwcvtXF | Op::VfwcvtFXu | Op::VfwcvtFX | Op::VfwcvtFF
-            | Op::VfwcvtRtzXuF | Op::VfwcvtRtzXF => {
+            Op::VfwcvtXuF
+            | Op::VfwcvtXF
+            | Op::VfwcvtFXu
+            | Op::VfwcvtFX
+            | Op::VfwcvtFF
+            | Op::VfwcvtRtzXuF
+            | Op::VfwcvtRtzXF => {
                 // Widening conversions: SEW source -> 2*SEW result.
                 let eb = self.sew_bytes();
                 if eb > 4 {
@@ -2061,8 +2311,14 @@ impl RiscVCpu {
                 }
                 self.accrue(flags);
             }
-            Op::VfncvtXuF | Op::VfncvtXF | Op::VfncvtFXu | Op::VfncvtFX | Op::VfncvtFF
-            | Op::VfncvtRodFF | Op::VfncvtRtzXuF | Op::VfncvtRtzXF => {
+            Op::VfncvtXuF
+            | Op::VfncvtXF
+            | Op::VfncvtFXu
+            | Op::VfncvtFX
+            | Op::VfncvtFF
+            | Op::VfncvtRodFF
+            | Op::VfncvtRtzXuF
+            | Op::VfncvtRtzXF => {
                 // Narrowing conversions: 2*SEW source vs2 -> SEW result.
                 let eb = self.sew_bytes();
                 if eb > 4 {
@@ -2143,13 +2399,21 @@ impl RiscVCpu {
                         continue;
                     }
                     let a = self.velem(vs2, e, eb);
-                    let b = if is_vv { self.velem(insn.rs1, e, eb) } else { scalar };
+                    let b = if is_vv {
+                        self.velem(insn.rs1, e, eb)
+                    } else {
+                        scalar
+                    };
                     let r = vfp_cmp(insn.op, eb, a, b, &mut flags);
                     self.set_vmask_bit(vd, e, r);
                 }
                 self.accrue(flags);
             }
-            Op::VzextVf2 | Op::VsextVf2 | Op::VzextVf4 | Op::VsextVf4 | Op::VzextVf8
+            Op::VzextVf2
+            | Op::VsextVf2
+            | Op::VzextVf4
+            | Op::VsextVf4
+            | Op::VzextVf8
             | Op::VsextVf8 => {
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
@@ -2170,11 +2434,21 @@ impl RiscVCpu {
                         continue;
                     }
                     let src = self.velem(vs2, e, neb);
-                    let v = if signed { sext_sew(src, neb) as u64 } else { src };
+                    let v = if signed {
+                        sext_sew(src, neb) as u64
+                    } else {
+                        src
+                    };
                     self.set_velem(vd, e, eb, v & mask);
                 }
             }
-            Op::Vmand | Op::Vmnand | Op::Vmandn | Op::Vmxor | Op::Vmor | Op::Vmnor | Op::Vmorn
+            Op::Vmand
+            | Op::Vmnand
+            | Op::Vmandn
+            | Op::Vmxor
+            | Op::Vmor
+            | Op::Vmnor
+            | Op::Vmorn
             | Op::Vmxnor => {
                 // Mask-register logicals: vd.bit[i] = vs2.bit[i] OP vs1.bit[i],
                 // always unmasked, over the body [vstart, vl).
@@ -2228,7 +2502,11 @@ impl RiscVCpu {
                         continue;
                     }
                     let src = (e as u64).wrapping_add(offset);
-                    let v = if src < vlmax { self.velem(vs2, src as usize, eb) } else { 0 };
+                    let v = if src < vlmax {
+                        self.velem(vs2, src as usize, eb)
+                    } else {
+                        0
+                    };
                     self.set_velem(vd, e, eb, v & mask);
                 }
             }
@@ -2249,7 +2527,11 @@ impl RiscVCpu {
                     if !vm && !self.vmask_bit(e) {
                         continue;
                     }
-                    let v = if e == 0 { scalar } else { self.velem(vs2, e - 1, eb) };
+                    let v = if e == 0 {
+                        scalar
+                    } else {
+                        self.velem(vs2, e - 1, eb)
+                    };
                     self.set_velem(vd, e, eb, v & mask);
                 }
             }
@@ -2270,12 +2552,22 @@ impl RiscVCpu {
                     if !vm && !self.vmask_bit(e) {
                         continue;
                     }
-                    let v = if e + 1 < vl { self.velem(vs2, e + 1, eb) } else { scalar };
+                    let v = if e + 1 < vl {
+                        self.velem(vs2, e + 1, eb)
+                    } else {
+                        scalar
+                    };
                     self.set_velem(vd, e, eb, v & mask);
                 }
             }
-            Op::Vwaddu | Op::Vwadd | Op::Vwsubu | Op::Vwsub | Op::VwadduW | Op::VwaddW
-            | Op::VwsubuW | Op::VwsubW => {
+            Op::Vwaddu
+            | Op::Vwadd
+            | Op::Vwsubu
+            | Op::Vwsub
+            | Op::VwadduW
+            | Op::VwaddW
+            | Op::VwsubuW
+            | Op::VwsubW => {
                 // Widening add/subtract: 2*SEW result. `.w` forms read a wide vs2.
                 let eb = self.sew_bytes();
                 if eb > 4 {
@@ -2283,18 +2575,10 @@ impl RiscVCpu {
                 }
                 let web = eb * 2;
                 let wmask = Self::sew_mask(web);
-                let signed = matches!(
-                    insn.op,
-                    Op::Vwadd | Op::Vwsub | Op::VwaddW | Op::VwsubW
-                );
-                let sub = matches!(
-                    insn.op,
-                    Op::Vwsubu | Op::Vwsub | Op::VwsubuW | Op::VwsubW
-                );
-                let wide_vs2 = matches!(
-                    insn.op,
-                    Op::VwadduW | Op::VwaddW | Op::VwsubuW | Op::VwsubW
-                );
+                let signed = matches!(insn.op, Op::Vwadd | Op::Vwsub | Op::VwaddW | Op::VwsubW);
+                let sub = matches!(insn.op, Op::Vwsubu | Op::Vwsub | Op::VwsubuW | Op::VwsubW);
+                let wide_vs2 =
+                    matches!(insn.op, Op::VwadduW | Op::VwaddW | Op::VwsubuW | Op::VwsubW);
                 let is_vv = insn.funct3 == 0b010;
                 let scalar = self.x(insn.rs1) & Self::sew_mask(eb);
                 for e in vstart..vl {
@@ -2303,18 +2587,39 @@ impl RiscVCpu {
                     }
                     let a: i128 = if wide_vs2 {
                         let raw = self.velem(vs2, e, web);
-                        if signed { sext_sew(raw, web) as i128 } else { raw as i128 }
+                        if signed {
+                            sext_sew(raw, web) as i128
+                        } else {
+                            raw as i128
+                        }
                     } else {
                         let raw = self.velem(vs2, e, eb);
-                        if signed { sext_sew(raw, eb) as i128 } else { raw as i128 }
+                        if signed {
+                            sext_sew(raw, eb) as i128
+                        } else {
+                            raw as i128
+                        }
                     };
-                    let braw = if is_vv { self.velem(insn.rs1, e, eb) } else { scalar };
-                    let b: i128 = if signed { sext_sew(braw, eb) as i128 } else { braw as i128 };
+                    let braw = if is_vv {
+                        self.velem(insn.rs1, e, eb)
+                    } else {
+                        scalar
+                    };
+                    let b: i128 = if signed {
+                        sext_sew(braw, eb) as i128
+                    } else {
+                        braw as i128
+                    };
                     let r = if sub { a - b } else { a + b };
                     self.set_velem(vd, e, web, (r as u64) & wmask);
                 }
             }
-            Op::Vwmulu | Op::Vwmulsu | Op::Vwmul | Op::Vwmaccu | Op::Vwmacc | Op::Vwmaccsu
+            Op::Vwmulu
+            | Op::Vwmulsu
+            | Op::Vwmul
+            | Op::Vwmaccu
+            | Op::Vwmacc
+            | Op::Vwmaccsu
             | Op::Vwmaccus => {
                 // Widening multiply / multiply-accumulate: 2*SEW product into vd group.
                 let eb = self.sew_bytes();
@@ -2341,9 +2646,21 @@ impl RiscVCpu {
                         continue;
                     }
                     let araw = self.velem(vs2, e, eb);
-                    let braw = if is_vv { self.velem(insn.rs1, e, eb) } else { scalar };
-                    let av: i128 = if a_signed { sext_sew(araw, eb) as i128 } else { araw as i128 };
-                    let bv: i128 = if b_signed { sext_sew(braw, eb) as i128 } else { braw as i128 };
+                    let braw = if is_vv {
+                        self.velem(insn.rs1, e, eb)
+                    } else {
+                        scalar
+                    };
+                    let av: i128 = if a_signed {
+                        sext_sew(araw, eb) as i128
+                    } else {
+                        araw as i128
+                    };
+                    let bv: i128 = if b_signed {
+                        sext_sew(braw, eb) as i128
+                    } else {
+                        braw as i128
+                    };
                     let mut prod = av * bv;
                     if is_mac {
                         prod = prod.wrapping_add(self.velem(vd, e, web) as i128);
@@ -2378,7 +2695,11 @@ impl RiscVCpu {
                         continue;
                     }
                     let aw = self.velem(vs2, e, web);
-                    let sh = (if is_vv { self.velem(insn.rs1, e, eb) } else { scalar }) as u32
+                    let sh = (if is_vv {
+                        self.velem(insn.rs1, e, eb)
+                    } else {
+                        scalar
+                    }) as u32
                         & sh_mask;
                     let r = if !is_clip {
                         if signed {
@@ -2431,7 +2752,11 @@ impl RiscVCpu {
                         continue;
                     }
                     let a = self.velem(vs2, e, eb);
-                    let sh = (if is_vv { self.velem(insn.rs1, e, eb) } else { scalar }) as u32
+                    let sh = (if is_vv {
+                        self.velem(insn.rs1, e, eb)
+                    } else {
+                        scalar
+                    }) as u32
                         & shmask;
                     let incr = round_incr(a as u128, sh, vxrm);
                     let res = if insn.op == Op::Vssrl {
@@ -2458,7 +2783,11 @@ impl RiscVCpu {
                         continue;
                     }
                     let a = self.velem(vs2, e, eb);
-                    let b = if is_vv { self.velem(insn.rs1, e, eb) } else { scalar };
+                    let b = if is_vv {
+                        self.velem(insn.rs1, e, eb)
+                    } else {
+                        scalar
+                    };
                     let prod = sext_sew(a, eb) as i128 * sext_sew(b, eb) as i128;
                     let incr = round_incr(prod as u128, bits - 1, vxrm) as i128;
                     let mut r = (prod >> (bits - 1)) + incr;
@@ -2480,7 +2809,11 @@ impl RiscVCpu {
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 let bits = (eb * 8) as u32;
-                let m2: u128 = if bits >= 64 { u128::MAX } else { (1u128 << (2 * bits)) - 1 };
+                let m2: u128 = if bits >= 64 {
+                    u128::MAX
+                } else {
+                    (1u128 << (2 * bits)) - 1
+                };
                 let vxrm = self.vxrm;
                 let is_vv = insn.funct3 == 0b010;
                 let scalar = self.x(insn.rs1) & mask;
@@ -2489,7 +2822,11 @@ impl RiscVCpu {
                         continue;
                     }
                     let a = self.velem(vs2, e, eb);
-                    let b = if is_vv { self.velem(insn.rs1, e, eb) } else { scalar };
+                    let b = if is_vv {
+                        self.velem(insn.rs1, e, eb)
+                    } else {
+                        scalar
+                    };
                     let res = match insn.op {
                         Op::Vaaddu => {
                             let v = a as u128 + b as u128;
@@ -2530,14 +2867,26 @@ impl RiscVCpu {
                         continue;
                     }
                     let a = self.velem(vs2, e, eb);
-                    let b = if is_vv { self.velem(insn.rs1, e, eb) } else { scalar };
+                    let b = if is_vv {
+                        self.velem(insn.rs1, e, eb)
+                    } else {
+                        scalar
+                    };
                     let (r, s) = match insn.op {
                         Op::Vsaddu => {
                             let full = a as u128 + b as u128;
-                            if full > mask as u128 { (mask, true) } else { (full as u64, false) }
+                            if full > mask as u128 {
+                                (mask, true)
+                            } else {
+                                (full as u64, false)
+                            }
                         }
                         Op::Vssubu => {
-                            if a < b { (0, true) } else { (a - b, false) }
+                            if a < b {
+                                (0, true)
+                            } else {
+                                (a - b, false)
+                            }
                         }
                         Op::Vsadd => {
                             let sum = sext_sew(a, eb) as i128 + sext_sew(b, eb) as i128;
@@ -2579,7 +2928,11 @@ impl RiscVCpu {
                 let is_vv = insn.funct3 == 0b000;
                 for e in vstart..vl {
                     let a = self.velem(vs2, e, eb);
-                    let b = if is_vv { self.velem(insn.rs1, e, eb) } else { scalar };
+                    let b = if is_vv {
+                        self.velem(insn.rs1, e, eb)
+                    } else {
+                        scalar
+                    };
                     let cin = self.vmask_bit(e) as u64; // v0 carry/borrow-in
                     let r = if insn.op == Op::Vadc {
                         a.wrapping_add(b).wrapping_add(cin)
@@ -2607,7 +2960,11 @@ impl RiscVCpu {
                     } else {
                         scalar
                     } as u128;
-                    let cin = if use_cin { self.vmask_bit(e) as u128 } else { 0 };
+                    let cin = if use_cin {
+                        self.vmask_bit(e) as u128
+                    } else {
+                        0
+                    };
                     let out = if insn.op == Op::Vmadc {
                         a + b + cin > mask
                     } else {
@@ -2693,7 +3050,11 @@ impl RiscVCpu {
                     } else {
                         scalar_idx
                     };
-                    let v = if idx < vlmax { self.velem(vs2, idx as usize, eb) } else { 0 };
+                    let v = if idx < vlmax {
+                        self.velem(vs2, idx as usize, eb)
+                    } else {
+                        0
+                    };
                     self.set_velem(vd, e, eb, v & mask);
                 }
             }
@@ -2987,12 +3348,18 @@ impl RiscVCpu {
             // ---- loads / stores ----
             Op::Flw => {
                 let addr = self.x(rs1).wrapping_add(insn.imm as u64) & self.xmask();
-                let v = self.mem.read_u32(addr).map_err(|_| acc_fault(false, addr))?;
+                let v = self
+                    .mem
+                    .read_u32(addr)
+                    .map_err(|_| acc_fault(false, addr))?;
                 self.wf32(rd, v);
             }
             Op::Fld => {
                 let addr = self.x(rs1).wrapping_add(insn.imm as u64) & self.xmask();
-                let v = self.mem.read_u64(addr).map_err(|_| acc_fault(false, addr))?;
+                let v = self
+                    .mem
+                    .read_u64(addr)
+                    .map_err(|_| acc_fault(false, addr))?;
                 self.wf64(rd, v);
             }
             Op::Fsw => {
@@ -3030,19 +3397,47 @@ impl RiscVCpu {
                 self.wf32(rd, r as u32);
             }
             Op::FmaddS => {
-                let r = ff::sf_fma(ff::F32, self.s32(rs1), self.s32(rs2), self.s32(rs3), rm, &mut flags);
+                let r = ff::sf_fma(
+                    ff::F32,
+                    self.s32(rs1),
+                    self.s32(rs2),
+                    self.s32(rs3),
+                    rm,
+                    &mut flags,
+                );
                 self.wf32(rd, r as u32);
             }
             Op::FmsubS => {
-                let r = ff::sf_fma(ff::F32, self.s32(rs1), self.s32(rs2), neg32(self.s32(rs3)), rm, &mut flags);
+                let r = ff::sf_fma(
+                    ff::F32,
+                    self.s32(rs1),
+                    self.s32(rs2),
+                    neg32(self.s32(rs3)),
+                    rm,
+                    &mut flags,
+                );
                 self.wf32(rd, r as u32);
             }
             Op::FnmsubS => {
-                let r = ff::sf_fma(ff::F32, neg32(self.s32(rs1)), self.s32(rs2), self.s32(rs3), rm, &mut flags);
+                let r = ff::sf_fma(
+                    ff::F32,
+                    neg32(self.s32(rs1)),
+                    self.s32(rs2),
+                    self.s32(rs3),
+                    rm,
+                    &mut flags,
+                );
                 self.wf32(rd, r as u32);
             }
             Op::FnmaddS => {
-                let r = ff::sf_fma(ff::F32, neg32(self.s32(rs1)), self.s32(rs2), neg32(self.s32(rs3)), rm, &mut flags);
+                let r = ff::sf_fma(
+                    ff::F32,
+                    neg32(self.s32(rs1)),
+                    self.s32(rs2),
+                    neg32(self.s32(rs3)),
+                    rm,
+                    &mut flags,
+                );
                 self.wf32(rd, r as u32);
             }
 
@@ -3068,19 +3463,47 @@ impl RiscVCpu {
                 self.wf64(rd, r);
             }
             Op::FmaddD => {
-                let r = ff::sf_fma(ff::F64, self.f(rs1), self.f(rs2), self.f(rs3), rm, &mut flags);
+                let r = ff::sf_fma(
+                    ff::F64,
+                    self.f(rs1),
+                    self.f(rs2),
+                    self.f(rs3),
+                    rm,
+                    &mut flags,
+                );
                 self.wf64(rd, r);
             }
             Op::FmsubD => {
-                let r = ff::sf_fma(ff::F64, self.f(rs1), self.f(rs2), neg64(self.f(rs3)), rm, &mut flags);
+                let r = ff::sf_fma(
+                    ff::F64,
+                    self.f(rs1),
+                    self.f(rs2),
+                    neg64(self.f(rs3)),
+                    rm,
+                    &mut flags,
+                );
                 self.wf64(rd, r);
             }
             Op::FnmsubD => {
-                let r = ff::sf_fma(ff::F64, neg64(self.f(rs1)), self.f(rs2), self.f(rs3), rm, &mut flags);
+                let r = ff::sf_fma(
+                    ff::F64,
+                    neg64(self.f(rs1)),
+                    self.f(rs2),
+                    self.f(rs3),
+                    rm,
+                    &mut flags,
+                );
                 self.wf64(rd, r);
             }
             Op::FnmaddD => {
-                let r = ff::sf_fma(ff::F64, neg64(self.f(rs1)), self.f(rs2), neg64(self.f(rs3)), rm, &mut flags);
+                let r = ff::sf_fma(
+                    ff::F64,
+                    neg64(self.f(rs1)),
+                    self.f(rs2),
+                    neg64(self.f(rs3)),
+                    rm,
+                    &mut flags,
+                );
                 self.wf64(rd, r);
             }
 
@@ -3278,7 +3701,10 @@ impl RiscVCpu {
             // ---- Zfh half-precision ----
             Op::Flh => {
                 let addr = self.x(rs1).wrapping_add(insn.imm as u64) & self.xmask();
-                let v = self.mem.read_u16(addr).map_err(|_| acc_fault(false, addr))?;
+                let v = self
+                    .mem
+                    .read_u16(addr)
+                    .map_err(|_| acc_fault(false, addr))?;
                 self.wf16(rd, v);
             }
             Op::Fsh => {
@@ -3308,19 +3734,47 @@ impl RiscVCpu {
                 self.wf16(rd, r as u16);
             }
             Op::FmaddH => {
-                let r = ff::sf_fma(ff::F16, self.h(rs1), self.h(rs2), self.h(rs3), rm, &mut flags);
+                let r = ff::sf_fma(
+                    ff::F16,
+                    self.h(rs1),
+                    self.h(rs2),
+                    self.h(rs3),
+                    rm,
+                    &mut flags,
+                );
                 self.wf16(rd, r as u16);
             }
             Op::FmsubH => {
-                let r = ff::sf_fma(ff::F16, self.h(rs1), self.h(rs2), neg16(self.h(rs3)), rm, &mut flags);
+                let r = ff::sf_fma(
+                    ff::F16,
+                    self.h(rs1),
+                    self.h(rs2),
+                    neg16(self.h(rs3)),
+                    rm,
+                    &mut flags,
+                );
                 self.wf16(rd, r as u16);
             }
             Op::FnmsubH => {
-                let r = ff::sf_fma(ff::F16, neg16(self.h(rs1)), self.h(rs2), self.h(rs3), rm, &mut flags);
+                let r = ff::sf_fma(
+                    ff::F16,
+                    neg16(self.h(rs1)),
+                    self.h(rs2),
+                    self.h(rs3),
+                    rm,
+                    &mut flags,
+                );
                 self.wf16(rd, r as u16);
             }
             Op::FnmaddH => {
-                let r = ff::sf_fma(ff::F16, neg16(self.h(rs1)), self.h(rs2), neg16(self.h(rs3)), rm, &mut flags);
+                let r = ff::sf_fma(
+                    ff::F16,
+                    neg16(self.h(rs1)),
+                    self.h(rs2),
+                    neg16(self.h(rs3)),
+                    rm,
+                    &mut flags,
+                );
                 self.wf16(rd, r as u16);
             }
             Op::FsgnjH | Op::FsgnjnH | Op::FsgnjxH => {
@@ -3349,11 +3803,26 @@ impl RiscVCpu {
                 let r = ff::fmaxm_h(self.rf16(rs1), self.rf16(rs2), &mut flags);
                 self.wf16(rd, r);
             }
-            Op::FeqH => self.set_x(rd, ff::feq_h(self.rf16(rs1), self.rf16(rs2), &mut flags) as u64),
-            Op::FltH => self.set_x(rd, ff::flt_h(self.rf16(rs1), self.rf16(rs2), &mut flags) as u64),
-            Op::FleH => self.set_x(rd, ff::fle_h(self.rf16(rs1), self.rf16(rs2), &mut flags) as u64),
-            Op::FleqH => self.set_x(rd, ff::fleq_h(self.rf16(rs1), self.rf16(rs2), &mut flags) as u64),
-            Op::FltqH => self.set_x(rd, ff::fltq_h(self.rf16(rs1), self.rf16(rs2), &mut flags) as u64),
+            Op::FeqH => self.set_x(
+                rd,
+                ff::feq_h(self.rf16(rs1), self.rf16(rs2), &mut flags) as u64,
+            ),
+            Op::FltH => self.set_x(
+                rd,
+                ff::flt_h(self.rf16(rs1), self.rf16(rs2), &mut flags) as u64,
+            ),
+            Op::FleH => self.set_x(
+                rd,
+                ff::fle_h(self.rf16(rs1), self.rf16(rs2), &mut flags) as u64,
+            ),
+            Op::FleqH => self.set_x(
+                rd,
+                ff::fleq_h(self.rf16(rs1), self.rf16(rs2), &mut flags) as u64,
+            ),
+            Op::FltqH => self.set_x(
+                rd,
+                ff::fltq_h(self.rf16(rs1), self.rf16(rs2), &mut flags) as u64,
+            ),
             Op::FclassH => self.set_x(rd, ff::fclass_bits(ff::F16, self.h(rs1))),
             Op::FroundH => {
                 let r = ff::fround_h(self.rf16(rs1), rm, false, &mut flags);
@@ -3505,11 +3974,7 @@ fn divw(a: u32, b: u32, signed: bool, rem: bool) -> u64 {
         r as i64 as u64
     } else {
         let r = if rem {
-            if b == 0 {
-                a
-            } else {
-                a % b
-            }
+            if b == 0 { a } else { a % b }
         } else if b == 0 {
             u32::MAX
         } else {
@@ -3606,10 +4071,10 @@ fn round_incr(bits: u128, d: u32, vxrm: u64) -> u128 {
     let bit = |i: u32| (bits >> i) & 1;
     let lown = |n: u32| bits & ((1u128 << n) - 1) != 0;
     match vxrm {
-        0 => bit(d - 1),                                                    // round-to-nearest-up
+        0 => bit(d - 1), // round-to-nearest-up
         1 => bit(d - 1) & (bit(d) | if d >= 2 && lown(d - 1) { 1 } else { 0 }), // round-to-nearest-even
-        2 => 0,                                                             // round-down (truncate)
-        _ => (1 - bit(d)) & if lown(d) { 1 } else { 0 },                    // round-to-odd
+        2 => 0,                                          // round-down (truncate)
+        _ => (1 - bit(d)) & if lown(d) { 1 } else { 0 }, // round-to-odd
     }
 }
 
@@ -3665,28 +4130,40 @@ fn vfp_bin(op: Op, eb: usize, a: u64, b: u64, rm: RoundingMode, flags: &mut u32)
     match op {
         Op::Vfadd => match eb {
             2 => ff::sf_add(ff::F16, x, y, rm, flags),
-            4 => ff::add(f32::from_bits(x as u32), f32::from_bits(y as u32), rm, flags).to_bits()
-                as u64,
+            4 => ff::add(
+                f32::from_bits(x as u32),
+                f32::from_bits(y as u32),
+                rm,
+                flags,
+            )
+            .to_bits() as u64,
             _ => ff::add(f64::from_bits(x), f64::from_bits(y), rm, flags).to_bits(),
         },
         Op::Vfsub | Op::Vfrsub => match eb {
             2 => ff::sf_sub(ff::F16, x, y, rm, flags),
-            4 => ff::sub(f32::from_bits(x as u32), f32::from_bits(y as u32), rm, flags).to_bits()
-                as u64,
+            4 => ff::sub(
+                f32::from_bits(x as u32),
+                f32::from_bits(y as u32),
+                rm,
+                flags,
+            )
+            .to_bits() as u64,
             _ => ff::sub(f64::from_bits(x), f64::from_bits(y), rm, flags).to_bits(),
         },
         Op::Vfmul => ff::sf_mul(fmt_eb(eb), x, y, rm, flags),
         Op::Vfdiv | Op::Vfrdiv => ff::sf_div(fmt_eb(eb), x, y, rm, flags),
         Op::Vfmin => match eb {
             2 => ff::fmin_h(x as u16, y as u16, flags) as u64,
-            4 => ff::fmin(f32::from_bits(x as u32), f32::from_bits(y as u32), flags).to_bits()
-                as u64,
+            4 => {
+                ff::fmin(f32::from_bits(x as u32), f32::from_bits(y as u32), flags).to_bits() as u64
+            }
             _ => ff::fmin(f64::from_bits(x), f64::from_bits(y), flags).to_bits(),
         },
         Op::Vfmax => match eb {
             2 => ff::fmax_h(x as u16, y as u16, flags) as u64,
-            4 => ff::fmax(f32::from_bits(x as u32), f32::from_bits(y as u32), flags).to_bits()
-                as u64,
+            4 => {
+                ff::fmax(f32::from_bits(x as u32), f32::from_bits(y as u32), flags).to_bits() as u64
+            }
             _ => ff::fmax(f64::from_bits(x), f64::from_bits(y), flags).to_bits(),
         },
         Op::Vfsgnj | Op::Vfsgnjn | Op::Vfsgnjx => {
@@ -3821,7 +4298,10 @@ mod tests {
     use crate::riscv::memory::FlatMemory;
 
     fn cpu() -> RiscVCpu {
-        RiscVCpu::new(RiscVConfig::rv64gc(), Box::new(FlatMemory::new(0, 0x1_0000)))
+        RiscVCpu::new(
+            RiscVConfig::rv64gc(),
+            Box::new(FlatMemory::new(0, 0x1_0000)),
+        )
     }
 
     /// Encode a register-register OP instruction.
@@ -3912,7 +4392,10 @@ mod tests {
             (0 << 25) | (2 << 20) | (1 << 15) | (3 << 12) | (s_imm_lo << 7) | 0x23,
         );
         // ld x3, 0(x1)
-        run_one(&mut c, (0u32 << 20) | (1 << 15) | (3 << 12) | (3 << 7) | 0x03);
+        run_one(
+            &mut c,
+            (0u32 << 20) | (1 << 15) | (3 << 12) | (3 << 7) | 0x03,
+        );
         assert_eq!(c.x(3), 0x1122_3344_5566_7788);
     }
 
@@ -3923,7 +4406,10 @@ mod tests {
         c.write_memory(0x2000, &10u64.to_le_bytes()).unwrap();
         c.set_x(2, 5);
         // amoadd.d x3, x2, (x1): funct5=00000, funct3=011
-        run_one(&mut c, (0b00000 << 27) | (2 << 20) | (1 << 15) | (3 << 12) | (3 << 7) | 0x2f);
+        run_one(
+            &mut c,
+            (0b00000 << 27) | (2 << 20) | (1 << 15) | (3 << 12) | (3 << 7) | 0x2f,
+        );
         assert_eq!(c.x(3), 10); // returns old
         assert_eq!(c.mem_read_u64(0x2000).unwrap(), 15);
     }
@@ -3935,8 +4421,14 @@ mod tests {
         let b11 = (u >> 11) & 1;
         let b10_5 = (u >> 5) & 0x3f;
         let b4_1 = (u >> 1) & 0xf;
-        (b12 << 31) | (b10_5 << 25) | (rs2 << 20) | (rs1 << 15) | (funct3 << 12)
-            | (b4_1 << 8) | (b11 << 7) | 0x63
+        (b12 << 31)
+            | (b10_5 << 25)
+            | (rs2 << 20)
+            | (rs1 << 15)
+            | (funct3 << 12)
+            | (b4_1 << 8)
+            | (b11 << 7)
+            | 0x63
     }
     fn j_type(imm: i32, rd: u32) -> u32 {
         let u = (imm as u32) & 0x1f_ffff;
@@ -3992,7 +4484,10 @@ mod tests {
         // jalr x5, x6, 3 : target = (x6 + 3) & ~1, link = pc+4
         c.set_pc(0x2000);
         c.set_x(6, 0x3001);
-        run_one(&mut c, (3u32 << 20) | (6 << 15) | (0 << 12) | (5 << 7) | 0x67);
+        run_one(
+            &mut c,
+            (3u32 << 20) | (6 << 15) | (0 << 12) | (5 << 7) | 0x67,
+        );
         assert_eq!(c.x(5), 0x2004);
         assert_eq!(c.pc(), 0x3004 & !1); // (0x3001+3)=0x3004, &~1 = 0x3004
     }
@@ -4044,7 +4539,10 @@ mod tests {
         assert_eq!(c.x(3), 0xdead_beef);
         // Writing a read-only CSR (cycle, 0xC00) must trap illegal.
         c.set_x(4, 1);
-        assert!(matches!(run_one(&mut c, csr(0xC00, 4, 1, 5)), RiscVExit::Trap(_)));
+        assert!(matches!(
+            run_one(&mut c, csr(0xC00, 4, 1, 5)),
+            RiscVExit::Trap(_)
+        ));
     }
 
     #[test]
@@ -4135,7 +4633,10 @@ mod tests {
         c.set_x(1, 0x100);
         c.write_memory(0x100, &[0x80]).unwrap();
         // lb x2, 0(x1): 0x80 -> sign-extended to 0xffffff80 (32-bit, zero-ext to 64)
-        run_one(&mut c, (0u32 << 20) | (1 << 15) | (0 << 12) | (2 << 7) | 0x03);
+        run_one(
+            &mut c,
+            (0u32 << 20) | (1 << 15) | (0 << 12) | (2 << 7) | 0x03,
+        );
         assert_eq!(c.x(2), 0xffff_ff80);
     }
 
@@ -4154,27 +4655,42 @@ mod tests {
         let mut c = cpu();
         // vsetvli x1, x2(=100), e8,m1 (vtype=0): VLMAX=128/8=16, vl=min(100,16)=16
         c.set_x(2, 100);
-        run_one(&mut c, (0u32 << 20) | (2 << 15) | (7 << 12) | (1 << 7) | 0x57);
+        run_one(
+            &mut c,
+            (0u32 << 20) | (2 << 15) | (7 << 12) | (1 << 7) | 0x57,
+        );
         assert_eq!(c.x(1), 16);
         assert_eq!(c.csr_read(0xC20).unwrap(), 16); // vl
         assert_eq!(c.csr_read(0xC21).unwrap(), 0); // vtype
         assert_eq!(c.csr_read(0xC22).unwrap(), 16); // vlenb (VLEN/8)
 
         // e32,m1: VLMAX = 128/32 = 4. AVL=100 -> vl=4.
-        run_one(&mut c, ((2u32 << 3) << 20) | (2 << 15) | (7 << 12) | (3 << 7) | 0x57);
+        run_one(
+            &mut c,
+            ((2u32 << 3) << 20) | (2 << 15) | (7 << 12) | (3 << 7) | 0x57,
+        );
         assert_eq!(c.x(3), 4);
 
         // Keep form (rs1=x0, rd=x0): vl unchanged. Set vl=4 first (above), then keep.
-        run_one(&mut c, (0u32 << 20) | (0 << 15) | (7 << 12) | (0 << 7) | 0x57);
+        run_one(
+            &mut c,
+            (0u32 << 20) | (0 << 15) | (7 << 12) | (0 << 7) | 0x57,
+        );
         assert_eq!(c.csr_read(0xC20).unwrap(), 4); // vl retained
 
         // Illegal vtype (vsew=4 -> SEW=128 > ELEN): vill set, vl=0.
-        run_one(&mut c, ((4u32 << 3) << 20) | (0 << 15) | (7 << 12) | (5 << 7) | 0x57);
+        run_one(
+            &mut c,
+            ((4u32 << 3) << 20) | (0 << 15) | (7 << 12) | (5 << 7) | 0x57,
+        );
         assert_eq!(c.x(5), 0);
         assert_eq!(c.csr_read(0xC21).unwrap() >> 63, 1); // vtype.vill
 
         // vsetivli x6, 3, e64,m1: VLMAX = 128/64 = 2, vl = min(3,2) = 2.
-        run_one(&mut c, (0b11u32 << 30) | ((3u32 << 3) << 20) | (3 << 15) | (7 << 12) | (6 << 7) | 0x57);
+        run_one(
+            &mut c,
+            (0b11u32 << 30) | ((3u32 << 3) << 20) | (3 << 15) | (7 << 12) | (6 << 7) | 0x57,
+        );
         assert_eq!(c.x(6), 2);
     }
 
@@ -4183,10 +4699,16 @@ mod tests {
         let mut c = cpu();
         c.set_x(1, 0x0000_0000_0000_00ff);
         // clz x2, x1 : funct7=0110000 rs2=0 funct3=1 opcode=0x13
-        run_one(&mut c, (0b0110000u32 << 25) | (0 << 20) | (1 << 15) | (1 << 12) | (2 << 7) | 0x13);
+        run_one(
+            &mut c,
+            (0b0110000u32 << 25) | (0 << 20) | (1 << 15) | (1 << 12) | (2 << 7) | 0x13,
+        );
         assert_eq!(c.x(2), 56);
         // cpop x3, x1
-        run_one(&mut c, (0b0110000u32 << 25) | (2 << 20) | (1 << 15) | (1 << 12) | (3 << 7) | 0x13);
+        run_one(
+            &mut c,
+            (0b0110000u32 << 25) | (2 << 20) | (1 << 15) | (1 << 12) | (3 << 7) | 0x13,
+        );
         assert_eq!(c.x(3), 8);
     }
 }

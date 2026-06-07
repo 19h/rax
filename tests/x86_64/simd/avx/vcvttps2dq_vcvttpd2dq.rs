@@ -443,7 +443,8 @@ fn test_vcvttps2dq_xmm0_mem() {
         0xcd, 0xcc, 0x4c, 0x40, // 3.2
         0x33, 0x33, 0x73, 0x40, // 3.8
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -452,7 +453,8 @@ fn test_vcvttps2dq_xmm0_mem() {
 fn test_vcvttps2dq_xmm8_mem() {
     // VCVTTPS2DQ XMM8, [mem]
     let code = [
-        0xc4, 0x41, 0x7a, 0x5b, 0x05, 0x00, 0x40, 0x00, 0x00, // VCVTTPS2DQ XMM8, [rip + 0x4000]
+        0xc4, 0x41, 0x7a, 0x5b, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VCVTTPS2DQ XMM8, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -463,7 +465,8 @@ fn test_vcvttps2dq_xmm8_mem() {
         0x9a, 0x99, 0xc9, 0x42, // 100.8 -> 100
         0x33, 0x33, 0xc9, 0xc2, // -100.6 -> -100
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -492,7 +495,8 @@ fn test_vcvttps2dq_ymm0_mem() {
         0xcd, 0xcc, 0x4c, 0xc0, // -3.2
         0x33, 0x33, 0x73, 0xc0, // -3.8
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -501,7 +505,8 @@ fn test_vcvttps2dq_ymm0_mem() {
 fn test_vcvttps2dq_ymm8_mem() {
     // VCVTTPS2DQ YMM8, [mem]
     let code = [
-        0xc4, 0x41, 0x7e, 0x5b, 0x05, 0x00, 0x40, 0x00, 0x00, // VCVTTPS2DQ YMM8, [rip + 0x4000]
+        0xc4, 0x41, 0x7e, 0x5b, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VCVTTPS2DQ YMM8, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -516,7 +521,8 @@ fn test_vcvttps2dq_ymm8_mem() {
         0x9a, 0x99, 0x19, 0x40, // 2.4 -> 2
         0x66, 0x66, 0x26, 0x40, // 2.6 -> 2
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -907,7 +913,8 @@ fn test_vcvttpd2dq_xmm0_mem() {
         0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0xf3, 0x3f, // 1.2
         0x9a, 0x99, 0x99, 0x99, 0x99, 0x99, 0x04, 0x40, // 2.6
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -916,7 +923,8 @@ fn test_vcvttpd2dq_xmm0_mem() {
 fn test_vcvttpd2dq_xmm8_mem() {
     // VCVTTPD2DQ XMM8, [mem]
     let code = [
-        0xc4, 0x41, 0x79, 0xe6, 0x05, 0x00, 0x40, 0x00, 0x00, // VCVTTPD2DQ XMM8, [rip + 0x4000]
+        0xc4, 0x41, 0x79, 0xe6, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VCVTTPD2DQ XMM8, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -925,7 +933,8 @@ fn test_vcvttpd2dq_xmm8_mem() {
         0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0xf3, 0xbf, // -1.2 -> -1
         0x9a, 0x99, 0x99, 0x99, 0x99, 0x99, 0x04, 0xc0, // -2.6 -> -2
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -950,7 +959,8 @@ fn test_vcvttpd2dq_xmm0_mem256() {
         0x9a, 0x99, 0x99, 0x99, 0x99, 0x99, 0x09, 0x40, // 3.2
         0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x0e, 0x40, // 3.8
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -959,7 +969,8 @@ fn test_vcvttpd2dq_xmm0_mem256() {
 fn test_vcvttpd2dq_xmm8_mem256() {
     // VCVTTPD2DQ XMM8, [mem]
     let code = [
-        0xc4, 0x41, 0x7d, 0xe6, 0x05, 0x00, 0x40, 0x00, 0x00, // VCVTTPD2DQ XMM8, [rip + 0x4000]
+        0xc4, 0x41, 0x7d, 0xe6, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VCVTTPD2DQ XMM8, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -970,7 +981,8 @@ fn test_vcvttpd2dq_xmm8_mem256() {
         0x9a, 0x99, 0x99, 0x99, 0x99, 0x99, 0x09, 0xc0, // -3.2 -> -3
         0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x0e, 0xc0, // -3.8 -> -3
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }

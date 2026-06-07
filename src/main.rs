@@ -2,11 +2,11 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
+use rax::Result;
 use rax::config::{
     Address, ArchKind, BackendKind, CliConfig, Endianness, FileConfig, HexagonIsa, MemorySize,
     VmConfig,
 };
-use rax::Result;
 use rax::snapshot::Snapshot;
 use rax::vmm::Vmm;
 use tracing_subscriber::EnvFilter;
@@ -102,8 +102,7 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     // Build log filter, adding gdb trace if requested
-    let base_filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info"));
+    let base_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
     let filter = if cli.gdb_trace {
         base_filter.add_directive("rax::gdb=trace".parse().unwrap())
     } else {

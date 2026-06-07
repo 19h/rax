@@ -2069,4 +2069,3 @@ pub static A32_MEM_SWEEP: &[(&str, u32, u8)] = &[
     ("A32 stmdb r1!, {r0, r3, r5}", 0xe9210029, 0),
     ("T32 stmdb r1!, {r0, r3, r5}", 0xe9210029, 2),
 ];
-

@@ -160,7 +160,8 @@ fn test_pmaddubsw_xmm0_mem() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data: [u8; 16] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -177,9 +178,12 @@ fn test_pmaddubsw_xmm1_mem_signed_negative() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: [u8; 16] = [0xFF, 0xFE, 0xFD, 0xFC, 0xFB, 0xFA, 0xF9, 0xF8,
-                           0xF7, 0xF6, 0xF5, 0xF4, 0xF3, 0xF2, 0xF1, 0xF0];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    let data: [u8; 16] = [
+        0xFF, 0xFE, 0xFD, 0xFC, 0xFB, 0xFA, 0xF9, 0xF8, 0xF7, 0xF6, 0xF5, 0xF4, 0xF3, 0xF2, 0xF1,
+        0xF0,
+    ];
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -197,8 +201,12 @@ fn test_pmaddubsw_xmm2_mem_saturate() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // Values that will saturate: 255 * 127 + 255 * 127 = 64770 > 32767
-    let data: [u8; 16] = [0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    let data: [u8; 16] = [
+        0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F,
+        0x7F,
+    ];
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -247,7 +255,14 @@ fn test_pmaddubsw_mem_displacement() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+            0x01, 0x01,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

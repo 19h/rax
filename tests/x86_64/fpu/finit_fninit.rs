@@ -26,29 +26,30 @@ use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 // FPU default values
-const DEFAULT_CONTROL_WORD: u16 = 0x037F;    // Round to nearest, all exceptions masked
-const DEFAULT_STATUS_WORD: u16 = 0x0000;     // No exceptions, TOP=0
-const DEFAULT_TAG_WORD: u16 = 0xFFFF;        // All registers empty
+const DEFAULT_CONTROL_WORD: u16 = 0x037F; // Round to nearest, all exceptions masked
+const DEFAULT_STATUS_WORD: u16 = 0x0000; // No exceptions, TOP=0
+const DEFAULT_TAG_WORD: u16 = 0xFFFF; // All registers empty
 
 // Status word bit definitions
-const IE_BIT: u16 = 0x0001;      // Invalid Operation
-const DE_BIT: u16 = 0x0002;      // Denormalized Operand
-const ZE_BIT: u16 = 0x0004;      // Zero Divide
-const OE_BIT: u16 = 0x0008;      // Overflow
-const UE_BIT: u16 = 0x0010;      // Underflow
-const PE_BIT: u16 = 0x0020;      // Precision
-const SF_BIT: u16 = 0x0040;      // Stack Fault
-const ES_BIT: u16 = 0x0080;      // Exception Summary Status
-const TOP_MASK: u16 = 0x3800;    // TOP bits 11-13
-const C2_BIT: u16 = 0x0400;      // Condition Code 2
-const C1_BIT: u16 = 0x0200;      // Condition Code 1
-const C3_BIT: u16 = 0x4000;      // Condition Code 3
-const C0_BIT: u16 = 0x0100;      // Condition Code 0
-const B_BIT: u16 = 0x8000;       // Busy
+const IE_BIT: u16 = 0x0001; // Invalid Operation
+const DE_BIT: u16 = 0x0002; // Denormalized Operand
+const ZE_BIT: u16 = 0x0004; // Zero Divide
+const OE_BIT: u16 = 0x0008; // Overflow
+const UE_BIT: u16 = 0x0010; // Underflow
+const PE_BIT: u16 = 0x0020; // Precision
+const SF_BIT: u16 = 0x0040; // Stack Fault
+const ES_BIT: u16 = 0x0080; // Exception Summary Status
+const TOP_MASK: u16 = 0x3800; // TOP bits 11-13
+const C2_BIT: u16 = 0x0400; // Condition Code 2
+const C1_BIT: u16 = 0x0200; // Condition Code 1
+const C3_BIT: u16 = 0x4000; // Condition Code 3
+const C0_BIT: u16 = 0x0100; // Condition Code 0
+const B_BIT: u16 = 0x8000; // Busy
 
 // Helper function to write u16 to memory
 fn write_u16(mem: &vm_memory::GuestMemoryMmap, addr: u64, val: u16) {
-    mem.write_slice(&val.to_le_bytes(), GuestAddress(addr)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), GuestAddress(addr))
+        .unwrap();
 }
 
 // Helper function to read u16 from memory
@@ -60,7 +61,8 @@ fn read_u16(mem: &vm_memory::GuestMemoryMmap, addr: u64) -> u16 {
 
 // Helper function to write f64 to memory
 fn write_f64(mem: &vm_memory::GuestMemoryMmap, addr: u64, val: f64) {
-    mem.write_slice(&val.to_le_bytes(), GuestAddress(addr)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), GuestAddress(addr))
+        .unwrap();
 }
 
 // Helper function to read f64 from memory
@@ -78,9 +80,9 @@ fn read_f64(mem: &vm_memory::GuestMemoryMmap, addr: u64) -> f64 {
 fn test_fninit_basic() {
     // Basic FNINIT operation
     let code = [
-        0xDB, 0xE3,        // FNINIT
-        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FNSTCW [0x3000]
-        0xF4,              // HLT
+        0xDB, 0xE3, // FNINIT
+        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00, // FNSTCW [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -88,17 +90,20 @@ fn test_fninit_basic() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let cw = read_u16(&mem, 0x3000);
-    assert_eq!(cw, DEFAULT_CONTROL_WORD, "Control word should be 037FH after FNINIT");
+    assert_eq!(
+        cw, DEFAULT_CONTROL_WORD,
+        "Control word should be 037FH after FNINIT"
+    );
 }
 
 #[test]
 fn test_fninit_clears_status_word() {
     // FNINIT should clear the status word
     let code = [
-        0xDB, 0xE3,        // FNINIT
-        0xDF, 0xE0,        // FNSTSW AX
-        0x66, 0x89, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // MOV word [0x3000], AX
-        0xF4,              // HLT
+        0xDB, 0xE3, // FNINIT
+        0xDF, 0xE0, // FNSTSW AX
+        0x66, 0x89, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // MOV word [0x3000], AX
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -106,7 +111,10 @@ fn test_fninit_clears_status_word() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let sw = read_u16(&mem, 0x3000);
-    assert_eq!(sw, DEFAULT_STATUS_WORD, "Status word should be 0000H after FNINIT");
+    assert_eq!(
+        sw, DEFAULT_STATUS_WORD,
+        "Status word should be 0000H after FNINIT"
+    );
 }
 
 #[test]
@@ -114,10 +122,10 @@ fn test_fninit_sets_tag_word() {
     // FNINIT should set tag word to FFFFH (all registers empty)
     // Note: Tag word is typically read through environment save
     let code = [
-        0xDB, 0xE3,        // FNINIT
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (load after init)
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,              // HLT
+        0xDB, 0xE3, // FNINIT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000] (load after init)
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -133,12 +141,12 @@ fn test_fninit_sets_tag_word() {
 fn test_fninit_resets_top_pointer() {
     // FNINIT should reset TOP (Top of Stack) pointer to 0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (push)
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (push)
-        0xDB, 0xE3,                                  // FNINIT (reset TOP)
-        0xDF, 0xE0,                                  // FNSTSW AX
-        0x66, 0x89, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // MOV word [0x3000], AX
-        0xF4,              // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000] (push)
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00, // FLD qword [0x2008] (push)
+        0xDB, 0xE3, // FNINIT (reset TOP)
+        0xDF, 0xE0, // FNSTSW AX
+        0x66, 0x89, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // MOV word [0x3000], AX
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -156,13 +164,13 @@ fn test_fninit_resets_top_pointer() {
 fn test_fninit_multiple_times() {
     // Multiple FNINIT operations
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xDB, 0xE3,                                  // FNINIT
-        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FNSTCW [0x3000]
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xDB, 0xE3,                                  // FNINIT
-        0xD9, 0x3C, 0x25, 0x02, 0x30, 0x00, 0x00,  // FNSTCW [0x3002]
-        0xF4,              // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xDB, 0xE3, // FNINIT
+        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00, // FNSTCW [0x3000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00, // FLD qword [0x2008]
+        0xDB, 0xE3, // FNINIT
+        0xD9, 0x3C, 0x25, 0x02, 0x30, 0x00, 0x00, // FNSTCW [0x3002]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -173,8 +181,14 @@ fn test_fninit_multiple_times() {
 
     let cw1 = read_u16(&mem, 0x3000);
     let cw2 = read_u16(&mem, 0x3002);
-    assert_eq!(cw1, DEFAULT_CONTROL_WORD, "First FNINIT should set CW to 037FH");
-    assert_eq!(cw2, DEFAULT_CONTROL_WORD, "Second FNINIT should set CW to 037FH");
+    assert_eq!(
+        cw1, DEFAULT_CONTROL_WORD,
+        "First FNINIT should set CW to 037FH"
+    );
+    assert_eq!(
+        cw2, DEFAULT_CONTROL_WORD,
+        "Second FNINIT should set CW to 037FH"
+    );
 }
 
 // ============================================================================
@@ -185,9 +199,9 @@ fn test_fninit_multiple_times() {
 fn test_finit_basic() {
     // Basic FINIT operation with FWAIT prefix
     let code = [
-        0x9B, 0xDB, 0xE3,  // FINIT (with FWAIT)
-        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FNSTCW [0x3000]
-        0xF4,              // HLT
+        0x9B, 0xDB, 0xE3, // FINIT (with FWAIT)
+        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00, // FNSTCW [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -195,17 +209,20 @@ fn test_finit_basic() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let cw = read_u16(&mem, 0x3000);
-    assert_eq!(cw, DEFAULT_CONTROL_WORD, "Control word should be 037FH after FINIT");
+    assert_eq!(
+        cw, DEFAULT_CONTROL_WORD,
+        "Control word should be 037FH after FINIT"
+    );
 }
 
 #[test]
 fn test_finit_clears_status_word() {
     // FINIT should clear the status word
     let code = [
-        0x9B, 0xDB, 0xE3,  // FINIT (with FWAIT)
-        0xDF, 0xE0,        // FNSTSW AX
-        0x66, 0x89, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // MOV word [0x3000], AX
-        0xF4,              // HLT
+        0x9B, 0xDB, 0xE3, // FINIT (with FWAIT)
+        0xDF, 0xE0, // FNSTSW AX
+        0x66, 0x89, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // MOV word [0x3000], AX
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -213,7 +230,10 @@ fn test_finit_clears_status_word() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let sw = read_u16(&mem, 0x3000);
-    assert_eq!(sw, DEFAULT_STATUS_WORD, "Status word should be 0000H after FINIT");
+    assert_eq!(
+        sw, DEFAULT_STATUS_WORD,
+        "Status word should be 0000H after FINIT"
+    );
 }
 
 // ============================================================================
@@ -224,15 +244,15 @@ fn test_finit_clears_status_word() {
 fn test_finit_vs_fninit() {
     // FINIT and FNINIT should have same effect in normal operation
     let code1 = [
-        0x9B, 0xDB, 0xE3,  // FINIT
-        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FNSTCW [0x3000]
-        0xF4,              // HLT
+        0x9B, 0xDB, 0xE3, // FINIT
+        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00, // FNSTCW [0x3000]
+        0xF4, // HLT
     ];
 
     let code2 = [
-        0xDB, 0xE3,        // FNINIT
-        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FNSTCW [0x3000]
-        0xF4,              // HLT
+        0xDB, 0xE3, // FNINIT
+        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00, // FNSTCW [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu1, mem1) = setup_vm(&code1, None);
@@ -254,13 +274,13 @@ fn test_finit_vs_fninit() {
 fn test_fninit_after_arithmetic() {
     // FNINIT after arithmetic operations should reset state
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xDE, 0xC1,                                  // FADDP
-        0xDB, 0xE3,                                  // FNINIT
-        0xDF, 0xE0,                                  // FNSTSW AX
-        0x66, 0x89, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // MOV word [0x3000], AX
-        0xF4,              // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00, // FLD qword [0x2008]
+        0xDE, 0xC1, // FADDP
+        0xDB, 0xE3, // FNINIT
+        0xDF, 0xE0, // FNSTSW AX
+        0x66, 0x89, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // MOV word [0x3000], AX
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -270,20 +290,23 @@ fn test_fninit_after_arithmetic() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let sw = read_u16(&mem, 0x3000);
-    assert_eq!(sw, DEFAULT_STATUS_WORD, "Status word should be cleared after FNINIT");
+    assert_eq!(
+        sw, DEFAULT_STATUS_WORD,
+        "Status word should be cleared after FNINIT"
+    );
 }
 
 #[test]
 fn test_finit_after_comparison() {
     // FINIT after comparison
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xD8, 0xD1,                                  // FCOM ST(1)
-        0x9B, 0xDB, 0xE3,                           // FINIT
-        0xDF, 0xE0,                                  // FNSTSW AX
-        0x66, 0x89, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // MOV word [0x3000], AX
-        0xF4,              // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00, // FLD qword [0x2008]
+        0xD8, 0xD1, // FCOM ST(1)
+        0x9B, 0xDB, 0xE3, // FINIT
+        0xDF, 0xE0, // FNSTSW AX
+        0x66, 0x89, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // MOV word [0x3000], AX
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -293,7 +316,10 @@ fn test_finit_after_comparison() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let sw = read_u16(&mem, 0x3000);
-    assert_eq!(sw, DEFAULT_STATUS_WORD, "Status word should be cleared after FINIT");
+    assert_eq!(
+        sw, DEFAULT_STATUS_WORD,
+        "Status word should be cleared after FINIT"
+    );
 }
 
 // ============================================================================
@@ -304,9 +330,9 @@ fn test_finit_after_comparison() {
 fn test_fninit_control_word_precision() {
     // Control word should have 64-bit precision (bits 8-9 = 11)
     let code = [
-        0xDB, 0xE3,        // FNINIT
-        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FNSTCW [0x3000]
-        0xF4,              // HLT
+        0xDB, 0xE3, // FNINIT
+        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00, // FNSTCW [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -322,9 +348,9 @@ fn test_fninit_control_word_precision() {
 fn test_fninit_control_word_rounding() {
     // Control word should have round to nearest (bits 10-11 = 00)
     let code = [
-        0xDB, 0xE3,        // FNINIT
-        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FNSTCW [0x3000]
-        0xF4,              // HLT
+        0xDB, 0xE3, // FNINIT
+        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00, // FNSTCW [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -340,9 +366,9 @@ fn test_fninit_control_word_rounding() {
 fn test_fninit_control_word_exceptions_masked() {
     // Control word should have all exceptions masked (bits 0-5 = 111111)
     let code = [
-        0xDB, 0xE3,        // FNINIT
-        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FNSTCW [0x3000]
-        0xF4,              // HLT
+        0xDB, 0xE3, // FNINIT
+        0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00, // FNSTCW [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -362,12 +388,12 @@ fn test_fninit_control_word_exceptions_masked() {
 fn test_fninit_then_use_fpu() {
     // FPU should be usable immediately after FNINIT
     let code = [
-        0xDB, 0xE3,                                  // FNINIT
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xDE, 0xC1,                                  // FADDP
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,              // HLT
+        0xDB, 0xE3, // FNINIT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00, // FLD qword [0x2008]
+        0xDE, 0xC1, // FADDP
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -384,14 +410,14 @@ fn test_fninit_then_use_fpu() {
 fn test_fninit_stack_operations() {
     // Stack operations should work after FNINIT
     let code = [
-        0xDB, 0xE3,                                  // FNINIT
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xDD, 0x04, 0x25, 0x10, 0x20, 0x00, 0x00,  // FLD qword [0x2010]
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
-        0xDD, 0x1C, 0x25, 0x10, 0x30, 0x00, 0x00,  // FSTP qword [0x3010]
-        0xF4,              // HLT
+        0xDB, 0xE3, // FNINIT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00, // FLD qword [0x2008]
+        0xDD, 0x04, 0x25, 0x10, 0x20, 0x00, 0x00, // FLD qword [0x2010]
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00, // FSTP qword [0x3008]
+        0xDD, 0x1C, 0x25, 0x10, 0x30, 0x00, 0x00, // FSTP qword [0x3010]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -418,10 +444,10 @@ fn test_fninit_stack_operations() {
 fn test_fninit_clears_exception_flags() {
     // All exception flags should be cleared
     let code = [
-        0xDB, 0xE3,        // FNINIT
-        0xDF, 0xE0,        // FNSTSW AX
-        0x66, 0x89, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // MOV word [0x3000], AX
-        0xF4,              // HLT
+        0xDB, 0xE3, // FNINIT
+        0xDF, 0xE0, // FNSTSW AX
+        0x66, 0x89, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // MOV word [0x3000], AX
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -441,10 +467,10 @@ fn test_fninit_clears_exception_flags() {
 fn test_fninit_clears_stack_fault() {
     // Stack Fault flag should be cleared
     let code = [
-        0xDB, 0xE3,        // FNINIT
-        0xDF, 0xE0,        // FNSTSW AX
-        0x66, 0x89, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // MOV word [0x3000], AX
-        0xF4,              // HLT
+        0xDB, 0xE3, // FNINIT
+        0xDF, 0xE0, // FNSTSW AX
+        0x66, 0x89, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // MOV word [0x3000], AX
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -463,14 +489,14 @@ fn test_fninit_clears_stack_fault() {
 fn test_fninit_complete_flow() {
     // Complete workflow with FNINIT
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xDE, 0xC1,                                  // FADDP
-        0xDD, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FNSTSW [0x3000] (before init)
-        0xDB, 0xE3,                                  // FNINIT
-        0xDD, 0x3C, 0x25, 0x02, 0x30, 0x00, 0x00,  // FNSTSW [0x3002] (after init)
-        0xD9, 0x3C, 0x25, 0x04, 0x30, 0x00, 0x00,  // FNSTCW [0x3004]
-        0xF4,              // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00, // FLD qword [0x2008]
+        0xDE, 0xC1, // FADDP
+        0xDD, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00, // FNSTSW [0x3000] (before init)
+        0xDB, 0xE3, // FNINIT
+        0xDD, 0x3C, 0x25, 0x02, 0x30, 0x00, 0x00, // FNSTSW [0x3002] (after init)
+        0xD9, 0x3C, 0x25, 0x04, 0x30, 0x00, 0x00, // FNSTCW [0x3004]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -481,19 +507,25 @@ fn test_fninit_complete_flow() {
 
     let sw_after = read_u16(&mem, 0x3002);
     let cw = read_u16(&mem, 0x3004);
-    assert_eq!(sw_after, DEFAULT_STATUS_WORD, "Status word should be default after FNINIT");
-    assert_eq!(cw, DEFAULT_CONTROL_WORD, "Control word should be default after FNINIT");
+    assert_eq!(
+        sw_after, DEFAULT_STATUS_WORD,
+        "Status word should be default after FNINIT"
+    );
+    assert_eq!(
+        cw, DEFAULT_CONTROL_WORD,
+        "Control word should be default after FNINIT"
+    );
 }
 
 #[test]
 fn test_finit_preserves_data() {
     // FINIT doesn't modify register data, just tags them as empty
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xDB, 0xE3,                                  // FNINIT (data preserved, tagged empty)
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (will use ST(0))
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,              // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xDB, 0xE3, // FNINIT (data preserved, tagged empty)
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00, // FLD qword [0x2008] (will use ST(0))
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -511,18 +543,18 @@ fn test_multiple_finit_cycles() {
     // Multiple initialize/use cycles
     let code = [
         // First cycle
-        0xDB, 0xE3,                                  // FNINIT
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xDB, 0xE3, // FNINIT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
         // Second cycle
-        0xDB, 0xE3,                                  // FNINIT
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
+        0xDB, 0xE3, // FNINIT
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00, // FLD qword [0x2008]
+        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00, // FSTP qword [0x3008]
         // Third cycle
-        0xDB, 0xE3,                                  // FNINIT
-        0xDD, 0x04, 0x25, 0x10, 0x20, 0x00, 0x00,  // FLD qword [0x2010]
-        0xDD, 0x1C, 0x25, 0x10, 0x30, 0x00, 0x00,  // FSTP qword [0x3010]
-        0xF4,              // HLT
+        0xDB, 0xE3, // FNINIT
+        0xDD, 0x04, 0x25, 0x10, 0x20, 0x00, 0x00, // FLD qword [0x2010]
+        0xDD, 0x1C, 0x25, 0x10, 0x30, 0x00, 0x00, // FSTP qword [0x3010]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -564,7 +596,11 @@ fn test_stack_top_wraps_after_eight_pushes() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
     let sw = read_u16(&mem, 0x3000);
-    assert_eq!((sw & TOP_MASK) >> 11, 0, "TOP must wrap back to 0 after 8 pushes");
+    assert_eq!(
+        (sw & TOP_MASK) >> 11,
+        0,
+        "TOP must wrap back to 0 after 8 pushes"
+    );
 }
 
 #[test]
@@ -580,7 +616,11 @@ fn test_stack_top_after_one_push() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
     let sw = read_u16(&mem, 0x3000);
-    assert_eq!((sw & TOP_MASK) >> 11, 7, "TOP must be 7 after one push from empty");
+    assert_eq!(
+        (sw & TOP_MASK) >> 11,
+        7,
+        "TOP must be 7 after one push from empty"
+    );
 }
 
 #[test]
@@ -599,10 +639,22 @@ fn test_stack_overflow_sets_invalid_and_stack_fault() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
     let sw = read_u16(&mem, 0x3000);
-    assert_ne!(sw & IE_BIT, 0, "stack overflow must set IE (Invalid Operation)");
+    assert_ne!(
+        sw & IE_BIT,
+        0,
+        "stack overflow must set IE (Invalid Operation)"
+    );
     assert_ne!(sw & SF_BIT, 0, "stack overflow must set SF (Stack Fault)");
-    assert_ne!(sw & C1_BIT, 0, "stack overflow must set C1 (overflow direction)");
-    assert_ne!(sw & ES_BIT, 0, "IE+SF must raise the Exception Summary (ES)");
+    assert_ne!(
+        sw & C1_BIT,
+        0,
+        "stack overflow must set C1 (overflow direction)"
+    );
+    assert_ne!(
+        sw & ES_BIT,
+        0,
+        "IE+SF must raise the Exception Summary (ES)"
+    );
 }
 
 #[test]
@@ -619,8 +671,20 @@ fn test_stack_underflow_sets_invalid_and_stack_fault() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
     let sw = read_u16(&mem, 0x3000);
-    assert_ne!(sw & IE_BIT, 0, "stack underflow must set IE (Invalid Operation)");
+    assert_ne!(
+        sw & IE_BIT,
+        0,
+        "stack underflow must set IE (Invalid Operation)"
+    );
     assert_ne!(sw & SF_BIT, 0, "stack underflow must set SF (Stack Fault)");
-    assert_eq!(sw & C1_BIT, 0, "stack underflow must clear C1 (underflow direction)");
-    assert_ne!(sw & ES_BIT, 0, "IE+SF must raise the Exception Summary (ES)");
+    assert_eq!(
+        sw & C1_BIT,
+        0,
+        "stack underflow must clear C1 (underflow direction)"
+    );
+    assert_ne!(
+        sw & ES_BIT,
+        0,
+        "IE+SF must raise the Exception Summary (ES)"
+    );
 }

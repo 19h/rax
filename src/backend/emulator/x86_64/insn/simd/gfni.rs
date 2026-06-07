@@ -57,12 +57,7 @@ fn affine_byte(matrix: &[u8], input: u8, imm8: u8) -> u8 {
 }
 
 #[inline]
-fn read_src128(
-    vcpu: &mut X86_64Vcpu,
-    rm: u8,
-    is_memory: bool,
-    addr: u64,
-) -> Result<[u8; 16]> {
+fn read_src128(vcpu: &mut X86_64Vcpu, rm: u8, is_memory: bool, addr: u64) -> Result<[u8; 16]> {
     let (lo, hi) = if is_memory {
         (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
     } else {
@@ -108,7 +103,9 @@ pub fn gf2p8mulb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
 /// GF2P8AFFINEQB xmm1, xmm2/m128, imm8 (66 0F 3A CE /r ib): per-qword affine.
 pub fn gf2p8affineqb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("GF2P8AFFINEQB requires 66 prefix".to_string()));
+        return Err(Error::Emulator(
+            "GF2P8AFFINEQB requires 66 prefix".to_string(),
+        ));
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let imm8 = ctx.consume_u8()?;
@@ -128,10 +125,7 @@ pub fn gf2p8affineqb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
 }
 
 /// GF2P8AFFINEINVQB xmm1, xmm2/m128, imm8 (66 0F 3A CF /r ib): GF inverse then affine.
-pub fn gf2p8affineinvqb(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-) -> Result<Option<VcpuExit>> {
+pub fn gf2p8affineinvqb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
         return Err(Error::Emulator(
             "GF2P8AFFINEINVQB requires 66 prefix".to_string(),

@@ -19,7 +19,11 @@ fn test_pdep_pext_round_trip() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0xFF, "PEXT(PDEP(x, mask), mask) == x");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0xFF,
+        "PEXT(PDEP(x, mask), mask) == x"
+    );
 }
 
 #[test]
@@ -37,7 +41,11 @@ fn test_pext_pdep_round_trip() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let expected = 0x12345678u32 & 0xF0F0F0F0;
-    assert_eq!(regs.rdx & 0xFFFFFFFF, expected as u64, "PDEP(PEXT(x, mask), mask) == x & mask");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        expected as u64,
+        "PDEP(PEXT(x, mask), mask) == x & mask"
+    );
 }
 
 #[test]
@@ -69,7 +77,11 @@ fn test_bzhi_with_count_32() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "BZHI with count 32 is identity");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "BZHI with count 32 is identity"
+    );
 }
 
 #[test]
@@ -85,7 +97,10 @@ fn test_bzhi_with_count_64() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x123456789ABCDEF0, "BZHI with count 64 is identity");
+    assert_eq!(
+        regs.rax, 0x123456789ABCDEF0,
+        "BZHI with count 64 is identity"
+    );
 }
 
 #[test]
@@ -174,7 +189,11 @@ fn test_sarx_shlx_shrx_composition() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x00001234, "SHRX(SHLX(x, n), n) == x");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x00001234,
+        "SHRX(SHLX(x, n), n) == x"
+    );
 }
 
 #[test]
@@ -323,7 +342,11 @@ fn test_rorx_full_rotation_32() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "Full rotation is identity");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "Full rotation is identity"
+    );
 }
 
 #[test]

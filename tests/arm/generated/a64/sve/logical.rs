@@ -25,7 +25,11 @@ fn test_eor_z_p_zz_field_size_0_min_0_04190000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -41,7 +45,11 @@ fn test_eor_z_p_zz_field_size_1_poweroftwo_0_04590000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -57,7 +65,11 @@ fn test_eor_z_p_zz_field_size_2_poweroftwo_0_04990000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -73,7 +85,11 @@ fn test_eor_z_p_zz_field_size_3_max_0_04d90000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -89,7 +105,11 @@ fn test_eor_z_p_zz_field_pg_0_min_0_04190000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -105,7 +125,11 @@ fn test_eor_z_p_zz_field_pg_1_poweroftwo_0_04190400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -121,7 +145,11 @@ fn test_eor_z_p_zz_field_zm_0_min_0_04190000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -137,7 +165,11 @@ fn test_eor_z_p_zz_field_zm_1_poweroftwo_0_04190020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -153,7 +185,11 @@ fn test_eor_z_p_zz_field_zm_30_poweroftwominusone_0_041903c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -169,7 +205,11 @@ fn test_eor_z_p_zz_field_zm_31_max_0_041903e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -185,7 +225,11 @@ fn test_eor_z_p_zz_field_zdn_0_min_0_04190000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -201,7 +245,11 @@ fn test_eor_z_p_zz_field_zdn_1_poweroftwo_0_04190001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -217,7 +265,11 @@ fn test_eor_z_p_zz_field_zdn_15_poweroftwominusone_0_0419000f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -233,7 +285,11 @@ fn test_eor_z_p_zz_field_zdn_31_max_0_0419001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -249,7 +305,11 @@ fn test_eor_z_p_zz_combo_0_0_04190000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -265,7 +325,11 @@ fn test_eor_z_p_zz_combo_1_0_04590000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -281,7 +345,11 @@ fn test_eor_z_p_zz_combo_2_0_04990000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -297,7 +365,11 @@ fn test_eor_z_p_zz_combo_3_0_04d90000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -313,7 +385,11 @@ fn test_eor_z_p_zz_combo_4_0_04190000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -329,7 +405,11 @@ fn test_eor_z_p_zz_combo_5_0_04190400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -345,7 +425,11 @@ fn test_eor_z_p_zz_combo_6_0_04190000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -361,7 +445,11 @@ fn test_eor_z_p_zz_combo_7_0_04190020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -377,7 +465,11 @@ fn test_eor_z_p_zz_combo_8_0_041903c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -393,7 +485,11 @@ fn test_eor_z_p_zz_combo_9_0_041903e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -409,7 +505,11 @@ fn test_eor_z_p_zz_combo_10_0_04190000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -425,7 +525,11 @@ fn test_eor_z_p_zz_combo_11_0_04190001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -441,7 +545,11 @@ fn test_eor_z_p_zz_combo_12_0_0419000f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -457,7 +565,11 @@ fn test_eor_z_p_zz_combo_13_0_0419001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -473,7 +585,11 @@ fn test_eor_z_p_zz_special_size_0_size_variant_0_0_04190000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -489,7 +605,11 @@ fn test_eor_z_p_zz_special_size_1_size_variant_1_0_04590000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -505,7 +625,11 @@ fn test_eor_z_p_zz_special_size_2_size_variant_2_0_04990000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.P.ZZ__
@@ -521,7 +645,11 @@ fn test_eor_z_p_zz_special_size_3_size_variant_3_0_04d90000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -541,7 +669,11 @@ fn test_bic_z_p_zz_field_size_0_min_0_041b0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -557,7 +689,11 @@ fn test_bic_z_p_zz_field_size_1_poweroftwo_0_045b0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -573,7 +709,11 @@ fn test_bic_z_p_zz_field_size_2_poweroftwo_0_049b0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -589,7 +729,11 @@ fn test_bic_z_p_zz_field_size_3_max_0_04db0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -605,7 +749,11 @@ fn test_bic_z_p_zz_field_pg_0_min_0_041b0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -621,7 +769,11 @@ fn test_bic_z_p_zz_field_pg_1_poweroftwo_0_041b0400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -637,7 +789,11 @@ fn test_bic_z_p_zz_field_zm_0_min_0_041b0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -653,7 +809,11 @@ fn test_bic_z_p_zz_field_zm_1_poweroftwo_0_041b0020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -669,7 +829,11 @@ fn test_bic_z_p_zz_field_zm_30_poweroftwominusone_0_041b03c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -685,7 +849,11 @@ fn test_bic_z_p_zz_field_zm_31_max_0_041b03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -701,7 +869,11 @@ fn test_bic_z_p_zz_field_zdn_0_min_0_041b0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -717,7 +889,11 @@ fn test_bic_z_p_zz_field_zdn_1_poweroftwo_0_041b0001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -733,7 +909,11 @@ fn test_bic_z_p_zz_field_zdn_15_poweroftwominusone_0_041b000f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -749,7 +929,11 @@ fn test_bic_z_p_zz_field_zdn_31_max_0_041b001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -765,7 +949,11 @@ fn test_bic_z_p_zz_combo_0_0_041b0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -781,7 +969,11 @@ fn test_bic_z_p_zz_combo_1_0_045b0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -797,7 +989,11 @@ fn test_bic_z_p_zz_combo_2_0_049b0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -813,7 +1009,11 @@ fn test_bic_z_p_zz_combo_3_0_04db0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -829,7 +1029,11 @@ fn test_bic_z_p_zz_combo_4_0_041b0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -845,7 +1049,11 @@ fn test_bic_z_p_zz_combo_5_0_041b0400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -861,7 +1069,11 @@ fn test_bic_z_p_zz_combo_6_0_041b0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -877,7 +1089,11 @@ fn test_bic_z_p_zz_combo_7_0_041b0020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -893,7 +1109,11 @@ fn test_bic_z_p_zz_combo_8_0_041b03c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -909,7 +1129,11 @@ fn test_bic_z_p_zz_combo_9_0_041b03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -925,7 +1149,11 @@ fn test_bic_z_p_zz_combo_10_0_041b0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -941,7 +1169,11 @@ fn test_bic_z_p_zz_combo_11_0_041b0001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -957,7 +1189,11 @@ fn test_bic_z_p_zz_combo_12_0_041b000f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -973,7 +1209,11 @@ fn test_bic_z_p_zz_combo_13_0_041b001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -989,7 +1229,11 @@ fn test_bic_z_p_zz_special_size_0_size_variant_0_0_041b0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -1005,7 +1249,11 @@ fn test_bic_z_p_zz_special_size_1_size_variant_1_0_045b0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -1021,7 +1269,11 @@ fn test_bic_z_p_zz_special_size_2_size_variant_2_0_049b0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.P.ZZ__
@@ -1037,7 +1289,11 @@ fn test_bic_z_p_zz_special_size_3_size_variant_3_0_04db0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -1057,7 +1313,11 @@ fn test_not_z_p_z_field_size_0_min_a000_041ea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1073,7 +1333,11 @@ fn test_not_z_p_z_field_size_1_poweroftwo_a000_045ea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1089,7 +1353,11 @@ fn test_not_z_p_z_field_size_2_poweroftwo_a000_049ea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1105,7 +1373,11 @@ fn test_not_z_p_z_field_size_3_max_a000_04dea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1121,7 +1393,11 @@ fn test_not_z_p_z_field_pg_0_min_a000_041ea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1137,7 +1413,11 @@ fn test_not_z_p_z_field_pg_1_poweroftwo_a000_041ea400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1153,7 +1433,11 @@ fn test_not_z_p_z_field_zn_0_min_a000_041ea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1169,7 +1453,11 @@ fn test_not_z_p_z_field_zn_1_poweroftwo_a000_041ea020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1185,7 +1473,11 @@ fn test_not_z_p_z_field_zn_30_poweroftwominusone_a000_041ea3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1201,7 +1493,11 @@ fn test_not_z_p_z_field_zn_31_max_a000_041ea3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1217,7 +1513,11 @@ fn test_not_z_p_z_field_zd_0_min_a000_041ea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1233,7 +1533,11 @@ fn test_not_z_p_z_field_zd_1_poweroftwo_a000_041ea001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1249,7 +1553,11 @@ fn test_not_z_p_z_field_zd_30_poweroftwominusone_a000_041ea01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1265,7 +1573,11 @@ fn test_not_z_p_z_field_zd_31_max_a000_041ea01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1281,7 +1593,11 @@ fn test_not_z_p_z_combo_0_a000_041ea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1297,7 +1613,11 @@ fn test_not_z_p_z_combo_1_a000_045ea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1313,7 +1633,11 @@ fn test_not_z_p_z_combo_2_a000_049ea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1329,7 +1653,11 @@ fn test_not_z_p_z_combo_3_a000_04dea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1345,7 +1673,11 @@ fn test_not_z_p_z_combo_4_a000_041ea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1361,7 +1693,11 @@ fn test_not_z_p_z_combo_5_a000_041ea400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1377,7 +1713,11 @@ fn test_not_z_p_z_combo_6_a000_041ea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1393,7 +1733,11 @@ fn test_not_z_p_z_combo_7_a000_041ea020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1409,7 +1753,11 @@ fn test_not_z_p_z_combo_8_a000_041ea3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1425,7 +1773,11 @@ fn test_not_z_p_z_combo_9_a000_041ea3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1441,7 +1793,11 @@ fn test_not_z_p_z_combo_10_a000_041ea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1457,7 +1813,11 @@ fn test_not_z_p_z_combo_11_a000_041ea001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1473,7 +1833,11 @@ fn test_not_z_p_z_combo_12_a000_041ea01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1489,7 +1853,11 @@ fn test_not_z_p_z_combo_13_a000_041ea01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1505,7 +1873,11 @@ fn test_not_z_p_z_special_size_0_size_variant_0_40960_041ea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1521,7 +1893,11 @@ fn test_not_z_p_z_special_size_1_size_variant_1_40960_045ea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1537,7 +1913,11 @@ fn test_not_z_p_z_special_size_2_size_variant_2_40960_049ea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: NOT_Z.P.Z__
@@ -1553,7 +1933,11 @@ fn test_not_z_p_z_special_size_3_size_variant_3_40960_04dea000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -1573,7 +1957,12 @@ fn test_orr_p_p_pp_z_field_s_0_min_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1589,7 +1978,12 @@ fn test_orr_p_p_pp_z_field_s_1_max_4000_25c04000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1605,7 +1999,12 @@ fn test_orr_p_p_pp_z_field_pm_0_min_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1621,7 +2020,12 @@ fn test_orr_p_p_pp_z_field_pm_1_poweroftwo_4000_25814000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1637,7 +2041,12 @@ fn test_orr_p_p_pp_z_field_pg_0_min_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1653,7 +2062,12 @@ fn test_orr_p_p_pp_z_field_pg_1_poweroftwo_4000_25804400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1669,7 +2083,12 @@ fn test_orr_p_p_pp_z_field_pn_0_min_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1685,7 +2104,12 @@ fn test_orr_p_p_pp_z_field_pn_1_poweroftwo_4000_25804020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1701,7 +2125,12 @@ fn test_orr_p_p_pp_z_field_pd_0_min_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1717,7 +2146,12 @@ fn test_orr_p_p_pp_z_field_pd_1_poweroftwo_4000_25804001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1733,7 +2167,12 @@ fn test_orr_p_p_pp_z_combo_0_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1749,7 +2188,12 @@ fn test_orr_p_p_pp_z_combo_1_4000_25c04000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1765,7 +2209,12 @@ fn test_orr_p_p_pp_z_combo_2_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1781,7 +2230,12 @@ fn test_orr_p_p_pp_z_combo_3_4000_25814000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1797,7 +2251,12 @@ fn test_orr_p_p_pp_z_combo_4_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1813,7 +2272,12 @@ fn test_orr_p_p_pp_z_combo_5_4000_25804400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1829,7 +2293,12 @@ fn test_orr_p_p_pp_z_combo_6_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1845,7 +2314,12 @@ fn test_orr_p_p_pp_z_combo_7_4000_25804020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1861,7 +2335,12 @@ fn test_orr_p_p_pp_z_combo_8_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1877,7 +2356,12 @@ fn test_orr_p_p_pp_z_combo_9_4000_25804001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1893,7 +2377,12 @@ fn test_orr_p_p_pp_z_combo_10_4000_25814400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1909,7 +2398,12 @@ fn test_orr_p_p_pp_z_combo_11_4000_258f7c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1925,7 +2419,12 @@ fn test_orr_p_p_pp_z_combo_12_4000_25814020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1941,7 +2440,12 @@ fn test_orr_p_p_pp_z_combo_13_4000_258f41e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1957,7 +2461,12 @@ fn test_orr_p_p_pp_z_combo_14_4000_25814001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1973,7 +2482,12 @@ fn test_orr_p_p_pp_z_combo_15_4000_258f400f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -1989,7 +2503,12 @@ fn test_orr_p_p_pp_z_combo_16_4000_25804420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -2005,7 +2524,12 @@ fn test_orr_p_p_pp_z_combo_17_4000_25807de0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -2021,7 +2545,12 @@ fn test_orr_p_p_pp_z_combo_18_4000_25804401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -2037,7 +2566,12 @@ fn test_orr_p_p_pp_z_combo_19_4000_25807c0f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -2053,7 +2587,12 @@ fn test_orr_p_p_pp_z_combo_20_4000_25804021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -2069,7 +2608,12 @@ fn test_orr_p_p_pp_z_combo_21_4000_258041ef() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -2085,7 +2629,12 @@ fn test_orr_p_p_pp_z_special_s_0_size_variant_0_16384_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -2101,7 +2650,12 @@ fn test_orr_p_p_pp_z_special_s_1_size_variant_1_16384_25c04000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2117,7 +2671,12 @@ fn test_orrs_p_p_pp_z_field_s_0_min_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2133,7 +2692,12 @@ fn test_orrs_p_p_pp_z_field_s_1_max_4000_25c04000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2149,7 +2713,12 @@ fn test_orrs_p_p_pp_z_field_pm_0_min_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2165,7 +2734,12 @@ fn test_orrs_p_p_pp_z_field_pm_1_poweroftwo_4000_25814000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2181,7 +2755,12 @@ fn test_orrs_p_p_pp_z_field_pg_0_min_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2197,7 +2776,12 @@ fn test_orrs_p_p_pp_z_field_pg_1_poweroftwo_4000_25804400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2213,7 +2797,12 @@ fn test_orrs_p_p_pp_z_field_pn_0_min_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2229,7 +2818,12 @@ fn test_orrs_p_p_pp_z_field_pn_1_poweroftwo_4000_25804020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2245,7 +2839,12 @@ fn test_orrs_p_p_pp_z_field_pd_0_min_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2261,7 +2860,12 @@ fn test_orrs_p_p_pp_z_field_pd_1_poweroftwo_4000_25804001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2277,7 +2881,12 @@ fn test_orrs_p_p_pp_z_combo_0_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2293,7 +2902,12 @@ fn test_orrs_p_p_pp_z_combo_1_4000_25c04000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2309,7 +2923,12 @@ fn test_orrs_p_p_pp_z_combo_2_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2325,7 +2944,12 @@ fn test_orrs_p_p_pp_z_combo_3_4000_25814000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2341,7 +2965,12 @@ fn test_orrs_p_p_pp_z_combo_4_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2357,7 +2986,12 @@ fn test_orrs_p_p_pp_z_combo_5_4000_25804400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2373,7 +3007,12 @@ fn test_orrs_p_p_pp_z_combo_6_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2389,7 +3028,12 @@ fn test_orrs_p_p_pp_z_combo_7_4000_25804020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2405,7 +3049,12 @@ fn test_orrs_p_p_pp_z_combo_8_4000_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2421,7 +3070,12 @@ fn test_orrs_p_p_pp_z_combo_9_4000_25804001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2437,7 +3091,12 @@ fn test_orrs_p_p_pp_z_combo_10_4000_25814400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2453,7 +3112,12 @@ fn test_orrs_p_p_pp_z_combo_11_4000_258f7c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2469,7 +3133,12 @@ fn test_orrs_p_p_pp_z_combo_12_4000_25814020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2485,7 +3154,12 @@ fn test_orrs_p_p_pp_z_combo_13_4000_258f41e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2501,7 +3175,12 @@ fn test_orrs_p_p_pp_z_combo_14_4000_25814001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2517,7 +3196,12 @@ fn test_orrs_p_p_pp_z_combo_15_4000_258f400f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2533,7 +3217,12 @@ fn test_orrs_p_p_pp_z_combo_16_4000_25804420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2549,7 +3238,12 @@ fn test_orrs_p_p_pp_z_combo_17_4000_25807de0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2565,7 +3259,12 @@ fn test_orrs_p_p_pp_z_combo_18_4000_25804401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2581,7 +3280,12 @@ fn test_orrs_p_p_pp_z_combo_19_4000_25807c0f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2597,7 +3301,12 @@ fn test_orrs_p_p_pp_z_combo_20_4000_25804021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2613,7 +3322,12 @@ fn test_orrs_p_p_pp_z_combo_21_4000_258041ef() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2629,7 +3343,12 @@ fn test_orrs_p_p_pp_z_special_s_0_size_variant_0_16384_25804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORRS_P.P.PP_Z
@@ -2645,7 +3364,12 @@ fn test_orrs_p_p_pp_z_special_s_1_size_variant_1_16384_25c04000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ORR_P.P.PP_Z
@@ -3031,7 +3755,11 @@ fn test_orr_z_zz_field_zm_0_min_3000_04603000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3047,7 +3775,11 @@ fn test_orr_z_zz_field_zm_1_poweroftwo_3000_04613000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3063,7 +3795,11 @@ fn test_orr_z_zz_field_zm_30_poweroftwominusone_3000_047e3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3079,7 +3815,11 @@ fn test_orr_z_zz_field_zm_31_max_3000_047f3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3095,7 +3835,11 @@ fn test_orr_z_zz_field_zn_0_min_3000_04603000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3111,7 +3855,11 @@ fn test_orr_z_zz_field_zn_1_poweroftwo_3000_04603020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3127,7 +3875,11 @@ fn test_orr_z_zz_field_zn_30_poweroftwominusone_3000_046033c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3143,7 +3895,11 @@ fn test_orr_z_zz_field_zn_31_max_3000_046033e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3159,7 +3915,11 @@ fn test_orr_z_zz_field_zd_0_min_3000_04603000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3175,7 +3935,11 @@ fn test_orr_z_zz_field_zd_1_poweroftwo_3000_04603001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3191,7 +3955,11 @@ fn test_orr_z_zz_field_zd_30_poweroftwominusone_3000_0460301e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3207,7 +3975,11 @@ fn test_orr_z_zz_field_zd_31_max_3000_0460301f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3223,7 +3995,11 @@ fn test_orr_z_zz_combo_0_3000_04603000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3239,7 +4015,11 @@ fn test_orr_z_zz_combo_1_3000_04613000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3255,7 +4035,11 @@ fn test_orr_z_zz_combo_2_3000_047e3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3271,7 +4055,11 @@ fn test_orr_z_zz_combo_3_3000_047f3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3287,7 +4075,11 @@ fn test_orr_z_zz_combo_4_3000_04603000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3303,7 +4095,11 @@ fn test_orr_z_zz_combo_5_3000_04603020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3319,7 +4115,11 @@ fn test_orr_z_zz_combo_6_3000_046033c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3335,7 +4135,11 @@ fn test_orr_z_zz_combo_7_3000_046033e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3351,7 +4155,11 @@ fn test_orr_z_zz_combo_8_3000_04603000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3367,7 +4175,11 @@ fn test_orr_z_zz_combo_9_3000_04603001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3383,7 +4195,11 @@ fn test_orr_z_zz_combo_10_3000_0460301e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZZ__
@@ -3399,7 +4215,11 @@ fn test_orr_z_zz_combo_11_3000_0460301f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -3419,7 +4239,11 @@ fn test_and_z_p_zz_field_size_0_min_0_041a0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3435,7 +4259,11 @@ fn test_and_z_p_zz_field_size_1_poweroftwo_0_045a0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3451,7 +4279,11 @@ fn test_and_z_p_zz_field_size_2_poweroftwo_0_049a0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3467,7 +4299,11 @@ fn test_and_z_p_zz_field_size_3_max_0_04da0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3483,7 +4319,11 @@ fn test_and_z_p_zz_field_pg_0_min_0_041a0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3499,7 +4339,11 @@ fn test_and_z_p_zz_field_pg_1_poweroftwo_0_041a0400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3515,7 +4359,11 @@ fn test_and_z_p_zz_field_zm_0_min_0_041a0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3531,7 +4379,11 @@ fn test_and_z_p_zz_field_zm_1_poweroftwo_0_041a0020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3547,7 +4399,11 @@ fn test_and_z_p_zz_field_zm_30_poweroftwominusone_0_041a03c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3563,7 +4419,11 @@ fn test_and_z_p_zz_field_zm_31_max_0_041a03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3579,7 +4439,11 @@ fn test_and_z_p_zz_field_zdn_0_min_0_041a0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3595,7 +4459,11 @@ fn test_and_z_p_zz_field_zdn_1_poweroftwo_0_041a0001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3611,7 +4479,11 @@ fn test_and_z_p_zz_field_zdn_15_poweroftwominusone_0_041a000f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3627,7 +4499,11 @@ fn test_and_z_p_zz_field_zdn_31_max_0_041a001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3643,7 +4519,11 @@ fn test_and_z_p_zz_combo_0_0_041a0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3659,7 +4539,11 @@ fn test_and_z_p_zz_combo_1_0_045a0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3675,7 +4559,11 @@ fn test_and_z_p_zz_combo_2_0_049a0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3691,7 +4579,11 @@ fn test_and_z_p_zz_combo_3_0_04da0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3707,7 +4599,11 @@ fn test_and_z_p_zz_combo_4_0_041a0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3723,7 +4619,11 @@ fn test_and_z_p_zz_combo_5_0_041a0400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3739,7 +4639,11 @@ fn test_and_z_p_zz_combo_6_0_041a0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3755,7 +4659,11 @@ fn test_and_z_p_zz_combo_7_0_041a0020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3771,7 +4679,11 @@ fn test_and_z_p_zz_combo_8_0_041a03c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3787,7 +4699,11 @@ fn test_and_z_p_zz_combo_9_0_041a03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3803,7 +4719,11 @@ fn test_and_z_p_zz_combo_10_0_041a0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3819,7 +4739,11 @@ fn test_and_z_p_zz_combo_11_0_041a0001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3835,7 +4759,11 @@ fn test_and_z_p_zz_combo_12_0_041a000f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3851,7 +4779,11 @@ fn test_and_z_p_zz_combo_13_0_041a001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3867,7 +4799,11 @@ fn test_and_z_p_zz_special_size_0_size_variant_0_0_041a0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3883,7 +4819,11 @@ fn test_and_z_p_zz_special_size_1_size_variant_1_0_045a0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3899,7 +4839,11 @@ fn test_and_z_p_zz_special_size_2_size_variant_2_0_049a0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.P.ZZ__
@@ -3915,7 +4859,11 @@ fn test_and_z_p_zz_special_size_3_size_variant_3_0_04da0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -3935,7 +4883,11 @@ fn test_orr_z_zi_field_imm13_0_zero_0_05000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -3951,7 +4903,11 @@ fn test_orr_z_zi_field_imm13_1_poweroftwo_0_05000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -3967,7 +4923,11 @@ fn test_orr_z_zi_field_imm13_3_poweroftwominusone_0_05000060() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -3983,7 +4943,11 @@ fn test_orr_z_zi_field_imm13_4_poweroftwo_0_05000080() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -3999,7 +4963,11 @@ fn test_orr_z_zi_field_imm13_7_poweroftwominusone_0_050000e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4015,7 +4983,11 @@ fn test_orr_z_zi_field_imm13_8_poweroftwo_0_05000100() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4031,7 +5003,11 @@ fn test_orr_z_zi_field_imm13_15_poweroftwominusone_0_050001e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4047,7 +5023,11 @@ fn test_orr_z_zi_field_imm13_16_poweroftwo_0_05000200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4063,7 +5043,11 @@ fn test_orr_z_zi_field_imm13_31_poweroftwominusone_0_050003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4079,7 +5063,11 @@ fn test_orr_z_zi_field_imm13_32_poweroftwo_0_05000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4095,7 +5083,11 @@ fn test_orr_z_zi_field_imm13_63_poweroftwominusone_0_050007e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4111,7 +5103,11 @@ fn test_orr_z_zi_field_imm13_64_poweroftwo_0_05000800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4127,7 +5123,11 @@ fn test_orr_z_zi_field_imm13_127_poweroftwominusone_0_05000fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4143,7 +5143,11 @@ fn test_orr_z_zi_field_imm13_128_poweroftwo_0_05001000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4159,7 +5163,11 @@ fn test_orr_z_zi_field_imm13_255_poweroftwominusone_0_05001fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4175,7 +5183,11 @@ fn test_orr_z_zi_field_imm13_256_poweroftwo_0_05002000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4191,7 +5203,11 @@ fn test_orr_z_zi_field_imm13_511_poweroftwominusone_0_05003fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4207,7 +5223,11 @@ fn test_orr_z_zi_field_imm13_512_poweroftwo_0_05004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4223,7 +5243,11 @@ fn test_orr_z_zi_field_imm13_1023_poweroftwominusone_0_05007fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4239,7 +5263,11 @@ fn test_orr_z_zi_field_imm13_1024_poweroftwo_0_05008000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4255,7 +5283,11 @@ fn test_orr_z_zi_field_imm13_2047_poweroftwominusone_0_0500ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4271,7 +5303,11 @@ fn test_orr_z_zi_field_imm13_2048_poweroftwo_0_05010000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4287,7 +5323,11 @@ fn test_orr_z_zi_field_imm13_4095_poweroftwominusone_0_0501ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4303,7 +5343,11 @@ fn test_orr_z_zi_field_imm13_4096_poweroftwo_0_05020000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4319,7 +5363,11 @@ fn test_orr_z_zi_field_imm13_8191_max_0_0503ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4335,7 +5383,11 @@ fn test_orr_z_zi_field_zdn_0_min_0_05000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4351,7 +5403,11 @@ fn test_orr_z_zi_field_zdn_1_poweroftwo_0_05000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4367,7 +5423,11 @@ fn test_orr_z_zi_field_zdn_15_poweroftwominusone_0_0500000f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4383,7 +5443,11 @@ fn test_orr_z_zi_field_zdn_31_max_0_0500001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4399,7 +5463,11 @@ fn test_orr_z_zi_combo_0_0_05000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4415,7 +5483,11 @@ fn test_orr_z_zi_combo_1_0_05000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4431,7 +5503,11 @@ fn test_orr_z_zi_combo_2_0_05000060() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4447,7 +5523,11 @@ fn test_orr_z_zi_combo_3_0_05000080() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4463,7 +5543,11 @@ fn test_orr_z_zi_combo_4_0_050000e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4479,7 +5563,11 @@ fn test_orr_z_zi_combo_5_0_05000100() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4495,7 +5583,11 @@ fn test_orr_z_zi_combo_6_0_050001e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4511,7 +5603,11 @@ fn test_orr_z_zi_combo_7_0_05000200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4527,7 +5623,11 @@ fn test_orr_z_zi_combo_8_0_050003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4543,7 +5643,11 @@ fn test_orr_z_zi_combo_9_0_05000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4559,7 +5663,11 @@ fn test_orr_z_zi_combo_10_0_050007e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4575,7 +5683,11 @@ fn test_orr_z_zi_combo_11_0_05000800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4591,7 +5703,11 @@ fn test_orr_z_zi_combo_12_0_05000fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4607,7 +5723,11 @@ fn test_orr_z_zi_combo_13_0_05001000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4623,7 +5743,11 @@ fn test_orr_z_zi_combo_14_0_05001fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4639,7 +5763,11 @@ fn test_orr_z_zi_combo_15_0_05002000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4655,7 +5783,11 @@ fn test_orr_z_zi_combo_16_0_05003fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4671,7 +5803,11 @@ fn test_orr_z_zi_combo_17_0_05004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4687,7 +5823,11 @@ fn test_orr_z_zi_combo_18_0_05007fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4703,7 +5843,11 @@ fn test_orr_z_zi_combo_19_0_05008000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4719,7 +5863,11 @@ fn test_orr_z_zi_combo_20_0_0500ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4735,7 +5883,11 @@ fn test_orr_z_zi_combo_21_0_05010000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4751,7 +5903,11 @@ fn test_orr_z_zi_combo_22_0_0501ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4767,7 +5923,11 @@ fn test_orr_z_zi_combo_23_0_05020000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4783,7 +5943,11 @@ fn test_orr_z_zi_combo_24_0_0503ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4799,7 +5963,11 @@ fn test_orr_z_zi_combo_25_0_05000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4815,7 +5983,11 @@ fn test_orr_z_zi_combo_26_0_05000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4831,7 +6003,11 @@ fn test_orr_z_zi_combo_27_0_0500000f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.ZI__
@@ -4847,7 +6023,11 @@ fn test_orr_z_zi_combo_28_0_0500001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -4867,7 +6047,11 @@ fn test_bic_z_zz_field_zm_0_min_3000_04e03000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -4883,7 +6067,11 @@ fn test_bic_z_zz_field_zm_1_poweroftwo_3000_04e13000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -4899,7 +6087,11 @@ fn test_bic_z_zz_field_zm_30_poweroftwominusone_3000_04fe3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -4915,7 +6107,11 @@ fn test_bic_z_zz_field_zm_31_max_3000_04ff3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -4931,7 +6127,11 @@ fn test_bic_z_zz_field_zn_0_min_3000_04e03000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -4947,7 +6147,11 @@ fn test_bic_z_zz_field_zn_1_poweroftwo_3000_04e03020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -4963,7 +6167,11 @@ fn test_bic_z_zz_field_zn_30_poweroftwominusone_3000_04e033c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -4979,7 +6187,11 @@ fn test_bic_z_zz_field_zn_31_max_3000_04e033e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -4995,7 +6207,11 @@ fn test_bic_z_zz_field_zd_0_min_3000_04e03000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -5011,7 +6227,11 @@ fn test_bic_z_zz_field_zd_1_poweroftwo_3000_04e03001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -5027,7 +6247,11 @@ fn test_bic_z_zz_field_zd_30_poweroftwominusone_3000_04e0301e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -5043,7 +6267,11 @@ fn test_bic_z_zz_field_zd_31_max_3000_04e0301f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -5059,7 +6287,11 @@ fn test_bic_z_zz_combo_0_3000_04e03000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -5075,7 +6307,11 @@ fn test_bic_z_zz_combo_1_3000_04e13000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -5091,7 +6327,11 @@ fn test_bic_z_zz_combo_2_3000_04fe3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -5107,7 +6347,11 @@ fn test_bic_z_zz_combo_3_3000_04ff3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -5123,7 +6367,11 @@ fn test_bic_z_zz_combo_4_3000_04e03000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -5139,7 +6387,11 @@ fn test_bic_z_zz_combo_5_3000_04e03020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -5155,7 +6407,11 @@ fn test_bic_z_zz_combo_6_3000_04e033c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -5171,7 +6427,11 @@ fn test_bic_z_zz_combo_7_3000_04e033e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -5187,7 +6447,11 @@ fn test_bic_z_zz_combo_8_3000_04e03000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -5203,7 +6467,11 @@ fn test_bic_z_zz_combo_9_3000_04e03001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -5219,7 +6487,11 @@ fn test_bic_z_zz_combo_10_3000_04e0301e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: BIC_Z.ZZ__
@@ -5235,7 +6507,11 @@ fn test_bic_z_zz_combo_11_3000_04e0301f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -5255,7 +6531,12 @@ fn test_eor_p_p_pp_z_field_pm_0_min_4200_25004200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5271,7 +6552,12 @@ fn test_eor_p_p_pp_z_field_pm_1_poweroftwo_4200_25014200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5287,7 +6573,12 @@ fn test_eor_p_p_pp_z_field_pg_0_min_4200_25004200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5303,7 +6594,12 @@ fn test_eor_p_p_pp_z_field_pg_1_poweroftwo_4200_25004600() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5319,7 +6615,12 @@ fn test_eor_p_p_pp_z_field_pn_0_min_4200_25004200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5335,7 +6636,12 @@ fn test_eor_p_p_pp_z_field_pn_1_poweroftwo_4200_25004220() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5351,7 +6657,12 @@ fn test_eor_p_p_pp_z_field_pd_0_min_4200_25004200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5367,7 +6678,12 @@ fn test_eor_p_p_pp_z_field_pd_1_poweroftwo_4200_25004201() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5383,7 +6699,12 @@ fn test_eor_p_p_pp_z_combo_0_4200_25004200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5399,7 +6720,12 @@ fn test_eor_p_p_pp_z_combo_1_4200_25014200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5415,7 +6741,12 @@ fn test_eor_p_p_pp_z_combo_2_4200_25004200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5431,7 +6762,12 @@ fn test_eor_p_p_pp_z_combo_3_4200_25004600() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5447,7 +6783,12 @@ fn test_eor_p_p_pp_z_combo_4_4200_25004200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5463,7 +6804,12 @@ fn test_eor_p_p_pp_z_combo_5_4200_25004220() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5479,7 +6825,12 @@ fn test_eor_p_p_pp_z_combo_6_4200_25004200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5495,7 +6846,12 @@ fn test_eor_p_p_pp_z_combo_7_4200_25004201() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5511,7 +6867,12 @@ fn test_eor_p_p_pp_z_combo_8_4200_25014600() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5527,7 +6888,12 @@ fn test_eor_p_p_pp_z_combo_9_4200_250f7e00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5543,7 +6909,12 @@ fn test_eor_p_p_pp_z_combo_10_4200_25014220() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5559,7 +6930,12 @@ fn test_eor_p_p_pp_z_combo_11_4200_250f43e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5575,7 +6951,12 @@ fn test_eor_p_p_pp_z_combo_12_4200_25014201() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5591,7 +6972,12 @@ fn test_eor_p_p_pp_z_combo_13_4200_250f420f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5607,7 +6993,12 @@ fn test_eor_p_p_pp_z_combo_14_4200_25004620() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5623,7 +7014,12 @@ fn test_eor_p_p_pp_z_combo_15_4200_25007fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5639,7 +7035,12 @@ fn test_eor_p_p_pp_z_combo_16_4200_25004601() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5655,7 +7056,12 @@ fn test_eor_p_p_pp_z_combo_17_4200_25007e0f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5671,7 +7077,12 @@ fn test_eor_p_p_pp_z_combo_18_4200_25004221() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -5687,7 +7098,12 @@ fn test_eor_p_p_pp_z_combo_19_4200_250043ef() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5703,7 +7119,12 @@ fn test_eors_p_p_pp_z_field_pm_0_min_4200_25404200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5719,7 +7140,12 @@ fn test_eors_p_p_pp_z_field_pm_1_poweroftwo_4200_25414200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5735,7 +7161,12 @@ fn test_eors_p_p_pp_z_field_pg_0_min_4200_25404200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5751,7 +7182,12 @@ fn test_eors_p_p_pp_z_field_pg_1_poweroftwo_4200_25404600() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5767,7 +7203,12 @@ fn test_eors_p_p_pp_z_field_pn_0_min_4200_25404200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5783,7 +7224,12 @@ fn test_eors_p_p_pp_z_field_pn_1_poweroftwo_4200_25404220() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5799,7 +7245,12 @@ fn test_eors_p_p_pp_z_field_pd_0_min_4200_25404200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5815,7 +7266,12 @@ fn test_eors_p_p_pp_z_field_pd_1_poweroftwo_4200_25404201() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5831,7 +7287,12 @@ fn test_eors_p_p_pp_z_combo_0_4200_25404200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5847,7 +7308,12 @@ fn test_eors_p_p_pp_z_combo_1_4200_25414200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5863,7 +7329,12 @@ fn test_eors_p_p_pp_z_combo_2_4200_25404200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5879,7 +7350,12 @@ fn test_eors_p_p_pp_z_combo_3_4200_25404600() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5895,7 +7371,12 @@ fn test_eors_p_p_pp_z_combo_4_4200_25404200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5911,7 +7392,12 @@ fn test_eors_p_p_pp_z_combo_5_4200_25404220() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5927,7 +7413,12 @@ fn test_eors_p_p_pp_z_combo_6_4200_25404200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5943,7 +7434,12 @@ fn test_eors_p_p_pp_z_combo_7_4200_25404201() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5959,7 +7455,12 @@ fn test_eors_p_p_pp_z_combo_8_4200_25414600() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5975,7 +7476,12 @@ fn test_eors_p_p_pp_z_combo_9_4200_254f7e00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -5991,7 +7497,12 @@ fn test_eors_p_p_pp_z_combo_10_4200_25414220() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -6007,7 +7518,12 @@ fn test_eors_p_p_pp_z_combo_11_4200_254f43e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -6023,7 +7539,12 @@ fn test_eors_p_p_pp_z_combo_12_4200_25414201() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -6039,7 +7560,12 @@ fn test_eors_p_p_pp_z_combo_13_4200_254f420f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -6055,7 +7581,12 @@ fn test_eors_p_p_pp_z_combo_14_4200_25404620() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -6071,7 +7602,12 @@ fn test_eors_p_p_pp_z_combo_15_4200_25407fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -6087,7 +7623,12 @@ fn test_eors_p_p_pp_z_combo_16_4200_25404601() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -6103,7 +7644,12 @@ fn test_eors_p_p_pp_z_combo_17_4200_25407e0f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -6119,7 +7665,12 @@ fn test_eors_p_p_pp_z_combo_18_4200_25404221() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORS_P.P.PP_Z
@@ -6135,7 +7686,12 @@ fn test_eors_p_p_pp_z_combo_19_4200_254043ef() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EOR_P.P.PP_Z
@@ -6521,7 +8077,11 @@ fn test_and_z_zz_field_zm_0_min_3000_04203000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6537,7 +8097,11 @@ fn test_and_z_zz_field_zm_1_poweroftwo_3000_04213000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6553,7 +8117,11 @@ fn test_and_z_zz_field_zm_30_poweroftwominusone_3000_043e3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6569,7 +8137,11 @@ fn test_and_z_zz_field_zm_31_max_3000_043f3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6585,7 +8157,11 @@ fn test_and_z_zz_field_zn_0_min_3000_04203000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6601,7 +8177,11 @@ fn test_and_z_zz_field_zn_1_poweroftwo_3000_04203020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6617,7 +8197,11 @@ fn test_and_z_zz_field_zn_30_poweroftwominusone_3000_042033c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6633,7 +8217,11 @@ fn test_and_z_zz_field_zn_31_max_3000_042033e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6649,7 +8237,11 @@ fn test_and_z_zz_field_zd_0_min_3000_04203000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6665,7 +8257,11 @@ fn test_and_z_zz_field_zd_1_poweroftwo_3000_04203001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6681,7 +8277,11 @@ fn test_and_z_zz_field_zd_30_poweroftwominusone_3000_0420301e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6697,7 +8297,11 @@ fn test_and_z_zz_field_zd_31_max_3000_0420301f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6713,7 +8317,11 @@ fn test_and_z_zz_combo_0_3000_04203000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6729,7 +8337,11 @@ fn test_and_z_zz_combo_1_3000_04213000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6745,7 +8357,11 @@ fn test_and_z_zz_combo_2_3000_043e3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6761,7 +8377,11 @@ fn test_and_z_zz_combo_3_3000_043f3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6777,7 +8397,11 @@ fn test_and_z_zz_combo_4_3000_04203000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6793,7 +8417,11 @@ fn test_and_z_zz_combo_5_3000_04203020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6809,7 +8437,11 @@ fn test_and_z_zz_combo_6_3000_042033c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6825,7 +8457,11 @@ fn test_and_z_zz_combo_7_3000_042033e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6841,7 +8477,11 @@ fn test_and_z_zz_combo_8_3000_04203000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6857,7 +8497,11 @@ fn test_and_z_zz_combo_9_3000_04203001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6873,7 +8517,11 @@ fn test_and_z_zz_combo_10_3000_0420301e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZZ__
@@ -6889,7 +8537,11 @@ fn test_and_z_zz_combo_11_3000_0420301f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -6909,7 +8561,12 @@ fn test_bic_p_p_pp_z_field_pm_0_min_4010_25004010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -6925,7 +8582,12 @@ fn test_bic_p_p_pp_z_field_pm_1_poweroftwo_4010_25014010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -6941,7 +8603,12 @@ fn test_bic_p_p_pp_z_field_pg_0_min_4010_25004010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -6957,7 +8624,12 @@ fn test_bic_p_p_pp_z_field_pg_1_poweroftwo_4010_25004410() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -6973,7 +8645,12 @@ fn test_bic_p_p_pp_z_field_pn_0_min_4010_25004010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -6989,7 +8666,12 @@ fn test_bic_p_p_pp_z_field_pn_1_poweroftwo_4010_25004030() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7005,7 +8687,12 @@ fn test_bic_p_p_pp_z_field_pd_0_min_4010_25004010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7021,7 +8708,12 @@ fn test_bic_p_p_pp_z_field_pd_1_poweroftwo_4010_25004011() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7037,7 +8729,12 @@ fn test_bic_p_p_pp_z_combo_0_4010_25004010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7053,7 +8750,12 @@ fn test_bic_p_p_pp_z_combo_1_4010_25014010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7069,7 +8771,12 @@ fn test_bic_p_p_pp_z_combo_2_4010_25004010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7085,7 +8792,12 @@ fn test_bic_p_p_pp_z_combo_3_4010_25004410() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7101,7 +8813,12 @@ fn test_bic_p_p_pp_z_combo_4_4010_25004010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7117,7 +8834,12 @@ fn test_bic_p_p_pp_z_combo_5_4010_25004030() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7133,7 +8855,12 @@ fn test_bic_p_p_pp_z_combo_6_4010_25004010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7149,7 +8876,12 @@ fn test_bic_p_p_pp_z_combo_7_4010_25004011() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7165,7 +8897,12 @@ fn test_bic_p_p_pp_z_combo_8_4010_25014410() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7181,7 +8918,12 @@ fn test_bic_p_p_pp_z_combo_9_4010_250f7c10() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7197,7 +8939,12 @@ fn test_bic_p_p_pp_z_combo_10_4010_25014030() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7213,7 +8960,12 @@ fn test_bic_p_p_pp_z_combo_11_4010_250f41f0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7229,7 +8981,12 @@ fn test_bic_p_p_pp_z_combo_12_4010_25014011() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7245,7 +9002,12 @@ fn test_bic_p_p_pp_z_combo_13_4010_250f401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7261,7 +9023,12 @@ fn test_bic_p_p_pp_z_combo_14_4010_25004430() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7277,7 +9044,12 @@ fn test_bic_p_p_pp_z_combo_15_4010_25007df0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7293,7 +9065,12 @@ fn test_bic_p_p_pp_z_combo_16_4010_25004411() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7309,7 +9086,12 @@ fn test_bic_p_p_pp_z_combo_17_4010_25007c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7325,7 +9107,12 @@ fn test_bic_p_p_pp_z_combo_18_4010_25004031() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -7341,7 +9128,12 @@ fn test_bic_p_p_pp_z_combo_19_4010_250041ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7357,7 +9149,12 @@ fn test_bics_p_p_pp_z_field_pm_0_min_4010_25404010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7373,7 +9170,12 @@ fn test_bics_p_p_pp_z_field_pm_1_poweroftwo_4010_25414010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7389,7 +9191,12 @@ fn test_bics_p_p_pp_z_field_pg_0_min_4010_25404010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7405,7 +9212,12 @@ fn test_bics_p_p_pp_z_field_pg_1_poweroftwo_4010_25404410() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7421,7 +9233,12 @@ fn test_bics_p_p_pp_z_field_pn_0_min_4010_25404010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7437,7 +9254,12 @@ fn test_bics_p_p_pp_z_field_pn_1_poweroftwo_4010_25404030() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7453,7 +9275,12 @@ fn test_bics_p_p_pp_z_field_pd_0_min_4010_25404010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7469,7 +9296,12 @@ fn test_bics_p_p_pp_z_field_pd_1_poweroftwo_4010_25404011() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7485,7 +9317,12 @@ fn test_bics_p_p_pp_z_combo_0_4010_25404010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7501,7 +9338,12 @@ fn test_bics_p_p_pp_z_combo_1_4010_25414010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7517,7 +9359,12 @@ fn test_bics_p_p_pp_z_combo_2_4010_25404010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7533,7 +9380,12 @@ fn test_bics_p_p_pp_z_combo_3_4010_25404410() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7549,7 +9401,12 @@ fn test_bics_p_p_pp_z_combo_4_4010_25404010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7565,7 +9422,12 @@ fn test_bics_p_p_pp_z_combo_5_4010_25404030() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7581,7 +9443,12 @@ fn test_bics_p_p_pp_z_combo_6_4010_25404010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7597,7 +9464,12 @@ fn test_bics_p_p_pp_z_combo_7_4010_25404011() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7613,7 +9485,12 @@ fn test_bics_p_p_pp_z_combo_8_4010_25414410() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7629,7 +9506,12 @@ fn test_bics_p_p_pp_z_combo_9_4010_254f7c10() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7645,7 +9527,12 @@ fn test_bics_p_p_pp_z_combo_10_4010_25414030() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7661,7 +9548,12 @@ fn test_bics_p_p_pp_z_combo_11_4010_254f41f0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7677,7 +9569,12 @@ fn test_bics_p_p_pp_z_combo_12_4010_25414011() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7693,7 +9590,12 @@ fn test_bics_p_p_pp_z_combo_13_4010_254f401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7709,7 +9611,12 @@ fn test_bics_p_p_pp_z_combo_14_4010_25404430() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7725,7 +9632,12 @@ fn test_bics_p_p_pp_z_combo_15_4010_25407df0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7741,7 +9653,12 @@ fn test_bics_p_p_pp_z_combo_16_4010_25404411() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7757,7 +9674,12 @@ fn test_bics_p_p_pp_z_combo_17_4010_25407c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7773,7 +9695,12 @@ fn test_bics_p_p_pp_z_combo_18_4010_25404031() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BICS_P.P.PP_Z
@@ -7789,7 +9716,12 @@ fn test_bics_p_p_pp_z_combo_19_4010_254041ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: BIC_P.P.PP_Z
@@ -8175,7 +10107,11 @@ fn test_and_z_zi_field_imm13_0_zero_0_05800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8191,7 +10127,11 @@ fn test_and_z_zi_field_imm13_1_poweroftwo_0_05800020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8207,7 +10147,11 @@ fn test_and_z_zi_field_imm13_3_poweroftwominusone_0_05800060() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8223,7 +10167,11 @@ fn test_and_z_zi_field_imm13_4_poweroftwo_0_05800080() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8239,7 +10187,11 @@ fn test_and_z_zi_field_imm13_7_poweroftwominusone_0_058000e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8255,7 +10207,11 @@ fn test_and_z_zi_field_imm13_8_poweroftwo_0_05800100() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8271,7 +10227,11 @@ fn test_and_z_zi_field_imm13_15_poweroftwominusone_0_058001e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8287,7 +10247,11 @@ fn test_and_z_zi_field_imm13_16_poweroftwo_0_05800200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8303,7 +10267,11 @@ fn test_and_z_zi_field_imm13_31_poweroftwominusone_0_058003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8319,7 +10287,11 @@ fn test_and_z_zi_field_imm13_32_poweroftwo_0_05800400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8335,7 +10307,11 @@ fn test_and_z_zi_field_imm13_63_poweroftwominusone_0_058007e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8351,7 +10327,11 @@ fn test_and_z_zi_field_imm13_64_poweroftwo_0_05800800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8367,7 +10347,11 @@ fn test_and_z_zi_field_imm13_127_poweroftwominusone_0_05800fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8383,7 +10367,11 @@ fn test_and_z_zi_field_imm13_128_poweroftwo_0_05801000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8399,7 +10387,11 @@ fn test_and_z_zi_field_imm13_255_poweroftwominusone_0_05801fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8415,7 +10407,11 @@ fn test_and_z_zi_field_imm13_256_poweroftwo_0_05802000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8431,7 +10427,11 @@ fn test_and_z_zi_field_imm13_511_poweroftwominusone_0_05803fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8447,7 +10447,11 @@ fn test_and_z_zi_field_imm13_512_poweroftwo_0_05804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8463,7 +10467,11 @@ fn test_and_z_zi_field_imm13_1023_poweroftwominusone_0_05807fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8479,7 +10487,11 @@ fn test_and_z_zi_field_imm13_1024_poweroftwo_0_05808000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8495,7 +10507,11 @@ fn test_and_z_zi_field_imm13_2047_poweroftwominusone_0_0580ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8511,7 +10527,11 @@ fn test_and_z_zi_field_imm13_2048_poweroftwo_0_05810000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8527,7 +10547,11 @@ fn test_and_z_zi_field_imm13_4095_poweroftwominusone_0_0581ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8543,7 +10567,11 @@ fn test_and_z_zi_field_imm13_4096_poweroftwo_0_05820000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8559,7 +10587,11 @@ fn test_and_z_zi_field_imm13_8191_max_0_0583ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8575,7 +10607,11 @@ fn test_and_z_zi_field_zdn_0_min_0_05800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8591,7 +10627,11 @@ fn test_and_z_zi_field_zdn_1_poweroftwo_0_05800001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8607,7 +10647,11 @@ fn test_and_z_zi_field_zdn_15_poweroftwominusone_0_0580000f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8623,7 +10667,11 @@ fn test_and_z_zi_field_zdn_31_max_0_0580001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8639,7 +10687,11 @@ fn test_and_z_zi_combo_0_0_05800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8655,7 +10707,11 @@ fn test_and_z_zi_combo_1_0_05800020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8671,7 +10727,11 @@ fn test_and_z_zi_combo_2_0_05800060() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8687,7 +10747,11 @@ fn test_and_z_zi_combo_3_0_05800080() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8703,7 +10767,11 @@ fn test_and_z_zi_combo_4_0_058000e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8719,7 +10787,11 @@ fn test_and_z_zi_combo_5_0_05800100() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8735,7 +10807,11 @@ fn test_and_z_zi_combo_6_0_058001e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8751,7 +10827,11 @@ fn test_and_z_zi_combo_7_0_05800200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8767,7 +10847,11 @@ fn test_and_z_zi_combo_8_0_058003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8783,7 +10867,11 @@ fn test_and_z_zi_combo_9_0_05800400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8799,7 +10887,11 @@ fn test_and_z_zi_combo_10_0_058007e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8815,7 +10907,11 @@ fn test_and_z_zi_combo_11_0_05800800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8831,7 +10927,11 @@ fn test_and_z_zi_combo_12_0_05800fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8847,7 +10947,11 @@ fn test_and_z_zi_combo_13_0_05801000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8863,7 +10967,11 @@ fn test_and_z_zi_combo_14_0_05801fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8879,7 +10987,11 @@ fn test_and_z_zi_combo_15_0_05802000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8895,7 +11007,11 @@ fn test_and_z_zi_combo_16_0_05803fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8911,7 +11027,11 @@ fn test_and_z_zi_combo_17_0_05804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8927,7 +11047,11 @@ fn test_and_z_zi_combo_18_0_05807fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8943,7 +11067,11 @@ fn test_and_z_zi_combo_19_0_05808000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8959,7 +11087,11 @@ fn test_and_z_zi_combo_20_0_0580ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8975,7 +11107,11 @@ fn test_and_z_zi_combo_21_0_05810000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -8991,7 +11127,11 @@ fn test_and_z_zi_combo_22_0_0581ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -9007,7 +11147,11 @@ fn test_and_z_zi_combo_23_0_05820000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -9023,7 +11167,11 @@ fn test_and_z_zi_combo_24_0_0583ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -9039,7 +11187,11 @@ fn test_and_z_zi_combo_25_0_05800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -9055,7 +11207,11 @@ fn test_and_z_zi_combo_26_0_05800001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -9071,7 +11227,11 @@ fn test_and_z_zi_combo_27_0_0580000f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: AND_Z.ZI__
@@ -9087,7 +11247,11 @@ fn test_and_z_zi_combo_28_0_0580001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -9107,7 +11271,12 @@ fn test_andv_r_p_z_field_size_0_min_2000_041a2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9123,7 +11292,12 @@ fn test_andv_r_p_z_field_size_1_poweroftwo_2000_045a2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9139,7 +11313,12 @@ fn test_andv_r_p_z_field_size_2_poweroftwo_2000_049a2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9155,7 +11334,12 @@ fn test_andv_r_p_z_field_size_3_max_2000_04da2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9171,7 +11355,12 @@ fn test_andv_r_p_z_field_pg_0_min_2000_041a2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9187,7 +11376,12 @@ fn test_andv_r_p_z_field_pg_1_poweroftwo_2000_041a2400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9203,7 +11397,12 @@ fn test_andv_r_p_z_field_zn_0_min_2000_041a2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9219,7 +11418,12 @@ fn test_andv_r_p_z_field_zn_1_poweroftwo_2000_041a2020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9235,7 +11439,12 @@ fn test_andv_r_p_z_field_zn_30_poweroftwominusone_2000_041a23c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9251,7 +11460,12 @@ fn test_andv_r_p_z_field_zn_31_max_2000_041a23e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9267,7 +11481,12 @@ fn test_andv_r_p_z_field_vd_0_min_2000_041a2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9283,7 +11502,12 @@ fn test_andv_r_p_z_field_vd_1_poweroftwo_2000_041a2001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9299,7 +11523,12 @@ fn test_andv_r_p_z_field_vd_30_poweroftwominusone_2000_041a201e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9315,7 +11544,12 @@ fn test_andv_r_p_z_field_vd_31_max_2000_041a201f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9331,7 +11565,12 @@ fn test_andv_r_p_z_combo_0_2000_041a2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9347,7 +11586,12 @@ fn test_andv_r_p_z_combo_1_2000_045a2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9363,7 +11607,12 @@ fn test_andv_r_p_z_combo_2_2000_049a2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9379,7 +11628,12 @@ fn test_andv_r_p_z_combo_3_2000_04da2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9395,7 +11649,12 @@ fn test_andv_r_p_z_combo_4_2000_041a2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9411,7 +11670,12 @@ fn test_andv_r_p_z_combo_5_2000_041a2400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9427,7 +11691,12 @@ fn test_andv_r_p_z_combo_6_2000_041a2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9443,7 +11712,12 @@ fn test_andv_r_p_z_combo_7_2000_041a2020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9459,7 +11733,12 @@ fn test_andv_r_p_z_combo_8_2000_041a23c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9475,7 +11754,12 @@ fn test_andv_r_p_z_combo_9_2000_041a23e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9491,7 +11775,12 @@ fn test_andv_r_p_z_combo_10_2000_041a2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9507,7 +11796,12 @@ fn test_andv_r_p_z_combo_11_2000_041a2001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9523,7 +11817,12 @@ fn test_andv_r_p_z_combo_12_2000_041a201e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9539,7 +11838,12 @@ fn test_andv_r_p_z_combo_13_2000_041a201f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9555,7 +11859,12 @@ fn test_andv_r_p_z_special_size_0_size_variant_0_8192_041a2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9571,7 +11880,12 @@ fn test_andv_r_p_z_special_size_1_size_variant_1_8192_045a2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9587,7 +11901,12 @@ fn test_andv_r_p_z_special_size_2_size_variant_2_8192_049a2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9603,7 +11922,12 @@ fn test_andv_r_p_z_special_size_3_size_variant_3_8192_04da2000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDV_R.P.Z__
@@ -9638,7 +11962,11 @@ fn test_orr_z_p_zz_field_size_0_min_0_04180000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9654,7 +11982,11 @@ fn test_orr_z_p_zz_field_size_1_poweroftwo_0_04580000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9670,7 +12002,11 @@ fn test_orr_z_p_zz_field_size_2_poweroftwo_0_04980000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9686,7 +12022,11 @@ fn test_orr_z_p_zz_field_size_3_max_0_04d80000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9702,7 +12042,11 @@ fn test_orr_z_p_zz_field_pg_0_min_0_04180000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9718,7 +12062,11 @@ fn test_orr_z_p_zz_field_pg_1_poweroftwo_0_04180400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9734,7 +12082,11 @@ fn test_orr_z_p_zz_field_zm_0_min_0_04180000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9750,7 +12102,11 @@ fn test_orr_z_p_zz_field_zm_1_poweroftwo_0_04180020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9766,7 +12122,11 @@ fn test_orr_z_p_zz_field_zm_30_poweroftwominusone_0_041803c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9782,7 +12142,11 @@ fn test_orr_z_p_zz_field_zm_31_max_0_041803e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9798,7 +12162,11 @@ fn test_orr_z_p_zz_field_zdn_0_min_0_04180000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9814,7 +12182,11 @@ fn test_orr_z_p_zz_field_zdn_1_poweroftwo_0_04180001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9830,7 +12202,11 @@ fn test_orr_z_p_zz_field_zdn_15_poweroftwominusone_0_0418000f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9846,7 +12222,11 @@ fn test_orr_z_p_zz_field_zdn_31_max_0_0418001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9862,7 +12242,11 @@ fn test_orr_z_p_zz_combo_0_0_04180000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9878,7 +12262,11 @@ fn test_orr_z_p_zz_combo_1_0_04580000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9894,7 +12282,11 @@ fn test_orr_z_p_zz_combo_2_0_04980000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9910,7 +12302,11 @@ fn test_orr_z_p_zz_combo_3_0_04d80000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9926,7 +12322,11 @@ fn test_orr_z_p_zz_combo_4_0_04180000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9942,7 +12342,11 @@ fn test_orr_z_p_zz_combo_5_0_04180400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9958,7 +12362,11 @@ fn test_orr_z_p_zz_combo_6_0_04180000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9974,7 +12382,11 @@ fn test_orr_z_p_zz_combo_7_0_04180020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -9990,7 +12402,11 @@ fn test_orr_z_p_zz_combo_8_0_041803c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -10006,7 +12422,11 @@ fn test_orr_z_p_zz_combo_9_0_041803e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -10022,7 +12442,11 @@ fn test_orr_z_p_zz_combo_10_0_04180000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -10038,7 +12462,11 @@ fn test_orr_z_p_zz_combo_11_0_04180001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -10054,7 +12482,11 @@ fn test_orr_z_p_zz_combo_12_0_0418000f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -10070,7 +12502,11 @@ fn test_orr_z_p_zz_combo_13_0_0418001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -10086,7 +12522,11 @@ fn test_orr_z_p_zz_special_size_0_size_variant_0_0_04180000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -10102,7 +12542,11 @@ fn test_orr_z_p_zz_special_size_1_size_variant_1_0_04580000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -10118,7 +12562,11 @@ fn test_orr_z_p_zz_special_size_2_size_variant_2_0_04980000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: ORR_Z.P.ZZ__
@@ -10134,7 +12582,11 @@ fn test_orr_z_p_zz_special_size_3_size_variant_3_0_04d80000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -10154,7 +12606,12 @@ fn test_and_p_p_pp_z_field_s_0_min_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10170,7 +12627,12 @@ fn test_and_p_p_pp_z_field_s_1_max_4000_25404000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10186,7 +12648,12 @@ fn test_and_p_p_pp_z_field_pm_0_min_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10202,7 +12669,12 @@ fn test_and_p_p_pp_z_field_pm_1_poweroftwo_4000_25014000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10218,7 +12690,12 @@ fn test_and_p_p_pp_z_field_pg_0_min_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10234,7 +12711,12 @@ fn test_and_p_p_pp_z_field_pg_1_poweroftwo_4000_25004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10250,7 +12732,12 @@ fn test_and_p_p_pp_z_field_pn_0_min_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10266,7 +12753,12 @@ fn test_and_p_p_pp_z_field_pn_1_poweroftwo_4000_25004020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10282,7 +12774,12 @@ fn test_and_p_p_pp_z_field_pd_0_min_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10298,7 +12795,12 @@ fn test_and_p_p_pp_z_field_pd_1_poweroftwo_4000_25004001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10314,7 +12816,12 @@ fn test_and_p_p_pp_z_combo_0_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10330,7 +12837,12 @@ fn test_and_p_p_pp_z_combo_1_4000_25404000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10346,7 +12858,12 @@ fn test_and_p_p_pp_z_combo_2_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10362,7 +12879,12 @@ fn test_and_p_p_pp_z_combo_3_4000_25014000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10378,7 +12900,12 @@ fn test_and_p_p_pp_z_combo_4_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10394,7 +12921,12 @@ fn test_and_p_p_pp_z_combo_5_4000_25004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10410,7 +12942,12 @@ fn test_and_p_p_pp_z_combo_6_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10426,7 +12963,12 @@ fn test_and_p_p_pp_z_combo_7_4000_25004020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10442,7 +12984,12 @@ fn test_and_p_p_pp_z_combo_8_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10458,7 +13005,12 @@ fn test_and_p_p_pp_z_combo_9_4000_25004001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10474,7 +13026,12 @@ fn test_and_p_p_pp_z_combo_10_4000_25014400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10490,7 +13047,12 @@ fn test_and_p_p_pp_z_combo_11_4000_250f7c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10506,7 +13068,12 @@ fn test_and_p_p_pp_z_combo_12_4000_25014020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10522,7 +13089,12 @@ fn test_and_p_p_pp_z_combo_13_4000_250f41e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10538,7 +13110,12 @@ fn test_and_p_p_pp_z_combo_14_4000_25014001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10554,7 +13131,12 @@ fn test_and_p_p_pp_z_combo_15_4000_250f400f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10570,7 +13152,12 @@ fn test_and_p_p_pp_z_combo_16_4000_25004420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10586,7 +13173,12 @@ fn test_and_p_p_pp_z_combo_17_4000_25007de0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10602,7 +13194,12 @@ fn test_and_p_p_pp_z_combo_18_4000_25004401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10618,7 +13215,12 @@ fn test_and_p_p_pp_z_combo_19_4000_25007c0f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10634,7 +13236,12 @@ fn test_and_p_p_pp_z_combo_20_4000_25004021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10650,7 +13257,12 @@ fn test_and_p_p_pp_z_combo_21_4000_250041ef() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10666,7 +13278,12 @@ fn test_and_p_p_pp_z_special_s_0_size_variant_0_16384_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -10682,7 +13299,12 @@ fn test_and_p_p_pp_z_special_s_1_size_variant_1_16384_25404000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10698,7 +13320,12 @@ fn test_ands_p_p_pp_z_field_s_0_min_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10714,7 +13341,12 @@ fn test_ands_p_p_pp_z_field_s_1_max_4000_25404000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10730,7 +13362,12 @@ fn test_ands_p_p_pp_z_field_pm_0_min_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10746,7 +13383,12 @@ fn test_ands_p_p_pp_z_field_pm_1_poweroftwo_4000_25014000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10762,7 +13404,12 @@ fn test_ands_p_p_pp_z_field_pg_0_min_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10778,7 +13425,12 @@ fn test_ands_p_p_pp_z_field_pg_1_poweroftwo_4000_25004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10794,7 +13446,12 @@ fn test_ands_p_p_pp_z_field_pn_0_min_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10810,7 +13467,12 @@ fn test_ands_p_p_pp_z_field_pn_1_poweroftwo_4000_25004020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10826,7 +13488,12 @@ fn test_ands_p_p_pp_z_field_pd_0_min_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10842,7 +13509,12 @@ fn test_ands_p_p_pp_z_field_pd_1_poweroftwo_4000_25004001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10858,7 +13530,12 @@ fn test_ands_p_p_pp_z_combo_0_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10874,7 +13551,12 @@ fn test_ands_p_p_pp_z_combo_1_4000_25404000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10890,7 +13572,12 @@ fn test_ands_p_p_pp_z_combo_2_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10906,7 +13593,12 @@ fn test_ands_p_p_pp_z_combo_3_4000_25014000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10922,7 +13614,12 @@ fn test_ands_p_p_pp_z_combo_4_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10938,7 +13635,12 @@ fn test_ands_p_p_pp_z_combo_5_4000_25004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10954,7 +13656,12 @@ fn test_ands_p_p_pp_z_combo_6_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10970,7 +13677,12 @@ fn test_ands_p_p_pp_z_combo_7_4000_25004020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -10986,7 +13698,12 @@ fn test_ands_p_p_pp_z_combo_8_4000_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -11002,7 +13719,12 @@ fn test_ands_p_p_pp_z_combo_9_4000_25004001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -11018,7 +13740,12 @@ fn test_ands_p_p_pp_z_combo_10_4000_25014400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -11034,7 +13761,12 @@ fn test_ands_p_p_pp_z_combo_11_4000_250f7c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -11050,7 +13782,12 @@ fn test_ands_p_p_pp_z_combo_12_4000_25014020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -11066,7 +13803,12 @@ fn test_ands_p_p_pp_z_combo_13_4000_250f41e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -11082,7 +13824,12 @@ fn test_ands_p_p_pp_z_combo_14_4000_25014001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -11098,7 +13845,12 @@ fn test_ands_p_p_pp_z_combo_15_4000_250f400f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -11114,7 +13866,12 @@ fn test_ands_p_p_pp_z_combo_16_4000_25004420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -11130,7 +13887,12 @@ fn test_ands_p_p_pp_z_combo_17_4000_25007de0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -11146,7 +13908,12 @@ fn test_ands_p_p_pp_z_combo_18_4000_25004401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -11162,7 +13929,12 @@ fn test_ands_p_p_pp_z_combo_19_4000_25007c0f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -11178,7 +13950,12 @@ fn test_ands_p_p_pp_z_combo_20_4000_25004021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -11194,7 +13971,12 @@ fn test_ands_p_p_pp_z_combo_21_4000_250041ef() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -11210,7 +13992,12 @@ fn test_ands_p_p_pp_z_special_s_0_size_variant_0_16384_25004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: ANDS_P.P.PP_Z
@@ -11226,7 +14013,12 @@ fn test_ands_p_p_pp_z_special_s_1_size_variant_1_16384_25404000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: AND_P.P.PP_Z
@@ -11612,7 +14404,11 @@ fn test_eor_z_zz_field_zm_0_min_3000_04a03000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11628,7 +14424,11 @@ fn test_eor_z_zz_field_zm_1_poweroftwo_3000_04a13000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11644,7 +14444,11 @@ fn test_eor_z_zz_field_zm_30_poweroftwominusone_3000_04be3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11660,7 +14464,11 @@ fn test_eor_z_zz_field_zm_31_max_3000_04bf3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11676,7 +14484,11 @@ fn test_eor_z_zz_field_zn_0_min_3000_04a03000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11692,7 +14504,11 @@ fn test_eor_z_zz_field_zn_1_poweroftwo_3000_04a03020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11708,7 +14524,11 @@ fn test_eor_z_zz_field_zn_30_poweroftwominusone_3000_04a033c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11724,7 +14544,11 @@ fn test_eor_z_zz_field_zn_31_max_3000_04a033e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11740,7 +14564,11 @@ fn test_eor_z_zz_field_zd_0_min_3000_04a03000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11756,7 +14584,11 @@ fn test_eor_z_zz_field_zd_1_poweroftwo_3000_04a03001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11772,7 +14604,11 @@ fn test_eor_z_zz_field_zd_30_poweroftwominusone_3000_04a0301e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11788,7 +14624,11 @@ fn test_eor_z_zz_field_zd_31_max_3000_04a0301f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11804,7 +14644,11 @@ fn test_eor_z_zz_combo_0_3000_04a03000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11820,7 +14664,11 @@ fn test_eor_z_zz_combo_1_3000_04a13000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11836,7 +14684,11 @@ fn test_eor_z_zz_combo_2_3000_04be3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11852,7 +14704,11 @@ fn test_eor_z_zz_combo_3_3000_04bf3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11868,7 +14724,11 @@ fn test_eor_z_zz_combo_4_3000_04a03000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11884,7 +14744,11 @@ fn test_eor_z_zz_combo_5_3000_04a03020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11900,7 +14764,11 @@ fn test_eor_z_zz_combo_6_3000_04a033c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11916,7 +14784,11 @@ fn test_eor_z_zz_combo_7_3000_04a033e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11932,7 +14804,11 @@ fn test_eor_z_zz_combo_8_3000_04a03000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11948,7 +14824,11 @@ fn test_eor_z_zz_combo_9_3000_04a03001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11964,7 +14844,11 @@ fn test_eor_z_zz_combo_10_3000_04a0301e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZZ__
@@ -11980,7 +14864,11 @@ fn test_eor_z_zz_combo_11_3000_04a0301f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -12000,7 +14888,11 @@ fn test_eor_z_zi_field_imm13_0_zero_0_05400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12016,7 +14908,11 @@ fn test_eor_z_zi_field_imm13_1_poweroftwo_0_05400020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12032,7 +14928,11 @@ fn test_eor_z_zi_field_imm13_3_poweroftwominusone_0_05400060() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12048,7 +14948,11 @@ fn test_eor_z_zi_field_imm13_4_poweroftwo_0_05400080() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12064,7 +14968,11 @@ fn test_eor_z_zi_field_imm13_7_poweroftwominusone_0_054000e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12080,7 +14988,11 @@ fn test_eor_z_zi_field_imm13_8_poweroftwo_0_05400100() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12096,7 +15008,11 @@ fn test_eor_z_zi_field_imm13_15_poweroftwominusone_0_054001e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12112,7 +15028,11 @@ fn test_eor_z_zi_field_imm13_16_poweroftwo_0_05400200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12128,7 +15048,11 @@ fn test_eor_z_zi_field_imm13_31_poweroftwominusone_0_054003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12144,7 +15068,11 @@ fn test_eor_z_zi_field_imm13_32_poweroftwo_0_05400400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12160,7 +15088,11 @@ fn test_eor_z_zi_field_imm13_63_poweroftwominusone_0_054007e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12176,7 +15108,11 @@ fn test_eor_z_zi_field_imm13_64_poweroftwo_0_05400800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12192,7 +15128,11 @@ fn test_eor_z_zi_field_imm13_127_poweroftwominusone_0_05400fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12208,7 +15148,11 @@ fn test_eor_z_zi_field_imm13_128_poweroftwo_0_05401000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12224,7 +15168,11 @@ fn test_eor_z_zi_field_imm13_255_poweroftwominusone_0_05401fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12240,7 +15188,11 @@ fn test_eor_z_zi_field_imm13_256_poweroftwo_0_05402000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12256,7 +15208,11 @@ fn test_eor_z_zi_field_imm13_511_poweroftwominusone_0_05403fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12272,7 +15228,11 @@ fn test_eor_z_zi_field_imm13_512_poweroftwo_0_05404000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12288,7 +15248,11 @@ fn test_eor_z_zi_field_imm13_1023_poweroftwominusone_0_05407fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12304,7 +15268,11 @@ fn test_eor_z_zi_field_imm13_1024_poweroftwo_0_05408000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12320,7 +15288,11 @@ fn test_eor_z_zi_field_imm13_2047_poweroftwominusone_0_0540ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12336,7 +15308,11 @@ fn test_eor_z_zi_field_imm13_2048_poweroftwo_0_05410000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12352,7 +15328,11 @@ fn test_eor_z_zi_field_imm13_4095_poweroftwominusone_0_0541ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12368,7 +15348,11 @@ fn test_eor_z_zi_field_imm13_4096_poweroftwo_0_05420000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12384,7 +15368,11 @@ fn test_eor_z_zi_field_imm13_8191_max_0_0543ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12400,7 +15388,11 @@ fn test_eor_z_zi_field_zdn_0_min_0_05400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12416,7 +15408,11 @@ fn test_eor_z_zi_field_zdn_1_poweroftwo_0_05400001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12432,7 +15428,11 @@ fn test_eor_z_zi_field_zdn_15_poweroftwominusone_0_0540000f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12448,7 +15448,11 @@ fn test_eor_z_zi_field_zdn_31_max_0_0540001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12464,7 +15468,11 @@ fn test_eor_z_zi_combo_0_0_05400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12480,7 +15488,11 @@ fn test_eor_z_zi_combo_1_0_05400020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12496,7 +15508,11 @@ fn test_eor_z_zi_combo_2_0_05400060() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12512,7 +15528,11 @@ fn test_eor_z_zi_combo_3_0_05400080() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12528,7 +15548,11 @@ fn test_eor_z_zi_combo_4_0_054000e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12544,7 +15568,11 @@ fn test_eor_z_zi_combo_5_0_05400100() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12560,7 +15588,11 @@ fn test_eor_z_zi_combo_6_0_054001e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12576,7 +15608,11 @@ fn test_eor_z_zi_combo_7_0_05400200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12592,7 +15628,11 @@ fn test_eor_z_zi_combo_8_0_054003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12608,7 +15648,11 @@ fn test_eor_z_zi_combo_9_0_05400400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12624,7 +15668,11 @@ fn test_eor_z_zi_combo_10_0_054007e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12640,7 +15688,11 @@ fn test_eor_z_zi_combo_11_0_05400800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12656,7 +15708,11 @@ fn test_eor_z_zi_combo_12_0_05400fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12672,7 +15728,11 @@ fn test_eor_z_zi_combo_13_0_05401000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12688,7 +15748,11 @@ fn test_eor_z_zi_combo_14_0_05401fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12704,7 +15768,11 @@ fn test_eor_z_zi_combo_15_0_05402000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12720,7 +15788,11 @@ fn test_eor_z_zi_combo_16_0_05403fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12736,7 +15808,11 @@ fn test_eor_z_zi_combo_17_0_05404000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12752,7 +15828,11 @@ fn test_eor_z_zi_combo_18_0_05407fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12768,7 +15848,11 @@ fn test_eor_z_zi_combo_19_0_05408000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12784,7 +15868,11 @@ fn test_eor_z_zi_combo_20_0_0540ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12800,7 +15888,11 @@ fn test_eor_z_zi_combo_21_0_05410000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12816,7 +15908,11 @@ fn test_eor_z_zi_combo_22_0_0541ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12832,7 +15928,11 @@ fn test_eor_z_zi_combo_23_0_05420000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12848,7 +15948,11 @@ fn test_eor_z_zi_combo_24_0_0543ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12864,7 +15968,11 @@ fn test_eor_z_zi_combo_25_0_05400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12880,7 +15988,11 @@ fn test_eor_z_zi_combo_26_0_05400001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12896,7 +16008,11 @@ fn test_eor_z_zi_combo_27_0_0540000f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: EOR_Z.ZI__
@@ -12912,7 +16028,11 @@ fn test_eor_z_zi_combo_28_0_0540001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -12932,7 +16052,12 @@ fn test_eorv_r_p_z_field_size_0_min_2000_04192000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -12948,7 +16073,12 @@ fn test_eorv_r_p_z_field_size_1_poweroftwo_2000_04592000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -12964,7 +16094,12 @@ fn test_eorv_r_p_z_field_size_2_poweroftwo_2000_04992000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -12980,7 +16115,12 @@ fn test_eorv_r_p_z_field_size_3_max_2000_04d92000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -12996,7 +16136,12 @@ fn test_eorv_r_p_z_field_pg_0_min_2000_04192000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13012,7 +16157,12 @@ fn test_eorv_r_p_z_field_pg_1_poweroftwo_2000_04192400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13028,7 +16178,12 @@ fn test_eorv_r_p_z_field_zn_0_min_2000_04192000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13044,7 +16199,12 @@ fn test_eorv_r_p_z_field_zn_1_poweroftwo_2000_04192020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13060,7 +16220,12 @@ fn test_eorv_r_p_z_field_zn_30_poweroftwominusone_2000_041923c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13076,7 +16241,12 @@ fn test_eorv_r_p_z_field_zn_31_max_2000_041923e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13092,7 +16262,12 @@ fn test_eorv_r_p_z_field_vd_0_min_2000_04192000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13108,7 +16283,12 @@ fn test_eorv_r_p_z_field_vd_1_poweroftwo_2000_04192001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13124,7 +16304,12 @@ fn test_eorv_r_p_z_field_vd_30_poweroftwominusone_2000_0419201e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13140,7 +16325,12 @@ fn test_eorv_r_p_z_field_vd_31_max_2000_0419201f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13156,7 +16346,12 @@ fn test_eorv_r_p_z_combo_0_2000_04192000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13172,7 +16367,12 @@ fn test_eorv_r_p_z_combo_1_2000_04592000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13188,7 +16388,12 @@ fn test_eorv_r_p_z_combo_2_2000_04992000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13204,7 +16409,12 @@ fn test_eorv_r_p_z_combo_3_2000_04d92000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13220,7 +16430,12 @@ fn test_eorv_r_p_z_combo_4_2000_04192000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13236,7 +16451,12 @@ fn test_eorv_r_p_z_combo_5_2000_04192400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13252,7 +16472,12 @@ fn test_eorv_r_p_z_combo_6_2000_04192000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13268,7 +16493,12 @@ fn test_eorv_r_p_z_combo_7_2000_04192020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13284,7 +16514,12 @@ fn test_eorv_r_p_z_combo_8_2000_041923c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13300,7 +16535,12 @@ fn test_eorv_r_p_z_combo_9_2000_041923e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13316,7 +16556,12 @@ fn test_eorv_r_p_z_combo_10_2000_04192000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13332,7 +16577,12 @@ fn test_eorv_r_p_z_combo_11_2000_04192001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13348,7 +16598,12 @@ fn test_eorv_r_p_z_combo_12_2000_0419201e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13364,7 +16619,12 @@ fn test_eorv_r_p_z_combo_13_2000_0419201f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13380,7 +16640,12 @@ fn test_eorv_r_p_z_special_size_0_size_variant_0_8192_04192000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13396,7 +16661,12 @@ fn test_eorv_r_p_z_special_size_1_size_variant_1_8192_04592000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13412,7 +16682,12 @@ fn test_eorv_r_p_z_special_size_2_size_variant_2_8192_04992000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13428,7 +16703,12 @@ fn test_eorv_r_p_z_special_size_3_size_variant_3_8192_04d92000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: EORV_R.P.Z__
@@ -13445,4 +16725,3 @@ fn test_eorv_r_p_z_reg_write_0_04192000() {
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
 }
-

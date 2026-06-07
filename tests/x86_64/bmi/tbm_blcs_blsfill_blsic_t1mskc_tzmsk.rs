@@ -143,7 +143,12 @@ fn test_blsfill_formula() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = val | val.wrapping_sub(1);
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "BLSFILL(0x{:x})", val);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected as u64,
+            "BLSFILL(0x{:x})",
+            val
+        );
     }
 }
 
@@ -254,7 +259,12 @@ fn test_t1mskc_formula() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = !val | val.wrapping_add(1);
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "T1MSKC(0x{:x})", val);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected as u64,
+            "T1MSKC(0x{:x})",
+            val
+        );
     }
 }
 
@@ -430,7 +440,12 @@ fn test_blsfill_consecutive_bits() {
         regs.rbx = *src as u64;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(regs.rax & 0xFFFFFFFF, *expected as u64, "BLSFILL(0x{:x})", src);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "BLSFILL(0x{:x})",
+            src
+        );
     }
 }
 

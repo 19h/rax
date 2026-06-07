@@ -245,7 +245,8 @@ fn test_vcvtss2sd_xmm7_xmm8_xmm0() {
 fn test_vcvtss2sd_xmm0_xmm1_mem() {
     // VCVTSS2SD XMM0, XMM1, [mem] (reads 32 bits)
     let code = [
-        0xc5, 0xf2, 0x5a, 0x05, 0x00, 0x40, 0x00, 0x00, // VCVTSS2SD XMM0, XMM1, [rip + 0x4000]
+        0xc5, 0xf2, 0x5a, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VCVTSS2SD XMM0, XMM1, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -254,7 +255,8 @@ fn test_vcvtss2sd_xmm0_xmm1_mem() {
     let test_data: [u8; 4] = [
         0x00, 0x00, 0x80, 0x3f, // 1.0f
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -263,7 +265,8 @@ fn test_vcvtss2sd_xmm0_xmm1_mem() {
 fn test_vcvtss2sd_xmm8_xmm9_mem() {
     // VCVTSS2SD XMM8, XMM9, [mem]
     let code = [
-        0xc4, 0x41, 0x32, 0x5a, 0x05, 0x00, 0x40, 0x00, 0x00, // VCVTSS2SD XMM8, XMM9, [rip + 0x4000]
+        0xc4, 0x41, 0x32, 0x5a, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VCVTSS2SD XMM8, XMM9, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -271,7 +274,8 @@ fn test_vcvtss2sd_xmm8_xmm9_mem() {
     let test_data: [u8; 4] = [
         0x00, 0x00, 0x00, 0x40, // 2.0f
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -280,7 +284,8 @@ fn test_vcvtss2sd_xmm8_xmm9_mem() {
 fn test_vcvtss2sd_xmm2_xmm3_mem_denormal() {
     // VCVTSS2SD XMM2, XMM3, [mem] - Test with denormal value
     let code = [
-        0xc5, 0xe2, 0x5a, 0x15, 0x00, 0x40, 0x00, 0x00, // VCVTSS2SD XMM2, XMM3, [rip + 0x4000]
+        0xc5, 0xe2, 0x5a, 0x15, 0x00, 0x40, 0x00,
+        0x00, // VCVTSS2SD XMM2, XMM3, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -288,7 +293,8 @@ fn test_vcvtss2sd_xmm2_xmm3_mem_denormal() {
     let test_data: [u8; 4] = [
         0x01, 0x00, 0x00, 0x00, // Very small denormal float
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -297,7 +303,8 @@ fn test_vcvtss2sd_xmm2_xmm3_mem_denormal() {
 fn test_vcvtss2sd_xmm4_xmm5_mem_inf() {
     // VCVTSS2SD XMM4, XMM5, [mem] - Test with infinity
     let code = [
-        0xc5, 0xd2, 0x5a, 0x25, 0x00, 0x40, 0x00, 0x00, // VCVTSS2SD XMM4, XMM5, [rip + 0x4000]
+        0xc5, 0xd2, 0x5a, 0x25, 0x00, 0x40, 0x00,
+        0x00, // VCVTSS2SD XMM4, XMM5, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -305,7 +312,8 @@ fn test_vcvtss2sd_xmm4_xmm5_mem_inf() {
     let test_data: [u8; 4] = [
         0x00, 0x00, 0x80, 0x7f, // +Infinity
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -314,7 +322,8 @@ fn test_vcvtss2sd_xmm4_xmm5_mem_inf() {
 fn test_vcvtss2sd_xmm6_xmm7_mem_nan() {
     // VCVTSS2SD XMM6, XMM7, [mem] - Test with NaN
     let code = [
-        0xc5, 0xc2, 0x5a, 0x35, 0x00, 0x40, 0x00, 0x00, // VCVTSS2SD XMM6, XMM7, [rip + 0x4000]
+        0xc5, 0xc2, 0x5a, 0x35, 0x00, 0x40, 0x00,
+        0x00, // VCVTSS2SD XMM6, XMM7, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -322,7 +331,8 @@ fn test_vcvtss2sd_xmm6_xmm7_mem_nan() {
     let test_data: [u8; 4] = [
         0x00, 0x00, 0xc0, 0x7f, // Quiet NaN
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -556,7 +566,8 @@ fn test_vcvtsd2ss_xmm7_xmm8_xmm0() {
 fn test_vcvtsd2ss_xmm0_xmm1_mem() {
     // VCVTSD2SS XMM0, XMM1, [mem] (reads 64 bits)
     let code = [
-        0xc5, 0xf3, 0x5a, 0x05, 0x00, 0x40, 0x00, 0x00, // VCVTSD2SS XMM0, XMM1, [rip + 0x4000]
+        0xc5, 0xf3, 0x5a, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VCVTSD2SS XMM0, XMM1, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -565,7 +576,8 @@ fn test_vcvtsd2ss_xmm0_xmm1_mem() {
     let test_data: [u8; 8] = [
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f, // 1.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -574,7 +586,8 @@ fn test_vcvtsd2ss_xmm0_xmm1_mem() {
 fn test_vcvtsd2ss_xmm8_xmm9_mem() {
     // VCVTSD2SS XMM8, XMM9, [mem]
     let code = [
-        0xc4, 0x41, 0x33, 0x5a, 0x05, 0x00, 0x40, 0x00, 0x00, // VCVTSD2SS XMM8, XMM9, [rip + 0x4000]
+        0xc4, 0x41, 0x33, 0x5a, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VCVTSD2SS XMM8, XMM9, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -582,7 +595,8 @@ fn test_vcvtsd2ss_xmm8_xmm9_mem() {
     let test_data: [u8; 8] = [
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, // 2.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -591,7 +605,8 @@ fn test_vcvtsd2ss_xmm8_xmm9_mem() {
 fn test_vcvtsd2ss_xmm2_xmm3_mem_large() {
     // VCVTSD2SS XMM2, XMM3, [mem] - Test with large value
     let code = [
-        0xc5, 0xe3, 0x5a, 0x15, 0x00, 0x40, 0x00, 0x00, // VCVTSD2SS XMM2, XMM3, [rip + 0x4000]
+        0xc5, 0xe3, 0x5a, 0x15, 0x00, 0x40, 0x00,
+        0x00, // VCVTSD2SS XMM2, XMM3, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -599,7 +614,8 @@ fn test_vcvtsd2ss_xmm2_xmm3_mem_large() {
     let test_data: [u8; 8] = [
         0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x8f, 0x40, // 1000.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -608,7 +624,8 @@ fn test_vcvtsd2ss_xmm2_xmm3_mem_large() {
 fn test_vcvtsd2ss_xmm4_xmm5_mem_small() {
     // VCVTSD2SS XMM4, XMM5, [mem] - Test with small value
     let code = [
-        0xc5, 0xd3, 0x5a, 0x25, 0x00, 0x40, 0x00, 0x00, // VCVTSD2SS XMM4, XMM5, [rip + 0x4000]
+        0xc5, 0xd3, 0x5a, 0x25, 0x00, 0x40, 0x00,
+        0x00, // VCVTSD2SS XMM4, XMM5, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -616,7 +633,8 @@ fn test_vcvtsd2ss_xmm4_xmm5_mem_small() {
     let test_data: [u8; 8] = [
         0x97, 0xff, 0x57, 0x14, 0xae, 0x8a, 0xa4, 0x3e, // 1.2345e-8
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -625,7 +643,8 @@ fn test_vcvtsd2ss_xmm4_xmm5_mem_small() {
 fn test_vcvtsd2ss_xmm6_xmm7_mem_inf() {
     // VCVTSD2SS XMM6, XMM7, [mem] - Test with infinity
     let code = [
-        0xc5, 0xc3, 0x5a, 0x35, 0x00, 0x40, 0x00, 0x00, // VCVTSD2SS XMM6, XMM7, [rip + 0x4000]
+        0xc5, 0xc3, 0x5a, 0x35, 0x00, 0x40, 0x00,
+        0x00, // VCVTSD2SS XMM6, XMM7, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -633,7 +652,8 @@ fn test_vcvtsd2ss_xmm6_xmm7_mem_inf() {
     let test_data: [u8; 8] = [
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x7f, // +Infinity
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -642,7 +662,8 @@ fn test_vcvtsd2ss_xmm6_xmm7_mem_inf() {
 fn test_vcvtsd2ss_xmm7_xmm0_mem_nan() {
     // VCVTSD2SS XMM7, XMM0, [mem] - Test with NaN
     let code = [
-        0xc5, 0xfb, 0x5a, 0x3d, 0x00, 0x40, 0x00, 0x00, // VCVTSD2SS XMM7, XMM0, [rip + 0x4000]
+        0xc5, 0xfb, 0x5a, 0x3d, 0x00, 0x40, 0x00,
+        0x00, // VCVTSD2SS XMM7, XMM0, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -650,7 +671,8 @@ fn test_vcvtsd2ss_xmm7_xmm0_mem_nan() {
     let test_data: [u8; 8] = [
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf8, 0x7f, // Quiet NaN
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }

@@ -257,7 +257,8 @@ fn test_vpshufb_ymm0_ymm1_mem_identity() {
     let mut pattern = Vec::new();
     pattern.extend_from_slice(&[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
     pattern.extend_from_slice(&[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -276,7 +277,8 @@ fn test_vpshufb_ymm2_ymm3_mem_reverse() {
     let mut pattern = Vec::new();
     pattern.extend_from_slice(&[15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]);
     pattern.extend_from_slice(&[15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]);
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -292,7 +294,15 @@ fn test_vpshufb_ymm4_ymm5_mem_zeros() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // All high bits set (zeros output)
-    mem.write_slice(&[0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+            0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+            0x80, 0x80, 0x80, 0x80,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -308,7 +318,15 @@ fn test_vpshufb_ymm6_ymm7_mem_broadcast() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // Broadcast byte 0 from each lane
-    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -325,10 +343,11 @@ fn test_vpshufb_ymm8_ymm9_mem_mixed() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // Mixed pattern: some broadcast, some reverse, some zeros
     let pattern: Vec<u8> = vec![
-        0, 0, 0, 0, 15, 14, 13, 12, 0x80, 0x80, 0x80, 0x80, 3, 2, 1, 0,
-        0, 0, 0, 0, 15, 14, 13, 12, 0x80, 0x80, 0x80, 0x80, 3, 2, 1, 0,
+        0, 0, 0, 0, 15, 14, 13, 12, 0x80, 0x80, 0x80, 0x80, 3, 2, 1, 0, 0, 0, 0, 0, 15, 14, 13, 12,
+        0x80, 0x80, 0x80, 0x80, 3, 2, 1, 0,
     ];
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -483,7 +502,8 @@ fn test_vpshufb_different_per_lane() {
     let mut pattern = Vec::new();
     pattern.extend_from_slice(&[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
     pattern.extend_from_slice(&[15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]);
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -498,6 +518,14 @@ fn test_vpshufb_mem_unaligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

@@ -16,7 +16,11 @@ use rax::cpu::Registers;
 fn test_movdiri_m32_r32_basic() {
     // MOVDIRI [DATA_ADDR], EAX - basic 32-bit direct store
     let code = [
-        0x0f, 0x38, 0xf9, 0x04, 0x25, // MOVDIRI [DATA_ADDR], EAX
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25, // MOVDIRI [DATA_ADDR], EAX
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -28,14 +32,22 @@ fn test_movdiri_m32_r32_basic() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u32(&mem), 0x12345678, "Memory should contain stored value");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0x12345678,
+        "Memory should contain stored value"
+    );
 }
 
 #[test]
 fn test_movdiri_m32_r32_zero() {
     // MOVDIRI [DATA_ADDR], EAX - store zero
     let code = [
-        0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -54,7 +66,11 @@ fn test_movdiri_m32_r32_zero() {
 fn test_movdiri_m32_r32_all_ones() {
     // MOVDIRI [DATA_ADDR], EAX - store all ones
     let code = [
-        0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -66,14 +82,22 @@ fn test_movdiri_m32_r32_all_ones() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u32(&mem), 0xFFFFFFFF, "Memory should contain all ones");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0xFFFFFFFF,
+        "Memory should contain all ones"
+    );
 }
 
 #[test]
 fn test_movdiri_m32_r32_pattern() {
     // MOVDIRI [DATA_ADDR], EAX - store pattern
     let code = [
-        0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -85,14 +109,22 @@ fn test_movdiri_m32_r32_pattern() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u32(&mem), 0xAABBCCDD, "Memory should contain pattern");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0xAABBCCDD,
+        "Memory should contain pattern"
+    );
 }
 
 #[test]
 fn test_movdiri_m32_r32_alternating() {
     // MOVDIRI [DATA_ADDR], EAX - alternating pattern
     let code = [
-        0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -104,14 +136,22 @@ fn test_movdiri_m32_r32_alternating() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u32(&mem), 0x55AA55AA, "Memory should contain alternating pattern");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0x55AA55AA,
+        "Memory should contain alternating pattern"
+    );
 }
 
 #[test]
 fn test_movdiri_m32_ebx() {
     // MOVDIRI [DATA_ADDR], EBX - store from EBX
     let code = [
-        0x0f, 0x38, 0xf9, 0x1c, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x1c,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -123,14 +163,22 @@ fn test_movdiri_m32_ebx() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u32(&mem), 0x11223344, "Memory should contain EBX value");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0x11223344,
+        "Memory should contain EBX value"
+    );
 }
 
 #[test]
 fn test_movdiri_m32_ecx() {
     // MOVDIRI [DATA_ADDR], ECX - store from ECX
     let code = [
-        0x0f, 0x38, 0xf9, 0x0c, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x0c,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -142,14 +190,22 @@ fn test_movdiri_m32_ecx() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u32(&mem), 0xDEADBEEF, "Memory should contain ECX value");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0xDEADBEEF,
+        "Memory should contain ECX value"
+    );
 }
 
 #[test]
 fn test_movdiri_m32_edx() {
     // MOVDIRI [DATA_ADDR], EDX - store from EDX
     let code = [
-        0x0f, 0x38, 0xf9, 0x14, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x14,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -161,14 +217,22 @@ fn test_movdiri_m32_edx() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u32(&mem), 0xCAFEBABE, "Memory should contain EDX value");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0xCAFEBABE,
+        "Memory should contain EDX value"
+    );
 }
 
 #[test]
 fn test_movdiri_m32_esi() {
     // MOVDIRI [DATA_ADDR], ESI - store from ESI
     let code = [
-        0x0f, 0x38, 0xf9, 0x34, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x34,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -180,14 +244,22 @@ fn test_movdiri_m32_esi() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u32(&mem), 0x01020304, "Memory should contain ESI value");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0x01020304,
+        "Memory should contain ESI value"
+    );
 }
 
 #[test]
 fn test_movdiri_m32_edi() {
     // MOVDIRI [DATA_ADDR], EDI - store from EDI
     let code = [
-        0x0f, 0x38, 0xf9, 0x3c, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x3c,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -199,14 +271,23 @@ fn test_movdiri_m32_edi() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u32(&mem), 0xFEDCBA98, "Memory should contain EDI value");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0xFEDCBA98,
+        "Memory should contain EDI value"
+    );
 }
 
 #[test]
 fn test_movdiri_m32_r8d() {
     // MOVDIRI [DATA_ADDR], R8D - store from extended register
     let code = [
-        0x44, 0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x44,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -218,14 +299,23 @@ fn test_movdiri_m32_r8d() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u32(&mem), 0x12345678, "Memory should contain R8D value");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0x12345678,
+        "Memory should contain R8D value"
+    );
 }
 
 #[test]
 fn test_movdiri_m32_r15d() {
     // MOVDIRI [DATA_ADDR], R15D - store from R15D
     let code = [
-        0x44, 0x0f, 0x38, 0xf9, 0x3c, 0x25,
+        0x44,
+        0x0f,
+        0x38,
+        0xf9,
+        0x3c,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -237,7 +327,11 @@ fn test_movdiri_m32_r15d() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u32(&mem), 0xAABBCCDD, "Memory should contain R15D value");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0xAABBCCDD,
+        "Memory should contain R15D value"
+    );
 }
 
 // ===== 64-bit MOVDIRI Tests =====
@@ -246,7 +340,12 @@ fn test_movdiri_m32_r15d() {
 fn test_movdiri_m64_r64_basic() {
     // MOVDIRI [DATA_ADDR], RAX - basic 64-bit direct store
     let code = [
-        0x48, 0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x48,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -258,14 +357,23 @@ fn test_movdiri_m64_r64_basic() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u64(&mem), 0x0123456789ABCDEF, "Memory should contain stored value");
+    assert_eq!(
+        read_mem_u64(&mem),
+        0x0123456789ABCDEF,
+        "Memory should contain stored value"
+    );
 }
 
 #[test]
 fn test_movdiri_m64_r64_zero() {
     // MOVDIRI [DATA_ADDR], RAX - store zero
     let code = [
-        0x48, 0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x48,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -277,14 +385,23 @@ fn test_movdiri_m64_r64_zero() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u64(&mem), 0x0000000000000000, "Memory should contain zero");
+    assert_eq!(
+        read_mem_u64(&mem),
+        0x0000000000000000,
+        "Memory should contain zero"
+    );
 }
 
 #[test]
 fn test_movdiri_m64_r64_all_ones() {
     // MOVDIRI [DATA_ADDR], RAX - store all ones
     let code = [
-        0x48, 0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x48,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -296,14 +413,23 @@ fn test_movdiri_m64_r64_all_ones() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u64(&mem), 0xFFFFFFFFFFFFFFFF, "Memory should contain all ones");
+    assert_eq!(
+        read_mem_u64(&mem),
+        0xFFFFFFFFFFFFFFFF,
+        "Memory should contain all ones"
+    );
 }
 
 #[test]
 fn test_movdiri_m64_r64_pattern() {
     // MOVDIRI [DATA_ADDR], RAX - store pattern
     let code = [
-        0x48, 0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x48,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -315,14 +441,23 @@ fn test_movdiri_m64_r64_pattern() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u64(&mem), 0xFEDCBA9876543210, "Memory should contain pattern");
+    assert_eq!(
+        read_mem_u64(&mem),
+        0xFEDCBA9876543210,
+        "Memory should contain pattern"
+    );
 }
 
 #[test]
 fn test_movdiri_m64_r64_alternating() {
     // MOVDIRI [DATA_ADDR], RAX - alternating pattern
     let code = [
-        0x48, 0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x48,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -334,14 +469,23 @@ fn test_movdiri_m64_r64_alternating() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u64(&mem), 0x5555AAAA5555AAAA, "Memory should contain alternating pattern");
+    assert_eq!(
+        read_mem_u64(&mem),
+        0x5555AAAA5555AAAA,
+        "Memory should contain alternating pattern"
+    );
 }
 
 #[test]
 fn test_movdiri_m64_rbx() {
     // MOVDIRI [DATA_ADDR], RBX - store from RBX
     let code = [
-        0x48, 0x0f, 0x38, 0xf9, 0x1c, 0x25,
+        0x48,
+        0x0f,
+        0x38,
+        0xf9,
+        0x1c,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -353,14 +497,23 @@ fn test_movdiri_m64_rbx() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u64(&mem), 0x1122334455667788, "Memory should contain RBX value");
+    assert_eq!(
+        read_mem_u64(&mem),
+        0x1122334455667788,
+        "Memory should contain RBX value"
+    );
 }
 
 #[test]
 fn test_movdiri_m64_rcx() {
     // MOVDIRI [DATA_ADDR], RCX - store from RCX
     let code = [
-        0x48, 0x0f, 0x38, 0xf9, 0x0c, 0x25,
+        0x48,
+        0x0f,
+        0x38,
+        0xf9,
+        0x0c,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -372,14 +525,23 @@ fn test_movdiri_m64_rcx() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u64(&mem), 0xDEADBEEFCAFEBABE, "Memory should contain RCX value");
+    assert_eq!(
+        read_mem_u64(&mem),
+        0xDEADBEEFCAFEBABE,
+        "Memory should contain RCX value"
+    );
 }
 
 #[test]
 fn test_movdiri_m64_r8() {
     // MOVDIRI [DATA_ADDR], R8 - store from extended register
     let code = [
-        0x4c, 0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x4c,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -391,14 +553,23 @@ fn test_movdiri_m64_r8() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u64(&mem), 0x0123456789ABCDEF, "Memory should contain R8 value");
+    assert_eq!(
+        read_mem_u64(&mem),
+        0x0123456789ABCDEF,
+        "Memory should contain R8 value"
+    );
 }
 
 #[test]
 fn test_movdiri_m64_r15() {
     // MOVDIRI [DATA_ADDR], R15 - store from R15
     let code = [
-        0x4c, 0x0f, 0x38, 0xf9, 0x3c, 0x25,
+        0x4c,
+        0x0f,
+        0x38,
+        0xf9,
+        0x3c,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -410,7 +581,11 @@ fn test_movdiri_m64_r15() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u64(&mem), 0xFEDCBA9876543210, "Memory should contain R15 value");
+    assert_eq!(
+        read_mem_u64(&mem),
+        0xFEDCBA9876543210,
+        "Memory should contain R15 value"
+    );
 }
 
 // ===== Memory Alignment Tests =====
@@ -420,7 +595,11 @@ fn test_movdiri_m32_aligned_4byte() {
     // MOVDIRI to 4-byte aligned address
     let addr = 0x2000u64; // 4-byte aligned
     let code = [
-        0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (addr & 0xFF) as u8,
         ((addr >> 8) & 0xFF) as u8,
         ((addr >> 16) & 0xFF) as u8,
@@ -432,7 +611,11 @@ fn test_movdiri_m32_aligned_4byte() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, addr), 0x12345678, "4-byte aligned store should work");
+    assert_eq!(
+        read_mem_at_u32(&mem, addr),
+        0x12345678,
+        "4-byte aligned store should work"
+    );
 }
 
 #[test]
@@ -440,7 +623,12 @@ fn test_movdiri_m64_aligned_8byte() {
     // MOVDIRI to 8-byte aligned address
     let addr = 0x2000u64; // 8-byte aligned
     let code = [
-        0x48, 0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x48,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (addr & 0xFF) as u8,
         ((addr >> 8) & 0xFF) as u8,
         ((addr >> 16) & 0xFF) as u8,
@@ -452,7 +640,11 @@ fn test_movdiri_m64_aligned_8byte() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u64(&mem, addr), 0x0123456789ABCDEF, "8-byte aligned store should work");
+    assert_eq!(
+        read_mem_at_u64(&mem, addr),
+        0x0123456789ABCDEF,
+        "8-byte aligned store should work"
+    );
 }
 
 #[test]
@@ -460,7 +652,11 @@ fn test_movdiri_m32_unaligned() {
     // MOVDIRI to unaligned address (will be split)
     let addr = 0x2001u64; // Not 4-byte aligned
     let code = [
-        0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (addr & 0xFF) as u8,
         ((addr >> 8) & 0xFF) as u8,
         ((addr >> 16) & 0xFF) as u8,
@@ -472,7 +668,11 @@ fn test_movdiri_m32_unaligned() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, addr), 0x12345678, "Unaligned store should work (may be split)");
+    assert_eq!(
+        read_mem_at_u32(&mem, addr),
+        0x12345678,
+        "Unaligned store should work (may be split)"
+    );
 }
 
 #[test]
@@ -480,7 +680,12 @@ fn test_movdiri_m64_unaligned() {
     // MOVDIRI to unaligned address (will be split)
     let addr = 0x2001u64; // Not 8-byte aligned
     let code = [
-        0x48, 0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x48,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (addr & 0xFF) as u8,
         ((addr >> 8) & 0xFF) as u8,
         ((addr >> 16) & 0xFF) as u8,
@@ -492,7 +697,11 @@ fn test_movdiri_m64_unaligned() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u64(&mem, addr), 0x0123456789ABCDEF, "Unaligned store should work (may be split)");
+    assert_eq!(
+        read_mem_at_u64(&mem, addr),
+        0x0123456789ABCDEF,
+        "Unaligned store should work (may be split)"
+    );
 }
 
 // ===== Special Value Tests =====
@@ -501,7 +710,11 @@ fn test_movdiri_m64_unaligned() {
 fn test_movdiri_m32_max_signed() {
     // MOVDIRI with maximum signed 32-bit value
     let code = [
-        0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -513,14 +726,22 @@ fn test_movdiri_m32_max_signed() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u32(&mem), 0x7FFFFFFF, "Memory should contain max signed 32-bit value");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0x7FFFFFFF,
+        "Memory should contain max signed 32-bit value"
+    );
 }
 
 #[test]
 fn test_movdiri_m32_min_signed() {
     // MOVDIRI with minimum signed 32-bit value
     let code = [
-        0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -532,14 +753,23 @@ fn test_movdiri_m32_min_signed() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u32(&mem), 0x80000000, "Memory should contain min signed 32-bit value");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0x80000000,
+        "Memory should contain min signed 32-bit value"
+    );
 }
 
 #[test]
 fn test_movdiri_m64_max_signed() {
     // MOVDIRI with maximum signed 64-bit value
     let code = [
-        0x48, 0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x48,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -551,14 +781,23 @@ fn test_movdiri_m64_max_signed() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u64(&mem), 0x7FFFFFFFFFFFFFFF, "Memory should contain max signed 64-bit value");
+    assert_eq!(
+        read_mem_u64(&mem),
+        0x7FFFFFFFFFFFFFFF,
+        "Memory should contain max signed 64-bit value"
+    );
 }
 
 #[test]
 fn test_movdiri_m64_min_signed() {
     // MOVDIRI with minimum signed 64-bit value
     let code = [
-        0x48, 0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x48,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -570,14 +809,22 @@ fn test_movdiri_m64_min_signed() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u64(&mem), 0x8000000000000000, "Memory should contain min signed 64-bit value");
+    assert_eq!(
+        read_mem_u64(&mem),
+        0x8000000000000000,
+        "Memory should contain min signed 64-bit value"
+    );
 }
 
 #[test]
 fn test_movdiri_preserves_source_register() {
     // MOVDIRI should not modify source register
     let code = [
-        0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -596,7 +843,11 @@ fn test_movdiri_preserves_source_register() {
 fn test_movdiri_preserves_other_registers() {
     // MOVDIRI should not affect other registers
     let code = [
-        0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -618,7 +869,11 @@ fn test_movdiri_preserves_other_registers() {
 fn test_movdiri_does_not_modify_flags() {
     // MOVDIRI does not modify any flags
     let code = [
-        0x0f, 0x38, 0xf9, 0x04, 0x25,
+        0x0f,
+        0x38,
+        0xf9,
+        0x04,
+        0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,

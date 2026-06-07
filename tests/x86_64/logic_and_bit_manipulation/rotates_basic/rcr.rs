@@ -28,8 +28,8 @@
 // - Count is 0: No flags affected
 
 use crate::common::*;
-use rax::cpu::Registers;
 use rax::backend::emulator::x86_64::flags;
+use rax::cpu::Registers;
 use std::sync::Arc;
 
 // ============================================================================
@@ -160,7 +160,10 @@ fn test_rcr_count_zero_preserves_flags() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x42, "AL unchanged");
-    assert_eq!(regs.rflags, initial_flags, "Flags unchanged when count is 0");
+    assert_eq!(
+        regs.rflags, initial_flags,
+        "Flags unchanged when count is 0"
+    );
 }
 
 // ============================================================================
@@ -180,7 +183,11 @@ fn test_rcr_ax_1_cf_clear() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0x2190, "AX: 0x4321 RCR 1 (CF=0) = 0x2190");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x2190,
+        "AX: 0x4321 RCR 1 (CF=0) = 0x2190"
+    );
     assert!(cf_set(regs.rflags), "CF: LSB was 1");
 }
 
@@ -197,7 +204,11 @@ fn test_rcr_ax_1_cf_set() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0xA190, "AX: 0x4320 RCR 1 (CF=1) = 0xA190");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0xA190,
+        "AX: 0x4320 RCR 1 (CF=1) = 0xA190"
+    );
     assert!(!cf_set(regs.rflags), "CF: LSB was 0");
 }
 
@@ -216,7 +227,11 @@ fn test_rcr_ax_cl() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // After full 17-bit rotation, value should be back
-    assert_eq!(regs.rax & 0xFFFF, 0x0001, "AX: after 16 rotations of 17-bit value");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x0001,
+        "AX: after 16 rotations of 17-bit value"
+    );
 }
 
 #[test]
@@ -232,7 +247,11 @@ fn test_rcr_ax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0x8123, "AX: 0x1234 RCR 4 (CF=0) = 0x8123");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x8123,
+        "AX: 0x1234 RCR 4 (CF=0) = 0x8123"
+    );
 }
 
 // ============================================================================
@@ -252,7 +271,11 @@ fn test_rcr_eax_1_cf_clear() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x091A2B3C, "EAX: 0x12345678 RCR 1 (CF=0)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x091A2B3C,
+        "EAX: 0x12345678 RCR 1 (CF=0)"
+    );
     assert!(!cf_set(regs.rflags), "CF: LSB was 0");
 }
 
@@ -269,7 +292,11 @@ fn test_rcr_eax_1_cf_set() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x891A2B3C, "EAX: 0x12345678 RCR 1 (CF=1)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x891A2B3C,
+        "EAX: 0x12345678 RCR 1 (CF=1)"
+    );
     assert!(!cf_set(regs.rflags), "CF: LSB was 0");
 }
 
@@ -288,7 +315,11 @@ fn test_rcr_eax_cl() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // After 32 rotations of 33-bit value, CF should be at MSB
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX: after full 33-bit rotation");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX: after full 33-bit rotation"
+    );
 }
 
 #[test]
@@ -304,7 +335,11 @@ fn test_rcr_eax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xF0123456, "EAX: 0x12345678 RCR 8 (CF=0)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xF0123456,
+        "EAX: 0x12345678 RCR 8 (CF=0)"
+    );
 }
 
 #[test]
@@ -320,7 +355,11 @@ fn test_rcr_eax_with_lsb() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000000, "EAX: 0x00000001 RCR 1 (CF=0)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000000,
+        "EAX: 0x00000001 RCR 1 (CF=0)"
+    );
     assert!(cf_set(regs.rflags), "CF: LSB was 1");
 }
 
@@ -341,7 +380,10 @@ fn test_rcr_rax_1_cf_clear() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x091A2B3C4D5E6F78, "RAX: 0x123456789ABCDEF0 RCR 1 (CF=0)");
+    assert_eq!(
+        regs.rax, 0x091A2B3C4D5E6F78,
+        "RAX: 0x123456789ABCDEF0 RCR 1 (CF=0)"
+    );
     assert!(!cf_set(regs.rflags), "CF: LSB was 0");
 }
 
@@ -358,7 +400,10 @@ fn test_rcr_rax_1_cf_set() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x891A2B3C4D5E6F78, "RAX: 0x123456789ABCDEF0 RCR 1 (CF=1)");
+    assert_eq!(
+        regs.rax, 0x891A2B3C4D5E6F78,
+        "RAX: 0x123456789ABCDEF0 RCR 1 (CF=1)"
+    );
     assert!(!cf_set(regs.rflags), "CF: LSB was 0");
 }
 
@@ -393,7 +438,10 @@ fn test_rcr_rax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xBDE0123456789ABC, "RAX: 0x123456789ABCDEF0 RCR 16 (CF=0)");
+    assert_eq!(
+        regs.rax, 0xBDE0123456789ABC,
+        "RAX: 0x123456789ABCDEF0 RCR 16 (CF=0)"
+    );
 }
 
 #[test]
@@ -409,7 +457,10 @@ fn test_rcr_rax_with_lsb() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0000000000000000, "RAX: 0x0000000000000001 RCR 1 (CF=0)");
+    assert_eq!(
+        regs.rax, 0x0000000000000000,
+        "RAX: 0x0000000000000001 RCR 1 (CF=0)"
+    );
     assert!(cf_set(regs.rflags), "CF: LSB was 1");
 }
 
@@ -447,7 +498,11 @@ fn test_rcr_r10w_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r10 & 0xFFFF, 0x8123, "R10W: 0x1234 RCR 4 (CF=0) = 0x8123");
+    assert_eq!(
+        regs.r10 & 0xFFFF,
+        0x8123,
+        "R10W: 0x1234 RCR 4 (CF=0) = 0x8123"
+    );
 }
 
 #[test]
@@ -463,7 +518,11 @@ fn test_rcr_r12d_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r12 & 0xFFFFFFFF, 0xF0123456, "R12D: 0x12345678 RCR 8 (CF=0)");
+    assert_eq!(
+        regs.r12 & 0xFFFFFFFF,
+        0xF0123456,
+        "R12D: 0x12345678 RCR 8 (CF=0)"
+    );
 }
 
 #[test]
@@ -479,7 +538,10 @@ fn test_rcr_r15_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r15, 0xFF6E5D4C3B2A1908, "R15: 0xFEDCBA9876543210 RCR 1 (CF=1)");
+    assert_eq!(
+        regs.r15, 0xFF6E5D4C3B2A1908,
+        "R15: 0xFEDCBA9876543210 RCR 1 (CF=1)"
+    );
 }
 
 // ============================================================================
@@ -490,7 +552,9 @@ fn test_rcr_r15_1() {
 fn test_rcr_byte_ptr_1() {
     // RCR byte ptr [DATA_ADDR], 1
     let code = [
-        0xd0, 0x1c, 0x25, // RCR byte ptr [DATA_ADDR], 1
+        0xd0,
+        0x1c,
+        0x25, // RCR byte ptr [DATA_ADDR], 1
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -512,7 +576,10 @@ fn test_rcr_byte_ptr_1() {
 fn test_rcr_word_ptr_cl() {
     // RCR word ptr [DATA_ADDR], CL
     let code = [
-        0x66, 0xd3, 0x1c, 0x25, // RCR word ptr [DATA_ADDR], CL
+        0x66,
+        0xd3,
+        0x1c,
+        0x25, // RCR word ptr [DATA_ADDR], CL
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -535,7 +602,9 @@ fn test_rcr_word_ptr_cl() {
 fn test_rcr_dword_ptr_imm8() {
     // RCR dword ptr [DATA_ADDR], imm8
     let code = [
-        0xc1, 0x1c, 0x25, // RCR dword ptr [DATA_ADDR], imm8
+        0xc1,
+        0x1c,
+        0x25, // RCR dword ptr [DATA_ADDR], imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -558,7 +627,10 @@ fn test_rcr_dword_ptr_imm8() {
 fn test_rcr_qword_ptr_cl() {
     // RCR qword ptr [DATA_ADDR], CL
     let code = [
-        0x48, 0xd3, 0x1c, 0x25, // RCR qword ptr [DATA_ADDR], CL
+        0x48,
+        0xd3,
+        0x1c,
+        0x25, // RCR qword ptr [DATA_ADDR], CL
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -574,7 +646,10 @@ fn test_rcr_qword_ptr_cl() {
     run_until_hlt(&mut vcpu).unwrap();
     let result = read_mem_u64(&mem);
 
-    assert_eq!(result, 0xBDE0123456789ABC, "Memory: 0x123456789ABCDEF0 RCR 16 (CF=0)");
+    assert_eq!(
+        result, 0xBDE0123456789ABC,
+        "Memory: 0x123456789ABCDEF0 RCR 16 (CF=0)"
+    );
 }
 
 // ============================================================================
@@ -598,7 +673,11 @@ fn test_rcr_multi_precision_shift() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rbx & 0xFFFFFFFF, 0x091A2B3C, "EBX: high bits shifted");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000000, "EAX: low bits with CF from EBX");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000000,
+        "EAX: low bits with CF from EBX"
+    );
     assert!(cf_set(regs.rflags), "CF: LSB from EAX");
 }
 

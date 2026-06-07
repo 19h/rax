@@ -119,11 +119,7 @@ pub fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Resu
         7 => {
             // SAR
             let result = if count >= 8 {
-                if (val as i8) < 0 {
-                    0xFF
-                } else {
-                    0
-                }
+                if (val as i8) < 0 { 0xFF } else { 0 }
             } else {
                 ((val as i8) >> count) as u8
             };
@@ -312,11 +308,7 @@ pub fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u
             // SAR
             let result = if count as u32 >= bits {
                 let sign = (val >> (bits - 1)) & 1;
-                if sign != 0 {
-                    mask
-                } else {
-                    0
-                }
+                if sign != 0 { mask } else { 0 }
             } else {
                 match size {
                     2 => (((val & 0xFFFF) as i16 >> count) as u16) as u64,

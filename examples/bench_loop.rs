@@ -120,5 +120,9 @@ fn main() {
     eprintln!("[bench] elapsed       : {secs:.4} s");
     eprintln!("[bench] throughput    : {mips:.2} MIPS");
     let r = vcpu.get_regs().unwrap();
-    eprintln!("[bench] final eax={:#x} ecx={:#x}", r.rax & 0xffff_ffff, r.rcx & 0xffff_ffff);
+    eprintln!(
+        "[bench] final eax={:#x} ecx={:#x}",
+        r.rax & 0xffff_ffff,
+        r.rcx & 0xffff_ffff
+    );
 }

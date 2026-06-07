@@ -25,8 +25,8 @@
 // - Count is 0: No flags affected
 
 use crate::common::*;
-use rax::cpu::Registers;
 use rax::backend::emulator::x86_64::flags;
+use rax::cpu::Registers;
 use std::sync::Arc;
 
 // ============================================================================
@@ -47,7 +47,10 @@ fn test_shr_al_1() {
 
     assert_eq!(regs.rax & 0xFF, 0x21, "AL: 0x42 >> 1 = 0x21");
     assert!(!cf_set(regs.rflags), "CF should be clear (LSB was 0)");
-    assert!(!of_set(regs.rflags), "OF should be clear (MSB of original was 0)");
+    assert!(
+        !of_set(regs.rflags),
+        "OF should be clear (MSB of original was 0)"
+    );
     assert!(!sf_set(regs.rflags), "SF should be clear");
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
@@ -83,7 +86,10 @@ fn test_shr_al_1_msb_set() {
 
     assert_eq!(regs.rax & 0xFF, 0x40, "AL: 0x80 >> 1 = 0x40");
     assert!(!cf_set(regs.rflags), "CF should be clear (LSB was 0)");
-    assert!(of_set(regs.rflags), "OF should be set (MSB of original was 1)");
+    assert!(
+        of_set(regs.rflags),
+        "OF should be set (MSB of original was 1)"
+    );
 }
 
 #[test]
@@ -169,7 +175,10 @@ fn test_shr_count_zero_preserves_flags() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x42, "AL unchanged");
-    assert_eq!(regs.rflags, initial_flags, "Flags unchanged when count is 0");
+    assert_eq!(
+        regs.rflags, initial_flags,
+        "Flags unchanged when count is 0"
+    );
 }
 
 // ============================================================================
@@ -224,7 +233,10 @@ fn test_shr_ax_imm8() {
 
     assert_eq!(regs.rax & 0xFFFF, 0x0123, "AX: 0x1234 >> 4 = 0x0123");
     // CF = bit 3 of 0x1234 = 0 (last bit shifted out)
-    assert!(!cf_set(regs.rflags), "CF should be clear (bit 3 of 0x1234 was 0)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (bit 3 of 0x1234 was 0)"
+    );
 }
 
 #[test]
@@ -239,9 +251,16 @@ fn test_shr_ax_with_msb() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0x4000, "AX: 0x8000 >> 1 = 0x4000 (zero fill)");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x4000,
+        "AX: 0x8000 >> 1 = 0x4000 (zero fill)"
+    );
     assert!(!cf_set(regs.rflags), "CF should be clear (LSB was 0)");
-    assert!(of_set(regs.rflags), "OF should be set (MSB of original was 1)");
+    assert!(
+        of_set(regs.rflags),
+        "OF should be set (MSB of original was 1)"
+    );
 }
 
 // ============================================================================
@@ -260,7 +279,11 @@ fn test_shr_eax_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x091A2B3C, "EAX: 0x12345678 >> 1 = 0x091A2B3C");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x091A2B3C,
+        "EAX: 0x12345678 >> 1 = 0x091A2B3C"
+    );
     assert!(!cf_set(regs.rflags), "CF should be clear");
     assert!(!of_set(regs.rflags), "OF should be clear");
 }
@@ -278,7 +301,11 @@ fn test_shr_eax_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000001, "EAX: 0x80000000 >> 31 = 0x00000001");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000001,
+        "EAX: 0x80000000 >> 31 = 0x00000001"
+    );
     assert!(!cf_set(regs.rflags), "CF: last bit shifted out was 0");
 }
 
@@ -294,7 +321,11 @@ fn test_shr_eax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00123456, "EAX: 0x12345678 >> 8 = 0x00123456");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00123456,
+        "EAX: 0x12345678 >> 8 = 0x00123456"
+    );
     assert!(!cf_set(regs.rflags), "CF should be clear");
 }
 
@@ -310,9 +341,16 @@ fn test_shr_eax_with_msb() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x40000000, "EAX: 0x80000000 >> 1 = 0x40000000 (zero fill)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x40000000,
+        "EAX: 0x80000000 >> 1 = 0x40000000 (zero fill)"
+    );
     assert!(!cf_set(regs.rflags), "CF should be clear (LSB was 0)");
-    assert!(of_set(regs.rflags), "OF should be set (MSB of original was 1)");
+    assert!(
+        of_set(regs.rflags),
+        "OF should be set (MSB of original was 1)"
+    );
 }
 
 #[test]
@@ -328,7 +366,11 @@ fn test_shr_count_masked_32bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000001, "EAX: 0x80000000 >> 31 (count masked)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000001,
+        "EAX: 0x80000000 >> 31 (count masked)"
+    );
 }
 
 // ============================================================================
@@ -365,7 +407,10 @@ fn test_shr_rax_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0000000000000001, "RAX: 0x8000000000000000 >> 63");
+    assert_eq!(
+        regs.rax, 0x0000000000000001,
+        "RAX: 0x8000000000000000 >> 63"
+    );
     assert!(!cf_set(regs.rflags), "CF: last bit shifted out was 0");
 }
 
@@ -381,9 +426,15 @@ fn test_shr_rax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0000000012345678, "RAX: high 32 bits shifted to low 32");
+    assert_eq!(
+        regs.rax, 0x0000000012345678,
+        "RAX: high 32 bits shifted to low 32"
+    );
     // CF = bit 31 of original = MSB of 0x9ABCDEF0 = 1
-    assert!(cf_set(regs.rflags), "CF should be set (bit 31 of 0x9ABCDEF0 is 1)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (bit 31 of 0x9ABCDEF0 is 1)"
+    );
 }
 
 #[test]
@@ -398,9 +449,15 @@ fn test_shr_rax_with_msb() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x4000000000000000, "RAX: 0x8000000000000000 >> 1 (zero fill)");
+    assert_eq!(
+        regs.rax, 0x4000000000000000,
+        "RAX: 0x8000000000000000 >> 1 (zero fill)"
+    );
     assert!(!cf_set(regs.rflags), "CF should be clear (LSB was 0)");
-    assert!(of_set(regs.rflags), "OF should be set (MSB of original was 1)");
+    assert!(
+        of_set(regs.rflags),
+        "OF should be set (MSB of original was 1)"
+    );
 }
 
 #[test]
@@ -416,7 +473,10 @@ fn test_shr_count_masked_64bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0000000000000001, "RAX: 0x8000000000000000 >> 63 (count masked to 6 bits)");
+    assert_eq!(
+        regs.rax, 0x0000000000000001,
+        "RAX: 0x8000000000000000 >> 63 (count masked to 6 bits)"
+    );
 }
 
 // ============================================================================
@@ -467,7 +527,11 @@ fn test_shr_r12d_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r12 & 0xFFFFFFFF, 0x00123456, "R12D: 0x12345678 >> 8 = 0x00123456");
+    assert_eq!(
+        regs.r12 & 0xFFFFFFFF,
+        0x00123456,
+        "R12D: 0x12345678 >> 8 = 0x00123456"
+    );
 }
 
 #[test]
@@ -482,7 +546,10 @@ fn test_shr_r15_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r15, 0x7F6E5D4C3B2A1908, "R15: logical right shift by 1 (zero fill)");
+    assert_eq!(
+        regs.r15, 0x7F6E5D4C3B2A1908,
+        "R15: logical right shift by 1 (zero fill)"
+    );
     assert!(!sf_set(regs.rflags), "SF should be clear (result < 2^63)");
 }
 
@@ -494,7 +561,9 @@ fn test_shr_r15_1() {
 fn test_shr_byte_ptr_1() {
     // SHR byte ptr [DATA_ADDR], 1
     let code = [
-        0xd0, 0x2c, 0x25, // SHR byte ptr [DATA_ADDR], 1
+        0xd0,
+        0x2c,
+        0x25, // SHR byte ptr [DATA_ADDR], 1
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -515,7 +584,10 @@ fn test_shr_byte_ptr_1() {
 fn test_shr_word_ptr_cl() {
     // SHR word ptr [DATA_ADDR], CL
     let code = [
-        0x66, 0xd3, 0x2c, 0x25, // SHR word ptr [DATA_ADDR], CL
+        0x66,
+        0xd3,
+        0x2c,
+        0x25, // SHR word ptr [DATA_ADDR], CL
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -537,7 +609,9 @@ fn test_shr_word_ptr_cl() {
 fn test_shr_dword_ptr_imm8() {
     // SHR dword ptr [DATA_ADDR], imm8
     let code = [
-        0xc1, 0x2c, 0x25, // SHR dword ptr [DATA_ADDR], imm8
+        0xc1,
+        0x2c,
+        0x25, // SHR dword ptr [DATA_ADDR], imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -558,7 +632,10 @@ fn test_shr_dword_ptr_imm8() {
 fn test_shr_qword_ptr_cl() {
     // SHR qword ptr [DATA_ADDR], CL
     let code = [
-        0x48, 0xd3, 0x2c, 0x25, // SHR qword ptr [DATA_ADDR], CL
+        0x48,
+        0xd3,
+        0x2c,
+        0x25, // SHR qword ptr [DATA_ADDR], CL
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -573,7 +650,10 @@ fn test_shr_qword_ptr_cl() {
     run_until_hlt(&mut vcpu).unwrap();
     let result = read_mem_u64(&mem);
 
-    assert_eq!(result, 0x00000000FFFFFFFF, "Memory: 0xFFFFFFFF00000000 >> 32");
+    assert_eq!(
+        result, 0x00000000FFFFFFFF,
+        "Memory: 0xFFFFFFFF00000000 >> 32"
+    );
 }
 
 // ============================================================================
@@ -611,7 +691,11 @@ fn test_shr_vs_sar_negative_values() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x7FFFFFFF, "EAX: SHR fills with zero (not sign)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x7FFFFFFF,
+        "EAX: SHR fills with zero (not sign)"
+    );
     assert!(cf_set(regs.rflags), "CF: LSB was 1");
     assert!(!sf_set(regs.rflags), "SF: result is positive");
 }
@@ -628,7 +712,10 @@ fn test_shr_extract_high_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x00000000FFFFFFFF, "RAX: high 32 bits moved to low");
+    assert_eq!(
+        regs.rax, 0x00000000FFFFFFFF,
+        "RAX: high 32 bits moved to low"
+    );
 }
 
 #[test]
@@ -689,7 +776,11 @@ fn test_shr_chained_shifts() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x1F000000, "EAX: 0xF8000000 >> 3 = 0x1F000000");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x1F000000,
+        "EAX: 0xF8000000 >> 3 = 0x1F000000"
+    );
 }
 
 #[test]
@@ -704,7 +795,11 @@ fn test_shr_all_ones() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x7FFFFFFF, "EAX: 0xFFFFFFFF >> 1 = 0x7FFFFFFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x7FFFFFFF,
+        "EAX: 0xFFFFFFFF >> 1 = 0x7FFFFFFF"
+    );
     assert!(cf_set(regs.rflags), "CF: LSB was 1");
     assert!(!sf_set(regs.rflags), "SF: result is positive (MSB = 0)");
     assert!(!zf_set(regs.rflags), "ZF: result is not zero");
@@ -724,5 +819,9 @@ fn test_shr_isolate_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x56, "EAX: extracted byte at bits 8-15");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x56,
+        "EAX: extracted byte at bits 8-15"
+    );
 }

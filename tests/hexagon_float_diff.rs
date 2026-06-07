@@ -111,11 +111,7 @@ fn oracle_path() -> Option<PathBuf> {
             _ => return None,
         }
     }
-    if bin.exists() {
-        Some(bin)
-    } else {
-        None
-    }
+    if bin.exists() { Some(bin) } else { None }
 }
 
 fn run_oracle(oracle: &PathBuf, cases: &[(Vec<u32>, HexState)]) -> Option<Vec<HexState>> {
@@ -199,12 +195,7 @@ fn assemble_packets(packets: &[String]) -> Option<Vec<Vec<u32>>> {
         .stderr(Stdio::null())
         .spawn()
         .ok()?;
-    child
-        .stdin
-        .take()
-        .unwrap()
-        .write_all(src.as_bytes())
-        .ok()?;
+    child.stdin.take().unwrap().write_all(src.as_bytes()).ok()?;
     let mut out = String::new();
     child.stdout.take().unwrap().read_to_string(&mut out).ok()?;
     if !child.wait().ok()?.success() {
@@ -298,14 +289,16 @@ fn run_rax(words: &[u32], st: &HexState) -> Option<HexState> {
 
     let mut off = CODE_ADDR;
     for &w in words {
-        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64)).ok()?;
+        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64))
+            .ok()?;
         off += 4;
     }
     mem.write_slice(&trap0_word().to_le_bytes(), GuestAddress(off as u64))
         .ok()?;
 
     let mut vcpu = HexagonVcpu::new(0, mem.clone(), HexagonIsa::V68, Endianness::Little);
-    vcpu.set_state(&CpuState::hexagon(rax_regs_from_state(st))).ok()?;
+    vcpu.set_state(&CpuState::hexagon(rax_regs_from_state(st)))
+        .ok()?;
 
     let mut iters = 0;
     loop {
@@ -351,9 +344,32 @@ fn run_rax(words: &[u32], st: &HexState) -> Option<HexState> {
 /// f32 bit patterns.
 fn f32_values() -> Vec<u32> {
     let mut v: Vec<u32> = [
-        0.0_f32, -0.0, 1.0, -1.0, 2.0, -2.0, 0.5, -0.5, 3.0, -2.5, 4.0, 0.25, 100.0, -100.0, 1.5,
-        0.125, 8.0, 16.0, 1000.0, -7.0, 10.0, 0.1, // 0.1 is inexact in binary -> exercises inexact
-        3.141_592_7, 1e30, 1e-30, 1e38, // big/tiny -> overflow/underflow on mul/add
+        0.0_f32,
+        -0.0,
+        1.0,
+        -1.0,
+        2.0,
+        -2.0,
+        0.5,
+        -0.5,
+        3.0,
+        -2.5,
+        4.0,
+        0.25,
+        100.0,
+        -100.0,
+        1.5,
+        0.125,
+        8.0,
+        16.0,
+        1000.0,
+        -7.0,
+        10.0,
+        0.1, // 0.1 is inexact in binary -> exercises inexact
+        3.141_592_7,
+        1e30,
+        1e-30,
+        1e38, // big/tiny -> overflow/underflow on mul/add
     ]
     .iter()
     .map(|f| f.to_bits())
@@ -374,8 +390,32 @@ fn f32_values() -> Vec<u32> {
 /// f64 bit patterns, analogous to the f32 table.
 fn f64_values() -> Vec<u64> {
     let mut v: Vec<u64> = [
-        0.0_f64, -0.0, 1.0, -1.0, 2.0, -2.0, 0.5, -0.5, 3.0, -2.5, 4.0, 0.25, 100.0, -100.0, 1.5,
-        0.125, 8.0, 16.0, 1000.0, -7.0, 10.0, 0.1, 3.141_592_653_589_793, 1e300, 1e-300, 1e308,
+        0.0_f64,
+        -0.0,
+        1.0,
+        -1.0,
+        2.0,
+        -2.0,
+        0.5,
+        -0.5,
+        3.0,
+        -2.5,
+        4.0,
+        0.25,
+        100.0,
+        -100.0,
+        1.5,
+        0.125,
+        8.0,
+        16.0,
+        1000.0,
+        -7.0,
+        10.0,
+        0.1,
+        3.141_592_653_589_793,
+        1e300,
+        1e-300,
+        1e308,
     ]
     .iter()
     .map(|f| f.to_bits())
@@ -426,7 +466,10 @@ fn compare(
     let mut diffs = Vec::new();
     for &r in out_regs {
         if rax.w[r] != oracle.w[r] {
-            diffs.push(format!("r{r}: rax={:#010x} hw={:#010x}", rax.w[r], oracle.w[r]));
+            diffs.push(format!(
+                "r{r}: rax={:#010x} hw={:#010x}",
+                rax.w[r], oracle.w[r]
+            ));
         }
     }
     let rax_fp = rax.w[I_USR] & USR_FP_MASK;
@@ -475,7 +518,10 @@ fn report_and_panic(name: &str, batch_len: usize, mismatches: Vec<Mismatch>) {
     for m in mismatches.iter().take(30) {
         eprintln!("  [{}] {}: {}", m.label, m.asm, m.detail);
     }
-    panic!("{name}: {} divergences vs hardware oracle", mismatches.len());
+    panic!(
+        "{name}: {} divergences vs hardware oracle",
+        mismatches.len()
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -926,7 +972,10 @@ fn run_recip_family(name: &str, asm: &str, binary: bool, check_pe: bool) {
         };
         let mut diffs = Vec::new();
         if rax.w[1] != out.w[1] {
-            diffs.push(format!("Rd(r1): rax={:#010x} hw={:#010x}", rax.w[1], out.w[1]));
+            diffs.push(format!(
+                "Rd(r1): rax={:#010x} hw={:#010x}",
+                rax.w[1], out.w[1]
+            ));
         }
         if check_pe {
             let rax_pe = rax.w[I_PRED] & 0xff;
@@ -977,7 +1026,11 @@ fn diff_fp_recip() {
 
 /// Run a single sfrecipa case: returns (Rd, Pe).
 fn probe_one(oracle: &PathBuf, asm: &str, r2: u32, r3: u32) -> (u32, u32) {
-    let words = assemble_packets(&[asm.to_string()]).unwrap().into_iter().next().unwrap();
+    let words = assemble_packets(&[asm.to_string()])
+        .unwrap()
+        .into_iter()
+        .next()
+        .unwrap();
     let mut st = HexState::zeroed();
     st.w[2] = r2;
     st.w[3] = r3;
@@ -988,7 +1041,11 @@ fn probe_one(oracle: &PathBuf, asm: &str, r2: u32, r3: u32) -> (u32, u32) {
 
 /// Run a single case, returning (Rd, Pe, USR_fp).
 fn probe_usr(oracle: &PathBuf, asm: &str, r2: u32, r3: u32) -> (u32, u32, u32) {
-    let words = assemble_packets(&[asm.to_string()]).unwrap().into_iter().next().unwrap();
+    let words = assemble_packets(&[asm.to_string()])
+        .unwrap()
+        .into_iter()
+        .next()
+        .unwrap();
     let mut st = HexState::zeroed();
     st.w[2] = r2;
     st.w[3] = r3;
@@ -1008,20 +1065,37 @@ fn probe_recip_wide() {
         None => return,
     };
     let recipa = assemble_packets(&["{ r1,p0 = sfrecipa(r2,r3) }".to_string()])
-        .unwrap().into_iter().next().unwrap();
+        .unwrap()
+        .into_iter()
+        .next()
+        .unwrap();
     let invsqrta = assemble_packets(&["{ r1,p0 = sfinvsqrta(r2) }".to_string()])
-        .unwrap().into_iter().next().unwrap();
+        .unwrap()
+        .into_iter()
+        .next()
+        .unwrap();
     let fixn = assemble_packets(&["{ r1 = sffixupn(r2,r3) }".to_string()])
-        .unwrap().into_iter().next().unwrap();
+        .unwrap()
+        .into_iter()
+        .next()
+        .unwrap();
     let fixd = assemble_packets(&["{ r1 = sffixupd(r2,r3) }".to_string()])
-        .unwrap().into_iter().next().unwrap();
+        .unwrap()
+        .into_iter()
+        .next()
+        .unwrap();
     let fixr = assemble_packets(&["{ r1 = sffixupr(r2) }".to_string()])
-        .unwrap().into_iter().next().unwrap();
+        .unwrap()
+        .into_iter()
+        .next()
+        .unwrap();
 
     // A deterministic LCG over a spread of exponents/mantissas/signs.
     let mut seed: u64 = 0x1234_5678_9abc_def1;
     let mut next = || {
-        seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        seed = seed
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
         (seed >> 33) as u32
     };
     let mut mk = |r: &mut dyn FnMut() -> u32| -> u32 {
@@ -1060,19 +1134,33 @@ fn probe_recip_wide() {
             diff += &format!(" Rd rax={:#010x} hw={:#010x}", rax.w[1], out.w[1]);
         }
         if check_pe && (rax.w[I_PRED] & 0xff) != (out.w[I_PRED] & 0xff) {
-            diff += &format!(" Pe rax={:#04x} hw={:#04x}", rax.w[I_PRED] & 0xff, out.w[I_PRED] & 0xff);
+            diff += &format!(
+                " Pe rax={:#04x} hw={:#04x}",
+                rax.w[I_PRED] & 0xff,
+                out.w[I_PRED] & 0xff
+            );
         }
         if (rax.w[I_USR] & USR_FP_MASK) != (out.w[I_USR] & USR_FP_MASK) {
-            diff += &format!(" USR rax={:#04x} hw={:#04x}", rax.w[I_USR] & USR_FP_MASK, out.w[I_USR] & USR_FP_MASK);
+            diff += &format!(
+                " USR rax={:#04x} hw={:#04x}",
+                rax.w[I_USR] & USR_FP_MASK,
+                out.w[I_USR] & USR_FP_MASK
+            );
         }
         if !diff.is_empty() {
             bad += 1;
             if bad <= 30 {
-                eprintln!("kind={kind} Rs={:#010x} Rt={:#010x}{diff}", st.w[2], st.w[3]);
+                eprintln!(
+                    "kind={kind} Rs={:#010x} Rt={:#010x}{diff}",
+                    st.w[2], st.w[3]
+                );
             }
         }
     }
-    eprintln!("probe_recip_wide: {bad} divergences over {} cases", cases_r.len());
+    eprintln!(
+        "probe_recip_wide: {bad} divergences over {} cases",
+        cases_r.len()
+    );
     assert_eq!(bad, 0, "wide recip sweep diverged");
 }
 
@@ -1106,16 +1194,26 @@ fn probe_usr_flags() {
     }
     eprintln!("-- invsqrta USR flags --");
     let icases: &[(&str, u32)] = &[
-        ("0", 0), ("-0", 0x8000_0000), ("inf", 0x7f80_0000), ("-inf", 0xff80_0000),
-        ("snan", 0x7fa0_0000), ("-1", 0xbf80_0000), ("normal", 0x4049_0fdb),
-        ("den+", 0x0000_0001), ("bigden", 0x0040_0000),
+        ("0", 0),
+        ("-0", 0x8000_0000),
+        ("inf", 0x7f80_0000),
+        ("-inf", 0xff80_0000),
+        ("snan", 0x7fa0_0000),
+        ("-1", 0xbf80_0000),
+        ("normal", 0x4049_0fdb),
+        ("den+", 0x0000_0001),
+        ("bigden", 0x0040_0000),
     ];
     for (lbl, rs) in icases {
         let (rd, pe, usr) = probe_usr(&oracle, invsqrta, *rs, 0);
         eprintln!("  {lbl:8} -> Rd={rd:#010x} Pe={pe:#04x} USR={usr:#04x}");
     }
     eprintln!("-- fixup USR flags --");
-    for (lbl, asm) in &[("fixupn","{ r1 = sffixupn(r2,r3) }"), ("fixupd","{ r1 = sffixupd(r2,r3) }"), ("fixupr","{ r1 = sffixupr(r2) }")] {
+    for (lbl, asm) in &[
+        ("fixupn", "{ r1 = sffixupn(r2,r3) }"),
+        ("fixupd", "{ r1 = sffixupd(r2,r3) }"),
+        ("fixupr", "{ r1 = sffixupr(r2) }"),
+    ] {
         for (clbl, rs, rt) in rcases {
             let (rd, _pe, usr) = probe_usr(&oracle, asm, *rs, *rt);
             eprintln!("  {lbl} {clbl:10} -> Rd={rd:#010x} USR={usr:#04x}");
@@ -1145,7 +1243,14 @@ fn probe_recip() {
     }
     eprintln!("RECIP_TABLE (128 bytes):");
     for row in recip_table.chunks(16) {
-        eprintln!("    {}", row.iter().map(|b| format!("0x{b:02x}")).collect::<Vec<_>>().join(", ") + ",");
+        eprintln!(
+            "    {}",
+            row.iter()
+                .map(|b| format!("0x{b:02x}"))
+                .collect::<Vec<_>>()
+                .join(", ")
+                + ","
+        );
     }
 
     // ---- recip Rd_exp adjust across Rt exponents (Rs=1.0, Rt mant=0) ----
@@ -1160,21 +1265,21 @@ fn probe_recip() {
     // ---- recip denormal / special cases ----
     eprintln!("\n-- recip specials (Rs,Rt) --");
     let specials: &[(&str, u32, u32)] = &[
-        ("0/0",        0x0000_0000, 0x0000_0000),
-        ("inf/inf",    0x7f80_0000, 0x7f80_0000),
-        ("1/0",        0x3f80_0000, 0x0000_0000),
-        ("0/1",        0x0000_0000, 0x3f80_0000),
-        ("1/inf",      0x3f80_0000, 0x7f80_0000),
-        ("inf/1",      0x7f80_0000, 0x3f80_0000),
-        ("nan/1",      0x7fc0_0000, 0x3f80_0000),
-        ("1/nan",      0x3f80_0000, 0x7fc0_0000),
-        ("snan/1",     0x7fa0_0000, 0x3f80_0000),
-        ("1/snan",     0x3f80_0000, 0x7fa0_0000),
-        ("denormRs",   0x0000_0001, 0x3f80_0000),
-        ("denormRt",   0x3f80_0000, 0x0000_0001),
+        ("0/0", 0x0000_0000, 0x0000_0000),
+        ("inf/inf", 0x7f80_0000, 0x7f80_0000),
+        ("1/0", 0x3f80_0000, 0x0000_0000),
+        ("0/1", 0x0000_0000, 0x3f80_0000),
+        ("1/inf", 0x3f80_0000, 0x7f80_0000),
+        ("inf/1", 0x7f80_0000, 0x3f80_0000),
+        ("nan/1", 0x7fc0_0000, 0x3f80_0000),
+        ("1/nan", 0x3f80_0000, 0x7fc0_0000),
+        ("snan/1", 0x7fa0_0000, 0x3f80_0000),
+        ("1/snan", 0x3f80_0000, 0x7fa0_0000),
+        ("denormRs", 0x0000_0001, 0x3f80_0000),
+        ("denormRt", 0x3f80_0000, 0x0000_0001),
         ("denormRsRt", 0x0000_0001, 0x0040_0000),
         ("bigRtdenRs", 0x0000_0001, 0x7f00_0000),
-        ("Rt=-2",      0x3f80_0000, 0xc000_0000),
+        ("Rt=-2", 0x3f80_0000, 0xc000_0000),
         ("Rt small norm", 0x3f80_0000, 0x0080_0000),
         ("Rt large norm", 0x3f80_0000, 0x7f00_0000),
     ];
@@ -1198,11 +1303,25 @@ fn probe_recip() {
     }
     eprintln!("\nINVSQRT (even exp 127, mantbits): seed = (Rd>>15)&0xff");
     for row in invsqrt_even.chunks(16) {
-        eprintln!("    {}", row.iter().map(|b| format!("0x{b:02x}")).collect::<Vec<_>>().join(", ") + ",");
+        eprintln!(
+            "    {}",
+            row.iter()
+                .map(|b| format!("0x{b:02x}"))
+                .collect::<Vec<_>>()
+                .join(", ")
+                + ","
+        );
     }
     eprintln!("INVSQRT (odd exp 128):");
     for row in invsqrt_odd.chunks(16) {
-        eprintln!("    {}", row.iter().map(|b| format!("0x{b:02x}")).collect::<Vec<_>>().join(", ") + ",");
+        eprintln!(
+            "    {}",
+            row.iter()
+                .map(|b| format!("0x{b:02x}"))
+                .collect::<Vec<_>>()
+                .join(", ")
+                + ","
+        );
     }
 
     // ---- invsqrt exponent sweep ----
@@ -1213,23 +1332,25 @@ fn probe_recip() {
         let rd_exp = (rd >> 23) & 0xff;
         let seed = (rd >> 15) & 0xff;
         let mant_lo = rd & 0x7fff;
-        eprintln!("  Rs_exp={exp:3}  Rd={rd:#010x} Rd_exp={rd_exp:3} seed={seed:#04x} mlo={mant_lo:#06x} Pe={pe:#04x}");
+        eprintln!(
+            "  Rs_exp={exp:3}  Rd={rd:#010x} Rd_exp={rd_exp:3} seed={seed:#04x} mlo={mant_lo:#06x} Pe={pe:#04x}"
+        );
     }
 
     // ---- invsqrt specials ----
     eprintln!("\n-- invsqrt specials (Rs) --");
     let isp: &[(&str, u32)] = &[
-        ("0",       0x0000_0000),
-        ("-0",      0x8000_0000),
-        ("inf",     0x7f80_0000),
-        ("-inf",    0xff80_0000),
-        ("nan",     0x7fc0_0000),
-        ("snan",    0x7fa0_0000),
-        ("-1",      0xbf80_0000),
-        ("-2",      0xc000_0000),
+        ("0", 0x0000_0000),
+        ("-0", 0x8000_0000),
+        ("inf", 0x7f80_0000),
+        ("-inf", 0xff80_0000),
+        ("nan", 0x7fc0_0000),
+        ("snan", 0x7fa0_0000),
+        ("-1", 0xbf80_0000),
+        ("-2", 0xc000_0000),
         ("denorm+", 0x0000_0001),
         ("denorm-", 0x8000_0001),
-        ("bigdenorm",0x0040_0000),
+        ("bigdenorm", 0x0040_0000),
     ];
     for (lbl, rs) in isp {
         let (rd, pe) = probe_one(&oracle, invsqrta, *rs, 0);
@@ -1242,9 +1363,20 @@ fn probe_recip() {
     let fixd = "{ r1 = sffixupd(r2,r3) }";
     let fixr = "{ r1 = sffixupr(r2) }";
     let fvals: &[u32] = &[
-        0x3f80_0000, 0xc000_0000, 0x0000_0001, 0x8000_0001, 0x0040_0000,
-        0x007f_ffff, 0x7f80_0000, 0xff80_0000, 0x0000_0000, 0x8000_0000,
-        0x7fc0_0000, 0x7fa0_0000, 0x0080_0000, 0x7f7f_ffff,
+        0x3f80_0000,
+        0xc000_0000,
+        0x0000_0001,
+        0x8000_0001,
+        0x0040_0000,
+        0x007f_ffff,
+        0x7f80_0000,
+        0xff80_0000,
+        0x0000_0000,
+        0x8000_0000,
+        0x7fc0_0000,
+        0x7fa0_0000,
+        0x0080_0000,
+        0x7f7f_ffff,
     ];
     for &rt in fvals {
         // fixupn: Rd = adjusted Rs (Rs is the numerator); vary Rs, fix Rt=1.0

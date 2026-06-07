@@ -1,5 +1,5 @@
-use crate::common::{run_until_hlt, setup_vm};
 use crate::common::*;
+use crate::common::{run_until_hlt, setup_vm};
 use rax::backend::emulator::x86_64::flags;
 use rax::cpu::Registers;
 
@@ -128,7 +128,10 @@ fn test_shl_count_zero_preserves_flags() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x42, "AL unchanged");
-    assert_eq!(regs.rflags, initial_flags, "Flags unchanged when count is 0");
+    assert_eq!(
+        regs.rflags, initial_flags,
+        "Flags unchanged when count is 0"
+    );
 }
 
 #[test]
@@ -268,7 +271,7 @@ fn test_shl_edi_to_zero() {
     // Then shift once more to get zero
     let code = [
         0xc1, 0xe7, 0x1f, // SHL EDI, 31
-        0xd1, 0xe7,       // SHL EDI, 1
+        0xd1, 0xe7, // SHL EDI, 1
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -338,7 +341,7 @@ fn test_shl_rdi_to_zero() {
     // Note: SHL RDI, 64 would mask to 0 (no shift), so we use 63 + 1
     let code = [
         0x48, 0xc1, 0xe7, 0x3f, // SHL RDI, 63
-        0x48, 0xd1, 0xe7,       // SHL RDI, 1
+        0x48, 0xd1, 0xe7, // SHL RDI, 1
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -359,7 +362,10 @@ fn test_shl_count_masked_64bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0000000000000008, "RAX: 0x01 << 3 = 0x08 (count masked)");
+    assert_eq!(
+        regs.rax, 0x0000000000000008,
+        "RAX: 0x01 << 3 = 0x08 (count masked)"
+    );
 }
 
 // ============================================================================
@@ -593,7 +599,10 @@ fn test_strict_shl_r32_by_cl_cf() {
     regs.rcx = 1;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000_0002, "0x80000001 << 1 = 0x2 (32-bit, zero-extended)");
+    assert_eq!(
+        regs.rax, 0x0000_0002,
+        "0x80000001 << 1 = 0x2 (32-bit, zero-extended)"
+    );
     assert!(cf_set(regs.rflags), "CF = bit 31 shifted out");
 }
 
@@ -608,7 +617,10 @@ fn test_strict_shl_r64_imm_cf() {
     assert_eq!(regs.rax, 0x0000_0000_0000_00F0, "RAX << 4 drops top nibble");
     // Last bit shifted out for SHL by N is original bit (width-N) = bit 60.
     // 0x1000_0000_0000_000F has bit 60 set, so CF = 1.
-    assert!(cf_set(regs.rflags), "CF = last bit shifted out (bit 60 = 1)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF = last bit shifted out (bit 60 = 1)"
+    );
 }
 
 #[test]
@@ -647,7 +659,10 @@ fn test_strict_shld_r32() {
     regs.rdx = 0xAABB_CCDD;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x3456_78AA, "SHLD EAX,EDX,8 brings in EDX high byte");
+    assert_eq!(
+        regs.rax, 0x3456_78AA,
+        "SHLD EAX,EDX,8 brings in EDX high byte"
+    );
 }
 
 #[test]

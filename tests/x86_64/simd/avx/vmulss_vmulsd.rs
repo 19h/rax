@@ -183,7 +183,9 @@ fn test_vmulss_xmm0_xmm1_mem32() {
     ];
     let (mut vcpu, vm_memory) = setup_vm(&code, None);
     let test_data = [0x00, 0x00, 0x80, 0x3f]; // 1.0f
-    vm_memory.write(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    vm_memory
+        .write(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -195,7 +197,9 @@ fn test_vmulss_xmm2_xmm3_mem32() {
     ];
     let (mut vcpu, vm_memory) = setup_vm(&code, None);
     let test_data = [0x00, 0x00, 0x00, 0x40]; // 2.0f
-    vm_memory.write(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    vm_memory
+        .write(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -371,7 +375,9 @@ fn test_vmulsd_xmm0_xmm1_mem64() {
     ];
     let (mut vcpu, vm_memory) = setup_vm(&code, None);
     let test_data = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f]; // 1.0
-    vm_memory.write(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    vm_memory
+        .write(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -383,7 +389,9 @@ fn test_vmulsd_xmm2_xmm3_mem64() {
     ];
     let (mut vcpu, vm_memory) = setup_vm(&code, None);
     let test_data = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40]; // 2.0
-    vm_memory.write(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    vm_memory
+        .write(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -395,6 +403,8 @@ fn test_vmulsd_xmm4_xmm5_mem64() {
     ];
     let (mut vcpu, vm_memory) = setup_vm(&code, None);
     let test_data = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x40]; // 3.0
-    vm_memory.write(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    vm_memory
+        .write(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

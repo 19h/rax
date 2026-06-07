@@ -37,12 +37,7 @@ fn test_shlx_32bit_all_counts_0_to_31() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = (0x80000001u64 << count) & 0xFFFFFFFF;
-        assert_eq!(
-            regs.rax & 0xFFFFFFFF,
-            expected,
-            "SHLX by {} failed",
-            count
-        );
+        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "SHLX by {} failed", count);
     }
 }
 
@@ -433,7 +428,8 @@ fn test_shlx_32bit_memory_all_counts() {
     // Test SHLX with memory operand and various counts
     for count in vec![0, 1, 4, 8, 16, 24, 31] {
         let code = [
-            0xc4, 0xe2, 0x71, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // SHLX EAX, [0x2000], ECX
+            0xc4, 0xe2, 0x71, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00,
+            0x00, // SHLX EAX, [0x2000], ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -458,7 +454,8 @@ fn test_shrx_32bit_memory_all_counts() {
     // Test SHRX with memory operand and various counts
     for count in vec![0, 1, 4, 8, 16, 24, 31] {
         let code = [
-            0xc4, 0xe2, 0x73, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // SHRX EAX, [0x2000], ECX
+            0xc4, 0xe2, 0x73, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00,
+            0x00, // SHRX EAX, [0x2000], ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -483,7 +480,8 @@ fn test_sarx_32bit_memory_negative() {
     // Test SARX with memory operand (negative value)
     for count in vec![0, 1, 4, 8, 16, 24, 31] {
         let code = [
-            0xc4, 0xe2, 0x72, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // SARX EAX, [0x2000], ECX
+            0xc4, 0xe2, 0x72, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00,
+            0x00, // SARX EAX, [0x2000], ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -508,7 +506,8 @@ fn test_shlx_64bit_memory_all_counts() {
     // Test SHLX 64-bit with memory operand
     for count in vec![0, 1, 8, 16, 32, 48, 63] {
         let code = [
-            0xc4, 0xe2, 0xf1, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // SHLX RAX, [0x2000], RCX
+            0xc4, 0xe2, 0xf1, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00,
+            0x00, // SHLX RAX, [0x2000], RCX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -519,7 +518,11 @@ fn test_shlx_64bit_memory_all_counts() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = 0x123456789ABCDEF0u64 << count;
-        assert_eq!(regs.rax, expected, "SHLX 64-bit from memory by {} failed", count);
+        assert_eq!(
+            regs.rax, expected,
+            "SHLX 64-bit from memory by {} failed",
+            count
+        );
     }
 }
 
@@ -528,7 +531,8 @@ fn test_shrx_64bit_memory_all_counts() {
     // Test SHRX 64-bit with memory operand
     for count in vec![0, 1, 8, 16, 32, 48, 63] {
         let code = [
-            0xc4, 0xe2, 0xf3, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // SHRX RAX, [0x2000], RCX
+            0xc4, 0xe2, 0xf3, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00,
+            0x00, // SHRX RAX, [0x2000], RCX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -539,7 +543,11 @@ fn test_shrx_64bit_memory_all_counts() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = 0x123456789ABCDEF0u64 >> count;
-        assert_eq!(regs.rax, expected, "SHRX 64-bit from memory by {} failed", count);
+        assert_eq!(
+            regs.rax, expected,
+            "SHRX 64-bit from memory by {} failed",
+            count
+        );
     }
 }
 
@@ -548,7 +556,8 @@ fn test_sarx_64bit_memory_negative() {
     // Test SARX 64-bit with memory operand (negative value)
     for count in vec![0, 1, 8, 16, 32, 48, 63] {
         let code = [
-            0xc4, 0xe2, 0xf2, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // SARX RAX, [0x2000], RCX
+            0xc4, 0xe2, 0xf2, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00,
+            0x00, // SARX RAX, [0x2000], RCX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -559,7 +568,11 @@ fn test_sarx_64bit_memory_negative() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = (0x8000000000000000u64 as i64 >> count) as u64;
-        assert_eq!(regs.rax, expected, "SARX 64-bit from memory by {} failed", count);
+        assert_eq!(
+            regs.rax, expected,
+            "SARX 64-bit from memory by {} failed",
+            count
+        );
     }
 }
 
@@ -634,7 +647,7 @@ fn test_shlx_shrx_inverse_operations() {
     // SHLX followed by SHRX should return to original (for valid ranges)
     let code = [
         0xc4, 0xe2, 0x71, 0xf7, 0xc3, // SHLX EAX, EBX, ECX
-        0x48, 0x89, 0xc3,             // MOV RBX, RAX
+        0x48, 0x89, 0xc3, // MOV RBX, RAX
         0xc4, 0xe2, 0x73, 0xf7, 0xc3, // SHRX EAX, EBX, ECX
         0xf4,
     ];
@@ -656,7 +669,7 @@ fn test_consecutive_shifts_accumulate() {
     // Multiple shifts should accumulate
     let code = [
         0xc4, 0xe2, 0x71, 0xf7, 0xc3, // SHLX EAX, EBX, ECX
-        0x48, 0x89, 0xc3,             // MOV RBX, RAX
+        0x48, 0x89, 0xc3, // MOV RBX, RAX
         0xc4, 0xe2, 0x71, 0xf7, 0xc3, // SHLX EAX, EBX, ECX
         0xf4,
     ];
@@ -712,8 +725,7 @@ fn test_sarx_64bit_preserves_all_ones() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(
-            regs.rax,
-            0xFFFFFFFFFFFFFFFF,
+            regs.rax, 0xFFFFFFFFFFFFFFFF,
             "SARX 64-bit of all ones by {} should remain all ones",
             count
         );

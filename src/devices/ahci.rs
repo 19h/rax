@@ -377,18 +377,18 @@ impl Prd {
 
 /// Per-port register and DMA state. A single port is modelled with one disk.
 struct Port {
-    clb: u64, // command list base (PxCLB | PxCLBU << 32)
-    fb: u64,  // FIS base (PxFB | PxFBU << 32)
-    is: u32,  // interrupt status (RWC)
-    ie: u32,  // interrupt enable
-    cmd: u32, // command and status (ST/FRE etc.); CR/FR are derived
-    tfd: u32, // task file data (status in bits 7:0, error in bits 15:8)
-    sig: u32, // signature
+    clb: u64,  // command list base (PxCLB | PxCLBU << 32)
+    fb: u64,   // FIS base (PxFB | PxFBU << 32)
+    is: u32,   // interrupt status (RWC)
+    ie: u32,   // interrupt enable
+    cmd: u32,  // command and status (ST/FRE etc.); CR/FR are derived
+    tfd: u32,  // task file data (status in bits 7:0, error in bits 15:8)
+    sig: u32,  // signature
     ssts: u32, // SATA status
     sctl: u32, // SATA control
     serr: u32, // SATA error (RWC)
     sact: u32, // SATA active
-    ci: u32,  // command issue
+    ci: u32,   // command issue
     /// True if a SATA disk is attached to this port.
     present: bool,
 }
@@ -901,7 +901,10 @@ impl<M: Mem> AhciController<M> {
         words[6] = 63; // sectors per track
         put_ata_string(&mut words[10..20], "RAX-AHCI-0000000001 ");
         put_ata_string(&mut words[23..27], "1.0     ");
-        put_ata_string(&mut words[27..47], "RAX Virtual SATA Disk                   ");
+        put_ata_string(
+            &mut words[27..47],
+            "RAX Virtual SATA Disk                   ",
+        );
         // Word 47: max sectors per READ/WRITE MULTIPLE.
         words[47] = 0x8000 | 16;
         // Word 49: capabilities. Bit 9 = LBA, bit 8 = DMA.
@@ -1119,7 +1122,10 @@ mod tests {
     fn port_tfd_reports_ready() {
         let mut d = dev(64);
         // Device ready, not busy.
-        assert_eq!(read32(&mut d, px(PX_TFD)) & (ATA_DRDY as u32), ATA_DRDY as u32);
+        assert_eq!(
+            read32(&mut d, px(PX_TFD)) & (ATA_DRDY as u32),
+            ATA_DRDY as u32
+        );
         assert_eq!(read32(&mut d, px(PX_TFD)) & (ATA_BSY as u32), 0);
     }
 
@@ -1142,7 +1148,11 @@ mod tests {
         assert_ne!(v & PXCMD_FR, 0);
         // Clearing ST clears CR.
         write32(&mut d, px(PX_CMD), PXCMD_FRE);
-        assert_eq!(read32(&mut d, px(PX_CMD)) & PXCMD_CR, 0, "CR clears with ST");
+        assert_eq!(
+            read32(&mut d, px(PX_CMD)) & PXCMD_CR,
+            0,
+            "CR clears with ST"
+        );
     }
 
     // ---- PxCLB / PxFB programming (incl. 64-bit halves) ----
@@ -1180,7 +1190,13 @@ mod tests {
 
     /// Lay out a command header at `clb` slot 0 pointing at command table
     /// `ctba`, with `prdtl` PRD entries and the write flag.
-    fn write_cmd_header(d: &mut AhciController<VecMem>, clb: u64, ctba: u64, prdtl: u16, write: bool) {
+    fn write_cmd_header(
+        d: &mut AhciController<VecMem>,
+        clb: u64,
+        ctba: u64,
+        prdtl: u16,
+        write: bool,
+    ) {
         let mut hdr = [0u8; CMD_HEADER_SIZE as usize];
         // CFL = 5 DWORDs (a 20-byte H2D register FIS).
         let mut dw0 = 5u32;
@@ -1256,7 +1272,11 @@ mod tests {
         write32(&mut d, px(PX_CI), 1);
 
         // Command completed: PxCI cleared, PxIS DHRS set, HBA IS bit set.
-        assert_eq!(read32(&mut d, px(PX_CI)) & 1, 0, "PxCI cleared on completion");
+        assert_eq!(
+            read32(&mut d, px(PX_CI)) & 1,
+            0,
+            "PxCI cleared on completion"
+        );
         assert_ne!(read32(&mut d, px(PX_IS)) & PXIS_DHRS, 0, "DHRS raised");
         assert_ne!(read32(&mut d, REG_IS) & 1, 0, "HBA IS port0 bit set");
         assert!(d.interrupt_pending(), "interrupt pending");
@@ -1402,7 +1422,11 @@ mod tests {
         write32(&mut d, px(PX_CI), 1);
 
         // ST not set: the command stays pending (PxCI still 1, no interrupt).
-        assert_eq!(read32(&mut d, px(PX_CI)) & 1, 1, "PxCI remains pending without ST");
+        assert_eq!(
+            read32(&mut d, px(PX_CI)) & 1,
+            1,
+            "PxCI remains pending without ST"
+        );
         assert_eq!(read32(&mut d, px(PX_IS)), 0);
     }
 

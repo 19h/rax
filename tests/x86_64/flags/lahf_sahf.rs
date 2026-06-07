@@ -58,7 +58,7 @@ fn test_sahf_basic() {
     // SAHF - Store AH into flags
     let code = [
         0xb8, 0x00, 0x01, 0x00, 0x00, // MOV EAX, 0x0100 (AH=1, AL=0)
-        0x9e,                          // SAHF - store AH into flags
+        0x9e, // SAHF - store AH into flags
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -72,8 +72,8 @@ fn test_sahf_basic() {
 fn test_lahf_sahf_roundtrip() {
     // LAHF followed by SAHF should preserve flags
     let code = [
-        0x9f,           // LAHF - load flags into AH
-        0x9e,           // SAHF - store AH back to flags
+        0x9f, // LAHF - load flags into AH
+        0x9e, // SAHF - store AH back to flags
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -83,9 +83,21 @@ fn test_lahf_sahf_roundtrip() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Some flags may be masked in LAHF/SAHF, but CF, ZF, SF should roundtrip
-    assert_eq!(cf_set(regs.rflags), cf_set(initial_flags), "CF should roundtrip");
-    assert_eq!(zf_set(regs.rflags), zf_set(initial_flags), "ZF should roundtrip");
-    assert_eq!(sf_set(regs.rflags), sf_set(initial_flags), "SF should roundtrip");
+    assert_eq!(
+        cf_set(regs.rflags),
+        cf_set(initial_flags),
+        "CF should roundtrip"
+    );
+    assert_eq!(
+        zf_set(regs.rflags),
+        zf_set(initial_flags),
+        "ZF should roundtrip"
+    );
+    assert_eq!(
+        sf_set(regs.rflags),
+        sf_set(initial_flags),
+        "SF should roundtrip"
+    );
 }
 
 #[test]
@@ -195,7 +207,7 @@ fn test_sahf_with_zero_ah() {
     regs.rflags = 0x2 | 0xFFF; // Set various flags initially
     let code = [
         0xb8, 0x00, 0x00, 0x00, 0x00, // MOV EAX, 0 (AH will be 0)
-        0x9e,                          // SAHF
+        0x9e, // SAHF
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -211,7 +223,7 @@ fn test_sahf_with_all_bits_set() {
     // SAHF with AH = 0xFF (all bits set)
     let code = [
         0xb8, 0x00, 0xff, 0x00, 0x00, // MOV EAX, 0xFF00 (AH=0xFF, AL=0)
-        0x9e,                          // SAHF
+        0x9e, // SAHF
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -249,7 +261,7 @@ fn test_lahf_preserves_lower_rax() {
     // LAHF only modifies AH
     let code = [
         0xb8, 0x42, 0x00, 0x00, 0x00, // MOV EAX, 0x42 (AL=0x42)
-        0x9f,                          // LAHF
+        0x9f, // LAHF
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -263,7 +275,7 @@ fn test_sahf_from_ah_cf_only() {
     // SAHF with only CF set in AH
     let code = [
         0xb8, 0x00, 0x01, 0x00, 0x00, // MOV EAX, 0x0100 (AH=0x01, AL=0x00)
-        0x9e,                          // SAHF
+        0x9e, // SAHF
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -299,8 +311,8 @@ fn test_sahf_clears_unwanted_flags() {
     // SAHF only modifies SF, ZF, AF, PF, CF
     let code = [
         0xb8, 0x00, 0x00, 0x00, 0x00, // MOV EAX, 0
-        0xb4, 0x00,                    // MOV AH, 0
-        0x9e,                          // SAHF
+        0xb4, 0x00, // MOV AH, 0
+        0x9e, // SAHF
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -309,7 +321,11 @@ fn test_sahf_clears_unwanted_flags() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // SAHF shouldn't clear OF
-    assert_eq!(of_set(regs.rflags), true, "OF should not be affected by SAHF");
+    assert_eq!(
+        of_set(regs.rflags),
+        true,
+        "OF should not be affected by SAHF"
+    );
 }
 
 #[test]
@@ -317,8 +333,8 @@ fn test_lahf_after_sub() {
     // LAHF after SUB instruction
     let code = [
         0xb8, 0x05, 0x00, 0x00, 0x00, // MOV EAX, 5
-        0x83, 0xe8, 0x03,              // SUB EAX, 3 (sets flags)
-        0x9f,                          // LAHF
+        0x83, 0xe8, 0x03, // SUB EAX, 3 (sets flags)
+        0x9f, // LAHF
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -405,9 +421,9 @@ fn test_lahf_with_specific_flags() {
 fn test_lahf_sahf_memory_pattern() {
     // LAHF/SAHF can be used to save flags to memory through AH
     let code = [
-        0x9f,                          // LAHF - load flags to AH
+        0x9f, // LAHF - load flags to AH
         0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
-        0x88, 0x23,                    // MOV [RBX], AH - save flags to memory
+        0x88, 0x23, // MOV [RBX], AH - save flags to memory
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -420,7 +436,7 @@ fn test_sahf_preserves_rax_except_ah() {
     // SAHF only modifies flags, not RAX
     let code = [
         0x48, 0xc7, 0xc0, 0xef, 0xbe, 0xad, 0xde, // MOV RAX, 0xdeadbeef (EF in AL)
-        0x9e,                                       // SAHF - AH should modify flags only
+        0x9e, // SAHF - AH should modify flags only
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -453,9 +469,9 @@ fn test_lahf_before_and_after_cmp() {
     // LAHF before and after comparison
     let code = [
         0xb8, 0x05, 0x00, 0x00, 0x00, // MOV EAX, 5
-        0x9f,                          // LAHF - save initial
-        0x39, 0xc0,                    // CMP EAX, EAX (equal, sets ZF)
-        0x9f,                          // LAHF - save CMP flags
+        0x9f, // LAHF - save initial
+        0x39, 0xc0, // CMP EAX, EAX (equal, sets ZF)
+        0x9f, // LAHF - save CMP flags
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -470,8 +486,8 @@ fn test_lahf_before_and_after_cmp() {
 fn test_lahf_with_xor_zero() {
     // LAHF after XOR EAX,EAX (sets ZF)
     let code = [
-        0x31, 0xc0,     // XOR EAX, EAX (sets ZF, clears CF, OF)
-        0x9f,           // LAHF
+        0x31, 0xc0, // XOR EAX, EAX (sets ZF, clears CF, OF)
+        0x9f, // LAHF
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -489,7 +505,7 @@ fn test_sahf_ef_pattern() {
     // This sets: CF(0), PF(2), ZF(6), SF(7) in addition to reserved bit 1
     let code = [
         0xb8, 0x00, 0xef, 0x00, 0x00, // MOV EAX, 0xEF00 (AH=0xEF, AL=0x00)
-        0x9e,                          // SAHF
+        0x9e, // SAHF
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

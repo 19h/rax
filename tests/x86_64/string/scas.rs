@@ -1,4 +1,6 @@
-use crate::common::{setup_vm_legacy as setup_vm, run_until_hlt_legacy as run_until_hlt, VM, Bytes};
+use crate::common::{
+    Bytes, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+};
 
 // SCAS/SCASB/SCASW/SCASD/SCASQ - Scan String
 // Compares AL/AX/EAX/RAX with [RDI], sets flags, increments/decrements RDI based on DF
@@ -134,7 +136,8 @@ fn test_scasd_basic() {
 fn test_scasq_basic() {
     let code = [
         0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
-        0x48, 0xb8, 0xef, 0xcd, 0xab, 0x90, 0x78, 0x56, 0x34, 0x12, // MOV RAX, 0x1234567890ABCDEF
+        0x48, 0xb8, 0xef, 0xcd, 0xab, 0x90, 0x78, 0x56, 0x34,
+        0x12, // MOV RAX, 0x1234567890ABCDEF
         0x48, 0x89, 0x07, // MOV [RDI], RAX
         0xfc, // CLD
         0x48, 0xaf, // SCASQ

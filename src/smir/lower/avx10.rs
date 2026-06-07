@@ -320,7 +320,7 @@ impl Avx10Lowerer {
             _ => {
                 return Err(LowerError::UnsupportedOperation(
                     "VNNI: invalid element type".to_string(),
-                ))
+                ));
             }
         };
 
@@ -393,7 +393,7 @@ impl Avx10Lowerer {
             _ => {
                 return Err(LowerError::UnsupportedOperation(
                     "VPOPCNT: invalid element type".to_string(),
-                ))
+                ));
             }
         };
 
@@ -573,7 +573,7 @@ impl Avx10Lowerer {
             _ => {
                 return Err(LowerError::UnsupportedOperation(
                     "FP16: unsupported op".to_string(),
-                ))
+                ));
             }
         };
 
@@ -615,7 +615,7 @@ impl Avx10Lowerer {
             _ => {
                 return Err(LowerError::UnsupportedOperation(
                     "Saturation conversion: invalid types".to_string(),
-                ))
+                ));
             }
         };
 
@@ -654,7 +654,7 @@ impl Avx10Lowerer {
             _ => {
                 return Err(LowerError::UnsupportedOperation(
                     "VMINMAX: invalid element type".to_string(),
-                ))
+                ));
             }
         };
 
@@ -734,7 +734,7 @@ impl Avx10Lowerer {
             _ => {
                 return Err(LowerError::UnsupportedOperation(
                     "Media accel: invalid types".to_string(),
-                ))
+                ));
             }
         };
 
@@ -756,7 +756,7 @@ impl Avx10Lowerer {
             _ => {
                 return Err(LowerError::UnsupportedOperation(
                     "Media accel: invalid element".to_string(),
-                ))
+                ));
             }
         };
 

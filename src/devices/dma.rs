@@ -351,13 +351,13 @@ impl IoDevice for Dma {
             0x00..=0x07 => Self::read_channel_reg(&mut self.c1, port as usize),
             // Controller 1 command/status block.
             0x08 => Self::read_status(&mut self.c1),
-            0x09 => 0xFF, // request register: write-only
-            0x0A => 0xFF, // single mask: write-only
-            0x0B => 0xFF, // mode: write-only
-            0x0C => 0xFF, // clear flip-flop: write-only
+            0x09 => 0xFF,              // request register: write-only
+            0x0A => 0xFF,              // single mask: write-only
+            0x0B => 0xFF,              // mode: write-only
+            0x0C => 0xFF,              // clear flip-flop: write-only
             0x0D => self.c1.temporary, // master clear port reads temp register
-            0x0E => 0xFF, // clear mask: write-only
-            0x0F => 0xFF, // write-all-mask: write-only
+            0x0E => 0xFF,              // clear mask: write-only
+            0x0F => 0xFF,              // write-all-mask: write-only
 
             // Page registers.
             0x80..=0x8F => self.read_page(port),

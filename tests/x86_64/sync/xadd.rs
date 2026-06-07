@@ -162,8 +162,16 @@ fn test_xadd_32bit_reg_reg_basic() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x30000000, "EBX should be 0x30000000");
-    assert_eq!(regs.rcx & 0xFFFFFFFF, 0x10000000, "ECX should be 0x10000000");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0x30000000,
+        "EBX should be 0x30000000"
+    );
+    assert_eq!(
+        regs.rcx & 0xFFFFFFFF,
+        0x10000000,
+        "ECX should be 0x10000000"
+    );
 }
 
 #[test]
@@ -177,7 +185,11 @@ fn test_xadd_32bit_overflow() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rbx & 0xFFFFFFFF, 0, "EBX should be 0");
-    assert_eq!(regs.rcx & 0xFFFFFFFF, 0xFFFFFFFF, "ECX should be 0xFFFFFFFF");
+    assert_eq!(
+        regs.rcx & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "ECX should be 0xFFFFFFFF"
+    );
     assert_ne!(regs.rflags & 0x01, 0, "CF should be set");
     assert_ne!(regs.rflags & 0x40, 0, "ZF should be set");
 }
@@ -185,7 +197,8 @@ fn test_xadd_32bit_overflow() {
 #[test]
 fn test_xadd_32bit_zeros_upper() {
     let code = [
-        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // MOV RAX, 0xFFFFFFFFFFFFFFFF
+        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, // MOV RAX, 0xFFFFFFFFFFFFFFFF
         0x48, 0x89, 0xc3, // MOV RBX, RAX (RBX = 0xFFFFFFFFFFFFFFFF)
         0x48, 0xc7, 0xc1, 0x01, 0x00, 0x00, 0x00, // MOV RCX, 1
         0x0f, 0xc1, 0xcb, // XADD EBX, ECX (32-bit operation)
@@ -194,7 +207,11 @@ fn test_xadd_32bit_zeros_upper() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rbx, 0, "RBX upper 32 bits should be zeroed");
-    assert_eq!(regs.rcx & 0xFFFFFFFF, 0xFFFFFFFF, "ECX should be 0xFFFFFFFF");
+    assert_eq!(
+        regs.rcx & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "ECX should be 0xFFFFFFFF"
+    );
 }
 
 #[test]
@@ -207,7 +224,11 @@ fn test_xadd_32bit_max_values() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0xFFFFFFFE, "EBX should be 0xFFFFFFFE");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0xFFFFFFFE,
+        "EBX should be 0xFFFFFFFE"
+    );
     assert_ne!(regs.rflags & 0x01, 0, "CF should be set");
 }
 
@@ -221,7 +242,11 @@ fn test_xadd_32bit_signed_overflow() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x80000000, "EBX should be 0x80000000");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0x80000000,
+        "EBX should be 0x80000000"
+    );
     assert_ne!(regs.rflags & 0x800, 0, "OF should be set");
     assert_ne!(regs.rflags & 0x80, 0, "SF should be set");
 }
@@ -247,7 +272,8 @@ fn test_xadd_64bit_reg_reg_basic() {
 #[test]
 fn test_xadd_64bit_overflow() {
     let code = [
-        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // MOV RAX, 0xFFFFFFFFFFFFFFFF
+        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, // MOV RAX, 0xFFFFFFFFFFFFFFFF
         0x48, 0x89, 0xc3, // MOV RBX, RAX
         0x48, 0xc7, 0xc1, 0x01, 0x00, 0x00, 0x00, // MOV RCX, 1
         0x48, 0x0f, 0xc1, 0xcb, // XADD RBX, RCX
@@ -256,7 +282,10 @@ fn test_xadd_64bit_overflow() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rbx, 0, "RBX should be 0");
-    assert_eq!(regs.rcx, 0xFFFFFFFFFFFFFFFF, "RCX should be 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(
+        regs.rcx, 0xFFFFFFFFFFFFFFFF,
+        "RCX should be 0xFFFFFFFFFFFFFFFF"
+    );
     assert_ne!(regs.rflags & 0x01, 0, "CF should be set");
     assert_ne!(regs.rflags & 0x40, 0, "ZF should be set");
 }
@@ -264,7 +293,8 @@ fn test_xadd_64bit_overflow() {
 #[test]
 fn test_xadd_64bit_max_values() {
     let code = [
-        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // MOV RAX, 0xFFFFFFFFFFFFFFFF
+        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, // MOV RAX, 0xFFFFFFFFFFFFFFFF
         0x48, 0x89, 0xc3, // MOV RBX, RAX
         0x48, 0x89, 0xc1, // MOV RCX, RAX
         0x48, 0x0f, 0xc1, 0xcb, // XADD RBX, RCX
@@ -272,14 +302,18 @@ fn test_xadd_64bit_max_values() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbx, 0xFFFFFFFFFFFFFFFE, "RBX should be 0xFFFFFFFFFFFFFFFE");
+    assert_eq!(
+        regs.rbx, 0xFFFFFFFFFFFFFFFE,
+        "RBX should be 0xFFFFFFFFFFFFFFFE"
+    );
     assert_ne!(regs.rflags & 0x01, 0, "CF should be set");
 }
 
 #[test]
 fn test_xadd_64bit_signed_overflow() {
     let code = [
-        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, // MOV RAX, 0x7FFFFFFFFFFFFFFF
+        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0x7f, // MOV RAX, 0x7FFFFFFFFFFFFFFF
         0x48, 0x89, 0xc3, // MOV RBX, RAX
         0x48, 0xc7, 0xc1, 0x01, 0x00, 0x00, 0x00, // MOV RCX, 1
         0x48, 0x0f, 0xc1, 0xcb, // XADD RBX, RCX
@@ -287,7 +321,10 @@ fn test_xadd_64bit_signed_overflow() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbx, 0x8000000000000000, "RBX should be 0x8000000000000000");
+    assert_eq!(
+        regs.rbx, 0x8000000000000000,
+        "RBX should be 0x8000000000000000"
+    );
     assert_ne!(regs.rflags & 0x800, 0, "OF should be set");
     assert_ne!(regs.rflags & 0x80, 0, "SF should be set");
 }
@@ -332,7 +369,11 @@ fn test_xadd_sign_flag() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x80000001, "EBX should be 0x80000001");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0x80000001,
+        "EBX should be 0x80000001"
+    );
     assert_ne!(regs.rflags & 0x80, 0, "SF should be set (negative)");
 }
 
@@ -436,8 +477,14 @@ fn test_xadd_rsi_rdi() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // MOV r64, imm32 sign-extends: 0xAAAAAAAA -> 0xFFFFFFFFAAAAAAAA
     // Sum = 0xFFFFFFFFAAAAAAAA + 0x55555555 = 0xFFFFFFFFFFFFFFFF
-    assert_eq!(regs.rsi, 0xFFFFFFFFFFFFFFFFu64, "RSI should be 0xFFFFFFFFFFFFFFFF");
-    assert_eq!(regs.rdi, 0xFFFFFFFFAAAAAAAAu64, "RDI should be old RSI value");
+    assert_eq!(
+        regs.rsi, 0xFFFFFFFFFFFFFFFFu64,
+        "RSI should be 0xFFFFFFFFFFFFFFFF"
+    );
+    assert_eq!(
+        regs.rdi, 0xFFFFFFFFAAAAAAAAu64,
+        "RDI should be old RSI value"
+    );
 }
 
 #[test]
@@ -488,17 +535,25 @@ fn test_xadd_with_negative_values() {
 #[test]
 fn test_xadd_large_values_64bit() {
     let code = [
-        0x48, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, // MOV RAX, 0x8000000000000000
+        0x48, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x80, // MOV RAX, 0x8000000000000000
         0x48, 0x89, 0xc3, // MOV RBX, RAX
-        0x48, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, // MOV RAX, 0x4000000000000000
+        0x48, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x40, // MOV RAX, 0x4000000000000000
         0x48, 0x89, 0xc1, // MOV RCX, RAX
         0x48, 0x0f, 0xc1, 0xcb, // XADD RBX, RCX
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbx, 0xC000000000000000, "RBX should be 0xC000000000000000");
-    assert_eq!(regs.rcx, 0x8000000000000000, "RCX should be 0x8000000000000000");
+    assert_eq!(
+        regs.rbx, 0xC000000000000000,
+        "RBX should be 0xC000000000000000"
+    );
+    assert_eq!(
+        regs.rcx, 0x8000000000000000,
+        "RCX should be 0x8000000000000000"
+    );
 }
 
 // ===== MEMORY OPERAND TESTS =====
@@ -516,7 +571,8 @@ fn test_xadd_8bit_reg_mem() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut buf = [0u8; 1];
-    mem.read_slice(&mut buf, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.read_slice(&mut buf, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     assert_eq!(buf[0], 15, "Memory should contain 15 (sum)");
     assert_eq!(regs.rcx & 0xFF, 10, "CL should be 10 (old memory value)");
@@ -535,7 +591,8 @@ fn test_xadd_16bit_reg_mem() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut buf = [0u8; 2];
-    mem.read_slice(&mut buf, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.read_slice(&mut buf, vm_memory::GuestAddress(0x2000))
+        .unwrap();
     let mem_val = u16::from_le_bytes(buf);
 
     assert_eq!(mem_val, 0x3000, "Memory should contain 0x3000");
@@ -555,11 +612,16 @@ fn test_xadd_32bit_reg_mem() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut buf = [0u8; 4];
-    mem.read_slice(&mut buf, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.read_slice(&mut buf, vm_memory::GuestAddress(0x2000))
+        .unwrap();
     let mem_val = u32::from_le_bytes(buf);
 
     assert_eq!(mem_val, 0x30000000, "Memory should contain 0x30000000");
-    assert_eq!(regs.rcx & 0xFFFFFFFF, 0x10000000, "ECX should be 0x10000000");
+    assert_eq!(
+        regs.rcx & 0xFFFFFFFF,
+        0x10000000,
+        "ECX should be 0x10000000"
+    );
 }
 
 #[test]
@@ -575,7 +637,8 @@ fn test_xadd_64bit_reg_mem() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut buf = [0u8; 8];
-    mem.read_slice(&mut buf, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.read_slice(&mut buf, vm_memory::GuestAddress(0x2000))
+        .unwrap();
     let mem_val = u64::from_le_bytes(buf);
 
     assert_eq!(mem_val, 0x33333333, "Memory should contain 0x33333333");
@@ -595,11 +658,16 @@ fn test_xadd_mem_overflow() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut buf = [0u8; 4];
-    mem.read_slice(&mut buf, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.read_slice(&mut buf, vm_memory::GuestAddress(0x2000))
+        .unwrap();
     let mem_val = u32::from_le_bytes(buf);
 
     assert_eq!(mem_val, 0, "Memory should wrap to 0");
-    assert_eq!(regs.rcx & 0xFFFFFFFF, 0xFFFFFFFF, "ECX should be 0xFFFFFFFF");
+    assert_eq!(
+        regs.rcx & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "ECX should be 0xFFFFFFFF"
+    );
     assert_ne!(regs.rflags & 0x01, 0, "CF should be set");
     assert_ne!(regs.rflags & 0x40, 0, "ZF should be set");
 }
@@ -620,7 +688,8 @@ fn test_xadd_atomic_increment_pattern() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut buf = [0u8; 4];
-    mem.read_slice(&mut buf, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.read_slice(&mut buf, vm_memory::GuestAddress(0x2000))
+        .unwrap();
     let mem_val = u32::from_le_bytes(buf);
 
     assert_eq!(mem_val, 101, "Memory should be incremented to 101");
@@ -641,11 +710,16 @@ fn test_xadd_fetch_and_add_pattern() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut buf = [0u8; 4];
-    mem.read_slice(&mut buf, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.read_slice(&mut buf, vm_memory::GuestAddress(0x2000))
+        .unwrap();
     let mem_val = u32::from_le_bytes(buf);
 
     assert_eq!(mem_val, 55, "Memory should be 55 (42 + 13)");
-    assert_eq!(regs.rcx & 0xFFFFFFFF, 42, "ECX contains old value (fetched)");
+    assert_eq!(
+        regs.rcx & 0xFFFFFFFF,
+        42,
+        "ECX contains old value (fetched)"
+    );
 }
 
 #[test]

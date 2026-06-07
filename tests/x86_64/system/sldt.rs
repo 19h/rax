@@ -1,6 +1,6 @@
 use rax::cpu::Registers;
 
-use crate::common::{run_until_hlt, setup_vm, write_mem_at_u16, read_mem_at_u16, DATA_ADDR};
+use crate::common::{DATA_ADDR, read_mem_at_u16, run_until_hlt, setup_vm, write_mem_at_u16};
 
 // SLDT - Store Local Descriptor Table Register
 // Opcode: 0F 00 /0
@@ -244,7 +244,11 @@ fn test_sldt_rax() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Upper 48 bits of RAX should be zero
-    assert_eq!(regs.rax & 0xFFFFFFFFFFFF0000, 0, "Upper 48 bits should be zero");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFFFFFF0000,
+        0,
+        "Upper 48 bits should be zero"
+    );
 }
 
 // SLDT r64 - Store LDTR to RBX
@@ -470,8 +474,10 @@ fn test_sldt_negative_displacement() {
 #[test]
 fn test_sldt_preserves_registers() {
     let code = [
-        0x48, 0xbb, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, // MOV RBX, 0x1111111111111111
-        0x48, 0xb9, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, // MOV RCX, 0x2222222222222222
+        0x48, 0xbb, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+        0x11, // MOV RBX, 0x1111111111111111
+        0x48, 0xb9, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
+        0x22, // MOV RCX, 0x2222222222222222
         0x0f, 0x00, 0xc0, // SLDT AX
         0xf4, // HLT
     ];
@@ -496,7 +502,11 @@ fn test_lldt_sldt_roundtrip() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // BX should contain the LDTR value we loaded (0x0008)
-    assert_eq!(regs.rbx & 0xFFFF, 0x0008, "SLDT should return value loaded by LLDT");
+    assert_eq!(
+        regs.rbx & 0xFFFF,
+        0x0008,
+        "SLDT should return value loaded by LLDT"
+    );
 }
 
 // SLDT m16 via RBP with displacement
@@ -622,5 +632,9 @@ fn test_sldt_r64_upper_bits_zero() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Only lower 16 bits should be set, upper 48 bits zero
-    assert_eq!(regs.rax & 0xFFFFFFFFFFFF0000, 0, "Upper 48 bits should be zero");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFFFFFF0000,
+        0,
+        "Upper 48 bits should be zero"
+    );
 }

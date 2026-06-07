@@ -119,7 +119,8 @@ fn test_vpabsb_ymm0_mem_all_negative() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let neg_data: Vec<u8> = (0..32).map(|i| (-(i as i8)) as u8).collect();
-    mem.write_slice(&neg_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&neg_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -134,7 +135,15 @@ fn test_vpabsb_ymm1_mem_mixed() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let mixed: Vec<u8> = (0..32).map(|i| if i % 2 == 0 { i as u8 } else { (-(i as i8)) as u8 }).collect();
+    let mixed: Vec<u8> = (0..32)
+        .map(|i| {
+            if i % 2 == 0 {
+                i as u8
+            } else {
+                (-(i as i8)) as u8
+            }
+        })
+        .collect();
     mem.write_slice(&mixed, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -151,7 +160,10 @@ fn test_vpabsb_ymm2_mem_min_max() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let mut data = vec![0x80u8; 16]; // -128
-    data.extend(vec![0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F]); // +127
+    data.extend(vec![
+        0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F,
+        0x7F,
+    ]); // +127
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -259,7 +271,8 @@ fn test_vpabsw_ymm0_mem_all_negative() {
     let neg_data: Vec<u8> = (0..16)
         .flat_map(|i| ((-(i as i16 * 100)) as u16).to_le_bytes())
         .collect();
-    mem.write_slice(&neg_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&neg_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -409,7 +422,8 @@ fn test_vpabsd_ymm0_mem_all_negative() {
     let neg_data: Vec<u8> = (0..8)
         .flat_map(|i| ((-(i as i32 * 10000)) as u32).to_le_bytes())
         .collect();
-    mem.write_slice(&neg_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&neg_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -425,8 +439,7 @@ fn test_vpabsd_ymm1_mem_mixed() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let mixed: Vec<u8> = vec![
-        100000i32, -200000i32, 300000i32, -400000i32,
-        500000i32, -600000i32, 700000i32, -800000i32,
+        100000i32, -200000i32, 300000i32, -400000i32, 500000i32, -600000i32, 700000i32, -800000i32,
     ]
     .into_iter()
     .flat_map(|v| (v as u32).to_le_bytes())
@@ -540,7 +553,8 @@ fn test_vpabsb_mem_pattern() {
         .cycle()
         .take(32)
         .collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -561,7 +575,8 @@ fn test_vpabsw_mem_pattern() {
         .take(16)
         .flat_map(|v| v.to_le_bytes())
         .collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -582,6 +597,7 @@ fn test_vpabsd_mem_pattern() {
         .take(8)
         .flat_map(|v| v.to_le_bytes())
         .collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

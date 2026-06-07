@@ -1381,7 +1381,11 @@ impl X86_64Vcpu {
         // Get opcode. REX2.M selects the 0F opcode map without encoding an
         // actual 0x0F byte, so leave the cursor on the map opcode and dispatch
         // through the normal two-byte handler.
-        let opcode = if ctx.rex2_m() { 0x0F } else { ctx.consume_u8()? };
+        let opcode = if ctx.rex2_m() {
+            0x0F
+        } else {
+            ctx.consume_u8()?
+        };
         ctx.opcode = opcode;
 
         // Resolve the handler once, here on the (cold) miss path, so subsequent
@@ -1857,7 +1861,8 @@ impl X86_64Vcpu {
     // handling will corrupt the stack (RSP gets decremented twice on retry).
     pub(super) fn push64(&mut self, value: u64) -> Result<()> {
         let new_rsp = self.regs.rsp.wrapping_sub(8);
-        self.mmu.write_u64(self.sregs.ss.base.wrapping_add(new_rsp), value, &self.sregs)?;
+        self.mmu
+            .write_u64(self.sregs.ss.base.wrapping_add(new_rsp), value, &self.sregs)?;
         self.regs.rsp = new_rsp;
         Ok(())
     }
@@ -1873,33 +1878,41 @@ impl X86_64Vcpu {
     }
 
     pub(super) fn pop64(&mut self) -> Result<u64> {
-        let value = self.mmu.read_u64(self.sregs.ss.base.wrapping_add(self.regs.rsp), &self.sregs)?;
+        let value = self
+            .mmu
+            .read_u64(self.sregs.ss.base.wrapping_add(self.regs.rsp), &self.sregs)?;
         self.regs.rsp = self.regs.rsp.wrapping_add(8);
         Ok(value)
     }
 
     pub(super) fn push32(&mut self, value: u32) -> Result<()> {
         let new_rsp = self.regs.rsp.wrapping_sub(4);
-        self.mmu.write_u32(self.sregs.ss.base.wrapping_add(new_rsp), value, &self.sregs)?;
+        self.mmu
+            .write_u32(self.sregs.ss.base.wrapping_add(new_rsp), value, &self.sregs)?;
         self.regs.rsp = new_rsp;
         Ok(())
     }
 
     pub(super) fn pop32(&mut self) -> Result<u32> {
-        let value = self.mmu.read_u32(self.sregs.ss.base.wrapping_add(self.regs.rsp), &self.sregs)?;
+        let value = self
+            .mmu
+            .read_u32(self.sregs.ss.base.wrapping_add(self.regs.rsp), &self.sregs)?;
         self.regs.rsp = self.regs.rsp.wrapping_add(4);
         Ok(value)
     }
 
     pub(super) fn push16(&mut self, value: u16) -> Result<()> {
         let new_rsp = self.regs.rsp.wrapping_sub(2);
-        self.mmu.write_u16(self.sregs.ss.base.wrapping_add(new_rsp), value, &self.sregs)?;
+        self.mmu
+            .write_u16(self.sregs.ss.base.wrapping_add(new_rsp), value, &self.sregs)?;
         self.regs.rsp = new_rsp;
         Ok(())
     }
 
     pub(super) fn pop16(&mut self) -> Result<u16> {
-        let value = self.mmu.read_u16(self.sregs.ss.base.wrapping_add(self.regs.rsp), &self.sregs)?;
+        let value = self
+            .mmu
+            .read_u16(self.sregs.ss.base.wrapping_add(self.regs.rsp), &self.sregs)?;
         self.regs.rsp = self.regs.rsp.wrapping_add(2);
         Ok(value)
     }
@@ -2000,8 +2013,16 @@ impl X86_64Vcpu {
             seg.s = true;
             seg.dpl = ((d >> 45) & 3) as u8;
             seg.present = true;
-            seg.db = if preserve_mode { prev_db } else { (d >> 54) & 1 != 0 };
-            seg.l = if preserve_mode { prev_l } else { (d >> 53) & 1 != 0 };
+            seg.db = if preserve_mode {
+                prev_db
+            } else {
+                (d >> 54) & 1 != 0
+            };
+            seg.l = if preserve_mode {
+                prev_l
+            } else {
+                (d >> 53) & 1 != 0
+            };
             seg.g = g;
         } else {
             // Flat fallback: long mode, a null selector, or a non-usable
@@ -2948,7 +2969,11 @@ extern "C" fn jit_crash_handler(
             let nib = ((v >> (shift * 4)) & 0xf) as u8;
             if nib != 0 || started || shift == 0 {
                 started = true;
-                let c = if nib < 10 { b'0' + nib } else { b'a' + nib - 10 };
+                let c = if nib < 10 {
+                    b'0' + nib
+                } else {
+                    b'a' + nib - 10
+                };
                 if *n < buf.len() {
                     buf[*n] = c;
                     *n += 1;
@@ -3042,7 +3067,11 @@ unsafe extern "C" fn rax_jit_mem_store(
         let old = vcpu.read_mem(addr, size as u8);
         vcpu.jit_mem_trace = saved_trace;
         match old {
-            Ok(old) => vcpu.jit_mem_log.as_mut().unwrap().push((addr, size as u8, old)),
+            Ok(old) => vcpu
+                .jit_mem_log
+                .as_mut()
+                .unwrap()
+                .push((addr, size as u8, old)),
             // Can't snapshot this store → can't soundly verify; abort logging.
             Err(_) => vcpu.jit_mem_log = None,
         }
@@ -3247,7 +3276,12 @@ fn jit_classify_bail(
             if !op.kind.is_jit_safe() {
                 return variant(&op.kind);
             }
-            if op.kind.dests().iter().any(|d| matches!(d, VReg::Virtual(_))) {
+            if op
+                .kind
+                .dests()
+                .iter()
+                .any(|d| matches!(d, VReg::Virtual(_)))
+            {
                 return format!("virtual-dst:{}", variant(&op.kind));
             }
             if op.kind.dests().iter().any(is_sp_bp)
@@ -3377,8 +3411,7 @@ impl X86_64Vcpu {
             let mut exits: HashMap<_, u64> = HashMap::new();
             // Block ids present in the lifted function — to validate a CALL's
             // continuation was lifted before lowering it as a call-out.
-            let lifted: std::collections::HashSet<_> =
-                func.blocks.iter().map(|b| b.id).collect();
+            let lifted: std::collections::HashSet<_> = func.blocks.iter().map(|b| b.id).collect();
             for b in &func.blocks {
                 let frontier = match &b.terminator {
                     Terminator::Trap { .. }
@@ -3433,7 +3466,11 @@ impl X86_64Vcpu {
                             Terminator::IndirectBranch { .. } => "IndirectBranch".to_string(),
                             Terminator::IndirectBranchMem { .. } => "IndirectBranchMem".to_string(),
                             Terminator::Switch { .. } => "Switch".to_string(),
-                            Terminator::Call { target, continuation, .. } => {
+                            Terminator::Call {
+                                target,
+                                continuation,
+                                ..
+                            } => {
                                 let tk = match target {
                                     crate::smir::ir::CallTarget::Direct(_) => "DirectFn",
                                     crate::smir::ir::CallTarget::GuestAddr(_) => "GuestAddr",
@@ -3441,10 +3478,7 @@ impl X86_64Vcpu {
                                     crate::smir::ir::CallTarget::IndirectMem(_) => "IndirectMem",
                                     crate::smir::ir::CallTarget::Runtime(_) => "Runtime",
                                 };
-                                format!(
-                                    "Call/{tk}(lifted-cont={})",
-                                    lifted.contains(continuation)
-                                )
+                                format!("Call/{tk}(lifted-cont={})", lifted.contains(continuation))
                             }
                             _ => "other".to_string(),
                         })
@@ -3479,7 +3513,11 @@ impl X86_64Vcpu {
                 Ok(r) if r.relocations.is_empty() => r,
                 Ok(r) => {
                     if jit_bail_log() {
-                        eprintln!("[JIT-BAIL] relocs:{} @ {:#x} (call={cm})", r.relocations.len(), entry);
+                        eprintln!(
+                            "[JIT-BAIL] relocs:{} @ {:#x} (call={cm})",
+                            r.relocations.len(),
+                            entry
+                        );
                     }
                     continue 'modes;
                 }
@@ -3787,13 +3825,17 @@ impl X86_64Vcpu {
                     let lo = center.saturating_sub(4);
                     let hi = (center + 4).min(jit_trace.len().max(interp_trace.len()));
                     for i in lo..hi {
-                        let j = jit_trace.get(i).map(|&(k, a, s, v)| {
-                            format!("{} [{a:#x}/{s}B]={v:#x}", kindname(k))
-                        });
-                        let ip = interp_trace.get(i).map(|&(k, a, s, v)| {
-                            format!("{} [{a:#x}/{s}B]={v:#x}", kindname(k))
-                        });
-                        let mark = if jit_trace.get(i) != interp_trace.get(i) { "<<<" } else { "" };
+                        let j = jit_trace
+                            .get(i)
+                            .map(|&(k, a, s, v)| format!("{} [{a:#x}/{s}B]={v:#x}", kindname(k)));
+                        let ip = interp_trace
+                            .get(i)
+                            .map(|&(k, a, s, v)| format!("{} [{a:#x}/{s}B]={v:#x}", kindname(k)));
+                        let mark = if jit_trace.get(i) != interp_trace.get(i) {
+                            "<<<"
+                        } else {
+                            ""
+                        };
                         eprintln!(
                             "[JIT-VERIFY]   #{i:<3} jit={:<34} interp={:<34} {mark}",
                             j.unwrap_or_else(|| "-".into()),
@@ -3865,7 +3907,16 @@ impl X86_64Vcpu {
                 );
                 eprintln!(
                     "[JIT-VERIFY] entry regs: rax={:#x} rcx={:#x} rdx={:#x} rbx={:#x} rsi={:#x} rdi={:#x} r8={:#x} r9={:#x} r10={:#x} r11={:#x}",
-                    snap.rax, snap.rcx, snap.rdx, snap.rbx, snap.rsi, snap.rdi, snap.r8, snap.r9, snap.r10, snap.r11
+                    snap.rax,
+                    snap.rcx,
+                    snap.rdx,
+                    snap.rbx,
+                    snap.rsi,
+                    snap.rdi,
+                    snap.r8,
+                    snap.r9,
+                    snap.r10,
+                    snap.r11
                 );
                 eprintln!("[JIT-VERIFY] code@entry[256] = {code:02x?}");
                 // The JIT's load trace reconstructs the memory the region reads
@@ -3876,7 +3927,10 @@ impl X86_64Vcpu {
                     .map(|&(_, a, s, v)| format!("[{a:#x}/{s}B]={v:#x}"))
                     .collect();
                 eprintln!("[JIT-VERIFY] jit loads ({}): {:?}", loads.len(), loads);
-                eprintln!("[JIT-VERIFY] lifted+optimized region:\n{}", self.jit_dump_region(entry_pc));
+                eprintln!(
+                    "[JIT-VERIFY] lifted+optimized region:\n{}",
+                    self.jit_dump_region(entry_pc)
+                );
                 for d in &diffs {
                     eprintln!("[JIT-VERIFY]   {d}");
                 }
@@ -4015,7 +4069,11 @@ impl X86_64Vcpu {
         if std::env::var_os("RAX_JIT_LOG").is_some() {
             eprintln!(
                 "[JIT] promote @ {head:#x} -> {}",
-                if region.is_some() { "compiled" } else { "ineligible" }
+                if region.is_some() {
+                    "compiled"
+                } else {
+                    "ineligible"
+                }
             );
         }
         match &region {

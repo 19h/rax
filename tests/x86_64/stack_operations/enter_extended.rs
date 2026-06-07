@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm, read_mem_at_u64, write_mem_at_u64};
+use crate::common::{read_mem_at_u64, run_until_hlt, setup_vm, write_mem_at_u64};
 use rax::cpu::Registers;
 
 // Comprehensive tests for ENTER instruction
@@ -785,7 +785,11 @@ fn test_strict_enter_level0_frame_setup() {
     let out = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(out.rbp, 0x3FF8, "RBP set to saved-RBP slot");
     assert_eq!(out.rsp, 0x3FD8, "RSP = RBP - 0x20");
-    assert_eq!(read_mem_at_u64(&mem, 0x3FF8), 0x5000, "old RBP saved at new RBP slot");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x3FF8),
+        0x5000,
+        "old RBP saved at new RBP slot"
+    );
 }
 
 #[test]
@@ -797,7 +801,10 @@ fn test_strict_enter_level0_zero_storage() {
     regs.rbp = 0xABCD;
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let out = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(out.rsp, 0x3FF8, "RSP decremented by the saved-RBP push only");
+    assert_eq!(
+        out.rsp, 0x3FF8,
+        "RSP decremented by the saved-RBP push only"
+    );
     assert_eq!(out.rbp, 0x3FF8, "RBP points at saved-RBP slot");
     assert_eq!(read_mem_at_u64(&mem, 0x3FF8), 0xABCD, "old RBP saved");
 }

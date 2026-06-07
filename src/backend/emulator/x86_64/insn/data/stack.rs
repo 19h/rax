@@ -22,7 +22,7 @@ pub fn push_r64(
             return Err(Error::Emulator(format!(
                 "invalid PUSH r op size: {}",
                 op_size
-            )))
+            )));
         }
     }
     vcpu.regs.rip += ctx.cursor as u64;
@@ -34,19 +34,11 @@ fn segment_op_size(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
     let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
 
     if in_64bit_mode {
-        if ctx.operand_size_override {
-            2
-        } else {
-            8
-        }
+        if ctx.operand_size_override { 2 } else { 8 }
     } else {
         let default_16bit = !vcpu.sregs.cs.db;
         let is_16bit = default_16bit ^ ctx.operand_size_override;
-        if is_16bit {
-            2
-        } else {
-            4
-        }
+        if is_16bit { 2 } else { 4 }
     }
 }
 
@@ -55,19 +47,11 @@ fn stack_op_size(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
     let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
 
     if in_64bit_mode {
-        if ctx.operand_size_override {
-            2
-        } else {
-            8
-        }
+        if ctx.operand_size_override { 2 } else { 8 }
     } else {
         let default_16bit = !vcpu.sregs.cs.db;
         let is_16bit = default_16bit ^ ctx.operand_size_override;
-        if is_16bit {
-            2
-        } else {
-            4
-        }
+        if is_16bit { 2 } else { 4 }
     }
 }
 
@@ -113,7 +97,7 @@ pub fn push_sreg(
             return Err(Error::Emulator(format!(
                 "invalid PUSH Sreg size: {}",
                 op_size
-            )))
+            )));
         }
     }
     vcpu.regs.rip += ctx.cursor as u64;
@@ -145,7 +129,7 @@ pub fn pop_sreg(
             return Err(Error::Emulator(format!(
                 "invalid POP Sreg size: {}",
                 op_size
-            )))
+            )));
         }
     };
     vcpu.set_sreg(sreg, (value & 0xFFFF) as u16);
@@ -165,7 +149,7 @@ pub fn push_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
             return Err(Error::Emulator(format!(
                 "invalid PUSH imm8 op size: {}",
                 op_size
-            )))
+            )));
         }
     }
     vcpu.regs.rip += ctx.cursor as u64;
@@ -188,7 +172,7 @@ pub fn push_imm32(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
             return Err(Error::Emulator(format!(
                 "invalid PUSH imm32 op size: {}",
                 op_size
-            )))
+            )));
         }
     }
     vcpu.regs.rip += ctx.cursor as u64;
@@ -219,7 +203,7 @@ pub fn pop_r64(
                 return Err(Error::Emulator(format!(
                     "invalid POP RSP op size: {}",
                     op_size
-                )))
+                )));
             }
         };
         // For POP RSP, the final RSP is just the value read from stack
@@ -237,7 +221,7 @@ pub fn pop_r64(
             return Err(Error::Emulator(format!(
                 "invalid POP r op size: {}",
                 op_size
-            )))
+            )));
         }
     };
     vcpu.set_reg(reg, value, op_size);
@@ -260,7 +244,7 @@ pub fn pop_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             return Err(Error::Emulator(format!(
                 "invalid POP r/m op size: {}",
                 op_size
-            )))
+            )));
         }
     };
 

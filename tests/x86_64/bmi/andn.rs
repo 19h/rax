@@ -149,7 +149,10 @@ fn test_andn_preserves_sources() {
     assert_eq!(regs.rbx & 0xFFFF_FFFF, 0x1234_5678, "src1 (EBX) unchanged");
     assert_eq!(regs.rcx & 0xFFFF_FFFF, 0x8765_4321, "src2 (ECX) unchanged");
     // dest = ~EBX & ECX
-    assert_eq!(regs.rax & 0xFFFF_FFFF, ((!0x1234_5678u32) & 0x8765_4321u32) as u64);
+    assert_eq!(
+        regs.rax & 0xFFFF_FFFF,
+        ((!0x1234_5678u32) & 0x8765_4321u32) as u64
+    );
 }
 
 #[test]
@@ -188,8 +191,7 @@ fn test_andn_r15() {
 fn test_andn_mem32() {
     // ANDN EAX, EBX, [DATA_ADDR] : src1=EBX, src2=[mem]
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0xf4,
+        0xc4, 0xe2, 0x60, 0xf2, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0xf4,
     ];
     let mut initial_regs = Registers::default();
     initial_regs.rbx = 0x0000_0000; // ~0 = all ones -> result == [mem]
@@ -204,8 +206,7 @@ fn test_andn_mem32() {
 fn test_andn_mem64() {
     // ANDN RAX, RBX, [DATA_ADDR] : src1=RBX, src2=[mem]
     let code = [
-        0xc4, 0xe2, 0xe0, 0xf2, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0xf4,
+        0xc4, 0xe2, 0xe0, 0xf2, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0xf4,
     ];
     let mut initial_regs = Registers::default();
     initial_regs.rbx = 0x0000_0000_FFFF_FFFF;

@@ -89,7 +89,10 @@ fn test_adc_64bit_carry_propagation() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0000000000000000, "0xFFFFFFFFFFFFFFFF + 0 + 1 = 0");
+    assert_eq!(
+        regs.rax, 0x0000000000000000,
+        "0xFFFFFFFFFFFFFFFF + 0 + 1 = 0"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
 }
 
@@ -105,7 +108,10 @@ fn test_adc_signed_overflow() {
 
     assert_eq!(regs.rax & 0xFF, 0x80, "0x7F + 0x01 = 0x80");
     assert!(of_set(regs.rflags), "OF should be set (signed overflow)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (no unsigned overflow)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (no unsigned overflow)"
+    );
     assert!(sf_set(regs.rflags), "SF should be set (result is negative)");
 }
 
@@ -177,7 +183,11 @@ fn test_add_register_to_register_32bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x23456789, "0x12345678 + 0x11111111 = 0x23456789");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x23456789,
+        "0x12345678 + 0x11111111 = 0x23456789"
+    );
     assert_eq!(regs.rbx & 0xFFFFFFFF, 0x11111111, "EBX unchanged");
 }
 
@@ -326,7 +336,7 @@ fn test_sbb_multiprecision_subtraction() {
     // First: SBB with CF=0 (low dword), then SBB with result CF (high dword)
     let code = [
         0x2d, 0x01, 0x00, 0x00, 0x00, // SUB EAX, 1 (low dword)
-        0x19, 0xca,                   // SBB EDX, ECX (high dword)
+        0x19, 0xca, // SBB EDX, ECX (high dword)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -338,7 +348,11 @@ fn test_sbb_multiprecision_subtraction() {
 
     // 0x0000000100000000 - 1 = 0x00000000FFFFFFFF
     assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "Low dword underflowed");
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x00000000, "High dword decremented by borrow");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x00000000,
+        "High dword decremented by borrow"
+    );
 }
 
 // ============================================================================
@@ -509,7 +523,11 @@ fn test_neg_min_value_overflow() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0x80, "NEG -128 = -128 (overflow, stays same)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x80,
+        "NEG -128 = -128 (overflow, stays same)"
+    );
     assert!(of_set(regs.rflags), "OF should be set (signed overflow)");
     assert!(cf_set(regs.rflags), "CF should be set (non-zero operand)");
 }
@@ -665,7 +683,7 @@ fn test_div_8bit_basic() {
     let code = [0xf6, 0xf3, 0xf4]; // DIV BL
     let mut regs = Registers::default();
     regs.rax = 0x0011; // AX = 17
-    regs.rbx = 0x05;   // BL = 5
+    regs.rbx = 0x05; // BL = 5
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -679,7 +697,7 @@ fn test_div_8bit_exact() {
     let code = [0xf6, 0xf3, 0xf4]; // DIV BL
     let mut regs = Registers::default();
     regs.rax = 0x000F; // AX = 15
-    regs.rbx = 0x05;   // BL = 5
+    regs.rbx = 0x05; // BL = 5
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -721,7 +739,7 @@ fn test_div_by_one() {
     let code = [0xf6, 0xf3, 0xf4]; // DIV BL
     let mut regs = Registers::default();
     regs.rax = 0x00FF; // AX = 255
-    regs.rbx = 0x01;   // BL = 1
+    regs.rbx = 0x01; // BL = 1
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -735,7 +753,7 @@ fn test_div_large_dividend() {
     let code = [0xf6, 0xf3, 0xf4]; // DIV BL
     let mut regs = Registers::default();
     regs.rax = 0x0100; // AX = 256
-    regs.rbx = 0x02;   // BL = 2
+    regs.rbx = 0x02; // BL = 2
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -752,7 +770,7 @@ fn test_idiv_positive_by_positive() {
     let code = [0xf6, 0xfb, 0xf4]; // IDIV BL
     let mut regs = Registers::default();
     regs.rax = 0x0011; // AX = 17
-    regs.rbx = 0x05;   // BL = 5
+    regs.rbx = 0x05; // BL = 5
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -766,7 +784,7 @@ fn test_idiv_negative_by_positive() {
     let code = [0xf6, 0xfb, 0xf4]; // IDIV BL
     let mut regs = Registers::default();
     regs.rax = 0xFFEF; // AX = -17 (sign-extended)
-    regs.rbx = 0x05;   // BL = 5
+    regs.rbx = 0x05; // BL = 5
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -780,7 +798,7 @@ fn test_idiv_positive_by_negative() {
     let code = [0xf6, 0xfb, 0xf4]; // IDIV BL
     let mut regs = Registers::default();
     regs.rax = 0x0011; // AX = 17
-    regs.rbx = 0xFB;   // BL = -5 (0xFB)
+    regs.rbx = 0xFB; // BL = -5 (0xFB)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -794,7 +812,7 @@ fn test_idiv_negative_by_negative() {
     let code = [0xf6, 0xfb, 0xf4]; // IDIV BL
     let mut regs = Registers::default();
     regs.rax = 0xFFEF; // AX = -17
-    regs.rbx = 0xFB;   // BL = -5
+    regs.rbx = 0xFB; // BL = -5
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -812,8 +830,16 @@ fn test_idiv_32bit_signed() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFF2, "-100 / 7 = -14 (0xFFFFFFF2)");
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0xFFFFFFFE, "-100 % 7 = -2 (0xFFFFFFFE)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFF2,
+        "-100 / 7 = -14 (0xFFFFFFF2)"
+    );
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0xFFFFFFFE,
+        "-100 % 7 = -2 (0xFFFFFFFE)"
+    );
 }
 
 // ============================================================================
@@ -934,7 +960,11 @@ fn test_cdq_negative() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0xFFFFFFFF, "EDX = 0xFFFFFFFF for negative");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EDX = 0xFFFFFFFF for negative"
+    );
 }
 
 #[test]
@@ -995,7 +1025,11 @@ fn test_adcx_ignores_of() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000003, "1 + 2 + 0 = 3 (OF ignored)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000003,
+        "1 + 2 + 0 = 3 (OF ignored)"
+    );
 }
 
 #[test]
@@ -1029,7 +1063,11 @@ fn test_adox_ignores_cf() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000003, "1 + 2 + 0 = 3 (CF ignored)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000003,
+        "1 + 2 + 0 = 3 (CF ignored)"
+    );
 }
 
 #[test]
@@ -1063,8 +1101,8 @@ fn test_multiprecision_addition_128bit() {
     // Add two 128-bit numbers using ADC chain
     // (RAX:RDX) + (RBX:RCX) = result in (RAX:RDX)
     let code = [
-        0x48, 0x01, 0xd8,             // ADD RAX, RBX (low 64 bits)
-        0x48, 0x11, 0xca,             // ADC RDX, RCX (high 64 bits with carry)
+        0x48, 0x01, 0xd8, // ADD RAX, RBX (low 64 bits)
+        0x48, 0x11, 0xca, // ADC RDX, RCX (high 64 bits with carry)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -1086,8 +1124,8 @@ fn test_multiprecision_addition_128bit() {
 fn test_multiprecision_subtraction_128bit() {
     // Subtract two 128-bit numbers using SBB chain
     let code = [
-        0x48, 0x29, 0xd8,             // SUB RAX, RBX (low 64 bits)
-        0x48, 0x19, 0xca,             // SBB RDX, RCX (high 64 bits with borrow)
+        0x48, 0x29, 0xd8, // SUB RAX, RBX (low 64 bits)
+        0x48, 0x19, 0xca, // SBB RDX, RCX (high 64 bits with borrow)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -1109,9 +1147,9 @@ fn test_multiprecision_subtraction_128bit() {
 fn test_increment_loop_pattern() {
     // Common pattern: loop using INC and TEST
     let code = [
-        0x48, 0xff, 0xc0,             // INC RAX
-        0x48, 0x83, 0xf8, 0x05,       // CMP RAX, 5
-        0x75, 0xf7,                   // JNE back to INC
+        0x48, 0xff, 0xc0, // INC RAX
+        0x48, 0x83, 0xf8, 0x05, // CMP RAX, 5
+        0x75, 0xf7, // JNE back to INC
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -1126,8 +1164,8 @@ fn test_increment_loop_pattern() {
 fn test_decrement_loop_pattern() {
     // Decrement loop from 5 to 0
     let code = [
-        0x48, 0xff, 0xc8,             // DEC RAX
-        0x75, 0xfb,                   // JNZ back to DEC (ZF=0 means continue)
+        0x48, 0xff, 0xc8, // DEC RAX
+        0x75, 0xfb, // JNZ back to DEC (ZF=0 means continue)
         0xf4,
     ];
     let mut regs = Registers::default();

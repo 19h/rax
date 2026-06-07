@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm, read_mem_at_u64, write_mem_at_u64, DATA_ADDR};
+use crate::common::{DATA_ADDR, read_mem_at_u64, run_until_hlt, setup_vm, write_mem_at_u64};
 use rax::cpu::Registers;
 
 // Comprehensive tests for PUSH with memory operands

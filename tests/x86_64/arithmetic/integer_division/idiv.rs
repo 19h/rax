@@ -40,11 +40,11 @@ use rax::cpu::{Registers, VCpu};
 fn test_idiv_al_positive_by_positive() {
     let code = [
         0xf6, 0xfb, // IDIV BL (F6 /7, ModRM=11_111_011)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 100; // AX = 100 (dividend)
-    regs.rbx = 10;  // BL = 10 (divisor)
+    regs.rbx = 10; // BL = 10 (divisor)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -57,7 +57,7 @@ fn test_idiv_al_positive_by_positive_with_remainder() {
     let code = [0xf6, 0xfb, 0xf4]; // IDIV BL
     let mut regs = Registers::default();
     regs.rax = 107; // AX = 107
-    regs.rbx = 10;  // BL = 10
+    regs.rbx = 10; // BL = 10
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -71,7 +71,7 @@ fn test_idiv_al_negative_by_positive() {
     let code = [0xf6, 0xfb, 0xf4]; // IDIV BL
     let mut regs = Registers::default();
     regs.rax = (-100i16) as u16 as u64; // AX = -100
-    regs.rbx = 10;                       // BL = 10
+    regs.rbx = 10; // BL = 10
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -118,7 +118,11 @@ fn test_idiv_al_negative_with_remainder() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!((regs.rax & 0xFF) as i8, -10, "AL: -107 / 10 = -10");
-    assert_eq!(((regs.rax >> 8) & 0xFF) as i8, -7, "AH: -107 % 10 = -7 (same sign as dividend)");
+    assert_eq!(
+        ((regs.rax >> 8) & 0xFF) as i8,
+        -7,
+        "AH: -107 % 10 = -7 (same sign as dividend)"
+    );
 }
 
 #[test]
@@ -131,7 +135,11 @@ fn test_idiv_al_truncation_towards_zero() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!((regs.rax & 0xFF) as i8, -3, "AL: -17 / 5 = -3 (towards zero)");
+    assert_eq!(
+        (regs.rax & 0xFF) as i8,
+        -3,
+        "AL: -17 / 5 = -3 (towards zero)"
+    );
     assert_eq!(((regs.rax >> 8) & 0xFF) as i8, -2, "AH: -17 % 5 = -2");
 }
 
@@ -199,8 +207,8 @@ fn test_idiv_ax_positive_by_positive() {
     ];
     let mut regs = Registers::default();
     regs.rax = 10000; // AX = 10000
-    regs.rdx = 0;     // DX = 0
-    regs.rbx = 100;   // BX = 100
+    regs.rdx = 0; // DX = 0
+    regs.rbx = 100; // BX = 100
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -214,7 +222,7 @@ fn test_idiv_ax_negative_by_positive() {
     let code = [0x66, 0xf7, 0xfb, 0xf4]; // IDIV BX
     let mut regs = Registers::default();
     regs.rax = (-10000i32) as u32 as u64 & 0xFFFF; // AX (low word)
-    regs.rdx = ((-10000i32) as u32 >> 16) as u64;  // DX (high word, sign extension)
+    regs.rdx = ((-10000i32) as u32 >> 16) as u64; // DX (high word, sign extension)
     regs.rbx = 100;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -265,7 +273,11 @@ fn test_idiv_ax_negative_remainder() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!((regs.rax & 0xFFFF) as i16, -12, "AX: -12345 / 1000 = -12");
-    assert_eq!((regs.rdx & 0xFFFF) as i16, -345, "DX: remainder same sign as dividend");
+    assert_eq!(
+        (regs.rdx & 0xFFFF) as i16,
+        -345,
+        "DX: remainder same sign as dividend"
+    );
 }
 
 #[test]
@@ -306,8 +318,8 @@ fn test_idiv_eax_positive_by_positive() {
     ];
     let mut regs = Registers::default();
     regs.rax = 1000000; // EAX
-    regs.rdx = 0;       // EDX
-    regs.rbx = 1000;    // EBX
+    regs.rdx = 0; // EDX
+    regs.rbx = 1000; // EBX
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -374,7 +386,10 @@ fn test_idiv_eax_negative_remainder() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax as i32, -12345, "EAX: quotient");
-    assert_eq!(regs.rdx as i32, -6789, "EDX: remainder (same sign as dividend)");
+    assert_eq!(
+        regs.rdx as i32, -6789,
+        "EDX: remainder (same sign as dividend)"
+    );
 }
 
 #[test]
@@ -415,8 +430,8 @@ fn test_idiv_rax_positive_by_positive() {
     ];
     let mut regs = Registers::default();
     regs.rax = 1000000000000; // RAX
-    regs.rdx = 0;             // RDX
-    regs.rbx = 1000000;       // RBX
+    regs.rdx = 0; // RDX
+    regs.rbx = 1000000; // RBX
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -483,7 +498,10 @@ fn test_idiv_rax_negative_remainder() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax as i64, -12345678, "RAX: quotient");
-    assert_eq!(regs.rdx as i64, -9012345, "RDX: remainder (same sign as dividend)");
+    assert_eq!(
+        regs.rdx as i64, -9012345,
+        "RDX: remainder (same sign as dividend)"
+    );
 }
 
 #[test]
@@ -676,7 +694,11 @@ fn test_idiv_remainder_sign_same_as_dividend() {
     regs.rbx = 5;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(((regs.rax >> 8) & 0xFF) as i8, -2, "Negative remainder (same sign as dividend)");
+    assert_eq!(
+        ((regs.rax >> 8) & 0xFF) as i8,
+        -2,
+        "Negative remainder (same sign as dividend)"
+    );
 }
 
 // Note: Division by zero and overflow tests would require exception handling.

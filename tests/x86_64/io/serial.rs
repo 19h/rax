@@ -22,55 +22,55 @@ use rax::devices::serial::Serial16550;
 
 // COM1 base port
 const COM1_BASE: u16 = 0x3F8;
-const DATA_REG: u16 = COM1_BASE;     // 0x3F8
-const IER_REG: u16 = COM1_BASE + 1;  // 0x3F9
-const IIR_REG: u16 = COM1_BASE + 2;  // 0x3FA
-const LCR_REG: u16 = COM1_BASE + 3;  // 0x3FB
-const MCR_REG: u16 = COM1_BASE + 4;  // 0x3FC
-const LSR_REG: u16 = COM1_BASE + 5;  // 0x3FD
-const MSR_REG: u16 = COM1_BASE + 6;  // 0x3FE
-const SCR_REG: u16 = COM1_BASE + 7;  // 0x3FF
-const FCR_REG: u16 = COM1_BASE + 2;  // 0x3FA (same as IIR, write-only)
+const DATA_REG: u16 = COM1_BASE; // 0x3F8
+const IER_REG: u16 = COM1_BASE + 1; // 0x3F9
+const IIR_REG: u16 = COM1_BASE + 2; // 0x3FA
+const LCR_REG: u16 = COM1_BASE + 3; // 0x3FB
+const MCR_REG: u16 = COM1_BASE + 4; // 0x3FC
+const LSR_REG: u16 = COM1_BASE + 5; // 0x3FD
+const MSR_REG: u16 = COM1_BASE + 6; // 0x3FE
+const SCR_REG: u16 = COM1_BASE + 7; // 0x3FF
+const FCR_REG: u16 = COM1_BASE + 2; // 0x3FA (same as IIR, write-only)
 
 // LSR bit definitions (from datasheet)
-const LSR_DATA_READY: u8 = 0x01;  // bit 0: Data Ready
+const LSR_DATA_READY: u8 = 0x01; // bit 0: Data Ready
 #[allow(dead_code)]
-const LSR_OVERRUN: u8 = 0x02;     // bit 1: Overrun Error
+const LSR_OVERRUN: u8 = 0x02; // bit 1: Overrun Error
 #[allow(dead_code)]
-const LSR_PARITY: u8 = 0x04;      // bit 2: Parity Error
+const LSR_PARITY: u8 = 0x04; // bit 2: Parity Error
 #[allow(dead_code)]
-const LSR_FRAMING: u8 = 0x08;     // bit 3: Framing Error
+const LSR_FRAMING: u8 = 0x08; // bit 3: Framing Error
 #[allow(dead_code)]
-const LSR_BREAK: u8 = 0x10;       // bit 4: Break Interrupt
-const LSR_THRE: u8 = 0x20;        // bit 5: THR Empty
-const LSR_TEMT: u8 = 0x40;        // bit 6: Transmitter Empty
+const LSR_BREAK: u8 = 0x10; // bit 4: Break Interrupt
+const LSR_THRE: u8 = 0x20; // bit 5: THR Empty
+const LSR_TEMT: u8 = 0x40; // bit 6: Transmitter Empty
 #[allow(dead_code)]
-const LSR_FIFO_ERR: u8 = 0x80;    // bit 7: FIFO data error
+const LSR_FIFO_ERR: u8 = 0x80; // bit 7: FIFO data error
 
 // LCR bit definitions
-const LCR_DLAB: u8 = 0x80;        // bit 7: Divisor Latch Access Bit
+const LCR_DLAB: u8 = 0x80; // bit 7: Divisor Latch Access Bit
 
 // IIR bit definitions
-const IIR_NO_PENDING: u8 = 0x01;  // bit 0: 1 = no interrupt pending
+const IIR_NO_PENDING: u8 = 0x01; // bit 0: 1 = no interrupt pending
 #[allow(dead_code)]
-const IIR_RDA: u8 = 0x04;         // Received Data Available (bits 3:1 = 010)
-const IIR_THRE: u8 = 0x02;        // THR Empty (bits 3:1 = 001)
+const IIR_RDA: u8 = 0x04; // Received Data Available (bits 3:1 = 010)
+const IIR_THRE: u8 = 0x02; // THR Empty (bits 3:1 = 001)
 #[allow(dead_code)]
-const IIR_RLS: u8 = 0x06;         // Receiver Line Status (bits 3:1 = 011)
+const IIR_RLS: u8 = 0x06; // Receiver Line Status (bits 3:1 = 011)
 #[allow(dead_code)]
-const IIR_TIMEOUT: u8 = 0x0C;     // Timeout (bits 3:1 = 110)
+const IIR_TIMEOUT: u8 = 0x0C; // Timeout (bits 3:1 = 110)
 #[allow(dead_code)]
-const IIR_MS: u8 = 0x00;          // Modem Status (bits 3:1 = 000)
+const IIR_MS: u8 = 0x00; // Modem Status (bits 3:1 = 000)
 
 // IER bit definitions
 #[allow(dead_code)]
-const IER_RDA: u8 = 0x01;         // bit 0: Received Data Available interrupt
+const IER_RDA: u8 = 0x01; // bit 0: Received Data Available interrupt
 #[allow(dead_code)]
-const IER_THRE: u8 = 0x02;        // bit 1: THR Empty interrupt
+const IER_THRE: u8 = 0x02; // bit 1: THR Empty interrupt
 #[allow(dead_code)]
-const IER_RLS: u8 = 0x04;         // bit 2: Receiver Line Status interrupt
+const IER_RLS: u8 = 0x04; // bit 2: Receiver Line Status interrupt
 #[allow(dead_code)]
-const IER_MS: u8 = 0x08;          // bit 3: Modem Status interrupt
+const IER_MS: u8 = 0x08; // bit 3: Modem Status interrupt
 
 /// Test result tracking for serial operations
 struct SerialTestResult {
@@ -178,9 +178,9 @@ fn test_serial_lsr_initial_state() {
     // Read LSR - should show THRE and TEMT set (transmitter empty)
     // LSR reset value per spec: 0x60 (bits 5 and 6 set)
     let code = [
-        0xBA, 0xFD, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FD (LSR)
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xBA, 0xFD, 0x03, 0x00, 0x00, // MOV EDX, 0x3FD (LSR)
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -189,22 +189,30 @@ fn test_serial_lsr_initial_state() {
     let lsr = result.final_regs.rax as u8;
     assert_eq!(lsr & LSR_THRE, LSR_THRE, "THRE should be set");
     assert_eq!(lsr & LSR_TEMT, LSR_TEMT, "TEMT should be set");
-    assert_eq!(lsr & LSR_DATA_READY, 0, "Data Ready should be clear (no input)");
+    assert_eq!(
+        lsr & LSR_DATA_READY,
+        0,
+        "Data Ready should be clear (no input)"
+    );
 }
 
 #[test]
 fn test_serial_lsr_data_ready_with_input() {
     // Inject input data and verify LSR shows Data Ready
     let code = [
-        0xBA, 0xFD, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FD (LSR)
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xBA, 0xFD, 0x03, 0x00, 0x00, // MOV EDX, 0x3FD (LSR)
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial_input(&code, regs, b"A");
 
     let lsr = result.final_regs.rax as u8;
-    assert_eq!(lsr & LSR_DATA_READY, LSR_DATA_READY, "Data Ready should be set");
+    assert_eq!(
+        lsr & LSR_DATA_READY,
+        LSR_DATA_READY,
+        "Data Ready should be set"
+    );
     assert_eq!(lsr & LSR_THRE, LSR_THRE, "THRE should still be set");
     assert_eq!(lsr & LSR_TEMT, LSR_TEMT, "TEMT should still be set");
 }
@@ -213,11 +221,11 @@ fn test_serial_lsr_data_ready_with_input() {
 fn test_serial_lsr_write_is_ignored() {
     // Writes to LSR should be ignored (LSR is read-only per spec)
     let code = [
-        0xB0, 0x00,                     // MOV AL, 0x00 (try to clear LSR)
-        0xBA, 0xFD, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FD (LSR)
-        0xEE,                           // OUT DX, AL
-        0xEC,                           // IN AL, DX (read it back)
-        0xF4,                           // HLT
+        0xB0, 0x00, // MOV AL, 0x00 (try to clear LSR)
+        0xBA, 0xFD, 0x03, 0x00, 0x00, // MOV EDX, 0x3FD (LSR)
+        0xEE, // OUT DX, AL
+        0xEC, // IN AL, DX (read it back)
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -235,10 +243,10 @@ fn test_serial_lsr_write_is_ignored() {
 fn test_serial_write_thr_basic() {
     // Write a character to THR
     let code = [
-        0xB0, 0x41,                     // MOV AL, 'A'
-        0xBA, 0xF8, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F8 (THR)
-        0xEE,                           // OUT DX, AL
-        0xF4,                           // HLT
+        0xB0, 0x41, // MOV AL, 'A'
+        0xBA, 0xF8, 0x03, 0x00, 0x00, // MOV EDX, 0x3F8 (THR)
+        0xEE, // OUT DX, AL
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -251,12 +259,12 @@ fn test_serial_write_thr_basic() {
 fn test_serial_write_multiple_chars() {
     // Write multiple characters to THR
     let code = [
-        0xB0, 0x48,                     // MOV AL, 'H'
-        0xBA, 0xF8, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F8 (THR)
-        0xEE,                           // OUT DX, AL
-        0xB0, 0x69,                     // MOV AL, 'i'
-        0xEE,                           // OUT DX, AL
-        0xF4,                           // HLT
+        0xB0, 0x48, // MOV AL, 'H'
+        0xBA, 0xF8, 0x03, 0x00, 0x00, // MOV EDX, 0x3F8 (THR)
+        0xEE, // OUT DX, AL
+        0xB0, 0x69, // MOV AL, 'i'
+        0xEE, // OUT DX, AL
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -270,9 +278,9 @@ fn test_serial_write_multiple_chars() {
 fn test_serial_read_rbr_with_input() {
     // Read a character from RBR when input is available
     let code = [
-        0xBA, 0xF8, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F8 (RBR)
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xBA, 0xF8, 0x03, 0x00, 0x00, // MOV EDX, 0x3F8 (RBR)
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial_input(&code, regs, b"X");
@@ -284,9 +292,9 @@ fn test_serial_read_rbr_with_input() {
 fn test_serial_read_rbr_no_input() {
     // Read from RBR with no input should return 0
     let code = [
-        0xBA, 0xF8, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F8 (RBR)
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xBA, 0xF8, 0x03, 0x00, 0x00, // MOV EDX, 0x3F8 (RBR)
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -299,17 +307,17 @@ fn test_serial_read_multiple_chars() {
     // Read multiple characters from RBR
     // Note: run_with_serial_input enables FIFO mode automatically
     let code = [
-        0xBA, 0xF8, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F8 (RBR)
-        0xEC,                           // IN AL, DX (first char)
-        0x88, 0xC4,                     // MOV AH, AL
-        0xEC,                           // IN AL, DX (second char)
-        0xF4,                           // HLT
+        0xBA, 0xF8, 0x03, 0x00, 0x00, // MOV EDX, 0x3F8 (RBR)
+        0xEC, // IN AL, DX (first char)
+        0x88, 0xC4, // MOV AH, AL
+        0xEC, // IN AL, DX (second char)
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial_input(&code, regs, b"AB");
 
     // AH='A' (0x41), AL='B' (0x42)
-    assert_eq!(result.final_regs.rax & 0xFF, 0x42);       // AL = 'B'
+    assert_eq!(result.final_regs.rax & 0xFF, 0x42); // AL = 'B'
     assert_eq!((result.final_regs.rax >> 8) & 0xFF, 0x41); // AH = 'A'
 }
 
@@ -323,26 +331,22 @@ fn test_serial_dlab_enable_and_set_divisor() {
     // Divisor 0x000C = 12 for 9600 baud (with 1.8432 MHz clock)
     let code = [
         // Set DLAB
-        0xB0, 0x80,                     // MOV AL, 0x80 (DLAB=1)
-        0xBA, 0xFB, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FB (LCR)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x80, // MOV AL, 0x80 (DLAB=1)
+        0xBA, 0xFB, 0x03, 0x00, 0x00, // MOV EDX, 0x3FB (LCR)
+        0xEE, // OUT DX, AL
         // Write DLL (low byte of divisor)
-        0xB0, 0x0C,                     // MOV AL, 0x0C
-        0xBA, 0xF8, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F8 (DLL when DLAB=1)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x0C, // MOV AL, 0x0C
+        0xBA, 0xF8, 0x03, 0x00, 0x00, // MOV EDX, 0x3F8 (DLL when DLAB=1)
+        0xEE, // OUT DX, AL
         // Write DLM (high byte of divisor)
-        0xB0, 0x00,                     // MOV AL, 0x00
-        0xBA, 0xF9, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F9 (DLM when DLAB=1)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x00, // MOV AL, 0x00
+        0xBA, 0xF9, 0x03, 0x00, 0x00, // MOV EDX, 0x3F9 (DLM when DLAB=1)
+        0xEE, // OUT DX, AL
         // Clear DLAB
-        0xB0, 0x03,                     // MOV AL, 0x03 (8N1, DLAB=0)
-        0xBA, 0xFB, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FB (LCR)
-        0xEE,                           // OUT DX, AL
-
-        0xF4,                           // HLT
+        0xB0, 0x03, // MOV AL, 0x03 (8N1, DLAB=0)
+        0xBA, 0xFB, 0x03, 0x00, 0x00, // MOV EDX, 0x3FB (LCR)
+        0xEE, // OUT DX, AL
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -359,29 +363,24 @@ fn test_serial_dlab_read_divisor() {
     // Set DLAB, write divisor, read it back
     let code = [
         // Set DLAB and write divisor 0x1234
-        0xB0, 0x80,                     // MOV AL, 0x80 (DLAB=1)
-        0xBA, 0xFB, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FB (LCR)
-        0xEE,                           // OUT DX, AL
-
-        0xB0, 0x34,                     // MOV AL, 0x34 (DLL)
-        0xBA, 0xF8, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F8
-        0xEE,                           // OUT DX, AL
-
-        0xB0, 0x12,                     // MOV AL, 0x12 (DLM)
-        0xBA, 0xF9, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F9
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x80, // MOV AL, 0x80 (DLAB=1)
+        0xBA, 0xFB, 0x03, 0x00, 0x00, // MOV EDX, 0x3FB (LCR)
+        0xEE, // OUT DX, AL
+        0xB0, 0x34, // MOV AL, 0x34 (DLL)
+        0xBA, 0xF8, 0x03, 0x00, 0x00, // MOV EDX, 0x3F8
+        0xEE, // OUT DX, AL
+        0xB0, 0x12, // MOV AL, 0x12 (DLM)
+        0xBA, 0xF9, 0x03, 0x00, 0x00, // MOV EDX, 0x3F9
+        0xEE, // OUT DX, AL
         // Read back DLL
-        0xBA, 0xF8, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F8
-        0xEC,                           // IN AL, DX
-        0x88, 0xC4,                     // MOV AH, AL (save DLL)
-
+        0xBA, 0xF8, 0x03, 0x00, 0x00, // MOV EDX, 0x3F8
+        0xEC, // IN AL, DX
+        0x88, 0xC4, // MOV AH, AL (save DLL)
         // Read back DLM
-        0xBA, 0xF9, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F9
-        0xEC,                           // IN AL, DX
-        0x86, 0xC4,                     // XCHG AL, AH (now AX = DLM:DLL)
-
-        0xF4,                           // HLT
+        0xBA, 0xF9, 0x03, 0x00, 0x00, // MOV EDX, 0x3F9
+        0xEC, // IN AL, DX
+        0x86, 0xC4, // XCHG AL, AH (now AX = DLM:DLL)
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -398,11 +397,11 @@ fn test_serial_dlab_read_divisor() {
 fn test_serial_lcr_write_read() {
     // Write LCR and read it back
     let code = [
-        0xB0, 0x1B,                     // MOV AL, 0x1B (7 bits, even parity, 2 stop)
-        0xBA, 0xFB, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FB (LCR)
-        0xEE,                           // OUT DX, AL
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xB0, 0x1B, // MOV AL, 0x1B (7 bits, even parity, 2 stop)
+        0xBA, 0xFB, 0x03, 0x00, 0x00, // MOV EDX, 0x3FB (LCR)
+        0xEE, // OUT DX, AL
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -414,11 +413,11 @@ fn test_serial_lcr_write_read() {
 fn test_serial_lcr_8n1_config() {
     // Set standard 8N1 configuration
     let code = [
-        0xB0, 0x03,                     // MOV AL, 0x03 (8 bits, no parity, 1 stop)
-        0xBA, 0xFB, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FB (LCR)
-        0xEE,                           // OUT DX, AL
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xB0, 0x03, // MOV AL, 0x03 (8 bits, no parity, 1 stop)
+        0xBA, 0xFB, 0x03, 0x00, 0x00, // MOV EDX, 0x3FB (LCR)
+        0xEE, // OUT DX, AL
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -435,16 +434,15 @@ fn test_serial_ier_write_read() {
     // Write IER and read it back (DLAB must be 0)
     let code = [
         // First ensure DLAB is 0
-        0xB0, 0x00,                     // MOV AL, 0x00
-        0xBA, 0xFB, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FB (LCR)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x00, // MOV AL, 0x00
+        0xBA, 0xFB, 0x03, 0x00, 0x00, // MOV EDX, 0x3FB (LCR)
+        0xEE, // OUT DX, AL
         // Write IER
-        0xB0, 0x03,                     // MOV AL, 0x03 (RDA + THRE interrupts)
-        0xBA, 0xF9, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F9 (IER)
-        0xEE,                           // OUT DX, AL
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xB0, 0x03, // MOV AL, 0x03 (RDA + THRE interrupts)
+        0xBA, 0xF9, 0x03, 0x00, 0x00, // MOV EDX, 0x3F9 (IER)
+        0xEE, // OUT DX, AL
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -456,15 +454,14 @@ fn test_serial_ier_write_read() {
 fn test_serial_ier_enable_all_standard() {
     // Enable all 4 standard interrupt sources
     let code = [
-        0xB0, 0x00,                     // MOV AL, 0x00 (clear DLAB)
-        0xBA, 0xFB, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FB (LCR)
-        0xEE,                           // OUT DX, AL
-
-        0xB0, 0x0F,                     // MOV AL, 0x0F (all 4 interrupts)
-        0xBA, 0xF9, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F9 (IER)
-        0xEE,                           // OUT DX, AL
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xB0, 0x00, // MOV AL, 0x00 (clear DLAB)
+        0xBA, 0xFB, 0x03, 0x00, 0x00, // MOV EDX, 0x3FB (LCR)
+        0xEE, // OUT DX, AL
+        0xB0, 0x0F, // MOV AL, 0x0F (all 4 interrupts)
+        0xBA, 0xF9, 0x03, 0x00, 0x00, // MOV EDX, 0x3F9 (IER)
+        0xEE, // OUT DX, AL
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -481,9 +478,9 @@ fn test_serial_ier_enable_all_standard() {
 fn test_serial_iir_no_interrupt() {
     // Read IIR with no interrupts pending
     let code = [
-        0xBA, 0xFA, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FA (IIR)
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xBA, 0xFA, 0x03, 0x00, 0x00, // MOV EDX, 0x3FA (IIR)
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -499,29 +496,25 @@ fn test_serial_iir_thre_interrupt() {
     // Note: MCR_OUT2 (0x08) must be set for interrupts to be reported
     let code = [
         // Ensure DLAB=0
-        0xB0, 0x00,                     // MOV AL, 0x00
-        0xBA, 0xFB, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FB (LCR)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x00, // MOV AL, 0x00
+        0xBA, 0xFB, 0x03, 0x00, 0x00, // MOV EDX, 0x3FB (LCR)
+        0xEE, // OUT DX, AL
         // Set MCR with OUT2 (global interrupt enable)
-        0xB0, 0x08,                     // MOV AL, 0x08 (OUT2)
-        0xBA, 0xFC, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FC (MCR)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x08, // MOV AL, 0x08 (OUT2)
+        0xBA, 0xFC, 0x03, 0x00, 0x00, // MOV EDX, 0x3FC (MCR)
+        0xEE, // OUT DX, AL
         // Enable THRE interrupt
-        0xB0, 0x02,                     // MOV AL, 0x02 (THRE interrupt)
-        0xBA, 0xF9, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F9 (IER)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x02, // MOV AL, 0x02 (THRE interrupt)
+        0xBA, 0xF9, 0x03, 0x00, 0x00, // MOV EDX, 0x3F9 (IER)
+        0xEE, // OUT DX, AL
         // Write to THR to trigger THRE interrupt
-        0xB0, 0x41,                     // MOV AL, 'A'
-        0xBA, 0xF8, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F8 (THR)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x41, // MOV AL, 'A'
+        0xBA, 0xF8, 0x03, 0x00, 0x00, // MOV EDX, 0x3F8 (THR)
+        0xEE, // OUT DX, AL
         // Read IIR
-        0xBA, 0xFA, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FA (IIR)
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xBA, 0xFA, 0x03, 0x00, 0x00, // MOV EDX, 0x3FA (IIR)
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -536,28 +529,24 @@ fn test_serial_iir_read_clears_thre() {
     // Reading IIR should clear THRE interrupt
     let code = [
         // Set MCR with OUT2 (global interrupt enable)
-        0xB0, 0x08,                     // MOV AL, 0x08 (OUT2)
-        0xBA, 0xFC, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FC (MCR)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x08, // MOV AL, 0x08 (OUT2)
+        0xBA, 0xFC, 0x03, 0x00, 0x00, // MOV EDX, 0x3FC (MCR)
+        0xEE, // OUT DX, AL
         // Enable THRE interrupt
-        0xB0, 0x02,                     // MOV AL, 0x02
-        0xBA, 0xF9, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F9 (IER)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x02, // MOV AL, 0x02
+        0xBA, 0xF9, 0x03, 0x00, 0x00, // MOV EDX, 0x3F9 (IER)
+        0xEE, // OUT DX, AL
         // Write to THR to trigger THRE
-        0xB0, 0x41,                     // MOV AL, 'A'
-        0xBA, 0xF8, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F8 (THR)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x41, // MOV AL, 'A'
+        0xBA, 0xF8, 0x03, 0x00, 0x00, // MOV EDX, 0x3F8 (THR)
+        0xEE, // OUT DX, AL
         // First IIR read
-        0xBA, 0xFA, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FA (IIR)
-        0xEC,                           // IN AL, DX
-        0x88, 0xC4,                     // MOV AH, AL (save first read)
-
+        0xBA, 0xFA, 0x03, 0x00, 0x00, // MOV EDX, 0x3FA (IIR)
+        0xEC, // IN AL, DX
+        0x88, 0xC4, // MOV AH, AL (save first read)
         // Second IIR read - should show no interrupt
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -579,11 +568,11 @@ fn test_serial_iir_read_clears_thre() {
 fn test_serial_mcr_write_read() {
     // Write MCR and read it back
     let code = [
-        0xB0, 0x0B,                     // MOV AL, 0x0B (DTR, RTS, OUT2)
-        0xBA, 0xFC, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FC (MCR)
-        0xEE,                           // OUT DX, AL
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xB0, 0x0B, // MOV AL, 0x0B (DTR, RTS, OUT2)
+        0xBA, 0xFC, 0x03, 0x00, 0x00, // MOV EDX, 0x3FC (MCR)
+        0xEE, // OUT DX, AL
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -596,11 +585,11 @@ fn test_serial_mcr_write_read() {
 fn test_serial_mcr_loopback_bit() {
     // Set loopback mode (bit 4)
     let code = [
-        0xB0, 0x10,                     // MOV AL, 0x10 (loopback)
-        0xBA, 0xFC, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FC (MCR)
-        0xEE,                           // OUT DX, AL
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xB0, 0x10, // MOV AL, 0x10 (loopback)
+        0xBA, 0xFC, 0x03, 0x00, 0x00, // MOV EDX, 0x3FC (MCR)
+        0xEE, // OUT DX, AL
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -616,9 +605,9 @@ fn test_serial_mcr_loopback_bit() {
 fn test_serial_msr_read() {
     // Read MSR
     let code = [
-        0xBA, 0xFE, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FE (MSR)
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xBA, 0xFE, 0x03, 0x00, 0x00, // MOV EDX, 0x3FE (MSR)
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -636,11 +625,11 @@ fn test_serial_msr_read() {
 fn test_serial_scratch_write_read() {
     // SCR should be a simple read/write register
     let code = [
-        0xB0, 0xA5,                     // MOV AL, 0xA5
-        0xBA, 0xFF, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FF (SCR)
-        0xEE,                           // OUT DX, AL
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xB0, 0xA5, // MOV AL, 0xA5
+        0xBA, 0xFF, 0x03, 0x00, 0x00, // MOV EDX, 0x3FF (SCR)
+        0xEE, // OUT DX, AL
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -652,17 +641,15 @@ fn test_serial_scratch_write_read() {
 fn test_serial_scratch_multiple_values() {
     // Write different values to scratch register
     let code = [
-        0xBA, 0xFF, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FF (SCR)
-
-        0xB0, 0x00,                     // MOV AL, 0x00
-        0xEE,                           // OUT DX, AL
-        0xEC,                           // IN AL, DX
-        0x88, 0xC4,                     // MOV AH, AL
-
-        0xB0, 0xFF,                     // MOV AL, 0xFF
-        0xEE,                           // OUT DX, AL
-        0xEC,                           // IN AL, DX
-        0xF4,                           // HLT
+        0xBA, 0xFF, 0x03, 0x00, 0x00, // MOV EDX, 0x3FF (SCR)
+        0xB0, 0x00, // MOV AL, 0x00
+        0xEE, // OUT DX, AL
+        0xEC, // IN AL, DX
+        0x88, 0xC4, // MOV AH, AL
+        0xB0, 0xFF, // MOV AL, 0xFF
+        0xEE, // OUT DX, AL
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -682,10 +669,10 @@ fn test_serial_fcr_write() {
     // Write FCR (same address as IIR but write-only)
     // FCR 0xC7 = FIFOs enabled, clear both FIFOs, trigger level 14
     let code = [
-        0xB0, 0xC7,                     // MOV AL, 0xC7
-        0xBA, 0xFA, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FA (FCR)
-        0xEE,                           // OUT DX, AL
-        0xF4,                           // HLT
+        0xB0, 0xC7, // MOV AL, 0xC7
+        0xBA, 0xFA, 0x03, 0x00, 0x00, // MOV EDX, 0x3FA (FCR)
+        0xEE, // OUT DX, AL
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -710,44 +697,37 @@ fn test_serial_typical_init_sequence() {
     // 7. Enable desired interrupts
     let code = [
         // 1. Disable interrupts
-        0xB0, 0x00,                     // MOV AL, 0x00
-        0xBA, 0xF9, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F9 (IER)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x00, // MOV AL, 0x00
+        0xBA, 0xF9, 0x03, 0x00, 0x00, // MOV EDX, 0x3F9 (IER)
+        0xEE, // OUT DX, AL
         // 2. Set DLAB
-        0xB0, 0x80,                     // MOV AL, 0x80
-        0xBA, 0xFB, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FB (LCR)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x80, // MOV AL, 0x80
+        0xBA, 0xFB, 0x03, 0x00, 0x00, // MOV EDX, 0x3FB (LCR)
+        0xEE, // OUT DX, AL
         // 3. Set divisor for 115200 baud (divisor = 1)
-        0xB0, 0x01,                     // MOV AL, 0x01 (DLL)
-        0xBA, 0xF8, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F8
-        0xEE,                           // OUT DX, AL
-        0xB0, 0x00,                     // MOV AL, 0x00 (DLM)
-        0xBA, 0xF9, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F9
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x01, // MOV AL, 0x01 (DLL)
+        0xBA, 0xF8, 0x03, 0x00, 0x00, // MOV EDX, 0x3F8
+        0xEE, // OUT DX, AL
+        0xB0, 0x00, // MOV AL, 0x00 (DLM)
+        0xBA, 0xF9, 0x03, 0x00, 0x00, // MOV EDX, 0x3F9
+        0xEE, // OUT DX, AL
         // 4. Set 8N1, clear DLAB
-        0xB0, 0x03,                     // MOV AL, 0x03
-        0xBA, 0xFB, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FB (LCR)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x03, // MOV AL, 0x03
+        0xBA, 0xFB, 0x03, 0x00, 0x00, // MOV EDX, 0x3FB (LCR)
+        0xEE, // OUT DX, AL
         // 5. Enable FIFO, clear, 14-byte trigger
-        0xB0, 0xC7,                     // MOV AL, 0xC7
-        0xBA, 0xFA, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FA (FCR)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0xC7, // MOV AL, 0xC7
+        0xBA, 0xFA, 0x03, 0x00, 0x00, // MOV EDX, 0x3FA (FCR)
+        0xEE, // OUT DX, AL
         // 6. Set MCR (DTR, RTS, OUT2)
-        0xB0, 0x0B,                     // MOV AL, 0x0B
-        0xBA, 0xFC, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FC (MCR)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x0B, // MOV AL, 0x0B
+        0xBA, 0xFC, 0x03, 0x00, 0x00, // MOV EDX, 0x3FC (MCR)
+        0xEE, // OUT DX, AL
         // 7. Enable RDA and THRE interrupts
-        0xB0, 0x03,                     // MOV AL, 0x03
-        0xBA, 0xF9, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F9 (IER)
-        0xEE,                           // OUT DX, AL
-
-        0xF4,                           // HLT
+        0xB0, 0x03, // MOV AL, 0x03
+        0xBA, 0xF9, 0x03, 0x00, 0x00, // MOV EDX, 0x3F9 (IER)
+        0xEE, // OUT DX, AL
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -761,19 +741,16 @@ fn test_serial_transmit_with_status_check() {
     // Real-world pattern: check LSR before transmitting
     let code = [
         // Check LSR for THRE
-        0xBA, 0xFD, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FD (LSR)
-        0xEC,                           // IN AL, DX
-
+        0xBA, 0xFD, 0x03, 0x00, 0x00, // MOV EDX, 0x3FD (LSR)
+        0xEC, // IN AL, DX
         // Write character (THRE should be set)
-        0xB0, 0x48,                     // MOV AL, 'H'
-        0xBA, 0xF8, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F8 (THR)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x48, // MOV AL, 'H'
+        0xBA, 0xF8, 0x03, 0x00, 0x00, // MOV EDX, 0x3F8 (THR)
+        0xEE, // OUT DX, AL
         // Check LSR again
-        0xBA, 0xFD, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FD (LSR)
-        0xEC,                           // IN AL, DX
-
-        0xF4,                           // HLT
+        0xBA, 0xFD, 0x03, 0x00, 0x00, // MOV EDX, 0x3FD (LSR)
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -783,9 +760,12 @@ fn test_serial_transmit_with_status_check() {
     assert_eq!(result.io_writes[0], (0x3F8, vec![0x48]));
 
     // Both LSR reads should show THRE set (transmitter always empty)
-    assert!(result.io_reads.iter().all(|(port, val)| {
-        *port != 0x3FD || (*val & LSR_THRE) != 0
-    }));
+    assert!(
+        result
+            .io_reads
+            .iter()
+            .all(|(port, val)| { *port != 0x3FD || (*val & LSR_THRE) != 0 })
+    );
 }
 
 // ============================================================================
@@ -798,14 +778,12 @@ fn test_serial_receive_poll_pattern() {
     // Note: This is a simplified version since we inject data beforehand
     let code = [
         // Read LSR to check for Data Ready
-        0xBA, 0xFD, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FD (LSR)
-        0xEC,                           // IN AL, DX
-
+        0xBA, 0xFD, 0x03, 0x00, 0x00, // MOV EDX, 0x3FD (LSR)
+        0xEC, // IN AL, DX
         // If bit 0 is set, read the data
-        0xBA, 0xF8, 0x03, 0x00, 0x00,  // MOV EDX, 0x3F8 (RBR)
-        0xEC,                           // IN AL, DX
-
-        0xF4,                           // HLT
+        0xBA, 0xF8, 0x03, 0x00, 0x00, // MOV EDX, 0x3F8 (RBR)
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial_input(&code, regs, b"T");
@@ -823,20 +801,17 @@ fn test_serial_dx_based_io_sequence() {
     // Use DX-based I/O exclusively
     let code = [
         // Write to LCR using DX
-        0x66, 0xBA, 0xFB, 0x03,        // MOV DX, 0x3FB
-        0xB0, 0x03,                     // MOV AL, 0x03
-        0xEE,                           // OUT DX, AL
-
+        0x66, 0xBA, 0xFB, 0x03, // MOV DX, 0x3FB
+        0xB0, 0x03, // MOV AL, 0x03
+        0xEE, // OUT DX, AL
         // Write to THR using DX
-        0x66, 0xBA, 0xF8, 0x03,        // MOV DX, 0x3F8
-        0xB0, 0x5A,                     // MOV AL, 'Z'
-        0xEE,                           // OUT DX, AL
-
+        0x66, 0xBA, 0xF8, 0x03, // MOV DX, 0x3F8
+        0xB0, 0x5A, // MOV AL, 'Z'
+        0xEE, // OUT DX, AL
         // Read LSR using DX
-        0x66, 0xBA, 0xFD, 0x03,        // MOV DX, 0x3FD
-        0xEC,                           // IN AL, DX
-
-        0xF4,                           // HLT
+        0x66, 0xBA, 0xFD, 0x03, // MOV DX, 0x3FD
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
@@ -857,22 +832,22 @@ fn test_serial_dx_based_io_sequence() {
 fn test_serial_out_of_range_port() {
     // Access port outside serial range - should not affect serial
     let code = [
-        0xB0, 0x42,                     // MOV AL, 0x42
-        0xBA, 0x00, 0x04, 0x00, 0x00,  // MOV EDX, 0x400 (outside range)
-        0xEE,                           // OUT DX, AL
-
+        0xB0, 0x42, // MOV AL, 0x42
+        0xBA, 0x00, 0x04, 0x00, 0x00, // MOV EDX, 0x400 (outside range)
+        0xEE, // OUT DX, AL
         // Read from valid serial port to verify it's unaffected
-        0xBA, 0xFD, 0x03, 0x00, 0x00,  // MOV EDX, 0x3FD (LSR)
-        0xEC,                           // IN AL, DX
-
-        0xF4,                           // HLT
+        0xBA, 0xFD, 0x03, 0x00, 0x00, // MOV EDX, 0x3FD (LSR)
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);
 
     // LSR should be normal (0x60)
-    assert_eq!(result.final_regs.rax & (LSR_THRE | LSR_TEMT) as u64,
-               (LSR_THRE | LSR_TEMT) as u64);
+    assert_eq!(
+        result.final_regs.rax & (LSR_THRE | LSR_TEMT) as u64,
+        (LSR_THRE | LSR_TEMT) as u64
+    );
 }
 
 #[test]
@@ -881,8 +856,8 @@ fn test_serial_immediate_port_form() {
     // Note: These only work for ports 0-255, so we can't test COM1 directly
     // This test verifies the instruction works for some port
     let code = [
-        0xE4, 0x80,                     // IN AL, 0x80 (debug port - not serial)
-        0xF4,                           // HLT
+        0xE4, 0x80, // IN AL, 0x80 (debug port - not serial)
+        0xF4, // HLT
     ];
     let regs = Registers::default();
     let result = run_with_serial(&code, regs);

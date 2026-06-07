@@ -149,14 +149,16 @@ fn test_vbroadcastss_xmm14_to_ymm15() {
 fn test_vbroadcastss_mem_to_ymm0() {
     // VBROADCASTSS YMM0, [mem32]
     let code = [
-        0xc4, 0xe2, 0x7d, 0x18, 0x05, 0x00, 0x40, 0x00, 0x00, // VBROADCASTSS YMM0, [rip + 0x4000]
+        0xc4, 0xe2, 0x7d, 0x18, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VBROADCASTSS YMM0, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     // Initialize memory with a single-precision float (1.5 = 0x3fc00000)
     let test_data: [u8; 4] = [0x00, 0x00, 0xc0, 0x3f]; // 1.5 as float32
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -165,13 +167,15 @@ fn test_vbroadcastss_mem_to_ymm0() {
 fn test_vbroadcastss_mem_to_ymm1() {
     // VBROADCASTSS YMM1, [mem32]
     let code = [
-        0xc4, 0xe2, 0x7d, 0x18, 0x0d, 0x00, 0x40, 0x00, 0x00, // VBROADCASTSS YMM1, [rip + 0x4000]
+        0xc4, 0xe2, 0x7d, 0x18, 0x0d, 0x00, 0x40, 0x00,
+        0x00, // VBROADCASTSS YMM1, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let test_data: [u8; 4] = [0x00, 0x00, 0x00, 0x40]; // 2.0 as float32
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -180,13 +184,15 @@ fn test_vbroadcastss_mem_to_ymm1() {
 fn test_vbroadcastss_mem_to_ymm8() {
     // VBROADCASTSS YMM8, [mem32]
     let code = [
-        0xc4, 0xc2, 0x7d, 0x18, 0x05, 0x00, 0x40, 0x00, 0x00, // VBROADCASTSS YMM8, [rip + 0x4000]
+        0xc4, 0xc2, 0x7d, 0x18, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VBROADCASTSS YMM8, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let test_data: [u8; 4] = [0x00, 0x00, 0x80, 0x3f]; // 1.0 as float32
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -195,13 +201,15 @@ fn test_vbroadcastss_mem_to_ymm8() {
 fn test_vbroadcastss_mem_to_ymm15() {
     // VBROADCASTSS YMM15, [mem32]
     let code = [
-        0xc4, 0xc2, 0x7d, 0x18, 0x3d, 0x00, 0x40, 0x00, 0x00, // VBROADCASTSS YMM15, [rip + 0x4000]
+        0xc4, 0xc2, 0x7d, 0x18, 0x3d, 0x00, 0x40, 0x00,
+        0x00, // VBROADCASTSS YMM15, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let test_data: [u8; 4] = [0x00, 0x00, 0x00, 0xc0]; // -2.0 as float32
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -339,14 +347,16 @@ fn test_vbroadcastsd_xmm14_to_ymm15() {
 fn test_vbroadcastsd_mem_to_ymm0() {
     // VBROADCASTSD YMM0, [mem64]
     let code = [
-        0xc4, 0xe2, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00, 0x00, // VBROADCASTSD YMM0, [rip + 0x4000]
+        0xc4, 0xe2, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VBROADCASTSD YMM0, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     // Initialize memory with a double-precision float (1.5 = 0x3ff8000000000000)
     let test_data: [u8; 8] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf8, 0x3f];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -355,14 +365,16 @@ fn test_vbroadcastsd_mem_to_ymm0() {
 fn test_vbroadcastsd_mem_to_ymm1() {
     // VBROADCASTSD YMM1, [mem64]
     let code = [
-        0xc4, 0xe2, 0x7d, 0x19, 0x0d, 0x00, 0x40, 0x00, 0x00, // VBROADCASTSD YMM1, [rip + 0x4000]
+        0xc4, 0xe2, 0x7d, 0x19, 0x0d, 0x00, 0x40, 0x00,
+        0x00, // VBROADCASTSD YMM1, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     // 2.0 as float64
     let test_data: [u8; 8] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -371,14 +383,16 @@ fn test_vbroadcastsd_mem_to_ymm1() {
 fn test_vbroadcastsd_mem_to_ymm8() {
     // VBROADCASTSD YMM8, [mem64]
     let code = [
-        0xc4, 0xc2, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00, 0x00, // VBROADCASTSD YMM8, [rip + 0x4000]
+        0xc4, 0xc2, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VBROADCASTSD YMM8, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     // 1.0 as float64
     let test_data: [u8; 8] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -387,14 +401,16 @@ fn test_vbroadcastsd_mem_to_ymm8() {
 fn test_vbroadcastsd_mem_to_ymm15() {
     // VBROADCASTSD YMM15, [mem64]
     let code = [
-        0xc4, 0xc2, 0x7d, 0x19, 0x3d, 0x00, 0x40, 0x00, 0x00, // VBROADCASTSD YMM15, [rip + 0x4000]
+        0xc4, 0xc2, 0x7d, 0x19, 0x3d, 0x00, 0x40, 0x00,
+        0x00, // VBROADCASTSD YMM15, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     // 3.0 as float64
     let test_data: [u8; 8] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x40];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }

@@ -68,7 +68,11 @@ fn test_shlx_32bit_shift_one() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x55555554, "EAX should be shifted left by 1");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x55555554,
+        "EAX should be shifted left by 1"
+    );
 }
 
 #[test]
@@ -84,7 +88,11 @@ fn test_shlx_32bit_shift_to_high_bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX should have high bit set");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX should have high bit set"
+    );
 }
 
 #[test]
@@ -101,7 +109,11 @@ fn test_shlx_32bit_shift_overflow() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Count is masked to 5 bits (32 & 0x1F = 0)
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX should be unchanged (count masked to 0)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX should be unchanged (count masked to 0)"
+    );
 }
 
 #[test]
@@ -117,7 +129,11 @@ fn test_shlx_32bit_count_masked() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 2, "EAX should be shifted by 1 (33 & 0x1F = 1)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        2,
+        "EAX should be shifted by 1 (33 & 0x1F = 1)"
+    );
 }
 
 // ============================================================================
@@ -185,7 +201,10 @@ fn test_shlx_64bit_large_shift() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFFFFFFFF00000000, "RAX should be shifted left by 32");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFF00000000,
+        "RAX should be shifted left by 32"
+    );
 }
 
 // ============================================================================
@@ -253,7 +272,11 @@ fn test_shrx_32bit_no_sign_extend() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x40000000, "EAX should not sign extend");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x40000000,
+        "EAX should not sign extend"
+    );
 }
 
 #[test]
@@ -269,7 +292,11 @@ fn test_shrx_32bit_count_masked() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x7FFFFFFF, "EAX should be shifted by 1");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x7FFFFFFF,
+        "EAX should be shifted by 1"
+    );
 }
 
 // ============================================================================
@@ -337,7 +364,10 @@ fn test_shrx_64bit_large_shift() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x00000000FFFFFFFF, "RAX should be shifted right by 32");
+    assert_eq!(
+        regs.rax, 0x00000000FFFFFFFF,
+        "RAX should be shifted right by 32"
+    );
 }
 
 // ============================================================================
@@ -421,7 +451,11 @@ fn test_sarx_32bit_positive_no_sign() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x3FFFFFFF, "EAX should not sign extend");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x3FFFFFFF,
+        "EAX should not sign extend"
+    );
 }
 
 // ============================================================================
@@ -501,8 +535,8 @@ fn test_shlx_32bit_flags_not_modified() {
     // Test that SHLX does not modify flags
     let code = [
         0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // mov rax, 1
-        0x48, 0x83, 0xe8, 0x02,                   // sub rax, 2 (sets CF, SF, AF)
-        0xc4, 0xe2, 0x71, 0xf7, 0xc3,             // SHLX EAX, EBX, ECX
+        0x48, 0x83, 0xe8, 0x02, // sub rax, 2 (sets CF, SF, AF)
+        0xc4, 0xe2, 0x71, 0xf7, 0xc3, // SHLX EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -520,8 +554,8 @@ fn test_shrx_64bit_flags_not_modified() {
     // Test that SHRX does not modify flags
     let code = [
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // mov rax, 0
-        0x48, 0xff, 0xc0,                         // inc rax (clears ZF)
-        0xc4, 0xe2, 0xf3, 0xf7, 0xc3,             // SHRX RAX, RBX, RCX
+        0x48, 0xff, 0xc0, // inc rax (clears ZF)
+        0xc4, 0xe2, 0xf3, 0xf7, 0xc3, // SHRX RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -537,7 +571,7 @@ fn test_shrx_64bit_flags_not_modified() {
 fn test_sarx_32bit_flags_not_modified() {
     // Test that SARX does not modify flags
     let code = [
-        0xf9,                         // stc (set CF)
+        0xf9, // stc (set CF)
         0xc4, 0xe2, 0x72, 0xf7, 0xc3, // SARX EAX, EBX, ECX
         0xf4,
     ];
@@ -671,7 +705,11 @@ fn test_shlx_32bit_all_bits_shift_out() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX should have only high bit");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX should have only high bit"
+    );
 }
 
 #[test]
@@ -719,7 +757,10 @@ fn test_shlx_64bit_alternating_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xAAAAAAAAAAAAAAAA, "RAX should be shifted pattern");
+    assert_eq!(
+        regs.rax, 0xAAAAAAAAAAAAAAAA,
+        "RAX should be shifted pattern"
+    );
 }
 
 #[test]
@@ -735,7 +776,11 @@ fn test_shrx_32bit_alternating_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x55555555, "EAX should be shifted pattern");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x55555555,
+        "EAX should be shifted pattern"
+    );
 }
 
 #[test]
@@ -762,7 +807,11 @@ fn test_comparison_shrx_vs_sarx_positive() {
     let (mut vcpu2, _) = setup_vm(&sarx_code, Some(regs2));
     let regs2 = run_until_hlt(&mut vcpu2).unwrap();
 
-    assert_eq!(regs1.rax & 0xFFFFFFFF, regs2.rax & 0xFFFFFFFF, "SHRX and SARX should be same for positive");
+    assert_eq!(
+        regs1.rax & 0xFFFFFFFF,
+        regs2.rax & 0xFFFFFFFF,
+        "SHRX and SARX should be same for positive"
+    );
 }
 
 #[test]
@@ -789,9 +838,21 @@ fn test_comparison_shrx_vs_sarx_negative() {
     let (mut vcpu2, _) = setup_vm(&sarx_code, Some(regs2));
     let regs2 = run_until_hlt(&mut vcpu2).unwrap();
 
-    assert_ne!(regs1.rax & 0xFFFFFFFF, regs2.rax & 0xFFFFFFFF, "SHRX and SARX should differ for negative");
-    assert_eq!(regs1.rax & 0xFFFFFFFF, 0x08000000, "SHRX should not sign extend");
-    assert_eq!(regs2.rax & 0xFFFFFFFF, 0xF8000000, "SARX should sign extend");
+    assert_ne!(
+        regs1.rax & 0xFFFFFFFF,
+        regs2.rax & 0xFFFFFFFF,
+        "SHRX and SARX should differ for negative"
+    );
+    assert_eq!(
+        regs1.rax & 0xFFFFFFFF,
+        0x08000000,
+        "SHRX should not sign extend"
+    );
+    assert_eq!(
+        regs2.rax & 0xFFFFFFFF,
+        0xF8000000,
+        "SARX should sign extend"
+    );
 }
 
 #[test]
@@ -807,7 +868,11 @@ fn test_shlx_32bit_count_63() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should be 0 (2 << 31 in 32-bit wraps)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "EAX should be 0 (2 << 31 in 32-bit wraps)"
+    );
 }
 
 #[test]
@@ -831,7 +896,7 @@ fn test_sarx_32bit_multiple_operations() {
     // Multiple SARX operations to verify state
     let code = [
         0xc4, 0xe2, 0x72, 0xf7, 0xc3, // SARX EAX, EBX, ECX
-        0x48, 0x89, 0xc3,             // mov rbx, rax
+        0x48, 0x89, 0xc3, // mov rbx, rax
         0xc4, 0xe2, 0x6a, 0xf7, 0xc3, // SARX EAX, EBX, EDX
         0xf4,
     ];
@@ -844,5 +909,9 @@ fn test_sarx_32bit_multiple_operations() {
 
     // First: 0x80000000 >> 1 = 0xC0000000
     // Second: 0xC0000000 >> 1 = 0xE0000000
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xE0000000, "EAX should be double shifted");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xE0000000,
+        "EAX should be double shifted"
+    );
 }

@@ -93,7 +93,7 @@ fn test_vpmadd52luq_xmm_memory() {
     // VPMADD52LUQ XMM0, XMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0xF5, 0x08, 0xB4, 0x00,       // VPMADD52LUQ xmm0, xmm1, [rax]
+        0x62, 0xF2, 0xF5, 0x08, 0xB4, 0x00, // VPMADD52LUQ xmm0, xmm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -105,7 +105,7 @@ fn test_vpmadd52luq_ymm_memory() {
     // VPMADD52LUQ YMM0, YMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0xF5, 0x28, 0xB4, 0x00,       // VPMADD52LUQ ymm0, ymm1, [rax]
+        0x62, 0xF2, 0xF5, 0x28, 0xB4, 0x00, // VPMADD52LUQ ymm0, ymm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -117,7 +117,7 @@ fn test_vpmadd52luq_zmm_memory() {
     // VPMADD52LUQ ZMM0, ZMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0xF5, 0x48, 0xB4, 0x00,       // VPMADD52LUQ zmm0, zmm1, [rax]
+        0x62, 0xF2, 0xF5, 0x48, 0xB4, 0x00, // VPMADD52LUQ zmm0, zmm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -151,7 +151,7 @@ fn test_vpmadd52luq_zmm_broadcast() {
     // VPMADD52LUQ ZMM0, ZMM1, qword ptr [RAX]{1to8}
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0xF5, 0x58, 0xB4, 0x00,       // VPMADD52LUQ zmm0, zmm1, [rax]{1to8}
+        0x62, 0xF2, 0xF5, 0x58, 0xB4, 0x00, // VPMADD52LUQ zmm0, zmm1, [rax]{1to8}
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -234,7 +234,7 @@ fn test_vpmadd52huq_xmm_memory() {
     // VPMADD52HUQ XMM0, XMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0xF5, 0x08, 0xB5, 0x00,       // VPMADD52HUQ xmm0, xmm1, [rax]
+        0x62, 0xF2, 0xF5, 0x08, 0xB5, 0x00, // VPMADD52HUQ xmm0, xmm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -246,7 +246,7 @@ fn test_vpmadd52huq_ymm_memory() {
     // VPMADD52HUQ YMM0, YMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0xF5, 0x28, 0xB5, 0x00,       // VPMADD52HUQ ymm0, ymm1, [rax]
+        0x62, 0xF2, 0xF5, 0x28, 0xB5, 0x00, // VPMADD52HUQ ymm0, ymm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -258,7 +258,7 @@ fn test_vpmadd52huq_zmm_memory() {
     // VPMADD52HUQ ZMM0, ZMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0xF5, 0x48, 0xB5, 0x00,       // VPMADD52HUQ zmm0, zmm1, [rax]
+        0x62, 0xF2, 0xF5, 0x48, 0xB5, 0x00, // VPMADD52HUQ zmm0, zmm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -292,7 +292,7 @@ fn test_vpmadd52huq_zmm_broadcast() {
     // VPMADD52HUQ ZMM0, ZMM1, qword ptr [RAX]{1to8}
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0xF5, 0x58, 0xB5, 0x00,       // VPMADD52HUQ zmm0, zmm1, [rax]{1to8}
+        0x62, 0xF2, 0xF5, 0x58, 0xB5, 0x00, // VPMADD52HUQ zmm0, zmm1, [rax]{1to8}
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

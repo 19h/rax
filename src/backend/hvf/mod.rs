@@ -698,7 +698,7 @@ impl VCpu for HvfVcpu {
             _ => {
                 return Err(Error::InvalidConfig(
                     "HVF backend only supports x86_64 state".to_string(),
-                ))
+                ));
             }
         };
 

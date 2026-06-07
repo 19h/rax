@@ -167,7 +167,11 @@ fn group1_rm_imm32_mem(
     ctx.cursor = modrm_start + 1 + extra;
     let dst = vcpu.read_mem(addr, op_size)?;
     let imm = ctx.consume_imm(imm_size)?;
-    let imm = if op_size == 8 { imm as i32 as i64 as u64 } else { imm };
+    let imm = if op_size == 8 {
+        imm as i32 as i64 as u64
+    } else {
+        imm
+    };
     let (result, update_dest) = apply_group1(vcpu, op, dst, imm, op_size);
     if update_dest {
         vcpu.write_mem(addr, result, op_size)?;
@@ -192,7 +196,11 @@ pub fn group1_rm_imm32(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<O
     let dst = vcpu.get_reg(rm, op_size);
 
     let imm = ctx.consume_imm(imm_size)?;
-    let imm = if op_size == 8 { imm as i32 as i64 as u64 } else { imm };
+    let imm = if op_size == 8 {
+        imm as i32 as i64 as u64
+    } else {
+        imm
+    };
 
     let (result, update_dest) = apply_group1(vcpu, op, dst, imm, op_size);
     if update_dest {

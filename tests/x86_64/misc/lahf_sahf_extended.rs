@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm, cf_set, zf_set, sf_set, pf_set, af_set};
+use crate::common::{af_set, cf_set, pf_set, run_until_hlt, setup_vm, sf_set, zf_set};
 use rax::cpu::Registers;
 
 // Comprehensive tests for LAHF and SAHF instructions

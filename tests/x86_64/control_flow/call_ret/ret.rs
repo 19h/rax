@@ -182,7 +182,10 @@ fn test_ret_after_push() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rsp, 0x1000, "Stack balanced after PUSH/POP in function");
+    assert_eq!(
+        regs.rsp, 0x1000,
+        "Stack balanced after PUSH/POP in function"
+    );
 }
 
 // RET with stack frame

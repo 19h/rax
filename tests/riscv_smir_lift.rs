@@ -69,10 +69,7 @@ impl State {
         }
         for i in 0..32 {
             if self.v[i] != o.v[i] {
-                return Some(format!(
-                    "v{i}: ref={:02x?} smir={:02x?}",
-                    self.v[i], o.v[i]
-                ));
+                return Some(format!("v{i}: ref={:02x?} smir={:02x?}", self.v[i], o.v[i]));
             }
         }
         if self.vl != o.vl {
@@ -82,7 +79,10 @@ impl State {
             return Some(format!("vtype: ref={:#x} smir={:#x}", self.vtype, o.vtype));
         }
         if self.vstart != o.vstart {
-            return Some(format!("vstart: ref={:#x} smir={:#x}", self.vstart, o.vstart));
+            return Some(format!(
+                "vstart: ref={:#x} smir={:#x}",
+                self.vstart, o.vstart
+            ));
         }
         if self.vcsr != o.vcsr {
             return Some(format!("vcsr: ref={:#x} smir={:#x}", self.vcsr, o.vcsr));
@@ -648,7 +648,11 @@ fn lift_csr() {
                     matched += 1;
                 }
             }
-            Ok(None) => *gaps.entry(format!("{:?} csr={csr:#x}", insn.op)).or_default() += 1,
+            Ok(None) => {
+                *gaps
+                    .entry(format!("{:?} csr={csr:#x}", insn.op))
+                    .or_default() += 1
+            }
             Err(e) => diverged.push((w, format!("{:?}: {e}", insn.op))),
         }
     }
@@ -814,13 +818,28 @@ fn lift_v() {
     // Base reg a0=x10, stride a3=x13, AVL a2=x12, dest x-reg a1=x11.
     let prog: &[(&str, u32)] = &[
         // -- configuration (writes x[rd], vl, vtype) --
-        ("vsetvli a1,a2,e32m1", (E32_M1 as u32) << 20 | (12 << 15) | (7 << 12) | (11 << 7) | 0x57),
+        (
+            "vsetvli a1,a2,e32m1",
+            (E32_M1 as u32) << 20 | (12 << 15) | (7 << 12) | (11 << 7) | 0x57,
+        ),
         // -- unit-stride load / store (vd / memory) --
-        ("vle32.v v1,(a0)", (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07),
-        ("vse32.v v1,(a0)", (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x27),
+        (
+            "vle32.v v1,(a0)",
+            (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07,
+        ),
+        (
+            "vse32.v v1,(a0)",
+            (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x27,
+        ),
         // -- strided load / store --
-        ("vlse32.v v1,(a0),a3", (0b10 << 26) | (1 << 25) | (13 << 20) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07),
-        ("vsse32.v v1,(a0),a3", (0b10 << 26) | (1 << 25) | (13 << 20) | (10 << 15) | (6 << 12) | (1 << 7) | 0x27),
+        (
+            "vlse32.v v1,(a0),a3",
+            (0b10 << 26) | (1 << 25) | (13 << 20) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07,
+        ),
+        (
+            "vsse32.v v1,(a0),a3",
+            (0b10 << 26) | (1 << 25) | (13 << 20) | (10 << 15) | (6 << 12) | (1 << 7) | 0x27,
+        ),
         // -- integer arithmetic vv / vx / vi --
         ("vadd.vv v1,v2,v3", vop(0b000000, 1, 2, 3, 0, 1)),
         ("vadd.vx v1,v2,x13", vop(0b000000, 1, 2, 13, 4, 1)),
@@ -987,7 +1006,10 @@ fn lift_exhaustive_audit() {
         }
     }
 
-    eprintln!("lift_exhaustive_audit: executed={executed}, gap-ops={}", gaps.len());
+    eprintln!(
+        "lift_exhaustive_audit: executed={executed}, gap-ops={}",
+        gaps.len()
+    );
     let mut gv: Vec<_> = gaps.iter().collect();
     gv.sort_by(|a, b| b.1.cmp(a.1));
     for (op, n) in gv.iter() {
@@ -1004,7 +1026,14 @@ fn lift_exhaustive_audit() {
     let allowed = |op: &str| {
         matches!(
             op,
-            "Ecall" | "Ebreak" | "Fence" | "FenceI" | "Mret" | "Sret" | "Wfi" | "Pause"
+            "Ecall"
+                | "Ebreak"
+                | "Fence"
+                | "FenceI"
+                | "Mret"
+                | "Sret"
+                | "Wfi"
+                | "Pause"
                 | "c.Ebreak"
         ) || op.starts_with("Csrr")
     };

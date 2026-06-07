@@ -1,5 +1,5 @@
-use crate::common::{run_until_hlt, setup_vm};
 use crate::common::*;
+use crate::common::{run_until_hlt, setup_vm};
 use rax::backend::emulator::x86_64::flags;
 use rax::cpu::Registers;
 
@@ -477,7 +477,8 @@ fn test_test_byte_ptr_imm8() {
 #[test]
 fn test_test_dword_ptr_imm32() {
     let code = [
-        0xf7, 0x05, 0xf6, 0x0f, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, // TEST DWORD PTR [rip+0x0FF6], 0x000000FF
+        0xf7, 0x05, 0xf6, 0x0f, 0x00, 0x00, 0xFF, 0x00, 0x00,
+        0x00, // TEST DWORD PTR [rip+0x0FF6], 0x000000FF
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -576,7 +577,10 @@ fn test_strict_test_zero_result_flags() {
     assert!(zf_set(regs.rflags), "ZF set (AND = 0)");
     assert!(!sf_set(regs.rflags), "SF clear");
     assert!(pf_set(regs.rflags), "PF set (0)");
-    assert!(!cf_set(regs.rflags) && !of_set(regs.rflags), "CF/OF cleared");
+    assert!(
+        !cf_set(regs.rflags) && !of_set(regs.rflags),
+        "CF/OF cleared"
+    );
 }
 
 #[test]

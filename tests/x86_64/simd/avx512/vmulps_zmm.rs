@@ -370,7 +370,8 @@ fn test_vmulps_zmm0_zmm1_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -388,7 +389,8 @@ fn test_vmulps_zmm7_zmm6_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -406,7 +408,8 @@ fn test_vmulps_zmm15_zmm14_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -424,7 +427,8 @@ fn test_vmulps_zmm31_zmm30_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -538,7 +542,8 @@ fn test_vmulps_mem_base_displacement() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -556,7 +561,8 @@ fn test_vmulps_mem_with_rbx_base() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -574,7 +580,8 @@ fn test_vmulps_mem_with_rcx_base() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -592,6 +599,7 @@ fn test_vmulps_mem_with_rdx_base() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

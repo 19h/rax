@@ -1,5 +1,8 @@
 // Module path for tests run via x86_64.rs
-use crate::common::{run_until_hlt, setup_vm, read_mem_at_u8, read_mem_at_u16, read_mem_at_u32, read_mem_at_u64, write_mem_at_u8, write_mem_at_u16, write_mem_at_u32, write_mem_at_u64};
+use crate::common::{
+    read_mem_at_u8, read_mem_at_u16, read_mem_at_u32, read_mem_at_u64, run_until_hlt, setup_vm,
+    write_mem_at_u8, write_mem_at_u16, write_mem_at_u32, write_mem_at_u64,
+};
 use rax::cpu::Registers;
 
 // CLDEMOTE - Cache Line Demote
@@ -395,7 +398,7 @@ fn test_cldemote_write_then_demote() {
     // Write to memory, then CLDEMOTE
     let code = [
         0x48, 0xc7, 0x00, 0x99, 0x00, 0x00, 0x00, // MOV qword [rax], 0x99
-        0x0f, 0x1c, 0x00,                         // CLDEMOTE [rax]
+        0x0f, 0x1c, 0x00, // CLDEMOTE [rax]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -412,8 +415,8 @@ fn test_cldemote_write_then_demote() {
 fn test_cldemote_demote_then_read() {
     // CLDEMOTE then read from memory
     let code = [
-        0x0f, 0x1c, 0x00,             // CLDEMOTE [rax]
-        0x48, 0x8b, 0x18,             // MOV rbx, [rax]
+        0x0f, 0x1c, 0x00, // CLDEMOTE [rax]
+        0x48, 0x8b, 0x18, // MOV rbx, [rax]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -450,9 +453,9 @@ fn test_cldemote_same_location_twice() {
 fn test_cldemote_different_offsets_same_line() {
     // CLDEMOTE on different offsets in the same cache line
     let code = [
-        0x0f, 0x1c, 0x00,             // CLDEMOTE [rax]
-        0x0f, 0x1c, 0x40, 0x08,       // CLDEMOTE [rax + 8]
-        0x0f, 0x1c, 0x40, 0x10,       // CLDEMOTE [rax + 16]
+        0x0f, 0x1c, 0x00, // CLDEMOTE [rax]
+        0x0f, 0x1c, 0x40, 0x08, // CLDEMOTE [rax + 8]
+        0x0f, 0x1c, 0x40, 0x10, // CLDEMOTE [rax + 16]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -597,8 +600,8 @@ fn test_cldemote_with_sib_displacement() {
 fn test_cldemote_after_atomic_operation() {
     // CLDEMOTE after atomic operation
     let code = [
-        0xf0, 0x48, 0xff, 0x00,       // LOCK INC qword [rax]
-        0x0f, 0x1c, 0x00,             // CLDEMOTE [rax]
+        0xf0, 0x48, 0xff, 0x00, // LOCK INC qword [rax]
+        0x0f, 0x1c, 0x00, // CLDEMOTE [rax]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -615,7 +618,7 @@ fn test_cldemote_after_atomic_operation() {
 fn test_cldemote_multiple_cache_lines() {
     // Demote multiple cache lines
     let code = [
-        0x0f, 0x1c, 0x00,                         // CLDEMOTE [rax]
+        0x0f, 0x1c, 0x00, // CLDEMOTE [rax]
         0x0f, 0x1c, 0x80, 0x40, 0x00, 0x00, 0x00, // CLDEMOTE [rax + 0x40]
         0x0f, 0x1c, 0x80, 0x80, 0x00, 0x00, 0x00, // CLDEMOTE [rax + 0x80]
         0xf4,
@@ -640,9 +643,9 @@ fn test_cldemote_interleaved_with_operations() {
     // CLDEMOTE interleaved with other operations
     let code = [
         0x48, 0xc7, 0xc0, 0x42, 0x00, 0x00, 0x00, // MOV rax, 0x42
-        0x0f, 0x1c, 0x03,                         // CLDEMOTE [rbx]
+        0x0f, 0x1c, 0x03, // CLDEMOTE [rbx]
         0x48, 0xc7, 0xc1, 0x84, 0x00, 0x00, 0x00, // MOV rcx, 0x84
-        0x0f, 0x1c, 0x02,                         // CLDEMOTE [rdx]
+        0x0f, 0x1c, 0x02, // CLDEMOTE [rdx]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -666,9 +669,9 @@ fn test_cldemote_write_modify_demote_read() {
     // Write, modify, CLDEMOTE, read sequence
     let code = [
         0x48, 0xc7, 0x00, 0x11, 0x00, 0x00, 0x00, // MOV qword [rax], 0x11
-        0x48, 0xff, 0x00,                         // INC qword [rax]
-        0x0f, 0x1c, 0x00,                         // CLDEMOTE [rax]
-        0x48, 0x8b, 0x18,                         // MOV rbx, [rax]
+        0x48, 0xff, 0x00, // INC qword [rax]
+        0x0f, 0x1c, 0x00, // CLDEMOTE [rax]
+        0x48, 0x8b, 0x18, // MOV rbx, [rax]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -683,12 +686,12 @@ fn test_cldemote_write_modify_demote_read() {
 fn test_cldemote_with_different_data_sizes() {
     // CLDEMOTE after writing different data sizes
     let code = [
-        0xc6, 0x00, 0xAA,                         // MOV byte [rax], 0xAA
-        0x0f, 0x1c, 0x00,                         // CLDEMOTE [rax]
-        0x66, 0xc7, 0x40, 0x08, 0xBB, 0xCC,       // MOV word [rax+8], 0xCCBB
-        0x0f, 0x1c, 0x40, 0x08,                   // CLDEMOTE [rax+8]
+        0xc6, 0x00, 0xAA, // MOV byte [rax], 0xAA
+        0x0f, 0x1c, 0x00, // CLDEMOTE [rax]
+        0x66, 0xc7, 0x40, 0x08, 0xBB, 0xCC, // MOV word [rax+8], 0xCCBB
+        0x0f, 0x1c, 0x40, 0x08, // CLDEMOTE [rax+8]
         0xc7, 0x40, 0x10, 0xDD, 0xEE, 0xFF, 0x00, // MOV dword [rax+16], 0x00FFEEDD
-        0x0f, 0x1c, 0x40, 0x10,                   // CLDEMOTE [rax+16]
+        0x0f, 0x1c, 0x40, 0x10, // CLDEMOTE [rax+16]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -706,11 +709,11 @@ fn test_cldemote_with_different_data_sizes() {
 fn test_cldemote_loop_pattern() {
     // Simulate loop demote pattern
     let code = [
-        0x0f, 0x1c, 0x00,             // CLDEMOTE [rax]
-        0x48, 0x83, 0xc0, 0x40,       // ADD rax, 0x40
-        0x0f, 0x1c, 0x00,             // CLDEMOTE [rax]
-        0x48, 0x83, 0xc0, 0x40,       // ADD rax, 0x40
-        0x0f, 0x1c, 0x00,             // CLDEMOTE [rax]
+        0x0f, 0x1c, 0x00, // CLDEMOTE [rax]
+        0x48, 0x83, 0xc0, 0x40, // ADD rax, 0x40
+        0x0f, 0x1c, 0x00, // CLDEMOTE [rax]
+        0x48, 0x83, 0xc0, 0x40, // ADD rax, 0x40
+        0x0f, 0x1c, 0x00, // CLDEMOTE [rax]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -764,9 +767,9 @@ fn test_cldemote_all_extended_registers() {
 fn test_cldemote_consecutive_addresses() {
     // CLDEMOTE on consecutive byte addresses
     let code = [
-        0x0f, 0x1c, 0x00,             // CLDEMOTE [rax]
-        0x0f, 0x1c, 0x40, 0x01,       // CLDEMOTE [rax + 1]
-        0x0f, 0x1c, 0x40, 0x02,       // CLDEMOTE [rax + 2]
+        0x0f, 0x1c, 0x00, // CLDEMOTE [rax]
+        0x0f, 0x1c, 0x40, 0x01, // CLDEMOTE [rax + 1]
+        0x0f, 0x1c, 0x40, 0x02, // CLDEMOTE [rax + 2]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -828,9 +831,9 @@ fn test_cldemote_array_pattern() {
     // Simulate demoting array elements
     let code = [
         0x0f, 0x1c, 0x04, 0xc8, // CLDEMOTE [rax + rcx*8]
-        0x48, 0xff, 0xc1,       // INC rcx
+        0x48, 0xff, 0xc1, // INC rcx
         0x0f, 0x1c, 0x04, 0xc8, // CLDEMOTE [rax + rcx*8]
-        0x48, 0xff, 0xc1,       // INC rcx
+        0x48, 0xff, 0xc1, // INC rcx
         0x0f, 0x1c, 0x04, 0xc8, // CLDEMOTE [rax + rcx*8]
         0xf4,
     ];

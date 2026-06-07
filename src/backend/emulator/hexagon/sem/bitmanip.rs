@@ -8,7 +8,7 @@
 //! See `sem/alu.rs` for the established style. Verified against `qemu-hexagon`.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fimm_u, fld, SemCtx};
+use super::{SemCtx, fimm_u, fld};
 
 // --- macro helpers ----------------------------------------------------------
 
@@ -46,11 +46,7 @@ fn bidir_lshiftl_one(shamt: i64) -> u64 {
     if shamt < 0 {
         let s = (-shamt) - 1;
         // (1u64 >> s) >> 1 ; any positive shift of 1 yields 0
-        if s >= 63 {
-            0
-        } else {
-            (1u64 >> s) >> 1
-        }
+        if s >= 63 { 0 } else { (1u64 >> s) >> 1 }
     } else if shamt >= 64 {
         0
     } else {
@@ -280,7 +276,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::S2_insert => {
             let width = ui(ctx);
             let offset = big_ui(ctx);
-            let mask = if width >= 64 { u64::MAX } else { (1u64 << width) - 1 };
+            let mask = if width >= 64 {
+                u64::MAX
+            } else {
+                (1u64 << width) - 1
+            };
             let mut x = ctx.r(fld(d, b'x')) as u64;
             x &= !(mask << offset);
             x |= ((s(ctx) as u64) & mask) << offset;
@@ -289,7 +289,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::S2_insertp => {
             let width = ui(ctx);
             let offset = big_ui(ctx);
-            let mask = if width >= 64 { u64::MAX } else { (1u64 << width) - 1 };
+            let mask = if width >= 64 {
+                u64::MAX
+            } else {
+                (1u64 << width) - 1
+            };
             let mut x = ctx.rp(fld(d, b'x'));
             x &= !(mask << offset);
             x |= (sp(ctx) & mask) << offset;
@@ -300,7 +304,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::S2_insert_rp => {
             let width = zxtn(6, getword(1, tp(ctx)) as u64) as u32;
             let offset = sxtn(7, getword(0, tp(ctx)) as u64);
-            let mask = if width >= 64 { u64::MAX } else { (1u64 << width) - 1 };
+            let mask = if width >= 64 {
+                u64::MAX
+            } else {
+                (1u64 << width) - 1
+            };
             if offset < 0 {
                 ctx.set_r(fld(d, b'x'), 0);
             } else {
@@ -314,7 +322,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::S2_insertp_rp => {
             let width = zxtn(6, getword(1, tp(ctx)) as u64) as u32;
             let offset = sxtn(7, getword(0, tp(ctx)) as u64);
-            let mask = if width >= 64 { u64::MAX } else { (1u64 << width) - 1 };
+            let mask = if width >= 64 {
+                u64::MAX
+            } else {
+                (1u64 << width) - 1
+            };
             if offset < 0 {
                 ctx.set_rp(fld(d, b'x'), 0);
             } else {

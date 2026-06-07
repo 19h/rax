@@ -84,7 +84,12 @@ fn test_das_valid_bcd_values() {
         let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFF, *val as u64, "AL should remain {:#04x}", val);
+        assert_eq!(
+            regs.rax & 0xFF,
+            *val as u64,
+            "AL should remain {:#04x}",
+            val
+        );
         assert!(!cf_set(regs.rflags), "CF should be clear for {:#04x}", val);
         assert!(!af_set(regs.rflags), "AF should be clear for {:#04x}", val);
     }
@@ -210,8 +215,8 @@ fn test_das_after_sub_79_minus_35() {
     let code = [
         0xb0, 0x79, // MOV AL, 0x79
         0x2c, 0x35, // SUB AL, 0x35
-        0x2f,       // DAS
-        0xf4,       // HLT
+        0x2f, // DAS
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -226,8 +231,8 @@ fn test_das_after_sub_35_minus_47() {
     let code = [
         0xb0, 0x35, // MOV AL, 0x35
         0x2c, 0x47, // SUB AL, 0x47 (result: 0xEE with borrow)
-        0x2f,       // DAS (should produce 0x88 with CF=1)
-        0xf4,       // HLT
+        0x2f, // DAS (should produce 0x88 with CF=1)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -242,8 +247,8 @@ fn test_das_after_sub_99_minus_01() {
     let code = [
         0xb0, 0x99, // MOV AL, 0x99
         0x2c, 0x01, // SUB AL, 0x01 (result: 0x98)
-        0x2f,       // DAS
-        0xf4,       // HLT
+        0x2f, // DAS
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -258,8 +263,8 @@ fn test_das_after_sub_50_minus_25() {
     let code = [
         0xb0, 0x50, // MOV AL, 0x50
         0x2c, 0x25, // SUB AL, 0x25 (result: 0x2B)
-        0x2f,       // DAS
-        0xf4,       // HLT
+        0x2f, // DAS
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -274,8 +279,8 @@ fn test_das_after_sub_88_minus_99() {
     let code = [
         0xb0, 0x88, // MOV AL, 0x88
         0x2c, 0x99, // SUB AL, 0x99 (result: 0xEF with borrow)
-        0x2f,       // DAS
-        0xf4,       // HLT
+        0x2f, // DAS
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -333,7 +338,11 @@ fn test_das_cf_set_causes_upper_adjust() {
     let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0xC5, "AL should be 0xC5 (0x25 - 0x60, wrapped)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0xC5,
+        "AL should be 0xC5 (0x25 - 0x60, wrapped)"
+    );
     assert!(cf_set(regs.rflags), "CF should remain set");
 }
 
@@ -362,8 +371,8 @@ fn test_das_multidigit_85_minus_32() {
     let code = [
         0xb0, 0x05, // MOV AL, 5
         0x2c, 0x02, // SUB AL, 2
-        0x2f,       // DAS
-        0xf4,       // HLT
+        0x2f, // DAS
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -378,8 +387,8 @@ fn test_das_multidigit_52_minus_37() {
     let code = [
         0xb0, 0x02, // MOV AL, 2
         0x2c, 0x07, // SUB AL, 7 (result: 0xFB with borrow)
-        0x2f,       // DAS
-        0xf4,       // HLT
+        0x2f, // DAS
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -405,10 +414,20 @@ fn test_das_all_lower_nibbles() {
 
         if lower <= 9 {
             assert_eq!(regs.rax & 0xFF, lower, "AL should remain {:#04x}", lower);
-            assert!(!af_set(regs.rflags), "AF should be clear for {:#04x}", lower);
+            assert!(
+                !af_set(regs.rflags),
+                "AF should be clear for {:#04x}",
+                lower
+            );
         } else {
             let expected = lower - 6;
-            assert_eq!(regs.rax & 0xFF, expected, "AL should be {:#04x} for input {:#04x}", expected, lower);
+            assert_eq!(
+                regs.rax & 0xFF,
+                expected,
+                "AL should be {:#04x} for input {:#04x}",
+                expected,
+                lower
+            );
             assert!(af_set(regs.rflags), "AF should be set for {:#04x}", lower);
         }
     }
@@ -423,7 +442,11 @@ fn test_das_preserves_high_rax() {
     let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax >> 8, 0x1234_5678_DEAD_BE, "High bits of RAX should be preserved");
+    assert_eq!(
+        regs.rax >> 8,
+        0x1234_5678_DEAD_BE,
+        "High bits of RAX should be preserved"
+    );
 }
 
 #[test]
@@ -474,15 +497,19 @@ fn test_das_sequential_subtractions() {
     let code = [
         0xb0, 0x99, // MOV AL, 0x99
         0x2c, 0x15, // SUB AL, 0x15
-        0x2f,       // DAS (result: 0x84)
+        0x2f, // DAS (result: 0x84)
         0x2c, 0x27, // SUB AL, 0x27
-        0x2f,       // DAS (result: 0x57)
-        0xf4,       // HLT
+        0x2f, // DAS (result: 0x57)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0x57, "Final result should be 0x57 (BCD 57)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x57,
+        "Final result should be 0x57 (BCD 57)"
+    );
 }
 
 #[test]
@@ -491,39 +518,48 @@ fn test_das_with_borrow_propagation() {
     let code = [
         0xb0, 0x00, // MOV AL, 0x00
         0x2c, 0x01, // SUB AL, 0x01 (result: 0xFF with borrow)
-        0x2f,       // DAS
-        0xf4,       // HLT
+        0x2f, // DAS
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0xFF - 0x06 = 0xF9, then 0xF9 - 0x60 = 0x99
     assert_eq!(regs.rax & 0xFF, 0x99, "Result should be 0x99");
-    assert!(cf_set(regs.rflags), "CF should be set (borrow to next byte)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (borrow to next byte)"
+    );
 }
 
 #[test]
 fn test_das_comprehensive_packed_bcd() {
     // Test various valid packed BCD subtractions
     let test_cases = [
-        (0x79, 0x35, 0x44),  // 79 - 35 = 44
-        (0x68, 0x23, 0x45),  // 68 - 23 = 45
-        (0x99, 0x49, 0x50),  // 99 - 49 = 50
-        (0x77, 0x44, 0x33),  // 77 - 44 = 33
+        (0x79, 0x35, 0x44), // 79 - 35 = 44
+        (0x68, 0x23, 0x45), // 68 - 23 = 45
+        (0x99, 0x49, 0x50), // 99 - 49 = 50
+        (0x77, 0x44, 0x33), // 77 - 44 = 33
     ];
 
     for (a, b, expected) in test_cases.iter() {
         let code = [
-            0xb0, *a,   // MOV AL, a
+            0xb0, *a, // MOV AL, a
             0x2c, *b,   // SUB AL, b
-            0x2f,       // DAS
-            0xf4,       // HLT
+            0x2f, // DAS
+            0xf4, // HLT
         ];
         let (mut vcpu, _) = setup_vm_compat(&code, None);
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFF, *expected as u64,
-            "Result of {:#04x} - {:#04x} should be {:#04x}", a, b, expected);
+        assert_eq!(
+            regs.rax & 0xFF,
+            *expected as u64,
+            "Result of {:#04x} - {:#04x} should be {:#04x}",
+            a,
+            b,
+            expected
+        );
     }
 }
 
@@ -531,22 +567,27 @@ fn test_das_comprehensive_packed_bcd() {
 fn test_das_underflow_cases() {
     // Test subtractions that result in negative (borrow required)
     let test_cases = [
-        (0x10, 0x20),  // 10 - 20 (needs borrow)
-        (0x25, 0x50),  // 25 - 50 (needs borrow)
-        (0x00, 0x99),  // 00 - 99 (needs borrow)
+        (0x10, 0x20), // 10 - 20 (needs borrow)
+        (0x25, 0x50), // 25 - 50 (needs borrow)
+        (0x00, 0x99), // 00 - 99 (needs borrow)
     ];
 
     for (a, b) in test_cases.iter() {
         let code = [
-            0xb0, *a,   // MOV AL, a
+            0xb0, *a, // MOV AL, a
             0x2c, *b,   // SUB AL, b
-            0x2f,       // DAS
-            0xf4,       // HLT
+            0x2f, // DAS
+            0xf4, // HLT
         ];
         let (mut vcpu, _) = setup_vm_compat(&code, None);
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert!(cf_set(regs.rflags), "CF should be set for {:#04x} - {:#04x}", a, b);
+        assert!(
+            cf_set(regs.rflags),
+            "CF should be set for {:#04x} - {:#04x}",
+            a,
+            b
+        );
     }
 }
 
@@ -556,8 +597,8 @@ fn test_das_exact_zero_result() {
     let code = [
         0xb0, 0x45, // MOV AL, 0x45
         0x2c, 0x45, // SUB AL, 0x45
-        0x2f,       // DAS
-        0xf4,       // HLT
+        0x2f, // DAS
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -573,8 +614,8 @@ fn test_das_with_af_from_subtraction() {
     let code = [
         0xb0, 0x23, // MOV AL, 0x23
         0x2c, 0x05, // SUB AL, 0x05 (result: 0x1E, AF set)
-        0x2f,       // DAS
-        0xf4,       // HLT
+        0x2f, // DAS
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();

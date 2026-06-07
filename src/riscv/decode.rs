@@ -552,32 +552,122 @@ impl Op {
         matches!(
             self,
             Flw | Fsw
-                | FmaddS | FmsubS | FnmsubS | FnmaddS
-                | FaddS | FsubS | FmulS | FdivS | FsqrtS
-                | FsgnjS | FsgnjnS | FsgnjxS | FminS | FmaxS
-                | FcvtWS | FcvtWuS | FcvtLS | FcvtLuS | FmvXW
-                | FeqS | FltS | FleS | FclassS
-                | FcvtSW | FcvtSWu | FcvtSL | FcvtSLu | FmvWX
-                | Fld | Fsd
-                | FmaddD | FmsubD | FnmsubD | FnmaddD
-                | FaddD | FsubD | FmulD | FdivD | FsqrtD
-                | FsgnjD | FsgnjnD | FsgnjxD | FminD | FmaxD
-                | FcvtSD | FcvtDS
-                | FeqD | FltD | FleD | FclassD
-                | FcvtWD | FcvtWuD | FcvtLD | FcvtLuD
-                | FcvtDW | FcvtDWu | FcvtDL | FcvtDLu
-                | FmvXD | FmvDX
-                | FliS | FliD | FminmS | FmaxmS | FminmD | FmaxmD
-                | FroundS | FroundnxS | FroundD | FroundnxD
-                | FleqS | FltqS | FleqD | FltqD | FcvtmodWD
-                | Flh | Fsh | FaddH | FsubH | FmulH | FdivH | FsqrtH
-                | FmaddH | FmsubH | FnmsubH | FnmaddH
-                | FsgnjH | FsgnjnH | FsgnjxH | FminH | FmaxH
-                | FeqH | FltH | FleH | FclassH
-                | FcvtSH | FcvtHS | FcvtDH | FcvtHD
-                | FcvtWH | FcvtWuH | FcvtLH | FcvtLuH
-                | FcvtHW | FcvtHWu | FcvtHL | FcvtHLu | FmvXH | FmvHX
-                | FliH | FminmH | FmaxmH | FroundH | FroundnxH | FleqH | FltqH
+                | FmaddS
+                | FmsubS
+                | FnmsubS
+                | FnmaddS
+                | FaddS
+                | FsubS
+                | FmulS
+                | FdivS
+                | FsqrtS
+                | FsgnjS
+                | FsgnjnS
+                | FsgnjxS
+                | FminS
+                | FmaxS
+                | FcvtWS
+                | FcvtWuS
+                | FcvtLS
+                | FcvtLuS
+                | FmvXW
+                | FeqS
+                | FltS
+                | FleS
+                | FclassS
+                | FcvtSW
+                | FcvtSWu
+                | FcvtSL
+                | FcvtSLu
+                | FmvWX
+                | Fld
+                | Fsd
+                | FmaddD
+                | FmsubD
+                | FnmsubD
+                | FnmaddD
+                | FaddD
+                | FsubD
+                | FmulD
+                | FdivD
+                | FsqrtD
+                | FsgnjD
+                | FsgnjnD
+                | FsgnjxD
+                | FminD
+                | FmaxD
+                | FcvtSD
+                | FcvtDS
+                | FeqD
+                | FltD
+                | FleD
+                | FclassD
+                | FcvtWD
+                | FcvtWuD
+                | FcvtLD
+                | FcvtLuD
+                | FcvtDW
+                | FcvtDWu
+                | FcvtDL
+                | FcvtDLu
+                | FmvXD
+                | FmvDX
+                | FliS
+                | FliD
+                | FminmS
+                | FmaxmS
+                | FminmD
+                | FmaxmD
+                | FroundS
+                | FroundnxS
+                | FroundD
+                | FroundnxD
+                | FleqS
+                | FltqS
+                | FleqD
+                | FltqD
+                | FcvtmodWD
+                | Flh
+                | Fsh
+                | FaddH
+                | FsubH
+                | FmulH
+                | FdivH
+                | FsqrtH
+                | FmaddH
+                | FmsubH
+                | FnmsubH
+                | FnmaddH
+                | FsgnjH
+                | FsgnjnH
+                | FsgnjxH
+                | FminH
+                | FmaxH
+                | FeqH
+                | FltH
+                | FleH
+                | FclassH
+                | FcvtSH
+                | FcvtHS
+                | FcvtDH
+                | FcvtHD
+                | FcvtWH
+                | FcvtWuH
+                | FcvtLH
+                | FcvtLuH
+                | FcvtHW
+                | FcvtHWu
+                | FcvtHL
+                | FcvtHLu
+                | FmvXH
+                | FmvHX
+                | FliH
+                | FminmH
+                | FmaxmH
+                | FroundH
+                | FroundnxH
+                | FleqH
+                | FltqH
         )
     }
 }
@@ -1506,8 +1596,8 @@ fn decode_load_fp(w: u32, isa: &Isa) -> Insn {
         return match mop {
             0b00 => match lumop {
                 0b00000 if nf == 0 => base(Op::Vle, w),
-                0b00000 => base(Op::Vlseg, w),    // unit-stride segment (nf+1 fields)
-                0b01000 => base(Op::Vlre, w),     // whole register (nf+1 regs)
+                0b00000 => base(Op::Vlseg, w), // unit-stride segment (nf+1 fields)
+                0b01000 => base(Op::Vlre, w),  // whole register (nf+1 regs)
                 0b01011 if nf == 0 => base(Op::Vlm, w),
                 0b10000 if nf == 0 => base(Op::Vleff, w), // fault-only-first
                 _ => Insn::illegal(w, 4),
@@ -1538,8 +1628,8 @@ fn decode_store_fp(w: u32, isa: &Isa) -> Insn {
         return match mop {
             0b00 => match sumop {
                 0b00000 if nf == 0 => base(Op::Vse, w),
-                0b00000 => base(Op::Vsseg, w),    // unit-stride segment
-                0b01000 => base(Op::Vsre, w),     // whole register
+                0b00000 => base(Op::Vsseg, w), // unit-stride segment
+                0b01000 => base(Op::Vsre, w),  // whole register
                 0b01011 if nf == 0 => base(Op::Vsm, w),
                 _ => Insn::illegal(w, 4),
             },
@@ -1742,12 +1832,7 @@ fn decode_op_fp(w: u32, rv64: bool, isa: &Isa) -> Insn {
 }
 
 /// Fetch and decode the instruction at `pc`, selecting 16- or 32-bit width.
-pub fn decode_at(
-    mem: &dyn Memory,
-    pc: u64,
-    xlen: Xlen,
-    isa: &Isa,
-) -> Result<Insn, DecodeError> {
+pub fn decode_at(mem: &dyn Memory, pc: u64, xlen: Xlen, isa: &Isa) -> Result<Insn, DecodeError> {
     let lo = mem.read_u16(pc).map_err(DecodeError::Fetch)?;
     if lo & 0b11 != 0b11 {
         // 16-bit compressed parcel.

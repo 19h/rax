@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm, read_mem_at_u64, write_mem_at_u64};
+use crate::common::{read_mem_at_u64, run_until_hlt, setup_vm, write_mem_at_u64};
 use rax::cpu::Registers;
 
 // Comprehensive tests for LEAVE instruction
@@ -728,7 +728,7 @@ fn test_strict_leave_exact_semantics() {
     //   RSP := RBP = 0x3FF8; RBP := [0x3FF8] = 0x5000; RSP := 0x3FF8 + 8 = 0x4000.
     let code = [0xc9, 0xf4]; // LEAVE
     let mut regs = Registers::default();
-    regs.rsp = 0x3000;       // arbitrary; LEAVE overwrites RSP from RBP first
+    regs.rsp = 0x3000; // arbitrary; LEAVE overwrites RSP from RBP first
     regs.rbp = 0x3FF8;
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     write_mem_at_u64(&mem, 0x3FF8, 0x5000);

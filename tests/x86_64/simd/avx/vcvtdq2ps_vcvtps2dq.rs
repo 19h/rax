@@ -442,7 +442,8 @@ fn test_vcvtdq2ps_xmm0_mem() {
         0x03, 0x00, 0x00, 0x00, // 3
         0x04, 0x00, 0x00, 0x00, // 4
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -451,7 +452,8 @@ fn test_vcvtdq2ps_xmm0_mem() {
 fn test_vcvtdq2ps_xmm8_mem() {
     // VCVTDQ2PS XMM8, [mem]
     let code = [
-        0xc4, 0x41, 0x78, 0x5b, 0x05, 0x00, 0x40, 0x00, 0x00, // VCVTDQ2PS XMM8, [rip + 0x4000]
+        0xc4, 0x41, 0x78, 0x5b, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VCVTDQ2PS XMM8, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -462,7 +464,8 @@ fn test_vcvtdq2ps_xmm8_mem() {
         0x64, 0x00, 0x00, 0x00, // 100
         0x00, 0x04, 0x00, 0x00, // 1024
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -491,7 +494,8 @@ fn test_vcvtdq2ps_ymm0_mem() {
         0x07, 0x00, 0x00, 0x00, // 7
         0x08, 0x00, 0x00, 0x00, // 8
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -500,7 +504,8 @@ fn test_vcvtdq2ps_ymm0_mem() {
 fn test_vcvtdq2ps_ymm8_mem() {
     // VCVTDQ2PS YMM8, [mem]
     let code = [
-        0xc4, 0x41, 0x7c, 0x5b, 0x05, 0x00, 0x40, 0x00, 0x00, // VCVTDQ2PS YMM8, [rip + 0x4000]
+        0xc4, 0x41, 0x7c, 0x5b, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VCVTDQ2PS YMM8, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -515,7 +520,8 @@ fn test_vcvtdq2ps_ymm8_mem() {
         0xe8, 0x03, 0x00, 0x00, // 1000
         0x18, 0xfc, 0xff, 0xff, // -1000
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -908,7 +914,8 @@ fn test_vcvtps2dq_xmm0_mem() {
         0x00, 0x00, 0x40, 0x40, // 3.0
         0x00, 0x00, 0x80, 0x40, // 4.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -917,7 +924,8 @@ fn test_vcvtps2dq_xmm0_mem() {
 fn test_vcvtps2dq_xmm8_mem() {
     // VCVTPS2DQ XMM8, [mem]
     let code = [
-        0xc4, 0x41, 0x79, 0x5b, 0x05, 0x00, 0x40, 0x00, 0x00, // VCVTPS2DQ XMM8, [rip + 0x4000]
+        0xc4, 0x41, 0x79, 0x5b, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VCVTPS2DQ XMM8, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -928,7 +936,8 @@ fn test_vcvtps2dq_xmm8_mem() {
         0x00, 0x00, 0xc8, 0x42, // 100.0
         0x00, 0x00, 0xc8, 0xc2, // -100.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -957,7 +966,8 @@ fn test_vcvtps2dq_ymm0_mem() {
         0x00, 0x00, 0xe0, 0x40, // 7.0
         0x00, 0x00, 0x00, 0x41, // 8.0
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -966,7 +976,8 @@ fn test_vcvtps2dq_ymm0_mem() {
 fn test_vcvtps2dq_ymm8_mem() {
     // VCVTPS2DQ YMM8, [mem]
     let code = [
-        0xc4, 0x41, 0x7d, 0x5b, 0x05, 0x00, 0x40, 0x00, 0x00, // VCVTPS2DQ YMM8, [rip + 0x4000]
+        0xc4, 0x41, 0x7d, 0x5b, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VCVTPS2DQ YMM8, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -981,7 +992,8 @@ fn test_vcvtps2dq_ymm8_mem() {
         0x9a, 0x99, 0x19, 0x3f, // 0.6
         0x33, 0x33, 0xb3, 0x3f, // 1.4
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }

@@ -71,7 +71,10 @@ impl IoBus {
     }
 
     /// Attach the PCI host bridge as the fallback for unclaimed I/O ports.
-    pub fn set_pci(&mut self, bridge: std::sync::Arc<std::sync::Mutex<crate::devices::pci::PciStub>>) {
+    pub fn set_pci(
+        &mut self,
+        bridge: std::sync::Arc<std::sync::Mutex<crate::devices::pci::PciStub>>,
+    ) {
         self.pci = Some(bridge);
     }
 

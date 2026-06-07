@@ -80,7 +80,7 @@ pub fn blsi_blsmsk_blsr(
             return Err(Error::Emulator(format!(
                 "unimplemented VEX.0F38.F3 /{}",
                 reg_op
-            )))
+            )));
         }
     };
     vcpu.set_reg(vvvv, result & mask, ctx.op_size);
@@ -456,7 +456,7 @@ pub fn tbm_01_group(
             return Err(Error::Emulator(format!(
                 "unimplemented VEX.0F38.01 /{}",
                 reg_op
-            )))
+            )));
         }
     };
     vcpu.set_reg(vvvv, result & mask, ctx.op_size);

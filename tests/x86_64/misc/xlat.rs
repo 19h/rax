@@ -20,13 +20,13 @@ fn test_xlat_basic() {
 
     // Set up translation table at 0x2000
     let table: [u8; 16] = [
-        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-        0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E,
+        0x1F,
     ];
     mem.write_slice(&table, GuestAddress(0x2000)).unwrap();
 
     cpu.set_rbx(0x2000); // Table base
-    cpu.set_rax(0x05);   // Index (AL=5)
+    cpu.set_rax(0x05); // Index (AL=5)
 
     run_test(&mut cpu);
 
@@ -126,7 +126,11 @@ fn test_xlat_preserves_high_bits_of_rax() {
 
     run_test(&mut cpu);
 
-    assert_eq!(cpu.get_rax(), 0x12345678_9ABCDE33, "XLAT preserves high bits of RAX");
+    assert_eq!(
+        cpu.get_rax(),
+        0x12345678_9ABCDE33,
+        "XLAT preserves high bits of RAX"
+    );
 }
 
 #[test]
@@ -141,8 +145,8 @@ fn test_xlat_hex_digit_conversion() {
 
     // Hex digit to ASCII table: 0-9 -> '0'-'9', 10-15 -> 'A'-'F'
     let table: [u8; 16] = [
-        b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7',
-        b'8', b'9', b'A', b'B', b'C', b'D', b'E', b'F',
+        b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9', b'A', b'B', b'C', b'D', b'E',
+        b'F',
     ];
     mem.write_slice(&table, GuestAddress(0x5000)).unwrap();
 
@@ -177,4 +181,3 @@ fn test_xlat_identity_mapping() {
 
     assert_eq!(cpu.get_rax() & 0xFF, 0x42, "XLAT with identity mapping");
 }
-

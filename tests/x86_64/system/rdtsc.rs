@@ -70,8 +70,10 @@ fn test_rdtsc_preserves_flags() {
 fn test_rdtsc_preserves_other_registers() {
     let code = [
         0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242 (sign-extended)
-        0x48, 0xc7, 0xc1, 0x99, 0x99, 0x99, 0x99, // MOV RCX, 0x99999999 (sign-extended to 0xFFFFFFFF99999999)
-        0x48, 0xc7, 0xc6, 0xaa, 0xaa, 0xaa, 0xaa, // MOV RSI, 0xaaaaaaaa (sign-extended to 0xFFFFFFFFaaaaaaaa)
+        0x48, 0xc7, 0xc1, 0x99, 0x99, 0x99,
+        0x99, // MOV RCX, 0x99999999 (sign-extended to 0xFFFFFFFF99999999)
+        0x48, 0xc7, 0xc6, 0xaa, 0xaa, 0xaa,
+        0xaa, // MOV RSI, 0xaaaaaaaa (sign-extended to 0xFFFFFFFFaaaaaaaa)
         0x0f, 0x31, // RDTSC
         0xf4, // HLT
     ];
@@ -80,8 +82,14 @@ fn test_rdtsc_preserves_other_registers() {
 
     // RBX, RCX, RSI should be unchanged (MOV r64, imm32 sign-extends the immediate)
     assert_eq!(regs.rbx, 0x42424242, "RBX should not be affected");
-    assert_eq!(regs.rcx, 0xFFFFFFFF_99999999u64 as u64, "RCX should not be affected");
-    assert_eq!(regs.rsi, 0xFFFFFFFF_AAAAAAAAu64 as u64, "RSI should not be affected");
+    assert_eq!(
+        regs.rcx, 0xFFFFFFFF_99999999u64 as u64,
+        "RCX should not be affected"
+    );
+    assert_eq!(
+        regs.rsi, 0xFFFFFFFF_AAAAAAAAu64 as u64,
+        "RSI should not be affected"
+    );
 }
 
 // Test multiple sequential RDTSC calls
@@ -148,8 +156,16 @@ fn test_rdtsc_overwrites_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Old values should be completely overwritten
-    assert_ne!(regs.rax & 0xFFFFFFFF, 0x11111111, "EAX should be overwritten");
-    assert_ne!(regs.rdx & 0xFFFFFFFF, 0x22222222, "EDX should be overwritten");
+    assert_ne!(
+        regs.rax & 0xFFFFFFFF,
+        0x11111111,
+        "EAX should be overwritten"
+    );
+    assert_ne!(
+        regs.rdx & 0xFFFFFFFF,
+        0x22222222,
+        "EDX should be overwritten"
+    );
 }
 
 // Test RDTSC value is reasonable (non-zero)
@@ -372,7 +388,8 @@ fn test_rdtsc_high_values() {
 #[test]
 fn test_rdtsc_rbx_preservation() {
     let code = [
-        0x48, 0xc7, 0xc3, 0xef, 0xbe, 0xad, 0xde, // MOV RBX, 0xdeadbeef (sign-extended to 0xFFFFFFFFdeadbeef)
+        0x48, 0xc7, 0xc3, 0xef, 0xbe, 0xad,
+        0xde, // MOV RBX, 0xdeadbeef (sign-extended to 0xFFFFFFFFdeadbeef)
         0x0f, 0x31, // RDTSC #1
         0x0f, 0x31, // RDTSC #2
         0x0f, 0x31, // RDTSC #3
@@ -502,19 +519,22 @@ fn test_rdtsc_strict_monotonic_across_nops() {
     // delta is non-deterministic — only its monotonicity is guaranteed. (It used
     // to assert delta == 6*3000 under the old instruction-count TSC model.)
     let code = [
-        0x0f, 0x31,       // RDTSC (#1)
+        0x0f, 0x31, // RDTSC (#1)
         0x48, 0x89, 0xc3, // MOV RBX, RAX (save lo1)
         0x48, 0x89, 0xd6, // MOV RSI, RDX (save hi1)
         0x90, 0x90, 0x90, // NOP x3
-        0x0f, 0x31,       // RDTSC (#2)
-        0xf4,             // HLT
+        0x0f, 0x31, // RDTSC (#2)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let tsc1 = ((regs.rsi & 0xFFFF_FFFF) << 32) | (regs.rbx & 0xFFFF_FFFF);
     let tsc2 = ((regs.rdx & 0xFFFF_FFFF) << 32) | (regs.rax & 0xFFFF_FFFF);
-    assert!(tsc2 >= tsc1, "TSC is monotonic across NOPs (got {tsc1} -> {tsc2})");
+    assert!(
+        tsc2 >= tsc1,
+        "TSC is monotonic across NOPs (got {tsc1} -> {tsc2})"
+    );
 }
 
 #[test]
@@ -522,15 +542,18 @@ fn test_rdtsc_back_to_back_monotonic() {
     // Two RDTSCs separated by two MOVs. With a real-time TSC the inter-read delta
     // tracks host wall-clock and is non-deterministic; only monotonicity holds.
     let code = [
-        0x0f, 0x31,       // RDTSC (#1)
+        0x0f, 0x31, // RDTSC (#1)
         0x48, 0x89, 0xc3, // MOV RBX, RAX (save lo1)
         0x48, 0x89, 0xd6, // MOV RSI, RDX (save hi1)
-        0x0f, 0x31,       // RDTSC (#2)
-        0xf4,             // HLT
+        0x0f, 0x31, // RDTSC (#2)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     let tsc1 = ((regs.rsi & 0xFFFF_FFFF) << 32) | (regs.rbx & 0xFFFF_FFFF);
     let tsc2 = ((regs.rdx & 0xFFFF_FFFF) << 32) | (regs.rax & 0xFFFF_FFFF);
-    assert!(tsc2 >= tsc1, "TSC is monotonic back-to-back (got {tsc1} -> {tsc2})");
+    assert!(
+        tsc2 >= tsc1,
+        "TSC is monotonic back-to-back (got {tsc1} -> {tsc2})"
+    );
 }

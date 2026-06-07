@@ -31,8 +31,8 @@ fn test_xgetbv_xcr0_basic() {
     // XGETBV should read XCR0 into EDX:EAX
     let code = [
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0 (XCR0)
-        0x0f, 0x01, 0xd0,              // XGETBV
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd0, // XGETBV
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -51,8 +51,8 @@ fn test_xgetbv_xcr0_eax_contains_lower_32bits() {
     // XGETBV should put lower 32 bits of XCR0 in EAX
     let code = [
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0 (XCR0)
-        0x0f, 0x01, 0xd0,              // XGETBV
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd0, // XGETBV
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -68,8 +68,8 @@ fn test_xgetbv_xcr0_edx_contains_upper_32bits() {
     // XGETBV should put upper 32 bits of XCR0 in EDX
     let code = [
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0 (XCR0)
-        0x0f, 0x01, 0xd0,              // XGETBV
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd0, // XGETBV
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -86,12 +86,12 @@ fn test_xgetbv_xcr0_multiple_reads_consistent() {
     // Multiple XGETBV calls should return consistent values
     let code = [
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd0,              // XGETBV (first read)
-        0x89, 0xc3,                    // MOV EBX, EAX (save first EAX)
-        0x89, 0xd1,                    // MOV ECX, EDX (EDX -> save)
+        0x0f, 0x01, 0xd0, // XGETBV (first read)
+        0x89, 0xc3, // MOV EBX, EAX (save first EAX)
+        0x89, 0xd1, // MOV ECX, EDX (EDX -> save)
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd0,              // XGETBV (second read)
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd0, // XGETBV (second read)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -100,7 +100,10 @@ fn test_xgetbv_xcr0_multiple_reads_consistent() {
     let eax_first = regs.rbx & 0xFFFFFFFF;
 
     // Both reads should return same value
-    assert_eq!(eax_first, eax_second, "XGETBV should return consistent values");
+    assert_eq!(
+        eax_first, eax_second,
+        "XGETBV should return consistent values"
+    );
 }
 
 #[test]
@@ -108,8 +111,8 @@ fn test_xgetbv_xcr0_x87_always_set() {
     // Bit 0 of XCR0 (x87 state) should always be set
     let code = [
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd0,              // XGETBV
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd0, // XGETBV
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -125,11 +128,11 @@ fn test_xgetbv_ecx_parameter_used() {
     // Valid values are typically 0 and 1 (if XSAVE extended features supported)
     let code = [
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0 (XCR0)
-        0x0f, 0x01, 0xd0,              // XGETBV
-        0x89, 0xc3,                    // MOV EBX, EAX (save XCR0)
+        0x0f, 0x01, 0xd0, // XGETBV
+        0x89, 0xc3, // MOV EBX, EAX (save XCR0)
         0xb9, 0x01, 0x00, 0x00, 0x00, // MOV ECX, 1 (XCR1, if supported)
-        0x0f, 0x01, 0xd0,              // XGETBV
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd0, // XGETBV
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -147,11 +150,13 @@ fn test_xgetbv_ecx_parameter_used() {
 fn test_xgetbv_clears_high_32bits_in_64bit_mode() {
     // In 64-bit mode, high-order 32 bits of RAX/RDX should be cleared
     let code = [
-        0x48, 0xb8, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, 0xFFFFFFFFFFFFFFFF
-        0x48, 0xba, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RDX, 0xFFFFFFFFFFFFFFFF
+        0x48, 0xb8, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, // MOV RAX, 0xFFFFFFFFFFFFFFFF
+        0x48, 0xba, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, // MOV RDX, 0xFFFFFFFFFFFFFFFF
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd0,              // XGETBV (should clear upper 32 bits)
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd0, // XGETBV (should clear upper 32 bits)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -171,8 +176,8 @@ fn test_xgetbv_does_not_modify_other_registers() {
         0xb8, 0x11, 0x11, 0x11, 0x11, // MOV EAX, 0x11111111
         0xbb, 0x22, 0x22, 0x22, 0x22, // MOV EBX, 0x22222222
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0 (for XGETBV parameter)
-        0x0f, 0x01, 0xd0,              // XGETBV
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd0, // XGETBV
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -185,10 +190,10 @@ fn test_xgetbv_does_not_modify_other_registers() {
 fn test_xgetbv_does_not_modify_flags() {
     // XGETBV should not modify flags
     let code = [
-        0xf9,                          // STC (set carry flag)
+        0xf9, // STC (set carry flag)
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd0,              // XGETBV
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd0, // XGETBV
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -205,11 +210,11 @@ fn test_xsetbv_xcr0_x87_required() {
     // This would cause a #GP exception, which we expect to fault
     // For testing, we'll try to set it to a valid value instead
     let code = [
-        0x31, 0xc0,                    // XOR EAX, EAX (EAX = 0)
-        0x31, 0xd2,                    // XOR EDX, EDX (EDX = 0)
+        0x31, 0xc0, // XOR EAX, EAX (EAX = 0)
+        0x31, 0xd2, // XOR EDX, EDX (EDX = 0)
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0 (XCR0)
-        0x0f, 0x01, 0xd1,              // XSETBV (would fail with #GP)
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd1, // XSETBV (would fail with #GP)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     // This may fault, which is expected behavior
@@ -226,10 +231,10 @@ fn test_xsetbv_xcr0_x87_must_remain_set() {
     // Try to set XCR0 with x87 bit set (should succeed)
     let code = [
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1 (bit 0 = x87, set)
-        0x31, 0xd2,                    // XOR EDX, EDX (EDX = 0)
+        0x31, 0xd2, // XOR EDX, EDX (EDX = 0)
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0 (XCR0)
-        0x0f, 0x01, 0xd1,              // XSETBV
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd1, // XSETBV
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -245,10 +250,10 @@ fn test_xsetbv_sse_compat_with_avx() {
     // Setting bit 2 without bit 1 should fail
     let code = [
         0xb8, 0x04, 0x00, 0x00, 0x00, // MOV EAX, 0x04 (bit 2 = AVX, no bit 1 = SSE)
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0 (XCR0)
-        0x0f, 0x01, 0xd1,              // XSETBV (should fail with #GP)
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd1, // XSETBV (should fail with #GP)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -263,10 +268,10 @@ fn test_xsetbv_xcr0_valid_combination() {
     // Set XCR0 with x87 and SSE enabled
     let code = [
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 0x03 (bits 0 and 1 set)
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd1,              // XSETBV
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd1, // XSETBV
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -280,11 +285,11 @@ fn test_xsetbv_xcr0_valid_combination() {
 fn test_xsetbv_accepts_apx_f_bit() {
     let code = [
         0xb8, 0x07, 0x00, 0x08, 0x00, // MOV EAX, x87|SSE|AVX|APX_F
-        0x31, 0xd2,                   // XOR EDX, EDX
-        0x31, 0xc9,                   // XOR ECX, ECX
-        0x0f, 0x01, 0xd1,             // XSETBV
-        0x0f, 0x01, 0xd0,             // XGETBV
-        0xf4,                         // HLT
+        0x31, 0xd2, // XOR EDX, EDX
+        0x31, 0xc9, // XOR ECX, ECX
+        0x0f, 0x01, 0xd1, // XSETBV
+        0x0f, 0x01, 0xd0, // XGETBV
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -298,12 +303,12 @@ fn test_xsetbv_ecx_parameter_selects_xcrn() {
     // Different ECX values select different XCRs
     let code = [
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 0x03
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0 (XCR0)
-        0x0f, 0x01, 0xd1,              // XSETBV (XCR0)
+        0x0f, 0x01, 0xd1, // XSETBV (XCR0)
         0xb9, 0x01, 0x00, 0x00, 0x00, // MOV ECX, 1 (XCR1, might not exist)
-        0x0f, 0x01, 0xd1,              // XSETBV (XCR1)
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd1, // XSETBV (XCR1)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -320,8 +325,8 @@ fn test_xsetbv_edx_eax_64bit_parameter() {
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1 (lower 32 bits)
         0xba, 0x00, 0x00, 0x00, 0x00, // MOV EDX, 0 (upper 32 bits)
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0 (XCR0)
-        0x0f, 0x01, 0xd1,              // XSETBV
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd1, // XSETBV
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -337,16 +342,16 @@ fn test_xgetbv_after_xsetbv_reflects_change() {
     let code = [
         // First, get current XCR0
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd0,              // XGETBV (read current)
+        0x0f, 0x01, 0xd0, // XGETBV (read current)
         // Try to set XCR0 (may fail in user mode)
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 0x03
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd1,              // XSETBV (may fault)
+        0x0f, 0x01, 0xd1, // XSETBV (may fault)
         // Read it back
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd0,              // XGETBV
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd0, // XGETBV
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -362,19 +367,17 @@ fn test_xgetbv_xsetbv_operations_sequence() {
     let code = [
         // Read XCR0
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd0,              // XGETBV
-        0x89, 0xc3,                    // MOV EBX, EAX (save read value)
-
+        0x0f, 0x01, 0xd0, // XGETBV
+        0x89, 0xc3, // MOV EBX, EAX (save read value)
         // Attempt to set (may fail)
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 0x03
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd1,              // XSETBV
-
+        0x0f, 0x01, 0xd1, // XSETBV
         // Read again
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd0,              // XGETBV
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd0, // XGETBV
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -388,8 +391,8 @@ fn test_xgetbv_xcr0_contains_valid_state_bits() {
     // XCR0 should contain only valid state component bits
     let code = [
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd0,              // XGETBV
-        0xf4,                          // HLT
+        0x0f, 0x01, 0xd0, // XGETBV
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -410,18 +413,15 @@ fn test_xgetbv_multiple_sequential_reads() {
     // Multiple sequential XGETBV calls should return same value
     let code = [
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd0,              // XGETBV (1st)
-        0x89, 0xc6,                    // MOV ESI, EAX (save 1st read to ESI)
-
+        0x0f, 0x01, 0xd0, // XGETBV (1st)
+        0x89, 0xc6, // MOV ESI, EAX (save 1st read to ESI)
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd0,              // XGETBV (2nd)
-        0x89, 0xc3,                    // MOV EBX, EAX (save 2nd read to EBX)
-
+        0x0f, 0x01, 0xd0, // XGETBV (2nd)
+        0x89, 0xc3, // MOV EBX, EAX (save 2nd read to EBX)
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x01, 0xd0,              // XGETBV (3rd)
-
+        0x0f, 0x01, 0xd0, // XGETBV (3rd)
         // Now EAX = 3rd read, EBX = 2nd read, ESI = 1st read
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();

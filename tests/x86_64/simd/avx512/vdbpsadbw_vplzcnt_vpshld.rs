@@ -36,8 +36,8 @@ fn test_vdbpsadbw_xmm_basic() {
     // VDBPSADBW - Compute packed SAD on unsigned bytes (XMM)
     // EVEX.128.66.0F3A.W0 42 /r ib
     let code = [
-        0x62, 0xF3, 0x6D, 0x08, 0x42, 0xC1, 0x00,           // VDBPSADBW xmm0, xmm2, xmm1, 0
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0x6D, 0x08, 0x42, 0xC1, 0x00, // VDBPSADBW xmm0, xmm2, xmm1, 0
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -48,8 +48,8 @@ fn test_vdbpsadbw_ymm_basic() {
     // VDBPSADBW - Compute packed SAD (YMM)
     // EVEX.256.66.0F3A.W0 42 /r ib
     let code = [
-        0x62, 0xF3, 0x6D, 0x28, 0x42, 0xC2, 0xAA,           // VDBPSADBW ymm0, ymm2, ymm2, 0xAA
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0x6D, 0x28, 0x42, 0xC2, 0xAA, // VDBPSADBW ymm0, ymm2, ymm2, 0xAA
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -60,8 +60,8 @@ fn test_vdbpsadbw_zmm_basic() {
     // VDBPSADBW - Compute packed SAD (ZMM)
     // EVEX.512.66.0F3A.W0 42 /r ib
     let code = [
-        0x62, 0xF3, 0x6D, 0x48, 0x42, 0xC3, 0x55,           // VDBPSADBW zmm0, zmm2, zmm3, 0x55
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0x6D, 0x48, 0x42, 0xC3, 0x55, // VDBPSADBW zmm0, zmm2, zmm3, 0x55
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -71,9 +71,9 @@ fn test_vdbpsadbw_zmm_basic() {
 fn test_vdbpsadbw_zmm_memory() {
     // VDBPSADBW from memory
     let code = [
-        0x48, 0xC7, 0xC0, 0x00, 0x10, 0x00, 0x00,           // MOV RAX, 0x1000
-        0x62, 0xF3, 0x6D, 0x48, 0x42, 0x00, 0xFF,           // VDBPSADBW zmm0, zmm2, [rax], 0xFF
-        0xF4,                                                // HLT
+        0x48, 0xC7, 0xC0, 0x00, 0x10, 0x00, 0x00, // MOV RAX, 0x1000
+        0x62, 0xF3, 0x6D, 0x48, 0x42, 0x00, 0xFF, // VDBPSADBW zmm0, zmm2, [rax], 0xFF
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -84,12 +84,10 @@ fn test_vdbpsadbw_shuffle_control() {
     // Test different shuffle control values
     let code = [
         // imm8 = 0xE4 (11 10 01 00)
-        0x62, 0xF3, 0x6D, 0x48, 0x42, 0xC1, 0xE4,           // VDBPSADBW zmm0, zmm2, zmm1, 0xE4
-
+        0x62, 0xF3, 0x6D, 0x48, 0x42, 0xC1, 0xE4, // VDBPSADBW zmm0, zmm2, zmm1, 0xE4
         // imm8 = 0x1B (00 01 10 11)
-        0x62, 0xF3, 0x65, 0x48, 0x42, 0xCA, 0x1B,           // VDBPSADBW zmm1, zmm3, zmm2, 0x1B
-
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0x65, 0x48, 0x42, 0xCA, 0x1B, // VDBPSADBW zmm1, zmm3, zmm2, 0x1B
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -99,8 +97,8 @@ fn test_vdbpsadbw_shuffle_control() {
 fn test_vdbpsadbw_identity_shuffle() {
     // Test with identity shuffle (0xE4 = 11 10 01 00)
     let code = [
-        0x62, 0xF3, 0x6D, 0x48, 0x42, 0xC1, 0xE4,           // VDBPSADBW zmm0, zmm2, zmm1, 0xE4
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0x6D, 0x48, 0x42, 0xC1, 0xE4, // VDBPSADBW zmm0, zmm2, zmm1, 0xE4
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -115,8 +113,8 @@ fn test_vplzcntd_xmm_basic() {
     // VPLZCNTD - Count leading zero bits in dwords (XMM)
     // EVEX.128.66.0F38.W0 44 /r
     let code = [
-        0x62, 0xF2, 0x7D, 0x08, 0x44, 0xC1,                 // VPLZCNTD xmm0, xmm1
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0x7D, 0x08, 0x44, 0xC1, // VPLZCNTD xmm0, xmm1
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -126,8 +124,8 @@ fn test_vplzcntd_xmm_basic() {
 fn test_vplzcntd_ymm_basic() {
     // VPLZCNTD - Count leading zeros (YMM)
     let code = [
-        0x62, 0xF2, 0x7D, 0x28, 0x44, 0xC2,                 // VPLZCNTD ymm0, ymm2
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0x7D, 0x28, 0x44, 0xC2, // VPLZCNTD ymm0, ymm2
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -137,8 +135,8 @@ fn test_vplzcntd_ymm_basic() {
 fn test_vplzcntd_zmm_basic() {
     // VPLZCNTD - Count leading zeros (ZMM)
     let code = [
-        0x62, 0xF2, 0x7D, 0x48, 0x44, 0xC3,                 // VPLZCNTD zmm0, zmm3
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0x7D, 0x48, 0x44, 0xC3, // VPLZCNTD zmm0, zmm3
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -148,9 +146,9 @@ fn test_vplzcntd_zmm_basic() {
 fn test_vplzcntd_zmm_memory() {
     // VPLZCNTD from memory
     let code = [
-        0x48, 0xC7, 0xC0, 0x00, 0x20, 0x00, 0x00,           // MOV RAX, 0x2000
-        0x62, 0xF2, 0x7D, 0x48, 0x44, 0x00,                 // VPLZCNTD zmm0, [rax]
-        0xF4,                                                // HLT
+        0x48, 0xC7, 0xC0, 0x00, 0x20, 0x00, 0x00, // MOV RAX, 0x2000
+        0x62, 0xF2, 0x7D, 0x48, 0x44, 0x00, // VPLZCNTD zmm0, [rax]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -160,9 +158,9 @@ fn test_vplzcntd_zmm_memory() {
 fn test_vplzcntd_broadcast() {
     // VPLZCNTD with broadcast
     let code = [
-        0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00,           // MOV RAX, 0x3000
-        0x62, 0xF2, 0x7D, 0x58, 0x44, 0x00,                 // VPLZCNTD zmm0, dword ptr [rax]{1to16}
-        0xF4,                                                // HLT
+        0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
+        0x62, 0xF2, 0x7D, 0x58, 0x44, 0x00, // VPLZCNTD zmm0, dword ptr [rax]{1to16}
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -177,8 +175,8 @@ fn test_vplzcntq_xmm_basic() {
     // VPLZCNTQ - Count leading zero bits in qwords (XMM)
     // EVEX.128.66.0F38.W1 44 /r
     let code = [
-        0x62, 0xF2, 0xFD, 0x08, 0x44, 0xC1,                 // VPLZCNTQ xmm0, xmm1
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0xFD, 0x08, 0x44, 0xC1, // VPLZCNTQ xmm0, xmm1
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -188,8 +186,8 @@ fn test_vplzcntq_xmm_basic() {
 fn test_vplzcntq_ymm_basic() {
     // VPLZCNTQ - Count leading zeros (YMM)
     let code = [
-        0x62, 0xF2, 0xFD, 0x28, 0x44, 0xC2,                 // VPLZCNTQ ymm0, ymm2
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0xFD, 0x28, 0x44, 0xC2, // VPLZCNTQ ymm0, ymm2
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -199,8 +197,8 @@ fn test_vplzcntq_ymm_basic() {
 fn test_vplzcntq_zmm_basic() {
     // VPLZCNTQ - Count leading zeros (ZMM)
     let code = [
-        0x62, 0xF2, 0xFD, 0x48, 0x44, 0xC3,                 // VPLZCNTQ zmm0, zmm3
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0xFD, 0x48, 0x44, 0xC3, // VPLZCNTQ zmm0, zmm3
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -210,9 +208,9 @@ fn test_vplzcntq_zmm_basic() {
 fn test_vplzcntq_zmm_memory() {
     // VPLZCNTQ from memory
     let code = [
-        0x48, 0xC7, 0xC0, 0x00, 0x40, 0x00, 0x00,           // MOV RAX, 0x4000
-        0x62, 0xF2, 0xFD, 0x48, 0x44, 0x00,                 // VPLZCNTQ zmm0, [rax]
-        0xF4,                                                // HLT
+        0x48, 0xC7, 0xC0, 0x00, 0x40, 0x00, 0x00, // MOV RAX, 0x4000
+        0x62, 0xF2, 0xFD, 0x48, 0x44, 0x00, // VPLZCNTQ zmm0, [rax]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -227,8 +225,8 @@ fn test_vpshldw_xmm_basic() {
     // VPSHLDW - Concatenate and shift left words (XMM)
     // EVEX.128.66.0F3A.W1 70 /r ib
     let code = [
-        0x62, 0xF3, 0xED, 0x08, 0x70, 0xC1, 0x08,           // VPSHLDW xmm0, xmm2, xmm1, 8
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0xED, 0x08, 0x70, 0xC1, 0x08, // VPSHLDW xmm0, xmm2, xmm1, 8
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -238,8 +236,8 @@ fn test_vpshldw_xmm_basic() {
 fn test_vpshldw_ymm_basic() {
     // VPSHLDW - Shift left words (YMM)
     let code = [
-        0x62, 0xF3, 0xED, 0x28, 0x70, 0xC2, 0x04,           // VPSHLDW ymm0, ymm2, ymm2, 4
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0xED, 0x28, 0x70, 0xC2, 0x04, // VPSHLDW ymm0, ymm2, ymm2, 4
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -249,8 +247,8 @@ fn test_vpshldw_ymm_basic() {
 fn test_vpshldw_zmm_basic() {
     // VPSHLDW - Shift left words (ZMM)
     let code = [
-        0x62, 0xF3, 0xED, 0x48, 0x70, 0xC3, 0x0C,           // VPSHLDW zmm0, zmm2, zmm3, 12
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0xED, 0x48, 0x70, 0xC3, 0x0C, // VPSHLDW zmm0, zmm2, zmm3, 12
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -265,8 +263,8 @@ fn test_vpshldd_xmm_basic() {
     // VPSHLDD - Concatenate and shift left dwords (XMM)
     // EVEX.128.66.0F3A.W0 71 /r ib
     let code = [
-        0x62, 0xF3, 0x6D, 0x08, 0x71, 0xC1, 0x08,           // VPSHLDD xmm0, xmm2, xmm1, 8
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0x6D, 0x08, 0x71, 0xC1, 0x08, // VPSHLDD xmm0, xmm2, xmm1, 8
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -276,8 +274,8 @@ fn test_vpshldd_xmm_basic() {
 fn test_vpshldd_ymm_basic() {
     // VPSHLDD - Shift left dwords (YMM)
     let code = [
-        0x62, 0xF3, 0x6D, 0x28, 0x71, 0xC2, 0x10,           // VPSHLDD ymm0, ymm2, ymm2, 16
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0x6D, 0x28, 0x71, 0xC2, 0x10, // VPSHLDD ymm0, ymm2, ymm2, 16
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -287,8 +285,8 @@ fn test_vpshldd_ymm_basic() {
 fn test_vpshldd_zmm_basic() {
     // VPSHLDD - Shift left dwords (ZMM)
     let code = [
-        0x62, 0xF3, 0x6D, 0x48, 0x71, 0xC3, 0x04,           // VPSHLDD zmm0, zmm2, zmm3, 4
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0x6D, 0x48, 0x71, 0xC3, 0x04, // VPSHLDD zmm0, zmm2, zmm3, 4
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -298,9 +296,9 @@ fn test_vpshldd_zmm_basic() {
 fn test_vpshldd_zmm_memory() {
     // VPSHLDD from memory
     let code = [
-        0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00,           // MOV RAX, 0x5000
-        0x62, 0xF3, 0x6D, 0x48, 0x71, 0x00, 0x10,           // VPSHLDD zmm0, zmm2, [rax], 16
-        0xF4,                                                // HLT
+        0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
+        0x62, 0xF3, 0x6D, 0x48, 0x71, 0x00, 0x10, // VPSHLDD zmm0, zmm2, [rax], 16
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -315,8 +313,8 @@ fn test_vpshldq_xmm_basic() {
     // VPSHLDQ - Concatenate and shift left qwords (XMM)
     // EVEX.128.66.0F3A.W1 71 /r ib
     let code = [
-        0x62, 0xF3, 0xED, 0x08, 0x71, 0xC1, 0x10,           // VPSHLDQ xmm0, xmm2, xmm1, 16
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0xED, 0x08, 0x71, 0xC1, 0x10, // VPSHLDQ xmm0, xmm2, xmm1, 16
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -326,8 +324,8 @@ fn test_vpshldq_xmm_basic() {
 fn test_vpshldq_ymm_basic() {
     // VPSHLDQ - Shift left qwords (YMM)
     let code = [
-        0x62, 0xF3, 0xED, 0x28, 0x71, 0xC2, 0x20,           // VPSHLDQ ymm0, ymm2, ymm2, 32
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0xED, 0x28, 0x71, 0xC2, 0x20, // VPSHLDQ ymm0, ymm2, ymm2, 32
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -337,8 +335,8 @@ fn test_vpshldq_ymm_basic() {
 fn test_vpshldq_zmm_basic() {
     // VPSHLDQ - Shift left qwords (ZMM)
     let code = [
-        0x62, 0xF3, 0xED, 0x48, 0x71, 0xC3, 0x08,           // VPSHLDQ zmm0, zmm2, zmm3, 8
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0xED, 0x48, 0x71, 0xC3, 0x08, // VPSHLDQ zmm0, zmm2, zmm3, 8
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -353,8 +351,8 @@ fn test_vpshldvw_xmm_basic() {
     // VPSHLDVW - Variable shift left words (XMM)
     // EVEX.128.66.0F38.W1 70 /r
     let code = [
-        0x62, 0xF2, 0xED, 0x08, 0x70, 0xC1,                 // VPSHLDVW xmm0, xmm2, xmm1
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0xED, 0x08, 0x70, 0xC1, // VPSHLDVW xmm0, xmm2, xmm1
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -364,8 +362,8 @@ fn test_vpshldvw_xmm_basic() {
 fn test_vpshldvw_ymm_basic() {
     // VPSHLDVW - Variable shift left words (YMM)
     let code = [
-        0x62, 0xF2, 0xED, 0x28, 0x70, 0xC2,                 // VPSHLDVW ymm0, ymm2, ymm2
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0xED, 0x28, 0x70, 0xC2, // VPSHLDVW ymm0, ymm2, ymm2
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -375,8 +373,8 @@ fn test_vpshldvw_ymm_basic() {
 fn test_vpshldvw_zmm_basic() {
     // VPSHLDVW - Variable shift left words (ZMM)
     let code = [
-        0x62, 0xF2, 0xED, 0x48, 0x70, 0xC3,                 // VPSHLDVW zmm0, zmm2, zmm3
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0xED, 0x48, 0x70, 0xC3, // VPSHLDVW zmm0, zmm2, zmm3
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -391,8 +389,8 @@ fn test_vpshldvd_xmm_basic() {
     // VPSHLDVD - Variable shift left dwords (XMM)
     // EVEX.128.66.0F38.W0 71 /r
     let code = [
-        0x62, 0xF2, 0x6D, 0x08, 0x71, 0xC1,                 // VPSHLDVD xmm0, xmm2, xmm1
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0x6D, 0x08, 0x71, 0xC1, // VPSHLDVD xmm0, xmm2, xmm1
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -402,8 +400,8 @@ fn test_vpshldvd_xmm_basic() {
 fn test_vpshldvd_ymm_basic() {
     // VPSHLDVD - Variable shift left dwords (YMM)
     let code = [
-        0x62, 0xF2, 0x6D, 0x28, 0x71, 0xC2,                 // VPSHLDVD ymm0, ymm2, ymm2
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0x6D, 0x28, 0x71, 0xC2, // VPSHLDVD ymm0, ymm2, ymm2
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -413,8 +411,8 @@ fn test_vpshldvd_ymm_basic() {
 fn test_vpshldvd_zmm_basic() {
     // VPSHLDVD - Variable shift left dwords (ZMM)
     let code = [
-        0x62, 0xF2, 0x6D, 0x48, 0x71, 0xC3,                 // VPSHLDVD zmm0, zmm2, zmm3
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0x6D, 0x48, 0x71, 0xC3, // VPSHLDVD zmm0, zmm2, zmm3
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -429,8 +427,8 @@ fn test_vpshldvq_xmm_basic() {
     // VPSHLDVQ - Variable shift left qwords (XMM)
     // EVEX.128.66.0F38.W1 71 /r
     let code = [
-        0x62, 0xF2, 0xED, 0x08, 0x71, 0xC1,                 // VPSHLDVQ xmm0, xmm2, xmm1
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0xED, 0x08, 0x71, 0xC1, // VPSHLDVQ xmm0, xmm2, xmm1
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -440,8 +438,8 @@ fn test_vpshldvq_xmm_basic() {
 fn test_vpshldvq_ymm_basic() {
     // VPSHLDVQ - Variable shift left qwords (YMM)
     let code = [
-        0x62, 0xF2, 0xED, 0x28, 0x71, 0xC2,                 // VPSHLDVQ ymm0, ymm2, ymm2
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0xED, 0x28, 0x71, 0xC2, // VPSHLDVQ ymm0, ymm2, ymm2
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -451,8 +449,8 @@ fn test_vpshldvq_ymm_basic() {
 fn test_vpshldvq_zmm_basic() {
     // VPSHLDVQ - Variable shift left qwords (ZMM)
     let code = [
-        0x62, 0xF2, 0xED, 0x48, 0x71, 0xC3,                 // VPSHLDVQ zmm0, zmm2, zmm3
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0xED, 0x48, 0x71, 0xC3, // VPSHLDVQ zmm0, zmm2, zmm3
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -467,8 +465,8 @@ fn test_vpshrdw_xmm_basic() {
     // VPSHRDW - Concatenate and shift right words (XMM)
     // EVEX.128.66.0F3A.W1 72 /r ib
     let code = [
-        0x62, 0xF3, 0xED, 0x08, 0x72, 0xC1, 0x08,           // VPSHRDW xmm0, xmm2, xmm1, 8
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0xED, 0x08, 0x72, 0xC1, 0x08, // VPSHRDW xmm0, xmm2, xmm1, 8
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -478,8 +476,8 @@ fn test_vpshrdw_xmm_basic() {
 fn test_vpshrdw_ymm_basic() {
     // VPSHRDW - Shift right words (YMM)
     let code = [
-        0x62, 0xF3, 0xED, 0x28, 0x72, 0xC2, 0x04,           // VPSHRDW ymm0, ymm2, ymm2, 4
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0xED, 0x28, 0x72, 0xC2, 0x04, // VPSHRDW ymm0, ymm2, ymm2, 4
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -489,8 +487,8 @@ fn test_vpshrdw_ymm_basic() {
 fn test_vpshrdw_zmm_basic() {
     // VPSHRDW - Shift right words (ZMM)
     let code = [
-        0x62, 0xF3, 0xED, 0x48, 0x72, 0xC3, 0x0C,           // VPSHRDW zmm0, zmm2, zmm3, 12
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0xED, 0x48, 0x72, 0xC3, 0x0C, // VPSHRDW zmm0, zmm2, zmm3, 12
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -505,8 +503,8 @@ fn test_vpshrdd_xmm_basic() {
     // VPSHRDD - Concatenate and shift right dwords (XMM)
     // EVEX.128.66.0F3A.W0 73 /r ib
     let code = [
-        0x62, 0xF3, 0x6D, 0x08, 0x73, 0xC1, 0x08,           // VPSHRDD xmm0, xmm2, xmm1, 8
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0x6D, 0x08, 0x73, 0xC1, 0x08, // VPSHRDD xmm0, xmm2, xmm1, 8
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -516,8 +514,8 @@ fn test_vpshrdd_xmm_basic() {
 fn test_vpshrdd_ymm_basic() {
     // VPSHRDD - Shift right dwords (YMM)
     let code = [
-        0x62, 0xF3, 0x6D, 0x28, 0x73, 0xC2, 0x10,           // VPSHRDD ymm0, ymm2, ymm2, 16
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0x6D, 0x28, 0x73, 0xC2, 0x10, // VPSHRDD ymm0, ymm2, ymm2, 16
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -527,8 +525,8 @@ fn test_vpshrdd_ymm_basic() {
 fn test_vpshrdd_zmm_basic() {
     // VPSHRDD - Shift right dwords (ZMM)
     let code = [
-        0x62, 0xF3, 0x6D, 0x48, 0x73, 0xC3, 0x04,           // VPSHRDD zmm0, zmm2, zmm3, 4
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0x6D, 0x48, 0x73, 0xC3, 0x04, // VPSHRDD zmm0, zmm2, zmm3, 4
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -543,8 +541,8 @@ fn test_vpshrdq_xmm_basic() {
     // VPSHRDQ - Concatenate and shift right qwords (XMM)
     // EVEX.128.66.0F3A.W1 73 /r ib
     let code = [
-        0x62, 0xF3, 0xED, 0x08, 0x73, 0xC1, 0x10,           // VPSHRDQ xmm0, xmm2, xmm1, 16
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0xED, 0x08, 0x73, 0xC1, 0x10, // VPSHRDQ xmm0, xmm2, xmm1, 16
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -554,8 +552,8 @@ fn test_vpshrdq_xmm_basic() {
 fn test_vpshrdq_ymm_basic() {
     // VPSHRDQ - Shift right qwords (YMM)
     let code = [
-        0x62, 0xF3, 0xED, 0x28, 0x73, 0xC2, 0x20,           // VPSHRDQ ymm0, ymm2, ymm2, 32
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0xED, 0x28, 0x73, 0xC2, 0x20, // VPSHRDQ ymm0, ymm2, ymm2, 32
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -565,8 +563,8 @@ fn test_vpshrdq_ymm_basic() {
 fn test_vpshrdq_zmm_basic() {
     // VPSHRDQ - Shift right qwords (ZMM)
     let code = [
-        0x62, 0xF3, 0xED, 0x48, 0x73, 0xC3, 0x08,           // VPSHRDQ zmm0, zmm2, zmm3, 8
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0xED, 0x48, 0x73, 0xC3, 0x08, // VPSHRDQ zmm0, zmm2, zmm3, 8
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -581,8 +579,8 @@ fn test_vpshrdvw_zmm_basic() {
     // VPSHRDVW - Variable shift right words (ZMM)
     // EVEX.512.66.0F38.W1 72 /r
     let code = [
-        0x62, 0xF2, 0xED, 0x48, 0x72, 0xC3,                 // VPSHRDVW zmm0, zmm2, zmm3
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0xED, 0x48, 0x72, 0xC3, // VPSHRDVW zmm0, zmm2, zmm3
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -597,8 +595,8 @@ fn test_vpshrdvd_zmm_basic() {
     // VPSHRDVD - Variable shift right dwords (ZMM)
     // EVEX.512.66.0F38.W0 73 /r
     let code = [
-        0x62, 0xF2, 0x6D, 0x48, 0x73, 0xC3,                 // VPSHRDVD zmm0, zmm2, zmm3
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0x6D, 0x48, 0x73, 0xC3, // VPSHRDVD zmm0, zmm2, zmm3
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -613,8 +611,8 @@ fn test_vpshrdvq_zmm_basic() {
     // VPSHRDVQ - Variable shift right qwords (ZMM)
     // EVEX.512.66.0F38.W1 73 /r
     let code = [
-        0x62, 0xF2, 0xED, 0x48, 0x73, 0xC3,                 // VPSHRDVQ zmm0, zmm2, zmm3
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0xED, 0x48, 0x73, 0xC3, // VPSHRDVQ zmm0, zmm2, zmm3
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -628,9 +626,9 @@ fn test_vpshrdvq_zmm_basic() {
 fn test_shift_left_right_roundtrip() {
     // Shift left then right should restore original
     let code = [
-        0x62, 0xF3, 0x6D, 0x48, 0x71, 0xC1, 0x10,           // VPSHLDD zmm0, zmm2, zmm1, 16
-        0x62, 0xF3, 0x75, 0x48, 0x73, 0xC8, 0x10,           // VPSHRDD zmm1, zmm0, zmm0, 16
-        0xF4,                                                // HLT
+        0x62, 0xF3, 0x6D, 0x48, 0x71, 0xC1, 0x10, // VPSHLDD zmm0, zmm2, zmm1, 16
+        0x62, 0xF3, 0x75, 0x48, 0x73, 0xC8, 0x10, // VPSHRDD zmm1, zmm0, zmm0, 16
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -640,9 +638,9 @@ fn test_shift_left_right_roundtrip() {
 fn test_lzcnt_sad_combo() {
     // Combine leading zero count with SAD operation
     let code = [
-        0x62, 0xF2, 0x7D, 0x48, 0x44, 0xC1,                 // VPLZCNTD zmm0, zmm1
-        0x62, 0xF3, 0x7D, 0x48, 0x42, 0xD2, 0xE4,           // VDBPSADBW zmm2, zmm0, zmm2, 0xE4
-        0xF4,                                                // HLT
+        0x62, 0xF2, 0x7D, 0x48, 0x44, 0xC1, // VPLZCNTD zmm0, zmm1
+        0x62, 0xF3, 0x7D, 0x48, 0x42, 0xD2, 0xE4, // VDBPSADBW zmm2, zmm0, zmm2, 0xE4
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -716,7 +714,11 @@ mod evex_cmp_mask {
         let mut expected = 0u64;
         for i in 0..16 {
             // s1 alternates large-positive and "negative" (top bit set)
-            s1[i] = if i % 2 == 0 { 1000 + i as u32 } else { 0x8000_0000u32 | i as u32 };
+            s1[i] = if i % 2 == 0 {
+                1000 + i as u32
+            } else {
+                0x8000_0000u32 | i as u32
+            };
             s2[i] = 500;
             if (s1[i] as i32) > (s2[i] as i32) {
                 expected |= 1u64 << i;
@@ -752,7 +754,11 @@ mod evex_cmp_mask {
         let mut expected = 0u64;
         for i in 0..16 {
             // values that order differently signed vs unsigned (top-bit-set are "large" unsigned)
-            s1[i] = if i % 2 == 0 { 0x8000_0000u32 + i as u32 } else { i as u32 };
+            s1[i] = if i % 2 == 0 {
+                0x8000_0000u32 + i as u32
+            } else {
+                i as u32
+            };
             s2[i] = 10;
             if s1[i] > s2[i] {
                 // unsigned compare
@@ -812,7 +818,11 @@ mod evex_cmp_mask {
         for i in 0..64 {
             b1[i] = i as u8;
             // every third byte equal
-            b2[i] = if i % 3 == 0 { i as u8 } else { (i as u8).wrapping_add(1) };
+            b2[i] = if i % 3 == 0 {
+                i as u8
+            } else {
+                (i as u8).wrapping_add(1)
+            };
             if b1[i] == b2[i] {
                 expected |= 1u64 << i;
             }

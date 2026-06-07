@@ -41,7 +41,11 @@ fn test_sarx_32bit_shift_by_0() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "Shift by 0 should preserve value");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "Shift by 0 should preserve value"
+    );
 }
 
 #[test]
@@ -57,7 +61,11 @@ fn test_sarx_32bit_shift_positive_by_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000080, "256 >> 1 = 128 (positive)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000080,
+        "256 >> 1 = 128 (positive)"
+    );
 }
 
 #[test]
@@ -219,7 +227,10 @@ fn test_sarx_64bit_shift_by_0() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x123456789ABCDEF0, "Shift by 0 should preserve value");
+    assert_eq!(
+        regs.rax, 0x123456789ABCDEF0,
+        "Shift by 0 should preserve value"
+    );
 }
 
 #[test]
@@ -306,8 +317,7 @@ fn test_sarx_64bit_negative_shift_to_all_ones() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(
-        regs.rax,
-        0xFFFFFFFFFFFFFFFF,
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
         "Negative shifted 63 times becomes all ones"
     );
 }
@@ -368,7 +378,7 @@ fn test_sarx_64bit_sign_extension_pattern() {
 fn test_sarx_32bit_does_not_modify_cf() {
     // SARX should not modify CF
     let code = [
-        0xf9,                         // STC (set CF)
+        0xf9, // STC (set CF)
         0xc4, 0xe2, 0x72, 0xf7, 0xc3, // SARX EAX, EBX, ECX
         0xf4,
     ];
@@ -386,8 +396,8 @@ fn test_sarx_64bit_preserves_all_flags() {
     // Set various flags, then SARX should preserve them
     let code = [
         0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
-        0x48, 0x83, 0xe8, 0x02,                   // SUB RAX, 2 (sets CF, SF, AF)
-        0xc4, 0xe2, 0xf2, 0xf7, 0xc3,             // SARX RAX, RBX, RCX
+        0x48, 0x83, 0xe8, 0x02, // SUB RAX, 2 (sets CF, SF, AF)
+        0xc4, 0xe2, 0xf2, 0xf7, 0xc3, // SARX RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -443,8 +453,7 @@ fn test_sarx_64bit_all_ones_stays_all_ones() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(
-            regs.rax,
-            0xFFFFFFFFFFFFFFFF,
+            regs.rax, 0xFFFFFFFFFFFFFFFF,
             "All ones should remain all ones after SARX by {}",
             count
         );
@@ -510,7 +519,10 @@ fn test_sarx_64bit_memory_operand_negative() {
     write_mem_u64(&mem, 0x8000000000000000);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFF80000000000000, "64-bit memory operand sign extended");
+    assert_eq!(
+        regs.rax, 0xFF80000000000000,
+        "64-bit memory operand sign extended"
+    );
 }
 
 // ============================================================================
@@ -579,7 +591,7 @@ fn test_sarx_consecutive_shifts() {
     // Multiple SARX operations on negative number
     let code = [
         0xc4, 0xe2, 0x72, 0xf7, 0xc3, // SARX EAX, EBX, ECX
-        0x48, 0x89, 0xc3,             // MOV RBX, RAX
+        0x48, 0x89, 0xc3, // MOV RBX, RAX
         0xc4, 0xe2, 0x72, 0xf7, 0xc3, // SARX EAX, EBX, ECX
         0xf4,
     ];

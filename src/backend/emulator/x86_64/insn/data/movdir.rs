@@ -10,19 +10,11 @@ fn movdir_addr_size(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
     let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
 
     if in_64bit_mode {
-        if ctx.address_size_override {
-            4
-        } else {
-            8
-        }
+        if ctx.address_size_override { 4 } else { 8 }
     } else {
         let default_16bit = !vcpu.sregs.cs.db;
         let is_16bit = default_16bit ^ ctx.address_size_override;
-        if is_16bit {
-            2
-        } else {
-            4
-        }
+        if is_16bit { 2 } else { 4 }
     }
 }
 
@@ -78,7 +70,7 @@ pub fn movdir64b(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
             return Err(Error::Emulator(format!(
                 "MOVDIR64B invalid address size {}",
                 addr_size
-            )))
+            )));
         }
     };
 

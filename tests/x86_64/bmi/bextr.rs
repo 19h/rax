@@ -27,8 +27,15 @@ fn test_bextr_eax_ebx_ecx_basic() {
 
     // Extract 8 bits starting at bit 4: bits 4-11 of 0x12345678
     // 0x12345678 >> 4 = 0x01234567, mask 8 bits = 0x67
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x67, "EAX should contain extracted bits");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x67,
+        "EAX should contain extracted bits"
+    );
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (result is non-zero)"
+    );
     assert!(!cf_set(regs.rflags), "CF should be clear");
 }
 
@@ -62,7 +69,11 @@ fn test_bextr_single_bit_extract() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000001, "EAX should contain extracted bit");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000001,
+        "EAX should contain extracted bit"
+    );
 }
 
 #[test]
@@ -78,7 +89,11 @@ fn test_bextr_full_range_extract() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xDEADBEEF, "EAX should contain all 32 bits");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xDEADBEEF,
+        "EAX should contain all 32 bits"
+    );
 }
 
 #[test]
@@ -90,12 +105,12 @@ fn test_bextr_partial_range() {
     ];
 
     let test_cases = [
-        (0x0000_00FFu32, (8 << 8) | 0, 0xFFu32),      // bits 0-7
-        (0x0000_FF00u32, (8 << 8) | 8, 0xFFu32),      // bits 8-15
-        (0x00FF_0000u32, (8 << 8) | 16, 0xFFu32),     // bits 16-23
-        (0xFF00_0000u32, (8 << 8) | 24, 0xFFu32),     // bits 24-31
-        (0xFFFF_0000u32, (16 << 8) | 16, 0xFFFFu32),  // bits 16-31
-        (0x0000_FFFFu32, (16 << 8) | 0, 0xFFFFu32),   // bits 0-15
+        (0x0000_00FFu32, (8 << 8) | 0, 0xFFu32),     // bits 0-7
+        (0x0000_FF00u32, (8 << 8) | 8, 0xFFu32),     // bits 8-15
+        (0x00FF_0000u32, (8 << 8) | 16, 0xFFu32),    // bits 16-23
+        (0xFF00_0000u32, (8 << 8) | 24, 0xFFu32),    // bits 24-31
+        (0xFFFF_0000u32, (16 << 8) | 16, 0xFFFFu32), // bits 16-31
+        (0x0000_FFFFu32, (16 << 8) | 0, 0xFFFFu32),  // bits 0-15
     ];
 
     for (value, params, expected) in &test_cases {
@@ -105,7 +120,13 @@ fn test_bextr_partial_range() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, *expected as u64, "BEXTR({:08x}, {:04x}) extraction failed", value, params);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "BEXTR({:08x}, {:04x}) extraction failed",
+            value,
+            params
+        );
     }
 }
 
@@ -123,7 +144,10 @@ fn test_bextr_rax_rbx_rcx_64bit() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Extract bits 32-63 of 0x0123_4567_89AB_CDEF = 0x0123_4567
-    assert_eq!(regs.rax, 0x0000_0000_0123_4567, "RAX should contain high 32 bits");
+    assert_eq!(
+        regs.rax, 0x0000_0000_0123_4567,
+        "RAX should contain high 32 bits"
+    );
 }
 
 #[test]
@@ -139,7 +163,11 @@ fn test_bextr_zero_length() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should be zero for zero length");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "EAX should be zero for zero length"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set for zero result");
 }
 
@@ -157,7 +185,11 @@ fn test_bextr_beyond_boundary() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Should extract bits 28-31 (4 bits) and zero-extend
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0000000F, "EAX should zero-extend partial extraction");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x0000000F,
+        "EAX should zero-extend partial extraction"
+    );
 }
 
 #[test]
@@ -165,7 +197,8 @@ fn test_bextr_with_extended_registers() {
     // BEXTR R8D, R9D, R10D
     // VEX: R~=0, X~=1, B~=0, vvvv=0101 (R10 inverted)
     let code = [
-        0xc4, 0x42, 0x28, 0xf7, 0xc1, // BEXTR R8D, R9D, R10D (vvvv=0101=R10, R~=0 for R8, B~=0 for R9)
+        0xc4, 0x42, 0x28, 0xf7,
+        0xc1, // BEXTR R8D, R9D, R10D (vvvv=0101=R10, R~=0 for R8, B~=0 for R9)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -174,7 +207,11 @@ fn test_bextr_with_extended_registers() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0x67, "R8D should contain extracted bits");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0x67,
+        "R8D should contain extracted bits"
+    );
 }
 
 #[test]
@@ -199,7 +236,8 @@ fn test_bextr_mem32() {
     // BEXTR EAX, [mem], ECX
     // ModRM 0x04: mod=00, reg=0 (EAX), r/m=4 (SIB follows)
     let code = [
-        0xc4, 0xe2, 0x70, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // BEXTR EAX, [DATA_ADDR], ECX
+        0xc4, 0xe2, 0x70, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00,
+        0x00, // BEXTR EAX, [DATA_ADDR], ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -210,7 +248,11 @@ fn test_bextr_mem32() {
 
     // Extract 8 bits starting at bit 8 from 0xDEADBEEF
     // 0xDEADBEEF >> 8 = 0x00DEADBE, mask 8 bits = 0xBE
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xBE, "EAX should contain extracted bits from memory");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xBE,
+        "EAX should contain extracted bits from memory"
+    );
 }
 
 #[test]
@@ -218,7 +260,8 @@ fn test_bextr_mem64() {
     // BEXTR RAX, [mem], RCX
     // ModRM 0x04: mod=00, reg=0 (RAX), r/m=4 (SIB follows)
     let code = [
-        0xc4, 0xe2, 0xf0, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // BEXTR RAX, [DATA_ADDR], RCX
+        0xc4, 0xe2, 0xf0, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00,
+        0x00, // BEXTR RAX, [DATA_ADDR], RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -229,7 +272,10 @@ fn test_bextr_mem64() {
 
     // Extract 16 bits starting at bit 16 from 0x0123456789ABCDEF
     // 0x0123456789ABCDEF >> 16 = 0x01234567_89AB, mask 16 bits = 0x89AB
-    assert_eq!(regs.rax, 0x89AB, "RAX should contain extracted bits from memory");
+    assert_eq!(
+        regs.rax, 0x89AB,
+        "RAX should contain extracted bits from memory"
+    );
 }
 
 #[test]
@@ -241,10 +287,10 @@ fn test_bextr_byte_boundaries() {
     ];
 
     let test_cases = [
-        (0xFF00FF00u32, (8 << 8) | 0, 0x00),   // Extract byte 0
-        (0xFF00FF00u32, (8 << 8) | 8, 0xFF),   // Extract byte 1
-        (0xFF00FF00u32, (8 << 8) | 16, 0x00),  // Extract byte 2
-        (0xFF00FF00u32, (8 << 8) | 24, 0xFF),  // Extract byte 3
+        (0xFF00FF00u32, (8 << 8) | 0, 0x00),  // Extract byte 0
+        (0xFF00FF00u32, (8 << 8) | 8, 0xFF),  // Extract byte 1
+        (0xFF00FF00u32, (8 << 8) | 16, 0x00), // Extract byte 2
+        (0xFF00FF00u32, (8 << 8) | 24, 0xFF), // Extract byte 3
     ];
 
     for (value, params, expected) in &test_cases {
@@ -254,7 +300,11 @@ fn test_bextr_byte_boundaries() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, *expected as u64, "BEXTR byte extraction failed");
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "BEXTR byte extraction failed"
+        );
     }
 }
 
@@ -274,7 +324,12 @@ fn test_bextr_nibble_extraction() {
         let result = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = (0x0F0E0D0Cu32 >> (nibble_idx * 4)) & 0xF;
-        assert_eq!(result.rax & 0xFFFFFFFF, expected as u64, "Nibble {} extraction failed", nibble_idx);
+        assert_eq!(
+            result.rax & 0xFFFFFFFF,
+            expected as u64,
+            "Nibble {} extraction failed",
+            nibble_idx
+        );
     }
 }
 
@@ -331,7 +386,10 @@ fn test_bextr_large_length_64bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "RAX should contain all 64 bits");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "RAX should contain all 64 bits"
+    );
 }
 
 #[test]
@@ -361,17 +419,21 @@ fn test_bextr_sequential_fields() {
     regs.rbx = 0xDEADBEEF; // 4 bytes: 0xDE, 0xAD, 0xBE, 0xEF
 
     let fields = [
-        (0xEF, (8 << 8) | 0),   // Byte 0
-        (0xBE, (8 << 8) | 8),   // Byte 1
-        (0xAD, (8 << 8) | 16),  // Byte 2
-        (0xDE, (8 << 8) | 24),  // Byte 3
+        (0xEF, (8 << 8) | 0),  // Byte 0
+        (0xBE, (8 << 8) | 8),  // Byte 1
+        (0xAD, (8 << 8) | 16), // Byte 2
+        (0xDE, (8 << 8) | 24), // Byte 3
     ];
 
     for (expected, params) in &fields {
         regs.rcx = *params as u64;
         let (mut vcpu, _) = setup_vm(&code, Some(regs.clone()));
         let result = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(result.rax & 0xFFFFFFFF, *expected as u64, "Field extraction failed");
+        assert_eq!(
+            result.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "Field extraction failed"
+        );
     }
 }
 
@@ -397,7 +459,10 @@ fn test_bextr_flags_behavior() {
     regs.rcx = (4 << 8) | 28; // Extract bits 28-31 (all one)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert!(!zf_set(regs.rflags), "ZF should be clear for non-zero result");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear for non-zero result"
+    );
 
     // CF should always be clear
     assert!(!cf_set(regs.rflags), "CF should always be clear");
@@ -414,19 +479,24 @@ fn test_bextr_comprehensive_32bit() {
     regs.rbx = 0x12345678;
 
     let test_cases = [
-        ((4 << 8) | 0, 0x8),        // Extract bits 0-3
-        ((4 << 8) | 4, 0x7),        // Extract bits 4-7
-        ((8 << 8) | 0, 0x78),       // Extract bits 0-7
-        ((8 << 8) | 8, 0x56),       // Extract bits 8-15
-        ((16 << 8) | 0, 0x5678),    // Extract bits 0-15
-        ((16 << 8) | 16, 0x1234),   // Extract bits 16-31
+        ((4 << 8) | 0, 0x8),      // Extract bits 0-3
+        ((4 << 8) | 4, 0x7),      // Extract bits 4-7
+        ((8 << 8) | 0, 0x78),     // Extract bits 0-7
+        ((8 << 8) | 8, 0x56),     // Extract bits 8-15
+        ((16 << 8) | 0, 0x5678),  // Extract bits 0-15
+        ((16 << 8) | 16, 0x1234), // Extract bits 16-31
     ];
 
     for (params, expected) in &test_cases {
         regs.rcx = *params as u64;
         let (mut vcpu, _) = setup_vm(&code, Some(regs.clone()));
         let result = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(result.rax & 0xFFFFFFFF, *expected as u64, "Extraction with params {:04x} failed", params);
+        assert_eq!(
+            result.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "Extraction with params {:04x} failed",
+            params
+        );
     }
 }
 
@@ -444,18 +514,22 @@ fn test_bextr_comprehensive_64bit() {
     // (0x01234567 >> 0) & 0xFF = 0x67
 
     let test_cases = [
-        ((8 << 8) | 0, 0xEF),           // Low byte
-        ((8 << 8) | 32, 0x67),          // Byte at 32-bit boundary: (val >> 32) & 0xFF = 0x67
-        ((16 << 8) | 32, 0x4567),       // 16 bits starting at 32-bit boundary
-        ((32 << 8) | 32, 0x01234567),   // High 32 bits
-        ((8 << 8) | 56, 0x01),          // High byte
+        ((8 << 8) | 0, 0xEF),         // Low byte
+        ((8 << 8) | 32, 0x67),        // Byte at 32-bit boundary: (val >> 32) & 0xFF = 0x67
+        ((16 << 8) | 32, 0x4567),     // 16 bits starting at 32-bit boundary
+        ((32 << 8) | 32, 0x01234567), // High 32 bits
+        ((8 << 8) | 56, 0x01),        // High byte
     ];
 
     for (params, expected) in &test_cases {
         regs.rcx = *params as u64;
         let (mut vcpu, _) = setup_vm(&code, Some(regs.clone()));
         let result = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(result.rax, *expected, "64-bit extraction with params {:04x} failed", params);
+        assert_eq!(
+            result.rax, *expected,
+            "64-bit extraction with params {:04x} failed",
+            params
+        );
     }
 }
 
@@ -482,7 +556,11 @@ fn test_bextr_variable_length_extraction() {
             0xFEDCBA98 & ((1u32 << len) - 1)
         };
 
-        assert_eq!(result.rax & 0xFFFFFFFF, expected as u64, "Variable length extraction failed");
+        assert_eq!(
+            result.rax & 0xFFFFFFFF,
+            expected as u64,
+            "Variable length extraction failed"
+        );
     }
 }
 
@@ -502,7 +580,11 @@ fn test_bextr_variable_start_position() {
         let result = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = (0x12345678u32 >> start) & 0xFF;
-        assert_eq!(result.rax & 0xFFFFFFFF, expected as u64, "Variable start extraction failed");
+        assert_eq!(
+            result.rax & 0xFFFFFFFF,
+            expected as u64,
+            "Variable start extraction failed"
+        );
     }
 }
 
@@ -529,7 +611,11 @@ fn test_bextr_cross_word_extraction() {
         regs.rcx = *params as u64;
         let (mut vcpu, _) = setup_vm(&code, Some(regs.clone()));
         let result = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(result.rax & 0xFFFFFFFF, *expected as u64, "Cross-word extraction");
+        assert_eq!(
+            result.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "Cross-word extraction"
+        );
     }
 }
 
@@ -560,17 +646,21 @@ fn test_bextr_multi_byte_sequential() {
     regs.rbx = 0x12345678;
 
     let test_cases = [
-        ((8 << 8) | 0, 0x78u32),   // Extract byte 0
-        ((8 << 8) | 8, 0x56u32),   // Extract byte 1
-        ((8 << 8) | 16, 0x34u32),  // Extract byte 2
-        ((8 << 8) | 24, 0x12u32),  // Extract byte 3
+        ((8 << 8) | 0, 0x78u32),  // Extract byte 0
+        ((8 << 8) | 8, 0x56u32),  // Extract byte 1
+        ((8 << 8) | 16, 0x34u32), // Extract byte 2
+        ((8 << 8) | 24, 0x12u32), // Extract byte 3
     ];
 
     for (params, expected) in &test_cases {
         regs.rcx = *params as u64;
         let (mut vcpu, _) = setup_vm(&code, Some(regs.clone()));
         let result = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(result.rax & 0xFFFFFFFF, *expected as u64, "Multi-byte sequential extraction");
+        assert_eq!(
+            result.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "Multi-byte sequential extraction"
+        );
     }
 }
 
@@ -604,7 +694,11 @@ fn test_bextr_all_ones_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let result = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(result.rax & 0xFFFFFFFF, 0xFFFF, "All ones pattern extraction");
+    assert_eq!(
+        result.rax & 0xFFFFFFFF,
+        0xFFFF,
+        "All ones pattern extraction"
+    );
 }
 
 #[test]
@@ -620,8 +714,15 @@ fn test_bextr_all_zeros_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let result = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(zf_set(result.rflags), "All zeros pattern extraction should set ZF");
-    assert_eq!(result.rax & 0xFFFFFFFF, 0, "All zeros pattern extraction result");
+    assert!(
+        zf_set(result.rflags),
+        "All zeros pattern extraction should set ZF"
+    );
+    assert_eq!(
+        result.rax & 0xFFFFFFFF,
+        0,
+        "All zeros pattern extraction result"
+    );
 }
 
 #[test]
@@ -668,9 +769,9 @@ fn test_bextr_alternating_patterns() {
         0xf4,
     ];
     let test_cases = [
-        (0xAAAAAAAAu32, (4 << 8) | 0, 0xA),   // Extract 0xA
-        (0x55555555u32, (4 << 8) | 0, 0x5),   // Extract 0x5
-        (0xAAAAAAAAu32, (8 << 8) | 0, 0xAA),  // Extract 0xAA
+        (0xAAAAAAAAu32, (4 << 8) | 0, 0xA),  // Extract 0xA
+        (0x55555555u32, (4 << 8) | 0, 0x5),  // Extract 0x5
+        (0xAAAAAAAAu32, (8 << 8) | 0, 0xAA), // Extract 0xAA
     ];
 
     for (value, params, expected) in &test_cases {
@@ -679,7 +780,11 @@ fn test_bextr_alternating_patterns() {
         regs.rcx = *params as u64;
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let result = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(result.rax & 0xFFFFFFFF, *expected as u64, "Alternating pattern extraction");
+        assert_eq!(
+            result.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "Alternating pattern extraction"
+        );
     }
 }
 
@@ -698,18 +803,22 @@ fn test_bextr_offset_length_combinations() {
     // bits 0-2 = 0b011 = 3, bits 29-31 = 0b110 = 6
 
     let test_cases = [
-        ((1 << 8) | 0, 0x01),       // 1 bit at 0: bit 0 = 1
-        ((1 << 8) | 31, 0x01),      // 1 bit at 31: bit 31 = 1
-        ((2 << 8) | 0, 0x03),       // 2 bits at 0: bits 0-1 = 0b11
-        ((2 << 8) | 30, 0x03),      // 2 bits at 30: bits 30-31 = 0b11
-        ((3 << 8) | 0, 0x03),       // 3 bits at 0: bits 0-2 = 0b011
-        ((3 << 8) | 29, 0x06),      // 3 bits at 29: bits 29-31 = 0b110
+        ((1 << 8) | 0, 0x01),  // 1 bit at 0: bit 0 = 1
+        ((1 << 8) | 31, 0x01), // 1 bit at 31: bit 31 = 1
+        ((2 << 8) | 0, 0x03),  // 2 bits at 0: bits 0-1 = 0b11
+        ((2 << 8) | 30, 0x03), // 2 bits at 30: bits 30-31 = 0b11
+        ((3 << 8) | 0, 0x03),  // 3 bits at 0: bits 0-2 = 0b011
+        ((3 << 8) | 29, 0x06), // 3 bits at 29: bits 29-31 = 0b110
     ];
 
     for (params, expected) in &test_cases {
         regs.rcx = *params as u64;
         let (mut vcpu, _) = setup_vm(&code, Some(regs.clone()));
         let result = run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(result.rax & 0xFFFFFFFF, *expected as u64, "Offset/length combination");
+        assert_eq!(
+            result.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "Offset/length combination"
+        );
     }
 }

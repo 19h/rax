@@ -30,7 +30,11 @@ fn test_bts_ax_bx_bit_0_set() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 0 was 1)");
-    assert_eq!(regs.rax & 0xFFFF, 0b0000_0000_0000_0001, "AX: bit 0 should remain set");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0b0000_0000_0000_0001,
+        "AX: bit 0 should remain set"
+    );
 }
 
 #[test]
@@ -47,7 +51,11 @@ fn test_bts_ax_bx_bit_0_clear() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 0 was 0)");
-    assert_eq!(regs.rax & 0xFFFF, 0b0000_0000_0000_0001, "AX: bit 0 should be set to 1");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0b0000_0000_0000_0001,
+        "AX: bit 0 should be set to 1"
+    );
 }
 
 #[test]
@@ -81,7 +89,11 @@ fn test_bts_eax_ebx_bit_0() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 0 was 0)");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_0001, "EAX: bit 0 should be set to 1");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0000_0001,
+        "EAX: bit 0 should be set to 1"
+    );
 }
 
 #[test]
@@ -98,7 +110,11 @@ fn test_bts_eax_ebx_bit_31() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 31 was 0)");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX: bit 31 should be set to 1");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX: bit 31 should be set to 1"
+    );
 }
 
 #[test]
@@ -132,7 +148,10 @@ fn test_bts_rax_rbx_bit_63() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 63 was 0)");
-    assert_eq!(regs.rax, 0x8000_0000_0000_0000, "RAX: bit 63 should be set to 1");
+    assert_eq!(
+        regs.rax, 0x8000_0000_0000_0000,
+        "RAX: bit 63 should be set to 1"
+    );
 }
 
 #[test]
@@ -148,7 +167,11 @@ fn test_bts_ax_imm8_bit_0() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 0 was 0)");
-    assert_eq!(regs.rax & 0xFFFF, 0b0000_0000_0000_0001, "AX: bit 0 should be set to 1");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0b0000_0000_0000_0001,
+        "AX: bit 0 should be set to 1"
+    );
 }
 
 #[test]
@@ -180,7 +203,11 @@ fn test_bts_eax_imm8_bit_0() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 0 was 0)");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_0001, "EAX: bit 0 should be set to 1");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0000_0001,
+        "EAX: bit 0 should be set to 1"
+    );
 }
 
 #[test]
@@ -196,7 +223,11 @@ fn test_bts_eax_imm8_bit_31() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 31 was 0)");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX: bit 31 should be set to 1");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX: bit 31 should be set to 1"
+    );
 }
 
 #[test]
@@ -228,7 +259,10 @@ fn test_bts_rax_imm8_bit_63() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 63 was 0)");
-    assert_eq!(regs.rax, 0x8000_0000_0000_0000, "RAX: bit 63 should be set to 1");
+    assert_eq!(
+        regs.rax, 0x8000_0000_0000_0000,
+        "RAX: bit 63 should be set to 1"
+    );
 }
 
 #[test]
@@ -246,7 +280,11 @@ fn test_bts_idempotent() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let expected = 0x12345678 | (1 << 5);
-    assert_eq!(regs.rax & 0xFFFFFFFF, expected, "EAX: double set should have same result");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        expected,
+        "EAX: double set should have same result"
+    );
 }
 
 #[test]
@@ -263,7 +301,11 @@ fn test_bts_alternating_bits() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 0 was 0)");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xAAAAAAAA | 0x1, "EAX: bit 0 should be set");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xAAAAAAAA | 0x1,
+        "EAX: bit 0 should be set"
+    );
 }
 
 #[test]
@@ -279,7 +321,11 @@ fn test_bts_preserves_other_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 1 << 5, "EAX: only bit 5 should be set");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        1 << 5,
+        "EAX: only bit 5 should be set"
+    );
 }
 
 #[test]
@@ -296,7 +342,11 @@ fn test_bts_with_extended_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 0 was 0)");
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0b0000_0001, "R8D: bit 0 should be set to 1");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0b0000_0001,
+        "R8D: bit 0 should be set to 1"
+    );
 }
 
 #[test]
@@ -399,7 +449,11 @@ fn test_bts_all_bits_set() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 17 was 1)");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX: should remain all ones");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX: should remain all ones"
+    );
 }
 
 #[test]
@@ -483,7 +537,11 @@ fn test_bts_creates_single_bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 1 << 20, "EAX: only bit 20 should be set");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        1 << 20,
+        "EAX: only bit 20 should be set"
+    );
 }
 
 #[test]
@@ -510,7 +568,11 @@ fn test_bts_multiple_bits_sequential() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, (1 << 5) | (1 << 10), "EAX: bits 5 and 10 should be set");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        (1 << 5) | (1 << 10),
+        "EAX: bits 5 and 10 should be set"
+    );
 }
 
 #[test]
@@ -526,7 +588,11 @@ fn test_bts_no_effect_on_set_bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345679, "EAX: should be unchanged");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345679,
+        "EAX: should be unchanged"
+    );
 }
 
 #[test]
@@ -542,7 +608,11 @@ fn test_bts_creates_mask() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 1 << 8, "EAX: creates mask with bit 8 set");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        1 << 8,
+        "EAX: creates mask with bit 8 set"
+    );
 }
 
 #[test]
@@ -558,7 +628,11 @@ fn test_bts_sparse_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000001, "EAX: bits 0 and 31 should be set");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000001,
+        "EAX: bits 0 and 31 should be set"
+    );
 }
 
 #[test]

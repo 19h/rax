@@ -285,7 +285,11 @@ impl ExecMem {
         let ptr = ptr as *mut u8;
         unsafe { core::ptr::copy_nonoverlapping(code.as_ptr(), ptr, code.len()) };
         if unsafe {
-            libc::mprotect(ptr as *mut libc::c_void, len, libc::PROT_READ | libc::PROT_EXEC)
+            libc::mprotect(
+                ptr as *mut libc::c_void,
+                len,
+                libc::PROT_READ | libc::PROT_EXEC,
+            )
         } != 0
         {
             unsafe { libc::munmap(ptr as *mut libc::c_void, len) };
@@ -443,7 +447,12 @@ fn block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) ->
             return false;
         }
         // (2) no virtual-temp writes (would clobber a guest GPR).
-        if op.kind.dests().iter().any(|d| matches!(d, VReg::Virtual(_))) {
+        if op
+            .kind
+            .dests()
+            .iter()
+            .any(|d| matches!(d, VReg::Virtual(_)))
+        {
             return false;
         }
         // (3) guest RSP/RBP. A WRITE is never modeled (the trampoline freezes
@@ -506,10 +515,16 @@ mod tests {
     fn exec_mem_exit_pc_via_stub() {
         let mut code = vec![
             0x55, // push rbp
-            0x48, 0x89, 0xE5, // mov rbp, rsp
+            0x48,
+            0x89,
+            0xE5, // mov rbp, rsp
             0x50, // push rax (scratch)
-            0x48, 0x8B, 0x45, X86_STATE_PTR_AT_RBP as u8, // mov rax, [rbp+state_ptr]
-            0xC7, 0x80,
+            0x48,
+            0x8B,
+            0x45,
+            X86_STATE_PTR_AT_RBP as u8, // mov rax, [rbp+state_ptr]
+            0xC7,
+            0x80,
         ];
         code.extend_from_slice(&(X86_GUEST_EXIT_PC_OFFSET as u32).to_le_bytes());
         code.extend_from_slice(&0x1234_abcdu32.to_le_bytes());
@@ -527,7 +542,10 @@ mod tests {
         regs.gpr[0] = 0xCAFE; // guest RAX must pass through (scratch restored)
         regs.rflags = 0x2;
         mem.run(0, &mut regs);
-        assert_eq!(regs.exit_pc, 0x1234_abcd, "exit_pc recorded via frame state ptr");
+        assert_eq!(
+            regs.exit_pc, 0x1234_abcd,
+            "exit_pc recorded via frame state ptr"
+        );
         assert_eq!(regs.gpr[0], 0xCAFE, "guest RAX restored after scratch use");
     }
 
@@ -607,10 +625,15 @@ mod tests {
                 flags: FlagUpdate::None,
             },
         );
-        b.set_terminator(Terminator::Trap { kind: TrapKind::Halt });
+        b.set_terminator(Terminator::Trap {
+            kind: TrapKind::Halt,
+        });
         let func = b.finish();
 
-        assert!(!is_native_clobber_safe(&func), "exit block's virtual write trips the strict gate");
+        assert!(
+            !is_native_clobber_safe(&func),
+            "exit block's virtual write trips the strict gate"
+        );
         let mut exits = std::collections::HashMap::new();
         exits.insert(exit_blk, 0x2000u64);
         assert!(
@@ -637,7 +660,13 @@ mod tests {
         );
         // Trailing TestCondition feeding the CondBranch: lowerer folds it, never
         // materializing `cond`, so the gate must treat the block as safe.
-        b.push_op(0x1003, OpKind::TestCondition { dst: cond, cond: Condition::Ne });
+        b.push_op(
+            0x1003,
+            OpKind::TestCondition {
+                dst: cond,
+                cond: Condition::Ne,
+            },
+        );
         b.set_terminator(Terminator::CondBranch {
             cond,
             true_target: t_blk,

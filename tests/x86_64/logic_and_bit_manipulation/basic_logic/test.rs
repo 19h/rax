@@ -150,7 +150,10 @@ fn test_test_rm64_imm32_basic() {
 
     // High bits set but testing low 32 bits only
     assert_eq!(regs.rbx, 0xFFFFFFFF00000000, "RBX unchanged");
-    assert!(!zf_set(regs.rflags), "ZF clear (sign-extended imm32 tests all bits)");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF clear (sign-extended imm32 tests all bits)"
+    );
 }
 
 // ============================================================================
@@ -448,7 +451,8 @@ fn test_test_byte_ptr_mem() {
 #[test]
 fn test_test_dword_ptr_mem() {
     let code = [
-        0xf7, 0x05, 0xf6, 0x0f, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, // TEST DWORD PTR [rip+0x0FF6], 0x000000FF
+        0xf7, 0x05, 0xf6, 0x0f, 0x00, 0x00, 0xFF, 0x00, 0x00,
+        0x00, // TEST DWORD PTR [rip+0x0FF6], 0x000000FF
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -506,5 +510,8 @@ fn test_test_check_sign_bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(sf_set(regs.rflags), "SF set means high bit is set (negative)");
+    assert!(
+        sf_set(regs.rflags),
+        "SF set means high bit is set (negative)"
+    );
 }

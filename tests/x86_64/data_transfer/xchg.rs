@@ -1,4 +1,6 @@
-use crate::common::{setup_vm_legacy as setup_vm, run_until_hlt_legacy as run_until_hlt, VM, Bytes};
+use crate::common::{
+    Bytes, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+};
 
 // XCHG - Exchange Register/Memory with Register
 // Swaps the contents of two operands

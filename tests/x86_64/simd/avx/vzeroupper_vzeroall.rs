@@ -137,14 +137,16 @@ fn test_vzeroupper_after_perm() {
 fn test_vzeroupper_after_broadcast() {
     // VBROADCASTSS followed by VZEROUPPER
     let code = [
-        0xc4, 0xe2, 0x7d, 0x18, 0x05, 0x00, 0x40, 0x00, 0x00, // VBROADCASTSS YMM0, [rip + 0x4000]
+        0xc4, 0xe2, 0x7d, 0x18, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VBROADCASTSS YMM0, [rip + 0x4000]
         0xc5, 0xf8, 0x77, // VZEROUPPER
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let test_data: [u8; 4] = [0x00, 0x00, 0x80, 0x3f]; // 1.0
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -409,14 +411,16 @@ fn test_vzeroall_after_perm() {
 fn test_vzeroall_after_broadcast() {
     // VBROADCASTSS followed by VZEROALL
     let code = [
-        0xc4, 0xe2, 0x7d, 0x18, 0x05, 0x00, 0x40, 0x00, 0x00, // VBROADCASTSS YMM0, [rip + 0x4000]
+        0xc4, 0xe2, 0x7d, 0x18, 0x05, 0x00, 0x40, 0x00,
+        0x00, // VBROADCASTSS YMM0, [rip + 0x4000]
         0xc5, 0xfc, 0x77, // VZEROALL
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let test_data: [u8; 4] = [0x00, 0x00, 0x80, 0x3f]; // 1.0
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }

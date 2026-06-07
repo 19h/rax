@@ -536,9 +536,7 @@ impl E1000 {
             0
         };
         // Clear START, set DONE, keep the address bits, place data in [31:16].
-        self.eerd = (value & !EERD_START)
-            | EERD_DONE
-            | (u32::from(data) << EERD_DATA_SHIFT);
+        self.eerd = (value & !EERD_START) | EERD_DONE | (u32::from(data) << EERD_DATA_SHIFT);
     }
 
     // ---- Interrupt helpers ----------------------------------------------

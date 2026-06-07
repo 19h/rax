@@ -228,8 +228,10 @@ fn test_vldmxcsr_multiple_loads() {
 
     let mxcsr1: [u8; 4] = [0x80, 0x1f, 0x00, 0x00];
     let mxcsr2: [u8; 4] = [0x80, 0x7f, 0x00, 0x00];
-    mem.write_slice(&mxcsr1, GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&mxcsr2, GuestAddress(ALIGNED_ADDR + 4)).unwrap();
+    mem.write_slice(&mxcsr1, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&mxcsr2, GuestAddress(ALIGNED_ADDR + 4))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -468,8 +470,10 @@ fn test_multiple_ldmxcsr_stmxcsr_pairs() {
 
     let mxcsr1: [u8; 4] = [0x80, 0x1f, 0x00, 0x00];
     let mxcsr2: [u8; 4] = [0x80, 0x7f, 0x00, 0x00];
-    mem.write_slice(&mxcsr1, GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&mxcsr2, GuestAddress(ALIGNED_ADDR + 4)).unwrap();
+    mem.write_slice(&mxcsr1, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&mxcsr2, GuestAddress(ALIGNED_ADDR + 4))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -487,7 +491,8 @@ fn test_ldmxcsr_save_restore_pattern() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let mxcsr_new: [u8; 4] = [0x80, 0x7f, 0x00, 0x00];
-    mem.write_slice(&mxcsr_new, GuestAddress(ALIGNED_ADDR + 4)).unwrap();
+    mem.write_slice(&mxcsr_new, GuestAddress(ALIGNED_ADDR + 4))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -520,17 +525,22 @@ fn test_vstmxcsr_after_sqrt() {
 fn test_ldmxcsr_context_switch() {
     // Simulate context switch with MXCSR
     let code = [
-        0xc5, 0xf8, 0xae, 0x1d, 0x00, 0x40, 0x00, 0x00, // VSTMXCSR [rip + 0x4000] (save context 1)
-        0xc5, 0xf8, 0xae, 0x15, 0x04, 0x40, 0x00, 0x00, // VLDMXCSR [rip + 0x4004] (load context 2)
+        0xc5, 0xf8, 0xae, 0x1d, 0x00, 0x40, 0x00,
+        0x00, // VSTMXCSR [rip + 0x4000] (save context 1)
+        0xc5, 0xf8, 0xae, 0x15, 0x04, 0x40, 0x00,
+        0x00, // VLDMXCSR [rip + 0x4004] (load context 2)
         0xc5, 0xf0, 0x58, 0xc2, // VADDPS XMM0, XMM1, XMM2 (in context 2)
-        0xc5, 0xf8, 0xae, 0x1d, 0x04, 0x40, 0x00, 0x00, // VSTMXCSR [rip + 0x4004] (save context 2)
-        0xc5, 0xf8, 0xae, 0x15, 0x00, 0x40, 0x00, 0x00, // VLDMXCSR [rip + 0x4000] (restore context 1)
+        0xc5, 0xf8, 0xae, 0x1d, 0x04, 0x40, 0x00,
+        0x00, // VSTMXCSR [rip + 0x4004] (save context 2)
+        0xc5, 0xf8, 0xae, 0x15, 0x00, 0x40, 0x00,
+        0x00, // VLDMXCSR [rip + 0x4000] (restore context 1)
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let mxcsr2: [u8; 4] = [0x80, 0x7f, 0x00, 0x00];
-    mem.write_slice(&mxcsr2, GuestAddress(ALIGNED_ADDR + 4)).unwrap();
+    mem.write_slice(&mxcsr2, GuestAddress(ALIGNED_ADDR + 4))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }

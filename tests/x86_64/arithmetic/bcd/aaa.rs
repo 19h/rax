@@ -96,8 +96,16 @@ fn test_aaa_lower_nibble_0a() {
     let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0x00, "AL should be 0x00 (0x0A + 0x06 = 0x10, masked to 0x00)");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0x01, "AH should be incremented to 0x01");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x00,
+        "AL should be 0x00 (0x0A + 0x06 = 0x10, masked to 0x00)"
+    );
+    assert_eq!(
+        (regs.rax >> 8) & 0xFF,
+        0x01,
+        "AH should be incremented to 0x01"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -112,7 +120,11 @@ fn test_aaa_lower_nibble_0b() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x01, "AL should be 0x01");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0x01, "AH should be incremented to 0x01");
+    assert_eq!(
+        (regs.rax >> 8) & 0xFF,
+        0x01,
+        "AH should be incremented to 0x01"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -127,7 +139,11 @@ fn test_aaa_lower_nibble_0f() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x05, "AL should be 0x05");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0x01, "AH should be incremented to 0x01");
+    assert_eq!(
+        (regs.rax >> 8) & 0xFF,
+        0x01,
+        "AH should be incremented to 0x01"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -145,8 +161,16 @@ fn test_aaa_with_upper_nibble_1x() {
     let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0x00, "AL should be 0x00 (upper nibble cleared)");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0x01, "AH should be incremented to 0x01");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x00,
+        "AL should be 0x00 (upper nibble cleared)"
+    );
+    assert_eq!(
+        (regs.rax >> 8) & 0xFF,
+        0x01,
+        "AH should be incremented to 0x01"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -161,7 +185,11 @@ fn test_aaa_with_upper_nibble_2x() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x01, "AL should be 0x01");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0x01, "AH should be incremented to 0x01");
+    assert_eq!(
+        (regs.rax >> 8) & 0xFF,
+        0x01,
+        "AH should be incremented to 0x01"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -176,7 +204,11 @@ fn test_aaa_with_upper_nibble_fx() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x02, "AL should be 0x02");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0x02, "AH should be incremented to 0x02");
+    assert_eq!(
+        (regs.rax >> 8) & 0xFF,
+        0x02,
+        "AH should be incremented to 0x02"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -210,7 +242,11 @@ fn test_aaa_ah_nonzero_adjust() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x03, "AL should be 0x03");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0x08, "AH should be incremented to 0x08");
+    assert_eq!(
+        (regs.rax >> 8) & 0xFF,
+        0x08,
+        "AH should be incremented to 0x08"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -244,8 +280,16 @@ fn test_aaa_af_set_valid_bcd() {
     let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0x0B, "AL should be 0x0B (0x05 + 0x06 = 0x0B)");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0x01, "AH should be incremented to 0x01");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x0B,
+        "AL should be 0x0B (0x05 + 0x06 = 0x0B)"
+    );
+    assert_eq!(
+        (regs.rax >> 8) & 0xFF,
+        0x01,
+        "AH should be incremented to 0x01"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -261,7 +305,11 @@ fn test_aaa_af_set_zero() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x06, "AL should be 0x06");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0x01, "AH should be incremented to 0x01");
+    assert_eq!(
+        (regs.rax >> 8) & 0xFF,
+        0x01,
+        "AH should be incremented to 0x01"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -276,8 +324,16 @@ fn test_aaa_af_set_nine() {
     let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0x0F, "AL should be 0x0F (0x09 + 0x06 = 0x0F)");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0x01, "AH should be incremented to 0x01");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x0F,
+        "AL should be 0x0F (0x09 + 0x06 = 0x0F)"
+    );
+    assert_eq!(
+        (regs.rax >> 8) & 0xFF,
+        0x01,
+        "AH should be incremented to 0x01"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -292,8 +348,8 @@ fn test_aaa_after_add_3_plus_4() {
     let code = [
         0xb0, 0x03, // MOV AL, 3
         0x04, 0x04, // ADD AL, 4
-        0x37,       // AAA
-        0xf4,       // HLT
+        0x37, // AAA
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -310,8 +366,8 @@ fn test_aaa_after_add_5_plus_6() {
     let code = [
         0xb0, 0x05, // MOV AL, 5
         0x04, 0x06, // ADD AL, 6
-        0x37,       // AAA
-        0xf4,       // HLT
+        0x37, // AAA
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -328,8 +384,8 @@ fn test_aaa_after_add_9_plus_9() {
     let code = [
         0xb0, 0x09, // MOV AL, 9
         0x04, 0x09, // ADD AL, 9
-        0x37,       // AAA
-        0xf4,       // HLT
+        0x37, // AAA
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -346,8 +402,8 @@ fn test_aaa_after_add_7_plus_8() {
     let code = [
         0xb0, 0x07, // MOV AL, 7
         0x04, 0x08, // ADD AL, 8
-        0x37,       // AAA
-        0xf4,       // HLT
+        0x37, // AAA
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -369,8 +425,8 @@ fn test_aaa_multidigit_34_plus_45() {
     let code = [
         0xb0, 0x04, // MOV AL, 4
         0x04, 0x05, // ADD AL, 5
-        0x37,       // AAA
-        0xf4,       // HLT
+        0x37, // AAA
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -386,8 +442,8 @@ fn test_aaa_multidigit_38_plus_47() {
     let code = [
         0xb0, 0x08, // MOV AL, 8
         0x04, 0x07, // ADD AL, 7
-        0x37,       // AAA
-        0xf4,       // HLT
+        0x37, // AAA
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -415,7 +471,13 @@ fn test_aaa_all_lower_nibbles() {
             assert!(!cf_set(regs.rflags), "CF should be clear for {:#04x}", val);
         } else {
             let expected = (val + 6) & 0x0F;
-            assert_eq!(regs.rax & 0xFF, expected, "AL should be {:#04x} for input {:#04x}", expected, val);
+            assert_eq!(
+                regs.rax & 0xFF,
+                expected,
+                "AL should be {:#04x} for input {:#04x}",
+                expected,
+                val
+            );
             assert!(cf_set(regs.rflags), "CF should be set for {:#04x}", val);
         }
     }
@@ -430,7 +492,11 @@ fn test_aaa_upper_bits_cleared() {
     let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xF0, 0x00, "Upper 4 bits of AL should be cleared");
+    assert_eq!(
+        regs.rax & 0xF0,
+        0x00,
+        "Upper 4 bits of AL should be cleared"
+    );
 }
 
 #[test]
@@ -442,7 +508,11 @@ fn test_aaa_preserves_high_rax() {
     let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax >> 16, 0x1234_5678_DEAD, "High bits of RAX should be preserved");
+    assert_eq!(
+        regs.rax >> 16,
+        0x1234_5678_DEAD,
+        "High bits of RAX should be preserved"
+    );
 }
 
 #[test]
@@ -451,10 +521,10 @@ fn test_aaa_sequential_operations() {
     let code = [
         0xb0, 0x08, // MOV AL, 8
         0x04, 0x05, // ADD AL, 5 (result: 13 = 0x0D)
-        0x37,       // AAA (result: AL=3, AH=1)
+        0x37, // AAA (result: AL=3, AH=1)
         0x04, 0x07, // ADD AL, 7 (result: 10 = 0x0A)
-        0x37,       // AAA (result: AL=0, AH=2)
-        0xf4,       // HLT
+        0x37, // AAA (result: AL=0, AH=2)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -468,9 +538,9 @@ fn test_aaa_with_initial_carry() {
     // Simulate addition with initial carry from previous operation
     let code = [
         0xb8, 0x08, 0x00, // MOV AX, 0x0008 (AH=0, AL=8)
-        0x04, 0x09,       // ADD AL, 9 (result: 17 = 0x11)
-        0x37,             // AAA (result: AL=7, AH=1)
-        0xf4,             // HLT
+        0x04, 0x09, // ADD AL, 9 (result: 17 = 0x11)
+        0x37, // AAA (result: AL=7, AH=1)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();

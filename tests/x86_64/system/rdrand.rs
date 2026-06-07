@@ -1,6 +1,6 @@
 use rax::cpu::Registers;
 
-use crate::common::{run_until_hlt, setup_vm, cf_set, of_set, sf_set, zf_set, af_set, pf_set};
+use crate::common::{af_set, cf_set, of_set, pf_set, run_until_hlt, setup_vm, sf_set, zf_set};
 
 // RDRAND - Read Random Number
 // Opcode: 0F C7 /6
@@ -407,7 +407,10 @@ fn test_rdrand_variation() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Both calls should succeed
-    assert!(cf_set(regs.rflags), "Both random generations should succeed");
+    assert!(
+        cf_set(regs.rflags),
+        "Both random generations should succeed"
+    );
     // Values might be different (though not guaranteed)
     // Just verify both calls completed
 }
@@ -437,8 +440,10 @@ fn test_rdrand_clears_all_flags() {
 #[test]
 fn test_rdrand_preserves_other_registers() {
     let code = [
-        0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242 (sign-extends to 0x42424242)
-        0x48, 0xc7, 0xc1, 0x19, 0x19, 0x19, 0x19, // MOV RCX, 0x19191919 (sign-extends to 0x19191919)
+        0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42,
+        0x42, // MOV RBX, 0x42424242 (sign-extends to 0x42424242)
+        0x48, 0xc7, 0xc1, 0x19, 0x19, 0x19,
+        0x19, // MOV RCX, 0x19191919 (sign-extends to 0x19191919)
         0x48, 0x0f, 0xc7, 0xf0, // RDRAND RAX
         0xf4, // HLT
     ];
@@ -462,7 +467,11 @@ fn test_rdrand_16bit_preserves_upper_bits() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Upper 48 bits should be preserved
-    assert_eq!(regs.rax & 0xFFFFFFFFFFFF0000, 0xFFFFFFFFFFFF0000, "Upper bits should be preserved");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFFFFFF0000,
+        0xFFFFFFFFFFFF0000,
+        "Upper bits should be preserved"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
 }
 
@@ -497,7 +506,10 @@ fn test_rdrand_cf_consistency() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // All calls should set CF
-    assert!(cf_set(regs.rflags), "CF should be set after successful RDRAND");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set after successful RDRAND"
+    );
 }
 
 // Test RDRAND with different operand sizes in sequence
@@ -526,7 +538,10 @@ fn test_rdrand_privilege_level() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Should work at any privilege level (we're in ring 0)
-    assert!(cf_set(regs.rflags), "RDRAND should work at current privilege");
+    assert!(
+        cf_set(regs.rflags),
+        "RDRAND should work at current privilege"
+    );
 }
 
 // Test RDRAND r32 with R8-R15 registers (lower 32-bit)

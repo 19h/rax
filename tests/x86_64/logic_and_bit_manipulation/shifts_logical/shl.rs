@@ -22,8 +22,8 @@
 // - AF: Undefined for non-zero count
 // - Count is 0: No flags affected
 
-use rax::cpu::Registers;
 use rax::backend::emulator::x86_64::flags;
+use rax::cpu::Registers;
 use std::sync::Arc;
 
 use crate::common::*;
@@ -156,7 +156,10 @@ fn test_shl_count_zero_preserves_flags() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x42, "AL unchanged");
-    assert_eq!(regs.rflags, initial_flags, "Flags unchanged when count is 0");
+    assert_eq!(
+        regs.rflags, initial_flags,
+        "Flags unchanged when count is 0"
+    );
 }
 
 // ============================================================================
@@ -248,7 +251,11 @@ fn test_shl_eax_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x2468ACF0, "EAX: 0x12345678 << 1 = 0x2468ACF0");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x2468ACF0,
+        "EAX: 0x12345678 << 1 = 0x2468ACF0"
+    );
     assert!(!cf_set(regs.rflags), "CF should be clear");
     assert!(!of_set(regs.rflags), "OF should be clear");
 }
@@ -266,7 +273,11 @@ fn test_shl_eax_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX: 0x00000001 << 31 = 0x80000000");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX: 0x00000001 << 31 = 0x80000000"
+    );
     assert!(!cf_set(regs.rflags), "CF: last bit shifted out was 0");
     assert!(sf_set(regs.rflags), "SF should be set");
 }
@@ -283,7 +294,11 @@ fn test_shl_eax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345600, "EAX: 0x00123456 << 8 = 0x12345600");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345600,
+        "EAX: 0x00123456 << 8 = 0x12345600"
+    );
     assert!(!cf_set(regs.rflags), "CF should be clear");
 }
 
@@ -299,7 +314,11 @@ fn test_shl_eax_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000002, "EAX: 0x80000001 << 1 = 0x00000002");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000002,
+        "EAX: 0x80000001 << 1 = 0x00000002"
+    );
     assert!(cf_set(regs.rflags), "CF should be set (MSB was 1)");
     assert!(of_set(regs.rflags), "OF: MSB XOR CF = 0 XOR 1 = 1");
 }
@@ -317,7 +336,11 @@ fn test_shl_count_masked_32bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX: 0x00000001 << 31 = 0x80000000 (count masked)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX: 0x00000001 << 31 = 0x80000000 (count masked)"
+    );
 }
 
 // ============================================================================
@@ -354,7 +377,10 @@ fn test_shl_rax_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x8000000000000000, "RAX: 0x0000000000000001 << 63");
+    assert_eq!(
+        regs.rax, 0x8000000000000000,
+        "RAX: 0x0000000000000001 << 63"
+    );
     assert!(!cf_set(regs.rflags), "CF: last bit shifted out was 0");
     assert!(sf_set(regs.rflags), "SF should be set");
 }
@@ -371,7 +397,10 @@ fn test_shl_rax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x123456789ABC0000, "RAX: 0x0000123456789ABC << 16");
+    assert_eq!(
+        regs.rax, 0x123456789ABC0000,
+        "RAX: 0x0000123456789ABC << 16"
+    );
     assert!(!cf_set(regs.rflags), "CF should be clear");
 }
 
@@ -405,7 +434,10 @@ fn test_shl_count_masked_64bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x8000000000000000, "RAX: 0x0000000000000001 << 63 (count masked to 6 bits)");
+    assert_eq!(
+        regs.rax, 0x8000000000000000,
+        "RAX: 0x0000000000000001 << 63 (count masked to 6 bits)"
+    );
 }
 
 // ============================================================================
@@ -457,7 +489,11 @@ fn test_shl_r12d_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r12 & 0xFFFFFFFF, 0x34567800, "R12D: 0x12345678 << 8 = 0x34567800");
+    assert_eq!(
+        regs.r12 & 0xFFFFFFFF,
+        0x34567800,
+        "R12D: 0x12345678 << 8 = 0x34567800"
+    );
 }
 
 #[test]
@@ -483,7 +519,9 @@ fn test_shl_r15_1() {
 fn test_shl_byte_ptr_1() {
     // SHL byte ptr [DATA_ADDR], 1
     let code = [
-        0xd0, 0x24, 0x25, // SHL byte ptr [DATA_ADDR], 1
+        0xd0,
+        0x24,
+        0x25, // SHL byte ptr [DATA_ADDR], 1
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -504,7 +542,10 @@ fn test_shl_byte_ptr_1() {
 fn test_shl_word_ptr_cl() {
     // SHL word ptr [DATA_ADDR], CL
     let code = [
-        0x66, 0xd3, 0x24, 0x25, // SHL word ptr [DATA_ADDR], CL
+        0x66,
+        0xd3,
+        0x24,
+        0x25, // SHL word ptr [DATA_ADDR], CL
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -526,7 +567,9 @@ fn test_shl_word_ptr_cl() {
 fn test_shl_dword_ptr_imm8() {
     // SHL dword ptr [DATA_ADDR], imm8
     let code = [
-        0xc1, 0x24, 0x25, // SHL dword ptr [DATA_ADDR], imm8
+        0xc1,
+        0x24,
+        0x25, // SHL dword ptr [DATA_ADDR], imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -547,7 +590,10 @@ fn test_shl_dword_ptr_imm8() {
 fn test_shl_qword_ptr_cl() {
     // SHL qword ptr [DATA_ADDR], CL
     let code = [
-        0x48, 0xd3, 0x24, 0x25, // SHL qword ptr [DATA_ADDR], CL
+        0x48,
+        0xd3,
+        0x24,
+        0x25, // SHL qword ptr [DATA_ADDR], CL
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -562,7 +608,10 @@ fn test_shl_qword_ptr_cl() {
     run_until_hlt(&mut vcpu).unwrap();
     let result = read_mem_u64(&mem);
 
-    assert_eq!(result, 0x56789ABCDEF00000, "Memory: 0x123456789ABCDEF0 << 16");
+    assert_eq!(
+        result, 0x56789ABCDEF00000,
+        "Memory: 0x123456789ABCDEF0 << 16"
+    );
 }
 
 // ============================================================================
@@ -614,7 +663,10 @@ fn test_shl_extract_high_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFFFFFFFF00000000, "RAX: low 32 bits moved to high");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFF00000000,
+        "RAX: low 32 bits moved to high"
+    );
 }
 
 #[test]
@@ -629,7 +681,11 @@ fn test_shl_overflow_flag_1bit_same_sign() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX: 0x40000000 << 1 = 0x80000000");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX: 0x40000000 << 1 = 0x80000000"
+    );
     assert!(!cf_set(regs.rflags), "CF: bit shifted out was 0");
     assert!(of_set(regs.rflags), "OF: MSB(result) XOR CF = 1 XOR 0 = 1");
 }
@@ -646,7 +702,11 @@ fn test_shl_overflow_flag_1bit_different_sign() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX: 0xC0000000 << 1 = 0x80000000");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX: 0xC0000000 << 1 = 0x80000000"
+    );
     assert!(cf_set(regs.rflags), "CF: bit shifted out was 1");
     assert!(!of_set(regs.rflags), "OF: MSB(result) XOR CF = 1 XOR 1 = 0");
     // Actually: MSB of result is 1, CF is 1, so MSB XOR CF = 0
@@ -704,7 +764,11 @@ fn test_shl_all_ones() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFE, "EAX: 0xFFFFFFFF << 1 = 0xFFFFFFFE");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFE,
+        "EAX: 0xFFFFFFFF << 1 = 0xFFFFFFFE"
+    );
     assert!(cf_set(regs.rflags), "CF: MSB was 1");
     assert!(sf_set(regs.rflags), "SF: result is negative");
     assert!(!zf_set(regs.rflags), "ZF: result is not zero");

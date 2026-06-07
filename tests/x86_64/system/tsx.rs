@@ -33,9 +33,9 @@ fn test_xbegin_basic() {
         // To reach HLT: offset = 7 + 3 = 10 = 0x0A
         0xC7, 0xF8, 0x0A, 0x00, 0x00, 0x00, // XBEGIN +10 (fallback = HLT)
         0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1 (in transaction)
-        0x0F, 0x01, 0xD5,                   // XEND
+        0x0F, 0x01, 0xD5, // XEND
         // fallback:
-        0xF4,                               // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -53,9 +53,9 @@ fn test_xbegin_preserves_registers() {
     let code = [
         0x48, 0xC7, 0xC3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242
         0x48, 0xC7, 0xC1, 0x99, 0x99, 0x99, 0x99, // MOV RCX, 0x99999999
-        0xC7, 0xF8, 0x03, 0x00, 0x00, 0x00,       // XBEGIN +3 (to HLT)
-        0x0F, 0x01, 0xD5,                         // XEND (skipped)
-        0xF4,                                      // HLT
+        0xC7, 0xF8, 0x03, 0x00, 0x00, 0x00, // XBEGIN +3 (to HLT)
+        0x0F, 0x01, 0xD5, // XEND (skipped)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -72,13 +72,13 @@ fn test_xbegin_abort_path() {
     // XBEGIN at 0x1000, 6 bytes
     // MOV RBX,1 is 7 bytes, XABORT is 3 bytes = 10 bytes to skip
     let code = [
-        0xC7, 0xF8, 0x0A, 0x00, 0x00, 0x00,       // XBEGIN +10 (to fallback)
+        0xC7, 0xF8, 0x0A, 0x00, 0x00, 0x00, // XBEGIN +10 (to fallback)
         // Transaction path (skipped):
         0x48, 0xC7, 0xC3, 0x01, 0x00, 0x00, 0x00, // MOV RBX, 1
-        0xC6, 0xF8, 0x01,                         // XABORT 1
+        0xC6, 0xF8, 0x01, // XABORT 1
         // Fallback path:
         0x48, 0xC7, 0xC3, 0x02, 0x00, 0x00, 0x00, // MOV RBX, 2
-        0xF4,                                      // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -95,13 +95,13 @@ fn test_xbegin_with_memory() {
     // Transaction code: MOV [RCX] is 6 bytes, XEND is 3 bytes = 9 bytes to skip
     let code = [
         0x48, 0xC7, 0xC1, 0x00, 0x50, 0x00, 0x00, // MOV RCX, 0x5000
-        0xC7, 0xF8, 0x09, 0x00, 0x00, 0x00,       // XBEGIN +9 (skip to after transaction)
+        0xC7, 0xF8, 0x09, 0x00, 0x00, 0x00, // XBEGIN +9 (skip to after transaction)
         // In transaction (skipped):
-        0xC7, 0x01, 0x42, 0x42, 0x42, 0x42,       // MOV DWORD PTR [RCX], 0x42424242
-        0x0F, 0x01, 0xD5,                         // XEND
+        0xC7, 0x01, 0x42, 0x42, 0x42, 0x42, // MOV DWORD PTR [RCX], 0x42424242
+        0x0F, 0x01, 0xD5, // XEND
         // After transaction:
-        0x8B, 0x01,                               // MOV EAX, [RCX]
-        0xF4,                                      // HLT
+        0x8B, 0x01, // MOV EAX, [RCX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -121,9 +121,9 @@ fn test_xbegin_nested() {
         0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
         0xC7, 0xF8, 0x0D, 0x00, 0x00, 0x00, // XBEGIN (inner, would also skip)
         0x48, 0xC7, 0xC3, 0x02, 0x00, 0x00, 0x00, // MOV RBX, 2
-        0x0F, 0x01, 0xD5,                   // XEND (inner)
-        0x0F, 0x01, 0xD5,                   // XEND (outer)
-        0xF4,                               // HLT
+        0x0F, 0x01, 0xD5, // XEND (inner)
+        0x0F, 0x01, 0xD5, // XEND (outer)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -144,8 +144,8 @@ fn test_xend_basic() {
     let code = [
         0xC7, 0xF8, 0x0A, 0x00, 0x00, 0x00, // XBEGIN +10 (to HLT)
         0x48, 0xC7, 0xC0, 0x42, 0x00, 0x00, 0x00, // MOV RAX, 0x42 (skipped)
-        0x0F, 0x01, 0xD5,                   // XEND (skipped)
-        0xF4,                               // HLT
+        0x0F, 0x01, 0xD5, // XEND (skipped)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -160,10 +160,10 @@ fn test_xend_preserves_registers() {
     // XBEGIN at 0x1007, 6 bytes. MOV is 7, XEND is 3 = 10 bytes to skip
     let code = [
         0x48, 0xC7, 0xC3, 0x11, 0x11, 0x11, 0x11, // MOV RBX, 0x11111111
-        0xC7, 0xF8, 0x0A, 0x00, 0x00, 0x00,       // XBEGIN +10 (to HLT)
+        0xC7, 0xF8, 0x0A, 0x00, 0x00, 0x00, // XBEGIN +10 (to HLT)
         0x48, 0xC7, 0xC0, 0x22, 0x22, 0x22, 0x22, // MOV RAX, 0x22222222 (skipped)
-        0x0F, 0x01, 0xD5,                         // XEND (skipped)
-        0xF4,                                      // HLT
+        0x0F, 0x01, 0xD5, // XEND (skipped)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -180,11 +180,11 @@ fn test_xend_preserves_flags() {
     // XBEGIN aborts, skips transaction code, goes to HLT
     // XBEGIN at 0x1000, 6 bytes. MOV is 7, ADD is 4, XEND is 3 = 14 bytes
     let code = [
-        0xC7, 0xF8, 0x0E, 0x00, 0x00, 0x00,       // XBEGIN +14 (to HLT)
+        0xC7, 0xF8, 0x0E, 0x00, 0x00, 0x00, // XBEGIN +14 (to HLT)
         0x48, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1 (skipped)
-        0x48, 0x83, 0xC0, 0x01,                   // ADD RAX, 1 (skipped)
-        0x0F, 0x01, 0xD5,                         // XEND (skipped)
-        0xF4,                                      // HLT
+        0x48, 0x83, 0xC0, 0x01, // ADD RAX, 1 (skipped)
+        0x0F, 0x01, 0xD5, // XEND (skipped)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -204,12 +204,12 @@ fn test_xabort_basic() {
     // XOR is 3 bytes, XBEGIN at 0x1003, 6 bytes
     // MOV is 7 bytes, XABORT is 3 bytes = 10 bytes to skip
     let code = [
-        0x48, 0x31, 0xC0,                         // XOR RAX, RAX
-        0xC7, 0xF8, 0x0A, 0x00, 0x00, 0x00,       // XBEGIN +10 (to HLT)
+        0x48, 0x31, 0xC0, // XOR RAX, RAX
+        0xC7, 0xF8, 0x0A, 0x00, 0x00, 0x00, // XBEGIN +10 (to HLT)
         0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1 (skipped)
-        0xC6, 0xF8, 0x42,                         // XABORT 0x42 (skipped)
+        0xC6, 0xF8, 0x42, // XABORT 0x42 (skipped)
         // Fallback:
-        0xF4,                                      // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -225,9 +225,9 @@ fn test_xabort_different_codes() {
     // XBEGIN at 0x1000, 6 bytes. XABORT is 3 bytes = skip 3
     let code = [
         0xC7, 0xF8, 0x03, 0x00, 0x00, 0x00, // XBEGIN +3 (to HLT)
-        0xC6, 0xF8, 0xFF,                   // XABORT 0xFF (skipped)
+        0xC6, 0xF8, 0xFF, // XABORT 0xFF (skipped)
         // Fallback:
-        0xF4,                               // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -242,11 +242,11 @@ fn test_xabort_unconditional() {
     // MOV RBX is 7 bytes, XABORT is 3 bytes = 10 bytes to skip
     let code = [
         0x48, 0xC7, 0xC3, 0x00, 0x00, 0x00, 0x00, // MOV RBX, 0
-        0xC7, 0xF8, 0x0A, 0x00, 0x00, 0x00,       // XBEGIN +10 (to HLT)
+        0xC7, 0xF8, 0x0A, 0x00, 0x00, 0x00, // XBEGIN +10 (to HLT)
         0x48, 0xC7, 0xC3, 0x99, 0x99, 0x99, 0x99, // MOV RBX, 0x99999999 (skipped)
-        0xC6, 0xF8, 0x01,                         // XABORT 1 (skipped)
+        0xC6, 0xF8, 0x01, // XABORT 1 (skipped)
         // Fallback:
-        0xF4,                                      // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -267,14 +267,17 @@ fn test_xtest_outside_transaction() {
     // Sets ZF=1 if not in transaction
     let code = [
         0x0F, 0x01, 0xD6, // XTEST
-        0xF4,             // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // ZF should be 1 (not in transaction)
-    assert!(regs.rflags & 0x40 != 0, "ZF should be set outside transaction");
+    assert!(
+        regs.rflags & 0x40 != 0,
+        "ZF should be set outside transaction"
+    );
 }
 
 #[test]
@@ -283,9 +286,9 @@ fn test_xtest_inside_transaction() {
     // XBEGIN at 0x1000, 6 bytes. XTEST is 3, XEND is 3 = 6 bytes to skip
     let code = [
         0xC7, 0xF8, 0x06, 0x00, 0x00, 0x00, // XBEGIN +6 (to HLT)
-        0x0F, 0x01, 0xD6,                   // XTEST (skipped)
-        0x0F, 0x01, 0xD5,                   // XEND (skipped)
-        0xF4,                               // HLT
+        0x0F, 0x01, 0xD6, // XTEST (skipped)
+        0x0F, 0x01, 0xD5, // XEND (skipped)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -300,9 +303,10 @@ fn test_xtest_preserves_registers() {
     // Note: MOV RAX, imm32 sign-extends to 64 bits
     let code = [
         0x48, 0xC7, 0xC0, 0x42, 0x42, 0x42, 0x42, // MOV RAX, 0x42424242 (sign-extended)
-        0x48, 0xC7, 0xC3, 0x99, 0x99, 0x99, 0x99, // MOV RBX, 0x99999999 (sign-extended to 0xFFFFFFFF99999999)
-        0x0F, 0x01, 0xD6,                         // XTEST
-        0xF4,                                      // HLT
+        0x48, 0xC7, 0xC3, 0x99, 0x99, 0x99,
+        0x99, // MOV RBX, 0x99999999 (sign-extended to 0xFFFFFFFF99999999)
+        0x0F, 0x01, 0xD6, // XTEST
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -320,13 +324,16 @@ fn test_xtest_multiple() {
         0x0F, 0x01, 0xD6, // XTEST #1
         0x0F, 0x01, 0xD6, // XTEST #2
         0x0F, 0x01, 0xD6, // XTEST #3
-        0xF4,             // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(regs.rflags & 0x40 != 0, "All XTESTs should show not-in-transaction");
+    assert!(
+        regs.rflags & 0x40 != 0,
+        "All XTESTs should show not-in-transaction"
+    );
 }
 
 // ============================================================================
@@ -340,14 +347,14 @@ fn test_tsx_complete_transaction() {
     // MOV [RCX] is 6, XTEST is 3, XEND is 3 = 12 bytes to skip
     let code = [
         0x48, 0xC7, 0xC1, 0x00, 0x50, 0x00, 0x00, // MOV RCX, 0x5000
-        0xC7, 0xF8, 0x0C, 0x00, 0x00, 0x00,       // XBEGIN +12 (to MOV EAX)
+        0xC7, 0xF8, 0x0C, 0x00, 0x00, 0x00, // XBEGIN +12 (to MOV EAX)
         // In transaction (skipped):
-        0xC7, 0x01, 0x42, 0x42, 0x42, 0x42,       // MOV DWORD PTR [RCX], 0x42424242
-        0x0F, 0x01, 0xD6,                         // XTEST
-        0x0F, 0x01, 0xD5,                         // XEND
+        0xC7, 0x01, 0x42, 0x42, 0x42, 0x42, // MOV DWORD PTR [RCX], 0x42424242
+        0x0F, 0x01, 0xD6, // XTEST
+        0x0F, 0x01, 0xD5, // XEND
         // After transaction:
-        0x8B, 0x01,                               // MOV EAX, [RCX]
-        0xF4,                                      // HLT
+        0x8B, 0x01, // MOV EAX, [RCX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -365,20 +372,20 @@ fn test_tsx_abort_and_retry() {
     // Skip everything to done: CMP 4 + JNE 2 + XABORT 3 + XEND 3 + JMP 2 + INC 3 + JMP 2 = 19
     // Actually simpler: just jump to done which is after JMP done instruction
     let code = [
-        0x48, 0x31, 0xC3,                   // XOR RBX, RBX (retry counter)
+        0x48, 0x31, 0xC3, // XOR RBX, RBX (retry counter)
         0xC7, 0xF8, 0x13, 0x00, 0x00, 0x00, // XBEGIN +19 (to done: HLT)
         // In transaction (skipped):
-        0x48, 0x83, 0xFB, 0x00,             // CMP RBX, 0
-        0x75, 0x02,                         // JNE skip_abort
-        0xC6, 0xF8, 0x01,                   // XABORT 1
+        0x48, 0x83, 0xFB, 0x00, // CMP RBX, 0
+        0x75, 0x02, // JNE skip_abort
+        0xC6, 0xF8, 0x01, // XABORT 1
         // skip_abort:
-        0x0F, 0x01, 0xD5,                   // XEND
-        0xEB, 0x03,                         // JMP done
+        0x0F, 0x01, 0xD5, // XEND
+        0xEB, 0x03, // JMP done
         // Fallback (skipped):
-        0x48, 0xFF, 0xC3,                   // INC RBX
-        0xEB, 0xED,                         // JMP retry
+        0x48, 0xFF, 0xC3, // INC RBX
+        0xEB, 0xED, // JMP retry
         // done:
-        0xF4,                               // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -394,12 +401,12 @@ fn test_tsx_xtest_sequence() {
     // XTEST at 0x1000, 3 bytes
     // XBEGIN at 0x1003, 6 bytes. Skip XTEST + XEND = 6 bytes
     let code = [
-        0x0F, 0x01, 0xD6,                   // XTEST (outside) - ZF=1
+        0x0F, 0x01, 0xD6, // XTEST (outside) - ZF=1
         0xC7, 0xF8, 0x06, 0x00, 0x00, 0x00, // XBEGIN +6 (to XTEST after)
-        0x0F, 0x01, 0xD6,                   // XTEST (inside, skipped)
-        0x0F, 0x01, 0xD5,                   // XEND (skipped)
-        0x0F, 0x01, 0xD6,                   // XTEST (after) - ZF=1
-        0xF4,                               // HLT
+        0x0F, 0x01, 0xD6, // XTEST (inside, skipped)
+        0x0F, 0x01, 0xD5, // XEND (skipped)
+        0x0F, 0x01, 0xD6, // XTEST (after) - ZF=1
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -414,15 +421,15 @@ fn test_tsx_with_arithmetic() {
     // XOR is 3, XBEGIN at 0x1003, 6 bytes
     // MOV+MOV+ADD+XEND = 7+7+3+3 = 20 bytes to skip
     let code = [
-        0x48, 0x31, 0xC0,                         // XOR RAX, RAX
-        0xC7, 0xF8, 0x14, 0x00, 0x00, 0x00,       // XBEGIN +20 (to HLT)
+        0x48, 0x31, 0xC0, // XOR RAX, RAX
+        0xC7, 0xF8, 0x14, 0x00, 0x00, 0x00, // XBEGIN +20 (to HLT)
         // In transaction (skipped):
         0x48, 0xC7, 0xC0, 0x0A, 0x00, 0x00, 0x00, // MOV RAX, 10
         0x48, 0xC7, 0xC3, 0x14, 0x00, 0x00, 0x00, // MOV RBX, 20
-        0x48, 0x01, 0xD8,                         // ADD RAX, RBX
-        0x0F, 0x01, 0xD5,                         // XEND
+        0x48, 0x01, 0xD8, // ADD RAX, RBX
+        0x0F, 0x01, 0xD5, // XEND
         // After transaction:
-        0xF4,                                      // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -439,16 +446,16 @@ fn test_tsx_memory_conflict_simulation() {
     // Transaction code: MOV+ADD+MOV+XEND = 2+4+2+3 = 11 bytes to skip
     let code = [
         0x48, 0xC7, 0xC1, 0x00, 0x50, 0x00, 0x00, // MOV RCX, 0x5000
-        0xC7, 0x01, 0x00, 0x00, 0x00, 0x00,       // MOV DWORD PTR [RCX], 0
-        0xC7, 0xF8, 0x0B, 0x00, 0x00, 0x00,       // XBEGIN +11 (to MOV EAX after)
+        0xC7, 0x01, 0x00, 0x00, 0x00, 0x00, // MOV DWORD PTR [RCX], 0
+        0xC7, 0xF8, 0x0B, 0x00, 0x00, 0x00, // XBEGIN +11 (to MOV EAX after)
         // In transaction (skipped):
-        0x8B, 0x01,                               // MOV EAX, [RCX]
-        0x48, 0x83, 0xC0, 0x01,                   // ADD RAX, 1
-        0x89, 0x01,                               // MOV [RCX], EAX
-        0x0F, 0x01, 0xD5,                         // XEND
+        0x8B, 0x01, // MOV EAX, [RCX]
+        0x48, 0x83, 0xC0, 0x01, // ADD RAX, 1
+        0x89, 0x01, // MOV [RCX], EAX
+        0x0F, 0x01, 0xD5, // XEND
         // After:
-        0x8B, 0x01,                               // MOV EAX, [RCX]
-        0xF4,                                      // HLT
+        0x8B, 0x01, // MOV EAX, [RCX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 

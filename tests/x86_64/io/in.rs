@@ -42,8 +42,16 @@ fn test_in_al_imm8_port_0() {
     }
 
     let regs = vcpu.get_regs().unwrap();
-    assert_eq!(regs.rax & 0xFF, 0x42, "AL should contain value read from port");
-    assert_eq!(regs.rax & 0xFFFFFF00, 0xDEADBE00, "High bytes should be preserved");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x42,
+        "AL should contain value read from port"
+    );
+    assert_eq!(
+        regs.rax & 0xFFFFFF00,
+        0xDEADBE00,
+        "High bytes should be preserved"
+    );
 }
 
 #[test]
@@ -221,7 +229,11 @@ fn test_in_ax_imm8_basic() {
 
     let regs = vcpu.get_regs().unwrap();
     assert_eq!(regs.rax & 0xFFFF, 0x1234, "AX should contain 0x1234");
-    assert_eq!(regs.rax & 0xFFFF0000, 0xDEAD0000, "High word should be preserved");
+    assert_eq!(
+        regs.rax & 0xFFFF0000,
+        0xDEAD0000,
+        "High word should be preserved"
+    );
 }
 
 #[test]
@@ -320,8 +332,16 @@ fn test_in_eax_imm8_basic() {
     }
 
     let regs = vcpu.get_regs().unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX should contain 0x12345678");
-    assert_eq!(regs.rax & 0xFFFFFFFF00000000, 0, "High dword should be zeroed in 64-bit");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX should contain 0x12345678"
+    );
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF00000000,
+        0,
+        "High dword should be zeroed in 64-bit"
+    );
 }
 
 #[test]
@@ -735,10 +755,10 @@ fn test_in_eax_dx_preserves_rdx() {
 fn test_in_sequence_different_sizes() {
     // IN AL, 0x60; IN AX, DX; IN EAX, 0x40
     let code = [
-        0xE4, 0x60,       // IN AL, 0x60
-        0x66, 0xED,       // IN AX, DX
-        0xE5, 0x40,       // IN EAX, 0x40
-        0xF4,             // HLT
+        0xE4, 0x60, // IN AL, 0x60
+        0x66, 0xED, // IN AX, DX
+        0xE5, 0x40, // IN EAX, 0x40
+        0xF4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rdx = 0x64;
@@ -771,11 +791,11 @@ fn test_in_loop_changing_port() {
     // Loop reading from incrementing ports
     // MOV DX, 0x100; IN AL, DX; INC DX; IN AL, DX; HLT
     let code = [
-        0x66, 0xBA, 0x00, 0x01,  // MOV DX, 0x100
-        0xEC,                     // IN AL, DX
-        0x66, 0xFF, 0xC2,        // INC DX
-        0xEC,                     // IN AL, DX
-        0xF4,                     // HLT
+        0x66, 0xBA, 0x00, 0x01, // MOV DX, 0x100
+        0xEC, // IN AL, DX
+        0x66, 0xFF, 0xC2, // INC DX
+        0xEC, // IN AL, DX
+        0xF4, // HLT
     ];
     let mut regs = Registers::default();
     let (mut vcpu, _) = setup_vm(&code, Some(regs));

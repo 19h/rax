@@ -30,7 +30,11 @@ fn test_btc_ax_bx_bit_0_set() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 0 was 1)");
-    assert_eq!(regs.rax & 0xFFFF, 0b0000_0000_0000_0000, "AX: bit 0 should be complemented to 0");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0b0000_0000_0000_0000,
+        "AX: bit 0 should be complemented to 0"
+    );
 }
 
 #[test]
@@ -47,7 +51,11 @@ fn test_btc_ax_bx_bit_0_clear() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 0 was 0)");
-    assert_eq!(regs.rax & 0xFFFF, 0b0000_0000_0000_0001, "AX: bit 0 should be complemented to 1");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0b0000_0000_0000_0001,
+        "AX: bit 0 should be complemented to 1"
+    );
 }
 
 #[test]
@@ -64,7 +72,11 @@ fn test_btc_ax_bx_bit_15() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 15 was 1)");
-    assert_eq!(regs.rax & 0xFFFF, 0x0000, "AX: bit 15 should be complemented to 0");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x0000,
+        "AX: bit 15 should be complemented to 0"
+    );
 }
 
 #[test]
@@ -81,7 +93,11 @@ fn test_btc_eax_ebx_bit_0() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 0 was 1)");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_0000, "EAX: bit 0 should be complemented to 0");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0000_0000,
+        "EAX: bit 0 should be complemented to 0"
+    );
 }
 
 #[test]
@@ -98,7 +114,11 @@ fn test_btc_eax_ebx_bit_31() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 31 was 1)");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000000, "EAX: bit 31 should be complemented to 0");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000000,
+        "EAX: bit 31 should be complemented to 0"
+    );
 }
 
 #[test]
@@ -115,7 +135,10 @@ fn test_btc_rax_rbx_bit_0() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 0 was 1)");
-    assert_eq!(regs.rax, 0b0000_0000, "RAX: bit 0 should be complemented to 0");
+    assert_eq!(
+        regs.rax, 0b0000_0000,
+        "RAX: bit 0 should be complemented to 0"
+    );
 }
 
 #[test]
@@ -132,7 +155,10 @@ fn test_btc_rax_rbx_bit_63() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 63 was 1)");
-    assert_eq!(regs.rax, 0x0000_0000_0000_0000, "RAX: bit 63 should be complemented to 0");
+    assert_eq!(
+        regs.rax, 0x0000_0000_0000_0000,
+        "RAX: bit 63 should be complemented to 0"
+    );
 }
 
 #[test]
@@ -148,7 +174,11 @@ fn test_btc_ax_imm8_bit_0() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 0 was 1)");
-    assert_eq!(regs.rax & 0xFFFF, 0b0000_0000_0000_0000, "AX: bit 0 should be complemented to 0");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0b0000_0000_0000_0000,
+        "AX: bit 0 should be complemented to 0"
+    );
 }
 
 #[test]
@@ -164,7 +194,11 @@ fn test_btc_ax_imm8_bit_15() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 15 was 0)");
-    assert_eq!(regs.rax & 0xFFFF, 0x8000, "AX: bit 15 should be complemented to 1");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x8000,
+        "AX: bit 15 should be complemented to 1"
+    );
 }
 
 #[test]
@@ -180,7 +214,11 @@ fn test_btc_eax_imm8_bit_0() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 0 was 0)");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_0001, "EAX: bit 0 should be complemented to 1");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0000_0001,
+        "EAX: bit 0 should be complemented to 1"
+    );
 }
 
 #[test]
@@ -196,7 +234,11 @@ fn test_btc_eax_imm8_bit_31() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 31 was 0)");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX: bit 31 should be complemented to 1");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX: bit 31 should be complemented to 1"
+    );
 }
 
 #[test]
@@ -212,7 +254,10 @@ fn test_btc_rax_imm8_bit_0() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 0 was 1)");
-    assert_eq!(regs.rax, 0b0000_0000, "RAX: bit 0 should be complemented to 0");
+    assert_eq!(
+        regs.rax, 0b0000_0000,
+        "RAX: bit 0 should be complemented to 0"
+    );
 }
 
 #[test]
@@ -228,7 +273,10 @@ fn test_btc_rax_imm8_bit_63() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 63 was 0)");
-    assert_eq!(regs.rax, 0x8000_0000_0000_0000, "RAX: bit 63 should be complemented to 1");
+    assert_eq!(
+        regs.rax, 0x8000_0000_0000_0000,
+        "RAX: bit 63 should be complemented to 1"
+    );
 }
 
 #[test]
@@ -245,7 +293,11 @@ fn test_btc_double_complement() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX: double complement should return to original");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX: double complement should return to original"
+    );
 }
 
 #[test]
@@ -262,7 +314,11 @@ fn test_btc_alternating_bits() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 1 was 1)");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xAAAAAAAA & !0x2, "EAX: bit 1 should be complemented");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xAAAAAAAA & !0x2,
+        "EAX: bit 1 should be complemented"
+    );
 }
 
 #[test]
@@ -278,7 +334,11 @@ fn test_btc_preserves_other_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF & !(1 << 5), "EAX: only bit 5 should change");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF & !(1 << 5),
+        "EAX: only bit 5 should change"
+    );
 }
 
 #[test]
@@ -295,7 +355,11 @@ fn test_btc_with_extended_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 0 was 1)");
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0b0000_0000, "R8D: bit 0 should be complemented to 0");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0b0000_0000,
+        "R8D: bit 0 should be complemented to 0"
+    );
 }
 
 #[test]
@@ -311,7 +375,10 @@ fn test_btc_r15_imm8() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 32 was 0)");
-    assert_eq!(regs.r15, 0x1_0000_0000, "R15: bit 32 should be complemented to 1");
+    assert_eq!(
+        regs.r15, 0x1_0000_0000,
+        "R15: bit 32 should be complemented to 1"
+    );
 }
 
 #[test]
@@ -347,7 +414,10 @@ fn test_btc_mem32_reg() {
 
     assert!(!cf_set(regs.rflags), "CF should be clear (bit 16 was 0)");
     let result = read_mem_u32(&mem);
-    assert_eq!(result, 0x00010000, "Memory: bit 16 should be complemented to 1");
+    assert_eq!(
+        result, 0x00010000,
+        "Memory: bit 16 should be complemented to 1"
+    );
 }
 
 #[test]
@@ -365,7 +435,10 @@ fn test_btc_mem64_reg() {
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 40 was 1)");
     let result = read_mem_u64(&mem);
-    assert_eq!(result, 0x000_0000_0000, "Memory: bit 40 should be complemented to 0");
+    assert_eq!(
+        result, 0x000_0000_0000,
+        "Memory: bit 40 should be complemented to 0"
+    );
 }
 
 #[test]
@@ -400,7 +473,11 @@ fn test_btc_toggle_pattern() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // After 3 toggles: 0 -> 1 -> 0 -> 1
-    assert_eq!(regs.rax & 0xFFFFFFFF, 1 << 10, "EAX: bit 10 should be set after 3 toggles");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        1 << 10,
+        "EAX: bit 10 should be set after 3 toggles"
+    );
 }
 
 #[test]
@@ -417,7 +494,11 @@ fn test_btc_all_bits_set() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 17 was 1)");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF & !(1 << 17), "EAX: bit 17 should be clear");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF & !(1 << 17),
+        "EAX: bit 17 should be clear"
+    );
 }
 
 #[test]
@@ -451,7 +532,11 @@ fn test_btc_bit_position_modulo_16() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 0 was 1)");
-    assert_eq!(regs.rax & 0xFFFF, 0x0000, "AX: bit 0 should be complemented");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x0000,
+        "AX: bit 0 should be complemented"
+    );
 }
 
 #[test]
@@ -468,7 +553,11 @@ fn test_btc_bit_position_modulo_32() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 0 was 1)");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0000, "EAX: bit 0 should be complemented");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x0000,
+        "EAX: bit 0 should be complemented"
+    );
 }
 
 #[test]
@@ -501,7 +590,11 @@ fn test_btc_creates_single_bit_set() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 1 << 20, "EAX: only bit 20 should be set");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        1 << 20,
+        "EAX: only bit 20 should be set"
+    );
 }
 
 #[test]
@@ -517,7 +610,11 @@ fn test_btc_clears_single_bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF & !(1 << 20), "EAX: only bit 20 should be clear");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF & !(1 << 20),
+        "EAX: only bit 20 should be clear"
+    );
 }
 
 #[test]
@@ -544,5 +641,9 @@ fn test_btc_multiple_different_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, (1 << 5) | (1 << 10), "EAX: bits 5 and 10 should be set");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        (1 << 5) | (1 << 10),
+        "EAX: bits 5 and 10 should be set"
+    );
 }

@@ -24,7 +24,11 @@ fn test_pdep_eax_ebx_ecx_all_mask() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX should equal source (identity with full mask)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX should equal source (identity with full mask)"
+    );
 }
 
 #[test]
@@ -40,7 +44,11 @@ fn test_pdep_eax_ebx_ecx_zero_mask() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should be zero (no deposit positions)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "EAX should be zero (no deposit positions)"
+    );
 }
 
 #[test]
@@ -56,7 +64,11 @@ fn test_pdep_eax_ebx_ecx_single_bit_mask() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_1000, "EAX should have bit 3 set");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0000_1000,
+        "EAX should have bit 3 set"
+    );
 }
 
 #[test]
@@ -73,7 +85,11 @@ fn test_pdep_eax_ebx_ecx_alternating_mask() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Deposits 16 bits into 16 alternating positions
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x55555555, "EAX should have alternating pattern");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x55555555,
+        "EAX should have alternating pattern"
+    );
 }
 
 #[test]
@@ -89,7 +105,11 @@ fn test_pdep_eax_ebx_ecx_low_nibble() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0F00, "EAX should have bits 8-11 set");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x0F00,
+        "EAX should have bits 8-11 set"
+    );
 }
 
 #[test]
@@ -105,7 +125,10 @@ fn test_pdep_rax_rbx_rcx_64bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFF00000000000000, "RAX should have high byte set");
+    assert_eq!(
+        regs.rax, 0xFF00000000000000,
+        "RAX should have high byte set"
+    );
 }
 
 #[test]
@@ -121,7 +144,11 @@ fn test_pdep_sparse_mask() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80001001, "EAX should have bits at mask positions");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80001001,
+        "EAX should have bits at mask positions"
+    );
 }
 
 #[test]
@@ -137,14 +164,19 @@ fn test_pdep_with_extended_registers() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0x00FF0000, "R8D should have bits 16-23 set");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0x00FF0000,
+        "R8D should have bits 16-23 set"
+    );
 }
 
 #[test]
 fn test_pdep_mem32() {
     // PDEP EAX, EBX, [mem]
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PDEP EAX, EBX, [DATA_ADDR]
+        0xc4, 0xe2, 0x63, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00,
+        0x00, // PDEP EAX, EBX, [DATA_ADDR]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -153,14 +185,19 @@ fn test_pdep_mem32() {
     write_mem_u32(&mem, 0x000F0000); // mask bits 16-19
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x000F0000, "EAX should have bits deposited from memory mask");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x000F0000,
+        "EAX should have bits deposited from memory mask"
+    );
 }
 
 #[test]
 fn test_pdep_mem64() {
     // PDEP RAX, RBX, [mem]
     let code = [
-        0xc4, 0xe2, 0xe3, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PDEP RAX, RBX, [DATA_ADDR]
+        0xc4, 0xe2, 0xe3, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00,
+        0x00, // PDEP RAX, RBX, [DATA_ADDR]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -169,7 +206,10 @@ fn test_pdep_mem64() {
     write_mem_u64(&mem, 0x00FF000000000000); // mask bits 48-55
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x00FF000000000000, "RAX should have bits deposited from memory mask");
+    assert_eq!(
+        regs.rax, 0x00FF000000000000,
+        "RAX should have bits deposited from memory mask"
+    );
 }
 
 #[test]
@@ -210,7 +250,14 @@ fn test_pdep_sequential_deposits() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "PDEP(0x{:X}, 0x{:X}) should be 0x{:X}", src, mask, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "PDEP(0x{:X}, 0x{:X}) should be 0x{:X}",
+            src,
+            mask,
+            expected
+        );
     }
 }
 
@@ -228,7 +275,11 @@ fn test_pdep_extract_nibbles() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Each nibble deposited to alternating positions
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0A0B0C0D, "Should deposit nibbles to alternating positions");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x0A0B0C0D,
+        "Should deposit nibbles to alternating positions"
+    );
 }
 
 #[test]
@@ -244,7 +295,11 @@ fn test_pdep_bit_scatter() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x01010101, "Should scatter bits across byte positions");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x01010101,
+        "Should scatter bits across byte positions"
+    );
 }
 
 #[test]
@@ -261,7 +316,12 @@ fn test_pdep_power_of_two_masks() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, 1u64 << bit_pos, "Should deposit to bit {}", bit_pos);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            1u64 << bit_pos,
+            "Should deposit to bit {}",
+            bit_pos
+        );
     }
 }
 
@@ -296,7 +356,11 @@ fn test_pdep_inverse_of_pext() {
     let regs_pdep = run_until_hlt(&mut vcpu).unwrap();
 
     let masked_original = value & mask;
-    assert_eq!(regs_pdep.rax & 0xFFFFFFFF, masked_original, "PDEP(PEXT(x, mask), mask) should equal x & mask");
+    assert_eq!(
+        regs_pdep.rax & 0xFFFFFFFF,
+        masked_original,
+        "PDEP(PEXT(x, mask), mask) should equal x & mask"
+    );
 }
 
 #[test]
@@ -312,7 +376,11 @@ fn test_pdep_excess_source_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0000000F, "Should use only first 4 source bits");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x0000000F,
+        "Should use only first 4 source bits"
+    );
 }
 
 #[test]
@@ -328,7 +396,11 @@ fn test_pdep_byte_expansion() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x000000FF, "Should expand byte to separated positions");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x000000FF,
+        "Should expand byte to separated positions"
+    );
 }
 
 #[test]
@@ -360,16 +432,19 @@ fn test_pdep_64bit_high_positions() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFFFF000000000000, "Should deposit to high positions");
+    assert_eq!(
+        regs.rax, 0xFFFF000000000000,
+        "Should deposit to high positions"
+    );
 }
 
 #[test]
 fn test_pdep_pattern_generation() {
     // Generate patterns by depositing bits
     let test_cases = vec![
-        (0x1, 0x11111111, 0x00000001),     // deposit single bit
-        (0x3, 0x33333333, 0x00000003),     // deposit two bits
-        (0xF, 0x0F0F0F0F, 0x0000000F),     // deposit nibble
+        (0x1, 0x11111111, 0x00000001), // deposit single bit
+        (0x3, 0x33333333, 0x00000003), // deposit two bits
+        (0xF, 0x0F0F0F0F, 0x0000000F), // deposit nibble
     ];
 
     for (src, mask, expected) in test_cases {
@@ -383,7 +458,14 @@ fn test_pdep_pattern_generation() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "PDEP(0x{:X}, 0x{:X}) should be 0x{:X}", src, mask, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "PDEP(0x{:X}, 0x{:X}) should be 0x{:X}",
+            src,
+            mask,
+            expected
+        );
     }
 }
 
@@ -400,7 +482,11 @@ fn test_pdep_consecutive_mask_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00005678, "Consecutive mask preserves lower bits");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00005678,
+        "Consecutive mask preserves lower bits"
+    );
 }
 
 #[test]
@@ -416,5 +502,9 @@ fn test_pdep_field_packing() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0F0000F0, "Should pack bits into fields");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x0F0000F0,
+        "Should pack bits into fields"
+    );
 }

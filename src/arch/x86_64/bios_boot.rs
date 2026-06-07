@@ -28,7 +28,11 @@ pub fn is_iso_image_header(magic_at_0x8001: &[u8]) -> bool {
 /// detection, and arm the 16-bit real-mode CPU state to be returned by
 /// [`armed_real_mode_state`]. `mem_bytes` is the *reported* RAM size (what the
 /// guest should see), not the padded allocation.
-pub fn arm_real_mode_boot(mem: &GuestMemoryMmap, iso: Vec<u8>, mem_bytes: u64) -> Result<(), String> {
+pub fn arm_real_mode_boot(
+    mem: &GuestMemoryMmap,
+    iso: Vec<u8>,
+    mem_bytes: u64,
+) -> Result<(), String> {
     let boot = setup_real_mode_boot(mem, iso)?;
     crate::backend::emulator::x86_64::bios::install_cd(std::sync::Arc::new(boot.iso));
     crate::backend::emulator::x86_64::bios::install_mem(mem_bytes);
@@ -194,7 +198,10 @@ pub fn parse_el_torito(iso: &[u8]) -> Result<ElToritoBoot, String> {
 
     // Validation entry (first 32 bytes): [0]=header id 1, [0x1E..0x20]=0x55 0xAA.
     if iso[cat] != 0x01 {
-        return Err(format!("bad El-Torito validation header id 0x{:02x}", iso[cat]));
+        return Err(format!(
+            "bad El-Torito validation header id 0x{:02x}",
+            iso[cat]
+        ));
     }
     if iso[cat + 0x1E] != 0x55 || iso[cat + 0x1F] != 0xAA {
         return Err("bad El-Torito validation entry signature (0x55AA)".into());
@@ -208,7 +215,10 @@ pub fn parse_el_torito(iso: &[u8]) -> Result<ElToritoBoot, String> {
     //   [8..12]  = image LBA (LE, 2048-byte CD sectors)
     let e = cat + 32;
     if iso[e] != 0x88 {
-        return Err(format!("initial boot entry not bootable (0x{:02x})", iso[e]));
+        return Err(format!(
+            "initial boot entry not bootable (0x{:02x})",
+            iso[e]
+        ));
     }
     let media_type = iso[e + 1];
     let raw_seg = u16::from_le_bytes([iso[e + 2], iso[e + 3]]);
@@ -293,8 +303,8 @@ mod tests {
     #[test]
     fn real_mode_setup_loads_image_and_state() {
         let iso = synthetic_iso();
-        let mem = GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x20_0000)])
-            .expect("guest mem");
+        let mem =
+            GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x20_0000)]).expect("guest mem");
         let boot = setup_real_mode_boot(&mem, iso).expect("setup real-mode boot");
 
         // Boot image landed at 0x7C00.

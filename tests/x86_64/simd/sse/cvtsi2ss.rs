@@ -74,7 +74,8 @@ fn test_cvtsi2ss_mem32() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = 42;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -87,7 +88,8 @@ fn test_cvtsi2ss_mem64() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i64 = 1234567890;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -101,7 +103,8 @@ fn test_cvtsi2ss_zero() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = 0;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -114,7 +117,8 @@ fn test_cvtsi2ss_max_i32() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = i32::MAX;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -127,7 +131,8 @@ fn test_cvtsi2ss_min_i32() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = i32::MIN;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -140,7 +145,8 @@ fn test_cvtsi2ss_max_i64() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i64 = i64::MAX;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -153,7 +159,8 @@ fn test_cvtsi2ss_min_i64() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i64 = i64::MIN;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -166,7 +173,8 @@ fn test_cvtsi2ss_positive_small() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = 1;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -179,7 +187,8 @@ fn test_cvtsi2ss_negative_small() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = -1;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -192,7 +201,8 @@ fn test_cvtsi2ss_positive_medium() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = 1000000;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -205,7 +215,8 @@ fn test_cvtsi2ss_negative_medium() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = -1000000;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -219,7 +230,8 @@ fn test_cvtsi2ss_power_of_2() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = 1024;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -232,7 +244,8 @@ fn test_cvtsi2ss_negative_power_of_2() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = -1024;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -246,7 +259,8 @@ fn test_cvtsi2ss_large_with_precision_loss() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = 16777217; // Larger than 2^24, may lose precision
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -259,7 +273,8 @@ fn test_cvtsi2ss_64bit_large() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i64 = 1000000000000;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -273,7 +288,8 @@ fn test_cvtsi2ss_100() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = 100;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -286,7 +302,8 @@ fn test_cvtsi2ss_minus_100() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = -100;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -299,7 +316,8 @@ fn test_cvtsi2ss_12345() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = 12345;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -312,7 +330,8 @@ fn test_cvtsi2ss_minus_67890() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = -67890;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -326,7 +345,8 @@ fn test_cvtsi2ss_displacement() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = 999;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -344,7 +364,8 @@ fn test_cvtsi2ss_multiple() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = 777;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -372,7 +393,8 @@ fn test_cvtsi2ss_boundary_8388608() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = 8388608;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -386,6 +408,7 @@ fn test_cvtsi2ss_boundary_16777216() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: i32 = 16777216;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

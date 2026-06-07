@@ -25,7 +25,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_opc_0_min_0_2c000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -41,7 +45,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_opc_1_poweroftwo_0_6c000000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -57,7 +65,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_opc_2_poweroftwo_0_ac000000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -73,7 +85,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_opc_3_max_0_ec000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -89,7 +105,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_l_0_min_0_2c000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -105,7 +125,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_l_1_max_0_2c400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -121,7 +145,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_imm7_0_zero_0_2c000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -137,7 +165,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_imm7_1_poweroftwo_0_2c008000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -153,7 +185,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_imm7_3_poweroftwominusone_0_2c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -169,7 +205,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_imm7_4_poweroftwo_0_2c020000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -185,7 +225,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_imm7_7_poweroftwominusone_0_2c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -201,7 +245,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_imm7_8_poweroftwo_0_2c040000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -217,7 +265,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_imm7_15_poweroftwominusone_0_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -233,7 +285,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_imm7_16_poweroftwo_0_2c080000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -249,7 +305,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_imm7_31_poweroftwominusone_0_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -265,7 +325,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_imm7_32_poweroftwo_0_2c100000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -281,7 +345,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_imm7_63_poweroftwominusone_0_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -297,7 +365,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_imm7_64_poweroftwo_0_2c200000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -313,7 +385,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_imm7_127_max_0_2c3f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -329,7 +405,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_rt2_0_min_0_2c000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -345,7 +425,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_rt2_1_poweroftwo_0_2c000400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -361,7 +445,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_rt2_30_poweroftwominusone_0_2c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -377,7 +465,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_rt2_31_max_0_2c007c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -393,7 +485,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_rn_0_min_0_2c000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -409,7 +505,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_rn_1_poweroftwo_0_2c000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -425,7 +525,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_rn_30_poweroftwominusone_0_2c0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -441,7 +545,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_rn_31_max_0_2c0003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -457,7 +565,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_rt_0_min_0_2c000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -473,7 +585,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_rt_1_poweroftwo_0_2c000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -489,7 +605,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_rt_30_poweroftwominusone_0_2c0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -505,7 +625,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_field_rt_31_max_0_2c00001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -521,7 +645,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_0_0_2c000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -537,7 +665,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_1_0_6c000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -553,7 +685,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_2_0_ac000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -569,7 +705,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_3_0_ec000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -585,7 +725,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_4_0_2c000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -601,7 +745,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_5_0_2c400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -617,7 +765,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_6_0_2c000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -633,7 +785,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_7_0_2c008000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -649,7 +805,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_8_0_2c018000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -665,7 +825,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_9_0_2c020000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -681,7 +845,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_10_0_2c038000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -697,7 +865,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_11_0_2c040000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -713,7 +885,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_12_0_2c078000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -729,7 +905,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_13_0_2c080000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -745,7 +925,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_14_0_2c0f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -761,7 +945,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_15_0_2c100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -777,7 +965,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_16_0_2c1f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -793,7 +985,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_17_0_2c200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -809,7 +1005,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_18_0_2c3f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -825,7 +1025,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_19_0_2c000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -841,7 +1045,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_20_0_2c000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -857,7 +1065,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_21_0_2c007800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -873,7 +1085,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_22_0_2c007c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -889,7 +1105,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_23_0_2c000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -905,7 +1125,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_24_0_2c000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -921,7 +1145,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_25_0_2c0003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -937,7 +1165,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_26_0_2c0003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -953,7 +1185,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_27_0_2c000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -969,7 +1205,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_28_0_2c000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -985,7 +1225,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_29_0_2c00001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -1001,7 +1245,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_30_0_2c00001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -1017,7 +1265,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_31_0_2c000420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -1033,7 +1285,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_32_0_2c007fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -1049,7 +1305,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_33_0_2c000401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -1065,7 +1325,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_34_0_2c007c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -1081,7 +1345,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_35_0_2c000021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -1097,7 +1365,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_combo_36_0_2c0003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -1113,7 +1385,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_special_opc_0_size_variant_0_0_2c008
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -1129,7 +1405,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_special_opc_1_size_variant_1_0_6c008
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -1145,7 +1425,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_special_opc_2_size_variant_2_0_ac008
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -1161,7 +1445,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_special_opc_3_size_variant_3_0_ec008
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -1169,7 +1457,8 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_special_opc_3_size_variant_3_0_ec008
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_pair_simdfp_no_alloc_special_rn_31_stack_pointer_sp_may_require_alignment_0_2c0083e0() {
+fn test_aarch64_memory_pair_simdfp_no_alloc_special_rn_31_stack_pointer_sp_may_require_alignment_0_2c0083e0()
+ {
     // Encoding: 0x2C0083E0
     // Test aarch64_memory_pair_simdfp_no_alloc special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rt=0, opc=0, L=0, imm7=1, Rt2=0, Rn=31
@@ -1177,7 +1466,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_special_rn_31_stack_pointer_sp_may_r
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_no_alloc
@@ -1185,7 +1478,8 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_special_rn_31_stack_pointer_sp_may_r
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_pair_simdfp_no_alloc_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2c00801f() {
+fn test_aarch64_memory_pair_simdfp_no_alloc_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2c00801f()
+ {
     // Encoding: 0x2C00801F
     // Test aarch64_memory_pair_simdfp_no_alloc special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: opc=0, Rt2=0, Rn=0, Rt=31, L=0, imm7=1
@@ -1193,7 +1487,11 @@ fn test_aarch64_memory_pair_simdfp_no_alloc_special_rt_31_zero_register_xzr_wzr_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -1213,7 +1511,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_opc_0_min_0_28800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1229,7 +1532,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_opc_1_poweroftwo_0_68800000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1245,7 +1553,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_opc_2_poweroftwo_0_a8800000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1261,7 +1574,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_opc_3_max_0_e8800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1277,7 +1595,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_l_0_min_0_28800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1293,7 +1616,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_l_1_max_0_28c00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1309,7 +1637,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_imm7_0_zero_0_28800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1325,7 +1658,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_imm7_1_poweroftwo_0_28808000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1341,7 +1679,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_imm7_3_poweroftwominusone_0_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1357,7 +1700,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_imm7_4_poweroftwo_0_28820000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1373,7 +1721,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_imm7_7_poweroftwominusone_0_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1389,7 +1742,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_imm7_8_poweroftwo_0_28840000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1405,7 +1763,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_imm7_15_poweroftwominusone_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1421,7 +1784,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_imm7_16_poweroftwo_0_28880000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1437,7 +1805,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_imm7_31_poweroftwominusone_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1453,7 +1826,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_imm7_32_poweroftwo_0_28900000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1469,7 +1847,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_imm7_63_poweroftwominusone_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1485,7 +1868,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_imm7_64_poweroftwo_0_28a00000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1501,7 +1889,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_imm7_127_max_0_28bf8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1517,7 +1910,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_rt2_0_min_0_28800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1533,7 +1931,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_rt2_1_poweroftwo_0_28800400()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1549,7 +1952,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_rt2_30_poweroftwominusone_0_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1565,7 +1973,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_rt2_31_max_0_28807c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1581,7 +1994,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_rn_0_min_0_28800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1597,7 +2015,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_rn_1_poweroftwo_0_28800020() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1613,7 +2036,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_rn_30_poweroftwominusone_0_28
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1629,7 +2057,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_rn_31_max_0_288003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1645,7 +2078,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_rt_0_min_0_28800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1661,7 +2099,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_rt_1_poweroftwo_0_28800001() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1677,7 +2120,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_rt_30_poweroftwominusone_0_28
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1693,7 +2141,12 @@ fn test_aarch64_memory_pair_general_post_idx_field_rt_31_max_0_2880001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1709,7 +2162,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_0_0_28800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1725,7 +2183,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_1_0_68800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1741,7 +2204,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_2_0_a8800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1757,7 +2225,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_3_0_e8800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1773,7 +2246,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_4_0_28800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1789,7 +2267,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_5_0_28c00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1805,7 +2288,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_6_0_28800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1821,7 +2309,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_7_0_28808000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1837,7 +2330,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_8_0_28818000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1853,7 +2351,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_9_0_28820000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1869,7 +2372,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_10_0_28838000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1885,7 +2393,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_11_0_28840000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1901,7 +2414,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_12_0_28878000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1917,7 +2435,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_13_0_28880000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1933,7 +2456,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_14_0_288f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1949,7 +2477,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_15_0_28900000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1965,7 +2498,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_16_0_289f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1981,7 +2519,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_17_0_28a00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -1997,7 +2540,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_18_0_28bf8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2013,7 +2561,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_19_0_28800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2029,7 +2582,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_20_0_28800400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2045,7 +2603,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_21_0_28807800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2061,7 +2624,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_22_0_28807c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2077,7 +2645,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_23_0_28800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2093,7 +2666,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_24_0_28800020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2109,7 +2687,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_25_0_288003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2125,7 +2708,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_26_0_288003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2141,7 +2729,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_27_0_28800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2157,7 +2750,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_28_0_28800001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2173,7 +2771,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_29_0_2880001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2189,7 +2792,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_30_0_2880001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2205,7 +2813,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_31_0_28800420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2221,7 +2834,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_32_0_28807fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2237,7 +2855,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_33_0_28800401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2253,7 +2876,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_34_0_28807c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2269,7 +2897,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_35_0_28800021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2285,7 +2918,12 @@ fn test_aarch64_memory_pair_general_post_idx_combo_36_0_288003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2301,7 +2939,12 @@ fn test_aarch64_memory_pair_general_post_idx_special_opc_0_size_variant_0_0_2880
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2317,7 +2960,12 @@ fn test_aarch64_memory_pair_general_post_idx_special_opc_1_size_variant_1_0_6880
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2333,7 +2981,12 @@ fn test_aarch64_memory_pair_general_post_idx_special_opc_2_size_variant_2_0_a880
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2349,7 +3002,12 @@ fn test_aarch64_memory_pair_general_post_idx_special_opc_3_size_variant_3_0_e880
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2357,7 +3015,8 @@ fn test_aarch64_memory_pair_general_post_idx_special_opc_3_size_variant_3_0_e880
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_pair_general_post_idx_special_rn_31_stack_pointer_sp_may_require_alignment_0_288083e0() {
+fn test_aarch64_memory_pair_general_post_idx_special_rn_31_stack_pointer_sp_may_require_alignment_0_288083e0()
+ {
     // Encoding: 0x288083E0
     // Test aarch64_memory_pair_general_post_idx special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: L=0, Rn=31, Rt2=0, imm7=1, Rt=0, opc=0
@@ -2365,7 +3024,12 @@ fn test_aarch64_memory_pair_general_post_idx_special_rn_31_stack_pointer_sp_may_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -2373,7 +3037,8 @@ fn test_aarch64_memory_pair_general_post_idx_special_rn_31_stack_pointer_sp_may_
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_pair_general_post_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2880801f() {
+fn test_aarch64_memory_pair_general_post_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2880801f()
+ {
     // Encoding: 0x2880801F
     // Test aarch64_memory_pair_general_post_idx special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: imm7=1, Rt=31, Rn=0, opc=0, L=0, Rt2=0
@@ -2381,7 +3046,12 @@ fn test_aarch64_memory_pair_general_post_idx_special_rt_31_zero_register_xzr_wzr
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2397,7 +3067,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_opc_0_min_0_29800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2413,7 +3088,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_opc_1_poweroftwo_0_69800000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2429,7 +3109,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_opc_2_poweroftwo_0_a9800000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2445,7 +3130,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_opc_3_max_0_e9800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2461,7 +3151,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_l_0_min_0_29800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2477,7 +3172,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_l_1_max_0_29c00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2493,7 +3193,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_imm7_0_zero_0_29800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2509,7 +3214,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_imm7_1_poweroftwo_0_29808000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2525,7 +3235,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_imm7_3_poweroftwominusone_0_29
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2541,7 +3256,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_imm7_4_poweroftwo_0_29820000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2557,7 +3277,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_imm7_7_poweroftwominusone_0_29
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2573,7 +3298,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_imm7_8_poweroftwo_0_29840000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2589,7 +3319,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_imm7_15_poweroftwominusone_0_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2605,7 +3340,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_imm7_16_poweroftwo_0_29880000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2621,7 +3361,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_imm7_31_poweroftwominusone_0_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2637,7 +3382,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_imm7_32_poweroftwo_0_29900000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2653,7 +3403,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_imm7_63_poweroftwominusone_0_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2669,7 +3424,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_imm7_64_poweroftwo_0_29a00000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2685,7 +3445,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_imm7_127_max_0_29bf8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2701,7 +3466,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_rt2_0_min_0_29800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2717,7 +3487,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_rt2_1_poweroftwo_0_29800400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2733,7 +3508,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_rt2_30_poweroftwominusone_0_29
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2749,7 +3529,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_rt2_31_max_0_29807c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2765,7 +3550,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_rn_0_min_0_29800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2781,7 +3571,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_rn_1_poweroftwo_0_29800020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2797,7 +3592,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_rn_30_poweroftwominusone_0_298
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2813,7 +3613,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_rn_31_max_0_298003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2829,7 +3634,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_rt_0_min_0_29800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2845,7 +3655,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_rt_1_poweroftwo_0_29800001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2861,7 +3676,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_rt_30_poweroftwominusone_0_298
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2877,7 +3697,12 @@ fn test_aarch64_memory_pair_general_pre_idx_field_rt_31_max_0_2980001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2893,7 +3718,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_0_0_29800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2909,7 +3739,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_1_0_69800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2925,7 +3760,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_2_0_a9800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2941,7 +3781,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_3_0_e9800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2957,7 +3802,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_4_0_29800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2973,7 +3823,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_5_0_29c00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -2989,7 +3844,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_6_0_29800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3005,7 +3865,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_7_0_29808000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3021,7 +3886,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_8_0_29818000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3037,7 +3907,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_9_0_29820000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3053,7 +3928,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_10_0_29838000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3069,7 +3949,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_11_0_29840000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3085,7 +3970,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_12_0_29878000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3101,7 +3991,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_13_0_29880000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3117,7 +4012,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_14_0_298f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3133,7 +4033,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_15_0_29900000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3149,7 +4054,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_16_0_299f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3165,7 +4075,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_17_0_29a00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3181,7 +4096,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_18_0_29bf8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3197,7 +4117,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_19_0_29800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3213,7 +4138,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_20_0_29800400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3229,7 +4159,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_21_0_29807800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3245,7 +4180,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_22_0_29807c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3261,7 +4201,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_23_0_29800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3277,7 +4222,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_24_0_29800020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3293,7 +4243,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_25_0_298003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3309,7 +4264,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_26_0_298003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3325,7 +4285,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_27_0_29800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3341,7 +4306,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_28_0_29800001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3357,7 +4327,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_29_0_2980001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3373,7 +4348,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_30_0_2980001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3389,7 +4369,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_31_0_29800420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3405,7 +4390,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_32_0_29807fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3421,7 +4411,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_33_0_29800401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3437,7 +4432,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_34_0_29807c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3453,7 +4453,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_35_0_29800021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3469,7 +4474,12 @@ fn test_aarch64_memory_pair_general_pre_idx_combo_36_0_298003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3485,7 +4495,12 @@ fn test_aarch64_memory_pair_general_pre_idx_special_opc_0_size_variant_0_0_29808
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3501,7 +4516,12 @@ fn test_aarch64_memory_pair_general_pre_idx_special_opc_1_size_variant_1_0_69808
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3517,7 +4537,12 @@ fn test_aarch64_memory_pair_general_pre_idx_special_opc_2_size_variant_2_0_a9808
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3533,7 +4558,12 @@ fn test_aarch64_memory_pair_general_pre_idx_special_opc_3_size_variant_3_0_e9808
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3541,7 +4571,8 @@ fn test_aarch64_memory_pair_general_pre_idx_special_opc_3_size_variant_3_0_e9808
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_pair_general_pre_idx_special_rn_31_stack_pointer_sp_may_require_alignment_0_298083e0() {
+fn test_aarch64_memory_pair_general_pre_idx_special_rn_31_stack_pointer_sp_may_require_alignment_0_298083e0()
+ {
     // Encoding: 0x298083E0
     // Test aarch64_memory_pair_general_pre_idx special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: L=0, Rt=0, imm7=1, Rn=31, opc=0, Rt2=0
@@ -3549,7 +4580,12 @@ fn test_aarch64_memory_pair_general_pre_idx_special_rn_31_stack_pointer_sp_may_r
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -3557,7 +4593,8 @@ fn test_aarch64_memory_pair_general_pre_idx_special_rn_31_stack_pointer_sp_may_r
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_pair_general_pre_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2980801f() {
+fn test_aarch64_memory_pair_general_pre_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2980801f()
+ {
     // Encoding: 0x2980801F
     // Test aarch64_memory_pair_general_pre_idx special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: L=0, Rn=0, Rt2=0, opc=0, imm7=1, Rt=31
@@ -3565,7 +4602,12 @@ fn test_aarch64_memory_pair_general_pre_idx_special_rt_31_zero_register_xzr_wzr_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3581,7 +4623,12 @@ fn test_aarch64_memory_pair_general_offset_field_opc_0_min_0_29000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3597,7 +4644,12 @@ fn test_aarch64_memory_pair_general_offset_field_opc_1_poweroftwo_0_69000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3613,7 +4665,12 @@ fn test_aarch64_memory_pair_general_offset_field_opc_2_poweroftwo_0_a9000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3629,7 +4686,12 @@ fn test_aarch64_memory_pair_general_offset_field_opc_3_max_0_e9000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3645,7 +4707,12 @@ fn test_aarch64_memory_pair_general_offset_field_l_0_min_0_29000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3661,7 +4728,12 @@ fn test_aarch64_memory_pair_general_offset_field_l_1_max_0_29400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3677,7 +4749,12 @@ fn test_aarch64_memory_pair_general_offset_field_imm7_0_zero_0_29000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3693,7 +4770,12 @@ fn test_aarch64_memory_pair_general_offset_field_imm7_1_poweroftwo_0_29008000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3709,7 +4791,12 @@ fn test_aarch64_memory_pair_general_offset_field_imm7_3_poweroftwominusone_0_290
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3725,7 +4812,12 @@ fn test_aarch64_memory_pair_general_offset_field_imm7_4_poweroftwo_0_29020000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3741,7 +4833,12 @@ fn test_aarch64_memory_pair_general_offset_field_imm7_7_poweroftwominusone_0_290
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3757,7 +4854,12 @@ fn test_aarch64_memory_pair_general_offset_field_imm7_8_poweroftwo_0_29040000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3773,7 +4875,12 @@ fn test_aarch64_memory_pair_general_offset_field_imm7_15_poweroftwominusone_0_29
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3789,7 +4896,12 @@ fn test_aarch64_memory_pair_general_offset_field_imm7_16_poweroftwo_0_29080000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3805,7 +4917,12 @@ fn test_aarch64_memory_pair_general_offset_field_imm7_31_poweroftwominusone_0_29
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3821,7 +4938,12 @@ fn test_aarch64_memory_pair_general_offset_field_imm7_32_poweroftwo_0_29100000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3837,7 +4959,12 @@ fn test_aarch64_memory_pair_general_offset_field_imm7_63_poweroftwominusone_0_29
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3853,7 +4980,12 @@ fn test_aarch64_memory_pair_general_offset_field_imm7_64_poweroftwo_0_29200000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3869,7 +5001,12 @@ fn test_aarch64_memory_pair_general_offset_field_imm7_127_max_0_293f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3885,7 +5022,12 @@ fn test_aarch64_memory_pair_general_offset_field_rt2_0_min_0_29000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3901,7 +5043,12 @@ fn test_aarch64_memory_pair_general_offset_field_rt2_1_poweroftwo_0_29000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3917,7 +5064,12 @@ fn test_aarch64_memory_pair_general_offset_field_rt2_30_poweroftwominusone_0_290
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3933,7 +5085,12 @@ fn test_aarch64_memory_pair_general_offset_field_rt2_31_max_0_29007c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3949,7 +5106,12 @@ fn test_aarch64_memory_pair_general_offset_field_rn_0_min_0_29000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3965,7 +5127,12 @@ fn test_aarch64_memory_pair_general_offset_field_rn_1_poweroftwo_0_29000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3981,7 +5148,12 @@ fn test_aarch64_memory_pair_general_offset_field_rn_30_poweroftwominusone_0_2900
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -3997,7 +5169,12 @@ fn test_aarch64_memory_pair_general_offset_field_rn_31_max_0_290003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4013,7 +5190,12 @@ fn test_aarch64_memory_pair_general_offset_field_rt_0_min_0_29000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4029,7 +5211,12 @@ fn test_aarch64_memory_pair_general_offset_field_rt_1_poweroftwo_0_29000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4045,7 +5232,12 @@ fn test_aarch64_memory_pair_general_offset_field_rt_30_poweroftwominusone_0_2900
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4061,7 +5253,12 @@ fn test_aarch64_memory_pair_general_offset_field_rt_31_max_0_2900001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4077,7 +5274,12 @@ fn test_aarch64_memory_pair_general_offset_combo_0_0_29000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4093,7 +5295,12 @@ fn test_aarch64_memory_pair_general_offset_combo_1_0_69000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4109,7 +5316,12 @@ fn test_aarch64_memory_pair_general_offset_combo_2_0_a9000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4125,7 +5337,12 @@ fn test_aarch64_memory_pair_general_offset_combo_3_0_e9000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4141,7 +5358,12 @@ fn test_aarch64_memory_pair_general_offset_combo_4_0_29000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4157,7 +5379,12 @@ fn test_aarch64_memory_pair_general_offset_combo_5_0_29400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4173,7 +5400,12 @@ fn test_aarch64_memory_pair_general_offset_combo_6_0_29000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4189,7 +5421,12 @@ fn test_aarch64_memory_pair_general_offset_combo_7_0_29008000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4205,7 +5442,12 @@ fn test_aarch64_memory_pair_general_offset_combo_8_0_29018000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4221,7 +5463,12 @@ fn test_aarch64_memory_pair_general_offset_combo_9_0_29020000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4237,7 +5484,12 @@ fn test_aarch64_memory_pair_general_offset_combo_10_0_29038000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4253,7 +5505,12 @@ fn test_aarch64_memory_pair_general_offset_combo_11_0_29040000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4269,7 +5526,12 @@ fn test_aarch64_memory_pair_general_offset_combo_12_0_29078000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4285,7 +5547,12 @@ fn test_aarch64_memory_pair_general_offset_combo_13_0_29080000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4301,7 +5568,12 @@ fn test_aarch64_memory_pair_general_offset_combo_14_0_290f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4317,7 +5589,12 @@ fn test_aarch64_memory_pair_general_offset_combo_15_0_29100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4333,7 +5610,12 @@ fn test_aarch64_memory_pair_general_offset_combo_16_0_291f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4349,7 +5631,12 @@ fn test_aarch64_memory_pair_general_offset_combo_17_0_29200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4365,7 +5652,12 @@ fn test_aarch64_memory_pair_general_offset_combo_18_0_293f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4381,7 +5673,12 @@ fn test_aarch64_memory_pair_general_offset_combo_19_0_29000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4397,7 +5694,12 @@ fn test_aarch64_memory_pair_general_offset_combo_20_0_29000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4413,7 +5715,12 @@ fn test_aarch64_memory_pair_general_offset_combo_21_0_29007800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4429,7 +5736,12 @@ fn test_aarch64_memory_pair_general_offset_combo_22_0_29007c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4445,7 +5757,12 @@ fn test_aarch64_memory_pair_general_offset_combo_23_0_29000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4461,7 +5778,12 @@ fn test_aarch64_memory_pair_general_offset_combo_24_0_29000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4477,7 +5799,12 @@ fn test_aarch64_memory_pair_general_offset_combo_25_0_290003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4493,7 +5820,12 @@ fn test_aarch64_memory_pair_general_offset_combo_26_0_290003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4509,7 +5841,12 @@ fn test_aarch64_memory_pair_general_offset_combo_27_0_29000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4525,7 +5862,12 @@ fn test_aarch64_memory_pair_general_offset_combo_28_0_29000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4541,7 +5883,12 @@ fn test_aarch64_memory_pair_general_offset_combo_29_0_2900001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4557,7 +5904,12 @@ fn test_aarch64_memory_pair_general_offset_combo_30_0_2900001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4573,7 +5925,12 @@ fn test_aarch64_memory_pair_general_offset_combo_31_0_29000420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4589,7 +5946,12 @@ fn test_aarch64_memory_pair_general_offset_combo_32_0_29007fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4605,7 +5967,12 @@ fn test_aarch64_memory_pair_general_offset_combo_33_0_29000401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4621,7 +5988,12 @@ fn test_aarch64_memory_pair_general_offset_combo_34_0_29007c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4637,7 +6009,12 @@ fn test_aarch64_memory_pair_general_offset_combo_35_0_29000021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4653,7 +6030,12 @@ fn test_aarch64_memory_pair_general_offset_combo_36_0_290003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4669,7 +6051,12 @@ fn test_aarch64_memory_pair_general_offset_special_opc_0_size_variant_0_0_290080
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4685,7 +6072,12 @@ fn test_aarch64_memory_pair_general_offset_special_opc_1_size_variant_1_0_690080
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4701,7 +6093,12 @@ fn test_aarch64_memory_pair_general_offset_special_opc_2_size_variant_2_0_a90080
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4717,7 +6114,12 @@ fn test_aarch64_memory_pair_general_offset_special_opc_3_size_variant_3_0_e90080
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4725,7 +6127,8 @@ fn test_aarch64_memory_pair_general_offset_special_opc_3_size_variant_3_0_e90080
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_pair_general_offset_special_rn_31_stack_pointer_sp_may_require_alignment_0_290083e0() {
+fn test_aarch64_memory_pair_general_offset_special_rn_31_stack_pointer_sp_may_require_alignment_0_290083e0()
+ {
     // Encoding: 0x290083E0
     // Test aarch64_memory_pair_general_offset special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rn=31, Rt=0, opc=0, L=0, Rt2=0, imm7=1
@@ -4733,7 +6136,12 @@ fn test_aarch64_memory_pair_general_offset_special_rn_31_stack_pointer_sp_may_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_offset
@@ -4741,7 +6149,8 @@ fn test_aarch64_memory_pair_general_offset_special_rn_31_stack_pointer_sp_may_re
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_pair_general_offset_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2900801f() {
+fn test_aarch64_memory_pair_general_offset_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2900801f()
+ {
     // Encoding: 0x2900801F
     // Test aarch64_memory_pair_general_offset special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: opc=0, imm7=1, Rt2=0, L=0, Rn=0, Rt=31
@@ -4749,7 +6158,12 @@ fn test_aarch64_memory_pair_general_offset_special_rt_31_zero_register_xzr_wzr_r
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_post_idx
@@ -4985,7 +6399,11 @@ fn test_aarch64_memory_pair_general_pre_idx_ldr_oracle_1_39800020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFFF, "X0 should be 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFFFFF,
+        "X0 should be 0xFFFFFFFFFFFFFFFF"
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -5003,7 +6421,11 @@ fn test_aarch64_memory_pair_general_pre_idx_ldr_oracle_2_39800020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFFF, "X0 should be 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFFFFF,
+        "X0 should be 0xFFFFFFFFFFFFFFFF"
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -5021,7 +6443,11 @@ fn test_aarch64_memory_pair_general_pre_idx_ldr_oracle_3_39800020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFFF, "X0 should be 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFFFFF,
+        "X0 should be 0xFFFFFFFFFFFFFFFF"
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -5039,7 +6465,11 @@ fn test_aarch64_memory_pair_general_pre_idx_ldr_oracle_4_39800020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFF0, "X0 should be 0xFFFFFFFFFFFFFFF0");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFFFF0,
+        "X0 should be 0xFFFFFFFFFFFFFFF0"
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -5057,7 +6487,11 @@ fn test_aarch64_memory_pair_general_pre_idx_ldr_oracle_5_39800020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFF80, "X0 should be 0xFFFFFFFFFFFFFF80");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFFF80,
+        "X0 should be 0xFFFFFFFFFFFFFF80"
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_pre_idx
@@ -5313,7 +6747,7 @@ fn test_aarch64_memory_pair_general_offset_str_oracle_0_39000020() {
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
     {
         let buf = cpu.read_memory(0x1000, 1).unwrap();
-        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0; 8]));
         assert_eq!(val, 0x0, "Memory at 0x1000 should be 0x0");
     }
 }
@@ -5335,7 +6769,7 @@ fn test_aarch64_memory_pair_general_offset_str_oracle_1_39000020() {
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
     {
         let buf = cpu.read_memory(0x1000, 1).unwrap();
-        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0; 8]));
         assert_eq!(val, 0xFF, "Memory at 0x1000 should be 0xFF");
     }
 }
@@ -5357,7 +6791,7 @@ fn test_aarch64_memory_pair_general_offset_str_oracle_2_39000020() {
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
     {
         let buf = cpu.read_memory(0x1000, 1).unwrap();
-        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0; 8]));
         assert_eq!(val, 0x34, "Memory at 0x1000 should be 0x34");
     }
 }
@@ -5379,7 +6813,7 @@ fn test_aarch64_memory_pair_general_offset_str_oracle_3_39000020() {
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
     {
         let buf = cpu.read_memory(0x1000, 1).unwrap();
-        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0; 8]));
         assert_eq!(val, 0x78, "Memory at 0x1000 should be 0x78");
     }
 }
@@ -5401,7 +6835,7 @@ fn test_aarch64_memory_pair_general_offset_str_oracle_4_39000020() {
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
     {
         let buf = cpu.read_memory(0x1000, 1).unwrap();
-        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0; 8]));
         assert_eq!(val, 0xF0, "Memory at 0x1000 should be 0xF0");
     }
 }
@@ -5623,7 +7057,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_opc_0_min_0_28000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5639,7 +7078,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_opc_1_poweroftwo_0_68000000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5655,7 +7099,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_opc_2_poweroftwo_0_a8000000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5671,7 +7120,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_opc_3_max_0_e8000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5687,7 +7141,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_l_0_min_0_28000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5703,7 +7162,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_l_1_max_0_28400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5719,7 +7183,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_imm7_0_zero_0_28000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5735,7 +7204,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_imm7_1_poweroftwo_0_28008000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5751,7 +7225,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_imm7_3_poweroftwominusone_0_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5767,7 +7246,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_imm7_4_poweroftwo_0_28020000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5783,7 +7267,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_imm7_7_poweroftwominusone_0_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5799,7 +7288,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_imm7_8_poweroftwo_0_28040000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5815,7 +7309,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_imm7_15_poweroftwominusone_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5831,7 +7330,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_imm7_16_poweroftwo_0_28080000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5847,7 +7351,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_imm7_31_poweroftwominusone_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5863,7 +7372,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_imm7_32_poweroftwo_0_28100000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5879,7 +7393,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_imm7_63_poweroftwominusone_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5895,7 +7414,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_imm7_64_poweroftwo_0_28200000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5911,7 +7435,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_imm7_127_max_0_283f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5927,7 +7456,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_rt2_0_min_0_28000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5943,7 +7477,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_rt2_1_poweroftwo_0_28000400()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5959,7 +7498,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_rt2_30_poweroftwominusone_0_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5975,7 +7519,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_rt2_31_max_0_28007c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -5991,7 +7540,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_rn_0_min_0_28000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6007,7 +7561,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_rn_1_poweroftwo_0_28000020() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6023,7 +7582,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_rn_30_poweroftwominusone_0_28
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6039,7 +7603,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_rn_31_max_0_280003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6055,7 +7624,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_rt_0_min_0_28000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6071,7 +7645,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_rt_1_poweroftwo_0_28000001() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6087,7 +7666,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_rt_30_poweroftwominusone_0_28
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6103,7 +7687,12 @@ fn test_aarch64_memory_pair_general_no_alloc_field_rt_31_max_0_2800001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6119,7 +7708,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_0_0_28000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6135,7 +7729,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_1_0_68000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6151,7 +7750,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_2_0_a8000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6167,7 +7771,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_3_0_e8000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6183,7 +7792,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_4_0_28000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6199,7 +7813,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_5_0_28400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6215,7 +7834,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_6_0_28000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6231,7 +7855,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_7_0_28008000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6247,7 +7876,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_8_0_28018000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6263,7 +7897,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_9_0_28020000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6279,7 +7918,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_10_0_28038000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6295,7 +7939,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_11_0_28040000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6311,7 +7960,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_12_0_28078000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6327,7 +7981,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_13_0_28080000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6343,7 +8002,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_14_0_280f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6359,7 +8023,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_15_0_28100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6375,7 +8044,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_16_0_281f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6391,7 +8065,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_17_0_28200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6407,7 +8086,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_18_0_283f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6423,7 +8107,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_19_0_28000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6439,7 +8128,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_20_0_28000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6455,7 +8149,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_21_0_28007800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6471,7 +8170,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_22_0_28007c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6487,7 +8191,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_23_0_28000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6503,7 +8212,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_24_0_28000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6519,7 +8233,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_25_0_280003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6535,7 +8254,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_26_0_280003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6551,7 +8275,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_27_0_28000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6567,7 +8296,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_28_0_28000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6583,7 +8317,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_29_0_2800001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6599,7 +8338,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_30_0_2800001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6615,7 +8359,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_31_0_28000420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6631,7 +8380,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_32_0_28007fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6647,7 +8401,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_33_0_28000401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6663,7 +8422,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_34_0_28007c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6679,7 +8443,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_35_0_28000021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6695,7 +8464,12 @@ fn test_aarch64_memory_pair_general_no_alloc_combo_36_0_280003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6711,7 +8485,12 @@ fn test_aarch64_memory_pair_general_no_alloc_special_opc_0_size_variant_0_0_2800
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6727,7 +8506,12 @@ fn test_aarch64_memory_pair_general_no_alloc_special_opc_1_size_variant_1_0_6800
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6743,7 +8527,12 @@ fn test_aarch64_memory_pair_general_no_alloc_special_opc_2_size_variant_2_0_a800
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6759,7 +8548,12 @@ fn test_aarch64_memory_pair_general_no_alloc_special_opc_3_size_variant_3_0_e800
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6767,7 +8561,8 @@ fn test_aarch64_memory_pair_general_no_alloc_special_opc_3_size_variant_3_0_e800
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_pair_general_no_alloc_special_rn_31_stack_pointer_sp_may_require_alignment_0_280083e0() {
+fn test_aarch64_memory_pair_general_no_alloc_special_rn_31_stack_pointer_sp_may_require_alignment_0_280083e0()
+ {
     // Encoding: 0x280083E0
     // Test aarch64_memory_pair_general_no_alloc special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: opc=0, Rt2=0, imm7=1, Rn=31, Rt=0, L=0
@@ -6775,7 +8570,12 @@ fn test_aarch64_memory_pair_general_no_alloc_special_rn_31_stack_pointer_sp_may_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6783,7 +8583,8 @@ fn test_aarch64_memory_pair_general_no_alloc_special_rn_31_stack_pointer_sp_may_
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_pair_general_no_alloc_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2800801f() {
+fn test_aarch64_memory_pair_general_no_alloc_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2800801f()
+ {
     // Encoding: 0x2800801F
     // Test aarch64_memory_pair_general_no_alloc special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: opc=0, L=0, Rt2=0, imm7=1, Rn=0, Rt=31
@@ -6791,7 +8592,12 @@ fn test_aarch64_memory_pair_general_no_alloc_special_rt_31_zero_register_xzr_wzr
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_general_no_alloc
@@ -6951,7 +8757,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_opc_0_min_0_2c800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -6967,7 +8777,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_opc_1_poweroftwo_0_6c800000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -6983,7 +8797,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_opc_2_poweroftwo_0_ac800000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -6999,7 +8817,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_opc_3_max_0_ec800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7015,7 +8837,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_l_0_min_0_2c800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7031,7 +8857,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_l_1_max_0_2cc00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7047,7 +8877,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_imm7_0_zero_0_2c800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7063,7 +8897,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_imm7_1_poweroftwo_0_2c808000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7079,7 +8917,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_imm7_3_poweroftwominusone_0_2c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7095,7 +8937,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_imm7_4_poweroftwo_0_2c820000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7111,7 +8957,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_imm7_7_poweroftwominusone_0_2c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7127,7 +8977,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_imm7_8_poweroftwo_0_2c840000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7143,7 +8997,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_imm7_15_poweroftwominusone_0_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7159,7 +9017,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_imm7_16_poweroftwo_0_2c880000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7175,7 +9037,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_imm7_31_poweroftwominusone_0_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7191,7 +9057,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_imm7_32_poweroftwo_0_2c900000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7207,7 +9077,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_imm7_63_poweroftwominusone_0_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7223,7 +9097,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_imm7_64_poweroftwo_0_2ca00000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7239,7 +9117,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_imm7_127_max_0_2cbf8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7255,7 +9137,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_rt2_0_min_0_2c800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7271,7 +9157,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_rt2_1_poweroftwo_0_2c800400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7287,7 +9177,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_rt2_30_poweroftwominusone_0_2c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7303,7 +9197,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_rt2_31_max_0_2c807c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7319,7 +9217,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_rn_0_min_0_2c800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7335,7 +9237,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_rn_1_poweroftwo_0_2c800020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7351,7 +9257,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_rn_30_poweroftwominusone_0_2c8
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7367,7 +9277,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_rn_31_max_0_2c8003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7383,7 +9297,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_rt_0_min_0_2c800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7399,7 +9317,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_rt_1_poweroftwo_0_2c800001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7415,7 +9337,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_rt_30_poweroftwominusone_0_2c8
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7431,7 +9357,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_field_rt_31_max_0_2c80001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7447,7 +9377,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_0_0_2c800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7463,7 +9397,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_1_0_6c800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7479,7 +9417,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_2_0_ac800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7495,7 +9437,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_3_0_ec800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7511,7 +9457,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_4_0_2c800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7527,7 +9477,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_5_0_2cc00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7543,7 +9497,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_6_0_2c800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7559,7 +9517,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_7_0_2c808000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7575,7 +9537,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_8_0_2c818000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7591,7 +9557,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_9_0_2c820000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7607,7 +9577,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_10_0_2c838000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7623,7 +9597,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_11_0_2c840000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7639,7 +9617,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_12_0_2c878000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7655,7 +9637,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_13_0_2c880000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7671,7 +9657,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_14_0_2c8f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7687,7 +9677,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_15_0_2c900000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7703,7 +9697,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_16_0_2c9f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7719,7 +9717,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_17_0_2ca00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7735,7 +9737,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_18_0_2cbf8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7751,7 +9757,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_19_0_2c800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7767,7 +9777,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_20_0_2c800400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7783,7 +9797,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_21_0_2c807800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7799,7 +9817,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_22_0_2c807c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7815,7 +9837,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_23_0_2c800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7831,7 +9857,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_24_0_2c800020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7847,7 +9877,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_25_0_2c8003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7863,7 +9897,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_26_0_2c8003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7879,7 +9917,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_27_0_2c800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7895,7 +9937,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_28_0_2c800001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7911,7 +9957,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_29_0_2c80001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7927,7 +9977,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_30_0_2c80001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7943,7 +9997,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_31_0_2c800420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7959,7 +10017,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_32_0_2c807fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7975,7 +10037,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_33_0_2c800401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -7991,7 +10057,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_34_0_2c807c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -8007,7 +10077,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_35_0_2c800021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -8023,7 +10097,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_combo_36_0_2c8003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -8039,7 +10117,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_special_opc_0_size_variant_0_0_2c808
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -8055,7 +10137,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_special_opc_1_size_variant_1_0_6c808
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -8071,7 +10157,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_special_opc_2_size_variant_2_0_ac808
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -8087,7 +10177,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_special_opc_3_size_variant_3_0_ec808
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -8095,7 +10189,8 @@ fn test_aarch64_memory_pair_simdfp_post_idx_special_opc_3_size_variant_3_0_ec808
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_pair_simdfp_post_idx_special_rn_31_stack_pointer_sp_may_require_alignment_0_2c8083e0() {
+fn test_aarch64_memory_pair_simdfp_post_idx_special_rn_31_stack_pointer_sp_may_require_alignment_0_2c8083e0()
+ {
     // Encoding: 0x2C8083E0
     // Test aarch64_memory_pair_simdfp_post_idx special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: imm7=1, Rt=0, Rt2=0, opc=0, Rn=31, L=0
@@ -8103,7 +10198,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_special_rn_31_stack_pointer_sp_may_r
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_post_idx
@@ -8111,7 +10210,8 @@ fn test_aarch64_memory_pair_simdfp_post_idx_special_rn_31_stack_pointer_sp_may_r
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_pair_simdfp_post_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2c80801f() {
+fn test_aarch64_memory_pair_simdfp_post_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2c80801f()
+ {
     // Encoding: 0x2C80801F
     // Test aarch64_memory_pair_simdfp_post_idx special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: L=0, Rn=0, Rt=31, Rt2=0, opc=0, imm7=1
@@ -8119,7 +10219,11 @@ fn test_aarch64_memory_pair_simdfp_post_idx_special_rt_31_zero_register_xzr_wzr_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8135,7 +10239,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_opc_0_min_0_2d800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8151,7 +10259,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_opc_1_poweroftwo_0_6d800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8167,7 +10279,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_opc_2_poweroftwo_0_ad800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8183,7 +10299,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_opc_3_max_0_ed800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8199,7 +10319,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_l_0_min_0_2d800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8215,7 +10339,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_l_1_max_0_2dc00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8231,7 +10359,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_imm7_0_zero_0_2d800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8247,7 +10379,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_imm7_1_poweroftwo_0_2d808000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8263,7 +10399,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_imm7_3_poweroftwominusone_0_2d8
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8279,7 +10419,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_imm7_4_poweroftwo_0_2d820000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8295,7 +10439,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_imm7_7_poweroftwominusone_0_2d8
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8311,7 +10459,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_imm7_8_poweroftwo_0_2d840000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8327,7 +10479,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_imm7_15_poweroftwominusone_0_2d
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8343,7 +10499,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_imm7_16_poweroftwo_0_2d880000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8359,7 +10519,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_imm7_31_poweroftwominusone_0_2d
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8375,7 +10539,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_imm7_32_poweroftwo_0_2d900000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8391,7 +10559,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_imm7_63_poweroftwominusone_0_2d
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8407,7 +10579,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_imm7_64_poweroftwo_0_2da00000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8423,7 +10599,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_imm7_127_max_0_2dbf8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8439,7 +10619,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_rt2_0_min_0_2d800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8455,7 +10639,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_rt2_1_poweroftwo_0_2d800400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8471,7 +10659,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_rt2_30_poweroftwominusone_0_2d8
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8487,7 +10679,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_rt2_31_max_0_2d807c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8503,7 +10699,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_rn_0_min_0_2d800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8519,7 +10719,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_rn_1_poweroftwo_0_2d800020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8535,7 +10739,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_rn_30_poweroftwominusone_0_2d80
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8551,7 +10759,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_rn_31_max_0_2d8003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8567,7 +10779,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_rt_0_min_0_2d800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8583,7 +10799,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_rt_1_poweroftwo_0_2d800001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8599,7 +10819,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_rt_30_poweroftwominusone_0_2d80
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8615,7 +10839,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_field_rt_31_max_0_2d80001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8631,7 +10859,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_0_0_2d800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8647,7 +10879,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_1_0_6d800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8663,7 +10899,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_2_0_ad800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8679,7 +10919,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_3_0_ed800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8695,7 +10939,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_4_0_2d800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8711,7 +10959,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_5_0_2dc00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8727,7 +10979,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_6_0_2d800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8743,7 +10999,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_7_0_2d808000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8759,7 +11019,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_8_0_2d818000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8775,7 +11039,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_9_0_2d820000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8791,7 +11059,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_10_0_2d838000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8807,7 +11079,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_11_0_2d840000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8823,7 +11099,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_12_0_2d878000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8839,7 +11119,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_13_0_2d880000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8855,7 +11139,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_14_0_2d8f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8871,7 +11159,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_15_0_2d900000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8887,7 +11179,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_16_0_2d9f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8903,7 +11199,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_17_0_2da00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8919,7 +11219,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_18_0_2dbf8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8935,7 +11239,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_19_0_2d800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8951,7 +11259,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_20_0_2d800400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8967,7 +11279,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_21_0_2d807800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8983,7 +11299,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_22_0_2d807c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -8999,7 +11319,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_23_0_2d800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9015,7 +11339,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_24_0_2d800020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9031,7 +11359,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_25_0_2d8003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9047,7 +11379,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_26_0_2d8003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9063,7 +11399,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_27_0_2d800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9079,7 +11419,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_28_0_2d800001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9095,7 +11439,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_29_0_2d80001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9111,7 +11459,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_30_0_2d80001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9127,7 +11479,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_31_0_2d800420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9143,7 +11499,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_32_0_2d807fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9159,7 +11519,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_33_0_2d800401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9175,7 +11539,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_34_0_2d807c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9191,7 +11559,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_35_0_2d800021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9207,7 +11579,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_combo_36_0_2d8003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9223,7 +11599,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_special_opc_0_size_variant_0_0_2d8080
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9239,7 +11619,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_special_opc_1_size_variant_1_0_6d8080
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9255,7 +11639,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_special_opc_2_size_variant_2_0_ad8080
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9271,7 +11659,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_special_opc_3_size_variant_3_0_ed8080
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9279,7 +11671,8 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_special_opc_3_size_variant_3_0_ed8080
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_pair_simdfp_pre_idx_special_rn_31_stack_pointer_sp_may_require_alignment_0_2d8083e0() {
+fn test_aarch64_memory_pair_simdfp_pre_idx_special_rn_31_stack_pointer_sp_may_require_alignment_0_2d8083e0()
+ {
     // Encoding: 0x2D8083E0
     // Test aarch64_memory_pair_simdfp_pre_idx special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: opc=0, Rt=0, Rt2=0, L=0, Rn=31, imm7=1
@@ -9287,7 +11680,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_special_rn_31_stack_pointer_sp_may_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_pre_idx
@@ -9295,7 +11692,8 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_special_rn_31_stack_pointer_sp_may_re
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_pair_simdfp_pre_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2d80801f() {
+fn test_aarch64_memory_pair_simdfp_pre_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2d80801f()
+ {
     // Encoding: 0x2D80801F
     // Test aarch64_memory_pair_simdfp_pre_idx special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: L=0, opc=0, imm7=1, Rn=0, Rt2=0, Rt=31
@@ -9303,7 +11701,11 @@ fn test_aarch64_memory_pair_simdfp_pre_idx_special_rt_31_zero_register_xzr_wzr_r
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9319,7 +11721,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_opc_0_min_0_2d000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9335,7 +11741,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_opc_1_poweroftwo_0_6d000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9351,7 +11761,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_opc_2_poweroftwo_0_ad000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9367,7 +11781,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_opc_3_max_0_ed000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9383,7 +11801,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_l_0_min_0_2d000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9399,7 +11821,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_l_1_max_0_2d400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9415,7 +11841,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_imm7_0_zero_0_2d000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9431,7 +11861,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_imm7_1_poweroftwo_0_2d008000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9447,7 +11881,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_imm7_3_poweroftwominusone_0_2d01
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9463,7 +11901,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_imm7_4_poweroftwo_0_2d020000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9479,7 +11921,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_imm7_7_poweroftwominusone_0_2d03
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9495,7 +11941,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_imm7_8_poweroftwo_0_2d040000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9511,7 +11961,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_imm7_15_poweroftwominusone_0_2d0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9527,7 +11981,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_imm7_16_poweroftwo_0_2d080000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9543,7 +12001,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_imm7_31_poweroftwominusone_0_2d0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9559,7 +12021,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_imm7_32_poweroftwo_0_2d100000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9575,7 +12041,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_imm7_63_poweroftwominusone_0_2d1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9591,7 +12061,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_imm7_64_poweroftwo_0_2d200000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9607,7 +12081,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_imm7_127_max_0_2d3f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9623,7 +12101,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_rt2_0_min_0_2d000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9639,7 +12121,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_rt2_1_poweroftwo_0_2d000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9655,7 +12141,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_rt2_30_poweroftwominusone_0_2d00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9671,7 +12161,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_rt2_31_max_0_2d007c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9687,7 +12181,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_rn_0_min_0_2d000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9703,7 +12201,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_rn_1_poweroftwo_0_2d000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9719,7 +12221,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_rn_30_poweroftwominusone_0_2d000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9735,7 +12241,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_rn_31_max_0_2d0003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9751,7 +12261,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_rt_0_min_0_2d000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9767,7 +12281,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_rt_1_poweroftwo_0_2d000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9783,7 +12301,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_rt_30_poweroftwominusone_0_2d000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9799,7 +12321,11 @@ fn test_aarch64_memory_pair_simdfp_offset_field_rt_31_max_0_2d00001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9815,7 +12341,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_0_0_2d000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9831,7 +12361,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_1_0_6d000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9847,7 +12381,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_2_0_ad000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9863,7 +12401,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_3_0_ed000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9879,7 +12421,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_4_0_2d000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9895,7 +12441,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_5_0_2d400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9911,7 +12461,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_6_0_2d000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9927,7 +12481,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_7_0_2d008000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9943,7 +12501,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_8_0_2d018000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9959,7 +12521,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_9_0_2d020000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9975,7 +12541,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_10_0_2d038000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -9991,7 +12561,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_11_0_2d040000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10007,7 +12581,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_12_0_2d078000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10023,7 +12601,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_13_0_2d080000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10039,7 +12621,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_14_0_2d0f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10055,7 +12641,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_15_0_2d100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10071,7 +12661,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_16_0_2d1f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10087,7 +12681,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_17_0_2d200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10103,7 +12701,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_18_0_2d3f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10119,7 +12721,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_19_0_2d000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10135,7 +12741,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_20_0_2d000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10151,7 +12761,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_21_0_2d007800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10167,7 +12781,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_22_0_2d007c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10183,7 +12801,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_23_0_2d000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10199,7 +12821,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_24_0_2d000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10215,7 +12841,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_25_0_2d0003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10231,7 +12861,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_26_0_2d0003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10247,7 +12881,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_27_0_2d000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10263,7 +12901,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_28_0_2d000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10279,7 +12921,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_29_0_2d00001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10295,7 +12941,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_30_0_2d00001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10311,7 +12961,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_31_0_2d000420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10327,7 +12981,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_32_0_2d007fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10343,7 +13001,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_33_0_2d000401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10359,7 +13021,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_34_0_2d007c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10375,7 +13041,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_35_0_2d000021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10391,7 +13061,11 @@ fn test_aarch64_memory_pair_simdfp_offset_combo_36_0_2d0003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10407,7 +13081,11 @@ fn test_aarch64_memory_pair_simdfp_offset_special_opc_0_size_variant_0_0_2d00800
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10423,7 +13101,11 @@ fn test_aarch64_memory_pair_simdfp_offset_special_opc_1_size_variant_1_0_6d00800
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10439,7 +13121,11 @@ fn test_aarch64_memory_pair_simdfp_offset_special_opc_2_size_variant_2_0_ad00800
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10455,7 +13141,11 @@ fn test_aarch64_memory_pair_simdfp_offset_special_opc_3_size_variant_3_0_ed00800
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10463,7 +13153,8 @@ fn test_aarch64_memory_pair_simdfp_offset_special_opc_3_size_variant_3_0_ed00800
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_pair_simdfp_offset_special_rn_31_stack_pointer_sp_may_require_alignment_0_2d0083e0() {
+fn test_aarch64_memory_pair_simdfp_offset_special_rn_31_stack_pointer_sp_may_require_alignment_0_2d0083e0()
+ {
     // Encoding: 0x2D0083E0
     // Test aarch64_memory_pair_simdfp_offset special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rt=0, L=0, imm7=1, opc=0, Rt2=0, Rn=31
@@ -10471,7 +13162,11 @@ fn test_aarch64_memory_pair_simdfp_offset_special_rn_31_stack_pointer_sp_may_req
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_pair_simdfp_offset
@@ -10479,7 +13174,8 @@ fn test_aarch64_memory_pair_simdfp_offset_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_pair_simdfp_offset_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2d00801f() {
+fn test_aarch64_memory_pair_simdfp_offset_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_2d00801f()
+ {
     // Encoding: 0x2D00801F
     // Test aarch64_memory_pair_simdfp_offset special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rt=31, Rt2=0, imm7=1, opc=0, L=0, Rn=0
@@ -10487,6 +13183,9 @@ fn test_aarch64_memory_pair_simdfp_offset_special_rt_31_zero_register_xzr_wzr_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
-

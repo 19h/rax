@@ -5,7 +5,7 @@
 //! verified against the qemu-hexagon oracle.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fimm_s, fimm_u, fld, SemCtx};
+use super::{SemCtx, fimm_s, fimm_u, fld};
 
 /// Execute an "extra" opcode. Returns `false` if `op` is not in this set.
 pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
@@ -68,11 +68,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let (sum, ovf) = a.overflowing_add(b);
             let r = if ovf {
                 ctx.set_ovf();
-                if a < 0 {
-                    i64::MIN
-                } else {
-                    i64::MAX
-                }
+                if a < 0 { i64::MIN } else { i64::MAX }
             } else {
                 sum
             };

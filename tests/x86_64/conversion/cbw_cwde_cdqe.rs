@@ -24,7 +24,11 @@ fn test_cbw_al_negative_one() {
     regs.rax = 0xFF; // -1 in AL
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0xFFFF, "AX should be 0xFFFF after CBW with AL=0xFF");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0xFFFF,
+        "AX should be 0xFFFF after CBW with AL=0xFF"
+    );
 }
 
 #[test]
@@ -35,7 +39,11 @@ fn test_cbw_al_positive_one() {
     regs.rax = 0x01;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x0001, "AX should be 0x0001 after CBW with AL=0x01");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x0001,
+        "AX should be 0x0001 after CBW with AL=0x01"
+    );
 }
 
 #[test]
@@ -46,7 +54,11 @@ fn test_cbw_al_max_positive() {
     regs.rax = 0x7F;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x007F, "AX should be 0x007F after CBW with AL=0x7F");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x007F,
+        "AX should be 0x007F after CBW with AL=0x7F"
+    );
 }
 
 #[test]
@@ -57,7 +69,11 @@ fn test_cbw_al_max_negative() {
     regs.rax = 0x80;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0xFF80, "AX should be 0xFF80 after CBW with AL=0x80");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0xFF80,
+        "AX should be 0xFF80 after CBW with AL=0x80"
+    );
 }
 
 #[test]
@@ -68,7 +84,11 @@ fn test_cbw_al_zero() {
     regs.rax = 0x00;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x0000, "AX should be 0x0000 after CBW with AL=0x00");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x0000,
+        "AX should be 0x0000 after CBW with AL=0x00"
+    );
 }
 
 #[test]
@@ -79,7 +99,11 @@ fn test_cbw_al_midrange_positive() {
     regs.rax = 0x42;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x0042, "AX should be 0x0042 after CBW with AL=0x42");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x0042,
+        "AX should be 0x0042 after CBW with AL=0x42"
+    );
 }
 
 #[test]
@@ -90,7 +114,11 @@ fn test_cbw_al_midrange_negative() {
     regs.rax = 0xAA;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0xFFAA, "AX should be 0xFFAA after CBW with AL=0xAA");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0xFFAA,
+        "AX should be 0xFFAA after CBW with AL=0xAA"
+    );
 }
 
 #[test]
@@ -118,7 +146,11 @@ fn test_cwde_ax_negative_one() {
     regs.rax = 0xFFFF; // -1 in AX
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX should be 0xFFFFFFFF after CWDE with AX=0xFFFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX should be 0xFFFFFFFF after CWDE with AX=0xFFFF"
+    );
 }
 
 #[test]
@@ -129,7 +161,11 @@ fn test_cwde_ax_positive_one() {
     regs.rax = 0x0001;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000001, "EAX should be 0x00000001 after CWDE with AX=0x0001");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000001,
+        "EAX should be 0x00000001 after CWDE with AX=0x0001"
+    );
 }
 
 #[test]
@@ -140,7 +176,11 @@ fn test_cwde_ax_max_positive() {
     regs.rax = 0x7FFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00007FFF, "EAX should be 0x00007FFF after CWDE with AX=0x7FFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00007FFF,
+        "EAX should be 0x00007FFF after CWDE with AX=0x7FFF"
+    );
 }
 
 #[test]
@@ -151,7 +191,11 @@ fn test_cwde_ax_max_negative() {
     regs.rax = 0x8000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFF8000, "EAX should be 0xFFFF8000 after CWDE with AX=0x8000");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFF8000,
+        "EAX should be 0xFFFF8000 after CWDE with AX=0x8000"
+    );
 }
 
 #[test]
@@ -162,7 +206,11 @@ fn test_cwde_ax_zero() {
     regs.rax = 0x0000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000000, "EAX should be 0x00000000 after CWDE with AX=0x0000");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000000,
+        "EAX should be 0x00000000 after CWDE with AX=0x0000"
+    );
 }
 
 #[test]
@@ -173,7 +221,11 @@ fn test_cwde_ax_midrange_positive() {
     regs.rax = 0x1234;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00001234, "EAX should be 0x00001234 after CWDE with AX=0x1234");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00001234,
+        "EAX should be 0x00001234 after CWDE with AX=0x1234"
+    );
 }
 
 #[test]
@@ -184,7 +236,11 @@ fn test_cwde_ax_midrange_negative() {
     regs.rax = 0xDEAD;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFDEAD, "EAX should be 0xFFFFDEAD after CWDE with AX=0xDEAD");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFDEAD,
+        "EAX should be 0xFFFFDEAD after CWDE with AX=0xDEAD"
+    );
 }
 
 // ============================================================================
@@ -199,7 +255,10 @@ fn test_cdqe_eax_negative_one() {
     regs.rax = 0xFFFFFFFF; // -1 in EAX
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "RAX should be 0xFFFFFFFFFFFFFFFF after CDQE with EAX=0xFFFFFFFF");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "RAX should be 0xFFFFFFFFFFFFFFFF after CDQE with EAX=0xFFFFFFFF"
+    );
 }
 
 #[test]
@@ -210,7 +269,10 @@ fn test_cdqe_eax_positive_one() {
     regs.rax = 0x00000001;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000000000001, "RAX should be 0x0000000000000001 after CDQE with EAX=0x00000001");
+    assert_eq!(
+        regs.rax, 0x0000000000000001,
+        "RAX should be 0x0000000000000001 after CDQE with EAX=0x00000001"
+    );
 }
 
 #[test]
@@ -221,7 +283,10 @@ fn test_cdqe_eax_max_positive() {
     regs.rax = 0x7FFFFFFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x000000007FFFFFFF, "RAX should be 0x000000007FFFFFFF after CDQE with EAX=0x7FFFFFFF");
+    assert_eq!(
+        regs.rax, 0x000000007FFFFFFF,
+        "RAX should be 0x000000007FFFFFFF after CDQE with EAX=0x7FFFFFFF"
+    );
 }
 
 #[test]
@@ -232,7 +297,10 @@ fn test_cdqe_eax_max_negative() {
     regs.rax = 0x80000000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFF80000000, "RAX should be 0xFFFFFFFF80000000 after CDQE with EAX=0x80000000");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFF80000000,
+        "RAX should be 0xFFFFFFFF80000000 after CDQE with EAX=0x80000000"
+    );
 }
 
 #[test]
@@ -243,7 +311,10 @@ fn test_cdqe_eax_zero() {
     regs.rax = 0x00000000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000000000000, "RAX should be 0x0000000000000000 after CDQE with EAX=0x00000000");
+    assert_eq!(
+        regs.rax, 0x0000000000000000,
+        "RAX should be 0x0000000000000000 after CDQE with EAX=0x00000000"
+    );
 }
 
 #[test]
@@ -254,7 +325,10 @@ fn test_cdqe_eax_midrange_positive() {
     regs.rax = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000012345678, "RAX should be 0x0000000012345678 after CDQE with EAX=0x12345678");
+    assert_eq!(
+        regs.rax, 0x0000000012345678,
+        "RAX should be 0x0000000012345678 after CDQE with EAX=0x12345678"
+    );
 }
 
 #[test]
@@ -265,7 +339,10 @@ fn test_cdqe_eax_midrange_negative() {
     regs.rax = 0xDEADBEEF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFFDEADBEEF, "RAX should be 0xFFFFFFFFDEADBEEF after CDQE with EAX=0xDEADBEEF");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFDEADBEEF,
+        "RAX should be 0xFFFFFFFFDEADBEEF after CDQE with EAX=0xDEADBEEF"
+    );
 }
 
 // ============================================================================
@@ -310,8 +387,16 @@ fn test_cwde_boundary_0x7fff_0x8000() {
     let (mut vcpu, _) = setup_vm(&code2, Some(regs));
     let regs2 = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs1.rax & 0xFFFFFFFF, 0x00007FFF, "0x7FFF should be positive");
-    assert_eq!(regs2.rax & 0xFFFFFFFF, 0xFFFF8000, "0x8000 should be negative");
+    assert_eq!(
+        regs1.rax & 0xFFFFFFFF,
+        0x00007FFF,
+        "0x7FFF should be positive"
+    );
+    assert_eq!(
+        regs2.rax & 0xFFFFFFFF,
+        0xFFFF8000,
+        "0x8000 should be negative"
+    );
 }
 
 #[test]
@@ -331,8 +416,14 @@ fn test_cdqe_boundary_0x7fffffff_0x80000000() {
     let (mut vcpu, _) = setup_vm(&code2, Some(regs));
     let regs2 = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs1.rax, 0x000000007FFFFFFF, "0x7FFFFFFF should be positive");
-    assert_eq!(regs2.rax, 0xFFFFFFFF80000000, "0x80000000 should be negative");
+    assert_eq!(
+        regs1.rax, 0x000000007FFFFFFF,
+        "0x7FFFFFFF should be positive"
+    );
+    assert_eq!(
+        regs2.rax, 0xFFFFFFFF80000000,
+        "0x80000000 should be negative"
+    );
 }
 
 // ============================================================================
@@ -354,14 +445,22 @@ fn test_cbw_sequential_values() {
         let signed_byte = value as i8;
         let expected = (signed_byte as i16) as u16;
 
-        assert_eq!(regs.rax & 0xFFFF, expected as u64, "CBW should sign-extend 0x{:02X} to 0x{:04X}", value, expected);
+        assert_eq!(
+            regs.rax & 0xFFFF,
+            expected as u64,
+            "CBW should sign-extend 0x{:02X} to 0x{:04X}",
+            value,
+            expected
+        );
     }
 }
 
 #[test]
 fn test_cwde_sequential_values() {
     // Test multiple word values
-    let test_values = vec![0x0000, 0x0001, 0x1234, 0x7FFE, 0x7FFF, 0x8000, 0x8001, 0xDEAD, 0xFFFE, 0xFFFF];
+    let test_values = vec![
+        0x0000, 0x0001, 0x1234, 0x7FFE, 0x7FFF, 0x8000, 0x8001, 0xDEAD, 0xFFFE, 0xFFFF,
+    ];
     for value in test_values {
         let code = [0x98, 0xf4]; // CWDE, HLT
         let mut regs = Registers::default();
@@ -373,7 +472,13 @@ fn test_cwde_sequential_values() {
         let signed_word = value as i16;
         let expected = (signed_word as i32) as u32;
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "CWDE should sign-extend 0x{:04X} to 0x{:08X}", value, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected as u64,
+            "CWDE should sign-extend 0x{:04X} to 0x{:08X}",
+            value,
+            expected
+        );
     }
 }
 
@@ -381,7 +486,15 @@ fn test_cwde_sequential_values() {
 fn test_cdqe_sequential_values() {
     // Test multiple dword values
     let test_values = vec![
-        0x00000000u32, 0x00000001u32, 0x12345678u32, 0x7FFFFFFFu32, 0x80000000u32, 0x80000001u32, 0xDEADBEEFu32, 0xFFFFFFFEu32, 0xFFFFFFFFu32
+        0x00000000u32,
+        0x00000001u32,
+        0x12345678u32,
+        0x7FFFFFFFu32,
+        0x80000000u32,
+        0x80000001u32,
+        0xDEADBEEFu32,
+        0xFFFFFFFEu32,
+        0xFFFFFFFFu32,
     ];
     for value in test_values {
         let code = [0x48, 0x98, 0xf4]; // CDQE, HLT
@@ -394,7 +507,11 @@ fn test_cdqe_sequential_values() {
         let signed_dword = value as i32;
         let expected = (signed_dword as i64) as u64;
 
-        assert_eq!(regs.rax, expected, "CDQE should sign-extend 0x{:08X} to 0x{:016X}", value, expected);
+        assert_eq!(
+            regs.rax, expected,
+            "CDQE should sign-extend 0x{:08X} to 0x{:016X}",
+            value, expected
+        );
     }
 }
 
@@ -476,7 +593,11 @@ fn test_cwde_practical_short_conversion() {
     regs.rax = 0xF000; // -4096 as signed word
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFF000, "EAX should be -4096 in 32-bit form");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFF000,
+        "EAX should be -4096 in 32-bit form"
+    );
 }
 
 #[test]
@@ -490,7 +611,10 @@ fn test_cdqe_practical_int_conversion() {
     regs.rax = 0xF0000000; // negative as 32-bit
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFFF0000000, "RAX should be sign-extended to 64-bit");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFF0000000,
+        "RAX should be sign-extended to 64-bit"
+    );
 }
 
 // ============================================================================
@@ -509,7 +633,11 @@ fn test_chained_cbw_cwde() {
     regs.rax = 0xFF; // -1 in AL
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "Should be sign-extended through both stages");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "Should be sign-extended through both stages"
+    );
 }
 
 #[test]
@@ -524,7 +652,10 @@ fn test_chained_cwde_cdqe() {
     regs.rax = 0xFFFF; // -1 in AX
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "Should be sign-extended through both stages");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "Should be sign-extended through both stages"
+    );
 }
 
 #[test]
@@ -540,7 +671,10 @@ fn test_chained_cbw_cwde_cdqe() {
     regs.rax = 0x80; // -128 in AL
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFF80, "Should be fully sign-extended to 64-bit");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFF80,
+        "Should be fully sign-extended to 64-bit"
+    );
 }
 
 // ============================================================================
@@ -561,7 +695,11 @@ fn test_cwde_to_use_in_arithmetic() {
     regs.rax = 0xFFFF; // -1 in AX
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000000, "Should be -1 sign-extended to EAX, then add 1 = 0");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000000,
+        "Should be -1 sign-extended to EAX, then add 1 = 0"
+    );
 }
 
 #[test]
@@ -576,7 +714,10 @@ fn test_cdqe_to_use_in_arithmetic() {
     regs.rax = 0xFFFFFFFF; // -1 in EAX
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000000000000, "Should be -1 sign-extended to RAX, then add 1 = 0");
+    assert_eq!(
+        regs.rax, 0x0000000000000000,
+        "Should be -1 sign-extended to RAX, then add 1 = 0"
+    );
 }
 
 // ============================================================================

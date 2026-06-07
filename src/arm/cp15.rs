@@ -647,11 +647,7 @@ impl Sctlr {
 
     /// Get exception vector base address.
     pub fn vector_base(&self) -> u32 {
-        if self.v() {
-            0xFFFF0000
-        } else {
-            0x00000000
-        }
+        if self.v() { 0xFFFF0000 } else { 0x00000000 }
     }
 
     /// RR bit: Round-robin replacement for caches.

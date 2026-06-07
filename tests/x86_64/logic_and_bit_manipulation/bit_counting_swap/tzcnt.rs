@@ -24,9 +24,16 @@ fn test_tzcnt_ax_bx_all_zeros() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 16, "AX should contain 16 (all bits are zero)");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        16,
+        "AX should contain 16 (all bits are zero)"
+    );
     assert!(cf_set(regs.rflags), "CF should be set (source is zero)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (count is non-zero)");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (count is non-zero)"
+    );
 }
 
 #[test]
@@ -41,8 +48,15 @@ fn test_tzcnt_ax_bx_lsb_set() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0, "AX should contain 0 (no trailing zeros)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (source is non-zero)");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0,
+        "AX should contain 0 (no trailing zeros)"
+    );
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (source is non-zero)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set (count is zero)");
 }
 
@@ -58,7 +72,11 @@ fn test_tzcnt_eax_ebx_all_zeros() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 32, "EAX should contain 32 (all bits are zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        32,
+        "EAX should contain 32 (all bits are zero)"
+    );
     assert!(cf_set(regs.rflags), "CF should be set (source is zero)");
 }
 
@@ -74,8 +92,15 @@ fn test_tzcnt_eax_ebx_lsb_set() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should contain 0 (no trailing zeros)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (source is non-zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "EAX should contain 0 (no trailing zeros)"
+    );
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (source is non-zero)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set (count is zero)");
 }
 
@@ -108,7 +133,10 @@ fn test_tzcnt_rax_rbx_lsb_set() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax, 0, "RAX should contain 0 (no trailing zeros)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (source is non-zero)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (source is non-zero)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set (count is zero)");
 }
 
@@ -124,7 +152,11 @@ fn test_tzcnt_eax_ebx_one_trailing_zero() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 1, "EAX should contain 1 (one trailing zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        1,
+        "EAX should contain 1 (one trailing zero)"
+    );
     assert!(!cf_set(regs.rflags), "CF should be clear");
 }
 
@@ -140,7 +172,11 @@ fn test_tzcnt_eax_ebx_multiple_trailing_zeros() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 16, "EAX should contain 16 (sixteen trailing zeros)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        16,
+        "EAX should contain 16 (sixteen trailing zeros)"
+    );
     assert!(!cf_set(regs.rflags), "CF should be clear");
 }
 
@@ -157,7 +193,13 @@ fn test_tzcnt_power_of_two() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, bit_pos as u64, "TZCNT(2^{}) should be {}", bit_pos, bit_pos);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            bit_pos as u64,
+            "TZCNT(2^{}) should be {}",
+            bit_pos,
+            bit_pos
+        );
     }
 }
 
@@ -260,7 +302,11 @@ fn test_tzcnt_all_ones() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should contain 0 (no trailing zeros)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "EAX should contain 0 (no trailing zeros)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set");
 }
 
@@ -288,7 +334,13 @@ fn test_tzcnt_single_bit_patterns() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "TZCNT(0x{:08X}) should be {}", value, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "TZCNT(0x{:08X}) should be {}",
+            value,
+            expected
+        );
     }
 }
 
@@ -304,7 +356,11 @@ fn test_tzcnt_alternating_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 1, "EAX should contain 1 (one trailing zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        1,
+        "EAX should contain 1 (one trailing zero)"
+    );
 }
 
 #[test]
@@ -372,7 +428,13 @@ fn test_tzcnt_byte_values() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "TZCNT(0x{:08X}) should be {}", value, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "TZCNT(0x{:08X}) should be {}",
+            value,
+            expected
+        );
     }
 }
 
@@ -388,7 +450,11 @@ fn test_tzcnt_vs_bsf_similarity() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 16, "TZCNT should find first set bit at position 16");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        16,
+        "TZCNT should find first set bit at position 16"
+    );
 }
 
 #[test]
@@ -425,10 +491,10 @@ fn test_tzcnt_64bit_upper_half() {
 fn test_tzcnt_alignment_detection() {
     // TZCNT can detect alignment (power of 2 divisibility)
     let test_cases = vec![
-        (0x00000001, 0), // 2^0 aligned
-        (0x00000002, 1), // 2^1 aligned
-        (0x00000004, 2), // 2^2 aligned
-        (0x00000008, 3), // 2^3 aligned
+        (0x00000001, 0),  // 2^0 aligned
+        (0x00000002, 1),  // 2^1 aligned
+        (0x00000004, 2),  // 2^2 aligned
+        (0x00000008, 3),  // 2^3 aligned
         (0x00001000, 12), // 2^12 aligned (4KB)
     ];
 
@@ -442,7 +508,13 @@ fn test_tzcnt_alignment_detection() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "Value 0x{:08X} is 2^{} aligned", value, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "Value 0x{:08X} is 2^{} aligned",
+            value,
+            expected
+        );
     }
 }
 
@@ -461,7 +533,12 @@ fn test_tzcnt_odd_numbers() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, 0, "Odd number {} should have 0 trailing zeros", value);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            0,
+            "Odd number {} should have 0 trailing zeros",
+            value
+        );
     }
 }
 
@@ -469,12 +546,12 @@ fn test_tzcnt_odd_numbers() {
 fn test_tzcnt_even_numbers() {
     // Even numbers have at least one trailing zero
     let test_cases = vec![
-        (2, 1),   // one trailing zero
-        (4, 2),   // two trailing zeros
-        (6, 1),   // one trailing zero
-        (8, 3),   // three trailing zeros
-        (12, 2),  // two trailing zeros
-        (16, 4),  // four trailing zeros
+        (2, 1),  // one trailing zero
+        (4, 2),  // two trailing zeros
+        (6, 1),  // one trailing zero
+        (8, 3),  // three trailing zeros
+        (12, 2), // two trailing zeros
+        (16, 4), // four trailing zeros
     ];
 
     for (value, expected) in test_cases {
@@ -487,6 +564,12 @@ fn test_tzcnt_even_numbers() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "Even number {} should have {} trailing zeros", value, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "Even number {} should have {} trailing zeros",
+            value,
+            expected
+        );
     }
 }

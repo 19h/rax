@@ -908,7 +908,7 @@ mod tests {
         }
         let lsr = IoDevice::read(&mut serial, LSR);
         assert_eq!(lsr & LSR_OE, 0); // No overrun yet
-                                     // 17th byte causes overrun
+        // 17th byte causes overrun
         serial.inject_input(b"X");
         let lsr2 = IoDevice::read(&mut serial, LSR);
         assert_eq!(lsr2 & LSR_OE, LSR_OE);
@@ -1052,7 +1052,7 @@ mod tests {
         IoDevice::write(&mut serial, MCR, MCR_LOOP | MCR_RTS);
         let msr = IoDevice::read(&mut serial, MSR);
         assert_eq!(msr & MSR_DCTS, MSR_DCTS); // Delta CTS set
-                                              // Delta cleared on read
+        // Delta cleared on read
         let msr2 = IoDevice::read(&mut serial, MSR);
         assert_eq!(msr2 & MSR_DCTS, 0);
     }
@@ -1188,7 +1188,10 @@ mod tests {
         // Idle shell waiting on a keystroke: RX interrupt armed, TX idle.
         IoDevice::write(&mut serial, IER, IER_RDA);
         serial.thre_interrupt = false;
-        assert!(!serial.has_pending_interrupt(), "no data yet → no interrupt");
+        assert!(
+            !serial.has_pending_interrupt(),
+            "no data yet → no interrupt"
+        );
 
         // One typed byte (1 < 14-byte trigger) MUST still interrupt.
         serial.queue_input(b"x");

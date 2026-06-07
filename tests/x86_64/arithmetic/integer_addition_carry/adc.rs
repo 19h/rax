@@ -55,7 +55,11 @@ fn test_adc_al_imm8_carry_propagation() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFF, 0, "ADC AL, 0xFF: 0 + 0xFF + 1 = 0x100 (wraps to 0)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0,
+        "ADC AL, 0xFF: 0 + 0xFF + 1 = 0x100 (wraps to 0)"
+    );
     assert!(cf_set(regs.rflags), "CF should be set (carry out)");
     assert!(zf_set(regs.rflags), "ZF should be set (result = 0)");
 }
@@ -85,7 +89,11 @@ fn test_adc_al_imm8_double_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFF, 0xFF, "ADC AL, 0xFF: 0xFF + 0xFF + 1 = 0x1FF (low byte = 0xFF)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0xFF,
+        "ADC AL, 0xFF: 0xFF + 0xFF + 1 = 0x1FF (low byte = 0xFF)"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
 }
 
@@ -104,7 +112,11 @@ fn test_adc_ax_imm16_no_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x2234, "ADC AX, 0x1234: 0x1000 + 0x1234 + 0");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x2234,
+        "ADC AX, 0x1234: 0x1000 + 0x1234 + 0"
+    );
 }
 
 #[test]
@@ -117,7 +129,11 @@ fn test_adc_ax_imm16_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x2235, "ADC AX, 0x1234: 0x1000 + 0x1234 + 1 = 0x2235");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x2235,
+        "ADC AX, 0x1234: 0x1000 + 0x1234 + 1 = 0x2235"
+    );
 }
 
 #[test]
@@ -131,7 +147,10 @@ fn test_adc_eax_imm32_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x1234567A, "ADC EAX, 0x12345678: 1 + 0x12345678 + 1");
+    assert_eq!(
+        regs.rax, 0x1234567A,
+        "ADC EAX, 0x12345678: 1 + 0x12345678 + 1"
+    );
 }
 
 #[test]
@@ -211,7 +230,10 @@ fn test_adc_rm32_imm32_register_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0x1234567A, "ADC ECX, 0x12345678: 1 + 0x12345678 + 1");
+    assert_eq!(
+        regs.rcx, 0x1234567A,
+        "ADC ECX, 0x12345678: 1 + 0x12345678 + 1"
+    );
 }
 
 #[test]
@@ -242,7 +264,11 @@ fn test_adc_rm32_imm32_memory_with_carry() {
     write_mem_u32(&mem, 0x12345678);
 
     let _ = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_u32(&mem), 0x12346679, "ADC [RBX], 0x1000: with CF=1");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0x12346679,
+        "ADC [RBX], 0x1000: with CF=1"
+    );
 }
 
 // ============================================================================
@@ -288,7 +314,10 @@ fn test_adc_rm64_imm8_sign_extended_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0x100000000, "ADC RCX, -1: with CF=1 results in same value");
+    assert_eq!(
+        regs.rcx, 0x100000000,
+        "ADC RCX, -1: with CF=1 results in same value"
+    );
 }
 
 // ============================================================================
@@ -504,9 +533,9 @@ fn test_adc_chain_64bit_addition() {
     // ADD EAX, ECX (low 32 bits)
     // ADC EBX, EDX (high 32 bits with carry)
     let code = [
-        0x01, 0xc8,       // ADD EAX, ECX
-        0x11, 0xd3,       // ADC EBX, EDX
-        0xf4,             // HLT
+        0x01, 0xc8, // ADD EAX, ECX
+        0x11, 0xd3, // ADC EBX, EDX
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     // Add 0xFFFFFFFF_00000001 + 0x00000000_00000001 = 0x00000001_00000002
@@ -530,9 +559,9 @@ fn test_adc_chain_with_carry_propagation() {
     // ADD EAX, ECX (low, produces carry)
     // ADC EBX, EDX (high, receives carry)
     let code = [
-        0x01, 0xc8,       // ADD EAX, ECX
-        0x11, 0xd3,       // ADC EBX, EDX
-        0xf4,             // HLT
+        0x01, 0xc8, // ADD EAX, ECX
+        0x11, 0xd3, // ADC EBX, EDX
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     // Add 0x00000000_FFFFFFFF + 0x00000000_00000001 = 0x00000001_00000000
@@ -552,22 +581,25 @@ fn test_adc_chain_128bit_addition() {
     // Simulate 128-bit addition using four 32-bit ADDs/ADCs
     // word0 + word1 + word2 (with carry) + word3 (with carry)
     let code = [
-        0x01, 0xc8,       // ADD EAX, ECX
-        0x11, 0xd3,       // ADC EBX, EDX
+        0x01, 0xc8, // ADD EAX, ECX
+        0x11, 0xd3, // ADC EBX, EDX
         0x45, 0x11, 0xc0, // ADC R8D, R8D (simulate adding 0 with carry)
-        0xf4,             // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0xFFFFFFFF;
     regs.rcx = 0x00000002; // This will produce carry
     regs.rbx = 0xFFFFFFFF;
     regs.rdx = 0x00000000; // This will receive carry and produce carry
-    regs.r8 = 0x00000000;  // This will receive carry
+    regs.r8 = 0x00000000; // This will receive carry
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 1, "word0: 0xFFFFFFFF + 2 = 1 (with carry)");
-    assert_eq!(regs.rbx, 0, "word1: 0xFFFFFFFF + 0 + carry = 0 (with carry)");
+    assert_eq!(
+        regs.rbx, 0,
+        "word1: 0xFFFFFFFF + 0 + carry = 0 (with carry)"
+    );
     assert_eq!(regs.r8, 1, "word2: 0 + 0 + carry = 1");
 }
 
@@ -664,5 +696,8 @@ fn test_adc_r15_extended_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r15, 0x3001, "ADC R15, RAX: 0x2000 + 0x1000 + 1 = 0x3001");
+    assert_eq!(
+        regs.r15, 0x3001,
+        "ADC R15, RAX: 0x2000 + 0x1000 + 1 = 0x3001"
+    );
 }

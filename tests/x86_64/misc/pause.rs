@@ -129,8 +129,8 @@ fn test_pause_in_spin_wait_pattern() {
     // This simulates: while (flag == 0) { PAUSE; }
     let code = [
         0xb8, 0x00, 0x00, 0x00, 0x00, // MOV EAX, 0
-        0xf3, 0x90,                    // PAUSE
-        0x83, 0xc0, 0x01,              // ADD EAX, 1 (exit condition)
+        0xf3, 0x90, // PAUSE
+        0x83, 0xc0, 0x01, // ADD EAX, 1 (exit condition)
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -163,8 +163,8 @@ fn test_pause_after_arithmetic() {
     // PAUSE after arithmetic operation preserves flags
     let code = [
         0xb8, 0xff, 0xff, 0xff, 0xff, // MOV EAX, 0xFFFFFFFF
-        0x83, 0xc0, 0x01,              // ADD EAX, 1 (sets CF, ZF)
-        0xf3, 0x90,                    // PAUSE
+        0x83, 0xc0, 0x01, // ADD EAX, 1 (sets CF, ZF)
+        0xf3, 0x90, // PAUSE
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -180,7 +180,7 @@ fn test_pause_between_instructions() {
     // PAUSE between two MOV instructions
     let code = [
         0xb8, 0x11, 0x00, 0x00, 0x00, // MOV EAX, 0x11
-        0xf3, 0x90,                    // PAUSE
+        0xf3, 0x90, // PAUSE
         0xbb, 0x22, 0x00, 0x00, 0x00, // MOV EBX, 0x22
         0xf4,
     ];
@@ -248,10 +248,10 @@ fn test_pause_after_conditional_jump() {
     // PAUSE after a conditional jump
     let code = [
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1
-        0x85, 0xc0,                    // TEST EAX, EAX
-        0x75, 0x05,                    // JNZ +5 (skip next instruction)
+        0x85, 0xc0, // TEST EAX, EAX
+        0x75, 0x05, // JNZ +5 (skip next instruction)
         0xb8, 0xff, 0x00, 0x00, 0x00, // MOV EAX, 0xFF (skipped)
-        0xf3, 0x90,                    // PAUSE
+        0xf3, 0x90, // PAUSE
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -265,8 +265,8 @@ fn test_pause_before_loop_condition_check() {
     // PAUSE before checking loop condition (typical usage)
     let code = [
         0xb9, 0x05, 0x00, 0x00, 0x00, // MOV ECX, 5 (loop counter)
-        0xf3, 0x90,                    // PAUSE
-        0x83, 0xe9, 0x01,              // SUB ECX, 1
+        0xf3, 0x90, // PAUSE
+        0x83, 0xe9, 0x01, // SUB ECX, 1
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -279,7 +279,7 @@ fn test_pause_before_loop_condition_check() {
 fn test_pause_with_carry_flag_set() {
     // PAUSE with carry flag set
     let code = [
-        0xf9,       // STC (set carry flag)
+        0xf9, // STC (set carry flag)
         0xf3, 0x90, // PAUSE
         0xf4,
     ];
@@ -309,8 +309,8 @@ fn test_pause_with_sign_flag_set() {
     // PAUSE with sign flag set
     let code = [
         0xb8, 0x00, 0x00, 0x00, 0x80, // MOV EAX, 0x80000000 (negative in 32-bit)
-        0x85, 0xc0,                    // TEST EAX, EAX (sets SF)
-        0xf3, 0x90,                    // PAUSE
+        0x85, 0xc0, // TEST EAX, EAX (sets SF)
+        0xf3, 0x90, // PAUSE
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -324,8 +324,8 @@ fn test_pause_with_overflow_flag_set() {
     // PAUSE with overflow flag set
     let code = [
         0xb8, 0xff, 0xff, 0xff, 0x7f, // MOV EAX, 0x7FFFFFFF
-        0x83, 0xc0, 0x01,              // ADD EAX, 1 (sets OF)
-        0xf3, 0x90,                    // PAUSE
+        0x83, 0xc0, 0x01, // ADD EAX, 1 (sets OF)
+        0xf3, 0x90, // PAUSE
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -339,9 +339,9 @@ fn test_pause_after_stack_push() {
     // PAUSE after stack push
     let code = [
         0xb8, 0x42, 0x00, 0x00, 0x00, // MOV EAX, 0x42
-        0x50,                          // PUSH RAX
-        0xf3, 0x90,                    // PAUSE
-        0x58,                          // POP RAX
+        0x50, // PUSH RAX
+        0xf3, 0x90, // PAUSE
+        0x58, // POP RAX
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -356,9 +356,9 @@ fn test_pause_in_mixed_instruction_sequence() {
     let code = [
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1
         0xbb, 0x02, 0x00, 0x00, 0x00, // MOV EBX, 2
-        0xf3, 0x90,                    // PAUSE
-        0x01, 0xd8,                    // ADD EAX, EBX
-        0xf3, 0x90,                    // PAUSE
+        0xf3, 0x90, // PAUSE
+        0x01, 0xd8, // ADD EAX, EBX
+        0xf3, 0x90, // PAUSE
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -385,7 +385,7 @@ fn test_pause_does_not_cause_exceptions() {
 fn test_pause_preserves_direction_flag() {
     // PAUSE with direction flag set
     let code = [
-        0xfd,       // STD (set direction flag)
+        0xfd, // STD (set direction flag)
         0xf3, 0x90, // PAUSE
         0xf4,
     ];
@@ -400,7 +400,7 @@ fn test_pause_as_nop_equivalent() {
     // PAUSE acts as a NOP (no operation) in terms of architectural state
     let code = [
         0xb8, 0x55, 0x00, 0x00, 0x00, // MOV EAX, 0x55
-        0xf3, 0x90,                    // PAUSE
+        0xf3, 0x90, // PAUSE
         0xbb, 0xAA, 0x00, 0x00, 0x00, // MOV EBX, 0xAA
         0xf4,
     ];
@@ -425,7 +425,10 @@ fn test_pause_before_memory_read() {
     write_mem_u64(&mem, 0xDEADBEEFCAFEBABE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xDEADBEEFCAFEBABE, "RAX should contain memory value");
+    assert_eq!(
+        regs.rax, 0xDEADBEEFCAFEBABE,
+        "RAX should contain memory value"
+    );
 }
 
 #[test]
@@ -448,7 +451,10 @@ fn test_pause_intensive_loop() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let final_regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(final_regs.rax, 0x123456789ABCDEF0, "RAX unchanged after many PAUSE");
+    assert_eq!(
+        final_regs.rax, 0x123456789ABCDEF0,
+        "RAX unchanged after many PAUSE"
+    );
 }
 
 #[test]

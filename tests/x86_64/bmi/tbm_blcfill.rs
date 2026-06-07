@@ -23,7 +23,11 @@ fn test_blcfill_basic() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let expected = src & src.wrapping_add(1);
-    assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "Fill from lowest clear bit");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        expected as u64,
+        "Fill from lowest clear bit"
+    );
 }
 
 #[test]
@@ -164,7 +168,8 @@ fn test_blcfill_high_bit_clear() {
 fn test_blcfill_mem_operand() {
     // BLCFILL EAX, [mem]
     let code = [
-        0xc4, 0xe2, 0x78, 0x01, 0x0c, 0x25, 0x00, 0x20, 0x00, 0x00, // BLCFILL EAX, [DATA_ADDR]
+        0xc4, 0xe2, 0x78, 0x01, 0x0c, 0x25, 0x00, 0x20, 0x00,
+        0x00, // BLCFILL EAX, [DATA_ADDR]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -227,7 +232,12 @@ fn test_blcfill_formula() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = value & value.wrapping_add(1);
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "Formula for 0x{:08x}", value);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected as u64,
+            "Formula for 0x{:08x}",
+            value
+        );
     }
 }
 

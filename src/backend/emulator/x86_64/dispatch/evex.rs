@@ -39,7 +39,7 @@ impl X86_64Vcpu {
             1 => self.execute_evex_0f(ctx, opcode),
             2 => self.execute_evex_0f38(ctx, opcode),
             3 => self.execute_evex_0f3a(ctx, opcode),
-            4 => self.execute_evex_map4_apx(ctx, opcode),  // APX GPR instructions
+            4 => self.execute_evex_map4_apx(ctx, opcode), // APX GPR instructions
             5 => self.execute_evex_map5(ctx, opcode),
             _ => Err(Error::Emulator(format!(
                 "Invalid EVEX mm field {} at RIP={:#x}",
@@ -64,24 +64,16 @@ impl X86_64Vcpu {
             // VMOVUPD/VMOVAPD store (0x11/0x29 with 66 prefix)
             0x11 | 0x29 if evex.pp == 1 => self.execute_evex_mov_store(ctx, opcode == 0x29),
             // VADDPS (pp=0/W=0) / VADDPD (pp=1/W=1) (0x58)
-            0x58 if evex.pp == 1 || evex.w => {
-                self.execute_evex_fp_arith_pd(ctx, |a, b| a + b)
-            }
+            0x58 if evex.pp == 1 || evex.w => self.execute_evex_fp_arith_pd(ctx, |a, b| a + b),
             0x58 => self.execute_evex_fp_arith_ps(ctx, |a, b| a + b),
             // VMULPS / VMULPD (0x59)
-            0x59 if evex.pp == 1 || evex.w => {
-                self.execute_evex_fp_arith_pd(ctx, |a, b| a * b)
-            }
+            0x59 if evex.pp == 1 || evex.w => self.execute_evex_fp_arith_pd(ctx, |a, b| a * b),
             0x59 => self.execute_evex_fp_arith_ps(ctx, |a, b| a * b),
             // VSUBPS / VSUBPD (0x5C)
-            0x5C if evex.pp == 1 || evex.w => {
-                self.execute_evex_fp_arith_pd(ctx, |a, b| a - b)
-            }
+            0x5C if evex.pp == 1 || evex.w => self.execute_evex_fp_arith_pd(ctx, |a, b| a - b),
             0x5C => self.execute_evex_fp_arith_ps(ctx, |a, b| a - b),
             // VDIVPS / VDIVPD (0x5E)
-            0x5E if evex.pp == 1 || evex.w => {
-                self.execute_evex_fp_arith_pd(ctx, |a, b| a / b)
-            }
+            0x5E if evex.pp == 1 || evex.w => self.execute_evex_fp_arith_pd(ctx, |a, b| a / b),
             0x5E => self.execute_evex_fp_arith_ps(ctx, |a, b| a / b),
             // VXORPS/VXORPD (0x57)
             0x57 => self.execute_evex_bitwise_xor(ctx),
@@ -1111,7 +1103,11 @@ impl X86_64Vcpu {
     // ============================================================================
 
     /// VPDPBUSD/VPDPBUSDS - Multiply and Add Unsigned and Signed Bytes
-    fn execute_vpdpbusd(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+    fn execute_vpdpbusd(
+        &mut self,
+        ctx: &mut InsnContext,
+        saturate: bool,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
@@ -1147,11 +1143,12 @@ impl X86_64Vcpu {
         for i in 0..num_dwords {
             let base = i * 4;
             // Each dword contains 4 bytes
-            let mut sum = i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
+            let mut sum =
+                i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
 
             for j in 0..4 {
-                let a = src1[base + j] as u8 as i32;  // unsigned byte
-                let b = src2[base + j] as i8 as i32;  // signed byte
+                let a = src1[base + j] as u8 as i32; // unsigned byte
+                let b = src2[base + j] as i8 as i32; // signed byte
                 sum += (a * b) as i64;
             }
 
@@ -1180,7 +1177,11 @@ impl X86_64Vcpu {
     }
 
     /// VPDPWSSD/VPDPWSSDS - Multiply and Add Signed Word Integers
-    fn execute_vpdpwssd(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+    fn execute_vpdpwssd(
+        &mut self,
+        ctx: &mut InsnContext,
+        saturate: bool,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
@@ -1210,7 +1211,8 @@ impl X86_64Vcpu {
 
         for i in 0..num_dwords {
             let base = i * 4;
-            let mut sum = i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
+            let mut sum =
+                i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
 
             // Two pairs of signed words per dword
             let a0 = i16::from_le_bytes([src1[base], src1[base + 1]]) as i32;
@@ -1280,18 +1282,36 @@ impl X86_64Vcpu {
         for i in 0..num_qwords {
             let base = i * 8;
             let a = u64::from_le_bytes([
-                src1[base], src1[base + 1], src1[base + 2], src1[base + 3],
-                src1[base + 4], src1[base + 5], src1[base + 6], src1[base + 7],
+                src1[base],
+                src1[base + 1],
+                src1[base + 2],
+                src1[base + 3],
+                src1[base + 4],
+                src1[base + 5],
+                src1[base + 6],
+                src1[base + 7],
             ]) & 0x000F_FFFF_FFFF_FFFF; // 52-bit mask
 
             let b = u64::from_le_bytes([
-                src2[base], src2[base + 1], src2[base + 2], src2[base + 3],
-                src2[base + 4], src2[base + 5], src2[base + 6], src2[base + 7],
+                src2[base],
+                src2[base + 1],
+                src2[base + 2],
+                src2[base + 3],
+                src2[base + 4],
+                src2[base + 5],
+                src2[base + 6],
+                src2[base + 7],
             ]) & 0x000F_FFFF_FFFF_FFFF;
 
             let d = u64::from_le_bytes([
-                dst[base], dst[base + 1], dst[base + 2], dst[base + 3],
-                dst[base + 4], dst[base + 5], dst[base + 6], dst[base + 7],
+                dst[base],
+                dst[base + 1],
+                dst[base + 2],
+                dst[base + 3],
+                dst[base + 4],
+                dst[base + 5],
+                dst[base + 6],
+                dst[base + 7],
             ]);
 
             // 52x52 multiplication gives 104-bit result
@@ -1327,7 +1347,11 @@ impl X86_64Vcpu {
     // ============================================================================
 
     /// VPOPCNTB/W/D/Q - Population count for packed elements
-    fn execute_vpopcnt(&mut self, ctx: &mut InsnContext, elem_size: usize) -> Result<Option<VcpuExit>> {
+    fn execute_vpopcnt(
+        &mut self,
+        ctx: &mut InsnContext,
+        elem_size: usize,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
@@ -1473,7 +1497,11 @@ impl X86_64Vcpu {
 
         for i in 0..vl {
             let index = (idx[i] as usize) % table_size;
-            dst[i] = if index < vl { src1[index] } else { src2[index - vl] };
+            dst[i] = if index < vl {
+                src1[index]
+            } else {
+                src2[index - vl]
+            };
         }
 
         self.set_zmm_data(zmm_idx, &dst[..vl], vl);
@@ -1522,7 +1550,11 @@ impl X86_64Vcpu {
 
         for i in 0..vl {
             let index = (idx[i] as usize) % table_size;
-            dst[i] = if index < vl { src1[index] } else { src2[index - vl] };
+            dst[i] = if index < vl {
+                src1[index]
+            } else {
+                src2[index - vl]
+            };
         }
 
         self.set_zmm_data(zmm_dst, &dst[..vl], vl);
@@ -1683,7 +1715,10 @@ impl X86_64Vcpu {
         for i in 0..num_floats {
             let src_base = i * 4;
             let f = f32::from_le_bytes([
-                src[src_base], src[src_base + 1], src[src_base + 2], src[src_base + 3],
+                src[src_base],
+                src[src_base + 1],
+                src[src_base + 2],
+                src[src_base + 3],
             ]);
             let bf16 = f32_to_bf16(f);
             let dst_base = i * 2;
@@ -1739,7 +1774,10 @@ impl X86_64Vcpu {
         for i in 0..num_floats {
             let src_base = i * 4;
             let f = f32::from_le_bytes([
-                src2[src_base], src2[src_base + 1], src2[src_base + 2], src2[src_base + 3],
+                src2[src_base],
+                src2[src_base + 1],
+                src2[src_base + 2],
+                src2[src_base + 3],
             ]);
             let bf16 = f32_to_bf16(f);
             let dst_base = i * 2;
@@ -1751,7 +1789,10 @@ impl X86_64Vcpu {
         for i in 0..num_floats {
             let src_base = i * 4;
             let f = f32::from_le_bytes([
-                src1[src_base], src1[src_base + 1], src1[src_base + 2], src1[src_base + 3],
+                src1[src_base],
+                src1[src_base + 1],
+                src1[src_base + 2],
+                src1[src_base + 3],
             ]);
             let bf16 = f32_to_bf16(f);
             let dst_base = (vl / 2) + i * 2;
@@ -1809,8 +1850,8 @@ impl X86_64Vcpu {
         // imm8 encoding: bits [2:0] select src1 offset, bits [5:3] select src2 offset
         // Each lane uses the same block selection from imm8
         let num_lanes = vl / 16;
-        let src1_blk = (imm8 & 0x3) as usize;  // bits [1:0]
-        let src2_blk = ((imm8 >> 2) & 0x3) as usize;  // bits [3:2]
+        let src1_blk = (imm8 & 0x3) as usize; // bits [1:0]
+        let src2_blk = ((imm8 >> 2) & 0x3) as usize; // bits [3:2]
 
         for lane in 0..num_lanes {
             let lane_base = lane * 16;
@@ -1830,7 +1871,7 @@ impl X86_64Vcpu {
                     let b = if b_idx < lane_base + 16 {
                         src2[b_idx] as i16
                     } else {
-                        0  // Zero-pad beyond lane boundary
+                        0 // Zero-pad beyond lane boundary
                     };
                     sad += (a - b).unsigned_abs();
                 }
@@ -1891,8 +1932,10 @@ impl X86_64Vcpu {
 
         for i in 0..num_elems {
             let base = i * 4;
-            let a = f32::from_le_bytes([src1[base], src1[base + 1], src1[base + 2], src1[base + 3]]);
-            let b = f32::from_le_bytes([src2[base], src2[base + 1], src2[base + 2], src2[base + 3]]);
+            let a =
+                f32::from_le_bytes([src1[base], src1[base + 1], src1[base + 2], src1[base + 3]]);
+            let b =
+                f32::from_le_bytes([src2[base], src2[base + 1], src2[base + 2], src2[base + 3]]);
 
             let result = if is_min { a.min(b) } else { a.max(b) };
             let bytes = result.to_le_bytes();
@@ -1947,12 +1990,24 @@ impl X86_64Vcpu {
         for i in 0..num_elems {
             let base = i * 8;
             let a = f64::from_le_bytes([
-                src1[base], src1[base + 1], src1[base + 2], src1[base + 3],
-                src1[base + 4], src1[base + 5], src1[base + 6], src1[base + 7],
+                src1[base],
+                src1[base + 1],
+                src1[base + 2],
+                src1[base + 3],
+                src1[base + 4],
+                src1[base + 5],
+                src1[base + 6],
+                src1[base + 7],
             ]);
             let b = f64::from_le_bytes([
-                src2[base], src2[base + 1], src2[base + 2], src2[base + 3],
-                src2[base + 4], src2[base + 5], src2[base + 6], src2[base + 7],
+                src2[base],
+                src2[base + 1],
+                src2[base + 2],
+                src2[base + 3],
+                src2[base + 4],
+                src2[base + 5],
+                src2[base + 6],
+                src2[base + 7],
             ]);
 
             let result = if is_min { a.min(b) } else { a.max(b) };
@@ -1998,7 +2053,11 @@ impl X86_64Vcpu {
         let a_val = f32::from_le_bytes([src1[0], src1[1], src1[2], src1[3]]);
 
         let is_min = (imm8 & 0x1) == 0;
-        let result = if is_min { a_val.min(b_val) } else { a_val.max(b_val) };
+        let result = if is_min {
+            a_val.min(b_val)
+        } else {
+            a_val.max(b_val)
+        };
 
         // Copy src1 to dst, then overwrite lowest element
         let mut dst = self.get_zmm_data(zmm_src1, 16);
@@ -2032,26 +2091,27 @@ impl X86_64Vcpu {
         let b_val = if is_memory {
             let bytes = self.load_zmm_data(addr, 8)?;
             f64::from_le_bytes([
-                bytes[0], bytes[1], bytes[2], bytes[3],
-                bytes[4], bytes[5], bytes[6], bytes[7],
+                bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
             ])
         } else {
             let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
             let src2 = self.get_zmm_data(zmm_src2, 16);
             f64::from_le_bytes([
-                src2[0], src2[1], src2[2], src2[3],
-                src2[4], src2[5], src2[6], src2[7],
+                src2[0], src2[1], src2[2], src2[3], src2[4], src2[5], src2[6], src2[7],
             ])
         };
 
         let src1 = self.get_zmm_data(zmm_src1, 16);
         let a_val = f64::from_le_bytes([
-            src1[0], src1[1], src1[2], src1[3],
-            src1[4], src1[5], src1[6], src1[7],
+            src1[0], src1[1], src1[2], src1[3], src1[4], src1[5], src1[6], src1[7],
         ]);
 
         let is_min = (imm8 & 0x1) == 0;
-        let result = if is_min { a_val.min(b_val) } else { a_val.max(b_val) };
+        let result = if is_min {
+            a_val.min(b_val)
+        } else {
+            a_val.max(b_val)
+        };
 
         // Copy src1 to dst, then overwrite lowest element
         let mut dst = self.get_zmm_data(zmm_src1, 16);
@@ -2104,7 +2164,10 @@ impl X86_64Vcpu {
         for i in 0..num_floats {
             let src_base = i * 4;
             let f = f32::from_le_bytes([
-                src[src_base], src[src_base + 1], src[src_base + 2], src[src_base + 3],
+                src[src_base],
+                src[src_base + 1],
+                src[src_base + 2],
+                src[src_base + 3],
             ]);
             // Truncate and saturate to i8
             let val = f.trunc() as i32;
@@ -2156,7 +2219,10 @@ impl X86_64Vcpu {
         for i in 0..num_floats {
             let src_base = i * 4;
             let f = f32::from_le_bytes([
-                src[src_base], src[src_base + 1], src[src_base + 2], src[src_base + 3],
+                src[src_base],
+                src[src_base + 1],
+                src[src_base + 2],
+                src[src_base + 3],
             ]);
             // Truncate and saturate to u8
             let val = f.trunc() as i32;
@@ -2206,8 +2272,14 @@ impl X86_64Vcpu {
         for i in 0..num_doubles {
             let base = i * 8;
             let f = f64::from_le_bytes([
-                src[base], src[base + 1], src[base + 2], src[base + 3],
-                src[base + 4], src[base + 5], src[base + 6], src[base + 7],
+                src[base],
+                src[base + 1],
+                src[base + 2],
+                src[base + 3],
+                src[base + 4],
+                src[base + 5],
+                src[base + 6],
+                src[base + 7],
             ]);
             // Truncate and saturate to i64
             let val = f.trunc();
@@ -2264,8 +2336,14 @@ impl X86_64Vcpu {
         for i in 0..num_doubles {
             let base = i * 8;
             let f = f64::from_le_bytes([
-                src[base], src[base + 1], src[base + 2], src[base + 3],
-                src[base + 4], src[base + 5], src[base + 6], src[base + 7],
+                src[base],
+                src[base + 1],
+                src[base + 2],
+                src[base + 3],
+                src[base + 4],
+                src[base + 5],
+                src[base + 6],
+                src[base + 7],
             ]);
             // Truncate and saturate to u64
             let val = f.trunc();
@@ -2299,7 +2377,11 @@ impl X86_64Vcpu {
     // ============================================================================
 
     /// VPDPBSSD/VPDPBSSDS - Multiply and Add Signed Byte Integers
-    fn execute_vpdpbssd(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+    fn execute_vpdpbssd(
+        &mut self,
+        ctx: &mut InsnContext,
+        saturate: bool,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
@@ -2329,11 +2411,12 @@ impl X86_64Vcpu {
 
         for i in 0..num_dwords {
             let base = i * 4;
-            let mut sum = i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
+            let mut sum =
+                i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
 
             for j in 0..4 {
-                let a = src1[base + j] as i8 as i32;  // signed byte
-                let b = src2[base + j] as i8 as i32;  // signed byte
+                let a = src1[base + j] as i8 as i32; // signed byte
+                let b = src2[base + j] as i8 as i32; // signed byte
                 sum += (a * b) as i64;
             }
 
@@ -2362,7 +2445,11 @@ impl X86_64Vcpu {
     }
 
     /// VPDPBSUD/VPDPBSUDS - Multiply and Add Signed/Unsigned Byte Integers
-    fn execute_vpdpbsud(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+    fn execute_vpdpbsud(
+        &mut self,
+        ctx: &mut InsnContext,
+        saturate: bool,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
@@ -2392,11 +2479,12 @@ impl X86_64Vcpu {
 
         for i in 0..num_dwords {
             let base = i * 4;
-            let mut sum = i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
+            let mut sum =
+                i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
 
             for j in 0..4 {
-                let a = src1[base + j] as i8 as i32;   // signed byte
-                let b = src2[base + j] as u8 as i32;  // unsigned byte
+                let a = src1[base + j] as i8 as i32; // signed byte
+                let b = src2[base + j] as u8 as i32; // unsigned byte
                 sum += (a * b) as i64;
             }
 
@@ -2425,7 +2513,11 @@ impl X86_64Vcpu {
     }
 
     /// VPDPBUUD/VPDPBUUDS - Multiply and Add Unsigned Byte Integers
-    fn execute_vpdpbuud(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+    fn execute_vpdpbuud(
+        &mut self,
+        ctx: &mut InsnContext,
+        saturate: bool,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
@@ -2455,11 +2547,12 @@ impl X86_64Vcpu {
 
         for i in 0..num_dwords {
             let base = i * 4;
-            let mut sum = u32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as u64;
+            let mut sum =
+                u32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as u64;
 
             for j in 0..4 {
-                let a = src1[base + j] as u32;  // unsigned byte
-                let b = src2[base + j] as u32;  // unsigned byte
+                let a = src1[base + j] as u32; // unsigned byte
+                let b = src2[base + j] as u32; // unsigned byte
                 sum += (a * b) as u64;
             }
 
@@ -2488,7 +2581,11 @@ impl X86_64Vcpu {
     }
 
     /// VPDPWSUD/VPDPWSUDS - Multiply and Add Signed/Unsigned Word Integers
-    fn execute_vpdpwsud(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+    fn execute_vpdpwsud(
+        &mut self,
+        ctx: &mut InsnContext,
+        saturate: bool,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
@@ -2518,13 +2615,14 @@ impl X86_64Vcpu {
 
         for i in 0..num_dwords {
             let base = i * 4;
-            let mut sum = i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
+            let mut sum =
+                i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
 
             // Two pairs of words per dword
-            let a0 = i16::from_le_bytes([src1[base], src1[base + 1]]) as i32;       // signed
-            let b0 = u16::from_le_bytes([src2[base], src2[base + 1]]) as i32;       // unsigned
-            let a1 = i16::from_le_bytes([src1[base + 2], src1[base + 3]]) as i32;   // signed
-            let b1 = u16::from_le_bytes([src2[base + 2], src2[base + 3]]) as i32;   // unsigned
+            let a0 = i16::from_le_bytes([src1[base], src1[base + 1]]) as i32; // signed
+            let b0 = u16::from_le_bytes([src2[base], src2[base + 1]]) as i32; // unsigned
+            let a1 = i16::from_le_bytes([src1[base + 2], src1[base + 3]]) as i32; // signed
+            let b1 = u16::from_le_bytes([src2[base + 2], src2[base + 3]]) as i32; // unsigned
 
             sum += (a0 * b0 + a1 * b1) as i64;
 
@@ -2553,7 +2651,11 @@ impl X86_64Vcpu {
     }
 
     /// VPDPWUSD/VPDPWUSDS - Multiply and Add Unsigned/Signed Word Integers
-    fn execute_vpdpwusd(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+    fn execute_vpdpwusd(
+        &mut self,
+        ctx: &mut InsnContext,
+        saturate: bool,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
@@ -2583,13 +2685,14 @@ impl X86_64Vcpu {
 
         for i in 0..num_dwords {
             let base = i * 4;
-            let mut sum = i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
+            let mut sum =
+                i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
 
             // Two pairs of words per dword
-            let a0 = u16::from_le_bytes([src1[base], src1[base + 1]]) as i32;       // unsigned
-            let b0 = i16::from_le_bytes([src2[base], src2[base + 1]]) as i32;       // signed
-            let a1 = u16::from_le_bytes([src1[base + 2], src1[base + 3]]) as i32;   // unsigned
-            let b1 = i16::from_le_bytes([src2[base + 2], src2[base + 3]]) as i32;   // signed
+            let a0 = u16::from_le_bytes([src1[base], src1[base + 1]]) as i32; // unsigned
+            let b0 = i16::from_le_bytes([src2[base], src2[base + 1]]) as i32; // signed
+            let a1 = u16::from_le_bytes([src1[base + 2], src1[base + 3]]) as i32; // unsigned
+            let b1 = i16::from_le_bytes([src2[base + 2], src2[base + 3]]) as i32; // signed
 
             sum += (a0 * b0 + a1 * b1) as i64;
 
@@ -2618,7 +2721,11 @@ impl X86_64Vcpu {
     }
 
     /// VPDPWUUD/VPDPWUUDS - Multiply and Add Unsigned Word Integers
-    fn execute_vpdpwuud(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+    fn execute_vpdpwuud(
+        &mut self,
+        ctx: &mut InsnContext,
+        saturate: bool,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
@@ -2648,13 +2755,14 @@ impl X86_64Vcpu {
 
         for i in 0..num_dwords {
             let base = i * 4;
-            let mut sum = u32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as u64;
+            let mut sum =
+                u32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as u64;
 
             // Two pairs of words per dword
-            let a0 = u16::from_le_bytes([src1[base], src1[base + 1]]) as u32;       // unsigned
-            let b0 = u16::from_le_bytes([src2[base], src2[base + 1]]) as u32;       // unsigned
-            let a1 = u16::from_le_bytes([src1[base + 2], src1[base + 3]]) as u32;   // unsigned
-            let b1 = u16::from_le_bytes([src2[base + 2], src2[base + 3]]) as u32;   // unsigned
+            let a0 = u16::from_le_bytes([src1[base], src1[base + 1]]) as u32; // unsigned
+            let b0 = u16::from_le_bytes([src2[base], src2[base + 1]]) as u32; // unsigned
+            let a1 = u16::from_le_bytes([src1[base + 2], src1[base + 3]]) as u32; // unsigned
+            let b1 = u16::from_le_bytes([src2[base + 2], src2[base + 3]]) as u32; // unsigned
 
             sum += (a0 * b0 + a1 * b1) as u64;
 
@@ -2691,15 +2799,19 @@ impl X86_64Vcpu {
     /// - EGPR (R16-R31) via B4, X4, R4 bits
     /// - NDD (New Data Destination) - 3-operand forms where vvvv is destination
     /// - NF (No Flags) - arithmetic without updating RFLAGS
-    fn execute_evex_map4_apx(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+    fn execute_evex_map4_apx(
+        &mut self,
+        ctx: &mut InsnContext,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx
             .evex
             .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
 
         // APX uses ND (New Data Destination) for 3-operand forms
         // and NF (No Flags) for flag-suppressing variants
-        let ndd = evex.nd;  // 3-operand form
-        let nf = evex.nf;   // No flags update
+        let ndd = evex.nd; // 3-operand form
+        let nf = evex.nf; // No flags update
 
         match opcode {
             // ADD variants (0x00-0x03)
@@ -2789,7 +2901,13 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         // Determine operand size from opcode and EVEX.W
         let is_byte = (opcode & 0x01) == 0;
-        let op_size = if is_byte { 1 } else if ctx.evex_w() { 8 } else { 4 };
+        let op_size = if is_byte {
+            1
+        } else if ctx.evex_w() {
+            8
+        } else {
+            4
+        };
 
         // Determine direction (reg->rm or rm->reg)
         let reg_is_src = (opcode & 0x02) == 0;
@@ -2798,7 +2916,11 @@ impl X86_64Vcpu {
 
         // Apply EVEX register extensions for EGPR (R16-R31)
         let reg = reg | ctx.evex_dest_reg();
-        let rm = if is_memory { rm } else { rm | ctx.evex_rm_reg() };
+        let rm = if is_memory {
+            rm
+        } else {
+            rm | ctx.evex_rm_reg()
+        };
 
         // Get source values
         let (src1, src2) = if reg_is_src {
@@ -2853,10 +2975,24 @@ impl X86_64Vcpu {
         if !nf {
             match alu_op {
                 ApxAluOp::Adc => {
-                    flags::update_flags_adc(&mut self.regs.rflags, src1, src2, cf_in, result, op_size);
+                    flags::update_flags_adc(
+                        &mut self.regs.rflags,
+                        src1,
+                        src2,
+                        cf_in,
+                        result,
+                        op_size,
+                    );
                 }
                 ApxAluOp::Sbb => {
-                    flags::update_flags_sbb(&mut self.regs.rflags, src1, src2, cf_in, result, op_size);
+                    flags::update_flags_sbb(
+                        &mut self.regs.rflags,
+                        src1,
+                        src2,
+                        cf_in,
+                        result,
+                        op_size,
+                    );
                 }
                 _ => self.update_flags_alu(result, src1, src2, op_size, alu_op),
             }
@@ -2895,13 +3031,23 @@ impl X86_64Vcpu {
     /// APX CCMP operation.
     fn execute_apx_ccmp(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
         let is_byte = (opcode & 0x01) == 0;
-        let op_size = if is_byte { 1 } else if ctx.evex_w() { 8 } else { 4 };
+        let op_size = if is_byte {
+            1
+        } else if ctx.evex_w() {
+            8
+        } else {
+            4
+        };
         let reg_is_src = (opcode & 0x02) == 0;
         let (cc, dfv) = Self::apx_ccmp_condition_and_default_flags(ctx)?;
 
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let reg = reg | ctx.evex_dest_reg();
-        let rm = if is_memory { rm } else { rm | ctx.evex_rm_reg() };
+        let rm = if is_memory {
+            rm
+        } else {
+            rm | ctx.evex_rm_reg()
+        };
 
         if self.check_condition(cc) {
             let (src1, src2) = if reg_is_src {
@@ -2935,12 +3081,22 @@ impl X86_64Vcpu {
     /// APX CTEST operation.
     fn execute_apx_ctest(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
         let is_byte = opcode == 0x84;
-        let op_size = if is_byte { 1 } else if ctx.evex_w() { 8 } else { 4 };
+        let op_size = if is_byte {
+            1
+        } else if ctx.evex_w() {
+            8
+        } else {
+            4
+        };
         let (cc, dfv) = Self::apx_ccmp_condition_and_default_flags(ctx)?;
 
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let reg = reg | ctx.evex_dest_reg();
-        let rm = if is_memory { rm } else { rm | ctx.evex_rm_reg() };
+        let rm = if is_memory {
+            rm
+        } else {
+            rm | ctx.evex_rm_reg()
+        };
 
         if self.check_condition(cc) {
             let src1 = self.get_reg(reg, op_size);
@@ -3029,7 +3185,11 @@ impl X86_64Vcpu {
         let op_size = Self::apx_scalar_op_size(ctx);
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let reg = reg | ctx.evex_dest_reg();
-        let rm = if is_memory { rm } else { rm | ctx.evex_rm_reg() };
+        let rm = if is_memory {
+            rm
+        } else {
+            rm | ctx.evex_rm_reg()
+        };
 
         if ndd {
             let dst = ctx.evex_vvvv();
@@ -3088,12 +3248,22 @@ impl X86_64Vcpu {
     /// APX MOV operation
     fn execute_apx_mov(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
         let is_byte = (opcode & 0x01) == 0;
-        let op_size = if is_byte { 1 } else if ctx.evex_w() { 8 } else { 4 };
+        let op_size = if is_byte {
+            1
+        } else if ctx.evex_w() {
+            8
+        } else {
+            4
+        };
         let reg_is_src = (opcode & 0x02) == 0;
 
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let reg = reg | ctx.evex_dest_reg();
-        let rm = if is_memory { rm } else { rm | ctx.evex_rm_reg() };
+        let rm = if is_memory {
+            rm
+        } else {
+            rm | ctx.evex_rm_reg()
+        };
 
         if reg_is_src {
             // MOV r/m, r
@@ -3285,7 +3455,13 @@ impl X86_64Vcpu {
     }
 
     /// APX IMUL with immediate
-    fn execute_apx_imul_imm(&mut self, ctx: &mut InsnContext, ndd: bool, nf: bool, imm32: bool) -> Result<Option<VcpuExit>> {
+    fn execute_apx_imul_imm(
+        &mut self,
+        ctx: &mut InsnContext,
+        ndd: bool,
+        nf: bool,
+        imm32: bool,
+    ) -> Result<Option<VcpuExit>> {
         let op_size = if ctx.evex_w() { 8 } else { 4 };
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let reg = reg | ctx.evex_dest_reg();
@@ -3506,9 +3682,21 @@ impl X86_64Vcpu {
     }
 
     /// APX shift with immediate
-    fn execute_apx_shift_imm(&mut self, ctx: &mut InsnContext, opcode: u8, ndd: bool, nf: bool) -> Result<Option<VcpuExit>> {
+    fn execute_apx_shift_imm(
+        &mut self,
+        ctx: &mut InsnContext,
+        opcode: u8,
+        ndd: bool,
+        nf: bool,
+    ) -> Result<Option<VcpuExit>> {
         let is_byte = opcode == 0xC0;
-        let op_size = if is_byte { 1 } else if ctx.evex_w() { 8 } else { 4 };
+        let op_size = if is_byte {
+            1
+        } else if ctx.evex_w() {
+            8
+        } else {
+            4
+        };
 
         let modrm = ctx.peek_u8()?;
         let shift_type = (modrm >> 3) & 0x07;
@@ -3547,9 +3735,21 @@ impl X86_64Vcpu {
     }
 
     /// APX shift by CL
-    fn execute_apx_shift_cl(&mut self, ctx: &mut InsnContext, opcode: u8, ndd: bool, nf: bool) -> Result<Option<VcpuExit>> {
+    fn execute_apx_shift_cl(
+        &mut self,
+        ctx: &mut InsnContext,
+        opcode: u8,
+        ndd: bool,
+        nf: bool,
+    ) -> Result<Option<VcpuExit>> {
         let is_byte = (opcode & 0x01) == 0;
-        let op_size = if is_byte { 1 } else if ctx.evex_w() { 8 } else { 4 };
+        let op_size = if is_byte {
+            1
+        } else if ctx.evex_w() {
+            8
+        } else {
+            4
+        };
         let by_one = (opcode & 0x02) == 0;
 
         let modrm = ctx.peek_u8()?;
@@ -3564,7 +3764,11 @@ impl X86_64Vcpu {
         };
 
         let shift_mask = if op_size == 8 { 0x3F } else { 0x1F };
-        let count = if by_one { 1 } else { self.regs.rcx & shift_mask };
+        let count = if by_one {
+            1
+        } else {
+            self.regs.rcx & shift_mask
+        };
 
         if shift_type <= 3 {
             self.materialize_flags();
@@ -3595,7 +3799,13 @@ impl X86_64Vcpu {
         ndd: bool,
         nf: bool,
     ) -> Result<Option<VcpuExit>> {
-        let op_size = if opcode == 0xF6 { 1 } else if ctx.evex_w() { 8 } else { 4 };
+        let op_size = if opcode == 0xF6 {
+            1
+        } else if ctx.evex_w() {
+            8
+        } else {
+            4
+        };
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let op_type = reg & 0x07;
         let src_reg = rm | ctx.evex_rm_reg();
@@ -3702,7 +3912,8 @@ impl X86_64Vcpu {
                     self.inject_exception(0, None)?;
                     return Ok(false);
                 }
-                let dividend = ((self.regs.rdx as u32 as u64) << 32) | (self.regs.rax as u32 as u64);
+                let dividend =
+                    ((self.regs.rdx as u32 as u64) << 32) | (self.regs.rax as u32 as u64);
                 let quotient = dividend / divisor;
                 let remainder = dividend % divisor;
                 if quotient > u32::MAX as u64 {
@@ -3735,13 +3946,14 @@ impl X86_64Vcpu {
                     return Ok(false);
                 }
                 let dividend = self.regs.rax as u16 as i16;
-                let (quotient, remainder) = match (dividend.checked_div(divisor), dividend.checked_rem(divisor)) {
-                    (Some(q), Some(r)) => (q, r),
-                    _ => {
-                        self.inject_exception(0, None)?;
-                        return Ok(false);
-                    }
-                };
+                let (quotient, remainder) =
+                    match (dividend.checked_div(divisor), dividend.checked_rem(divisor)) {
+                        (Some(q), Some(r)) => (q, r),
+                        _ => {
+                            self.inject_exception(0, None)?;
+                            return Ok(false);
+                        }
+                    };
                 if quotient < i8::MIN as i16 || quotient > i8::MAX as i16 {
                     self.inject_exception(0, None)?;
                     return Ok(false);
@@ -3757,13 +3969,14 @@ impl X86_64Vcpu {
                 }
                 let dividend =
                     (((self.regs.rdx as u32 as u64) << 32) | (self.regs.rax as u32 as u64)) as i64;
-                let (quotient, remainder) = match (dividend.checked_div(divisor), dividend.checked_rem(divisor)) {
-                    (Some(q), Some(r)) => (q, r),
-                    _ => {
-                        self.inject_exception(0, None)?;
-                        return Ok(false);
-                    }
-                };
+                let (quotient, remainder) =
+                    match (dividend.checked_div(divisor), dividend.checked_rem(divisor)) {
+                        (Some(q), Some(r)) => (q, r),
+                        _ => {
+                            self.inject_exception(0, None)?;
+                            return Ok(false);
+                        }
+                    };
                 if quotient < i32::MIN as i64 || quotient > i32::MAX as i64 {
                     self.inject_exception(0, None)?;
                     return Ok(false);
@@ -3778,13 +3991,14 @@ impl X86_64Vcpu {
                     return Ok(false);
                 }
                 let dividend = (((self.regs.rdx as u128) << 64) | (self.regs.rax as u128)) as i128;
-                let (quotient, remainder) = match (dividend.checked_div(divisor), dividend.checked_rem(divisor)) {
-                    (Some(q), Some(r)) => (q, r),
-                    _ => {
-                        self.inject_exception(0, None)?;
-                        return Ok(false);
-                    }
-                };
+                let (quotient, remainder) =
+                    match (dividend.checked_div(divisor), dividend.checked_rem(divisor)) {
+                        (Some(q), Some(r)) => (q, r),
+                        _ => {
+                            self.inject_exception(0, None)?;
+                            return Ok(false);
+                        }
+                    };
                 if quotient < i64::MIN as i128 || quotient > i64::MAX as i128 {
                     self.inject_exception(0, None)?;
                     return Ok(false);
@@ -3824,9 +4038,21 @@ impl X86_64Vcpu {
         self.execute_apx_inc_dec(ctx, opcode, ndd, nf)
     }
 
-    fn execute_apx_inc_dec(&mut self, ctx: &mut InsnContext, opcode: u8, ndd: bool, nf: bool) -> Result<Option<VcpuExit>> {
+    fn execute_apx_inc_dec(
+        &mut self,
+        ctx: &mut InsnContext,
+        opcode: u8,
+        ndd: bool,
+        nf: bool,
+    ) -> Result<Option<VcpuExit>> {
         let is_byte = opcode == 0xFE;
-        let op_size = if is_byte { 1 } else if ctx.evex_w() { 8 } else { 4 };
+        let op_size = if is_byte {
+            1
+        } else if ctx.evex_w() {
+            8
+        } else {
+            4
+        };
 
         let modrm = ctx.peek_u8()?;
         let op_type = (modrm >> 3) & 0x07;
@@ -3858,7 +4084,13 @@ impl X86_64Vcpu {
         if !nf {
             // INC/DEC don't affect CF
             let old_cf = self.regs.rflags & 0x001;
-            self.update_flags_alu(result, src, 1, op_size, if is_dec { ApxAluOp::Sub } else { ApxAluOp::Add });
+            self.update_flags_alu(
+                result,
+                src,
+                1,
+                op_size,
+                if is_dec { ApxAluOp::Sub } else { ApxAluOp::Add },
+            );
             self.regs.rflags = (self.regs.rflags & !0x001) | old_cf;
         }
 
@@ -3951,7 +4183,14 @@ impl X86_64Vcpu {
     }
 
     /// Update flags for ALU operations
-    fn update_flags_alu(&mut self, result: u64, src1: u64, src2: u64, op_size: u8, alu_op: ApxAluOp) {
+    fn update_flags_alu(
+        &mut self,
+        result: u64,
+        src1: u64,
+        src2: u64,
+        op_size: u8,
+        alu_op: ApxAluOp,
+    ) {
         let sign_bit: u64 = match op_size {
             1 => 0x80,
             2 => 0x8000,
@@ -3996,16 +4235,33 @@ impl X86_64Vcpu {
         // Update RFLAGS
         let mut flags = self.regs.rflags;
         flags &= !(0x8D5); // Clear CF, PF, ZF, SF, OF
-        if cf { flags |= 0x001; }
-        if pf { flags |= 0x004; }
-        if zf { flags |= 0x040; }
-        if sf { flags |= 0x080; }
-        if of { flags |= 0x800; }
+        if cf {
+            flags |= 0x001;
+        }
+        if pf {
+            flags |= 0x004;
+        }
+        if zf {
+            flags |= 0x040;
+        }
+        if sf {
+            flags |= 0x080;
+        }
+        if of {
+            flags |= 0x800;
+        }
         self.regs.rflags = flags;
     }
 
     /// Update flags for shift operations
-    fn update_flags_shift(&mut self, result: u64, src: u64, count: u64, shift_type: u8, op_size: u8) {
+    fn update_flags_shift(
+        &mut self,
+        result: u64,
+        src: u64,
+        count: u64,
+        shift_type: u8,
+        op_size: u8,
+    ) {
         let sign_bit: u64 = match op_size {
             1 => 0x80,
             2 => 0x8000,
@@ -4035,10 +4291,10 @@ impl X86_64Vcpu {
             }
 
             let cf = match shift_type {
-                0 => (masked_result & 1) != 0,                  // ROL
-                1 => (masked_result & sign_bit) != 0,           // ROR
-                2 => (src >> (bits - rotate_count)) & 1 != 0,   // RCL
-                3 => (src >> (rotate_count - 1)) & 1 != 0,      // RCR
+                0 => (masked_result & 1) != 0,                // ROL
+                1 => (masked_result & sign_bit) != 0,         // ROR
+                2 => (src >> (bits - rotate_count)) & 1 != 0, // RCL
+                3 => (src >> (rotate_count - 1)) & 1 != 0,    // RCR
                 _ => unreachable!(),
             };
             let of = if rotate_count == 1 {
@@ -4101,11 +4357,21 @@ impl X86_64Vcpu {
 
         let mut flags = self.regs.rflags;
         flags &= !(0x8D5);
-        if cf { flags |= 0x001; }
-        if pf { flags |= 0x004; }
-        if zf { flags |= 0x040; }
-        if sf { flags |= 0x080; }
-        if of { flags |= 0x800; }
+        if cf {
+            flags |= 0x001;
+        }
+        if pf {
+            flags |= 0x004;
+        }
+        if zf {
+            flags |= 0x040;
+        }
+        if sf {
+            flags |= 0x080;
+        }
+        if of {
+            flags |= 0x800;
+        }
         self.regs.rflags = flags;
     }
 

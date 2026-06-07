@@ -126,7 +126,8 @@ fn test_vpsllw_ymm6_ymm7_mem() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let shift_count: Vec<u8> = 3u64.to_le_bytes().to_vec();
-    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -246,7 +247,8 @@ fn test_vpslld_ymm6_ymm7_mem() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let shift_count: Vec<u8> = 5u64.to_le_bytes().to_vec();
-    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -366,7 +368,8 @@ fn test_vpsllq_ymm6_ymm7_mem() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let shift_count: Vec<u8> = 7u64.to_le_bytes().to_vec();
-    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -523,7 +526,8 @@ fn test_vpsllw_mem_large_shift_count() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // Shift count > 16 should zero out all words
     let shift_count: Vec<u8> = 100u64.to_le_bytes().to_vec();
-    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -540,7 +544,8 @@ fn test_vpslld_mem_large_shift_count() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // Shift count > 32 should zero out all dwords
     let shift_count: Vec<u8> = 100u64.to_le_bytes().to_vec();
-    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -557,6 +562,7 @@ fn test_vpsllq_mem_large_shift_count() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // Shift count > 64 should zero out all qwords
     let shift_count: Vec<u8> = 100u64.to_le_bytes().to_vec();
-    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

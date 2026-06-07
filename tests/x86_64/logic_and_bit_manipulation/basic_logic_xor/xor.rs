@@ -175,7 +175,11 @@ fn test_xor_rm8_r8_basic() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0xFF, "AL: 0xAA XOR 0x55 = 0xFF (all different)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0xFF,
+        "AL: 0xAA XOR 0x55 = 0xFF (all different)"
+    );
 }
 
 #[test]
@@ -317,7 +321,11 @@ fn test_xor_toggle_specific_bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0x0F, "Toggle bit 4 off: 0x1F ^ 0x10 = 0x0F");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x0F,
+        "Toggle bit 4 off: 0x1F ^ 0x10 = 0x0F"
+    );
 }
 
 #[test]
@@ -482,7 +490,8 @@ fn test_xor_byte_ptr_mem() {
 #[test]
 fn test_xor_dword_ptr_mem() {
     let code = [
-        0x81, 0x35, 0xf6, 0x0f, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, // XOR DWORD PTR [rip+0x0FF6], 0x0000FFFF
+        0x81, 0x35, 0xf6, 0x0f, 0x00, 0x00, 0xFF, 0xFF, 0x00,
+        0x00, // XOR DWORD PTR [rip+0x0FF6], 0x0000FFFF
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

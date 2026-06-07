@@ -21,7 +21,8 @@ use vm_memory::{Bytes, GuestAddress};
 
 // Helper function to write f64 to memory
 fn write_f64(mem: &vm_memory::GuestMemoryMmap, addr: u64, val: f64) {
-    mem.write_slice(&val.to_le_bytes(), GuestAddress(addr)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), GuestAddress(addr))
+        .unwrap();
 }
 
 // Helper function to read f64 from memory
@@ -33,7 +34,8 @@ fn read_f64(mem: &vm_memory::GuestMemoryMmap, addr: u64) -> f64 {
 
 // Helper function to write FPU control word
 fn write_fpu_control_word(mem: &vm_memory::GuestMemoryMmap, addr: u64, cw: u16) {
-    mem.write_slice(&cw.to_le_bytes(), GuestAddress(addr)).unwrap();
+    mem.write_slice(&cw.to_le_bytes(), GuestAddress(addr))
+        .unwrap();
 }
 
 // ============================================================================
@@ -44,10 +46,10 @@ fn write_fpu_control_word(mem: &vm_memory::GuestMemoryMmap, addr: u64, cw: u16) 
 fn test_frndint_positive_round_down() {
     // Test 3.2 rounds to 3.0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -63,10 +65,10 @@ fn test_frndint_positive_round_down() {
 fn test_frndint_positive_round_up() {
     // Test 3.8 rounds to 4.0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -82,10 +84,10 @@ fn test_frndint_positive_round_up() {
 fn test_frndint_positive_half() {
     // Test 2.5 rounds to nearest even (2.0)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -101,10 +103,10 @@ fn test_frndint_positive_half() {
 fn test_frndint_positive_half_odd() {
     // Test 3.5 rounds to nearest even (4.0)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -124,10 +126,10 @@ fn test_frndint_positive_half_odd() {
 fn test_frndint_negative_round_up() {
     // Test -3.2 rounds to -3.0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -143,10 +145,10 @@ fn test_frndint_negative_round_up() {
 fn test_frndint_negative_round_down() {
     // Test -3.8 rounds to -4.0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -162,10 +164,10 @@ fn test_frndint_negative_round_down() {
 fn test_frndint_negative_half() {
     // Test -2.5 rounds to nearest even (-2.0)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -181,10 +183,10 @@ fn test_frndint_negative_half() {
 fn test_frndint_negative_half_odd() {
     // Test -3.5 rounds to nearest even (-4.0)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -204,10 +206,10 @@ fn test_frndint_negative_half_odd() {
 fn test_frndint_already_integer_positive() {
     // Test 5.0 remains 5.0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -223,10 +225,10 @@ fn test_frndint_already_integer_positive() {
 fn test_frndint_already_integer_negative() {
     // Test -7.0 remains -7.0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -242,10 +244,10 @@ fn test_frndint_already_integer_negative() {
 fn test_frndint_already_integer_large() {
     // Test large integer value
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -254,7 +256,10 @@ fn test_frndint_already_integer_large() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 123456789.0, "FRNDINT of large integer should remain unchanged");
+    assert_eq!(
+        result, 123456789.0,
+        "FRNDINT of large integer should remain unchanged"
+    );
 }
 
 // ============================================================================
@@ -264,10 +269,10 @@ fn test_frndint_already_integer_large() {
 #[test]
 fn test_frndint_positive_zero() {
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -283,10 +288,10 @@ fn test_frndint_positive_zero() {
 #[test]
 fn test_frndint_negative_zero() {
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -302,10 +307,10 @@ fn test_frndint_negative_zero() {
 #[test]
 fn test_frndint_positive_infinity() {
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -314,17 +319,23 @@ fn test_frndint_positive_infinity() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(result.is_infinite(), "FRNDINT of +infinity should remain +infinity");
-    assert!(!result.is_sign_negative(), "Result should be positive infinity");
+    assert!(
+        result.is_infinite(),
+        "FRNDINT of +infinity should remain +infinity"
+    );
+    assert!(
+        !result.is_sign_negative(),
+        "Result should be positive infinity"
+    );
 }
 
 #[test]
 fn test_frndint_negative_infinity() {
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -333,17 +344,23 @@ fn test_frndint_negative_infinity() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(result.is_infinite(), "FRNDINT of -infinity should remain -infinity");
-    assert!(result.is_sign_negative(), "Result should be negative infinity");
+    assert!(
+        result.is_infinite(),
+        "FRNDINT of -infinity should remain -infinity"
+    );
+    assert!(
+        result.is_sign_negative(),
+        "Result should be negative infinity"
+    );
 }
 
 #[test]
 fn test_frndint_nan() {
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -363,10 +380,10 @@ fn test_frndint_nan() {
 fn test_frndint_small_positive_fraction() {
     // Test 0.1 rounds to 0.0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -382,10 +399,10 @@ fn test_frndint_small_positive_fraction() {
 fn test_frndint_small_negative_fraction() {
     // Test -0.1 rounds to -0.0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -401,10 +418,10 @@ fn test_frndint_small_negative_fraction() {
 fn test_frndint_near_one() {
     // Test 0.9 rounds to 1.0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -420,10 +437,10 @@ fn test_frndint_near_one() {
 fn test_frndint_near_negative_one() {
     // Test -0.9 rounds to -1.0
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -442,10 +459,10 @@ fn test_frndint_near_negative_one() {
 #[test]
 fn test_frndint_large_positive() {
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -454,16 +471,19 @@ fn test_frndint_large_positive() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 123456790.0, "FRNDINT of large value should round correctly");
+    assert_eq!(
+        result, 123456790.0,
+        "FRNDINT of large value should round correctly"
+    );
 }
 
 #[test]
 fn test_frndint_large_negative() {
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -472,7 +492,10 @@ fn test_frndint_large_negative() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, -987654321.0, "FRNDINT of large negative should round correctly");
+    assert_eq!(
+        result, -987654321.0,
+        "FRNDINT of large negative should round correctly"
+    );
 }
 
 // ============================================================================
@@ -482,10 +505,10 @@ fn test_frndint_large_negative() {
 #[test]
 fn test_frndint_pi() {
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -500,10 +523,10 @@ fn test_frndint_pi() {
 #[test]
 fn test_frndint_e() {
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -523,13 +546,13 @@ fn test_frndint_e() {
 fn test_frndint_sequence() {
     // Test multiple FRNDINT operations in sequence
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00, // FLD qword [0x2008]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00, // FSTP qword [0x3008]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -548,11 +571,11 @@ fn test_frndint_sequence() {
 fn test_frndint_idempotent() {
     // FRNDINT on an integer should be idempotent
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xD9, 0xFC,                                  // FRNDINT (second time)
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xD9, 0xFC, // FRNDINT (second time)
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -572,10 +595,10 @@ fn test_frndint_idempotent() {
 fn test_frndint_very_large_value() {
     // Values so large they are already integers
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -591,10 +614,10 @@ fn test_frndint_very_large_value() {
 fn test_frndint_one_half() {
     // Test exact 0.5 (rounds to even, which is 0.0)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -610,10 +633,10 @@ fn test_frndint_one_half() {
 fn test_frndint_one_and_half() {
     // Test 1.5 (rounds to even, which is 2.0)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -629,10 +652,10 @@ fn test_frndint_one_and_half() {
 fn test_frndint_negative_one_half() {
     // Test -0.5 (rounds to even, which is -0.0)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -648,10 +671,10 @@ fn test_frndint_negative_one_half() {
 fn test_frndint_negative_one_and_half() {
     // Test -1.5 (rounds to even, which is -2.0)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -667,10 +690,10 @@ fn test_frndint_negative_one_and_half() {
 fn test_frndint_various_fractions() {
     // Test a range of fractional values
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xFC,                                  // FRNDINT
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
+        0xD9, 0xFC, // FRNDINT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00, // FSTP qword [0x3000]
+        0xF4, // HLT
     ];
 
     let test_cases = vec![
@@ -691,7 +714,11 @@ fn test_frndint_various_fractions() {
         run_until_hlt(&mut vcpu).unwrap();
 
         let result = read_f64(&mem, 0x3000);
-        assert_eq!(result, expected, "FRNDINT of {} should be {}", input, expected);
+        assert_eq!(
+            result, expected,
+            "FRNDINT of {} should be {}",
+            input, expected
+        );
     }
 }
 
@@ -728,8 +755,16 @@ const RC_TRUNC: u16 = 0x0F7F;
 
 #[test]
 fn test_frndint_round_nearest_even_mode() {
-    assert_eq!(kat_frndint_rc(2.5, RC_NEAREST), 2.0, "2.5 ties to even -> 2");
-    assert_eq!(kat_frndint_rc(3.5, RC_NEAREST), 4.0, "3.5 ties to even -> 4");
+    assert_eq!(
+        kat_frndint_rc(2.5, RC_NEAREST),
+        2.0,
+        "2.5 ties to even -> 2"
+    );
+    assert_eq!(
+        kat_frndint_rc(3.5, RC_NEAREST),
+        4.0,
+        "3.5 ties to even -> 4"
+    );
     assert_eq!(kat_frndint_rc(2.4, RC_NEAREST), 2.0);
     assert_eq!(kat_frndint_rc(2.6, RC_NEAREST), 3.0);
 }

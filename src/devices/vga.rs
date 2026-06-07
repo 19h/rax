@@ -539,7 +539,7 @@ mod tests {
         // Reading 0x3DA mid-sequence must reset the flip-flop to address phase.
         // Put it into data phase first by writing an index...
         pio_write(&mut vga, PORT_ATTR_ADDR_DATA, 0x12); // index 0x12 -> now data phase
-                                              // ...then reset.
+        // ...then reset.
         pio_read(&mut vga, PORT_INPUT_STATUS_1);
         // Next write is treated as an index again (not data for 0x12).
         pio_write(&mut vga, PORT_ATTR_ADDR_DATA, 0x13); // index 0x13
@@ -665,7 +665,7 @@ mod tests {
         // Put the AC into data phase.
         pio_read(&mut vga, PORT_INPUT_STATUS_1);
         pio_write(&mut vga, PORT_ATTR_ADDR_DATA, 0x05); // index -> data phase next
-                                              // Reset.
+        // Reset.
         pio_read(&mut vga, PORT_INPUT_STATUS_1);
         // A subsequent write is an index again.
         pio_write(&mut vga, PORT_ATTR_ADDR_DATA, 0x0A);

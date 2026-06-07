@@ -13,7 +13,11 @@ fn test_movsx_ax_bl() {
     regs.rbx = 0xFF; // -1 in signed byte
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0xFFFF, "AX should be sign-extended to 0xFFFF");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0xFFFF,
+        "AX should be sign-extended to 0xFFFF"
+    );
 }
 
 #[test]
@@ -23,7 +27,11 @@ fn test_movsx_eax_bl() {
     regs.rbx = 0xFF; // -1 in signed byte
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX should be sign-extended to 0xFFFFFFFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX should be sign-extended to 0xFFFFFFFF"
+    );
 }
 
 #[test]
@@ -33,7 +41,10 @@ fn test_movsx_rax_bl() {
     regs.rbx = 0xFF; // -1 in signed byte
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "RAX should be sign-extended to all 1s");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "RAX should be sign-extended to all 1s"
+    );
 }
 
 // Test positive byte (sign bit clear)
@@ -44,7 +55,11 @@ fn test_movsx_eax_bl_positive() {
     regs.rbx = 0x7F; // 127 - positive
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0000007F, "EAX should be sign-extended to 0x7F");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x0000007F,
+        "EAX should be sign-extended to 0x7F"
+    );
 }
 
 // Test negative byte (sign bit set)
@@ -55,7 +70,11 @@ fn test_movsx_eax_bl_negative() {
     regs.rbx = 0x80; // -128 in signed byte
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFF80, "EAX should be sign-extended to 0xFFFFFF80");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFF80,
+        "EAX should be sign-extended to 0xFFFFFF80"
+    );
 }
 
 // Word to dword/qword sign extension
@@ -66,7 +85,11 @@ fn test_movsx_eax_bx() {
     regs.rbx = 0xFFFF; // -1 in signed word
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX should be sign-extended to 0xFFFFFFFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX should be sign-extended to 0xFFFFFFFF"
+    );
 }
 
 #[test]
@@ -76,7 +99,10 @@ fn test_movsx_rax_bx() {
     regs.rbx = 0xFFFF; // -1 in signed word
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "RAX should be sign-extended to all 1s");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "RAX should be sign-extended to all 1s"
+    );
 }
 
 #[test]
@@ -86,7 +112,11 @@ fn test_movsx_eax_bx_positive() {
     regs.rbx = 0x7FFF; // 32767 - positive
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00007FFF, "EAX should be sign-extended to 0x7FFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00007FFF,
+        "EAX should be sign-extended to 0x7FFF"
+    );
 }
 
 #[test]
@@ -96,7 +126,11 @@ fn test_movsx_eax_bx_negative() {
     regs.rbx = 0x8000; // -32768 in signed word
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFF8000, "EAX should be sign-extended to 0xFFFF8000");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFF8000,
+        "EAX should be sign-extended to 0xFFFF8000"
+    );
 }
 
 // MOVSXD - Move with sign extension (dword to qword)
@@ -107,7 +141,10 @@ fn test_movsxd_rax_ebx() {
     regs.rbx = 0xFFFFFFFF; // -1 in signed dword
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "RAX should be sign-extended to all 1s");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "RAX should be sign-extended to all 1s"
+    );
 }
 
 #[test]
@@ -117,7 +154,10 @@ fn test_movsxd_rax_ebx_positive() {
     regs.rbx = 0x7FFFFFFF; // max positive signed dword
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x000000007FFFFFFF, "RAX should be sign-extended to 0x7FFFFFFF");
+    assert_eq!(
+        regs.rax, 0x000000007FFFFFFF,
+        "RAX should be sign-extended to 0x7FFFFFFF"
+    );
 }
 
 #[test]
@@ -127,7 +167,10 @@ fn test_movsxd_rax_ebx_negative() {
     regs.rbx = 0x80000000; // min negative signed dword
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFF80000000, "RAX should be sign-extended to 0xFFFFFFFF80000000");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFF80000000,
+        "RAX should be sign-extended to 0xFFFFFFFF80000000"
+    );
 }
 
 // Test with different source registers
@@ -138,7 +181,11 @@ fn test_movsx_eax_cl() {
     regs.rcx = 0x80;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFF80, "EAX should be sign-extended from CL");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFF80,
+        "EAX should be sign-extended from CL"
+    );
 }
 
 #[test]
@@ -148,7 +195,11 @@ fn test_movsx_eax_dl() {
     regs.rdx = 0x7F;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0000007F, "EAX should be sign-extended from DL");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x0000007F,
+        "EAX should be sign-extended from DL"
+    );
 }
 
 // Test with extended registers (R8-R15)
@@ -159,7 +210,11 @@ fn test_movsx_r8d_bl() {
     regs.rbx = 0x80;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0xFFFFFF80, "R8D should be sign-extended");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0xFFFFFF80,
+        "R8D should be sign-extended"
+    );
 }
 
 #[test]
@@ -169,7 +224,11 @@ fn test_movsx_eax_r8b() {
     regs.r8 = 0xFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX should be sign-extended from R8B");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX should be sign-extended from R8B"
+    );
 }
 
 #[test]
@@ -179,7 +238,10 @@ fn test_movsx_r9_r10b() {
     regs.r10 = 0x80;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r9, 0xFFFFFFFFFFFFFF80, "R9 should be sign-extended from R10B");
+    assert_eq!(
+        regs.r9, 0xFFFFFFFFFFFFFF80,
+        "R9 should be sign-extended from R10B"
+    );
 }
 
 // Test zero value
@@ -223,7 +285,11 @@ fn test_movsx_vs_movzx_behavior() {
     regs.rbx = 0x80; // -128 signed, 128 unsigned
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFF80, "MOVSX should sign-extend to 0xFFFFFF80");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFF80,
+        "MOVSX should sign-extend to 0xFFFFFF80"
+    );
     // MOVZX would produce 0x00000080 instead
 }
 
@@ -236,7 +302,11 @@ fn test_movsx_byte_values_127_to_128() {
     regs.rbx = 0x7F;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0000007F, "127 should sign-extend to 0x0000007F");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x0000007F,
+        "127 should sign-extend to 0x0000007F"
+    );
 
     // Value 128 (0x80) - negative
     let code = [0x0f, 0xbe, 0xc3, 0xf4]; // MOVSX EAX, BL
@@ -244,7 +314,11 @@ fn test_movsx_byte_values_127_to_128() {
     regs.rbx = 0x80;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFF80, "128 should sign-extend to 0xFFFFFF80 (-128)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFF80,
+        "128 should sign-extend to 0xFFFFFF80 (-128)"
+    );
 }
 
 // Test with garbage in upper bits of source register
@@ -255,7 +329,11 @@ fn test_movsx_ignores_upper_bits() {
     regs.rbx = 0xDEADBEEF000000FF; // garbage in upper bits, 0xFF in BL
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "Should only use BL, ignoring upper bits");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "Should only use BL, ignoring upper bits"
+    );
 }
 
 // Test different register combinations for word extension
@@ -266,7 +344,11 @@ fn test_movsx_edx_cx() {
     regs.rcx = 0x8000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0xFFFF8000, "EDX should be sign-extended from CX");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0xFFFF8000,
+        "EDX should be sign-extended from CX"
+    );
 }
 
 #[test]
@@ -276,7 +358,11 @@ fn test_movsx_esi_di() {
     regs.rdi = 0x7FFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rsi & 0xFFFFFFFF, 0x00007FFF, "ESI should be sign-extended from DI");
+    assert_eq!(
+        regs.rsi & 0xFFFFFFFF,
+        0x00007FFF,
+        "ESI should be sign-extended from DI"
+    );
 }
 
 // Test MOVSXD with different values
@@ -308,7 +394,10 @@ fn test_movsx_rax_spl() {
     regs.rsp = 0xFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "RAX should be sign-extended from SPL");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "RAX should be sign-extended from SPL"
+    );
 }
 
 #[test]
@@ -318,7 +407,10 @@ fn test_movsx_rbx_bpl() {
     regs.rbp = 0x7F;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbx, 0x000000000000007F, "RBX should be sign-extended from BPL");
+    assert_eq!(
+        regs.rbx, 0x000000000000007F,
+        "RBX should be sign-extended from BPL"
+    );
 }
 
 // Test that 32-bit operations zero upper 32 bits
@@ -330,7 +422,10 @@ fn test_movsx_eax_bl_zeros_upper_32() {
     regs.rbx = 0x7F; // Positive byte
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x000000000000007F, "Upper 32 bits of RAX should be zeroed");
+    assert_eq!(
+        regs.rax, 0x000000000000007F,
+        "Upper 32 bits of RAX should be zeroed"
+    );
 }
 
 #[test]
@@ -341,7 +436,10 @@ fn test_movsx_eax_bl_zeros_upper_32_negative() {
     regs.rbx = 0x80; // Negative byte
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x00000000FFFFFF80, "Upper 32 bits should be zeroed, lower 32 sign-extended");
+    assert_eq!(
+        regs.rax, 0x00000000FFFFFF80,
+        "Upper 32 bits should be zeroed, lower 32 sign-extended"
+    );
 }
 
 // Test flags are not affected
@@ -357,7 +455,10 @@ fn test_movsx_preserves_flags() {
     regs.rbx = 0x80;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert!(regs.rflags & 0x40 != 0, "ZF should still be set after MOVSX");
+    assert!(
+        regs.rflags & 0x40 != 0,
+        "ZF should still be set after MOVSX"
+    );
 }
 
 // Test practical use case: loading signed char into int
@@ -368,7 +469,11 @@ fn test_movsx_practical_char_to_int() {
     regs.rbx = 0xF0; // -16 as signed char
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFF0, "EAX should represent -16 as 32-bit signed");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFF0,
+        "EAX should represent -16 as 32-bit signed"
+    );
 }
 
 // Test practical use case: loading signed short into long
@@ -379,7 +484,10 @@ fn test_movsx_practical_short_to_long() {
     regs.rbx = 0x8001; // -32767 as signed short
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFF8001, "RAX should represent -32767 as 64-bit signed");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFF8001,
+        "RAX should represent -32767 as 64-bit signed"
+    );
 }
 
 // ============================================================================
@@ -396,7 +504,10 @@ fn test_strict_movsx_r32_r8_negative_full_rax() {
     regs.rbx = 0x80;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000_0000_FFFF_FF80, "EAX sign-extend of 0x80, upper RAX cleared");
+    assert_eq!(
+        regs.rax, 0x0000_0000_FFFF_FF80,
+        "EAX sign-extend of 0x80, upper RAX cleared"
+    );
 }
 
 #[test]
@@ -419,7 +530,10 @@ fn test_strict_movsx_r64_r16_positive() {
     regs.rbx = 0x7FFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000_0000_0000_7FFF, "positive 16-bit sign-extend");
+    assert_eq!(
+        regs.rax, 0x0000_0000_0000_7FFF,
+        "positive 16-bit sign-extend"
+    );
 }
 
 #[test]
@@ -431,7 +545,10 @@ fn test_strict_movsx_r16_r8_preserves_upper() {
     regs.rbx = 0x80; // -128 -> 0xFF80
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x1234_5678_9ABC_FF80, "AX sign-extended, upper 48 preserved");
+    assert_eq!(
+        regs.rax, 0x1234_5678_9ABC_FF80,
+        "AX sign-extended, upper 48 preserved"
+    );
 }
 
 #[test]
@@ -443,7 +560,10 @@ fn test_strict_movsxd_from_mem() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     crate::common::write_mem_at_u32(&mem, crate::common::DATA_ADDR, 0xFFFF_FFFE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFF_FFFF_FFFF_FFFE, "MOVSXD from memory sign-extends");
+    assert_eq!(
+        regs.rax, 0xFFFF_FFFF_FFFF_FFFE,
+        "MOVSXD from memory sign-extends"
+    );
 }
 
 #[test]
@@ -456,5 +576,9 @@ fn test_strict_movsx_does_not_touch_flags() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0xFFFF_FFFF_FFFF_FFFF);
-    assert_eq!(regs.rflags & 0x8D5, before & 0x8D5, "MOVSX must not alter status flags");
+    assert_eq!(
+        regs.rflags & 0x8D5,
+        before & 0x8D5,
+        "MOVSX must not alter status flags"
+    );
 }

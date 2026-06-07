@@ -210,31 +210,31 @@ impl X86_64Vcpu {
                     match opcode {
                         // KAND* - bitwise AND
                         0x41 => {
-                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a & b)
+                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a & b);
                         }
                         // KANDN* - bitwise AND NOT
                         0x42 => {
-                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| !a & b)
+                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| !a & b);
                         }
                         // KNOT* - bitwise NOT (unary, vvvv should be 1111)
                         0x44 => return self.execute_kmask_unaryop(ctx, mask_bits, |a| !a),
                         // KOR* - bitwise OR
                         0x45 => {
-                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a | b)
+                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a | b);
                         }
                         // KXNOR* - bitwise XNOR
                         0x46 => {
-                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| !(a ^ b))
+                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| !(a ^ b));
                         }
                         // KXOR* - bitwise XOR
                         0x47 => {
-                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a ^ b)
+                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a ^ b);
                         }
                         // KADD* - add (wrapping)
                         0x4A => {
                             return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| {
                                 a.wrapping_add(b)
-                            })
+                            });
                         }
                         _ => {}
                     }

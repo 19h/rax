@@ -42,10 +42,8 @@ fn test_vcompresspd_xmm_all_active() {
         // Setup mask K1 = 0b11
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 3
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPD XMM0{k1}, XMM1
         0x62, 0xf2, 0xfd, 0x09, 0x8a, 0xc1, // VCOMPRESSPD XMM0{k1}, XMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -60,10 +58,8 @@ fn test_vcompresspd_xmm_partial_mask() {
         // Setup mask K1 = 0b01
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPD XMM0{k1}, XMM1
         0x62, 0xf2, 0xfd, 0x09, 0x8a, 0xc1, // VCOMPRESSPD XMM0{k1}, XMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -78,10 +74,8 @@ fn test_vcompresspd_xmm_zeroing() {
         // Setup mask K1 = 0b01
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPD XMM0{k1}{z}, XMM1
         0x62, 0xf2, 0xfd, 0x89, 0x8a, 0xc1, // VCOMPRESSPD XMM0{k1}{z}, XMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -95,10 +89,9 @@ fn test_vcompresspd_xmm_to_memory() {
         // Setup mask K1 = 0b11
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 3
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPD [0x3000]{k1}, XMM1
-        0x62, 0xf2, 0xfd, 0x09, 0x8a, 0x0c, 0x25, 0x00, 0x30, 0x00, 0x00, // VCOMPRESSPD [0x3000]{k1}, XMM1
-
+        0x62, 0xf2, 0xfd, 0x09, 0x8a, 0x0c, 0x25, 0x00, 0x30, 0x00,
+        0x00, // VCOMPRESSPD [0x3000]{k1}, XMM1
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -116,10 +109,8 @@ fn test_vcompresspd_ymm_all_active() {
         // Setup mask K1 = 0b1111
         0xb8, 0x0f, 0x00, 0x00, 0x00, // MOV EAX, 15
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPD YMM0{k1}, YMM1
         0x62, 0xf2, 0xfd, 0x29, 0x8a, 0xc1, // VCOMPRESSPD YMM0{k1}, YMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -133,10 +124,8 @@ fn test_vcompresspd_ymm_sparse_mask() {
         // Setup mask K1 = 0b1010
         0xb8, 0x0a, 0x00, 0x00, 0x00, // MOV EAX, 10
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPD YMM0{k1}, YMM1
         0x62, 0xf2, 0xfd, 0x29, 0x8a, 0xc1, // VCOMPRESSPD YMM0{k1}, YMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -150,10 +139,8 @@ fn test_vcompresspd_ymm_alternating() {
         // Setup mask K1 = 0b0101
         0xb8, 0x05, 0x00, 0x00, 0x00, // MOV EAX, 5
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPD YMM0{k1}{z}, YMM1
         0x62, 0xf2, 0xfd, 0xa9, 0x8a, 0xc1, // VCOMPRESSPD YMM0{k1}{z}, YMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -171,10 +158,8 @@ fn test_vcompresspd_zmm_all_active() {
         // Setup mask K1 = 0xFF
         0xb8, 0xff, 0x00, 0x00, 0x00, // MOV EAX, 255
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPD ZMM0{k1}, ZMM1
         0x62, 0xf2, 0xfd, 0x49, 0x8a, 0xc1, // VCOMPRESSPD ZMM0{k1}, ZMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -188,10 +173,8 @@ fn test_vcompresspd_zmm_partial() {
         // Setup mask K1 = 0xF0
         0xb8, 0xf0, 0x00, 0x00, 0x00, // MOV EAX, 240
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPD ZMM0{k1}, ZMM1
         0x62, 0xf2, 0xfd, 0x49, 0x8a, 0xc1, // VCOMPRESSPD ZMM0{k1}, ZMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -209,10 +192,8 @@ fn test_vcompressps_xmm_all_active() {
         // Setup mask K1 = 0b1111
         0xb8, 0x0f, 0x00, 0x00, 0x00, // MOV EAX, 15
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPS XMM0{k1}, XMM1
         0x62, 0xf2, 0x7d, 0x09, 0x8a, 0xc1, // VCOMPRESSPS XMM0{k1}, XMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -226,10 +207,8 @@ fn test_vcompressps_xmm_first_two() {
         // Setup mask K1 = 0b0011
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 3
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPS XMM0{k1}, XMM1
         0x62, 0xf2, 0x7d, 0x09, 0x8a, 0xc1, // VCOMPRESSPS XMM0{k1}, XMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -243,10 +222,9 @@ fn test_vcompressps_xmm_to_memory() {
         // Setup mask K1 = 0b1111
         0xb8, 0x0f, 0x00, 0x00, 0x00, // MOV EAX, 15
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPS [0x3000]{k1}, XMM1
-        0x62, 0xf2, 0x7d, 0x09, 0x8a, 0x0c, 0x25, 0x00, 0x30, 0x00, 0x00, // VCOMPRESSPS [0x3000]{k1}, XMM1
-
+        0x62, 0xf2, 0x7d, 0x09, 0x8a, 0x0c, 0x25, 0x00, 0x30, 0x00,
+        0x00, // VCOMPRESSPS [0x3000]{k1}, XMM1
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -264,10 +242,8 @@ fn test_vcompressps_ymm_all_active() {
         // Setup mask K1 = 0xFF
         0xb8, 0xff, 0x00, 0x00, 0x00, // MOV EAX, 255
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPS YMM0{k1}, YMM1
         0x62, 0xf2, 0x7d, 0x29, 0x8a, 0xc1, // VCOMPRESSPS YMM0{k1}, YMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -281,10 +257,8 @@ fn test_vcompressps_ymm_even_elements() {
         // Setup mask K1 = 0xAA
         0xb8, 0xaa, 0x00, 0x00, 0x00, // MOV EAX, 170
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPS YMM0{k1}, YMM1
         0x62, 0xf2, 0x7d, 0x29, 0x8a, 0xc1, // VCOMPRESSPS YMM0{k1}, YMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -302,10 +276,8 @@ fn test_vcompressps_zmm_all_active() {
         // Setup mask K1 = 0xFFFF
         0xb8, 0xff, 0xff, 0x00, 0x00, // MOV EAX, 65535
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPS ZMM0{k1}, ZMM1
         0x62, 0xf2, 0x7d, 0x49, 0x8a, 0xc1, // VCOMPRESSPS ZMM0{k1}, ZMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -319,10 +291,8 @@ fn test_vcompressps_zmm_sparse() {
         // Setup mask K1 = 0x5555
         0xb8, 0x55, 0x55, 0x00, 0x00, // MOV EAX, 21845
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPS ZMM0{k1}, ZMM1
         0x62, 0xf2, 0x7d, 0x49, 0x8a, 0xc1, // VCOMPRESSPS ZMM0{k1}, ZMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -341,10 +311,8 @@ fn test_vexpandpd_xmm_all_active() {
         // Setup mask K1 = 0b11
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 3
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VEXPANDPD XMM0{k1}, XMM1
         0x62, 0xf2, 0xfd, 0x09, 0x88, 0xc1, // VEXPANDPD XMM0{k1}, XMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -358,10 +326,8 @@ fn test_vexpandpd_xmm_partial() {
         // Setup mask K1 = 0b10
         0xb8, 0x02, 0x00, 0x00, 0x00, // MOV EAX, 2
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VEXPANDPD XMM0{k1}, XMM1
         0x62, 0xf2, 0xfd, 0x09, 0x88, 0xc1, // VEXPANDPD XMM0{k1}, XMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -375,10 +341,9 @@ fn test_vexpandpd_xmm_from_memory() {
         // Setup mask K1 = 0b11
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 3
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VEXPANDPD XMM0{k1}, [0x3000]
-        0x62, 0xf2, 0xfd, 0x09, 0x88, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // VEXPANDPD XMM0{k1}, [0x3000]
-
+        0x62, 0xf2, 0xfd, 0x09, 0x88, 0x04, 0x25, 0x00, 0x30, 0x00,
+        0x00, // VEXPANDPD XMM0{k1}, [0x3000]
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -393,10 +358,8 @@ fn test_vexpandpd_xmm_zeroing() {
         // Setup mask K1 = 0b01
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VEXPANDPD XMM0{k1}{z}, XMM1
         0x62, 0xf2, 0xfd, 0x89, 0x88, 0xc1, // VEXPANDPD XMM0{k1}{z}, XMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -414,10 +377,8 @@ fn test_vexpandpd_ymm_all_active() {
         // Setup mask K1 = 0b1111
         0xb8, 0x0f, 0x00, 0x00, 0x00, // MOV EAX, 15
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VEXPANDPD YMM0{k1}, YMM1
         0x62, 0xf2, 0xfd, 0x29, 0x88, 0xc1, // VEXPANDPD YMM0{k1}, YMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -431,10 +392,8 @@ fn test_vexpandpd_ymm_alternating() {
         // Setup mask K1 = 0b0101
         0xb8, 0x05, 0x00, 0x00, 0x00, // MOV EAX, 5
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VEXPANDPD YMM0{k1}, YMM1
         0x62, 0xf2, 0xfd, 0x29, 0x88, 0xc1, // VEXPANDPD YMM0{k1}, YMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -452,10 +411,8 @@ fn test_vexpandpd_zmm_all_active() {
         // Setup mask K1 = 0xFF
         0xb8, 0xff, 0x00, 0x00, 0x00, // MOV EAX, 255
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VEXPANDPD ZMM0{k1}, ZMM1
         0x62, 0xf2, 0xfd, 0x49, 0x88, 0xc1, // VEXPANDPD ZMM0{k1}, ZMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -469,10 +426,8 @@ fn test_vexpandpd_zmm_sparse() {
         // Setup mask K1 = 0xB4
         0xb8, 0xb4, 0x00, 0x00, 0x00, // MOV EAX, 180
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VEXPANDPD ZMM0{k1}, ZMM1
         0x62, 0xf2, 0xfd, 0x49, 0x88, 0xc1, // VEXPANDPD ZMM0{k1}, ZMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -490,10 +445,8 @@ fn test_vexpandps_xmm_all_active() {
         // Setup mask K1 = 0b1111
         0xb8, 0x0f, 0x00, 0x00, 0x00, // MOV EAX, 15
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VEXPANDPS XMM0{k1}, XMM1
         0x62, 0xf2, 0x7d, 0x09, 0x88, 0xc1, // VEXPANDPS XMM0{k1}, XMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -507,10 +460,8 @@ fn test_vexpandps_xmm_odd_elements() {
         // Setup mask K1 = 0b1010
         0xb8, 0x0a, 0x00, 0x00, 0x00, // MOV EAX, 10
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VEXPANDPS XMM0{k1}, XMM1
         0x62, 0xf2, 0x7d, 0x09, 0x88, 0xc1, // VEXPANDPS XMM0{k1}, XMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -524,10 +475,9 @@ fn test_vexpandps_xmm_from_memory() {
         // Setup mask K1 = 0b1111
         0xb8, 0x0f, 0x00, 0x00, 0x00, // MOV EAX, 15
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VEXPANDPS XMM0{k1}, [0x3000]
-        0x62, 0xf2, 0x7d, 0x09, 0x88, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // VEXPANDPS XMM0{k1}, [0x3000]
-
+        0x62, 0xf2, 0x7d, 0x09, 0x88, 0x04, 0x25, 0x00, 0x30, 0x00,
+        0x00, // VEXPANDPS XMM0{k1}, [0x3000]
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -545,10 +495,8 @@ fn test_vexpandps_ymm_all_active() {
         // Setup mask K1 = 0xFF
         0xb8, 0xff, 0x00, 0x00, 0x00, // MOV EAX, 255
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VEXPANDPS YMM0{k1}, YMM1
         0x62, 0xf2, 0x7d, 0x29, 0x88, 0xc1, // VEXPANDPS YMM0{k1}, YMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -562,10 +510,8 @@ fn test_vexpandps_ymm_pattern() {
         // Setup mask K1 = 0xCC
         0xb8, 0xcc, 0x00, 0x00, 0x00, // MOV EAX, 204
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VEXPANDPS YMM0{k1}, YMM1
         0x62, 0xf2, 0x7d, 0x29, 0x88, 0xc1, // VEXPANDPS YMM0{k1}, YMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -583,10 +529,8 @@ fn test_vexpandps_zmm_all_active() {
         // Setup mask K1 = 0xFFFF
         0xb8, 0xff, 0xff, 0x00, 0x00, // MOV EAX, 65535
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VEXPANDPS ZMM0{k1}, ZMM1
         0x62, 0xf2, 0x7d, 0x49, 0x88, 0xc1, // VEXPANDPS ZMM0{k1}, ZMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -600,10 +544,8 @@ fn test_vexpandps_zmm_checkerboard() {
         // Setup mask K1 = 0xAAAA
         0xb8, 0xaa, 0xaa, 0x00, 0x00, // MOV EAX, 43690
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VEXPANDPS ZMM0{k1}, ZMM1
         0x62, 0xf2, 0x7d, 0x49, 0x88, 0xc1, // VEXPANDPS ZMM0{k1}, ZMM1
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -621,13 +563,10 @@ fn test_compress_then_expand_roundtrip() {
         // Setup mask K1 = 0xFF
         0xb8, 0xff, 0x00, 0x00, 0x00, // MOV EAX, 255
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPS YMM2{k1}, YMM1
         0x62, 0xf2, 0x7d, 0x29, 0x8a, 0xd1, // VCOMPRESSPS YMM2{k1}, YMM1
-
         // VEXPANDPS YMM3{k1}, YMM2
         0x62, 0xf2, 0x7d, 0x29, 0x88, 0xda, // VEXPANDPS YMM3{k1}, YMM2
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -641,17 +580,13 @@ fn test_compress_expand_different_masks() {
         // Setup mask K1 = 0x0F (lower 4 elements)
         0xb8, 0x0f, 0x00, 0x00, 0x00, // MOV EAX, 15
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
-
         // VCOMPRESSPS YMM2{k1}, YMM1
         0x62, 0xf2, 0x7d, 0x29, 0x8a, 0xd1, // VCOMPRESSPS YMM2{k1}, YMM1
-
         // Setup mask K2 = 0xF0 (upper 4 elements)
         0xb8, 0xf0, 0x00, 0x00, 0x00, // MOV EAX, 240
         0xc5, 0xf8, 0x92, 0xd0, // KMOVW K2, EAX
-
         // VEXPANDPS YMM3{k2}, YMM2
         0x62, 0xf2, 0x7d, 0x2a, 0x88, 0xda, // VEXPANDPS YMM3{k2}, YMM2
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -667,19 +602,16 @@ fn test_compress_expand_different_sizes() {
         0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
         0x62, 0xf2, 0x7d, 0x09, 0x8a, 0xd1, // VCOMPRESSPS XMM2{k1}, XMM1
         0x62, 0xf2, 0x7d, 0x09, 0x88, 0xda, // VEXPANDPS XMM3{k1}, XMM2
-
         // YMM: K2 = 0xFF
         0xb8, 0xff, 0x00, 0x00, 0x00, // MOV EAX, 255
         0xc5, 0xf8, 0x92, 0xd0, // KMOVW K2, EAX
         0x62, 0xf2, 0x7d, 0x2a, 0x8a, 0xec, // VCOMPRESSPS YMM4{k2}, YMM5
         0x62, 0xf2, 0x7d, 0x2a, 0x88, 0xf4, // VEXPANDPS YMM6{k2}, YMM4
-
         // ZMM: K3 = 0xFFFF
         0xb8, 0xff, 0xff, 0x00, 0x00, // MOV EAX, 65535
         0xc5, 0xf8, 0x92, 0xd8, // KMOVW K3, EAX
         0x62, 0xf2, 0x7d, 0x4b, 0x8a, 0xf8, // VCOMPRESSPS ZMM7{k3}, ZMM0
         0x62, 0xf2, 0x7d, 0x4b, 0x88, 0xc7, // VEXPANDPS ZMM0{k3}, ZMM7
-
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

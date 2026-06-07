@@ -99,8 +99,7 @@ const CYLINDERS: u8 = 80;
 const HEADS: u8 = 2;
 const SECTORS_PER_TRACK: u8 = 18;
 const SECTOR_SIZE: usize = 512;
-const TOTAL_SECTORS: usize =
-    CYLINDERS as usize * HEADS as usize * SECTORS_PER_TRACK as usize; // 2880
+const TOTAL_SECTORS: usize = CYLINDERS as usize * HEADS as usize * SECTORS_PER_TRACK as usize; // 2880
 const IMAGE_SIZE: usize = TOTAL_SECTORS * SECTOR_SIZE; // 1,474,560 bytes
 
 /// Which phase of the command protocol the controller is currently in.
@@ -133,10 +132,10 @@ pub struct Fdc {
 
     // --- FIFO / protocol state ---
     phase: Phase,
-    command: u8,        // command byte currently being processed
-    params: Vec<u8>,    // accumulated parameter bytes
+    command: u8,     // command byte currently being processed
+    params: Vec<u8>, // accumulated parameter bytes
     params_needed: usize,
-    result: Vec<u8>,    // result bytes pending read-back (front = next)
+    result: Vec<u8>, // result bytes pending read-back (front = next)
     result_pos: usize,
 
     // --- data transfer buffer (execution phase) ---
@@ -752,11 +751,7 @@ impl Fdc {
 
     fn read_dir(&self) -> u8 {
         // Bit 7 = disk change line. Other bits read as 0 in this model.
-        if self.disk_changed {
-            0x80
-        } else {
-            0x00
-        }
+        if self.disk_changed { 0x80 } else { 0x00 }
     }
 }
 

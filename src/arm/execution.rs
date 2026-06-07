@@ -455,11 +455,7 @@ impl Psr {
         let base_cond = (self.it_state >> 4) & 0x0F;
         // Bit 4 of IT state XORed with bit 0 of base condition determines inversion
         let invert = ((self.it_state >> 4) & 1) != (base_cond & 1);
-        if invert {
-            base_cond ^ 1
-        } else {
-            base_cond
-        }
+        if invert { base_cond ^ 1 } else { base_cond }
     }
 
     /// Advance IT state after executing an instruction.
@@ -683,11 +679,7 @@ impl Armv7Cpu {
     /// Get register value, handling PC specially.
     #[inline]
     pub fn reg(&self, i: usize) -> u32 {
-        if i == 15 {
-            self.get_pc()
-        } else {
-            self.regs[i]
-        }
+        if i == 15 { self.get_pc() } else { self.regs[i] }
     }
 
     /// Set register value. Writing to PC sets branch_to instead.

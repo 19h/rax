@@ -54,7 +54,11 @@ fn test_cvtdq2pd_xmm0_mem() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [i32; 2] = [42, 123];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -69,7 +73,11 @@ fn test_cvtdq2pd_positive_values() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [i32; 2] = [1000, 1000000];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -84,7 +92,11 @@ fn test_cvtdq2pd_negative_values() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [i32; 2] = [-1000, -1000000];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -99,7 +111,11 @@ fn test_cvtdq2pd_mixed_values() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [i32; 2] = [-42, 123456];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -114,7 +130,11 @@ fn test_cvtdq2pd_zeros() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [i32; 2] = [0, 0];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -129,7 +149,11 @@ fn test_cvtdq2pd_max_min() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [i32; 2] = [i32::MAX, i32::MIN];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -144,7 +168,11 @@ fn test_cvtdq2pd_powers_of_two() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [i32; 2] = [1024, 1048576];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -160,7 +188,11 @@ fn test_cvtdq2pd_precise_values() {
     // Double precision can exactly represent all int32 values
     let vals: [i32; 2] = [16777217, -16777217];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -212,7 +244,11 @@ fn test_cvtpd2dq_xmm0_mem() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [1.0, 2.0];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -227,7 +263,11 @@ fn test_cvtpd2dq_positive_floats() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [1000.5, 9999.9];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -242,7 +282,11 @@ fn test_cvtpd2dq_negative_floats() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [-1000.5, -9999.9];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -257,7 +301,11 @@ fn test_cvtpd2dq_rounding_nearest_even() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [2.5, 3.5];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -272,7 +320,11 @@ fn test_cvtpd2dq_rounding_negative() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [-2.5, -3.5];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -287,7 +339,11 @@ fn test_cvtpd2dq_zeros() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [0.0, -0.0];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -302,7 +358,11 @@ fn test_cvtpd2dq_whole_numbers() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [100.0, -100.0];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -317,7 +377,11 @@ fn test_cvtpd2dq_large_values() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [1000000.0, -1000000.0];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -333,7 +397,11 @@ fn test_cvtpd2dq_overflow_positive() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [3e9, 1e10];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -348,7 +416,11 @@ fn test_cvtpd2dq_overflow_negative() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [-3e9, -1e10];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -364,7 +436,11 @@ fn test_cvtpd2dq_infinity() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [f64::INFINITY, f64::NEG_INFINITY];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -379,7 +455,11 @@ fn test_cvtpd2dq_nan() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [f64::NAN, 1.0];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -391,15 +471,19 @@ fn test_cvtdq2pd_cvtpd2dq_roundtrip() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&DATA_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0xf3, 0x0f, 0xe6, 0x00,       // CVTDQ2PD XMM0, [RAX]
-        0xf2, 0x0f, 0xe6, 0xc8,       // CVTPD2DQ XMM1, XMM0
+        0xf3, 0x0f, 0xe6, 0x00, // CVTDQ2PD XMM0, [RAX]
+        0xf2, 0x0f, 0xe6, 0xc8, // CVTPD2DQ XMM1, XMM0
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [i32; 2] = [42, -42];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -416,7 +500,11 @@ fn test_cvtdq2pd_precision_large() {
     // These values would lose precision in f32, but not in f64
     let vals: [i32; 2] = [16777217, 1073741824];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -447,7 +535,11 @@ fn test_cvtdq2pd_mem_disp() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [i32; 2] = [123, 456];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 4) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -462,7 +554,11 @@ fn test_cvtpd2dq_mem_disp() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [123.5, 456.7];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -478,7 +574,11 @@ fn test_cvtpd2dq_fraction_0_25() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [0.25, -0.25];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -493,7 +593,11 @@ fn test_cvtpd2dq_fraction_0_75() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [0.75, -0.75];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -509,7 +613,11 @@ fn test_cvtpd2dq_small_fractions() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [0.1, -0.1];
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -525,7 +633,11 @@ fn test_cvtpd2dq_int32_boundary() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let vals: [f64; 2] = [2147483647.0, -2147483648.0]; // INT_MAX, INT_MIN as f64
     for (i, &val) in vals.iter().enumerate() {
-        mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64)).unwrap();
+        mem.write_slice(
+            &val.to_le_bytes(),
+            vm_memory::GuestAddress(DATA_ADDR + (i * 8) as u64),
+        )
+        .unwrap();
     }
     run_until_hlt(&mut vcpu).unwrap();
 }

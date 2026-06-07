@@ -56,7 +56,11 @@ fn test_sub_al_imm8_borrow() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFF, 0xFF, "SUB AL, 1: 0 - 1 = 0xFF (with borrow)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0xFF,
+        "SUB AL, 1: 0 - 1 = 0xFF (with borrow)"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
     assert!(cf_set(regs.rflags), "CF should be set (borrow)");
     assert!(sf_set(regs.rflags), "SF should be set (result negative)");
@@ -74,7 +78,10 @@ fn test_sub_al_imm8_signed_overflow() {
     assert_eq!(regs.rax & 0xFF, 0x7F, "SUB AL, 1: 0x80 - 1 = 0x7F");
     assert!(of_set(regs.rflags), "OF should be set (signed overflow)");
     assert!(!sf_set(regs.rflags), "SF should be clear (result positive)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (no unsigned borrow)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (no unsigned borrow)"
+    );
 }
 
 #[test]
@@ -89,7 +96,10 @@ fn test_sub_al_imm8_negative_result() {
     assert_eq!(regs.rax & 0xFF, 0xFB, "SUB AL, 10: 5 - 10 = 0xFB (-5)");
     assert!(sf_set(regs.rflags), "SF should be set (result negative)");
     assert!(cf_set(regs.rflags), "CF should be set (borrow)");
-    assert!(!of_set(regs.rflags), "OF should be clear (no signed overflow)");
+    assert!(
+        !of_set(regs.rflags),
+        "OF should be clear (no signed overflow)"
+    );
 }
 
 #[test]
@@ -115,7 +125,11 @@ fn test_sub_al_imm8_preserves_high_bytes() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFF, 0x7D - 0x05);
-    assert_eq!(regs.rax & !0xFF, 0xDEADBEEF_12345600, "High bytes should be preserved");
+    assert_eq!(
+        regs.rax & !0xFF,
+        0xDEADBEEF_12345600,
+        "High bytes should be preserved"
+    );
 }
 
 // ============================================================================
@@ -132,7 +146,11 @@ fn test_sub_ax_imm16() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x4444, "SUB AX, 0x1234: 0x5678 - 0x1234 = 0x4444");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x4444,
+        "SUB AX, 0x1234: 0x5678 - 0x1234 = 0x4444"
+    );
 }
 
 #[test]
@@ -160,7 +178,10 @@ fn test_sub_rax_imm32_sign_extended() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // 100 - (-1) = 101
-    assert_eq!(regs.rax, 101, "SUB RAX, -1 (sign-extended): 100 - (-1) = 101");
+    assert_eq!(
+        regs.rax, 101,
+        "SUB RAX, -1 (sign-extended): 100 - (-1) = 101"
+    );
 }
 
 // ============================================================================
@@ -222,7 +243,10 @@ fn test_sub_rm64_imm32_register() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0x100000001, "SUB RCX, -1: 0x100000000 - (-1) = 0x100000001");
+    assert_eq!(
+        regs.rcx, 0x100000001,
+        "SUB RCX, -1: 0x100000000 - (-1) = 0x100000001"
+    );
 }
 
 #[test]
@@ -280,7 +304,10 @@ fn test_sub_rm64_imm8_sign_extended() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0x100000001, "SUB RCX, -1: 0x100000000 + 1 = 0x100000001");
+    assert_eq!(
+        regs.rcx, 0x100000001,
+        "SUB RCX, -1: 0x100000000 + 1 = 0x100000001"
+    );
 }
 
 #[test]
@@ -566,9 +593,18 @@ fn test_sub_flags_32bit_overflow() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x7FFFFFFF);
-    assert!(of_set(regs.rflags), "OF should be set (32-bit signed overflow)");
-    assert!(!sf_set(regs.rflags), "SF should be clear (result positive in 32-bit)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (no unsigned borrow)");
+    assert!(
+        of_set(regs.rflags),
+        "OF should be set (32-bit signed overflow)"
+    );
+    assert!(
+        !sf_set(regs.rflags),
+        "SF should be clear (result positive in 32-bit)"
+    );
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (no unsigned borrow)"
+    );
 }
 
 #[test]
@@ -581,7 +617,10 @@ fn test_sub_flags_64bit_overflow() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x7FFFFFFFFFFFFFFF);
-    assert!(of_set(regs.rflags), "OF should be set (64-bit signed overflow)");
+    assert!(
+        of_set(regs.rflags),
+        "OF should be set (64-bit signed overflow)"
+    );
     assert!(!sf_set(regs.rflags), "SF should be clear (result positive)");
 }
 
@@ -623,7 +662,10 @@ fn test_sub_no_auxiliary_carry() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFF, 0x1E);
-    assert!(!af_set(regs.rflags), "AF should be clear (no borrow from bit 4)");
+    assert!(
+        !af_set(regs.rflags),
+        "AF should be clear (no borrow from bit 4)"
+    );
 }
 
 // ============================================================================
@@ -681,8 +723,16 @@ fn test_sub_rm16_r16() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Only low 16 bits affected, high bits of RAX preserved
-    assert_eq!(regs.rax & 0xFFFF, 0x4444, "SUB AX, CX: 0x5678 - 0x1234 = 0x4444");
-    assert_eq!(regs.rax & 0xFFFF0000, 0xDEAD0000, "High word of EAX should be preserved");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x4444,
+        "SUB AX, CX: 0x5678 - 0x1234 = 0x4444"
+    );
+    assert_eq!(
+        regs.rax & 0xFFFF0000,
+        0xDEAD0000,
+        "High word of EAX should be preserved"
+    );
 }
 
 #[test]
@@ -713,7 +763,7 @@ fn test_sub_chain_multi_register() {
         0x29, 0xd8, // SUB EAX, EBX
         0x29, 0xc8, // SUB EAX, ECX
         0x29, 0xd0, // SUB EAX, EDX
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 100;
@@ -731,7 +781,7 @@ fn test_sub_self_zero() {
     // SUB RAX, RAX (always zeros the register)
     let code = [
         0x48, 0x29, 0xc0, // SUB RAX, RAX
-        0xf4,             // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0xDEADBEEF_CAFEBABE;

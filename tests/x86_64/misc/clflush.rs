@@ -1,5 +1,8 @@
 // Module path for tests run via x86_64.rs
-use crate::common::{run_until_hlt, setup_vm, read_mem_at_u8, read_mem_at_u32, read_mem_at_u64, write_mem_at_u8, write_mem_at_u32, write_mem_at_u64};
+use crate::common::{
+    read_mem_at_u8, read_mem_at_u32, read_mem_at_u64, run_until_hlt, setup_vm, write_mem_at_u8,
+    write_mem_at_u32, write_mem_at_u64,
+};
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
@@ -30,7 +33,11 @@ fn test_clflush_basic() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Memory should still contain the data (just flushed from cache)
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x42, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x42,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -50,7 +57,11 @@ fn test_clflush_with_displacement() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x2010), 0xDEADBEEF, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2010),
+        0xDEADBEEF,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -70,7 +81,11 @@ fn test_clflush_with_negative_displacement() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u64(&mem, 0x20f0), 0x1234567890ABCDEF, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x20f0),
+        0x1234567890ABCDEF,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rax, 0x2100, "RAX should be unchanged");
 }
 
@@ -89,7 +104,11 @@ fn test_clflush_rbx_base() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x3000), 0xAB, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x3000),
+        0xAB,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rbx, 0x3000, "RBX should be unchanged");
 }
 
@@ -108,7 +127,11 @@ fn test_clflush_rcx_base() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x4000), 0xCD, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x4000),
+        0xCD,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rcx, 0x4000, "RCX should be unchanged");
 }
 
@@ -127,7 +150,11 @@ fn test_clflush_rdx_base() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x5000), 0xEF, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x5000),
+        0xEF,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rdx, 0x5000, "RDX should be unchanged");
 }
 
@@ -146,7 +173,11 @@ fn test_clflush_rsi_base() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x6000), 0x12345678, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x6000),
+        0x12345678,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rsi, 0x6000, "RSI should be unchanged");
 }
 
@@ -165,7 +196,11 @@ fn test_clflush_rdi_base() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x7000), 0x87654321, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x7000),
+        0x87654321,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rdi, 0x7000, "RDI should be unchanged");
 }
 
@@ -184,7 +219,11 @@ fn test_clflush_large_displacement() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u64(&mem, 0x3000), 0xFEDCBA9876543210, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x3000),
+        0xFEDCBA9876543210,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -205,7 +244,11 @@ fn test_clflush_sib_addressing() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2040), 0x99, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2040),
+        0x99,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
     assert_eq!(regs.rbx, 0x10, "RBX should be unchanged");
 }
@@ -227,7 +270,11 @@ fn test_clflush_sib_scale_2() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x2200), 0xAABBCCDD, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2200),
+        0xAABBCCDD,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
     assert_eq!(regs.rbx, 0x100, "RBX should be unchanged");
 }
@@ -249,7 +296,11 @@ fn test_clflush_sib_scale_8() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u64(&mem, 0x2100), 0x1122334455667788, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x2100),
+        0x1122334455667788,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
     assert_eq!(regs.rbx, 0x20, "RBX should be unchanged");
 }
@@ -295,9 +346,21 @@ fn test_clflush_multiple_sequential() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x11, "Memory at RAX should still contain data");
-    assert_eq!(read_mem_at_u8(&mem, 0x3000), 0x22, "Memory at RBX should still contain data");
-    assert_eq!(read_mem_at_u8(&mem, 0x4000), 0x33, "Memory at RCX should still contain data");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x11,
+        "Memory at RAX should still contain data"
+    );
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x3000),
+        0x22,
+        "Memory at RBX should still contain data"
+    );
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x4000),
+        0x33,
+        "Memory at RCX should still contain data"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
     assert_eq!(regs.rbx, 0x3000, "RBX should be unchanged");
     assert_eq!(regs.rcx, 0x4000, "RCX should be unchanged");
@@ -318,7 +381,11 @@ fn test_clflush_aligned_address() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x2000), 0xABCDEF01, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2000),
+        0xABCDEF01,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -337,7 +404,11 @@ fn test_clflush_unaligned_address() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2007), 0x88, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2007),
+        0x88,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rax, 0x2007, "RAX should be unchanged");
 }
 
@@ -356,7 +427,11 @@ fn test_clflush_with_r8_base() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u64(&mem, 0x8000), 0x1111222233334444, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x8000),
+        0x1111222233334444,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.r8, 0x8000, "R8 should be unchanged");
 }
 
@@ -375,7 +450,11 @@ fn test_clflush_with_r15_base() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0xF000), 0x55667788, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0xF000),
+        0x55667788,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.r15, 0xF000, "R15 should be unchanged");
 }
 
@@ -384,7 +463,7 @@ fn test_clflush_write_then_flush() {
     // Write to memory, then CLFLUSH
     let code = [
         0x48, 0xc7, 0x00, 0x99, 0x00, 0x00, 0x00, // MOV qword [rax], 0x99
-        0x0f, 0xae, 0x38,                         // CLFLUSH [rax]
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -394,7 +473,11 @@ fn test_clflush_write_then_flush() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Memory should contain the written value
-    assert_eq!(read_mem_at_u32(&mem, 0x2000), 0x99, "Memory should contain written value");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x2000),
+        0x99,
+        "Memory should contain written value"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -402,8 +485,8 @@ fn test_clflush_write_then_flush() {
 fn test_clflush_flush_then_read() {
     // CLFLUSH then read from memory
     let code = [
-        0x0f, 0xae, 0x38,             // CLFLUSH [rax]
-        0x48, 0x8b, 0x18,             // MOV rbx, [rax]
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
+        0x48, 0x8b, 0x18, // MOV rbx, [rax]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -416,7 +499,10 @@ fn test_clflush_flush_then_read() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // RBX should contain the value from memory
-    assert_eq!(regs.rbx, 0xAABBCCDDEEFF0011, "RBX should contain value from memory");
+    assert_eq!(
+        regs.rbx, 0xAABBCCDDEEFF0011,
+        "RBX should contain value from memory"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -436,7 +522,11 @@ fn test_clflush_same_location_twice() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0xCC, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0xCC,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -444,9 +534,9 @@ fn test_clflush_same_location_twice() {
 fn test_clflush_different_offsets_same_line() {
     // CLFLUSH on different offsets that might be in the same cache line
     let code = [
-        0x0f, 0xae, 0x38,             // CLFLUSH [rax]
-        0x0f, 0xae, 0x78, 0x08,       // CLFLUSH [rax + 8]
-        0x0f, 0xae, 0x78, 0x10,       // CLFLUSH [rax + 16]
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
+        0x0f, 0xae, 0x78, 0x08, // CLFLUSH [rax + 8]
+        0x0f, 0xae, 0x78, 0x10, // CLFLUSH [rax + 16]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -459,9 +549,21 @@ fn test_clflush_different_offsets_same_line() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0x11, "Memory at offset 0 should still contain data");
-    assert_eq!(read_mem_at_u8(&mem, 0x2008), 0x22, "Memory at offset 8 should still contain data");
-    assert_eq!(read_mem_at_u8(&mem, 0x2010), 0x33, "Memory at offset 16 should still contain data");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0x11,
+        "Memory at offset 0 should still contain data"
+    );
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2008),
+        0x22,
+        "Memory at offset 8 should still contain data"
+    );
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2010),
+        0x33,
+        "Memory at offset 16 should still contain data"
+    );
     assert_eq!(regs.rax, 0x2000, "RAX should be unchanged");
 }
 
@@ -470,9 +572,9 @@ fn test_clflush_interleaved_with_operations() {
     // CLFLUSH interleaved with other operations
     let code = [
         0x48, 0xc7, 0xc0, 0x42, 0x00, 0x00, 0x00, // MOV rax, 0x42
-        0x0f, 0xae, 0x3b,                         // CLFLUSH [rbx]
+        0x0f, 0xae, 0x3b, // CLFLUSH [rbx]
         0x48, 0xc7, 0xc1, 0x84, 0x00, 0x00, 0x00, // MOV rcx, 0x84
-        0x0f, 0xae, 0x3a,                         // CLFLUSH [rdx]
+        0x0f, 0xae, 0x3a, // CLFLUSH [rdx]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -487,8 +589,16 @@ fn test_clflush_interleaved_with_operations() {
 
     assert_eq!(regs.rax, 0x42, "RAX should be 0x42");
     assert_eq!(regs.rcx, 0x84, "RCX should be 0x84");
-    assert_eq!(read_mem_at_u8(&mem, 0x3000), 0xAA, "Memory at RBX should still contain data");
-    assert_eq!(read_mem_at_u8(&mem, 0x5000), 0xBB, "Memory at RDX should still contain data");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x3000),
+        0xAA,
+        "Memory at RBX should still contain data"
+    );
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x5000),
+        0xBB,
+        "Memory at RDX should still contain data"
+    );
 }
 
 #[test]
@@ -538,7 +648,11 @@ fn test_clflush_with_stack_memory() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u64(&mem, 0x8000), 0xDEADBEEFCAFEBABE, "Stack memory should still contain data");
+    assert_eq!(
+        read_mem_at_u64(&mem, 0x8000),
+        0xDEADBEEFCAFEBABE,
+        "Stack memory should still contain data"
+    );
 }
 
 #[test]
@@ -556,7 +670,11 @@ fn test_clflush_near_boundary() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2FFF), 0x77, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2FFF),
+        0x77,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rax, 0x2FFF, "RAX should be unchanged");
 }
 
@@ -575,7 +693,11 @@ fn test_clflush_high_memory_address() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x100000), 0x12345678, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x100000),
+        0x12345678,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.rax, 0x100000, "RAX should be unchanged");
 }
 
@@ -596,7 +718,11 @@ fn test_clflush_with_sib_displacement() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2050), 0xAA, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2050),
+        0xAA,
+        "Memory should still contain data"
+    );
 }
 
 #[test]
@@ -614,7 +740,11 @@ fn test_clflush_r9_base() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u32(&mem, 0x9000), 0x99887766, "Memory should still contain data");
+    assert_eq!(
+        read_mem_at_u32(&mem, 0x9000),
+        0x99887766,
+        "Memory should still contain data"
+    );
     assert_eq!(regs.r9, 0x9000, "R9 should be unchanged");
 }
 
@@ -622,9 +752,9 @@ fn test_clflush_r9_base() {
 fn test_clflush_consecutive_bytes() {
     // CLFLUSH on consecutive byte addresses
     let code = [
-        0x0f, 0xae, 0x38,             // CLFLUSH [rax]
-        0x0f, 0xae, 0x78, 0x01,       // CLFLUSH [rax + 1]
-        0x0f, 0xae, 0x78, 0x02,       // CLFLUSH [rax + 2]
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
+        0x0f, 0xae, 0x78, 0x01, // CLFLUSH [rax + 1]
+        0x0f, 0xae, 0x78, 0x02, // CLFLUSH [rax + 2]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -637,7 +767,19 @@ fn test_clflush_consecutive_bytes() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_at_u8(&mem, 0x2000), 0xAA, "Byte 0 should still contain data");
-    assert_eq!(read_mem_at_u8(&mem, 0x2001), 0xBB, "Byte 1 should still contain data");
-    assert_eq!(read_mem_at_u8(&mem, 0x2002), 0xCC, "Byte 2 should still contain data");
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2000),
+        0xAA,
+        "Byte 0 should still contain data"
+    );
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2001),
+        0xBB,
+        "Byte 1 should still contain data"
+    );
+    assert_eq!(
+        read_mem_at_u8(&mem, 0x2002),
+        0xCC,
+        "Byte 2 should still contain data"
+    );
 }

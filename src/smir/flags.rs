@@ -346,7 +346,7 @@ impl MaterializedFlags {
         if self.zf {
             val |= 1 << 30;
         } // Z
-          // Note: ARM C is inverted from x86 CF for subtraction
+        // Note: ARM C is inverted from x86 CF for subtraction
         if !self.cf {
             val |= 1 << 29;
         } // C (no borrow)
@@ -400,12 +400,26 @@ impl FlagState {
     }
 
     /// Set lazy flags from an add-with-carry (ADC) operation
-    pub fn set_lazy_adc(&mut self, left: u64, right: u64, carry_in: u64, result: u64, width: OpWidth) {
+    pub fn set_lazy_adc(
+        &mut self,
+        left: u64,
+        right: u64,
+        carry_in: u64,
+        result: u64,
+        width: OpWidth,
+    ) {
         self.lazy = Some(LazyFlags::adc(left, right, carry_in, result, width));
     }
 
     /// Set lazy flags from a subtract-with-borrow (SBB) operation
-    pub fn set_lazy_sbb(&mut self, left: u64, right: u64, carry_in: u64, result: u64, width: OpWidth) {
+    pub fn set_lazy_sbb(
+        &mut self,
+        left: u64,
+        right: u64,
+        carry_in: u64,
+        result: u64,
+        width: OpWidth,
+    ) {
         self.lazy = Some(LazyFlags::sbb(left, right, carry_in, result, width));
     }
 

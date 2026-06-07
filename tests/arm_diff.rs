@@ -36,13 +36,13 @@ use rax::smir::lift::aarch64::Aarch64Lifter;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 use rax::smir::lift::{ControlFlow, LiftContext, SmirLifter};
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use rax::smir::lower::SmirLowerer;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 use rax::smir::lower::aarch64::Aarch64Lowerer;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 use rax::smir::lower::aarch64_x86::Aarch64X86_64Lowerer;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 use rax::smir::lower::runtime::{Aarch64GuestRegs, ExecMem};
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-use rax::smir::lower::SmirLowerer;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 use rax::smir::ops::OpKind;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -606,15 +606,7 @@ fn enc_bitfield_regs(sf: u32, opc: u32, immr: u32, imms: u32, rn: u32, rd: u32) 
 
 /// Logical immediate: `sf opc 100100 N immr imms Rn Rd`
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-fn enc_logical_imm_regs(
-    sf: u32,
-    opc: u32,
-    n: u32,
-    immr: u32,
-    imms: u32,
-    rn: u32,
-    rd: u32,
-) -> u32 {
+fn enc_logical_imm_regs(sf: u32, opc: u32, n: u32, immr: u32, imms: u32, rn: u32, rd: u32) -> u32 {
     (sf << 31)
         | (opc << 29)
         | (0b100100 << 23)
@@ -644,13 +636,7 @@ fn enc_logical_reg_n(sf: u32, opc: u32, n: u32, rd: u32, rn: u32, rm: u32) -> u3
 /// Extract: `sf 00 100111 N 0 Rm imms Rn Rd`
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn enc_extract(sf: u32, rn: u32, rm: u32, imms: u32) -> u32 {
-    (sf << 31)
-        | (0b100111 << 23)
-        | (sf << 22)
-        | (rm << 16)
-        | (imms << 10)
-        | (rn << 5)
-        | RD
+    (sf << 31) | (0b100111 << 23) | (sf << 22) | (rm << 16) | (imms << 10) | (rn << 5) | RD
 }
 
 /// Data-processing (3 source): `sf 00 11011 op31 Rm o0 Ra Rn Rd`
@@ -663,15 +649,7 @@ fn enc_dp3_ra(sf: u32, op31: u32, o0: u32, ra: u32) -> u32 {
     enc_dp3_ra_regs(sf, op31, o0, RD, RN, RM, ra)
 }
 
-fn enc_dp3_ra_regs(
-    sf: u32,
-    op31: u32,
-    o0: u32,
-    rd: u32,
-    rn: u32,
-    rm: u32,
-    ra: u32,
-) -> u32 {
+fn enc_dp3_ra_regs(sf: u32, op31: u32, o0: u32, rd: u32, rn: u32, rm: u32, ra: u32) -> u32 {
     (sf << 31)
         | (0b11011 << 24)
         | (op31 << 21)
@@ -728,15 +706,7 @@ fn enc_addsub_shift(sf: u32, op: u32, s: u32, shift: u32, imm6: u32) -> u32 {
 
 /// Add/subtract (immediate): `sf op S 10001 sh imm12 Rn Rd`.
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-fn enc_addsub_imm_regs(
-    sf: u32,
-    op: u32,
-    s: u32,
-    shift: u32,
-    imm12: u32,
-    rd: u32,
-    rn: u32,
-) -> u32 {
+fn enc_addsub_imm_regs(sf: u32, op: u32, s: u32, shift: u32, imm12: u32, rd: u32, rn: u32) -> u32 {
     (sf << 31)
         | (op << 30)
         | (s << 29)
@@ -1508,12 +1478,18 @@ fn lower_aarch64_native_function(func: &SmirFunction) -> Result<[u32; 3], String
         .finalize()
         .map_err(|e| format!("finalize failed: {e:?}"))?;
     if code.len() % 4 != 0 {
-        return Err(format!("unexpected native AArch64 code size {}", code.len()));
+        return Err(format!(
+            "unexpected native AArch64 code size {}",
+            code.len()
+        ));
     }
     let words = code.len() / 4;
     if words > 3 {
         if words != 4 {
-            return Err(format!("unexpected native AArch64 code size {}", code.len()));
+            return Err(format!(
+                "unexpected native AArch64 code size {}",
+                code.len()
+            ));
         }
         let ret = u32::from_le_bytes([code[12], code[13], code[14], code[15]]);
         if ret != 0xd65f_03c0 {
@@ -9722,13 +9698,7 @@ fn enc_msr_fpsr(rt: u32) -> u32 {
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn enc_msr_sysreg(rt: u32, op1: u32, crn: u32, crm: u32, op2: u32) -> u32 {
-    0xd500_0000
-        | (3 << 19)
-        | (op1 << 16)
-        | (crn << 12)
-        | (crm << 8)
-        | (op2 << 5)
-        | (rt & 0x1f)
+    0xd500_0000 | (3 << 19) | (op1 << 16) | (crn << 12) | (crm << 8) | (op2 << 5) | (rt & 0x1f)
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -9789,10 +9759,7 @@ fn compare_smir_scalar_case(
         }
     }
     if got.sp != hw.sp {
-        diffs.push(format!(
-            "sp: smir={:#018x} hw={:#018x}",
-            got.sp, hw.sp
-        ));
+        diffs.push(format!("sp: smir={:#018x} hw={:#018x}", got.sp, hw.sp));
     }
     // The oracle captures PC from its signal/trap harness, so it is not a
     // stable architectural post-instruction PC for these scalar comparisons.
@@ -9855,7 +9822,10 @@ fn compare_native_aarch64_case(
     let got_nzcv = (got.pstate >> 28) & 0xF;
     let hw_nzcv = (hw.pstate >> 28) & 0xF;
     if got_nzcv != hw_nzcv {
-        diffs.push(format!("nzcv: generated={:#x} source={:#x}", got_nzcv, hw_nzcv));
+        diffs.push(format!(
+            "nzcv: generated={:#x} source={:#x}",
+            got_nzcv, hw_nzcv
+        ));
     }
     if got.fpcr != hw.fpcr {
         diffs.push(format!(
@@ -9906,10 +9876,7 @@ fn compare_smir_memory_case(
         }
     }
     if got.sp != hw.sp {
-        diffs.push(format!(
-            "sp: smir={:#018x} hw={:#018x}",
-            got.sp, hw.sp
-        ));
+        diffs.push(format!("sp: smir={:#018x} hw={:#018x}", got.sp, hw.sp));
     }
     let got_nzcv = (got.nzcv >> 28) & 0xF;
     let hw_nzcv = (hw.pstate >> 28) & 0xF;
@@ -9940,7 +9907,9 @@ fn smir_aarch64_x86_scalar_lowering_matches_qemu_oracle() {
     let oracle = match oracle_path() {
         Some(p) => p,
         None => {
-            eprintln!("[arm_diff] smir_aarch64_x86_scalar: qemu/cross-toolchain unavailable -> skipping");
+            eprintln!(
+                "[arm_diff] smir_aarch64_x86_scalar: qemu/cross-toolchain unavailable -> skipping"
+            );
             return;
         }
     };
@@ -9954,7 +9923,10 @@ fn smir_aarch64_x86_scalar_lowering_matches_qemu_oracle() {
         ("subs_w_asr31_zero_ext", enc_addsub_shift(0, 1, 1, 2, 31)),
         ("add_x_uxtw", enc_addsub_ext(1, 0, 0, 0b010, 0)),
         ("add_x_sxtw_lsl2", enc_addsub_ext(1, 0, 0, 0b110, 2)),
-        ("subs_w_uxtb_lsl1_zero_ext", enc_addsub_ext(0, 1, 1, 0b000, 1)),
+        (
+            "subs_w_uxtb_lsl1_zero_ext",
+            enc_addsub_ext(0, 1, 1, 0b000, 1),
+        ),
         ("adc_x", enc_addsub_carry(1, 0, 0)),
         ("adcs_x", enc_addsub_carry(1, 0, 1)),
         ("sbc_x", enc_addsub_carry(1, 1, 0)),
@@ -10102,7 +10074,11 @@ fn smir_aarch64_x86_scalar_lowering_matches_qemu_oracle() {
     let mut st = ArmState::zeroed();
     st.x[1] = 1;
     st.x[2] = 1;
-    batch.push(("add_x_lsl4_crafted".into(), enc_addsub_shift(1, 0, 0, 0, 4), st));
+    batch.push((
+        "add_x_lsl4_crafted".into(),
+        enc_addsub_shift(1, 0, 0, 0, 4),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
@@ -10117,7 +10093,11 @@ fn smir_aarch64_x86_scalar_lowering_matches_qemu_oracle() {
     let mut st = ArmState::zeroed();
     st.x[1] = 0x1000_0000_0000_0000;
     st.x[2] = 0xffff_ffff_0000_0100;
-    batch.push(("add_x_uxtw_crafted".into(), enc_addsub_ext(1, 0, 0, 0b010, 0), st));
+    batch.push((
+        "add_x_uxtw_crafted".into(),
+        enc_addsub_ext(1, 0, 0, 0b010, 0),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.x[1] = 8;
@@ -10263,7 +10243,11 @@ fn smir_aarch64_x86_scalar_lowering_matches_qemu_oracle() {
     st.x[1] = 5;
     st.x[2] = 3;
     st.pstate = 0;
-    batch.push(("sbc_x_carry_clear_borrow_in".into(), enc_addsub_carry(1, 1, 0), st));
+    batch.push((
+        "sbc_x_carry_clear_borrow_in".into(),
+        enc_addsub_carry(1, 1, 0),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
@@ -10349,7 +10333,11 @@ fn smir_aarch64_x86_scalar_lowering_matches_qemu_oracle() {
     st.x[1] = 5;
     st.x[2] = 5;
     st.pstate = 0x4000_0000;
-    batch.push(("ccmp_x_eq_true".into(), enc_condcmp(1, 1, false, RM, 0, 0), st));
+    batch.push((
+        "ccmp_x_eq_true".into(),
+        enc_condcmp(1, 1, false, RM, 0, 0),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.x[1] = 1;
@@ -10365,7 +10353,11 @@ fn smir_aarch64_x86_scalar_lowering_matches_qemu_oracle() {
     st.x[1] = u64::MAX;
     st.x[2] = 1;
     st.pstate = 0;
-    batch.push(("ccmn_x_ne_true".into(), enc_condcmp(1, 0, false, RM, 1, 0), st));
+    batch.push((
+        "ccmn_x_ne_true".into(),
+        enc_condcmp(1, 0, false, RM, 1, 0),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.x[1] = 0x100;
@@ -10551,12 +10543,20 @@ fn smir_aarch64_x86_scalar_lowering_matches_qemu_oracle() {
     let mut st = ArmState::zeroed();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
     st.x[1] = 0xffff_ffff_8000_0001;
-    batch.push(("lsl_w_zero_ext_crafted".into(), enc_bitfield(0, 0b10, 25, 24), st));
+    batch.push((
+        "lsl_w_zero_ext_crafted".into(),
+        enc_bitfield(0, 0b10, 25, 24),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
     st.x[1] = 0x8000_0000_0000_0000;
-    batch.push(("asr_x_sign_crafted".into(), enc_bitfield(1, 0b00, 9, 63), st));
+    batch.push((
+        "asr_x_sign_crafted".into(),
+        enc_bitfield(1, 0b00, 9, 63),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
@@ -10566,7 +10566,11 @@ fn smir_aarch64_x86_scalar_lowering_matches_qemu_oracle() {
     let mut st = ArmState::zeroed();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
     st.x[1] = 0xffff_ffff_ffff_f8f0;
-    batch.push(("sbfx_w_sign_crafted".into(), enc_bitfield(0, 0b00, 4, 11), st));
+    batch.push((
+        "sbfx_w_sign_crafted".into(),
+        enc_bitfield(0, 0b00, 4, 11),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
@@ -10576,7 +10580,11 @@ fn smir_aarch64_x86_scalar_lowering_matches_qemu_oracle() {
     let mut st = ArmState::zeroed();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
     st.x[1] = 0xffff_ffff_ffff_ff80;
-    batch.push(("sbfiz_w_sign_crafted".into(), enc_bitfield(0, 0b00, 24, 7), st));
+    batch.push((
+        "sbfiz_w_sign_crafted".into(),
+        enc_bitfield(0, 0b00, 24, 7),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
@@ -10606,7 +10614,11 @@ fn smir_aarch64_x86_scalar_lowering_matches_qemu_oracle() {
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
     st.x[1] = 0xffff_ffff_1122_3344;
     st.x[2] = 0xffff_ffff_aabb_ccdd;
-    batch.push(("extr_w_zero_ext_crafted".into(), enc_extract(0, RN, RM, 7), st));
+    batch.push((
+        "extr_w_zero_ext_crafted".into(),
+        enc_extract(0, RN, RM, 7),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
@@ -10739,8 +10751,10 @@ fn smir_aarch64_x86_scalar_lowering_matches_qemu_oracle() {
         batch.push((format!("xaflag_nzcv_{nzcv:x}"), enc_xaflag(), st));
     }
 
-    let cases: Vec<(u32, u32, ArmState)> =
-        batch.iter().map(|(_, insn, st)| (*insn, NOP, *st)).collect();
+    let cases: Vec<(u32, u32, ArmState)> = batch
+        .iter()
+        .map(|(_, insn, st)| (*insn, NOP, *st))
+        .collect();
     let outs = match run_oracle(&oracle, &cases) {
         Some(o) => o,
         None => {
@@ -10821,8 +10835,10 @@ fn smir_aarch64_x86_nzcv_sysreg_roundtrip_matches_qemu_oracle() {
         ));
     }
 
-    let cases: Vec<(u32, u32, ArmState)> =
-        batch.iter().map(|(_, insn, insn2, st)| (*insn, *insn2, *st)).collect();
+    let cases: Vec<(u32, u32, ArmState)> = batch
+        .iter()
+        .map(|(_, insn, insn2, st)| (*insn, *insn2, *st))
+        .collect();
     let outs = match run_oracle(&oracle, &cases) {
         Some(o) => o,
         None => {
@@ -10919,8 +10935,10 @@ fn smir_aarch64_x86_fp_sysreg_roundtrip_matches_qemu_oracle() {
         ));
     }
 
-    let cases: Vec<(u32, u32, ArmState)> =
-        batch.iter().map(|(_, insn, insn2, st)| (*insn, *insn2, *st)).collect();
+    let cases: Vec<(u32, u32, ArmState)> = batch
+        .iter()
+        .map(|(_, insn, insn2, st)| (*insn, *insn2, *st))
+        .collect();
     let outs = match run_oracle(&oracle, &cases) {
         Some(o) => o,
         None => {
@@ -11054,7 +11072,12 @@ fn smir_aarch64_x86_test_branch_lowering_matches_qemu_oracle() {
     st.x[0] = 0x1111_2222_3333_4444;
     st.x[1] = 0;
     st.pstate = 0x9000_0000;
-    batch.push(("tbz_bit0_taken".into(), enc_test_branch(0, 0, 8), marker, st));
+    batch.push((
+        "tbz_bit0_taken".into(),
+        enc_test_branch(0, 0, 8),
+        marker,
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.x[0] = 0x1111_2222_3333_4444;
@@ -11071,7 +11094,12 @@ fn smir_aarch64_x86_test_branch_lowering_matches_qemu_oracle() {
     st.x[0] = 0x2222_3333_4444_5555;
     st.x[1] = 1 << 5;
     st.pstate = 0x2000_0000;
-    batch.push(("tbnz_bit5_taken".into(), enc_test_branch(1, 5, 8), marker, st));
+    batch.push((
+        "tbnz_bit5_taken".into(),
+        enc_test_branch(1, 5, 8),
+        marker,
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.x[0] = 0x2222_3333_4444_5555;
@@ -11088,7 +11116,12 @@ fn smir_aarch64_x86_test_branch_lowering_matches_qemu_oracle() {
     st.x[0] = 0x3333_4444_5555_6666;
     st.x[1] = 0x7fff_ffff_ffff_ffff;
     st.pstate = 0x8000_0000;
-    batch.push(("tbz_bit63_taken".into(), enc_test_branch(0, 63, 8), marker, st));
+    batch.push((
+        "tbz_bit63_taken".into(),
+        enc_test_branch(0, 63, 8),
+        marker,
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.x[0] = 0x3333_4444_5555_6666;
@@ -11105,7 +11138,12 @@ fn smir_aarch64_x86_test_branch_lowering_matches_qemu_oracle() {
     st.x[0] = 0x4444_5555_6666_7777;
     st.x[1] = 0x8000_0000;
     st.pstate = 0x3000_0000;
-    batch.push(("tbnz_w_bit31_taken".into(), enc_test_branch(1, 31, 8), marker, st));
+    batch.push((
+        "tbnz_w_bit31_taken".into(),
+        enc_test_branch(1, 31, 8),
+        marker,
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.x[0] = 0x4444_5555_6666_7777;
@@ -11118,8 +11156,10 @@ fn smir_aarch64_x86_test_branch_lowering_matches_qemu_oracle() {
         st,
     ));
 
-    let cases: Vec<(u32, u32, ArmState)> =
-        batch.iter().map(|(_, insn, insn2, st)| (*insn, *insn2, *st)).collect();
+    let cases: Vec<(u32, u32, ArmState)> = batch
+        .iter()
+        .map(|(_, insn, insn2, st)| (*insn, *insn2, *st))
+        .collect();
     let outs = match run_oracle(&oracle, &cases) {
         Some(o) => o,
         None => {
@@ -11183,12 +11223,7 @@ fn smir_aarch64_x86_test_branch_lowering_matches_qemu_oracle() {
     let mut hw_st = smir_st;
     hw_st.pc = PCREL_MAGIC;
     hw_st.x[1] = pcrel_marker(control_target);
-    control_batch.push((
-        "blr_x1_sets_lr_and_pc".into(),
-        enc_blr(RN),
-        hw_st,
-        smir_st,
-    ));
+    control_batch.push(("blr_x1_sets_lr_and_pc".into(), enc_blr(RN), hw_st, smir_st));
 
     let mut smir_st = ArmState::zeroed();
     smir_st.x[0] = 0x2222_3333_4444_5555;
@@ -17541,22 +17576,14 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
     st.x[1] = 0x8000_0000_0000_0000;
     st.x[2] = 4;
     st.pstate = 0x8000_0000;
-    push_lifted_case(
-        "lsrv_x_lifted_preserves_flags",
-        enc_dp2(1, 0b1001),
-        st,
-    );
+    push_lifted_case("lsrv_x_lifted_preserves_flags", enc_dp2(1, 0b1001), st);
 
     let mut st = native_state();
     st.x[0] = 0xbbbb_cccc_dddd_eeee;
     st.x[1] = 0x8000_0000_0000_0000;
     st.x[2] = 4;
     st.pstate = 0x3000_0000;
-    push_lifted_case(
-        "asrv_x_lifted_preserves_flags",
-        enc_dp2(1, 0b1010),
-        st,
-    );
+    push_lifted_case("asrv_x_lifted_preserves_flags", enc_dp2(1, 0b1010), st);
 
     let mut st = native_state();
     st.x[0] = 0xcccc_dddd_eeee_ffff;
@@ -17573,21 +17600,13 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
     st.x[0] = 0xdddd_eeee_ffff_0000;
     st.x[1] = 0x0000_0000_0000_00f0;
     st.pstate = 0x7000_0000;
-    push_lifted_case(
-        "clz_x_lifted_preserves_flags",
-        enc_dp1(1, 0b000100),
-        st,
-    );
+    push_lifted_case("clz_x_lifted_preserves_flags", enc_dp1(1, 0b000100), st);
 
     let mut st = native_state();
     st.x[0] = 0xeded_0101_2323_4545;
     st.x[1] = 0xffff_ffff_ffff_f000;
     st.pstate = 0xa000_0000;
-    push_lifted_case(
-        "cls_x_lifted_preserves_flags",
-        enc_dp1(1, 0b000101),
-        st,
-    );
+    push_lifted_case("cls_x_lifted_preserves_flags", enc_dp1(1, 0b000101), st);
 
     let mut st = native_state();
     st.x[0] = 0xfefe_1010_3232_5454;
@@ -17613,21 +17632,13 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
     st.x[0] = 0xffff_0000_1111_2222;
     st.x[1] = 0x1122_3344_5566_7788;
     st.pstate = 0x9000_0000;
-    push_lifted_case(
-        "rev_x_lifted_preserves_flags",
-        enc_dp1(1, 0b000011),
-        st,
-    );
+    push_lifted_case("rev_x_lifted_preserves_flags", enc_dp1(1, 0b000011), st);
 
     let mut st = native_state();
     st.x[0] = 0x1234_5678_9abc_def0;
     st.x[1] = 0x0011_2233_4455_6677;
     st.pstate = 0x3000_0000;
-    push_lifted_case(
-        "rev16_x_lifted_preserves_flags",
-        enc_dp1(1, 0b000001),
-        st,
-    );
+    push_lifted_case("rev16_x_lifted_preserves_flags", enc_dp1(1, 0b000001), st);
 
     let mut st = native_state();
     st.x[0] = 0x2345_6789_abcd_ef01;
@@ -17643,11 +17654,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
     st.x[0] = 0x3456_789a_bcde_f012;
     st.x[1] = 0x1122_3344_aabb_ccdd;
     st.pstate = 0x5000_0000;
-    push_lifted_case(
-        "rev32_x_lifted_preserves_flags",
-        enc_dp1(1, 0b000010),
-        st,
-    );
+    push_lifted_case("rev32_x_lifted_preserves_flags", enc_dp1(1, 0b000010), st);
 
     let mut st = native_state();
     st.x[0] = 0x0000_1111_2222_3333;
@@ -17871,22 +17878,14 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
     st.x[1] = SCRATCH_BASE;
     st.scratch[8] = 0x8877_6655_4433_2211;
     st.pstate = 0xc000_0000;
-    push_lifted_case(
-        "ldar_x_lifted_preserves_flags",
-        enc_ldar(3),
-        st,
-    );
+    push_lifted_case("ldar_x_lifted_preserves_flags", enc_ldar(3), st);
 
     let mut st = native_state();
     st.x[1] = SCRATCH_BASE;
     st.x[3] = 0xffff_ffff_aabb_ccdd;
     st.scratch[8] = 0x1122_3344_5566_7788;
     st.pstate = 0x5000_0000;
-    push_lifted_case(
-        "stlr_w_lifted_preserves_flags_and_memory",
-        enc_stlr(2),
-        st,
-    );
+    push_lifted_case("stlr_w_lifted_preserves_flags_and_memory", enc_stlr(2), st);
 
     let mut st = native_state();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
@@ -18425,20 +18424,12 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
     let mut st = native_state();
     st.x[0] = 0x2222_3333_4444_5555;
     st.pstate = 0x5000_0000;
-    push_lifted_case(
-        "dsb_sy_lifted_preserves_arch_state",
-        enc_barrier(0b100),
-        st,
-    );
+    push_lifted_case("dsb_sy_lifted_preserves_arch_state", enc_barrier(0b100), st);
 
     let mut st = native_state();
     st.x[0] = 0x3333_4444_5555_6666;
     st.pstate = 0x9000_0000;
-    push_lifted_case(
-        "dmb_sy_lifted_preserves_arch_state",
-        enc_barrier(0b101),
-        st,
-    );
+    push_lifted_case("dmb_sy_lifted_preserves_arch_state", enc_barrier(0b101), st);
 
     let mut st = native_state();
     st.x[0] = 0x4444_5555_6666_7777;
@@ -20904,14 +20895,18 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
     let source_outs = match run_oracle3(&oracle, &source_cases) {
         Some(o) => o,
         None => {
-            eprintln!("[arm_diff] smir_aarch64_native_lowering: source oracle run failed -> skipping");
+            eprintln!(
+                "[arm_diff] smir_aarch64_native_lowering: source oracle run failed -> skipping"
+            );
             return;
         }
     };
     let lowered_outs = match run_oracle3(&oracle, &lowered_cases) {
         Some(o) => o,
         None => {
-            eprintln!("[arm_diff] smir_aarch64_native_lowering: generated oracle run failed -> skipping");
+            eprintln!(
+                "[arm_diff] smir_aarch64_native_lowering: generated oracle run failed -> skipping"
+            );
             return;
         }
     };
@@ -20926,7 +20921,10 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
             mismatches.push(Mismatch {
                 label: label.clone(),
                 insn: source[0],
-                detail: format!("source instruction faulted with signal {}", source_out.trapped),
+                detail: format!(
+                    "source instruction faulted with signal {}",
+                    source_out.trapped
+                ),
             });
             continue;
         }
@@ -21006,7 +21004,11 @@ fn smir_aarch64_x86_memory_lowering_matches_qemu_oracle() {
         }
     }
     for &(label, insn, rm_value) in &[
-        ("ldr_x_reg_uxtw_lsl3", enc_ldst_reg(3, 1, RM, 0b010, 1), 8u64),
+        (
+            "ldr_x_reg_uxtw_lsl3",
+            enc_ldst_reg(3, 1, RM, 0b010, 1),
+            8u64,
+        ),
         ("str_w_reg_sxtw", enc_ldst_reg(2, 0, RM, 0b110, 0), 8u64),
         (
             "ldrsb_x_reg_sxtx_neg8",
@@ -21162,9 +21164,7 @@ fn smir_aarch64_x86_memory_lowering_matches_qemu_oracle() {
     }
 
     for size in 0..4 {
-        for &(acquire, release, suffix) in
-            &[(0, 0, ""), (1, 0, "a"), (0, 1, "l"), (1, 1, "al")]
-        {
+        for &(acquire, release, suffix) in &[(0, 0, ""), (1, 0, "a"), (0, 1, "l"), (1, 1, "al")] {
             for case_idx in 0..6 {
                 let mut st = mem_input(&mut rng);
                 if case_idx % 2 == 0 {
@@ -21240,7 +21240,11 @@ fn smir_aarch64_x86_memory_lowering_matches_qemu_oracle() {
         (0b00, 1, "ldnp_w"),
     ];
     for &(opc, l, name) in non_temporal_pair_ops {
-        let imm7s: &[i32] = if opc == 0b00 { &[0, 2, -2] } else { &[0, 1, -1] };
+        let imm7s: &[i32] = if opc == 0b00 {
+            &[0, 2, -2]
+        } else {
+            &[0, 1, -1]
+        };
         for &imm7 in imm7s {
             for _ in 0..4 {
                 batch.push((
@@ -21348,8 +21352,10 @@ fn smir_aarch64_x86_memory_lowering_matches_qemu_oracle() {
     }
 
     let labels: Vec<String> = batch.iter().map(|(label, _, _)| label.clone()).collect();
-    let cases: Vec<(u32, u32, ArmState)> =
-        batch.iter().map(|(_, insn, st)| (*insn, NOP, *st)).collect();
+    let cases: Vec<(u32, u32, ArmState)> = batch
+        .iter()
+        .map(|(_, insn, st)| (*insn, NOP, *st))
+        .collect();
     let outs = match run_oracle(&oracle, &cases) {
         Some(o) => o,
         None => {
@@ -24353,7 +24359,12 @@ fn diff_scalar_fp_cmp() {
     // Scalar FP compares (FCMP/FCMPE incl. compare-with-zero, with the NaN ->
     // unordered NZCV), FCCMP/FCCMPE, FCSEL, half-precision arithmetic/compare/
     // FSQRT/FMADD, and more FP<->int conversions (round modes, x/w widths).
-    let enc: &[u32] = &[0x1e212000, 0x1e612000, 0x1e212010, 0x1e202008, 0x1e602018, 0x1e210405, 0x1e21141a, 0x1e22cc20, 0x1e62bc20, 0x1ee22820, 0x1ee20820, 0x1ee21820, 0x1ee24820, 0x1ee1c020, 0x1ee12000, 0x1fc20c20, 0x1e780020, 0x9e390020, 0x1e280020, 0x9e710020, 0x1e240020, 0x9e630020, 0x1e63c020, 0x1ee2c020];
+    let enc: &[u32] = &[
+        0x1e212000, 0x1e612000, 0x1e212010, 0x1e202008, 0x1e602018, 0x1e210405, 0x1e21141a,
+        0x1e22cc20, 0x1e62bc20, 0x1ee22820, 0x1ee20820, 0x1ee21820, 0x1ee24820, 0x1ee1c020,
+        0x1ee12000, 0x1fc20c20, 0x1e780020, 0x9e390020, 0x1e280020, 0x9e710020, 0x1e240020,
+        0x9e630020, 0x1e63c020, 0x1ee2c020,
+    ];
     let sp: [u64; 12] = [
         0x7F800000_7F800000,
         0xFF800000_FF800000,
@@ -24402,7 +24413,12 @@ fn diff_scalar_fp() {
     // with NaN/inf/denormal/-0 operands: the ARM default-NaN/quiet-propagation,
     // FNMUL/FMSUB/FNMADD sign flips, FCVT NaN payload conversion, and the
     // round-mode FP-to-int conversions.
-    let enc: &[u32] = &[0x1e222820, 0x1e220820, 0x1e621820, 0x1e224820, 0x1e225820, 0x1e226820, 0x1e227820, 0x1e228820, 0x1f020c20, 0x1f028c20, 0x1f220c20, 0x1f628c20, 0x1e21c020, 0x1e60c020, 0x1e214020, 0x1e244020, 0x1e24c020, 0x1e65c020, 0x1e22c020, 0x1e624020, 0x1e23c020, 0x1ee24020, 0x1e380020, 0x1e220020, 0x1e210400, 0x1e221c20, 0x1e628820];
+    let enc: &[u32] = &[
+        0x1e222820, 0x1e220820, 0x1e621820, 0x1e224820, 0x1e225820, 0x1e226820, 0x1e227820,
+        0x1e228820, 0x1f020c20, 0x1f028c20, 0x1f220c20, 0x1f628c20, 0x1e21c020, 0x1e60c020,
+        0x1e214020, 0x1e244020, 0x1e24c020, 0x1e65c020, 0x1e22c020, 0x1e624020, 0x1e23c020,
+        0x1ee24020, 0x1e380020, 0x1e220020, 0x1e210400, 0x1e221c20, 0x1e628820,
+    ];
     let sp: [u64; 12] = [
         0x7F800000_7F800000,
         0xFF800000_FF800000,
@@ -28680,16 +28696,7 @@ fn diff_mem_ldst_struct() {
 }
 
 /// Load/store pair: `opc 101 V 0 mode L imm7 Rt2 Rn Rt`.
-fn enc_ldp_regs(
-    opc: u32,
-    v: u32,
-    mode: u32,
-    l: u32,
-    imm7: u32,
-    rt: u32,
-    rt2: u32,
-    rn: u32,
-) -> u32 {
+fn enc_ldp_regs(opc: u32, v: u32, mode: u32, l: u32, imm7: u32, rt: u32, rt2: u32, rn: u32) -> u32 {
     (opc << 30)
         | (0b101 << 27)
         | (v << 26)
@@ -28748,10 +28755,7 @@ fn diff_mem_ldp_stp() {
     ];
     for &(opc, l, name) in no_allocate_kinds {
         for imm7 in 0..3u32 {
-            cases.push((
-                format!("{name} #{imm7}"),
-                enc_ldp(opc, 0, 0b00, l, imm7),
-            ));
+            cases.push((format!("{name} #{imm7}"), enc_ldp(opc, 0, 0b00, l, imm7)));
         }
     }
     for imm7 in 0..3u32 {
@@ -28908,11 +28912,7 @@ fn diff_mem_ldst_reg_offset() {
             enc_ldst_reg(1, 2, RM, 0b010, 1),
             4,
         ),
-        (
-            "strb_reg_uxtw".into(),
-            enc_ldst_reg(0, 0, RM, 0b010, 0),
-            15,
-        ),
+        ("strb_reg_uxtw".into(), enc_ldst_reg(0, 0, RM, 0b010, 0), 15),
         (
             "ldr_x_reg_bad_extend_undef".into(),
             enc_ldst_reg(3, 1, RM, 0b000, 0),
@@ -28951,10 +28951,7 @@ fn diff_mem_ldst_unprivileged() {
             "ldtrsw_w_unpriv_undef".into(),
             enc_ldst_simm(2, 0, 3, 0b10, 0),
         ),
-        (
-            "prfm_unpriv_undef".into(),
-            enc_ldst_simm(3, 0, 2, 0b10, 0),
-        ),
+        ("prfm_unpriv_undef".into(), enc_ldst_simm(3, 0, 2, 0b10, 0)),
         (
             "size11_opc11_unpriv_undef".into(),
             enc_ldst_simm(3, 0, 3, 0b10, 0),
@@ -28986,7 +28983,10 @@ fn diff_mem_prfm() {
         ("prfm_post_undef".into(), enc_ldst_simm(3, 0, 2, 0b01, 8)),
         ("prfm_pre_undef".into(), enc_ldst_simm(3, 0, 2, 0b11, 8)),
         ("prfm_opc11_undef".into(), enc_ldst_uimm(3, 0, 3, 0)),
-        ("prfm_reg_bad_extend_undef".into(), enc_prfm_reg(0, RM, 0b000, 0)),
+        (
+            "prfm_reg_bad_extend_undef".into(),
+            enc_prfm_reg(0, RM, 0b000, 0),
+        ),
     ];
     let mut rng = Rng::new(0x1_0020);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -30088,8 +30088,7 @@ fn diff_sve2_comprehensive_sweep() {
             batch.push(((*label).to_string(), *insn, st));
         }
     }
-    let cases: Vec<(u32, u32, ArmState)> =
-        batch.iter().map(|(_, i, s)| (*i, NOP, *s)).collect();
+    let cases: Vec<(u32, u32, ArmState)> = batch.iter().map(|(_, i, s)| (*i, NOP, *s)).collect();
     let outs = run_oracle(&oracle, &cases).expect("oracle run failed");
     assert_eq!(outs.len(), cases.len());
 
@@ -30105,9 +30104,9 @@ fn diff_sve2_comprehensive_sweep() {
         if out.trapped != 0 {
             if rax.is_some() {
                 e[2] += 1;
-                sample.entry(label.clone()).or_insert_with(|| {
-                    format!("hw faulted sig{} but rax executed", out.trapped)
-                });
+                sample
+                    .entry(label.clone())
+                    .or_insert_with(|| format!("hw faulted sig{} but rax executed", out.trapped));
             }
             continue;
         }
@@ -30139,12 +30138,19 @@ fn diff_sve2_comprehensive_sweep() {
             if rax.vreg(r) != out.st.vreg(r) {
                 let (rl, rh) = rax.vreg(r);
                 let (hl, hh) = out.st.vreg(r);
-                diffs.push(format!("v{r}:rax={:#x}{:016x} hw={:#x}{:016x}", rh, rl, hh, hl));
+                diffs.push(format!(
+                    "v{r}:rax={:#x}{:016x} hw={:#x}{:016x}",
+                    rh, rl, hh, hl
+                ));
             }
         }
         for r in 0..16 {
             if rax.preg(r) != out.st.preg(r) {
-                diffs.push(format!("p{r}:rax={:#x} hw={:#x}", rax.preg(r), out.st.preg(r)));
+                diffs.push(format!(
+                    "p{r}:rax={:#x} hw={:#x}",
+                    rax.preg(r),
+                    out.st.preg(r)
+                ));
             }
         }
         if !diffs.is_empty() {
@@ -30169,28 +30175,52 @@ fn diff_sve2_comprehensive_sweep() {
             faults.push((label.clone(), e[2], e[3]));
         }
     }
-    eprintln!("\n==== SVE2 SWEEP PROBE: {} mnemonics, {} cases ====", stats.len(), batch.len());
+    eprintln!(
+        "\n==== SVE2 SWEEP PROBE: {} mnemonics, {} cases ====",
+        stats.len(),
+        batch.len()
+    );
     eprintln!("\n-- DECODE GAPS (hw runs, rax rejects): {} --", gaps.len());
     for (l, c, t) in &gaps {
-        eprintln!("  {c:3}/{t:<3} {l}    [{}]", sample.get(l).cloned().unwrap_or_default());
+        eprintln!(
+            "  {c:3}/{t:<3} {l}    [{}]",
+            sample.get(l).cloned().unwrap_or_default()
+        );
     }
     eprintln!("\n-- VALUE MISMATCHES (wrong answer): {} --", vals.len());
     for (l, c, t) in &vals {
-        eprintln!("  {c:3}/{t:<3} {l}    [{}]", sample.get(l).cloned().unwrap_or_default());
+        eprintln!(
+            "  {c:3}/{t:<3} {l}    [{}]",
+            sample.get(l).cloned().unwrap_or_default()
+        );
     }
-    eprintln!("\n-- FAULT DISAGREE (hw faults, rax runs): {} --", faults.len());
+    eprintln!(
+        "\n-- FAULT DISAGREE (hw faults, rax runs): {} --",
+        faults.len()
+    );
     for (l, c, t) in &faults {
-        eprintln!("  {c:3}/{t:<3} {l}    [{}]", sample.get(l).cloned().unwrap_or_default());
+        eprintln!(
+            "  {c:3}/{t:<3} {l}    [{}]",
+            sample.get(l).cloned().unwrap_or_default()
+        );
     }
-    eprintln!("\n==== END PROBE: {} gaps, {} value-mismatch, {} fault-disagree ====",
-        gaps.len(), vals.len(), faults.len());
+    eprintln!(
+        "\n==== END PROBE: {} gaps, {} value-mismatch, {} fault-disagree ====",
+        gaps.len(),
+        vals.len(),
+        faults.len()
+    );
 
     let total = gaps.len() + vals.len() + faults.len();
     assert_eq!(
-        total, 0,
+        total,
+        0,
         "sve2 comprehensive sweep: {} mnemonics diverged from the oracle \
          ({} decode-gaps, {} value-mismatches, {} fault-disagrees)",
-        total, gaps.len(), vals.len(), faults.len()
+        total,
+        gaps.len(),
+        vals.len(),
+        faults.len()
     );
 }
 
@@ -30222,8 +30252,7 @@ fn diff_neon_comprehensive_sweep() {
             batch.push(((*label).to_string(), *insn, st));
         }
     }
-    let cases: Vec<(u32, u32, ArmState)> =
-        batch.iter().map(|(_, i, s)| (*i, NOP, *s)).collect();
+    let cases: Vec<(u32, u32, ArmState)> = batch.iter().map(|(_, i, s)| (*i, NOP, *s)).collect();
     let outs = run_oracle(&oracle, &cases).expect("oracle run failed");
     assert_eq!(outs.len(), cases.len());
 
@@ -30238,9 +30267,9 @@ fn diff_neon_comprehensive_sweep() {
         if out.trapped != 0 {
             if rax.is_some() {
                 e[2] += 1;
-                sample.entry(label.clone()).or_insert_with(|| {
-                    format!("hw faulted sig{} but rax executed", out.trapped)
-                });
+                sample
+                    .entry(label.clone())
+                    .or_insert_with(|| format!("hw faulted sig{} but rax executed", out.trapped));
             }
             continue;
         }
@@ -30271,12 +30300,17 @@ fn diff_neon_comprehensive_sweep() {
             if rax.vreg(r) != out.st.vreg(r) {
                 let (rl, rh) = rax.vreg(r);
                 let (hl, hh) = out.st.vreg(r);
-                diffs.push(format!("v{r}:rax={:#x}{:016x} hw={:#x}{:016x}", rh, rl, hh, hl));
+                diffs.push(format!(
+                    "v{r}:rax={:#x}{:016x} hw={:#x}{:016x}",
+                    rh, rl, hh, hl
+                ));
             }
         }
         if !diffs.is_empty() {
             e[1] += 1;
-            sample.entry(label.clone()).or_insert_with(|| diffs.join(" | "));
+            sample
+                .entry(label.clone())
+                .or_insert_with(|| diffs.join(" | "));
         }
     }
 
@@ -30294,26 +30328,50 @@ fn diff_neon_comprehensive_sweep() {
             faults.push((label.clone(), e[2], e[3]));
         }
     }
-    eprintln!("\n==== NEON SWEEP PROBE: {} mnemonics, {} cases ====", stats.len(), batch.len());
+    eprintln!(
+        "\n==== NEON SWEEP PROBE: {} mnemonics, {} cases ====",
+        stats.len(),
+        batch.len()
+    );
     eprintln!("\n-- DECODE GAPS (hw runs, rax rejects): {} --", gaps.len());
     for (l, c, t) in &gaps {
-        eprintln!("  {c:3}/{t:<3} {l}    [{}]", sample.get(l).cloned().unwrap_or_default());
+        eprintln!(
+            "  {c:3}/{t:<3} {l}    [{}]",
+            sample.get(l).cloned().unwrap_or_default()
+        );
     }
     eprintln!("\n-- VALUE MISMATCHES (wrong answer): {} --", vals.len());
     for (l, c, t) in &vals {
-        eprintln!("  {c:3}/{t:<3} {l}    [{}]", sample.get(l).cloned().unwrap_or_default());
+        eprintln!(
+            "  {c:3}/{t:<3} {l}    [{}]",
+            sample.get(l).cloned().unwrap_or_default()
+        );
     }
-    eprintln!("\n-- FAULT DISAGREE (hw faults, rax runs): {} --", faults.len());
+    eprintln!(
+        "\n-- FAULT DISAGREE (hw faults, rax runs): {} --",
+        faults.len()
+    );
     for (l, c, t) in &faults {
-        eprintln!("  {c:3}/{t:<3} {l}    [{}]", sample.get(l).cloned().unwrap_or_default());
+        eprintln!(
+            "  {c:3}/{t:<3} {l}    [{}]",
+            sample.get(l).cloned().unwrap_or_default()
+        );
     }
-    eprintln!("\n==== END NEON PROBE: {} gaps, {} value-mismatch, {} fault-disagree ====",
-        gaps.len(), vals.len(), faults.len());
+    eprintln!(
+        "\n==== END NEON PROBE: {} gaps, {} value-mismatch, {} fault-disagree ====",
+        gaps.len(),
+        vals.len(),
+        faults.len()
+    );
 
     let total = gaps.len() + vals.len() + faults.len();
     assert_eq!(
-        total, 0,
+        total,
+        0,
         "neon comprehensive sweep: {} mnemonics diverged ({} gaps, {} value, {} fault)",
-        total, gaps.len(), vals.len(), faults.len()
+        total,
+        gaps.len(),
+        vals.len(),
+        faults.len()
     );
 }

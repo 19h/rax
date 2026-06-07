@@ -140,7 +140,11 @@ fn rm_moffs_uses_ds_base() {
     run(&mut v, 20);
     let mut b = [0u8; 2];
     m.read_slice(&mut b, GuestAddress(0x3040)).unwrap();
-    assert_eq!(u16::from_le_bytes(b), 0xCAFE, "moffs write must use DS.base + 0x40");
+    assert_eq!(
+        u16::from_le_bytes(b),
+        0xCAFE,
+        "moffs write must use DS.base + 0x40"
+    );
 }
 
 // ── Increment 3: stack uses SS.base; string ops use DS/ES base; far jmp sets CS.base.
@@ -160,10 +164,18 @@ fn rm_stack_uses_ss_base() {
     ];
     let (mut v, m) = rm_vcpu(&code, 0x7C00, 0);
     run(&mut v, 20);
-    assert_eq!(v.get_regs().unwrap().rcx & 0xFFFF, 0x1234, "pop must use SS.base");
+    assert_eq!(
+        v.get_regs().unwrap().rcx & 0xFFFF,
+        0x1234,
+        "pop must use SS.base"
+    );
     let mut b = [0u8; 2];
     m.read_slice(&mut b, GuestAddress(0x50FE)).unwrap(); // ss.base + (sp-2)
-    assert_eq!(u16::from_le_bytes(b), 0x1234, "push must write to SS.base+SP");
+    assert_eq!(
+        u16::from_le_bytes(b),
+        0x1234,
+        "push must write to SS.base+SP"
+    );
 }
 
 #[test]
@@ -179,11 +191,16 @@ fn rm_movs_uses_segment_bases() {
         0xF4,
     ];
     let (mut v, m) = rm_vcpu(&code, 0x7C00, 0);
-    m.write_slice(&[0xDE, 0xAD, 0xBE, 0xEF], GuestAddress(0x6000)).unwrap();
+    m.write_slice(&[0xDE, 0xAD, 0xBE, 0xEF], GuestAddress(0x6000))
+        .unwrap();
     run(&mut v, 40);
     let mut b = [0u8; 4];
     m.read_slice(&mut b, GuestAddress(0x7000)).unwrap();
-    assert_eq!(b, [0xDE, 0xAD, 0xBE, 0xEF], "rep movsb: DS.base+SI -> ES.base+DI");
+    assert_eq!(
+        b,
+        [0xDE, 0xAD, 0xBE, 0xEF],
+        "rep movsb: DS.base+SI -> ES.base+DI"
+    );
 }
 
 #[test]
@@ -191,10 +208,19 @@ fn rm_far_jmp_sets_cs_base() {
     // at 0x7C00: jmp 0x0900:0x0010 ; target at linear 0x9010: mov ax,0xF00D ; hlt
     let code = [0xEA, 0x10, 0x00, 0x00, 0x09]; // jmp ptr16:16 = 0x0900:0x0010
     let (mut v, m) = rm_vcpu(&code, 0x7C00, 0);
-    m.write_slice(&[0xB8, 0x0D, 0xF0, 0xF4], GuestAddress(0x9010)).unwrap();
+    m.write_slice(&[0xB8, 0x0D, 0xF0, 0xF4], GuestAddress(0x9010))
+        .unwrap();
     run(&mut v, 10);
-    assert_eq!(v.get_sregs().unwrap().cs.base, 0x9000, "far jmp sets CS.base = sel<<4");
-    assert_eq!(v.get_regs().unwrap().rax & 0xFFFF, 0xF00D, "fetch+exec at CS.base+IP");
+    assert_eq!(
+        v.get_sregs().unwrap().cs.base,
+        0x9000,
+        "far jmp sets CS.base = sel<<4"
+    );
+    assert_eq!(
+        v.get_regs().unwrap().rax & 0xFFFF,
+        0xF00D,
+        "fetch+exec at CS.base+IP"
+    );
 }
 
 // ── Increment 4: the actual TempleOS boot prologue end-to-end (relocate + far jmp).
@@ -240,8 +266,15 @@ fn rm_templeos_prologue_relocates_and_far_jumps() {
 
     // Far-jumped into the relocated copy at 0x9660:0x00B0.
     let s = v.get_sregs().unwrap();
-    assert_eq!(s.cs.base, 0x9_6600, "running in the relocated segment 0x9660");
-    assert_eq!(v.get_regs().unwrap().rax & 0xFFFF, 0xD00D, "executed the relocated marker");
+    assert_eq!(
+        s.cs.base, 0x9_6600,
+        "running in the relocated segment 0x9660"
+    );
+    assert_eq!(
+        v.get_regs().unwrap().rax & 0xFFFF,
+        0xD00D,
+        "executed the relocated marker"
+    );
     // The boot image was copied verbatim to 0x96600.
     let mut head = [0u8; 4];
     m.read_slice(&mut head, GuestAddress(0x9_6600)).unwrap();
@@ -282,7 +315,11 @@ fn rm_bios_int13_extended_read() {
     run(&mut v, 30);
 
     // CF clear (success), and the CD sector landed at the buffer 0x2000.
-    assert_eq!(v.get_regs().unwrap().rflags & 1, 0, "INT 13h AH=42h must clear CF");
+    assert_eq!(
+        v.get_regs().unwrap().rflags & 1,
+        0,
+        "INT 13h AH=42h must clear CF"
+    );
     let mut buf = [0u8; 2048];
     m.read_slice(&mut buf, GuestAddress(0x2000)).unwrap();
     for (i, b) in buf.iter().enumerate() {

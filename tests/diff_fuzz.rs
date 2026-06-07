@@ -26,7 +26,7 @@
 
 use std::sync::Arc;
 
-use rax::backend::emulator::x86_64::{flags, X86_64Vcpu};
+use rax::backend::emulator::x86_64::{X86_64Vcpu, flags};
 use rax::cpu::{Registers, SystemRegisters, VCpu, VcpuExit};
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
@@ -82,8 +82,12 @@ struct FinalState {
 }
 
 /// Observable, architecturally-defined RFLAGS status bits.
-const FLAG_MASK: u64 =
-    flags::bits::CF | flags::bits::PF | flags::bits::AF | flags::bits::ZF | flags::bits::SF | flags::bits::OF;
+const FLAG_MASK: u64 = flags::bits::CF
+    | flags::bits::PF
+    | flags::bits::AF
+    | flags::bits::ZF
+    | flags::bits::SF
+    | flags::bits::OF;
 
 // ---------------------------------------------------------------------------
 // Shared identity-mapped long-mode initial state.
@@ -142,15 +146,22 @@ fn install_tables_mmap(write: &mut dyn FnMut(u64, &[u8])) {
 // Interpreter backend
 // ---------------------------------------------------------------------------
 
-fn run_interpreter(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Result<FinalState, String> {
+fn run_interpreter(
+    code: &[u8],
+    init: &Registers,
+    scratch_init: &[u8; 64],
+) -> Result<FinalState, String> {
     let regions = vec![(GuestAddress(0), MEM_SIZE)];
-    let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&regions).map_err(|e| format!("mem: {e:?}"))?);
+    let mem =
+        Arc::new(GuestMemoryMmap::<()>::from_ranges(&regions).map_err(|e| format!("mem: {e:?}"))?);
 
     install_tables_mmap(&mut |addr, bytes| {
         mem.write_slice(bytes, GuestAddress(addr)).unwrap();
     });
-    mem.write_slice(code, GuestAddress(CODE_ADDR)).map_err(|e| format!("code: {e:?}"))?;
-    mem.write_slice(scratch_init, GuestAddress(DATA_ADDR)).map_err(|e| format!("scratch: {e:?}"))?;
+    mem.write_slice(code, GuestAddress(CODE_ADDR))
+        .map_err(|e| format!("code: {e:?}"))?;
+    mem.write_slice(scratch_init, GuestAddress(DATA_ADDR))
+        .map_err(|e| format!("scratch: {e:?}"))?;
 
     let mut vcpu = X86_64Vcpu::new(0, mem.clone());
 
@@ -160,8 +171,10 @@ fn run_interpreter(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Re
         regs.rsp = STACK_ADDR;
     }
     regs.rflags |= 0x2;
-    vcpu.set_regs(&regs).map_err(|e| format!("set_regs: {e:?}"))?;
-    vcpu.set_sregs(&base_sregs()).map_err(|e| format!("set_sregs: {e:?}"))?;
+    vcpu.set_regs(&regs)
+        .map_err(|e| format!("set_regs: {e:?}"))?;
+    vcpu.set_sregs(&base_sregs())
+        .map_err(|e| format!("set_sregs: {e:?}"))?;
 
     let mut iters = 0u64;
     loop {
@@ -175,7 +188,9 @@ fn run_interpreter(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Re
                 let data = vec![0u8; size as usize];
                 vcpu.complete_io_in(&data);
             }
-            Some(VcpuExit::Shutdown) | Some(VcpuExit::FailEntry { .. }) | Some(VcpuExit::InternalError) => {
+            Some(VcpuExit::Shutdown)
+            | Some(VcpuExit::FailEntry { .. })
+            | Some(VcpuExit::InternalError) => {
                 return Err("interpreter abnormal exit".to_string());
             }
             _ => {}
@@ -184,7 +199,8 @@ fn run_interpreter(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Re
 
     let final_regs = vcpu.get_regs().map_err(|e| format!("get_regs: {e:?}"))?;
     let mut scratch = [0u8; 64];
-    mem.read_slice(&mut scratch, GuestAddress(DATA_ADDR)).map_err(|e| format!("read scratch: {e:?}"))?;
+    mem.read_slice(&mut scratch, GuestAddress(DATA_ADDR))
+        .map_err(|e| format!("read scratch: {e:?}"))?;
 
     Ok(FinalState {
         xmm: final_regs.xmm,
@@ -217,7 +233,10 @@ impl KvmMem {
         if ptr == libc::MAP_FAILED {
             return None;
         }
-        Some(KvmMem { ptr: ptr as *mut u8, size })
+        Some(KvmMem {
+            ptr: ptr as *mut u8,
+            size,
+        })
     }
 
     fn write(&self, addr: u64, bytes: &[u8]) {
@@ -245,7 +264,11 @@ impl Drop for KvmMem {
 
 /// Returns Ok(None) if KVM is unavailable (callers skip gracefully),
 /// Ok(Some(state)) on success, Err on a genuine run failure.
-fn run_kvm(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Result<Option<FinalState>, String> {
+fn run_kvm(
+    code: &[u8],
+    init: &Registers,
+    scratch_init: &[u8; 64],
+) -> Result<Option<FinalState>, String> {
     use kvm_bindings::{kvm_segment, kvm_userspace_memory_region};
     use kvm_ioctls::Kvm;
 
@@ -284,7 +307,9 @@ fn run_kvm(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Result<Opt
     };
 
     let our_sregs = base_sregs();
-    let mut sregs = vcpu.get_sregs().map_err(|e| format!("kvm get_sregs: {e:?}"))?;
+    let mut sregs = vcpu
+        .get_sregs()
+        .map_err(|e| format!("kvm get_sregs: {e:?}"))?;
 
     let to_kvm_seg = |s: &rax::cpu::Segment| kvm_segment {
         base: s.base,
@@ -312,9 +337,12 @@ fn run_kvm(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Result<Opt
     sregs.fs = to_kvm_seg(&our_sregs.fs);
     sregs.gs = to_kvm_seg(&our_sregs.gs);
     sregs.ss = to_kvm_seg(&our_sregs.ss);
-    vcpu.set_sregs(&sregs).map_err(|e| format!("kvm set_sregs: {e:?}"))?;
+    vcpu.set_sregs(&sregs)
+        .map_err(|e| format!("kvm set_sregs: {e:?}"))?;
 
-    let mut kregs = vcpu.get_regs().map_err(|e| format!("kvm get_regs: {e:?}"))?;
+    let mut kregs = vcpu
+        .get_regs()
+        .map_err(|e| format!("kvm get_regs: {e:?}"))?;
     kregs.rax = init.rax;
     kregs.rbx = init.rbx;
     kregs.rcx = init.rcx;
@@ -333,7 +361,8 @@ fn run_kvm(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Result<Opt
     kregs.r15 = init.r15;
     kregs.rip = CODE_ADDR;
     kregs.rflags = init.rflags | 0x2;
-    vcpu.set_regs(&kregs).map_err(|e| format!("kvm set_regs: {e:?}"))?;
+    vcpu.set_regs(&kregs)
+        .map_err(|e| format!("kvm set_regs: {e:?}"))?;
 
     if init.xmm.iter().any(|x| x != &[0, 0]) {
         let mut fpu = vcpu.get_fpu().map_err(|e| format!("kvm get_fpu: {e:?}"))?;
@@ -343,7 +372,8 @@ fn run_kvm(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Result<Opt
             fpu.xmm[i][..8].copy_from_slice(&lo);
             fpu.xmm[i][8..].copy_from_slice(&hi);
         }
-        vcpu.set_fpu(&fpu).map_err(|e| format!("kvm set_fpu: {e:?}"))?;
+        vcpu.set_fpu(&fpu)
+            .map_err(|e| format!("kvm set_fpu: {e:?}"))?;
     }
 
     let mut iters = 0u64;
@@ -372,8 +402,12 @@ fn run_kvm(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Result<Opt
         }
     }
 
-    let final_kregs = vcpu.get_regs().map_err(|e| format!("kvm get_regs(final): {e:?}"))?;
-    let final_fpu = vcpu.get_fpu().map_err(|e| format!("kvm get_fpu(final): {e:?}"))?;
+    let final_kregs = vcpu
+        .get_regs()
+        .map_err(|e| format!("kvm get_regs(final): {e:?}"))?;
+    let final_fpu = vcpu
+        .get_fpu()
+        .map_err(|e| format!("kvm get_fpu(final): {e:?}"))?;
 
     let mut regs = Registers::default();
     regs.rax = final_kregs.rax;
@@ -479,7 +513,12 @@ fn describe_flags(bits: u64) -> String {
 /// Returns a list of human-readable divergences. `ignore_regs` lets a generator
 /// suppress GPRs whose value is architecturally UNDEFINED for the case (e.g. the
 /// destination of BSF/BSR on a zero source).
-fn compare(interp: &FinalState, kvm: &FinalState, opts: CompareOpts, ignore_regs: &[&str]) -> Vec<String> {
+fn compare(
+    interp: &FinalState,
+    kvm: &FinalState,
+    opts: CompareOpts,
+    ignore_regs: &[&str],
+) -> Vec<String> {
     let mut diffs = Vec::new();
 
     let il = gpr_list(&interp.regs);
@@ -574,9 +613,9 @@ impl Rng {
             2 => u64::MAX,
             3 => 0x8000_0000_0000_0000,
             4 => 0x7FFF_FFFF_FFFF_FFFF,
-            5 => 1u64 << self.below(64),       // single random bit
-            6 => self.next_u64() & 0xFF,       // small value
-            _ => self.next_u64(),              // full noise
+            5 => 1u64 << self.below(64), // single random bit
+            6 => self.next_u64() & 0xFF, // small value
+            _ => self.next_u64(),        // full noise
         }
     }
 }
@@ -825,14 +864,54 @@ struct AluOp {
 }
 
 const ALU_OPS: &[AluOp] = &[
-    AluOp { name: "add", rm_r_op8: 0x00, imm_digit: 0, writes: true },
-    AluOp { name: "or", rm_r_op8: 0x08, imm_digit: 1, writes: true },
-    AluOp { name: "adc", rm_r_op8: 0x10, imm_digit: 2, writes: true },
-    AluOp { name: "sbb", rm_r_op8: 0x18, imm_digit: 3, writes: true },
-    AluOp { name: "and", rm_r_op8: 0x20, imm_digit: 4, writes: true },
-    AluOp { name: "sub", rm_r_op8: 0x28, imm_digit: 5, writes: true },
-    AluOp { name: "xor", rm_r_op8: 0x30, imm_digit: 6, writes: true },
-    AluOp { name: "cmp", rm_r_op8: 0x38, imm_digit: 7, writes: false },
+    AluOp {
+        name: "add",
+        rm_r_op8: 0x00,
+        imm_digit: 0,
+        writes: true,
+    },
+    AluOp {
+        name: "or",
+        rm_r_op8: 0x08,
+        imm_digit: 1,
+        writes: true,
+    },
+    AluOp {
+        name: "adc",
+        rm_r_op8: 0x10,
+        imm_digit: 2,
+        writes: true,
+    },
+    AluOp {
+        name: "sbb",
+        rm_r_op8: 0x18,
+        imm_digit: 3,
+        writes: true,
+    },
+    AluOp {
+        name: "and",
+        rm_r_op8: 0x20,
+        imm_digit: 4,
+        writes: true,
+    },
+    AluOp {
+        name: "sub",
+        rm_r_op8: 0x28,
+        imm_digit: 5,
+        writes: true,
+    },
+    AluOp {
+        name: "xor",
+        rm_r_op8: 0x30,
+        imm_digit: 6,
+        writes: true,
+    },
+    AluOp {
+        name: "cmp",
+        rm_r_op8: 0x38,
+        imm_digit: 7,
+        writes: false,
+    },
 ];
 
 fn modrm(md: u8, reg: u8, rm: u8) -> u8 {
@@ -885,16 +964,31 @@ fn fuzz_alu() {
             }
             inputs = format!(
                 "{} {} {}, imm={:#x} (cf_in={}); dst={:#x}",
-                op.name, size.name(), reg_name(dst), imm, cf_in, dval
+                op.name,
+                size.name(),
+                reg_name(dst),
+                imm,
+                cf_in,
+                dval
             );
         } else {
             // reg,reg writing into r/m: opcode = rm_r_op8 (+1 for non-byte).
-            let opc = if size == Size::B8 { op.rm_r_op8 } else { op.rm_r_op8 + 1 };
+            let opc = if size == Size::B8 {
+                op.rm_r_op8
+            } else {
+                op.rm_r_op8 + 1
+            };
             code.push(opc);
             code.push(modrm(0b11, src, dst)); // reg=src, rm=dst -> dst = dst OP src
             inputs = format!(
                 "{} {} {}, {} (cf_in={}); dst={:#x} src={:#x}",
-                op.name, size.name(), reg_name(dst), reg_name(src), cf_in, dval, sval
+                op.name,
+                size.name(),
+                reg_name(dst),
+                reg_name(src),
+                cf_in,
+                dval,
+                sval
             );
         }
         code.push(HLT);
@@ -984,8 +1078,23 @@ fn fuzz_unary() {
         }
         code.push(HLT);
 
-        let inputs = format!("{} {} {} (cf_in={}); dst={:#x}", name, size.name(), reg_name(dst), cf_in, dval);
-        if !h.run_case("unary", &code, r, [0u8; 64], CompareOpts::default(), inputs, &[]) {
+        let inputs = format!(
+            "{} {} {} (cf_in={}); dst={:#x}",
+            name,
+            size.name(),
+            reg_name(dst),
+            cf_in,
+            dval
+        );
+        if !h.run_case(
+            "unary",
+            &code,
+            r,
+            [0u8; 64],
+            CompareOpts::default(),
+            inputs,
+            &[],
+        ) {
             break;
         }
     }
@@ -1063,7 +1172,12 @@ fn fuzz_shifts() {
             code.push(modrm(0b11, digit, dst));
             inputs = format!(
                 "{} {} {}, cl={} (cf_in={}); dst={:#x}",
-                name, size.name(), reg_name(dst), count, cf_in, dval
+                name,
+                size.name(),
+                reg_name(dst),
+                count,
+                cf_in,
+                dval
             );
         } else if count == 1 {
             // Use the dedicated by-1 form so OF is well-defined.
@@ -1071,7 +1185,11 @@ fn fuzz_shifts() {
             code.push(modrm(0b11, digit, dst));
             inputs = format!(
                 "{} {} {}, 1 (cf_in={}); dst={:#x}",
-                name, size.name(), reg_name(dst), cf_in, dval
+                name,
+                size.name(),
+                reg_name(dst),
+                cf_in,
+                dval
             );
         } else {
             code.push(if byte { 0xC0 } else { 0xC1 });
@@ -1079,7 +1197,12 @@ fn fuzz_shifts() {
             code.push(count);
             inputs = format!(
                 "{} {} {}, imm8={} (cf_in={}); dst={:#x}",
-                name, size.name(), reg_name(dst), count, cf_in, dval
+                name,
+                size.name(),
+                reg_name(dst),
+                count,
+                cf_in,
+                dval
             );
         }
         code.push(HLT);
@@ -1189,7 +1312,13 @@ fn fuzz_double_shifts() {
 
         let inputs = format!(
             "{} {} {}, {}, {} ; dst={:#x} src={:#x}",
-            name, size.name(), reg_name(dst), reg_name(src), count, dval, sval
+            name,
+            size.name(),
+            reg_name(dst),
+            reg_name(src),
+            count,
+            dval,
+            sval
         );
         let opts = CompareOpts {
             flag_mask,
@@ -1226,7 +1355,17 @@ fn fuzz_bitops() {
         Lzcnt,
         Tzcnt,
     }
-    let ops = [B::Bt, B::Bts, B::Btr, B::Btc, B::Bsf, B::Bsr, B::Popcnt, B::Lzcnt, B::Tzcnt];
+    let ops = [
+        B::Bt,
+        B::Bts,
+        B::Btr,
+        B::Btc,
+        B::Bsf,
+        B::Bsr,
+        B::Popcnt,
+        B::Lzcnt,
+        B::Tzcnt,
+    ];
 
     for _ in 0..CASES {
         let size = *h.rng.pick(&sizes);
@@ -1270,7 +1409,12 @@ fn fuzz_bitops() {
                 flag_mask = flags::bits::CF; // BT* define only CF.
                 inputs = format!(
                     "{} {} {}, {}={} ; dst={:#x}",
-                    name, size.name(), reg_name(dst), reg_name(src), bitidx, dval
+                    name,
+                    size.name(),
+                    reg_name(dst),
+                    reg_name(src),
+                    bitidx,
+                    dval
                 );
             }
             B::Bsf | B::Bsr => {
@@ -1284,19 +1428,27 @@ fn fuzz_bitops() {
                     code.push(0x48);
                 }
                 code.push(0x0F);
-                let (opc, n) = if matches!(op, B::Bsf) { (0xBCu8, "bsf") } else { (0xBD, "bsr") };
+                let (opc, n) = if matches!(op, B::Bsf) {
+                    (0xBCu8, "bsf")
+                } else {
+                    (0xBD, "bsr")
+                };
                 code.push(opc);
                 code.push(modrm(0b11, dst, src));
                 name = n;
                 flag_mask = flags::bits::ZF; // BSF/BSR define only ZF.
-                                             // When src==0 the destination is architecturally undefined.
+                // When src==0 the destination is architecturally undefined.
                 let masked_src = if w64 { srcval } else { srcval & 0xFFFF_FFFF };
                 if masked_src == 0 {
                     ignore.push(reg_name(dst));
                 }
                 inputs = format!(
                     "{} {} {}, {} ; src={:#x}",
-                    name, size.name(), reg_name(dst), reg_name(src), srcval
+                    name,
+                    size.name(),
+                    reg_name(dst),
+                    reg_name(src),
+                    srcval
                 );
             }
             B::Popcnt | B::Lzcnt | B::Tzcnt => {
@@ -1318,7 +1470,11 @@ fn fuzz_bitops() {
                 flag_mask = fm;
                 inputs = format!(
                     "{} {} {}, {} ; src={:#x}",
-                    name, size.name(), reg_name(dst), reg_name(src), dval
+                    name,
+                    size.name(),
+                    reg_name(dst),
+                    reg_name(src),
+                    dval
                 );
             }
         }
@@ -1360,7 +1516,11 @@ fn fuzz_muldiv() {
 
         let mut r = Registers::default();
         let bits = size.bits();
-        let mask: u128 = if bits == 64 { u128::MAX >> 64 } else { (1u128 << bits) - 1 };
+        let mask: u128 = if bits == 64 {
+            u128::MAX >> 64
+        } else {
+            (1u128 << bits) - 1
+        };
 
         let src = pick_gpr(&mut h.rng);
         // Don't use rax/rdx as the explicit source for 1-op forms (they're implicit).
@@ -1393,7 +1553,11 @@ fn fuzz_muldiv() {
             flag_mask = muldiv_defined;
             inputs = format!(
                 "imul2 {} {}, {} ; a={:#x} b={:#x}",
-                size.name(), reg_name(dst), reg_name(s2), a, b
+                size.name(),
+                reg_name(dst),
+                reg_name(s2),
+                a,
+                b
             );
             let opts = CompareOpts {
                 flag_mask,
@@ -1464,7 +1628,11 @@ fn fuzz_muldiv() {
                     flag_mask = 0; // all flags undefined for DIV.
                     inputs = format!(
                         "div {} {}={:#x} ; dividend_lo={:#x} hi={:#x}",
-                        size.name(), reg_name(srcr), divisor, lo as u64, hi as u64
+                        size.name(),
+                        reg_name(srcr),
+                        divisor,
+                        lo as u64,
+                        hi as u64
                     );
                 } else {
                     // Signed IDIV. Build from a signed quotient/remainder that fit.
@@ -1482,7 +1650,8 @@ fn fuzz_muldiv() {
                     };
                     // quotient in a safe range so it fits in `bits` signed and the
                     // product doesn't overflow the double-width dividend.
-                    let q = (sign_extend(h.rng.operand(), bits) as i128) % (smax / sdiv.abs().max(1) + 1).max(1);
+                    let q = (sign_extend(h.rng.operand(), bits) as i128)
+                        % (smax / sdiv.abs().max(1) + 1).max(1);
                     let rem_bound = sdiv.abs();
                     let mut rem = (h.rng.next_u64() as i128) % rem_bound.max(1);
                     // remainder sign follows the dividend; keep |rem| < |divisor|.
@@ -1501,7 +1670,13 @@ fn fuzz_muldiv() {
                     flag_mask = 0;
                     inputs = format!(
                         "idiv {} {}={:#x} ; dividend_lo={:#x} hi={:#x} (q={} rem={})",
-                        size.name(), reg_name(srcr), divisor, lo, hi, q, rem
+                        size.name(),
+                        reg_name(srcr),
+                        divisor,
+                        lo,
+                        hi,
+                        q,
+                        rem
                     );
                 }
             }
@@ -1601,9 +1776,23 @@ fn fuzz_movext_bswap() {
         }
         code.push(HLT);
 
-        let inputs = format!("{} {}, {} ; src={:#x}", name, reg_name(dst), reg_name(src), sval);
+        let inputs = format!(
+            "{} {}, {} ; src={:#x}",
+            name,
+            reg_name(dst),
+            reg_name(src),
+            sval
+        );
         // mov-extend ops don't touch flags -> compare all (they should be unchanged).
-        if !h.run_case("movext", &code, r, [0u8; 64], CompareOpts::default(), inputs, &[]) {
+        if !h.run_case(
+            "movext",
+            &code,
+            r,
+            [0u8; 64],
+            CompareOpts::default(),
+            inputs,
+            &[],
+        ) {
             break;
         }
     }
@@ -1630,7 +1819,15 @@ fn fuzz_bswap() {
         code.push(0xC8 + (reg & 7));
         code.push(HLT);
         let inputs = format!("bswap {} {} ; v={:#x}", size.name(), reg_name(reg), v);
-        if !h.run_case("bswap", &code, r, [0u8; 64], CompareOpts::default(), inputs, &[]) {
+        if !h.run_case(
+            "bswap",
+            &code,
+            r,
+            [0u8; 64],
+            CompareOpts::default(),
+            inputs,
+            &[],
+        ) {
             break;
         }
     }
@@ -1666,8 +1863,19 @@ fn fuzz_setcc_cmovcc() {
             code.extend_from_slice(&[0x48, 0x0F, 0x40 + cc, modrm(0b11, 0, 1)]);
             name = "cmov";
             code.push(HLT);
-            let inputs = format!("cmp+cmov cc={:#x} ; a={:#x} b={:#x} c={:#x}", cc, a, b, cval);
-            if !h.run_case("cmov", &code, r, [0u8; 64], CompareOpts::default(), inputs, &[]) {
+            let inputs = format!(
+                "cmp+cmov cc={:#x} ; a={:#x} b={:#x} c={:#x}",
+                cc, a, b, cval
+            );
+            if !h.run_case(
+                "cmov",
+                &code,
+                r,
+                [0u8; 64],
+                CompareOpts::default(),
+                inputs,
+                &[],
+            ) {
                 break;
             }
         } else {
@@ -1677,7 +1885,15 @@ fn fuzz_setcc_cmovcc() {
             name = "setcc";
             code.push(HLT);
             let inputs = format!("cmp+setcc cc={:#x} ; a={:#x} b={:#x}", cc, a, b);
-            if !h.run_case("setcc", &code, r, [0u8; 64], CompareOpts::default(), inputs, &[]) {
+            if !h.run_case(
+                "setcc",
+                &code,
+                r,
+                [0u8; 64],
+                CompareOpts::default(),
+                inputs,
+                &[],
+            ) {
                 break;
             }
         }
@@ -1730,7 +1946,18 @@ fn fuzz_bmi() {
         Shlx,
     }
     let ops = [
-        M::Andn, M::Blsi, M::Blsr, M::Blsmsk, M::Bzhi, M::Pext, M::Pdep, M::Mulx, M::Rorx, M::Sarx, M::Shrx, M::Shlx,
+        M::Andn,
+        M::Blsi,
+        M::Blsr,
+        M::Blsmsk,
+        M::Bzhi,
+        M::Pext,
+        M::Pdep,
+        M::Mulx,
+        M::Rorx,
+        M::Sarx,
+        M::Shrx,
+        M::Shlx,
     ];
 
     for _ in 0..CASES {
@@ -1753,7 +1980,12 @@ fn fuzz_bmi() {
                 let b3 = 0x60 | if w64 { 0x80 } else { 0 };
                 code.extend_from_slice(&[0xE2, b3, 0xF2, 0xC1]);
                 flag_mask = bmi_flags;
-                inputs = format!("andn{} eax,ebx,ecx ; ebx={:#x} ecx={:#x}", wbits(w64), ebx, ecx);
+                inputs = format!(
+                    "andn{} eax,ebx,ecx ; ebx={:#x} ecx={:#x}",
+                    wbits(w64),
+                    ebx,
+                    ecx
+                );
             }
             M::Blsi => {
                 code.extend_from_slice(&[0xE2, 0x78 | if w64 { 0x80 } else { 0 }, 0xF3, 0xD9]);
@@ -1773,25 +2005,45 @@ fn fuzz_bmi() {
             M::Bzhi => {
                 code.extend_from_slice(&[0xE2, 0x60 | if w64 { 0x80 } else { 0 }, 0xF5, 0xC1]);
                 flag_mask = bzhi_flags;
-                inputs = format!("bzhi{} eax,ecx,ebx ; ecx={:#x} ebx={:#x}", wbits(w64), ecx, ebx);
+                inputs = format!(
+                    "bzhi{} eax,ecx,ebx ; ecx={:#x} ebx={:#x}",
+                    wbits(w64),
+                    ecx,
+                    ebx
+                );
             }
             M::Pext => {
                 // pp=10(F3): byte3 = 0x62 (W0) / 0xE2 (W1).
                 code.extend_from_slice(&[0xE2, if w64 { 0xE2 } else { 0x62 }, 0xF5, 0xC1]);
                 flag_mask = 0;
-                inputs = format!("pext{} eax,ebx,ecx ; ebx={:#x} ecx={:#x}", wbits(w64), ebx, ecx);
+                inputs = format!(
+                    "pext{} eax,ebx,ecx ; ebx={:#x} ecx={:#x}",
+                    wbits(w64),
+                    ebx,
+                    ecx
+                );
             }
             M::Pdep => {
                 // pp=11(F2): byte3 = 0x63 (W0) / 0xE3 (W1).
                 code.extend_from_slice(&[0xE2, if w64 { 0xE3 } else { 0x63 }, 0xF5, 0xC1]);
                 flag_mask = 0;
-                inputs = format!("pdep{} eax,ebx,ecx ; ebx={:#x} ecx={:#x}", wbits(w64), ebx, ecx);
+                inputs = format!(
+                    "pdep{} eax,ebx,ecx ; ebx={:#x} ecx={:#x}",
+                    wbits(w64),
+                    ebx,
+                    ecx
+                );
             }
             M::Mulx => {
                 // pp=11(F2): byte3 = 0x63 (W0) / 0xE3 (W1). edx implicit.
                 code.extend_from_slice(&[0xE2, if w64 { 0xE3 } else { 0x63 }, 0xF6, 0xC1]);
                 flag_mask = 0;
-                inputs = format!("mulx{} eax,ebx,ecx ; edx={:#x} ecx={:#x}", wbits(w64), edx, ecx);
+                inputs = format!(
+                    "mulx{} eax,ebx,ecx ; edx={:#x} ecx={:#x}",
+                    wbits(w64),
+                    edx,
+                    ecx
+                );
             }
             M::Rorx => {
                 // map 0F3A, pp=11(F2): byte2=0xE3, byte3 = 0x7B (W0) / 0xFB (W1).
@@ -1804,19 +2056,34 @@ fn fuzz_bmi() {
                 // pp=10(F3): byte3 = 0x62 (W0) / 0xE2 (W1). count in ebx (vvvv).
                 code.extend_from_slice(&[0xE2, if w64 { 0xE2 } else { 0x62 }, 0xF7, 0xC1]);
                 flag_mask = 0;
-                inputs = format!("sarx{} eax,ecx,ebx ; ecx={:#x} ebx={:#x}", wbits(w64), ecx, ebx);
+                inputs = format!(
+                    "sarx{} eax,ecx,ebx ; ecx={:#x} ebx={:#x}",
+                    wbits(w64),
+                    ecx,
+                    ebx
+                );
             }
             M::Shrx => {
                 // pp=11(F2): byte3 = 0x63 (W0) / 0xE3 (W1).
                 code.extend_from_slice(&[0xE2, if w64 { 0xE3 } else { 0x63 }, 0xF7, 0xC1]);
                 flag_mask = 0;
-                inputs = format!("shrx{} eax,ecx,ebx ; ecx={:#x} ebx={:#x}", wbits(w64), ecx, ebx);
+                inputs = format!(
+                    "shrx{} eax,ecx,ebx ; ecx={:#x} ebx={:#x}",
+                    wbits(w64),
+                    ecx,
+                    ebx
+                );
             }
             M::Shlx => {
                 // pp=01(66): byte3 = 0x61 (W0) / 0xE1 (W1).
                 code.extend_from_slice(&[0xE2, if w64 { 0xE1 } else { 0x61 }, 0xF7, 0xC1]);
                 flag_mask = 0;
-                inputs = format!("shlx{} eax,ecx,ebx ; ecx={:#x} ebx={:#x}", wbits(w64), ecx, ebx);
+                inputs = format!(
+                    "shlx{} eax,ecx,ebx ; ecx={:#x} ebx={:#x}",
+                    wbits(w64),
+                    ecx,
+                    ebx
+                );
             }
         }
         code.push(HLT);
@@ -1833,11 +2100,7 @@ fn fuzz_bmi() {
 }
 
 fn wbits(w64: bool) -> &'static str {
-    if w64 {
-        "64"
-    } else {
-        "32"
-    }
+    if w64 { "64" } else { "32" }
 }
 
 // ===========================================================================
@@ -1882,56 +2145,256 @@ fn fuzz_sse2() {
         takes_imm: bool,
     }
     let ops: &[SseOp] = &[
-        SseOp { name: "paddb", bytes: &[0x66, 0x0F, 0xFC], takes_imm: false },
-        SseOp { name: "paddw", bytes: &[0x66, 0x0F, 0xFD], takes_imm: false },
-        SseOp { name: "paddd", bytes: &[0x66, 0x0F, 0xFE], takes_imm: false },
-        SseOp { name: "paddq", bytes: &[0x66, 0x0F, 0xD4], takes_imm: false },
-        SseOp { name: "psubb", bytes: &[0x66, 0x0F, 0xF8], takes_imm: false },
-        SseOp { name: "psubw", bytes: &[0x66, 0x0F, 0xF9], takes_imm: false },
-        SseOp { name: "psubd", bytes: &[0x66, 0x0F, 0xFA], takes_imm: false },
-        SseOp { name: "psubq", bytes: &[0x66, 0x0F, 0xFB], takes_imm: false },
-        SseOp { name: "paddsb", bytes: &[0x66, 0x0F, 0xEC], takes_imm: false },
-        SseOp { name: "paddsw", bytes: &[0x66, 0x0F, 0xED], takes_imm: false },
-        SseOp { name: "paddusb", bytes: &[0x66, 0x0F, 0xDC], takes_imm: false },
-        SseOp { name: "paddusw", bytes: &[0x66, 0x0F, 0xDD], takes_imm: false },
-        SseOp { name: "psubsb", bytes: &[0x66, 0x0F, 0xE8], takes_imm: false },
-        SseOp { name: "psubsw", bytes: &[0x66, 0x0F, 0xE9], takes_imm: false },
-        SseOp { name: "psubusb", bytes: &[0x66, 0x0F, 0xD8], takes_imm: false },
-        SseOp { name: "psubusw", bytes: &[0x66, 0x0F, 0xD9], takes_imm: false },
-        SseOp { name: "pand", bytes: &[0x66, 0x0F, 0xDB], takes_imm: false },
-        SseOp { name: "pandn", bytes: &[0x66, 0x0F, 0xDF], takes_imm: false },
-        SseOp { name: "por", bytes: &[0x66, 0x0F, 0xEB], takes_imm: false },
-        SseOp { name: "pxor", bytes: &[0x66, 0x0F, 0xEF], takes_imm: false },
-        SseOp { name: "pcmpeqb", bytes: &[0x66, 0x0F, 0x74], takes_imm: false },
-        SseOp { name: "pcmpeqw", bytes: &[0x66, 0x0F, 0x75], takes_imm: false },
-        SseOp { name: "pcmpeqd", bytes: &[0x66, 0x0F, 0x76], takes_imm: false },
-        SseOp { name: "pcmpgtb", bytes: &[0x66, 0x0F, 0x64], takes_imm: false },
-        SseOp { name: "pcmpgtw", bytes: &[0x66, 0x0F, 0x65], takes_imm: false },
-        SseOp { name: "pcmpgtd", bytes: &[0x66, 0x0F, 0x66], takes_imm: false },
-        SseOp { name: "pmullw", bytes: &[0x66, 0x0F, 0xD5], takes_imm: false },
-        SseOp { name: "pmulhw", bytes: &[0x66, 0x0F, 0xE5], takes_imm: false },
-        SseOp { name: "pmulhuw", bytes: &[0x66, 0x0F, 0xE4], takes_imm: false },
-        SseOp { name: "pmuludq", bytes: &[0x66, 0x0F, 0xF4], takes_imm: false },
-        SseOp { name: "pmaddwd", bytes: &[0x66, 0x0F, 0xF5], takes_imm: false },
-        SseOp { name: "psadbw", bytes: &[0x66, 0x0F, 0xF6], takes_imm: false },
-        SseOp { name: "pavgb", bytes: &[0x66, 0x0F, 0xE0], takes_imm: false },
-        SseOp { name: "pavgw", bytes: &[0x66, 0x0F, 0xE3], takes_imm: false },
-        SseOp { name: "pminub", bytes: &[0x66, 0x0F, 0xDA], takes_imm: false },
-        SseOp { name: "pmaxub", bytes: &[0x66, 0x0F, 0xDE], takes_imm: false },
-        SseOp { name: "pminsw", bytes: &[0x66, 0x0F, 0xEA], takes_imm: false },
-        SseOp { name: "pmaxsw", bytes: &[0x66, 0x0F, 0xEE], takes_imm: false },
-        SseOp { name: "packsswb", bytes: &[0x66, 0x0F, 0x63], takes_imm: false },
-        SseOp { name: "packssdw", bytes: &[0x66, 0x0F, 0x6B], takes_imm: false },
-        SseOp { name: "packuswb", bytes: &[0x66, 0x0F, 0x67], takes_imm: false },
-        SseOp { name: "punpcklbw", bytes: &[0x66, 0x0F, 0x60], takes_imm: false },
-        SseOp { name: "punpcklwd", bytes: &[0x66, 0x0F, 0x61], takes_imm: false },
-        SseOp { name: "punpckldq", bytes: &[0x66, 0x0F, 0x62], takes_imm: false },
-        SseOp { name: "punpcklqdq", bytes: &[0x66, 0x0F, 0x6C], takes_imm: false },
-        SseOp { name: "punpckhbw", bytes: &[0x66, 0x0F, 0x68], takes_imm: false },
-        SseOp { name: "punpckhwd", bytes: &[0x66, 0x0F, 0x69], takes_imm: false },
-        SseOp { name: "punpckhdq", bytes: &[0x66, 0x0F, 0x6A], takes_imm: false },
-        SseOp { name: "punpckhqdq", bytes: &[0x66, 0x0F, 0x6D], takes_imm: false },
-        SseOp { name: "pshufd", bytes: &[0x66, 0x0F, 0x70], takes_imm: true },
+        SseOp {
+            name: "paddb",
+            bytes: &[0x66, 0x0F, 0xFC],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "paddw",
+            bytes: &[0x66, 0x0F, 0xFD],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "paddd",
+            bytes: &[0x66, 0x0F, 0xFE],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "paddq",
+            bytes: &[0x66, 0x0F, 0xD4],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "psubb",
+            bytes: &[0x66, 0x0F, 0xF8],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "psubw",
+            bytes: &[0x66, 0x0F, 0xF9],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "psubd",
+            bytes: &[0x66, 0x0F, 0xFA],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "psubq",
+            bytes: &[0x66, 0x0F, 0xFB],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "paddsb",
+            bytes: &[0x66, 0x0F, 0xEC],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "paddsw",
+            bytes: &[0x66, 0x0F, 0xED],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "paddusb",
+            bytes: &[0x66, 0x0F, 0xDC],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "paddusw",
+            bytes: &[0x66, 0x0F, 0xDD],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "psubsb",
+            bytes: &[0x66, 0x0F, 0xE8],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "psubsw",
+            bytes: &[0x66, 0x0F, 0xE9],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "psubusb",
+            bytes: &[0x66, 0x0F, 0xD8],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "psubusw",
+            bytes: &[0x66, 0x0F, 0xD9],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pand",
+            bytes: &[0x66, 0x0F, 0xDB],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pandn",
+            bytes: &[0x66, 0x0F, 0xDF],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "por",
+            bytes: &[0x66, 0x0F, 0xEB],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pxor",
+            bytes: &[0x66, 0x0F, 0xEF],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pcmpeqb",
+            bytes: &[0x66, 0x0F, 0x74],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pcmpeqw",
+            bytes: &[0x66, 0x0F, 0x75],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pcmpeqd",
+            bytes: &[0x66, 0x0F, 0x76],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pcmpgtb",
+            bytes: &[0x66, 0x0F, 0x64],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pcmpgtw",
+            bytes: &[0x66, 0x0F, 0x65],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pcmpgtd",
+            bytes: &[0x66, 0x0F, 0x66],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pmullw",
+            bytes: &[0x66, 0x0F, 0xD5],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pmulhw",
+            bytes: &[0x66, 0x0F, 0xE5],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pmulhuw",
+            bytes: &[0x66, 0x0F, 0xE4],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pmuludq",
+            bytes: &[0x66, 0x0F, 0xF4],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pmaddwd",
+            bytes: &[0x66, 0x0F, 0xF5],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "psadbw",
+            bytes: &[0x66, 0x0F, 0xF6],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pavgb",
+            bytes: &[0x66, 0x0F, 0xE0],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pavgw",
+            bytes: &[0x66, 0x0F, 0xE3],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pminub",
+            bytes: &[0x66, 0x0F, 0xDA],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pmaxub",
+            bytes: &[0x66, 0x0F, 0xDE],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pminsw",
+            bytes: &[0x66, 0x0F, 0xEA],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pmaxsw",
+            bytes: &[0x66, 0x0F, 0xEE],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "packsswb",
+            bytes: &[0x66, 0x0F, 0x63],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "packssdw",
+            bytes: &[0x66, 0x0F, 0x6B],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "packuswb",
+            bytes: &[0x66, 0x0F, 0x67],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "punpcklbw",
+            bytes: &[0x66, 0x0F, 0x60],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "punpcklwd",
+            bytes: &[0x66, 0x0F, 0x61],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "punpckldq",
+            bytes: &[0x66, 0x0F, 0x62],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "punpcklqdq",
+            bytes: &[0x66, 0x0F, 0x6C],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "punpckhbw",
+            bytes: &[0x66, 0x0F, 0x68],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "punpckhwd",
+            bytes: &[0x66, 0x0F, 0x69],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "punpckhdq",
+            bytes: &[0x66, 0x0F, 0x6A],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "punpckhqdq",
+            bytes: &[0x66, 0x0F, 0x6D],
+            takes_imm: false,
+        },
+        SseOp {
+            name: "pshufd",
+            bytes: &[0x66, 0x0F, 0x70],
+            takes_imm: true,
+        },
     ];
 
     for _ in 0..CASES {
@@ -1944,7 +2407,7 @@ fn fuzz_sse2() {
         }
         // Occasionally bias to all-equal / all-zero / sign-boundary lanes.
         match h.rng.below(6) {
-            0 => b = a,                                // equality
+            0 => b = a, // equality
             1 => a = [0; 16],
             2 => a = [0xFF; 16],
             3 => b = [0x80; 16],
@@ -1966,7 +2429,11 @@ fn fuzz_sse2() {
         let inputs = format!(
             "{}{} ; a={:02x?} b={:02x?}",
             op.name,
-            if op.takes_imm { format!(" imm={imm:#x}") } else { String::new() },
+            if op.takes_imm {
+                format!(" imm={imm:#x}")
+            } else {
+                String::new()
+            },
             a,
             b
         );
@@ -1975,7 +2442,15 @@ fn fuzz_sse2() {
             scratch: true,
             ..CompareOpts::default()
         };
-        if !h.run_case("sse2", &code, Registers::default(), scratch, opts, inputs, &[]) {
+        if !h.run_case(
+            "sse2",
+            &code,
+            Registers::default(),
+            scratch,
+            opts,
+            inputs,
+            &[],
+        ) {
             break;
         }
     }
@@ -2008,7 +2483,7 @@ fn fuzz_pcmpistri() {
         0x06, 0x0e, 0x16, 0x1e, // RANGES       × {…}
         0x08, 0x18, 0x38, 0x3a, // EQUAL_EACH   (0x3a = the strlen idiom)
         0x0c, 0x1c, 0x3c, 0x5c, // EQUAL_ORDERED (+ MSB index 0x5c)
-        0x42, 0x4a, 0x48,       // index-MSB variants
+        0x42, 0x4a, 0x48, // index-MSB variants
         0x01, 0x05, 0x39, 0x1b, // word-size variants
     ];
 
@@ -2133,7 +2608,15 @@ fn fuzz_pcmpistrm() {
             scratch: false,
             ..CompareOpts::default()
         };
-        if !h.run_case("pcmpistrm", &code, Registers::default(), scratch, opts, inputs, &[]) {
+        if !h.run_case(
+            "pcmpistrm",
+            &code,
+            Registers::default(),
+            scratch,
+            opts,
+            inputs,
+            &[],
+        ) {
             break;
         }
     }
@@ -2164,7 +2647,24 @@ fn fuzz_pcmpestri() {
     ];
     // Lengths probing |EAX| saturation: negatives, exact, oversize, extremes.
     let len_pool: &[i32] = &[
-        0, 1, 2, 5, 7, 8, 15, 16, 17, 32, 1000, -1, -3, -8, -16, -17, -100, i32::MIN,
+        0,
+        1,
+        2,
+        5,
+        7,
+        8,
+        15,
+        16,
+        17,
+        32,
+        1000,
+        -1,
+        -3,
+        -8,
+        -16,
+        -17,
+        -100,
+        i32::MIN,
     ];
 
     for _ in 0..CASES {
@@ -2202,9 +2702,8 @@ fn fuzz_pcmpestri() {
         init.rdx = edx as u32 as u64; // EDX = operand2 length
         init.rcx = 0xFFFF_FFFF_FFFF_FFFF;
 
-        let inputs = format!(
-            "pcmpestri imm={imm:#04x} eax={eax} edx={edx} ; xmm1={a:02x?} xmm0={b:02x?}"
-        );
+        let inputs =
+            format!("pcmpestri imm={imm:#04x} eax={eax} edx={edx} ; xmm1={a:02x?} xmm0={b:02x?}");
         let opts = CompareOpts {
             flag_mask: FLAG_MASK,
             scratch: false,
@@ -2277,7 +2776,15 @@ fn fuzz_sse_shift_imm() {
             scratch: true,
             ..CompareOpts::default()
         };
-        if !h.run_case("sse_shift_imm", &code, Registers::default(), scratch, opts, inputs, &[]) {
+        if !h.run_case(
+            "sse_shift_imm",
+            &code,
+            Registers::default(),
+            scratch,
+            opts,
+            inputs,
+            &[],
+        ) {
             break;
         }
     }
@@ -2397,7 +2904,8 @@ fn fuzz_mem_addressing() {
                 set_reg(
                     &mut r,
                     BASE,
-                    ea.wrapping_sub(idxv.wrapping_mul(scale)).wrapping_sub(d8 as u64),
+                    ea.wrapping_sub(idxv.wrapping_mul(scale))
+                        .wrapping_sub(d8 as u64),
                 );
                 code.push(d8 as u8);
             }
@@ -2409,7 +2917,8 @@ fn fuzz_mem_addressing() {
                 set_reg(
                     &mut r,
                     BASE,
-                    ea.wrapping_sub(idxv.wrapping_mul(scale)).wrapping_sub(d32 as u64),
+                    ea.wrapping_sub(idxv.wrapping_mul(scale))
+                        .wrapping_sub(d32 as u64),
                 );
                 code.extend_from_slice(&(d32 as i32).to_le_bytes());
             }
@@ -2800,7 +3309,11 @@ fn fuzz_mem_addressing_segment() {
                 code.push(modrm(0b00, REG, 4));
                 code.push((scale_bits << 6) | (INDEX << 3) | BASE);
                 set_reg(&mut r, INDEX, idxv);
-                set_reg(&mut r, BASE, want_off.wrapping_sub(idxv.wrapping_mul(scale)));
+                set_reg(
+                    &mut r,
+                    BASE,
+                    want_off.wrapping_sub(idxv.wrapping_mul(scale)),
+                );
             }
             AddrForm::SibDisp8 => {
                 let d8 = (h.rng.next_u32() as i8) as i64;
@@ -2810,7 +3323,9 @@ fn fuzz_mem_addressing_segment() {
                 set_reg(
                     &mut r,
                     BASE,
-                    want_off.wrapping_sub(idxv.wrapping_mul(scale)).wrapping_sub(d8 as u64),
+                    want_off
+                        .wrapping_sub(idxv.wrapping_mul(scale))
+                        .wrapping_sub(d8 as u64),
                 );
                 code.push(d8 as u8);
             }
@@ -2822,7 +3337,9 @@ fn fuzz_mem_addressing_segment() {
                 set_reg(
                     &mut r,
                     BASE,
-                    want_off.wrapping_sub(idxv.wrapping_mul(scale)).wrapping_sub(d32 as u64),
+                    want_off
+                        .wrapping_sub(idxv.wrapping_mul(scale))
+                        .wrapping_sub(d32 as u64),
                 );
                 code.extend_from_slice(&(d32 as i32).to_le_bytes());
             }
@@ -2868,7 +3385,15 @@ fn fuzz_mem_addressing_segment() {
             scratch: true,
             ..CompareOpts::default()
         };
-        if !h.run_case("mem_addressing_segment", &code, r, scratch, opts, inputs, &[]) {
+        if !h.run_case(
+            "mem_addressing_segment",
+            &code,
+            r,
+            scratch,
+            opts,
+            inputs,
+            &[],
+        ) {
             break;
         }
     }
@@ -3025,13 +3550,7 @@ fn fuzz_string_rep() {
         }
 
         let op = if is_stos { "rep stos" } else { "rep movs" };
-        let inputs = format!(
-            "{}.{} count={} rax={:#x}",
-            op,
-            size.name(),
-            count,
-            r.rax
-        );
+        let inputs = format!("{}.{} count={} rax={:#x}", op, size.name(), count, r.rax);
         let opts = CompareOpts {
             scratch: true,
             ..CompareOpts::default()
@@ -3150,7 +3669,7 @@ enum SmirOutcome {
 /// against the KVM oracle: a semantics-preserving optimizer must yield the
 /// identical architectural state (GPRs / masked RFLAGS / memory).
 fn smir_optimize(func: &mut rax::smir::ir::SmirFunction) {
-    use rax::smir::opt::{optimize_function, OptLevel};
+    use rax::smir::opt::{OptLevel, optimize_function};
     optimize_function(func, OptLevel::O2);
 }
 
@@ -3223,7 +3742,10 @@ fn run_smir(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Result<Sm
         (X86Reg::Rcx, init.rcx),
         (X86Reg::Rdx, init.rdx),
         (X86Reg::Rbx, init.rbx),
-        (X86Reg::Rsp, if init.rsp == 0 { STACK_ADDR } else { init.rsp }),
+        (
+            X86Reg::Rsp,
+            if init.rsp == 0 { STACK_ADDR } else { init.rsp },
+        ),
         (X86Reg::Rbp, init.rbp),
         (X86Reg::Rsi, init.rsi),
         (X86Reg::Rdi, init.rdi),
@@ -3292,7 +3814,12 @@ struct SmirStats {
 
 impl SmirStats {
     fn new() -> Self {
-        SmirStats { ran: 0, skipped: 0, kvm_ok: true, mismatches: Vec::new() }
+        SmirStats {
+            ran: 0,
+            skipped: 0,
+            kvm_ok: true,
+            mismatches: Vec::new(),
+        }
     }
 
     fn check(
@@ -3417,26 +3944,47 @@ fn smir_alu() {
             }
             inputs = format!(
                 "{} {} {}, imm={:#x} (cf_in={}); dst={:#x}",
-                op.name, size.name(), reg_name(dst), imm, cf_in, dval
+                op.name,
+                size.name(),
+                reg_name(dst),
+                imm,
+                cf_in,
+                dval
             );
         } else {
-            let opc = if size == Size::B8 { op.rm_r_op8 } else { op.rm_r_op8 + 1 };
+            let opc = if size == Size::B8 {
+                op.rm_r_op8
+            } else {
+                op.rm_r_op8 + 1
+            };
             code.push(opc);
             code.push(modrm(0b11, src, dst));
             inputs = format!(
                 "{} {} {}, {} (cf_in={}); dst={:#x} src={:#x}",
-                op.name, size.name(), reg_name(dst), reg_name(src), cf_in, dval, sval
+                op.name,
+                size.name(),
+                reg_name(dst),
+                reg_name(src),
+                cf_in,
+                dval,
+                sval
             );
         }
         code.push(HLT);
 
-        if !stats.check("smir_alu", &code, r, [0u8; 64], CompareOpts::default(), inputs) {
+        if !stats.check(
+            "smir_alu",
+            &code,
+            r,
+            [0u8; 64],
+            CompareOpts::default(),
+            inputs,
+        ) {
             break;
         }
     }
     stats.finish("alu");
 }
-
 
 // SMIR validation: SHL/SHR/SAR/ROL/ROR/RCL/RCR by imm8/1/CL. Mirrors
 // fuzz_shifts's generation EXACTLY (same opcodes/encodings/operands/flag masks)
@@ -3493,7 +4041,12 @@ fn smir_shifts() {
             code.push(modrm(0b11, digit, dst));
             inputs = format!(
                 "{} {} {}, cl={} (cf_in={}); dst={:#x}",
-                name, size.name(), reg_name(dst), count, cf_in, dval
+                name,
+                size.name(),
+                reg_name(dst),
+                count,
+                cf_in,
+                dval
             );
         } else if count == 1 {
             // Use the dedicated by-1 form so OF is well-defined.
@@ -3501,7 +4054,11 @@ fn smir_shifts() {
             code.push(modrm(0b11, digit, dst));
             inputs = format!(
                 "{} {} {}, 1 (cf_in={}); dst={:#x}",
-                name, size.name(), reg_name(dst), cf_in, dval
+                name,
+                size.name(),
+                reg_name(dst),
+                cf_in,
+                dval
             );
         } else {
             code.push(if byte { 0xC0 } else { 0xC1 });
@@ -3509,7 +4066,12 @@ fn smir_shifts() {
             code.push(count);
             inputs = format!(
                 "{} {} {}, imm8={} (cf_in={}); dst={:#x}",
-                name, size.name(), reg_name(dst), count, cf_in, dval
+                name,
+                size.name(),
+                reg_name(dst),
+                count,
+                cf_in,
+                dval
             );
         }
         code.push(HLT);
@@ -3622,7 +4184,13 @@ fn smir_double_shifts() {
 
         let inputs = format!(
             "{} {} {}, {}, {} ; dst={:#x} src={:#x}",
-            name, size.name(), reg_name(dst), reg_name(src), count, dval, sval
+            name,
+            size.name(),
+            reg_name(dst),
+            reg_name(src),
+            count,
+            dval,
+            sval
         );
         let opts = CompareOpts {
             flag_mask,
@@ -3653,7 +4221,11 @@ fn smir_muldiv() {
 
         let mut r = Registers::default();
         let bits = size.bits();
-        let mask: u128 = if bits == 64 { u128::MAX >> 64 } else { (1u128 << bits) - 1 };
+        let mask: u128 = if bits == 64 {
+            u128::MAX >> 64
+        } else {
+            (1u128 << bits) - 1
+        };
 
         let src = pick_gpr(&mut rng);
         // Don't use rax/rdx as the explicit source for 1-op forms (they're implicit).
@@ -3686,7 +4258,11 @@ fn smir_muldiv() {
             flag_mask = muldiv_defined;
             inputs = format!(
                 "imul2 {} {}, {} ; a={:#x} b={:#x}",
-                size.name(), reg_name(dst), reg_name(s2), a, b
+                size.name(),
+                reg_name(dst),
+                reg_name(s2),
+                a,
+                b
             );
             let opts = CompareOpts {
                 flag_mask,
@@ -3757,7 +4333,11 @@ fn smir_muldiv() {
                     flag_mask = 0; // all flags undefined for DIV.
                     inputs = format!(
                         "div {} {}={:#x} ; dividend_lo={:#x} hi={:#x}",
-                        size.name(), reg_name(srcr), divisor, lo as u64, hi as u64
+                        size.name(),
+                        reg_name(srcr),
+                        divisor,
+                        lo as u64,
+                        hi as u64
                     );
                 } else {
                     // Signed IDIV. Build from a signed quotient/remainder that fit.
@@ -3775,7 +4355,8 @@ fn smir_muldiv() {
                     };
                     // quotient in a safe range so it fits in `bits` signed and the
                     // product doesn't overflow the double-width dividend.
-                    let q = (sign_extend(rng.operand(), bits) as i128) % (smax / sdiv.abs().max(1) + 1).max(1);
+                    let q = (sign_extend(rng.operand(), bits) as i128)
+                        % (smax / sdiv.abs().max(1) + 1).max(1);
                     let rem_bound = sdiv.abs();
                     let mut rem = (rng.next_u64() as i128) % rem_bound.max(1);
                     // remainder sign follows the dividend; keep |rem| < |divisor|.
@@ -3794,7 +4375,13 @@ fn smir_muldiv() {
                     flag_mask = 0;
                     inputs = format!(
                         "idiv {} {}={:#x} ; dividend_lo={:#x} hi={:#x} (q={} rem={})",
-                        size.name(), reg_name(srcr), divisor, lo, hi, q, rem
+                        size.name(),
+                        reg_name(srcr),
+                        divisor,
+                        lo,
+                        hi,
+                        q,
+                        rem
                     );
                 }
             }
@@ -3887,8 +4474,22 @@ fn smir_unary() {
         }
         code.push(HLT);
 
-        let inputs = format!("{} {} {} (cf_in={}); dst={:#x}", name, size.name(), reg_name(dst), cf_in, dval);
-        if !stats.check("smir_unary", &code, r, [0u8; 64], CompareOpts::default(), inputs) {
+        let inputs = format!(
+            "{} {} {} (cf_in={}); dst={:#x}",
+            name,
+            size.name(),
+            reg_name(dst),
+            cf_in,
+            dval
+        );
+        if !stats.check(
+            "smir_unary",
+            &code,
+            r,
+            [0u8; 64],
+            CompareOpts::default(),
+            inputs,
+        ) {
             break;
         }
     }
@@ -3944,9 +4545,22 @@ fn smir_movext() {
         }
         code.push(HLT);
 
-        let inputs = format!("{} {}, {} ; src={:#x}", name, reg_name(dst), reg_name(src), sval);
+        let inputs = format!(
+            "{} {}, {} ; src={:#x}",
+            name,
+            reg_name(dst),
+            reg_name(src),
+            sval
+        );
         // mov-extend ops don't touch flags -> compare all (they should be unchanged).
-        if !stats.check("smir_movext", &code, r, [0u8; 64], CompareOpts::default(), inputs) {
+        if !stats.check(
+            "smir_movext",
+            &code,
+            r,
+            [0u8; 64],
+            CompareOpts::default(),
+            inputs,
+        ) {
             break;
         }
     }
@@ -3985,8 +4599,18 @@ fn smir_setcc_cmov() {
             // sentinel already in rax via `a`; CMOV may or may not overwrite.
             code.extend_from_slice(&[0x48, 0x0F, 0x40 + cc, modrm(0b11, 0, 1)]);
             code.push(HLT);
-            let inputs = format!("cmp+cmov cc={:#x} ; a={:#x} b={:#x} c={:#x}", cc, a, b, cval);
-            if !stats.check("smir_cmov", &code, r, [0u8; 64], CompareOpts::default(), inputs) {
+            let inputs = format!(
+                "cmp+cmov cc={:#x} ; a={:#x} b={:#x} c={:#x}",
+                cc, a, b, cval
+            );
+            if !stats.check(
+                "smir_cmov",
+                &code,
+                r,
+                [0u8; 64],
+                CompareOpts::default(),
+                inputs,
+            ) {
                 break;
             }
         } else {
@@ -3995,7 +4619,14 @@ fn smir_setcc_cmov() {
             code.extend_from_slice(&[0x0F, 0xB6, 0xC0]); // movzx eax, al
             code.push(HLT);
             let inputs = format!("cmp+setcc cc={:#x} ; a={:#x} b={:#x}", cc, a, b);
-            if !stats.check("smir_setcc", &code, r, [0u8; 64], CompareOpts::default(), inputs) {
+            if !stats.check(
+                "smir_setcc",
+                &code,
+                r,
+                [0u8; 64],
+                CompareOpts::default(),
+                inputs,
+            ) {
                 break;
             }
         }
@@ -4089,7 +4720,8 @@ fn smir_memaddr() {
                 set_reg(
                     &mut r,
                     BASE,
-                    ea.wrapping_sub(idxv.wrapping_mul(scale)).wrapping_sub(d8 as u64),
+                    ea.wrapping_sub(idxv.wrapping_mul(scale))
+                        .wrapping_sub(d8 as u64),
                 );
                 code.push(d8 as u8);
             }
@@ -4101,7 +4733,8 @@ fn smir_memaddr() {
                 set_reg(
                     &mut r,
                     BASE,
-                    ea.wrapping_sub(idxv.wrapping_mul(scale)).wrapping_sub(d32 as u64),
+                    ea.wrapping_sub(idxv.wrapping_mul(scale))
+                        .wrapping_sub(d32 as u64),
                 );
                 code.extend_from_slice(&(d32 as i32).to_le_bytes());
             }
@@ -4204,7 +4837,7 @@ std::arch::global_asm!(
     "push r13",
     "push r14",
     "push r15",
-    "sub rsp, 24",        // [rsp]=entry [rsp+8]=state [rsp+16]=pad ; rsp 16-aligned
+    "sub rsp, 24", // [rsp]=entry [rsp+8]=state [rsp+16]=pad ; rsp 16-aligned
     "mov [rsp], rdi",
     "mov [rsp+8], rsi",
     "mov rax, [rsi+256]", // RFLAGS
@@ -4224,10 +4857,10 @@ std::arch::global_asm!(
     "mov r13, [rsi+104]",
     "mov r14, [rsi+112]",
     "mov r15, [rsi+120]",
-    "mov rsi, [rsi+48]",  // rsi last (was the base pointer)
+    "mov rsi, [rsi+48]", // rsi last (was the base pointer)
     "call [rsp]",
-    "push rax",           // save guest RAX ; state now at [rsp+16]
-    "mov rax, [rsp+16]",  // rax = *mut GuestRegs
+    "push rax",          // save guest RAX ; state now at [rsp+16]
+    "mov rax, [rsp+16]", // rax = *mut GuestRegs
     "mov [rax+8],   rcx",
     "mov [rax+16],  rdx",
     "mov [rax+24],  rbx",
@@ -4245,10 +4878,10 @@ std::arch::global_asm!(
     "pushfq",
     "pop rcx",
     "mov [rax+256], rcx",
-    "mov rcx, [rsp]",     // saved guest RAX
+    "mov rcx, [rsp]", // saved guest RAX
     "mov [rax+0], rcx",
-    "add rsp, 8",         // pop saved RAX
-    "add rsp, 24",        // pop locals
+    "add rsp, 8",  // pop saved RAX
+    "add rsp, 24", // pop locals
     "pop r15",
     "pop r14",
     "pop r13",
@@ -4288,7 +4921,11 @@ impl ExecMem {
         let ptr = ptr as *mut u8;
         unsafe { std::ptr::copy_nonoverlapping(code.as_ptr(), ptr, code.len()) };
         if unsafe {
-            libc::mprotect(ptr as *mut libc::c_void, len, libc::PROT_READ | libc::PROT_EXEC)
+            libc::mprotect(
+                ptr as *mut libc::c_void,
+                len,
+                libc::PROT_READ | libc::PROT_EXEC,
+            )
         } != 0
         {
             unsafe { libc::munmap(ptr as *mut libc::c_void, len) };
@@ -4316,8 +4953,8 @@ impl Drop for ExecMem {
 fn smir_native_m0_add() {
     use rax::smir::flags::FlagUpdate;
     use rax::smir::ir::{FunctionBuilder, Terminator};
-    use rax::smir::lower::x86_64::X86_64Lowerer;
     use rax::smir::lower::SmirLowerer;
+    use rax::smir::lower::x86_64::X86_64Lowerer;
     use rax::smir::ops::OpKind;
     use rax::smir::types::{ArchReg, FunctionId, OpWidth, SrcOperand, VReg, X86Reg};
 
@@ -4328,7 +4965,11 @@ fn smir_native_m0_add() {
     let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
     b.push_op(
         0x1000,
-        OpKind::Mov { dst: rax, src: SrcOperand::Reg(rbx), width: OpWidth::W64 },
+        OpKind::Mov {
+            dst: rax,
+            src: SrcOperand::Reg(rbx),
+            width: OpWidth::W64,
+        },
     );
     b.push_op(
         0x1004,
@@ -4359,7 +5000,11 @@ fn smir_native_m0_add() {
     regs.gpr[1] = 7; // RCX
     regs.rflags = 0x2;
     mem.run(res.entry_offset, &mut regs);
-    assert_eq!(regs.gpr[0], 12, "RAX should be RBX+RCX=12; got regs={:?}", regs);
+    assert_eq!(
+        regs.gpr[0], 12,
+        "RAX should be RBX+RCX=12; got regs={:?}",
+        regs
+    );
 }
 
 // run_smir_native: lift x86 -> SMIR -> LOWER to native -> execute via ExecMem
@@ -4374,8 +5019,8 @@ fn run_smir_native(
     use rax::smir::ir::{SmirFunction, Terminator};
     use rax::smir::lift::x86_64::X86_64Lifter;
     use rax::smir::lift::{LiftContext, MemoryReader, SmirLifter};
-    use rax::smir::lower::x86_64::X86_64Lowerer;
     use rax::smir::lower::SmirLowerer;
+    use rax::smir::lower::x86_64::X86_64Lowerer;
     use rax::smir::memory::MemoryError;
     use rax::smir::types::{FunctionId, SourceArch};
 
@@ -4394,7 +5039,10 @@ fn run_smir_native(
         }
     }
 
-    let reader = CR { base: CODE_ADDR, bytes: code.to_vec() };
+    let reader = CR {
+        base: CODE_ADDR,
+        bytes: code.to_vec(),
+    };
     let mut lifter = X86_64Lifter::strict();
     let mut lctx = LiftContext::new(SourceArch::X86_64);
     let mut block = match lifter.lift_block(CODE_ADDR, &reader, &mut lctx) {
@@ -4415,7 +5063,10 @@ fn run_smir_native(
         Err(e) => return Ok(SmirOutcome::Skipped(format!("lower: {e:?}"))),
     };
     if !res.relocations.is_empty() {
-        return Ok(SmirOutcome::Skipped(format!("unresolved relocs: {}", res.relocations.len())));
+        return Ok(SmirOutcome::Skipped(format!(
+            "unresolved relocs: {}",
+            res.relocations.len()
+        )));
     }
     let bytes = match lowerer.finalize() {
         Ok(b) => b,
@@ -4530,7 +5181,10 @@ impl SmirStats {
         opts: CompareOpts,
         inputs: String,
     ) -> bool {
-        let opts = CompareOpts { stack: false, ..opts };
+        let opts = CompareOpts {
+            stack: false,
+            ..opts
+        };
         let kvm = match run_kvm(code, &init, &scratch_init) {
             Ok(Some(s)) => s,
             Ok(None) => {
@@ -4620,18 +5274,44 @@ fn smir_native_alu() {
                 Size::B16 => code.extend_from_slice(&(imm as u16).to_le_bytes()),
                 _ => code.extend_from_slice(&(imm as u32).to_le_bytes()),
             }
-            inputs = format!("{} {} {}, imm={:#x} (cf_in={}); dst={:#x}",
-                op.name, size.name(), reg_name(dst), imm, cf_in, dval);
+            inputs = format!(
+                "{} {} {}, imm={:#x} (cf_in={}); dst={:#x}",
+                op.name,
+                size.name(),
+                reg_name(dst),
+                imm,
+                cf_in,
+                dval
+            );
         } else {
-            let opc = if size == Size::B8 { op.rm_r_op8 } else { op.rm_r_op8 + 1 };
+            let opc = if size == Size::B8 {
+                op.rm_r_op8
+            } else {
+                op.rm_r_op8 + 1
+            };
             code.push(opc);
             code.push(modrm(0b11, src, dst));
-            inputs = format!("{} {} {}, {} (cf_in={}); dst={:#x} src={:#x}",
-                op.name, size.name(), reg_name(dst), reg_name(src), cf_in, dval, sval);
+            inputs = format!(
+                "{} {} {}, {} (cf_in={}); dst={:#x} src={:#x}",
+                op.name,
+                size.name(),
+                reg_name(dst),
+                reg_name(src),
+                cf_in,
+                dval,
+                sval
+            );
         }
         code.push(HLT);
 
-        if !stats.check_native("smir_native_alu", &code, r, [0u8; 64], CompareOpts::default(), inputs) {
+        if !stats.check_native(
+            "smir_native_alu",
+            &code,
+            r,
+            [0u8; 64],
+            CompareOpts::default(),
+            inputs,
+        ) {
             break;
         }
     }
@@ -4655,8 +5335,8 @@ fn run_smir_lowered(
     use rax::smir::ir::{SmirBlock, SmirFunction, Terminator, TrapKind};
     use rax::smir::lift::x86_64::X86_64Lifter;
     use rax::smir::lift::{LiftContext, MemoryReader, SmirLifter};
-    use rax::smir::lower::x86_64::X86_64Lowerer;
     use rax::smir::lower::SmirLowerer;
+    use rax::smir::lower::x86_64::X86_64Lowerer;
     use rax::smir::memory::{FlatMemory, MemoryError, SmirMemory};
     use rax::smir::types::{ArchReg, BlockId, FunctionId, SourceArch, X86Reg};
 
@@ -4678,7 +5358,10 @@ fn run_smir_lowered(
     // 1) lift original
     let mut lifter = X86_64Lifter::strict();
     let mut lctx = LiftContext::new(SourceArch::X86_64);
-    let reader = CR { base: CODE_ADDR, bytes: code.to_vec() };
+    let reader = CR {
+        base: CODE_ADDR,
+        bytes: code.to_vec(),
+    };
     let mut block = match lifter.lift_block(CODE_ADDR, &reader, &mut lctx) {
         Ok(b) => b,
         Err(e) => return Ok(SmirOutcome::Skipped(format!("lift: {e:?}"))),
@@ -4724,7 +5407,9 @@ fn run_smir_lowered(
             Err(_) => break, // hit epilogue/ret or an un-liftable byte
         }
     }
-    block2.set_terminator(Terminator::Trap { kind: TrapKind::Halt });
+    block2.set_terminator(Terminator::Trap {
+        kind: TrapKind::Halt,
+    });
 
     // 4) interpret the re-lifted lowered body
     let mut interp = SmirInterpreter::new();
@@ -4736,11 +5421,25 @@ fn run_smir_lowered(
     let mut ctx = SmirContext::new_x86_64();
     ctx.pc = CODE_ADDR;
     let gprs = [
-        (X86Reg::Rax, init.rax), (X86Reg::Rcx, init.rcx), (X86Reg::Rdx, init.rdx),
-        (X86Reg::Rbx, init.rbx), (X86Reg::Rsp, if init.rsp == 0 { STACK_ADDR } else { init.rsp }),
-        (X86Reg::Rbp, init.rbp), (X86Reg::Rsi, init.rsi), (X86Reg::Rdi, init.rdi),
-        (X86Reg::R8, init.r8), (X86Reg::R9, init.r9), (X86Reg::R10, init.r10), (X86Reg::R11, init.r11),
-        (X86Reg::R12, init.r12), (X86Reg::R13, init.r13), (X86Reg::R14, init.r14), (X86Reg::R15, init.r15),
+        (X86Reg::Rax, init.rax),
+        (X86Reg::Rcx, init.rcx),
+        (X86Reg::Rdx, init.rdx),
+        (X86Reg::Rbx, init.rbx),
+        (
+            X86Reg::Rsp,
+            if init.rsp == 0 { STACK_ADDR } else { init.rsp },
+        ),
+        (X86Reg::Rbp, init.rbp),
+        (X86Reg::Rsi, init.rsi),
+        (X86Reg::Rdi, init.rdi),
+        (X86Reg::R8, init.r8),
+        (X86Reg::R9, init.r9),
+        (X86Reg::R10, init.r10),
+        (X86Reg::R11, init.r11),
+        (X86Reg::R12, init.r12),
+        (X86Reg::R13, init.r13),
+        (X86Reg::R14, init.r14),
+        (X86Reg::R15, init.r15),
     ];
     for (r, v) in gprs {
         ctx.write_arch_reg(ArchReg::X86(r), v);
@@ -4772,7 +5471,11 @@ fn run_smir_lowered(
     fr.rflags = ctx.flags.materialized.to_rflags();
     let mut scratch = [0u8; 64];
     mem.read(DATA_ADDR, &mut scratch).ok();
-    Ok(SmirOutcome::Ran(FinalState { xmm: [[0u64; 2]; 16], regs: fr, scratch }))
+    Ok(SmirOutcome::Ran(FinalState {
+        xmm: [[0u64; 2]; 16],
+        regs: fr,
+        scratch,
+    }))
 }
 
 #[test]
@@ -4782,7 +5485,10 @@ fn smir_lowered_alu() {
     let mut stats = SmirStats::new();
     let sizes = [Size::B8, Size::B16, Size::B32, Size::B64];
     // RSP/RBP excluded: the re-lifted epilogue (add rsp; pop rbp) perturbs them.
-    let opts = CompareOpts { stack: false, ..CompareOpts::default() };
+    let opts = CompareOpts {
+        stack: false,
+        ..CompareOpts::default()
+    };
 
     for _ in 0..CASES {
         let size = *rng.pick(&sizes);
@@ -4815,12 +5521,28 @@ fn smir_lowered_alu() {
                 Size::B16 => code.extend_from_slice(&(imm as u16).to_le_bytes()),
                 _ => code.extend_from_slice(&(imm as u32).to_le_bytes()),
             }
-            inputs = format!("{} {} {}, imm={:#x}", op.name, size.name(), reg_name(dst), imm);
+            inputs = format!(
+                "{} {} {}, imm={:#x}",
+                op.name,
+                size.name(),
+                reg_name(dst),
+                imm
+            );
         } else {
-            let opc = if size == Size::B8 { op.rm_r_op8 } else { op.rm_r_op8 + 1 };
+            let opc = if size == Size::B8 {
+                op.rm_r_op8
+            } else {
+                op.rm_r_op8 + 1
+            };
             code.push(opc);
             code.push(modrm(0b11, src, dst));
-            inputs = format!("{} {} {}, {}", op.name, size.name(), reg_name(dst), reg_name(src));
+            inputs = format!(
+                "{} {} {}, {}",
+                op.name,
+                size.name(),
+                reg_name(dst),
+                reg_name(src)
+            );
         }
         code.push(HLT);
 
@@ -4828,18 +5550,36 @@ fn smir_lowered_alu() {
         let kvm = match run_kvm(&code, &r, &[0u8; 64]) {
             Ok(Some(s)) => s,
             Ok(None) => break,
-            Err(e) => { stats.mismatches.push(Mismatch { label: "lowered_alu (kvm err)".into(), code: code.clone(), inputs, diffs: vec![e] }); continue; }
+            Err(e) => {
+                stats.mismatches.push(Mismatch {
+                    label: "lowered_alu (kvm err)".into(),
+                    code: code.clone(),
+                    inputs,
+                    diffs: vec![e],
+                });
+                continue;
+            }
         };
         match run_smir_lowered(&code, &r, &[0u8; 64]) {
             Ok(SmirOutcome::Ran(s)) => {
                 stats.ran += 1;
                 let diffs = compare(&s, &kvm, opts, &[]);
                 if !diffs.is_empty() {
-                    stats.mismatches.push(Mismatch { label: format!("lowered_alu {}", inputs), code: code.clone(), inputs, diffs });
+                    stats.mismatches.push(Mismatch {
+                        label: format!("lowered_alu {}", inputs),
+                        code: code.clone(),
+                        inputs,
+                        diffs,
+                    });
                 }
             }
             Ok(SmirOutcome::Skipped(_)) => stats.skipped += 1,
-            Err(e) => stats.mismatches.push(Mismatch { label: "lowered_alu (err)".into(), code: code.clone(), inputs, diffs: vec![e] }),
+            Err(e) => stats.mismatches.push(Mismatch {
+                label: "lowered_alu (err)".into(),
+                code: code.clone(),
+                inputs,
+                diffs: vec![e],
+            }),
         }
         stats.kvm_ok = true;
     }
@@ -4851,7 +5591,13 @@ fn smir_lowered_alu() {
 fn gen_shift_case(rng: &mut Rng) -> (Vec<u8>, Registers, CompareOpts, String) {
     let sizes = [Size::B8, Size::B16, Size::B32, Size::B64];
     let groups: &[(u8, &str)] = &[
-        (0, "rol"), (1, "ror"), (2, "rcl"), (3, "rcr"), (4, "shl"), (5, "shr"), (7, "sar"),
+        (0, "rol"),
+        (1, "ror"),
+        (2, "rcl"),
+        (3, "rcr"),
+        (4, "shl"),
+        (5, "shr"),
+        (7, "sar"),
     ];
     let size = *rng.pick(&sizes);
     let &(digit, name) = rng.pick(groups);
@@ -4877,16 +5623,39 @@ fn gen_shift_case(rng: &mut Rng) -> (Vec<u8>, Registers, CompareOpts, String) {
         r.rcx = count as u64;
         code.push(if byte { 0xD2 } else { 0xD3 });
         code.push(modrm(0b11, digit, dst));
-        inputs = format!("{} {} {}, cl={} (cf_in={}); dst={:#x}", name, size.name(), reg_name(dst), count, cf_in, dval);
+        inputs = format!(
+            "{} {} {}, cl={} (cf_in={}); dst={:#x}",
+            name,
+            size.name(),
+            reg_name(dst),
+            count,
+            cf_in,
+            dval
+        );
     } else if count == 1 {
         code.push(if byte { 0xD0 } else { 0xD1 });
         code.push(modrm(0b11, digit, dst));
-        inputs = format!("{} {} {}, 1 (cf_in={}); dst={:#x}", name, size.name(), reg_name(dst), cf_in, dval);
+        inputs = format!(
+            "{} {} {}, 1 (cf_in={}); dst={:#x}",
+            name,
+            size.name(),
+            reg_name(dst),
+            cf_in,
+            dval
+        );
     } else {
         code.push(if byte { 0xC0 } else { 0xC1 });
         code.push(modrm(0b11, digit, dst));
         code.push(count);
-        inputs = format!("{} {} {}, imm8={} (cf_in={}); dst={:#x}", name, size.name(), reg_name(dst), count, cf_in, dval);
+        inputs = format!(
+            "{} {} {}, imm8={} (cf_in={}); dst={:#x}",
+            name,
+            size.name(),
+            reg_name(dst),
+            count,
+            cf_in,
+            dval
+        );
     }
     code.push(HLT);
     let mask_bits = if size == Size::B64 { 63u32 } else { 31u32 };
@@ -4897,7 +5666,11 @@ fn gen_shift_case(rng: &mut Rng) -> (Vec<u8>, Registers, CompareOpts, String) {
     let flag_mask = if masked_count == 0 {
         FLAG_MASK
     } else if masked_count == 1 {
-        if is_rotate { flags::bits::CF | flags::bits::OF } else { FLAG_MASK }
+        if is_rotate {
+            flags::bits::CF | flags::bits::OF
+        } else {
+            FLAG_MASK
+        }
     } else if is_rotate {
         flags::bits::CF
     } else if masked_count <= width {
@@ -4907,7 +5680,10 @@ fn gen_shift_case(rng: &mut Rng) -> (Vec<u8>, Registers, CompareOpts, String) {
     } else {
         flags::bits::PF | flags::bits::ZF | flags::bits::SF
     };
-    let opts = CompareOpts { flag_mask, ..CompareOpts::default() };
+    let opts = CompareOpts {
+        flag_mask,
+        ..CompareOpts::default()
+    };
     (code, r, opts, inputs)
 }
 
@@ -4954,7 +5730,11 @@ fn gen_muldiv_case(rng: &mut Rng) -> (Vec<u8>, Registers, CompareOpts, String) {
     let two_op = kind == 1 && size != Size::B8 && rng.below(2) == 0;
     let mut r = Registers::default();
     let bits = size.bits();
-    let mask: u128 = if bits == 64 { u128::MAX >> 64 } else { (1u128 << bits) - 1 };
+    let mask: u128 = if bits == 64 {
+        u128::MAX >> 64
+    } else {
+        (1u128 << bits) - 1
+    };
     let mut srcr = pick_gpr(rng);
     while srcr == 0 || srcr == 2 {
         srcr = pick_gpr(rng);
@@ -4978,8 +5758,23 @@ fn gen_muldiv_case(rng: &mut Rng) -> (Vec<u8>, Registers, CompareOpts, String) {
         code.push(modrm(0b11, dst, s2));
         code.push(HLT);
         flag_mask = muldiv_defined;
-        inputs = format!("imul2 {} {}, {} ; a={:#x} b={:#x}", size.name(), reg_name(dst), reg_name(s2), a, b);
-        return (code, r, CompareOpts { flag_mask, ..CompareOpts::default() }, inputs);
+        inputs = format!(
+            "imul2 {} {}, {} ; a={:#x} b={:#x}",
+            size.name(),
+            reg_name(dst),
+            reg_name(s2),
+            a,
+            b
+        );
+        return (
+            code,
+            r,
+            CompareOpts {
+                flag_mask,
+                ..CompareOpts::default()
+            },
+            inputs,
+        );
     }
     let byte = size == Size::B8;
     if size == Size::B64 {
@@ -4996,7 +5791,15 @@ fn gen_muldiv_case(rng: &mut Rng) -> (Vec<u8>, Registers, CompareOpts, String) {
             code.push(if byte { 0xF6 } else { 0xF7 });
             code.push(modrm(0b11, if kind == 0 { 4 } else { 5 }, srcr));
             flag_mask = muldiv_defined;
-            inputs = format!("{} {} {} ; rax={:#x} {}={:#x}", if kind == 0 { "mul" } else { "imul1" }, size.name(), reg_name(srcr), a, reg_name(srcr), b);
+            inputs = format!(
+                "{} {} {} ; rax={:#x} {}={:#x}",
+                if kind == 0 { "mul" } else { "imul1" },
+                size.name(),
+                reg_name(srcr),
+                a,
+                reg_name(srcr),
+                b
+            );
         }
         _ => {
             let divisor = {
@@ -5017,9 +5820,20 @@ fn gen_muldiv_case(rng: &mut Rng) -> (Vec<u8>, Registers, CompareOpts, String) {
                 code.push(if byte { 0xF6 } else { 0xF7 });
                 code.push(modrm(0b11, 6, srcr));
                 flag_mask = 0;
-                inputs = format!("div {} {}={:#x} ; lo={:#x} hi={:#x}", size.name(), reg_name(srcr), divisor, lo as u64, hi as u64);
+                inputs = format!(
+                    "div {} {}={:#x} ; lo={:#x} hi={:#x}",
+                    size.name(),
+                    reg_name(srcr),
+                    divisor,
+                    lo as u64,
+                    hi as u64
+                );
             } else {
-                let smax: i128 = if bits == 64 { i64::MAX as i128 } else { (1i128 << (bits - 1)) - 1 };
+                let smax: i128 = if bits == 64 {
+                    i64::MAX as i128
+                } else {
+                    (1i128 << (bits - 1)) - 1
+                };
                 let sdiv = {
                     let mut d = sign_extend(divisor, bits) as i128;
                     if d == 0 {
@@ -5027,7 +5841,8 @@ fn gen_muldiv_case(rng: &mut Rng) -> (Vec<u8>, Registers, CompareOpts, String) {
                     }
                     d
                 };
-                let q = (sign_extend(rng.operand(), bits) as i128) % (smax / sdiv.abs().max(1) + 1).max(1);
+                let q = (sign_extend(rng.operand(), bits) as i128)
+                    % (smax / sdiv.abs().max(1) + 1).max(1);
                 let rem_bound = sdiv.abs();
                 let mut rem = (rng.next_u64() as i128) % rem_bound.max(1);
                 if q < 0 || (q == 0 && rem != 0 && rng.below(2) == 0) {
@@ -5043,12 +5858,27 @@ fn gen_muldiv_case(rng: &mut Rng) -> (Vec<u8>, Registers, CompareOpts, String) {
                 code.push(if byte { 0xF6 } else { 0xF7 });
                 code.push(modrm(0b11, 7, srcr));
                 flag_mask = 0;
-                inputs = format!("idiv {} {}={:#x} ; lo={:#x} hi={:#x}", size.name(), reg_name(srcr), divisor, lo, hi);
+                inputs = format!(
+                    "idiv {} {}={:#x} ; lo={:#x} hi={:#x}",
+                    size.name(),
+                    reg_name(srcr),
+                    divisor,
+                    lo,
+                    hi
+                );
             }
         }
     }
     code.push(HLT);
-    (code, r, CompareOpts { flag_mask, ..CompareOpts::default() }, inputs)
+    (
+        code,
+        r,
+        CompareOpts {
+            flag_mask,
+            ..CompareOpts::default()
+        },
+        inputs,
+    )
 }
 
 #[test]
@@ -5089,8 +5919,8 @@ fn smir_native_loop_dragon() {
     use rax::smir::ir::Terminator;
     use rax::smir::lift::x86_64::X86_64Lifter;
     use rax::smir::lift::{LiftContext, MemoryReader, SmirLifter};
-    use rax::smir::lower::x86_64::X86_64Lowerer;
     use rax::smir::lower::SmirLowerer;
+    use rax::smir::lower::x86_64::X86_64Lowerer;
     use rax::smir::memory::MemoryError;
     use rax::smir::types::SourceArch;
     use std::time::Instant;
@@ -5212,8 +6042,8 @@ fn run_smir_native_cfg(
     use rax::smir::ir::Terminator;
     use rax::smir::lift::x86_64::X86_64Lifter;
     use rax::smir::lift::{LiftContext, MemoryReader, SmirLifter};
-    use rax::smir::lower::x86_64::X86_64Lowerer;
     use rax::smir::lower::SmirLowerer;
+    use rax::smir::lower::x86_64::X86_64Lowerer;
     use rax::smir::memory::MemoryError;
     use rax::smir::types::SourceArch;
 
@@ -5232,7 +6062,10 @@ fn run_smir_native_cfg(
         }
     }
 
-    let reader = CR { base: CODE_ADDR, bytes: code.to_vec() };
+    let reader = CR {
+        base: CODE_ADDR,
+        bytes: code.to_vec(),
+    };
     let mut lifter = X86_64Lifter::strict();
     let mut lctx = LiftContext::new(SourceArch::X86_64);
     let mut func = match lifter.lift_function(CODE_ADDR, &reader, &mut lctx) {
@@ -5254,7 +6087,10 @@ fn run_smir_native_cfg(
         Err(e) => return Ok(SmirOutcome::Skipped(format!("lower: {e:?}"))),
     };
     if !res.relocations.is_empty() {
-        return Ok(SmirOutcome::Skipped(format!("unresolved relocs: {}", res.relocations.len())));
+        return Ok(SmirOutcome::Skipped(format!(
+            "unresolved relocs: {}",
+            res.relocations.len()
+        )));
     }
     let bytes = match lowerer.finalize() {
         Ok(b) => b,
@@ -5367,8 +6203,13 @@ impl SmirStats {
 //   OP eax,ecx ; jcc +6 ; mov eax,0 ; hlt ; mov eax,1 ; hlt
 fn gen_branch_case(rng: &mut Rng) -> (Vec<u8>, Registers, CompareOpts, String) {
     let setups: &[(u8, &str)] = &[
-        (0x39, "cmp"), (0x01, "add"), (0x29, "sub"),
-        (0x21, "and"), (0x09, "or"), (0x31, "xor"), (0x85, "test"),
+        (0x39, "cmp"),
+        (0x01, "add"),
+        (0x29, "sub"),
+        (0x21, "and"),
+        (0x09, "or"),
+        (0x31, "xor"),
+        (0x85, "test"),
     ];
     let &(op, opname) = rng.pick(setups);
     let cc = rng.below(16) as u8;
@@ -5417,7 +6258,11 @@ fn smir_native_branch() {
 //   loop: <body...> ; dec ecx ; jnz loop ; hlt        (ecx = trip via init)
 fn gen_loop_case(rng: &mut Rng) -> (Vec<u8>, Registers, CompareOpts, String) {
     let ops: &[(u8, &str)] = &[
-        (0x01, "add"), (0x29, "sub"), (0x31, "xor"), (0x21, "and"), (0x09, "or"),
+        (0x01, "add"),
+        (0x29, "sub"),
+        (0x31, "xor"),
+        (0x21, "and"),
+        (0x09, "or"),
     ];
     // 32-bit reg encodings, excluding ecx(1)=counter, esp(4), ebp(5).
     let regs = [0u8, 3, 2, 6, 7]; // eax, ebx, edx, esi, edi

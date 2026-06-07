@@ -157,9 +157,12 @@ fn test_pabsb_xmm0_mem() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     // Write test data to memory
-    let data: [u8; 16] = [0x01, 0xFF, 0x7F, 0x80, 0x00, 0xFE, 0x02, 0x81,
-                           0x10, 0xF0, 0x20, 0xE0, 0x30, 0xD0, 0x40, 0xC0];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    let data: [u8; 16] = [
+        0x01, 0xFF, 0x7F, 0x80, 0x00, 0xFE, 0x02, 0x81, 0x10, 0xF0, 0x20, 0xE0, 0x30, 0xD0, 0x40,
+        0xC0,
+    ];
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -179,8 +182,12 @@ fn test_pabsb_xmm1_mem_negative() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    let data: [u8; 16] = [0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80]; // All INT8_MIN
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    let data: [u8; 16] = [
+        0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+        0x80,
+    ]; // All INT8_MIN
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -327,10 +334,11 @@ fn test_pabsw_xmm0_mem() {
 
     // Write test data to memory (8 words)
     let data: [u8; 16] = [
-        0x01, 0x00, 0xFF, 0xFF, 0xFF, 0x7F, 0x00, 0x80,
-        0x34, 0x12, 0xCC, 0xED, 0x00, 0x00, 0x01, 0x80,
+        0x01, 0x00, 0xFF, 0xFF, 0xFF, 0x7F, 0x00, 0x80, 0x34, 0x12, 0xCC, 0xED, 0x00, 0x00, 0x01,
+        0x80,
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -350,8 +358,12 @@ fn test_pabsw_xmm1_mem_negative() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    let data: [u8; 16] = [0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80]; // All INT16_MIN
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    let data: [u8; 16] = [
+        0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00,
+        0x80,
+    ]; // All INT16_MIN
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -503,7 +515,8 @@ fn test_pabsd_xmm0_mem() {
         0xFF, 0xFF, 0xFF, 0x7F, // INT32_MAX
         0x00, 0x00, 0x00, 0x80, // INT32_MIN
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -523,8 +536,12 @@ fn test_pabsd_xmm1_mem_negative() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    let data: [u8; 16] = [0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80]; // All INT32_MIN
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    let data: [u8; 16] = [
+        0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
+        0x80,
+    ]; // All INT32_MIN
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }

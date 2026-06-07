@@ -34,11 +34,11 @@ fn test_idiv_al_positive() {
     let code = [
         0x66, 0x98, // CBW (sign-extend AL to AX) - needs 0x66 in 64-bit mode
         0xf6, 0xfb, // IDIV BL (F6 /7)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
-    regs.rax = 100;  // AL = 100
-    regs.rbx = 10;   // BL = 10
+    regs.rax = 100; // AL = 100
+    regs.rbx = 10; // BL = 10
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -148,7 +148,7 @@ fn test_idiv_ax_positive() {
     // 1000 / 10 = 100 remainder 0
     // Need CWD (0x99) to sign-extend AX into DX
     let code = [
-        0x66, 0x99,     // CWD (sign-extend AX to DX:AX) - needs 0x66 in 64-bit mode
+        0x66, 0x99, // CWD (sign-extend AX to DX:AX) - needs 0x66 in 64-bit mode
         0x66, 0xf7, 0xfb, // IDIV BX (66 F7 /7)
         0xf4,
     ];
@@ -166,7 +166,7 @@ fn test_idiv_ax_positive() {
 fn test_idiv_ax_negative_dividend() {
     // -1000 / 10 = -100 remainder 0
     let code = [
-        0x66, 0x99,     // CWD (needs 0x66 in 64-bit mode)
+        0x66, 0x99, // CWD (needs 0x66 in 64-bit mode)
         0x66, 0xf7, 0xfb, // IDIV BX
         0xf4,
     ];
@@ -184,7 +184,7 @@ fn test_idiv_ax_negative_dividend() {
 fn test_idiv_ax_with_remainder() {
     // 1000 / 7 = 142 remainder 6
     let code = [
-        0x66, 0x99,     // CWD (needs 0x66 in 64-bit mode)
+        0x66, 0x99, // CWD (needs 0x66 in 64-bit mode)
         0x66, 0xf7, 0xfb, // IDIV BX
         0xf4,
     ];
@@ -207,7 +207,7 @@ fn test_idiv_eax_positive() {
     // 1000000 / 1000 = 1000 remainder 0
     // CDQ (0x99) sign-extends EAX into EDX (in 32-bit context)
     let code = [
-        0x99,       // CDQ (sign-extend EAX to EDX:EAX in 32-bit mode)
+        0x99, // CDQ (sign-extend EAX to EDX:EAX in 32-bit mode)
         0xf7, 0xfb, // IDIV EBX (F7 /7)
         0xf4,
     ];
@@ -225,7 +225,7 @@ fn test_idiv_eax_positive() {
 fn test_idiv_eax_negative_dividend() {
     // -1000000 / 1000 = -1000 remainder 0
     let code = [
-        0x99,       // CDQ
+        0x99, // CDQ
         0xf7, 0xfb, // IDIV EBX
         0xf4,
     ];
@@ -243,7 +243,7 @@ fn test_idiv_eax_negative_dividend() {
 fn test_idiv_eax_negative_divisor() {
     // 1000000 / -1000 = -1000 remainder 0
     let code = [
-        0x99,       // CDQ
+        0x99, // CDQ
         0xf7, 0xfb, // IDIV EBX
         0xf4,
     ];
@@ -261,7 +261,7 @@ fn test_idiv_eax_negative_divisor() {
 fn test_idiv_eax_both_negative() {
     // -1000000 / -1000 = 1000 remainder 0
     let code = [
-        0x99,       // CDQ
+        0x99, // CDQ
         0xf7, 0xfb, // IDIV EBX
         0xf4,
     ];
@@ -279,7 +279,7 @@ fn test_idiv_eax_both_negative() {
 fn test_idiv_eax_with_remainder() {
     // 1000000 / 7 = 142857 remainder 1
     let code = [
-        0x99,       // CDQ
+        0x99, // CDQ
         0xf7, 0xfb, // IDIV EBX
         0xf4,
     ];
@@ -297,7 +297,7 @@ fn test_idiv_eax_with_remainder() {
 fn test_idiv_eax_negative_dividend_remainder() {
     // -1000000 / 7 = -142857 remainder -1
     let code = [
-        0x99,       // CDQ
+        0x99, // CDQ
         0xf7, 0xfb, // IDIV EBX
         0xf4,
     ];
@@ -322,7 +322,7 @@ fn test_idiv_rax_positive() {
     // 1000000000000 / 1000000 = 1000000 remainder 0
     // CQO (0x48 0x99) sign-extends RAX into RDX
     let code = [
-        0x48, 0x99,    // CQO (sign-extend RAX to RDX:RAX)
+        0x48, 0x99, // CQO (sign-extend RAX to RDX:RAX)
         0x48, 0xf7, 0xfb, // IDIV RBX (REX.W F7 /7)
         0xf4,
     ];
@@ -340,7 +340,7 @@ fn test_idiv_rax_positive() {
 fn test_idiv_rax_negative_dividend() {
     // -1000000000000 / 1000000 = -1000000 remainder 0
     let code = [
-        0x48, 0x99,    // CQO
+        0x48, 0x99, // CQO
         0x48, 0xf7, 0xfb, // IDIV RBX
         0xf4,
     ];
@@ -358,7 +358,7 @@ fn test_idiv_rax_negative_dividend() {
 fn test_idiv_rax_negative_divisor() {
     // 1000000000000 / -1000000 = -1000000 remainder 0
     let code = [
-        0x48, 0x99,    // CQO
+        0x48, 0x99, // CQO
         0x48, 0xf7, 0xfb, // IDIV RBX
         0xf4,
     ];
@@ -376,7 +376,7 @@ fn test_idiv_rax_negative_divisor() {
 fn test_idiv_rax_both_negative() {
     // -1000000000000 / -1000000 = 1000000 remainder 0
     let code = [
-        0x48, 0x99,    // CQO
+        0x48, 0x99, // CQO
         0x48, 0xf7, 0xfb, // IDIV RBX
         0xf4,
     ];
@@ -394,7 +394,7 @@ fn test_idiv_rax_both_negative() {
 fn test_idiv_rax_with_remainder() {
     // 1000000000000 / 7 = 142857142857 remainder 1
     let code = [
-        0x48, 0x99,    // CQO
+        0x48, 0x99, // CQO
         0x48, 0xf7, 0xfb, // IDIV RBX
         0xf4,
     ];
@@ -412,7 +412,7 @@ fn test_idiv_rax_with_remainder() {
 fn test_idiv_rax_negative_dividend_remainder() {
     // -1000000000000 / 7 = -142857142857 remainder -1
     let code = [
-        0x48, 0x99,    // CQO
+        0x48, 0x99, // CQO
         0x48, 0xf7, 0xfb, // IDIV RBX
         0xf4,
     ];
@@ -454,7 +454,7 @@ fn test_idiv_cl_register() {
 fn test_idiv_ecx_32bit() {
     // IDIV ECX (32-bit)
     let code = [
-        0x99,       // CDQ
+        0x99, // CDQ
         0xf7, 0xf9, // IDIV ECX
         0xf4,
     ];
@@ -491,7 +491,7 @@ fn test_idiv_r8b() {
 #[test]
 fn test_idiv_r10d() {
     let code = [
-        0x99,       // CDQ
+        0x99, // CDQ
         0x41, 0xf7, 0xfa, // IDIV R10D
         0xf4,
     ];
@@ -507,7 +507,7 @@ fn test_idiv_r10d() {
 #[test]
 fn test_idiv_r15() {
     let code = [
-        0x48, 0x99,    // CQO
+        0x48, 0x99, // CQO
         0x49, 0xf7, 0xff, // IDIV R15
         0xf4,
     ];
@@ -528,7 +528,8 @@ fn test_idiv_r15() {
 fn test_idiv_byte_ptr_mem() {
     let code = [
         0x66, 0x98, // CBW (needs 0x66 in 64-bit mode)
-        0xf6, 0x3d, 0xf8, 0x0f, 0x00, 0x00, // IDIV BYTE PTR [rip+0x0FF8] (DATA_ADDR=0x2000, RIP after=0x1008)
+        0xf6, 0x3d, 0xf8, 0x0f, 0x00,
+        0x00, // IDIV BYTE PTR [rip+0x0FF8] (DATA_ADDR=0x2000, RIP after=0x1008)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -547,8 +548,9 @@ fn test_idiv_byte_ptr_mem() {
 #[test]
 fn test_idiv_dword_ptr_mem() {
     let code = [
-        0x99,       // CDQ
-        0xf7, 0x3d, 0xf9, 0x0f, 0x00, 0x00, // IDIV DWORD PTR [rip+0x0FF9] (DATA_ADDR=0x2000, RIP after=0x1007)
+        0x99, // CDQ
+        0xf7, 0x3d, 0xf9, 0x0f, 0x00,
+        0x00, // IDIV DWORD PTR [rip+0x0FF9] (DATA_ADDR=0x2000, RIP after=0x1007)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -568,8 +570,9 @@ fn test_idiv_dword_ptr_mem() {
 #[test]
 fn test_idiv_qword_ptr_mem() {
     let code = [
-        0x48, 0x99,    // CQO
-        0x48, 0xf7, 0x3d, 0xf7, 0x0f, 0x00, 0x00, // IDIV QWORD PTR [rip+0x0FF7] (DATA_ADDR=0x2000, RIP after=0x1009)
+        0x48, 0x99, // CQO
+        0x48, 0xf7, 0x3d, 0xf7, 0x0f, 0x00,
+        0x00, // IDIV QWORD PTR [rip+0x0FF7] (DATA_ADDR=0x2000, RIP after=0x1009)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -593,7 +596,7 @@ fn test_idiv_qword_ptr_mem() {
 fn test_idiv_small_dividend() {
     // 5 / 10 = 0 remainder 5
     let code = [
-        0x99,       // CDQ
+        0x99, // CDQ
         0xf7, 0xfb, // IDIV EBX
         0xf4,
     ];
@@ -611,7 +614,7 @@ fn test_idiv_small_dividend() {
 fn test_idiv_negative_small_dividend() {
     // -5 / 10 = 0 remainder -5
     let code = [
-        0x99,       // CDQ
+        0x99, // CDQ
         0xf7, 0xfb, // IDIV EBX
         0xf4,
     ];
@@ -631,7 +634,7 @@ fn test_idiv_negative_small_dividend() {
 fn test_idiv_power_of_two() {
     // 1024 / 256 = 4 remainder 0
     let code = [
-        0x99,       // CDQ
+        0x99, // CDQ
         0xf7, 0xfb, // IDIV EBX
         0xf4,
     ];
@@ -649,7 +652,7 @@ fn test_idiv_power_of_two() {
 fn test_idiv_max_positive() {
     // 0x7FFFFFFF / 1 = 0x7FFFFFFF remainder 0 (max i32)
     let code = [
-        0x99,       // CDQ
+        0x99, // CDQ
         0xf7, 0xfb, // IDIV EBX
         0xf4,
     ];
@@ -710,13 +713,13 @@ fn test_idiv_eax_int_min_div_neg_one_raises_de() {
     // INT32_MIN (0x80000000) IDIV -1 overflows: |quotient| = 2^31 does not fit
     // in a signed 32-bit result. Must raise #DE (vector 0).
     let code = [
-        0x99,       // CDQ (sign-extend EAX into EDX => EDX:EAX = -2147483648)
+        0x99, // CDQ (sign-extend EAX into EDX => EDX:EAX = -2147483648)
         0xf7, 0xfb, // IDIV EBX
-        0xf4,       // HLT (must NOT be reached)
+        0xf4, // HLT (must NOT be reached)
     ];
     let mut regs = Registers::default();
     regs.rax = 0x8000_0000; // EAX = INT32_MIN
-    regs.rbx = 0xFFFF_FFFF;  // EBX = -1
+    regs.rbx = 0xFFFF_FFFF; // EBX = -1
     let (mut vcpu, _) = setup_vm_no_idt(&code, Some(regs));
     assert_raises_de(&mut vcpu);
 }
@@ -729,12 +732,12 @@ fn test_idiv_eax_dividend_i64_min_div_neg_one_no_host_panic() {
     // EDX:EAX = 0x8000000000000000 = i64::MIN (set directly; CDQ cannot produce it).
     let code = [
         0xf7, 0xfb, // IDIV EBX
-        0xf4,       // HLT (must NOT be reached)
+        0xf4, // HLT (must NOT be reached)
     ];
     let mut regs = Registers::default();
-    regs.rax = 0x0000_0000;  // EAX (low dword) = 0
-    regs.rdx = 0x8000_0000;  // EDX (high dword) = 0x80000000 => EDX:EAX = i64::MIN
-    regs.rbx = 0xFFFF_FFFF;  // EBX = -1
+    regs.rax = 0x0000_0000; // EAX (low dword) = 0
+    regs.rdx = 0x8000_0000; // EDX (high dword) = 0x80000000 => EDX:EAX = i64::MIN
+    regs.rbx = 0xFFFF_FFFF; // EBX = -1
     let (mut vcpu, _) = setup_vm_no_idt(&code, Some(regs));
     assert_raises_de(&mut vcpu);
 }
@@ -745,12 +748,12 @@ fn test_idiv_rax_dividend_i128_min_div_neg_one_no_host_panic() {
     // RDX:RAX = i128::MIN (RDX high bit set, rest zero). Must raise #DE.
     let code = [
         0x48, 0xf7, 0xfb, // IDIV RBX (REX.W F7 /7)
-        0xf4,             // HLT (must NOT be reached)
+        0xf4, // HLT (must NOT be reached)
     ];
     let mut regs = Registers::default();
     regs.rax = 0;
     regs.rdx = 0x8000_0000_0000_0000; // RDX:RAX = i128::MIN
-    regs.rbx = (-1i64) as u64;        // RBX = -1
+    regs.rbx = (-1i64) as u64; // RBX = -1
     let (mut vcpu, _) = setup_vm_no_idt(&code, Some(regs));
     assert_raises_de(&mut vcpu);
 }
@@ -759,9 +762,9 @@ fn test_idiv_rax_dividend_i128_min_div_neg_one_no_host_panic() {
 fn test_idiv_eax_div_by_zero_raises_de() {
     // IDIV by zero must raise #DE (vector 0), not panic the host.
     let code = [
-        0x99,       // CDQ
+        0x99, // CDQ
         0xf7, 0xfb, // IDIV EBX  (EBX = 0)
-        0xf4,       // HLT (must NOT be reached)
+        0xf4, // HLT (must NOT be reached)
     ];
     let mut regs = Registers::default();
     regs.rax = 100;

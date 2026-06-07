@@ -307,7 +307,7 @@ pub fn psub_packed(
             return Err(Error::Emulator(format!(
                 "unimplemented PSUB opcode {:#x} at RIP={:#x}",
                 opcode, vcpu.regs.rip
-            )))
+            )));
         }
     };
 
@@ -342,7 +342,7 @@ fn psub_packed_mmx(
             return Err(Error::Emulator(format!(
                 "unimplemented PSUB opcode {:#x} at RIP={:#x}",
                 opcode, vcpu.regs.rip
-            )))
+            )));
         }
     };
 

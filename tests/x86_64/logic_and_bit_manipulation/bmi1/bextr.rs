@@ -28,8 +28,15 @@ fn test_bextr_eax_ebx_ecx_basic() {
 
     // Extract 8 bits starting at bit 4: bits 4-11 of 0x12345678
     // 0x12345678 >> 4 = 0x01234567, mask 8 bits = 0x67
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x67, "EAX should contain extracted bits");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x67,
+        "EAX should contain extracted bits"
+    );
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (result is non-zero)"
+    );
     assert!(!cf_set(regs.rflags), "CF should be clear");
 }
 
@@ -64,7 +71,11 @@ fn test_bextr_eax_ebx_ecx_start_0() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFF, "EAX should contain lower 16 bits");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFF,
+        "EAX should contain lower 16 bits"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -115,7 +126,11 @@ fn test_bextr_eax_ebx_ecx_full_32bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX should contain all bits");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX should contain all bits"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -168,7 +183,11 @@ fn test_bextr_start_beyond_operand_size() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should be zero (start beyond size)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "EAX should be zero (start beyond size)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set");
 }
 
@@ -186,7 +205,11 @@ fn test_bextr_length_exceeds_remaining() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Should extract bits 20-31 (12 bits), zero-extended
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFF, "EAX should contain remaining bits");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFF,
+        "EAX should contain remaining bits"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -205,14 +228,19 @@ fn test_bextr_with_extended_registers() {
 
     // Extract 12 bits starting at bit 4
     let expected = (0xABCDEF01 >> 4) & 0xFFF;
-    assert_eq!(regs.r8 & 0xFFFFFFFF, expected, "R8D should contain extracted bits");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        expected,
+        "R8D should contain extracted bits"
+    );
 }
 
 #[test]
 fn test_bextr_mem32() {
     // BEXTR EAX, [mem], ECX
     let code = [
-        0xc4, 0xe2, 0x70, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // BEXTR EAX, [DATA_ADDR], ECX
+        0xc4, 0xe2, 0x70, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00,
+        0x00, // BEXTR EAX, [DATA_ADDR], ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -222,14 +250,19 @@ fn test_bextr_mem32() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Extract bits 8-15: 0xCC
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xCC, "EAX should contain extracted bits from memory");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xCC,
+        "EAX should contain extracted bits from memory"
+    );
 }
 
 #[test]
 fn test_bextr_mem64() {
     // BEXTR RAX, [mem], RCX
     let code = [
-        0xc4, 0xe2, 0xf0, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // BEXTR RAX, [DATA_ADDR], RCX
+        0xc4, 0xe2, 0xf0, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00,
+        0x00, // BEXTR RAX, [DATA_ADDR], RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -239,7 +272,10 @@ fn test_bextr_mem64() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Extract bits 16-31: 0x89AB
-    assert_eq!(regs.rax, 0x89AB, "RAX should contain extracted bits from memory");
+    assert_eq!(
+        regs.rax, 0x89AB,
+        "RAX should contain extracted bits from memory"
+    );
 }
 
 #[test]
@@ -259,7 +295,12 @@ fn test_bextr_nibble_extraction() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = (value >> (nibble_idx * 4)) & 0xF;
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "Should extract nibble {}", nibble_idx);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "Should extract nibble {}",
+            nibble_idx
+        );
     }
 }
 
@@ -280,7 +321,12 @@ fn test_bextr_byte_extraction() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = (value >> (byte_idx * 8)) & 0xFF;
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "Should extract byte {}", byte_idx);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "Should extract byte {}",
+            byte_idx
+        );
     }
 }
 
@@ -297,7 +343,11 @@ fn test_bextr_alternating_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xAA, "EAX should contain extracted pattern");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xAA,
+        "EAX should contain extracted pattern"
+    );
 }
 
 #[test]
@@ -317,7 +367,12 @@ fn test_bextr_single_bit_scan() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = ((value >> bit_idx) & 1) as u64;
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "Should extract bit {}", bit_idx);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "Should extract bit {}",
+            bit_idx
+        );
     }
 }
 
@@ -334,7 +389,11 @@ fn test_bextr_max_length_255() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX should contain all 32 bits");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX should contain all 32 bits"
+    );
 }
 
 #[test]
@@ -351,7 +410,11 @@ fn test_bextr_preserves_source() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rbx & 0xFFFFFFFF, 0x12345678, "EBX should be unchanged");
-    assert_eq!(regs.rcx & 0xFFFFFFFF, (8 << 8) | 4, "ECX should be unchanged");
+    assert_eq!(
+        regs.rcx & 0xFFFFFFFF,
+        (8 << 8) | 4,
+        "ECX should be unchanged"
+    );
 }
 
 #[test]
@@ -369,7 +432,10 @@ fn test_bextr_zero_extension() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 32-bit operation should zero upper 32 bits of RAX
-    assert_eq!(regs.rax, 0xFF, "RAX should be zero-extended (upper bits cleared)");
+    assert_eq!(
+        regs.rax, 0xFF,
+        "RAX should be zero-extended (upper bits cleared)"
+    );
 }
 
 #[test]
@@ -385,7 +451,11 @@ fn test_bextr_mask_creation() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFF, "EAX should contain 16-bit mask");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFF,
+        "EAX should contain 16-bit mask"
+    );
 }
 
 #[test]
@@ -401,7 +471,11 @@ fn test_bextr_field_alignment() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xDEAD, "EAX should contain upper 16 bits");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xDEAD,
+        "EAX should contain upper 16 bits"
+    );
 }
 
 #[test]
@@ -418,7 +492,11 @@ fn test_bextr_unaligned_field() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let expected = (0xFFFFFFFF >> 7) & 0x3FF;
-    assert_eq!(regs.rax & 0xFFFFFFFF, expected, "EAX should contain 10 bits");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        expected,
+        "EAX should contain 10 bits"
+    );
 }
 
 #[test]
@@ -434,5 +512,8 @@ fn test_bextr_64bit_full_extraction() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x123456789ABCDEF0, "RAX should contain all 64 bits");
+    assert_eq!(
+        regs.rax, 0x123456789ABCDEF0,
+        "RAX should contain all 64 bits"
+    );
 }

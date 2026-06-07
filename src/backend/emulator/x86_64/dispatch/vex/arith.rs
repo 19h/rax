@@ -23,13 +23,13 @@ impl X86_64Vcpu {
         // x86 MIN/MAX follow `(a<b)?a:b` / `(a>b)?a:b`, returning the SECOND operand
         // on any unordered (NaN) compare or signed-zero tie — not Rust's f32::min/max.
         let op: fn(f32, f32) -> f32 = match opcode {
-            0x58 => |a, b| a + b,                          // ADD
-            0x59 => |a, b| a * b,                          // MUL
-            0x5C => |a, b| a - b,                          // SUB
-            0x5D => |a, b| if a < b { a } else { b },      // MIN
-            0x5E => |a, b| a / b,                          // DIV
-            0x5F => |a, b| if a > b { a } else { b },      // MAX
-            0x51 => |_a, b| b.sqrt(),                      // SQRT (unary, uses only src2)
+            0x58 => |a, b| a + b,                     // ADD
+            0x59 => |a, b| a * b,                     // MUL
+            0x5C => |a, b| a - b,                     // SUB
+            0x5D => |a, b| if a < b { a } else { b }, // MIN
+            0x5E => |a, b| a / b,                     // DIV
+            0x5F => |a, b| if a > b { a } else { b }, // MAX
+            0x51 => |_a, b| b.sqrt(),                 // SQRT (unary, uses only src2)
             _ => unreachable!(),
         };
         let op_d: fn(f64, f64) -> f64 = match opcode {
@@ -439,11 +439,7 @@ impl X86_64Vcpu {
 }
 
 fn round_mode(imm8: u8) -> u8 {
-    if (imm8 & 0x4) != 0 {
-        0
-    } else {
-        imm8 & 0x3
-    }
+    if (imm8 & 0x4) != 0 { 0 } else { imm8 & 0x3 }
 }
 
 fn round_ties_even_f32(value: f32) -> f32 {

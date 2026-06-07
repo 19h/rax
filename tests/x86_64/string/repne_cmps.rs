@@ -806,12 +806,12 @@ fn test_repne_cmpsb_count_100() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..100 {
         write_mem_at_u8(&mem, 0x3000 + i, (i % 256) as u8);
         write_mem_at_u8(&mem, 0x4000 + i, (i % 256) as u8 + 1);
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 0, "RCX should reach zero");
 }
@@ -827,12 +827,12 @@ fn test_repne_cmpsw_pattern_search() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..10 {
         write_mem_at_u16(&mem, 0x3000 + i * 2, 0x1234);
         write_mem_at_u16(&mem, 0x4000 + i * 2, if i == 5 { 0x1234 } else { 0x5678 });
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 4, "Should stop at matching word");
 }
@@ -848,14 +848,14 @@ fn test_repne_cmpsd_boundary_check() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     write_mem_at_u32(&mem, 0x2FFC, 0x11111111);
     write_mem_at_u32(&mem, 0x3000, 0x22222222);
     write_mem_at_u32(&mem, 0x3004, 0x33333333);
     write_mem_at_u32(&mem, 0x3FFC, 0x44444444);
     write_mem_at_u32(&mem, 0x4000, 0x22222222);
     write_mem_at_u32(&mem, 0x4004, 0x55555555);
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert!(regs.rcx < 3, "Should find match");
 }
@@ -871,12 +871,16 @@ fn test_repne_cmpsq_incremental_values() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..8 {
         write_mem_at_u64(&mem, 0x3000 + i * 8, i as u64);
-        write_mem_at_u64(&mem, 0x4000 + i * 8, if i == 3 { 3 } else { i as u64 + 100 });
+        write_mem_at_u64(
+            &mem,
+            0x4000 + i * 8,
+            if i == 3 { 3 } else { i as u64 + 100 },
+        );
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 4, "Should stop at matching qword");
 }
@@ -892,12 +896,12 @@ fn test_repne_cmpsb_alternating_pattern() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..16 {
         write_mem_at_u8(&mem, 0x3000 + i, 0xAA);
         write_mem_at_u8(&mem, 0x4000 + i, if i % 2 == 0 { 0x55 } else { 0xAA });
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert!(regs.rcx < 16, "Should find match at odd position");
 }
@@ -913,10 +917,10 @@ fn test_repne_cmpsw_single_word() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     write_mem_at_u16(&mem, 0x3000, 0x1234);
     write_mem_at_u16(&mem, 0x4000, 0x5678);
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 0, "Should complete comparison");
 }
@@ -932,13 +936,13 @@ fn test_repne_cmpsd_powers_of_two() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     let powers = [1u32, 2, 4, 8, 16, 32, 64, 128];
     for i in 0..8u64 {
         write_mem_at_u32(&mem, 0x3000 + i * 4, powers[i as usize]);
         write_mem_at_u32(&mem, 0x4000 + i * 4, if i == 4 { 16 } else { 0 });
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 3, "Should find matching power of 2");
 }
@@ -954,12 +958,12 @@ fn test_repne_cmpsq_null_terminated_array() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..10 {
         write_mem_at_u64(&mem, 0x3000 + i * 8, i as u64 + 1000);
         write_mem_at_u64(&mem, 0x4000 + i * 8, if i == 7 { 1007 } else { 0 });
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 2, "Should find match at position 7");
 }
@@ -975,12 +979,12 @@ fn test_repne_cmpsb_sequential_bytes() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..20 {
         write_mem_at_u8(&mem, 0x3000 + i, i as u8);
         write_mem_at_u8(&mem, 0x4000 + i, if i == 10 { 10 } else { 0xFF });
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 9, "Should find match at byte 10");
 }
@@ -996,12 +1000,12 @@ fn test_repne_cmpsw_high_bit_pattern() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..12 {
         write_mem_at_u16(&mem, 0x3000 + i * 2, 0x8000 | (i as u16));
         write_mem_at_u16(&mem, 0x4000 + i * 2, if i == 6 { 0x8006 } else { 0x0000 });
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 5, "Should find matching high-bit word");
 }
@@ -1017,12 +1021,16 @@ fn test_repne_cmpsd_backward_scan() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..7 {
         write_mem_at_u32(&mem, 0x3000 + i * 4, 0xAAAAAAAA);
-        write_mem_at_u32(&mem, 0x4000 + i * 4, if i == 2 { 0xAAAAAAAA } else { 0xBBBBBBBB });
+        write_mem_at_u32(
+            &mem,
+            0x4000 + i * 4,
+            if i == 2 { 0xAAAAAAAA } else { 0xBBBBBBBB },
+        );
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert!(regs.rcx < 7, "Should find match during backward scan");
 }
@@ -1038,12 +1046,16 @@ fn test_repne_cmpsq_sparse_matches() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..15 {
         write_mem_at_u64(&mem, 0x3000 + i * 8, 0x123456789ABCDEF0 + i as u64);
-        write_mem_at_u64(&mem, 0x4000 + i * 8, if i == 9 { 0x123456789ABCDEF9 } else { 0 });
+        write_mem_at_u64(
+            &mem,
+            0x4000 + i * 8,
+            if i == 9 { 0x123456789ABCDEF9 } else { 0 },
+        );
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 5, "Should find first match");
 }
@@ -1059,13 +1071,13 @@ fn test_repne_cmpsb_hex_digits() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     let hex = b"0123456789ABCDEF";
     for i in 0..16u64 {
         write_mem_at_u8(&mem, 0x3000 + i, hex[i as usize]);
         write_mem_at_u8(&mem, 0x4000 + i, if i == 12 { b'C' } else { b'Z' });
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 3, "Should find 'C' at position 12");
 }
@@ -1081,12 +1093,12 @@ fn test_repne_cmpsw_unicode_bom() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..10 {
         write_mem_at_u16(&mem, 0x3000 + i * 2, 0xFEFF);
         write_mem_at_u16(&mem, 0x4000 + i * 2, if i == 0 { 0xFEFF } else { 0x0000 });
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 9, "Should find BOM at start");
 }
@@ -1102,12 +1114,16 @@ fn test_repne_cmpsd_signed_negative() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..8 {
         write_mem_at_u32(&mem, 0x3000 + i * 4, 0xFFFFFFFF);
-        write_mem_at_u32(&mem, 0x4000 + i * 4, if i == 5 { 0xFFFFFFFF } else { 0x7FFFFFFF });
+        write_mem_at_u32(
+            &mem,
+            0x4000 + i * 4,
+            if i == 5 { 0xFFFFFFFF } else { 0x7FFFFFFF },
+        );
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 2, "Should find matching negative value");
 }

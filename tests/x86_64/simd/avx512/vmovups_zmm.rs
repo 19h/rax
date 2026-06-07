@@ -12,9 +12,9 @@ use vm_memory::{Bytes, GuestAddress};
 // EVEX.512.0F.W0 10 /r    VMOVUPS zmm1 {k1}{z}, zmm2/m512    - Move unaligned packed single from zmm2/m512 to zmm1
 // EVEX.512.0F.W0 11 /r    VMOVUPS zmm2/m512 {k1}{z}, zmm1    - Move unaligned packed single from zmm1 to zmm2/m512
 
-const ALIGNED_ADDR: u64 = 0x3000;     // 64-byte aligned
-const UNALIGNED_ADDR: u64 = 0x3008;   // Intentionally unaligned (8-byte offset)
-const UNALIGNED_ADDR2: u64 = 0x3011;  // Intentionally unaligned (17-byte offset)
+const ALIGNED_ADDR: u64 = 0x3000; // 64-byte aligned
+const UNALIGNED_ADDR: u64 = 0x3008; // Intentionally unaligned (8-byte offset)
+const UNALIGNED_ADDR2: u64 = 0x3011; // Intentionally unaligned (17-byte offset)
 
 // ============================================================================
 // Register to Register Tests - ZMM0-ZMM7
@@ -292,7 +292,8 @@ fn test_vmovups_aligned_mem_to_zmm0() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x01u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x01u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -310,7 +311,8 @@ fn test_vmovups_aligned_mem_to_zmm15() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFFu8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFFu8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -328,7 +330,8 @@ fn test_vmovups_aligned_mem_to_zmm31() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xAAu8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xAAu8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -350,7 +353,8 @@ fn test_vmovups_unaligned8_mem_to_zmm0() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x11u8; 64], GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x11u8; 64], GuestAddress(UNALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -368,7 +372,8 @@ fn test_vmovups_unaligned8_mem_to_zmm7() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x22u8; 64], GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x22u8; 64], GuestAddress(UNALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -386,7 +391,8 @@ fn test_vmovups_unaligned8_mem_to_zmm15() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x33u8; 64], GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x33u8; 64], GuestAddress(UNALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -404,7 +410,8 @@ fn test_vmovups_unaligned8_mem_to_zmm31() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x44u8; 64], GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x44u8; 64], GuestAddress(UNALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -426,7 +433,8 @@ fn test_vmovups_unaligned17_mem_to_zmm0() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x55u8; 64], GuestAddress(UNALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0x55u8; 64], GuestAddress(UNALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -444,7 +452,8 @@ fn test_vmovups_unaligned17_mem_to_zmm15() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x66u8; 64], GuestAddress(UNALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0x66u8; 64], GuestAddress(UNALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -462,7 +471,8 @@ fn test_vmovups_unaligned17_mem_to_zmm31() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x77u8; 64], GuestAddress(UNALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0x77u8; 64], GuestAddress(UNALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -487,7 +497,8 @@ fn test_vmovups_zmm0_to_aligned_mem() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let mut result = [0u8; 64];
-    mem.read_slice(&mut result, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.read_slice(&mut result, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 }
 
 #[test]
@@ -630,7 +641,8 @@ fn test_vmovups_all_zeros_unaligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(UNALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -647,7 +659,8 @@ fn test_vmovups_all_ones_unaligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFFu8; 64], GuestAddress(UNALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFFu8; 64], GuestAddress(UNALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -668,7 +681,8 @@ fn test_vmovups_alternating_pattern_unaligned() {
     for i in 0..64 {
         data[i] = if i % 2 == 0 { 0xAA } else { 0x55 };
     }
-    mem.write_slice(&data, GuestAddress(UNALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&data, GuestAddress(UNALIGNED_ADDR2))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

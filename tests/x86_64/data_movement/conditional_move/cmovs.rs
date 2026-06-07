@@ -19,7 +19,11 @@ fn test_cmovs_eax_ebx_sf_set() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved when SF=1");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved when SF=1"
+    );
 }
 
 // CMOVS when SF=0 (positive result, should not move)
@@ -36,7 +40,11 @@ fn test_cmovs_eax_ebx_sf_clear() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000001, "EAX should not be moved when SF=0");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000001,
+        "EAX should not be moved when SF=0"
+    );
 }
 
 // Test after SUB with negative result
@@ -54,7 +62,11 @@ fn test_cmovs_after_sub_negative() {
     regs.rbx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x44444444, "EDX should be moved (negative result)");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x44444444,
+        "EDX should be moved (negative result)"
+    );
 }
 
 // Test after SUB with positive result
@@ -72,7 +84,11 @@ fn test_cmovs_after_sub_positive() {
     regs.rbx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x33333333, "EDX should not be moved (positive result)");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x33333333,
+        "EDX should not be moved (positive result)"
+    );
 }
 
 // Test 16-bit operand - use 64-bit negative value to set SF
@@ -125,7 +141,11 @@ fn test_cmovs_r8d_r9d() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // SF=1 from TEST, so CMOVS moves R9D to R8D
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0x22222222, "R8D should be moved when SF=1");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0x22222222,
+        "R8D should be moved when SF=1"
+    );
 }
 
 // Test with zero (SF=0)
@@ -141,7 +161,11 @@ fn test_cmovs_zero() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000000, "EAX should not be moved (zero, SF=0)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000000,
+        "EAX should not be moved (zero, SF=0)"
+    );
 }
 
 // Test that flags are preserved
@@ -175,7 +199,10 @@ fn test_cmovs_zeros_upper_32() {
     regs.rbx = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000012345678, "Upper 32 bits should be zeroed");
+    assert_eq!(
+        regs.rax, 0x0000000012345678,
+        "Upper 32 bits should be zeroed"
+    );
 }
 
 // Test practical use case: error flag check
@@ -189,7 +216,7 @@ fn test_cmovs_practical_error_check() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0xFFFFFFFFFFFFFFFF; // -1 (error)
-    regs.rdx = 0;  // error_code
+    regs.rdx = 0; // error_code
     regs.rcx = 0xFFFFFFFFFFFFFFFF; // -1
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -213,7 +240,11 @@ fn test_cmovs_esi_edi() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // 1 is positive (bit 63 = 0), so SF=0
-    assert_eq!(regs.rsi & 0xFFFFFFFF, 0x55555555, "ESI should not be moved when SF=0");
+    assert_eq!(
+        regs.rsi & 0xFFFFFFFF,
+        0x55555555,
+        "ESI should not be moved when SF=0"
+    );
 }
 
 // CMOVNS - Conditional Move if Not Sign (SF=0)
@@ -231,7 +262,11 @@ fn test_cmovns_eax_ebx_sf_clear() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved when SF=0");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved when SF=0"
+    );
 }
 
 #[test]
@@ -247,7 +282,11 @@ fn test_cmovns_eax_ebx_sf_set() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xffffffff, "EAX should not be moved when SF=1");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xffffffff,
+        "EAX should not be moved when SF=1"
+    );
 }
 
 #[test]
@@ -264,7 +303,11 @@ fn test_cmovns_after_sub_positive() {
     regs.rbx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x44444444, "EDX should be moved (positive result)");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x44444444,
+        "EDX should be moved (positive result)"
+    );
 }
 
 #[test]
@@ -298,7 +341,11 @@ fn test_cmovns_zero() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved (zero, SF=0)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved (zero, SF=0)"
+    );
 }
 
 #[test]
@@ -311,8 +358,8 @@ fn test_cmovns_practical_success_check() {
     ];
     let mut regs = Registers::default();
     regs.rax = 100; // positive result
-    regs.rdx = 0;   // success_flag
-    regs.rcx = 1;   // true
+    regs.rdx = 0; // success_flag
+    regs.rcx = 1; // true
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rdx, 1, "Success flag should be set");

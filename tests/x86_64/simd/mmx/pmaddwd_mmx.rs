@@ -70,5 +70,8 @@ fn test_pmaddwd_negative_products() {
     //   dword0 = -1 + -1 = -2 = 0xFFFFFFFE
     //   dword1 = -1 + -1 = -2 = 0xFFFFFFFE
     let r = run_pmaddwd(0xFFFFFFFFFFFFFFFF, 0x0001000100010001);
-    assert_eq!(r, 0xFFFFFFFEFFFFFFFE, "PMADDWD negative products -> [-2, -2]");
+    assert_eq!(
+        r, 0xFFFFFFFEFFFFFFFE,
+        "PMADDWD negative products -> [-2, -2]"
+    );
 }

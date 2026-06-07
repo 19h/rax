@@ -85,8 +85,10 @@ fn test_cmppd_eq_none_equal() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(3.0, 4.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -111,8 +113,10 @@ fn test_cmppd_eq_partial_equal() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 4.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -137,8 +141,10 @@ fn test_cmppd_eq_with_zeros() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(0.0, 0.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(0.0, 0.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(0.0, 0.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(0.0, 0.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -163,8 +169,10 @@ fn test_cmppd_eq_with_negatives() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(-1.0, -2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(-1.0, -2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(-1.0, -2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(-1.0, -2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -189,8 +197,16 @@ fn test_cmppd_eq_high_precision() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(3.141592653589793, 2.718281828459045), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(3.141592653589793, 2.718281828459045), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_2doubles(3.141592653589793, 2.718281828459045),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_2doubles(3.141592653589793, 2.718281828459045),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -219,8 +235,10 @@ fn test_cmppd_lt_all_less() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(3.0, 4.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -245,8 +263,10 @@ fn test_cmppd_lt_none_less() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(5.0, 6.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(5.0, 6.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -271,8 +291,10 @@ fn test_cmppd_lt_partial_less() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 6.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(5.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 6.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(5.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -297,8 +319,10 @@ fn test_cmppd_lt_with_negatives() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(-5.0, -4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(-1.0, -0.5), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(-5.0, -4.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(-1.0, -0.5), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -323,8 +347,10 @@ fn test_cmppd_lt_equal_not_less() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -353,8 +379,10 @@ fn test_cmppd_le_all_less_or_equal() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -379,8 +407,10 @@ fn test_cmppd_le_mixed() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 10.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(5.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 10.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(5.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -405,8 +435,10 @@ fn test_cmppd_le_none() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(10.0, 20.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(10.0, 20.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -435,8 +467,10 @@ fn test_cmppd_unord_with_nan_first() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -461,8 +495,10 @@ fn test_cmppd_unord_with_nan_second() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -487,8 +523,13 @@ fn test_cmppd_unord_with_nan_both() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(f64::NAN, f64::NAN), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_2doubles(f64::NAN, f64::NAN),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -513,8 +554,10 @@ fn test_cmppd_unord_no_nan() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(3.0, 4.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -543,8 +586,10 @@ fn test_cmppd_neq_all_different() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(3.0, 4.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -569,8 +614,10 @@ fn test_cmppd_neq_all_same() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -595,8 +642,10 @@ fn test_cmppd_neq_with_nan() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -625,8 +674,10 @@ fn test_cmppd_nlt_all_greater_or_equal() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(10.0, 20.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(10.0, 20.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -651,8 +702,10 @@ fn test_cmppd_nlt_all_less() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(10.0, 20.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(10.0, 20.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -677,8 +730,10 @@ fn test_cmppd_nlt_with_nan() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(f64::NAN, 20.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(10.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(f64::NAN, 20.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(10.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -707,8 +762,10 @@ fn test_cmppd_nle_all_greater() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(10.0, 20.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(10.0, 20.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -733,8 +790,10 @@ fn test_cmppd_nle_all_equal() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -759,8 +818,10 @@ fn test_cmppd_nle_with_nan() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -789,8 +850,10 @@ fn test_cmppd_ord_all_ordered() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(3.0, 4.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -815,8 +878,10 @@ fn test_cmppd_ord_with_nan_first() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -841,8 +906,10 @@ fn test_cmppd_ord_with_nan_second() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, f64::NAN), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, f64::NAN), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -867,8 +934,10 @@ fn test_cmppd_ord_with_nan_both() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(f64::NAN, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -897,8 +966,16 @@ fn test_cmppd_with_infinity() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, f64::NEG_INFINITY), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(f64::INFINITY, 0.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_2doubles(1.0, f64::NEG_INFINITY),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_2doubles(f64::INFINITY, 0.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -923,8 +1000,10 @@ fn test_cmppd_positive_negative_zero() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(0.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(-0.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(0.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(-0.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -950,8 +1029,10 @@ fn test_cmppd_denormal_values() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     let denorm = f64::from_bits(0x0000000000000001); // Smallest positive denormal
-    mem.write_slice(&make_2doubles(denorm, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(denorm, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -1005,8 +1086,10 @@ fn test_cmppd_xmm_mem_lt() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(3.0, 4.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -1062,8 +1145,10 @@ fn test_cmppd_xmm7_xmm6() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(3.0, 4.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -1088,8 +1173,10 @@ fn test_cmppd_xmm15_xmm8() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -1118,8 +1205,10 @@ fn test_cmppd_large_values() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1e200, 2e200), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(3e200, 4e200), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1e200, 2e200), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(3e200, 4e200), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -1144,8 +1233,10 @@ fn test_cmppd_small_values() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1e-200, 2e-200), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(3e-200, 4e-200), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1e-200, 2e-200), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(3e-200, 4e-200), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -1170,8 +1261,10 @@ fn test_cmppd_mixed_signs() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(-1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, -2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(-1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, -2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -1202,8 +1295,10 @@ fn test_cmppd_multiple_comparisons() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR2))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }

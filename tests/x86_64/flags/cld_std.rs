@@ -93,7 +93,11 @@ fn test_cld_preserves_other_flags() {
     assert_eq!(sf_set(regs.rflags), true, "SF should be preserved");
     assert_eq!(pf_set(regs.rflags), true, "PF should be preserved");
     assert_eq!(of_set(regs.rflags), true, "OF should be preserved");
-    assert_eq!(regs.rflags & !(1 << 10), initial_flags & !(1 << 10), "All flags except DF should match");
+    assert_eq!(
+        regs.rflags & !(1 << 10),
+        initial_flags & !(1 << 10),
+        "All flags except DF should match"
+    );
 }
 
 #[test]
@@ -154,9 +158,9 @@ fn test_std_does_not_modify_registers() {
 fn test_cld_std_sequence() {
     // Sequence of CLD and STD
     let code = [
-        0xfd,           // STD
-        0xfc,           // CLD
-        0xfd,           // STD
+        0xfd, // STD
+        0xfc, // CLD
+        0xfd, // STD
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -164,18 +168,22 @@ fn test_cld_std_sequence() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(df_set(regs.rflags), true, "DF should be set after final STD");
+    assert_eq!(
+        df_set(regs.rflags),
+        true,
+        "DF should be set after final STD"
+    );
 }
 
 #[test]
 fn test_cld_in_loop() {
     // CLD repeatedly in sequence
     let code = [
-        0xfd,           // STD
-        0xfc,           // CLD
-        0xfc,           // CLD
-        0xfc,           // CLD
-        0xfc,           // CLD
+        0xfd, // STD
+        0xfc, // CLD
+        0xfc, // CLD
+        0xfc, // CLD
+        0xfc, // CLD
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -190,11 +198,11 @@ fn test_cld_in_loop() {
 fn test_std_in_loop() {
     // STD repeatedly in sequence
     let code = [
-        0xfc,           // CLD
-        0xfd,           // STD
-        0xfd,           // STD
-        0xfd,           // STD
-        0xfd,           // STD
+        0xfc, // CLD
+        0xfd, // STD
+        0xfd, // STD
+        0xfd, // STD
+        0xfd, // STD
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -221,7 +229,10 @@ fn test_cld_with_all_flags_set() {
     // Other flags should not be affected
     let other_flags = regs.rflags & !(1 << 10); // Mask out DF
     let expected_flags = (0x2 | 0xFFF) & !(1 << 10);
-    assert_eq!(other_flags, expected_flags, "Other flags should be preserved");
+    assert_eq!(
+        other_flags, expected_flags,
+        "Other flags should be preserved"
+    );
 }
 
 #[test]
@@ -237,7 +248,11 @@ fn test_std_with_no_flags_set() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(df_set(regs.rflags), true, "DF should be set");
-    assert_eq!(regs.rflags & !(1 << 10), 0x2, "Other flags should remain unchanged");
+    assert_eq!(
+        regs.rflags & !(1 << 10),
+        0x2,
+        "Other flags should remain unchanged"
+    );
 }
 
 #[test]
@@ -245,9 +260,9 @@ fn test_cld_std_before_string_ops() {
     // CLD/STD are typically used before string operations
     // This tests they work in sequence
     let code = [
-        0xfc,           // CLD - forward direction
+        0xfc, // CLD - forward direction
         0xb8, 0x00, 0x10, 0x00, 0x00, // MOV EAX, 0x1000
-        0xfd,           // STD - reverse direction
+        0xfd, // STD - reverse direction
         0xb8, 0x00, 0x20, 0x00, 0x00, // MOV EAX, 0x2000
         0xf4,
     ];
@@ -261,10 +276,10 @@ fn test_cld_std_before_string_ops() {
 fn test_cld_multiple_times() {
     // Multiple CLDs
     let code = [
-        0xfd,           // STD
-        0xfc,           // CLD
-        0xfc,           // CLD
-        0xfc,           // CLD
+        0xfd, // STD
+        0xfc, // CLD
+        0xfc, // CLD
+        0xfc, // CLD
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -277,10 +292,10 @@ fn test_cld_multiple_times() {
 fn test_std_multiple_times() {
     // Multiple STDs
     let code = [
-        0xfc,           // CLD
-        0xfd,           // STD
-        0xfd,           // STD
-        0xfd,           // STD
+        0xfc, // CLD
+        0xfd, // STD
+        0xfd, // STD
+        0xfd, // STD
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -338,7 +353,11 @@ fn test_cld_isolation() {
     let after = regs.rflags;
     let mask = !(1 << 10); // DF mask
 
-    assert_eq!(after & mask, before & mask, "Non-DF flags should be unchanged");
+    assert_eq!(
+        after & mask,
+        before & mask,
+        "Non-DF flags should be unchanged"
+    );
     assert_eq!(df_set(regs.rflags), false, "DF should be clear");
 }
 
@@ -386,41 +405,53 @@ fn test_std_with_zero_flags() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rflags, 0x2 | (1 << 10), "Only reserved bit and DF should be set");
+    assert_eq!(
+        regs.rflags,
+        0x2 | (1 << 10),
+        "Only reserved bit and DF should be set"
+    );
 }
 
 #[test]
 fn test_cld_std_alternating() {
     // Alternating CLD and STD
     let code = [
-        0xfc,           // CLD
-        0xfd,           // STD
-        0xfc,           // CLD
-        0xfd,           // STD
-        0xfc,           // CLD
+        0xfc, // CLD
+        0xfd, // STD
+        0xfc, // CLD
+        0xfd, // STD
+        0xfc, // CLD
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(df_set(regs.rflags), false, "DF should be clear after final CLD");
+    assert_eq!(
+        df_set(regs.rflags),
+        false,
+        "DF should be clear after final CLD"
+    );
 }
 
 #[test]
 fn test_std_cld_alternating() {
     // Alternating STD and CLD, starting with STD
     let code = [
-        0xfd,           // STD
-        0xfc,           // CLD
-        0xfd,           // STD
-        0xfc,           // CLD
-        0xfd,           // STD
+        0xfd, // STD
+        0xfc, // CLD
+        0xfd, // STD
+        0xfc, // CLD
+        0xfd, // STD
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(df_set(regs.rflags), true, "DF should be set after final STD");
+    assert_eq!(
+        df_set(regs.rflags),
+        true,
+        "DF should be set after final STD"
+    );
 }
 
 #[test]
@@ -459,12 +490,12 @@ fn test_std_with_zero_flag_set() {
 fn test_cld_rapid_sequence() {
     // Rapid sequence of CLD
     let code = [
-        0xfd,           // STD
-        0xfc,           // CLD
-        0xfc,           // CLD
-        0xfc,           // CLD
-        0xfc,           // CLD
-        0xfc,           // CLD
+        0xfd, // STD
+        0xfc, // CLD
+        0xfc, // CLD
+        0xfc, // CLD
+        0xfc, // CLD
+        0xfc, // CLD
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -477,12 +508,12 @@ fn test_cld_rapid_sequence() {
 fn test_std_rapid_sequence() {
     // Rapid sequence of STD
     let code = [
-        0xfc,           // CLD
-        0xfd,           // STD
-        0xfd,           // STD
-        0xfd,           // STD
-        0xfd,           // STD
-        0xfd,           // STD
+        0xfc, // CLD
+        0xfd, // STD
+        0xfd, // STD
+        0xfd, // STD
+        0xfd, // STD
+        0xfd, // STD
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -496,9 +527,9 @@ fn test_cld_std_with_add_instruction() {
     // CLD/STD don't interfere with other instructions
     let code = [
         0xb8, 0x05, 0x00, 0x00, 0x00, // MOV EAX, 5
-        0xfc,                          // CLD
-        0x83, 0xc0, 0x03,              // ADD EAX, 3
-        0xfd,                          // STD
+        0xfc, // CLD
+        0x83, 0xc0, 0x03, // ADD EAX, 3
+        0xfd, // STD
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -514,8 +545,8 @@ fn test_cld_std_does_not_modify_rsi_rdi() {
     let code = [
         0x48, 0xc7, 0xc6, 0x00, 0x10, 0x00, 0x00, // MOV RSI, 0x1000
         0x48, 0xc7, 0xc7, 0x00, 0x20, 0x00, 0x00, // MOV RDI, 0x2000
-        0xfc,                                      // CLD
-        0xfd,                                      // STD
+        0xfc, // CLD
+        0xfd, // STD
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -542,8 +573,8 @@ fn test_direction_flag_default_state() {
 fn test_cld_after_std() {
     // CLD clears what STD set
     let code = [
-        0xfd,           // STD
-        0xfc,           // CLD
+        0xfd, // STD
+        0xfc, // CLD
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -556,8 +587,8 @@ fn test_cld_after_std() {
 fn test_std_after_cld() {
     // STD sets what CLD cleared
     let code = [
-        0xfc,           // CLD
-        0xfd,           // STD
+        0xfc, // CLD
+        0xfd, // STD
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

@@ -328,7 +328,11 @@ fn test_cdqe_various_values() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax, expected, "CDQE({:#x}) should be {:#x}", input, expected);
+        assert_eq!(
+            regs.rax, expected,
+            "CDQE({:#x}) should be {:#x}",
+            input, expected
+        );
     }
 }
 
@@ -356,7 +360,11 @@ fn test_cqo_various_values() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rdx, expected_rdx, "CQO({:#x}) RDX should be {:#x}", input, expected_rdx);
+        assert_eq!(
+            regs.rdx, expected_rdx,
+            "CQO({:#x}) RDX should be {:#x}",
+            input, expected_rdx
+        );
         assert_eq!(regs.rax, input, "CQO should not modify RAX");
     }
 }

@@ -115,7 +115,8 @@ fn test_pmulld_xmm0_mem_positive() {
         0x04, 0x00, 0x00, 0x00, // 4
         0x05, 0x00, 0x00, 0x00, // 5
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -140,7 +141,8 @@ fn test_pmulld_xmm1_mem_negative() {
         0xfd, 0xff, 0xff, 0xff, // -3
         0xfc, 0xff, 0xff, 0xff, // -4
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -165,7 +167,8 @@ fn test_pmulld_xmm2_mem_mixed() {
         0x64, 0x00, 0x00, 0x00, // 100
         0xce, 0xff, 0xff, 0xff, // -50
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -190,7 +193,8 @@ fn test_pmulld_xmm3_mem_overflow() {
         0x00, 0x00, 0x04, 0x00, // 0x40000 (262144)
         0x00, 0x00, 0x08, 0x00, // 0x80000 (524288)
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -208,8 +212,12 @@ fn test_pmulld_xmm4_mem_zeros() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: [u8; 16] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]; // All zeros
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    let data: [u8; 16] = [
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00,
+    ]; // All zeros
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -229,12 +237,11 @@ fn test_pmulld_xmm5_mem_ones() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // All ones (1, 1, 1, 1)
     let data: [u8; 16] = [
-        0x01, 0x00, 0x00, 0x00,
-        0x01, 0x00, 0x00, 0x00,
-        0x01, 0x00, 0x00, 0x00,
-        0x01, 0x00, 0x00, 0x00,
+        0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
+        0x00,
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -287,12 +294,11 @@ fn test_pmulld_mem_displacement() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data: [u8; 16] = [
-        0x02, 0x00, 0x00, 0x00,
-        0x03, 0x00, 0x00, 0x00,
-        0x04, 0x00, 0x00, 0x00,
-        0x05, 0x00, 0x00, 0x00,
+        0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00,
+        0x00,
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -323,12 +329,11 @@ fn test_pmulld_xmm6_mem_max_positive() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // Max positive 32-bit signed int: 0x7FFFFFFF
     let data: [u8; 16] = [
-        0xff, 0xff, 0xff, 0x7f,
-        0xff, 0xff, 0xff, 0x7f,
-        0xff, 0xff, 0xff, 0x7f,
-        0xff, 0xff, 0xff, 0x7f,
+        0xff, 0xff, 0xff, 0x7f, 0xff, 0xff, 0xff, 0x7f, 0xff, 0xff, 0xff, 0x7f, 0xff, 0xff, 0xff,
+        0x7f,
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -348,12 +353,11 @@ fn test_pmulld_xmm7_mem_min_negative() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // Min negative 32-bit signed int: 0x80000000
     let data: [u8; 16] = [
-        0x00, 0x00, 0x00, 0x80,
-        0x00, 0x00, 0x00, 0x80,
-        0x00, 0x00, 0x00, 0x80,
-        0x00, 0x00, 0x00, 0x80,
+        0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
+        0x80,
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -460,7 +464,8 @@ fn test_pmulld_xmm0_mem_alternating() {
         0x14, 0x00, 0x00, 0x00, // 20
         0xec, 0xff, 0xff, 0xff, // -20
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

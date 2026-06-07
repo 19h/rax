@@ -126,9 +126,7 @@ impl X86_64Vcpu {
     /// for opcodes `execute` would treat as unimplemented (the `_ =>` arm); in
     /// that case the fill path stores a fallback that simply re-enters `execute`
     /// (which produces the proper error), so behaviour is identical.
-    pub(in crate::backend::emulator::x86_64) fn resolve_handler(
-        opcode: u8,
-    ) -> Option<HandlerFn> {
+    pub(in crate::backend::emulator::x86_64) fn resolve_handler(opcode: u8) -> Option<HandlerFn> {
         let f: HandlerFn = match opcode {
             0x90 => sh_nop_or_pause,
             0xF4 => sh_hlt,

@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm, read_mem_at_u64, write_mem_at_u64, DATA_ADDR};
+use crate::common::{DATA_ADDR, read_mem_at_u64, run_until_hlt, setup_vm, write_mem_at_u64};
 use rax::cpu::Registers;
 
 // Comprehensive tests for POP with memory operands
@@ -649,8 +649,8 @@ fn test_pop_mem_struct_fields() {
 #[test]
 fn test_pop_mem_consecutive_locations() {
     let code = [
-        0x6a, 0x01, 0x6a, 0x02, 0x6a, 0x03, 0x6a, 0x04, 0x6a, 0x05,
-        0x8f, 0x40, 0x00, // POP [RAX + 0]
+        0x6a, 0x01, 0x6a, 0x02, 0x6a, 0x03, 0x6a, 0x04, 0x6a, 0x05, 0x8f, 0x40,
+        0x00, // POP [RAX + 0]
         0x8f, 0x40, 0x08, // POP [RAX + 8]
         0x8f, 0x40, 0x10, // POP [RAX + 16]
         0x8f, 0x40, 0x18, // POP [RAX + 24]

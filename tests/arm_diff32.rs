@@ -125,11 +125,7 @@ fn oracle_path() -> Option<PathBuf> {
             _ => return None,
         }
     }
-    if bin.exists() {
-        Some(bin)
-    } else {
-        None
-    }
+    if bin.exists() { Some(bin) } else { None }
 }
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -327,7 +323,10 @@ fn compare_case(
     if cmp_vfp {
         for r in 0..32 {
             if rax.d[r] != oracle.st.d[r] {
-                diffs.push(format!("d{r}: rax={:#018x} hw={:#018x}", rax.d[r], oracle.st.d[r]));
+                diffs.push(format!(
+                    "d{r}: rax={:#018x} hw={:#018x}",
+                    rax.d[r], oracle.st.d[r]
+                ));
             }
         }
     }
@@ -431,7 +430,15 @@ fn run_batch(name: &str, batch: Vec<(String, u32, u32, ArmState32)>, cmp_vfp: bo
 
     let mut mismatches = Vec::new();
     for (i, ((insn, _mode, st), out)) in cases.iter().zip(outs.iter()).enumerate() {
-        compare_case(&labels[i], *insn, modes[i], st, out, cmp_vfp, &mut mismatches);
+        compare_case(
+            &labels[i],
+            *insn,
+            modes[i],
+            st,
+            out,
+            cmp_vfp,
+            &mut mismatches,
+        );
     }
 
     if !mismatches.is_empty() {
@@ -472,7 +479,11 @@ fn run_batch(name: &str, batch: Vec<(String, u32, u32, ArmState32)>, cmp_vfp: bo
             let rows: Vec<_> = distinct.iter().filter(|((k, _), _)| *k == want).collect();
             eprintln!("  == {want} ({} distinct) ==", rows.len());
             for ((_, label), (count, insn, detail)) in rows.iter().take(120) {
-                let d = if detail.len() > 200 { &detail[..200] } else { detail };
+                let d = if detail.len() > 200 {
+                    &detail[..200]
+                } else {
+                    detail
+                };
                 eprintln!("    {count:4}x [{:#010x}] {label}: {d}", insn);
             }
         }

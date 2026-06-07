@@ -70,10 +70,10 @@ fn test_rdmsr_preserves_flags() {
     // RDMSR should not modify flags
     let code = [
         0x48, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
-        0x48, 0x83, 0xC0, 0x01,                   // ADD RAX, 1 (sets ZF)
+        0x48, 0x83, 0xC0, 0x01, // ADD RAX, 1 (sets ZF)
         0x48, 0xC7, 0xC1, 0x80, 0x00, 0x00, 0xC0, // MOV RCX, 0xC0000080
-        0x0F, 0x32,                               // RDMSR
-        0xF4,                                      // HLT
+        0x0F, 0x32, // RDMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -92,16 +92,22 @@ fn test_rdmsr_preserves_other_registers() {
         0x48, 0xC7, 0xC6, 0xAA, 0xAA, 0xAA, 0xAA, // MOV RSI, 0xAAAAAAAA (sign-ext)
         0x48, 0xC7, 0xC7, 0xBB, 0xBB, 0xBB, 0xBB, // MOV RDI, 0xBBBBBBBB (sign-ext)
         0x48, 0xC7, 0xC1, 0x1B, 0x00, 0x00, 0x00, // MOV RCX, 0x1B
-        0x0F, 0x32,                               // RDMSR
-        0xF4,                                      // HLT
+        0x0F, 0x32, // RDMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rbx, 0x42424242, "RBX should not be modified");
-    assert_eq!(regs.rsi, 0xFFFFFFFFAAAAAAAAu64, "RSI should not be modified (sign-extended)");
-    assert_eq!(regs.rdi, 0xFFFFFFFFBBBBBBBBu64, "RDI should not be modified (sign-extended)");
+    assert_eq!(
+        regs.rsi, 0xFFFFFFFFAAAAAAAAu64,
+        "RSI should not be modified (sign-extended)"
+    );
+    assert_eq!(
+        regs.rdi, 0xFFFFFFFFBBBBBBBBu64,
+        "RDI should not be modified (sign-extended)"
+    );
 }
 
 // ============================================================================
@@ -202,11 +208,11 @@ fn test_rdmsr_multiple_reads() {
     // Read same MSR twice
     let code = [
         0x48, 0xC7, 0xC1, 0x10, 0x00, 0x00, 0x00, // MOV RCX, 0x10
-        0x0F, 0x32,                               // RDMSR #1
-        0x48, 0x89, 0xC3,                         // MOV RBX, RAX (save first read)
-        0x48, 0x89, 0xD6,                         // MOV RSI, RDX
-        0x0F, 0x32,                               // RDMSR #2 (same MSR)
-        0xF4,                                      // HLT
+        0x0F, 0x32, // RDMSR #1
+        0x48, 0x89, 0xC3, // MOV RBX, RAX (save first read)
+        0x48, 0x89, 0xD6, // MOV RSI, RDX
+        0x0F, 0x32, // RDMSR #2 (same MSR)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -221,12 +227,12 @@ fn test_rdmsr_different_msrs() {
     // Read two different MSRs
     let code = [
         0x48, 0xC7, 0xC1, 0x1B, 0x00, 0x00, 0x00, // MOV RCX, 0x1B (APIC_BASE)
-        0x0F, 0x32,                               // RDMSR
-        0x48, 0x89, 0xC3,                         // MOV RBX, RAX
-        0x48, 0x89, 0xD6,                         // MOV RSI, RDX
+        0x0F, 0x32, // RDMSR
+        0x48, 0x89, 0xC3, // MOV RBX, RAX
+        0x48, 0x89, 0xD6, // MOV RSI, RDX
         0x48, 0xC7, 0xC1, 0x10, 0x00, 0x00, 0x00, // MOV RCX, 0x10 (TSC)
-        0x0F, 0x32,                               // RDMSR
-        0xF4,                                      // HLT
+        0x0F, 0x32, // RDMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -246,10 +252,10 @@ fn test_rdmsr_loop() {
         0x48, 0xC7, 0xC1, 0x10, 0x00, 0x00, 0x00, // MOV RCX, 0x10
         0x48, 0xC7, 0xC3, 0x03, 0x00, 0x00, 0x00, // MOV RBX, 3 (loop counter)
         // loop_start:
-        0x0F, 0x32,                               // RDMSR
-        0x48, 0xFF, 0xCB,                         // DEC RBX
-        0x75, 0xF9,                               // JNZ loop_start (-7 bytes)
-        0xF4,                                      // HLT
+        0x0F, 0x32, // RDMSR
+        0x48, 0xFF, 0xCB, // DEC RBX
+        0x75, 0xF9, // JNZ loop_start (-7 bytes)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -270,9 +276,9 @@ fn test_rdmsr_clears_upper_bits() {
     let code = [
         0x48, 0xB8, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
         0x48, 0xBA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RDX, -1
-        0x48, 0xC7, 0xC1, 0x1B, 0x00, 0x00, 0x00,                   // MOV RCX, 0x1B
-        0x0F, 0x32,                                                  // RDMSR
-        0xF4,                                                         // HLT
+        0x48, 0xC7, 0xC1, 0x1B, 0x00, 0x00, 0x00, // MOV RCX, 0x1B
+        0x0F, 0x32, // RDMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -337,8 +343,8 @@ fn test_rdmsr_with_previous_eax_edx() {
         0x48, 0xC7, 0xC0, 0x11, 0x11, 0x11, 0x11, // MOV RAX, 0x11111111
         0x48, 0xC7, 0xC2, 0x22, 0x22, 0x22, 0x22, // MOV RDX, 0x22222222
         0x48, 0xC7, 0xC1, 0x1B, 0x00, 0x00, 0x00, // MOV RCX, 0x1B
-        0x0F, 0x32,                               // RDMSR
-        0xF4,                                      // HLT
+        0x0F, 0x32, // RDMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -385,12 +391,12 @@ fn test_rdmsr_pat() {
 fn test_rdmsr_vs_rdtsc() {
     // Compare RDMSR(TSC) with RDTSC instruction
     let code = [
-        0x0F, 0x31,                               // RDTSC
-        0x48, 0x89, 0xC3,                         // MOV RBX, RAX
-        0x48, 0x89, 0xD6,                         // MOV RSI, RDX
+        0x0F, 0x31, // RDTSC
+        0x48, 0x89, 0xC3, // MOV RBX, RAX
+        0x48, 0x89, 0xD6, // MOV RSI, RDX
         0x48, 0xC7, 0xC1, 0x10, 0x00, 0x00, 0x00, // MOV RCX, 0x10
-        0x0F, 0x32,                               // RDMSR
-        0xF4,                                      // HLT
+        0x0F, 0x32, // RDMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 

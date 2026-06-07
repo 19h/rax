@@ -238,11 +238,7 @@ pub fn bcd_to_f64(bytes: &[u8]) -> f64 {
         val += hi * multiplier;
         multiplier *= 10;
     }
-    if sign {
-        -(val as f64)
-    } else {
-        val as f64
-    }
+    if sign { -(val as f64) } else { val as f64 }
 }
 
 /// Convert f64 to BCD
@@ -293,7 +289,7 @@ pub fn fnstenv(vcpu: &mut X86_64Vcpu, addr: u64) -> Result<()> {
     vcpu.write_mem16(addr + 8, 0)?; // FCS (code segment)
     vcpu.write_mem16(addr + 10, vcpu.fpu.data_ptr as u16)?;
     vcpu.write_mem16(addr + 12, 0)?; // FDS (data segment)
-                                     // Remaining 14 bytes are reserved/unused
+    // Remaining 14 bytes are reserved/unused
     for i in 0..7 {
         vcpu.write_mem16(addr + 14 + i * 2, 0)?;
     }

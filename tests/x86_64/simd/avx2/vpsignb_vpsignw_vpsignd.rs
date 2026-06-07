@@ -135,8 +135,19 @@ fn test_vpsignb_ymm0_ymm1_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let control: Vec<u8> = (0..32).map(|i| if i % 3 == 0 { 0xFF } else if i % 3 == 1 { 0x00 } else { 0x01 }).collect();
-    mem.write_slice(&control, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let control: Vec<u8> = (0..32)
+        .map(|i| {
+            if i % 3 == 0 {
+                0xFF
+            } else if i % 3 == 1 {
+                0x00
+            } else {
+                0x01
+            }
+        })
+        .collect();
+    mem.write_slice(&control, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -151,7 +162,15 @@ fn test_vpsignb_ymm2_ymm3_mem_all_negative() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -166,8 +185,11 @@ fn test_vpsignb_ymm4_ymm5_mem_alternating() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let control: Vec<u8> = (0..32).map(|i| if i % 2 == 0 { 0x01 } else { 0xFF }).collect();
-    mem.write_slice(&control, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let control: Vec<u8> = (0..32)
+        .map(|i| if i % 2 == 0 { 0x01 } else { 0xFF })
+        .collect();
+    mem.write_slice(&control, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -273,10 +295,20 @@ fn test_vpsignw_ymm0_ymm1_mem() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let control: Vec<u8> = (0..16)
         .flat_map(|i| {
-            if i % 3 == 0 { 0xFFFFu16 } else if i % 3 == 1 { 0x0000u16 } else { 0x0001u16 }
-        }.to_le_bytes())
+            {
+                if i % 3 == 0 {
+                    0xFFFFu16
+                } else if i % 3 == 1 {
+                    0x0000u16
+                } else {
+                    0x0001u16
+                }
+            }
+            .to_le_bytes()
+        })
         .collect();
-    mem.write_slice(&control, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&control, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -291,7 +323,15 @@ fn test_vpsignw_ymm2_ymm3_mem_all_negative() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -309,7 +349,8 @@ fn test_vpsignw_ymm4_ymm5_mem_alternating() {
     let control: Vec<u8> = (0..16)
         .flat_map(|i| if i % 2 == 0 { 0x0001u16 } else { 0x8000u16 }.to_le_bytes())
         .collect();
-    mem.write_slice(&control, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&control, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -415,10 +456,20 @@ fn test_vpsignd_ymm0_ymm1_mem() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let control: Vec<u8> = (0..8)
         .flat_map(|i| {
-            if i % 3 == 0 { 0xFFFFFFFFu32 } else if i % 3 == 1 { 0x00000000u32 } else { 0x00000001u32 }
-        }.to_le_bytes())
+            {
+                if i % 3 == 0 {
+                    0xFFFFFFFFu32
+                } else if i % 3 == 1 {
+                    0x00000000u32
+                } else {
+                    0x00000001u32
+                }
+            }
+            .to_le_bytes()
+        })
         .collect();
-    mem.write_slice(&control, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&control, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -433,7 +484,15 @@ fn test_vpsignd_ymm2_ymm3_mem_all_negative() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -449,9 +508,17 @@ fn test_vpsignd_ymm4_ymm5_mem_alternating() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let control: Vec<u8> = (0..8)
-        .flat_map(|i| if i % 2 == 0 { 0x00000001u32 } else { 0x80000000u32 }.to_le_bytes())
+        .flat_map(|i| {
+            if i % 2 == 0 {
+                0x00000001u32
+            } else {
+                0x80000000u32
+            }
+            .to_le_bytes()
+        })
         .collect();
-    mem.write_slice(&control, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&control, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -576,7 +643,8 @@ fn test_vpsignb_mem_pattern() {
         .cycle()
         .take(32)
         .collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -597,7 +665,8 @@ fn test_vpsignw_mem_pattern() {
         .take(16)
         .flat_map(|v| v.to_le_bytes())
         .collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -618,6 +687,7 @@ fn test_vpsignd_mem_pattern() {
         .take(8)
         .flat_map(|v| v.to_le_bytes())
         .collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

@@ -26,7 +26,8 @@ fn main() {
 
     // Create guest memory
     let region = MmapRegion::new(MEM_SIZE as usize).expect("Failed to create mmap region");
-    let guest_region = GuestRegionMmap::new(region, GuestAddress(0)).expect("Failed to create guest region");
+    let guest_region =
+        GuestRegionMmap::new(region, GuestAddress(0)).expect("Failed to create guest region");
     let memory = Arc::new(
         GuestMemoryMmap::from_regions(vec![guest_region]).expect("Failed to create guest memory"),
     );
@@ -79,7 +80,8 @@ fn main() {
     // Create vCPU and set initial state
     let mut vcpu = X86_64Vcpu::new(0, memory);
     vcpu.set_regs(&regs).expect("Failed to set registers");
-    vcpu.set_sregs(&sregs).expect("Failed to set system registers");
+    vcpu.set_sregs(&sregs)
+        .expect("Failed to set system registers");
 
     // Run with output capture
     let mut output = String::new();

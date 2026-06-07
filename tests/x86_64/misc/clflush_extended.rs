@@ -1,5 +1,8 @@
 // Module path for tests run via x86_64.rs
-use crate::common::{run_until_hlt, setup_vm, read_mem_at_u8, read_mem_at_u16, read_mem_at_u32, read_mem_at_u64, write_mem_at_u8, write_mem_at_u16, write_mem_at_u32, write_mem_at_u64};
+use crate::common::{
+    read_mem_at_u8, read_mem_at_u16, read_mem_at_u32, read_mem_at_u64, run_until_hlt, setup_vm,
+    write_mem_at_u8, write_mem_at_u16, write_mem_at_u32, write_mem_at_u64,
+};
 use rax::cpu::Registers;
 
 // CLFLUSH Extended Tests - Cache Line Flush
@@ -14,7 +17,16 @@ use rax::cpu::Registers;
 #[test]
 fn test_clflush_all_base_registers() {
     // Test CLFLUSH with all general purpose base registers
-    for (reg_idx, addr) in [(0, 0x2000u64), (3, 0x3000), (1, 0x4000), (2, 0x5000), (6, 0x6000), (7, 0x7000)].iter() {
+    for (reg_idx, addr) in [
+        (0, 0x2000u64),
+        (3, 0x3000),
+        (1, 0x4000),
+        (2, 0x5000),
+        (6, 0x6000),
+        (7, 0x7000),
+    ]
+    .iter()
+    {
         let modrm = 0x38 | reg_idx;
         let code = [
             0x0f, 0xae, modrm, // CLFLUSH [reg]
@@ -170,9 +182,9 @@ fn test_clflush_write_modify_flush_read() {
     // Write, modify, flush, then read sequence
     let code = [
         0x48, 0xc7, 0x00, 0x11, 0x00, 0x00, 0x00, // MOV qword [rax], 0x11
-        0x48, 0xff, 0x00,                         // INC qword [rax]
-        0x0f, 0xae, 0x38,                         // CLFLUSH [rax]
-        0x48, 0x8b, 0x18,                         // MOV rbx, [rax]
+        0x48, 0xff, 0x00, // INC qword [rax]
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
+        0x48, 0x8b, 0x18, // MOV rbx, [rax]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -187,7 +199,7 @@ fn test_clflush_write_modify_flush_read() {
 fn test_clflush_multiple_lines_sequential() {
     // Flush multiple sequential cache lines
     let code = [
-        0x0f, 0xae, 0x38,                         // CLFLUSH [rax]
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
         0x0f, 0xae, 0xb8, 0x40, 0x00, 0x00, 0x00, // CLFLUSH [rax + 0x40]
         0x0f, 0xae, 0xb8, 0x80, 0x00, 0x00, 0x00, // CLFLUSH [rax + 0x80]
         0x0f, 0xae, 0xb8, 0xC0, 0x00, 0x00, 0x00, // CLFLUSH [rax + 0xC0]
@@ -214,10 +226,10 @@ fn test_clflush_multiple_lines_sequential() {
 fn test_clflush_overlapping_addresses() {
     // Multiple flushes of overlapping addresses in same cache line
     let code = [
-        0x0f, 0xae, 0x38,             // CLFLUSH [rax]
-        0x0f, 0xae, 0x78, 0x10,       // CLFLUSH [rax + 0x10]
-        0x0f, 0xae, 0x78, 0x20,       // CLFLUSH [rax + 0x20]
-        0x0f, 0xae, 0x78, 0x30,       // CLFLUSH [rax + 0x30]
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
+        0x0f, 0xae, 0x78, 0x10, // CLFLUSH [rax + 0x10]
+        0x0f, 0xae, 0x78, 0x20, // CLFLUSH [rax + 0x20]
+        0x0f, 0xae, 0x78, 0x30, // CLFLUSH [rax + 0x30]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -240,7 +252,7 @@ fn test_clflush_after_atomic_operation() {
     // CLFLUSH after atomic operation
     let code = [
         0xf0, 0x48, 0xff, 0x00, // LOCK INC qword [rax]
-        0x0f, 0xae, 0x38,       // CLFLUSH [rax]
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -257,12 +269,12 @@ fn test_clflush_after_atomic_operation() {
 fn test_clflush_different_data_sizes() {
     // CLFLUSH after writing different data sizes
     let code = [
-        0xc6, 0x00, 0xAA,                         // MOV byte [rax], 0xAA
-        0x0f, 0xae, 0x38,                         // CLFLUSH [rax]
-        0x66, 0xc7, 0x40, 0x08, 0xBB, 0xCC,       // MOV word [rax+8], 0xCCBB
-        0x0f, 0xae, 0x78, 0x08,                   // CLFLUSH [rax+8]
+        0xc6, 0x00, 0xAA, // MOV byte [rax], 0xAA
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
+        0x66, 0xc7, 0x40, 0x08, 0xBB, 0xCC, // MOV word [rax+8], 0xCCBB
+        0x0f, 0xae, 0x78, 0x08, // CLFLUSH [rax+8]
         0xc7, 0x40, 0x10, 0xDD, 0xEE, 0xFF, 0x00, // MOV dword [rax+16], 0x00FFEEDD
-        0x0f, 0xae, 0x78, 0x10,                   // CLFLUSH [rax+16]
+        0x0f, 0xae, 0x78, 0x10, // CLFLUSH [rax+16]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -318,11 +330,11 @@ fn test_clflush_large_positive_displacement() {
 fn test_clflush_in_loop_pattern() {
     // Simulate loop flushing pattern
     let code = [
-        0x0f, 0xae, 0x38,             // CLFLUSH [rax]
-        0x48, 0x83, 0xc0, 0x40,       // ADD rax, 0x40
-        0x0f, 0xae, 0x38,             // CLFLUSH [rax]
-        0x48, 0x83, 0xc0, 0x40,       // ADD rax, 0x40
-        0x0f, 0xae, 0x38,             // CLFLUSH [rax]
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
+        0x48, 0x83, 0xc0, 0x40, // ADD rax, 0x40
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
+        0x48, 0x83, 0xc0, 0x40, // ADD rax, 0x40
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -345,8 +357,8 @@ fn test_clflush_in_loop_pattern() {
 fn test_clflush_preserves_rflags() {
     // Verify CLFLUSH preserves all RFLAGS
     let code = [
-        0xf8,             // CLC (clear carry)
-        0xf9,             // STC (set carry)
+        0xf8, // CLC (clear carry)
+        0xf9, // STC (set carry)
         0x0f, 0xae, 0x38, // CLFLUSH [rax]
         0xf4,
     ];
@@ -449,11 +461,11 @@ fn test_clflush_interleaved_reads_writes() {
     // CLFLUSH interleaved with reads and writes
     let code = [
         0x48, 0xc7, 0x00, 0x01, 0x00, 0x00, 0x00, // MOV qword [rax], 0x1
-        0x0f, 0xae, 0x38,                         // CLFLUSH [rax]
-        0x48, 0x8b, 0x18,                         // MOV rbx, [rax]
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
+        0x48, 0x8b, 0x18, // MOV rbx, [rax]
         0x48, 0xc7, 0x00, 0x02, 0x00, 0x00, 0x00, // MOV qword [rax], 0x2
-        0x0f, 0xae, 0x38,                         // CLFLUSH [rax]
-        0x48, 0x8b, 0x08,                         // MOV rcx, [rax]
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
+        0x48, 0x8b, 0x08, // MOV rcx, [rax]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -520,8 +532,8 @@ fn test_clflush_high_memory() {
 fn test_clflush_mixed_with_prefetch() {
     // CLFLUSH mixed with PREFETCH operations
     let code = [
-        0x0f, 0x18, 0x08,       // PREFETCH0 [rax]
-        0x0f, 0xae, 0x38,       // CLFLUSH [rax]
+        0x0f, 0x18, 0x08, // PREFETCH0 [rax]
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
         0x0f, 0x18, 0x48, 0x40, // PREFETCH1 [rax + 0x40]
         0x0f, 0xae, 0x78, 0x40, // CLFLUSH [rax + 0x40]
         0xf4,
@@ -608,9 +620,9 @@ fn test_clflush_array_pattern() {
     // Simulate flushing array elements
     let code = [
         0x0f, 0xae, 0x3c, 0xc8, // CLFLUSH [rax + rcx*8] - element 0
-        0x48, 0xff, 0xc1,       // INC rcx
+        0x48, 0xff, 0xc1, // INC rcx
         0x0f, 0xae, 0x3c, 0xc8, // CLFLUSH [rax + rcx*8] - element 1
-        0x48, 0xff, 0xc1,       // INC rcx
+        0x48, 0xff, 0xc1, // INC rcx
         0x0f, 0xae, 0x3c, 0xc8, // CLFLUSH [rax + rcx*8] - element 2
         0xf4,
     ];
@@ -652,9 +664,9 @@ fn test_clflush_cross_cache_line_boundary() {
 fn test_clflush_alternating_addresses() {
     // Flush alternating cache lines
     let code = [
-        0x0f, 0xae, 0x38,                         // CLFLUSH [rax]
+        0x0f, 0xae, 0x38, // CLFLUSH [rax]
         0x0f, 0xae, 0xb8, 0x80, 0x00, 0x00, 0x00, // CLFLUSH [rax + 0x80]
-        0x0f, 0xae, 0x78, 0x40,                   // CLFLUSH [rax + 0x40]
+        0x0f, 0xae, 0x78, 0x40, // CLFLUSH [rax + 0x40]
         0x0f, 0xae, 0xb8, 0xC0, 0x00, 0x00, 0x00, // CLFLUSH [rax + 0xC0]
         0xf4,
     ];

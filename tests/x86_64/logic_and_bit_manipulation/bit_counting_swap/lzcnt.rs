@@ -24,9 +24,16 @@ fn test_lzcnt_ax_bx_all_zeros() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 16, "AX should contain 16 (all bits are zero)");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        16,
+        "AX should contain 16 (all bits are zero)"
+    );
     assert!(cf_set(regs.rflags), "CF should be set (source is zero)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (count is non-zero)");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (count is non-zero)"
+    );
 }
 
 #[test]
@@ -41,8 +48,15 @@ fn test_lzcnt_ax_bx_msb_set() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0, "AX should contain 0 (no leading zeros)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (source is non-zero)");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0,
+        "AX should contain 0 (no leading zeros)"
+    );
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (source is non-zero)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set (count is zero)");
 }
 
@@ -58,7 +72,11 @@ fn test_lzcnt_eax_ebx_all_zeros() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 32, "EAX should contain 32 (all bits are zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        32,
+        "EAX should contain 32 (all bits are zero)"
+    );
     assert!(cf_set(regs.rflags), "CF should be set (source is zero)");
 }
 
@@ -74,8 +92,15 @@ fn test_lzcnt_eax_ebx_msb_set() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should contain 0 (no leading zeros)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (source is non-zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "EAX should contain 0 (no leading zeros)"
+    );
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (source is non-zero)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set (count is zero)");
 }
 
@@ -108,7 +133,10 @@ fn test_lzcnt_rax_rbx_msb_set() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax, 0, "RAX should contain 0 (no leading zeros)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (source is non-zero)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (source is non-zero)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set (count is zero)");
 }
 
@@ -124,7 +152,11 @@ fn test_lzcnt_eax_ebx_one_leading_zero() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 1, "EAX should contain 1 (one leading zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        1,
+        "EAX should contain 1 (one leading zero)"
+    );
     assert!(!cf_set(regs.rflags), "CF should be clear");
 }
 
@@ -140,7 +172,11 @@ fn test_lzcnt_eax_ebx_multiple_leading_zeros() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 8, "EAX should contain 8 (eight leading zeros)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        8,
+        "EAX should contain 8 (eight leading zeros)"
+    );
     assert!(!cf_set(regs.rflags), "CF should be clear");
 }
 
@@ -158,7 +194,13 @@ fn test_lzcnt_power_of_two() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = 31 - bit_pos;
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "LZCNT(2^{}) should be {}", bit_pos, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected as u64,
+            "LZCNT(2^{}) should be {}",
+            bit_pos,
+            expected
+        );
     }
 }
 
@@ -261,7 +303,11 @@ fn test_lzcnt_all_ones() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should contain 0 (no leading zeros)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "EAX should contain 0 (no leading zeros)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set");
 }
 
@@ -289,7 +335,13 @@ fn test_lzcnt_single_bit_patterns() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "LZCNT(0x{:08X}) should be {}", value, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "LZCNT(0x{:08X}) should be {}",
+            value,
+            expected
+        );
     }
 }
 
@@ -305,7 +357,11 @@ fn test_lzcnt_alternating_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should contain 0 (MSB is set)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "EAX should contain 0 (MSB is set)"
+    );
 }
 
 #[test]
@@ -373,7 +429,13 @@ fn test_lzcnt_byte_values() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "LZCNT(0x{:08X}) should be {}", value, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "LZCNT(0x{:08X}) should be {}",
+            value,
+            expected
+        );
     }
 }
 
@@ -389,7 +451,11 @@ fn test_lzcnt_complement_of_tzcnt_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 4, "EAX should contain 4 (31 - 27 = 4)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        4,
+        "EAX should contain 4 (31 - 27 = 4)"
+    );
 }
 
 #[test]

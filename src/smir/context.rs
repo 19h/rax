@@ -193,7 +193,7 @@ impl X86RegState {
         let mut state = Self::default();
         // Initialize RFLAGS with required bits
         state.rflags = 0x202; // IF=1, reserved bit 1 always set
-                              // Initialize MXCSR with default
+        // Initialize MXCSR with default
         state.mxcsr = 0x1F80; // Default rounding, all exceptions masked
         state
     }
@@ -449,11 +449,7 @@ impl RiscVRegState {
 
     /// Get integer register (x0 always returns 0)
     pub fn get_x(&self, n: u8) -> u64 {
-        if n == 0 {
-            0
-        } else {
-            self.x[n as usize & 0x1F]
-        }
+        if n == 0 { 0 } else { self.x[n as usize & 0x1F] }
     }
 
     /// Set integer register (writes to x0 are ignored)
@@ -614,19 +610,21 @@ impl SmirContext {
                 RiscVReg::Pc => rv.pc,
                 // Vector register: low 64 bits (the opaque RvVector op accesses
                 // the full 128-bit `rv.v` directly).
-                RiscVReg::V(n) => u64::from_le_bytes(rv.v[n as usize & 0x1f][0..8].try_into().unwrap()),
+                RiscVReg::V(n) => {
+                    u64::from_le_bytes(rv.v[n as usize & 0x1f][0..8].try_into().unwrap())
+                }
                 // Floating-point CSRs alias `fcsr` (fflags[4:0], frm[7:5]).
                 RiscVReg::Csr(0x001) => (rv.fcsr & 0x1f) as u64, // fflags
                 RiscVReg::Csr(0x002) => ((rv.fcsr >> 5) & 0x7) as u64, // frm
-                RiscVReg::Csr(0x003) => rv.fcsr as u64, // fcsr
+                RiscVReg::Csr(0x003) => rv.fcsr as u64,          // fcsr
                 // Vector CSRs.
-                RiscVReg::Csr(0x008) => rv.vstart, // vstart
+                RiscVReg::Csr(0x008) => rv.vstart,   // vstart
                 RiscVReg::Csr(0x009) => rv.vcsr & 1, // vxsat
                 RiscVReg::Csr(0x00a) => (rv.vcsr >> 1) & 3, // vxrm
-                RiscVReg::Csr(0x00f) => rv.vcsr,   // vcsr
-                RiscVReg::Csr(0xc20) => rv.vl,     // vl
-                RiscVReg::Csr(0xc21) => rv.vtype,  // vtype
-                RiscVReg::Csr(0xc22) => 16,        // vlenb = VLEN/8 (VLEN=128)
+                RiscVReg::Csr(0x00f) => rv.vcsr,     // vcsr
+                RiscVReg::Csr(0xc20) => rv.vl,       // vl
+                RiscVReg::Csr(0xc21) => rv.vtype,    // vtype
+                RiscVReg::Csr(0xc22) => 16,          // vlenb = VLEN/8 (VLEN=128)
                 _ => 0,
             },
             _ => 0, // Architecture mismatch
@@ -684,9 +682,7 @@ impl SmirContext {
                 }
                 // Floating-point CSRs alias `fcsr` (fflags[4:0], frm[7:5]).
                 RiscVReg::Csr(0x001) => rv.fcsr = (rv.fcsr & !0x1f) | (value as u32 & 0x1f),
-                RiscVReg::Csr(0x002) => {
-                    rv.fcsr = (rv.fcsr & !0xe0) | ((value as u32 & 0x7) << 5)
-                }
+                RiscVReg::Csr(0x002) => rv.fcsr = (rv.fcsr & !0xe0) | ((value as u32 & 0x7) << 5),
                 RiscVReg::Csr(0x003) => rv.fcsr = value as u32 & 0xff,
                 // Vector CSRs.
                 RiscVReg::Csr(0x008) => rv.vstart = value,

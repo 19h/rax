@@ -112,11 +112,7 @@ fn oracle_path() -> Option<PathBuf> {
             _ => return None,
         }
     }
-    if bin.exists() {
-        Some(bin)
-    } else {
-        None
-    }
+    if bin.exists() { Some(bin) } else { None }
 }
 
 fn run_oracle(oracle: &PathBuf, cases: &[(Vec<u32>, HexState)]) -> Option<Vec<HexState>> {
@@ -216,12 +212,7 @@ fn assemble_packets(packets: &[String]) -> Option<Vec<Vec<u32>>> {
         .stderr(Stdio::null())
         .spawn()
         .ok()?;
-    child
-        .stdin
-        .take()
-        .unwrap()
-        .write_all(src.as_bytes())
-        .ok()?;
+    child.stdin.take().unwrap().write_all(src.as_bytes()).ok()?;
     let mut out = String::new();
     child.stdout.take().unwrap().read_to_string(&mut out).ok()?;
     if !child.wait().ok()?.success() {
@@ -333,14 +324,16 @@ fn run_rax(words: &[u32], st: &HexState) -> Option<HexState> {
     // [test packet words][trap0]
     let mut off = CODE_ADDR;
     for &w in words {
-        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64)).ok()?;
+        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64))
+            .ok()?;
         off += 4;
     }
     mem.write_slice(&trap0_word().to_le_bytes(), GuestAddress(off as u64))
         .ok()?;
 
     let mut vcpu = HexagonVcpu::new(0, mem.clone(), HexagonIsa::V68, Endianness::Little);
-    vcpu.set_state(&CpuState::hexagon(rax_regs_from_state(st))).ok()?;
+    vcpu.set_state(&CpuState::hexagon(rax_regs_from_state(st)))
+        .ok()?;
 
     let mut iters = 0;
     loop {
@@ -413,7 +406,10 @@ fn compare_case(
     let mut diffs = Vec::new();
     for i in 0..NREG {
         if rax.w[i] != oracle.w[i] {
-            diffs.push(format!("r{i}: rax={:#010x} hw={:#010x}", rax.w[i], oracle.w[i]));
+            diffs.push(format!(
+                "r{i}: rax={:#010x} hw={:#010x}",
+                rax.w[i], oracle.w[i]
+            ));
         }
     }
     if rax.w[I_PRED] != oracle.w[I_PRED] {
@@ -515,7 +511,12 @@ fn run_family(name: &str, cases: Vec<(String, String)>, n_inputs: usize, seed: u
     let mut batch: Vec<(String, String, Vec<u32>, HexState)> = Vec::new();
     for ((label, asm), words) in cases.iter().zip(words_per.iter()) {
         for _ in 0..n_inputs {
-            batch.push((label.clone(), asm.clone(), words.clone(), gen_input(&mut rng)));
+            batch.push((
+                label.clone(),
+                asm.clone(),
+                words.clone(),
+                gen_input(&mut rng),
+            ));
         }
     }
 
@@ -554,7 +555,10 @@ fn run_family(name: &str, cases: Vec<(String, String)>, n_inputs: usize, seed: u
         for m in mismatches.iter().take(25) {
             eprintln!("  [{}] {}: {}", m.label, m.asm, m.detail);
         }
-        panic!("{name}: {} divergences vs hardware oracle", mismatches.len());
+        panic!(
+            "{name}: {} divergences vs hardware oracle",
+            mismatches.len()
+        );
     }
 }
 
@@ -604,9 +608,18 @@ fn diff_sa1_addrx() {
     // SA1_addrx is a duplex A-slot sub-insn (Rx = add(Rx,Rs)); pairing a
     // register-add with a compatible sub-insn makes llvm-mc emit the duplex.
     let cases = vec![
-        ("addrx_tfr".to_string(), "{ r0 = add(r0,r1); r2 = r3 }".to_string()),
-        ("addrx_inc".to_string(), "{ r4 = add(r4,r5); r6 = add(r6,#1) }".to_string()),
-        ("addrx_combzr".to_string(), "{ r16 = add(r16,r17); r18 = r19 }".to_string()),
+        (
+            "addrx_tfr".to_string(),
+            "{ r0 = add(r0,r1); r2 = r3 }".to_string(),
+        ),
+        (
+            "addrx_inc".to_string(),
+            "{ r4 = add(r4,r5); r6 = add(r6,#1) }".to_string(),
+        ),
+        (
+            "addrx_combzr".to_string(),
+            "{ r16 = add(r16,r17); r18 = r19 }".to_string(),
+        ),
     ];
     run_family("sa1_addrx", cases, 20, 0x5a1a);
 }
@@ -624,7 +637,8 @@ fn diff_tfr_cpair() {
             return;
         }
     };
-    let wp = match assemble_packets(&["{ c1:0 = r3:2 }".to_string(), "{ r5:4 = c1:0 }".to_string()]) {
+    let wp = match assemble_packets(&["{ c1:0 = r3:2 }".to_string(), "{ r5:4 = c1:0 }".to_string()])
+    {
         Some(w) => w,
         None => {
             eprintln!("[hexagon_diff] tfr_cpair: assembly failed -> skipping");
@@ -646,8 +660,10 @@ fn diff_tfr_cpair() {
         };
         let rx = run_rax(&pcp, &st).expect("rax tfrpcp");
         if rx.w[I_SA0] != hw.w[I_SA0] || rx.w[I_LC0] != hw.w[I_LC0] {
-            eprintln!("tfrpcp: rax sa0={:#x} lc0={:#x} hw sa0={:#x} lc0={:#x}",
-                rx.w[I_SA0], rx.w[I_LC0], hw.w[I_SA0], hw.w[I_LC0]);
+            eprintln!(
+                "tfrpcp: rax sa0={:#x} lc0={:#x} hw sa0={:#x} lc0={:#x}",
+                rx.w[I_SA0], rx.w[I_LC0], hw.w[I_SA0], hw.w[I_LC0]
+            );
             mism += 1;
         }
         // tfrcpp: seed sa0/lc0, check r4/r5 read them.
@@ -663,12 +679,17 @@ fn diff_tfr_cpair() {
         };
         let rx2 = run_rax(&cpp, &st2).expect("rax tfrcpp");
         if rx2.w[4] != hw2.w[4] || rx2.w[5] != hw2.w[5] {
-            eprintln!("tfrcpp: rax r4={:#x} r5={:#x} hw r4={:#x} r5={:#x}",
-                rx2.w[4], rx2.w[5], hw2.w[4], hw2.w[5]);
+            eprintln!(
+                "tfrcpp: rax r4={:#x} r5={:#x} hw r4={:#x} r5={:#x}",
+                rx2.w[4], rx2.w[5], hw2.w[4], hw2.w[5]
+            );
             mism += 1;
         }
     }
-    assert_eq!(mism, 0, "tfr_cpair: {mism} control-register-pair divergences vs oracle");
+    assert_eq!(
+        mism, 0,
+        "tfr_cpair: {mism} control-register-pair divergences vs oracle"
+    );
 }
 
 #[test]
@@ -699,29 +720,77 @@ fn diff_cmp() {
 fn diff_packets() {
     let cases = vec![
         // Parallel ALU writes commit together.
-        ("par2".to_string(), "{ r0 = add(r2,r3); r1 = sub(r4,r5) }".to_string()),
-        ("par3".to_string(), "{ r0 = add(r2,r3); r1 = and(r4,r5); r6 = xor(r7,r8) }".to_string()),
+        (
+            "par2".to_string(),
+            "{ r0 = add(r2,r3); r1 = sub(r4,r5) }".to_string(),
+        ),
+        (
+            "par3".to_string(),
+            "{ r0 = add(r2,r3); r1 = and(r4,r5); r6 = xor(r7,r8) }".to_string(),
+        ),
         // Register swap: both transfers read the OLD values.
         ("swap".to_string(), "{ r0 = r1; r1 = r0 }".to_string()),
         // Producer + consumer of the same OLD register (consumer sees old r0).
-        ("readold".to_string(), "{ r0 = add(r2,r3); r1 = add(r0,r4) }".to_string()),
+        (
+            "readold".to_string(),
+            "{ r0 = add(r2,r3); r1 = add(r0,r4) }".to_string(),
+        ),
         // In-packet .new predicate forwarding across the predicated ALU family.
-        ("dn_add_t".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = add(r4,r5) }".to_string()),
-        ("dn_add_f".to_string(), "{ p0 = cmp.gt(r2,r3); if (!p0.new) r0 = add(r4,r5) }".to_string()),
-        ("dn_addi".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = add(r4,#5) }".to_string()),
-        ("dn_sub".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = sub(r4,r5) }".to_string()),
-        ("dn_and".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = and(r4,r5) }".to_string()),
-        ("dn_or".to_string(), "{ p0 = cmp.gt(r2,r3); if (!p0.new) r0 = or(r4,r5) }".to_string()),
-        ("dn_xor".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = xor(r4,r5) }".to_string()),
-        ("dn_movi".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = #42 }".to_string()),
-        ("dn_aslh".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = aslh(r4) }".to_string()),
-        ("dn_sxtb".to_string(), "{ p0 = cmp.gt(r2,r3); if (!p0.new) r0 = sxtb(r4) }".to_string()),
-        ("dn_zxth".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = zxth(r4) }".to_string()),
+        (
+            "dn_add_t".to_string(),
+            "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = add(r4,r5) }".to_string(),
+        ),
+        (
+            "dn_add_f".to_string(),
+            "{ p0 = cmp.gt(r2,r3); if (!p0.new) r0 = add(r4,r5) }".to_string(),
+        ),
+        (
+            "dn_addi".to_string(),
+            "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = add(r4,#5) }".to_string(),
+        ),
+        (
+            "dn_sub".to_string(),
+            "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = sub(r4,r5) }".to_string(),
+        ),
+        (
+            "dn_and".to_string(),
+            "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = and(r4,r5) }".to_string(),
+        ),
+        (
+            "dn_or".to_string(),
+            "{ p0 = cmp.gt(r2,r3); if (!p0.new) r0 = or(r4,r5) }".to_string(),
+        ),
+        (
+            "dn_xor".to_string(),
+            "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = xor(r4,r5) }".to_string(),
+        ),
+        (
+            "dn_movi".to_string(),
+            "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = #42 }".to_string(),
+        ),
+        (
+            "dn_aslh".to_string(),
+            "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = aslh(r4) }".to_string(),
+        ),
+        (
+            "dn_sxtb".to_string(),
+            "{ p0 = cmp.gt(r2,r3); if (!p0.new) r0 = sxtb(r4) }".to_string(),
+        ),
+        (
+            "dn_zxth".to_string(),
+            "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = zxth(r4) }".to_string(),
+        ),
         // Conditional parallel execution (exactly one of the two writes r0).
-        ("cond_both".to_string(), "{ if (p0) r0 = r2; if (!p0) r0 = r3 }".to_string()),
+        (
+            "cond_both".to_string(),
+            "{ if (p0) r0 = r2; if (!p0) r0 = r3 }".to_string(),
+        ),
         // Old-predicate condition consumed in the same packet as a compare to a
         // *different* predicate (no forwarding hazard).
-        ("mixed".to_string(), "{ p1 = cmp.eq(r2,r3); r0 = add(r4,r5); r6 = sub(r7,r8) }".to_string()),
+        (
+            "mixed".to_string(),
+            "{ p1 = cmp.eq(r2,r3); r0 = add(r4,r5); r6 = sub(r7,r8) }".to_string(),
+        ),
     ];
     run_family("packets", cases, 25, 0x7ac);
 }
@@ -809,8 +878,14 @@ fn scalar_alu_ext_cases() -> Vec<(String, String)> {
         ("croundd_ri0", "{ r5:4 = cround(r7:6,#0) }"),
         ("croundd_rr", "{ r5:4 = cround(r7:6,r2) }"),
         // C2 conditional .new combine.
-        ("ccombinewnewt", "{ p0 = cmp.gt(r2,r3); if (p0.new) r5:4 = combine(r6,r7) }"),
-        ("ccombinewnewf", "{ p0 = cmp.gt(r2,r3); if (!p0.new) r5:4 = combine(r6,r7) }"),
+        (
+            "ccombinewnewt",
+            "{ p0 = cmp.gt(r2,r3); if (p0.new) r5:4 = combine(r6,r7) }",
+        ),
+        (
+            "ccombinewnewf",
+            "{ p0 = cmp.gt(r2,r3); if (!p0.new) r5:4 = combine(r6,r7) }",
+        ),
     ] {
         v.push((name.to_string(), asm.to_string()));
     }
@@ -827,7 +902,10 @@ fn diff_scalar_alu_ext() {
 /// all exercised. Compares GPRs (Rxx) + predicates (Pe=P0) + USR.
 #[test]
 fn diff_vacsh() {
-    let cases = vec![("vacsh".to_string(), "{ r1:0,p0 = vacsh(r3:2,r5:4) }".to_string())];
+    let cases = vec![(
+        "vacsh".to_string(),
+        "{ r1:0,p0 = vacsh(r3:2,r5:4) }".to_string(),
+    )];
     run_family("vacsh", cases, 200, 0xac55);
 }
 
@@ -872,8 +950,16 @@ fn diff_decbin() {
                 eprintln!(
                     "decbin: in r2={:#010x} r3={:#010x} r4={:#010x} r5={:#010x} | \
                      rax r0={:#010x} r1={:#010x} P={:#x} | hw r0={:#010x} r1={:#010x} P={:#x}",
-                    st.w[2], st.w[3], st.w[4], st.w[5],
-                    rx.w[0], rx.w[1], rx.w[I_PRED], hw.w[0], hw.w[1], hw.w[I_PRED]
+                    st.w[2],
+                    st.w[3],
+                    st.w[4],
+                    st.w[5],
+                    rx.w[0],
+                    rx.w[1],
+                    rx.w[I_PRED],
+                    hw.w[0],
+                    hw.w[1],
+                    hw.w[I_PRED]
                 );
             }
             mism += 1;
@@ -886,7 +972,10 @@ fn diff_decbin() {
 /// and word Rt; no MMU state involved).
 #[test]
 fn diff_tlbmatch() {
-    let cases = vec![("tlbmatch".to_string(), "{ p0 = tlbmatch(r3:2,r4) }".to_string())];
+    let cases = vec![(
+        "tlbmatch".to_string(),
+        "{ p0 = tlbmatch(r3:2,r4) }".to_string(),
+    )];
     run_family("tlbmatch", cases, 200, 0x71b);
 }
 
@@ -1066,10 +1155,16 @@ fn corpus_results(n_inputs: usize, seed: u64) -> Option<std::collections::BTreeM
                     }
                 }
                 if rax.w[I_PRED] != outs[i].w[I_PRED] {
-                    diffs.push(format!("P:rax={:#x},hw={:#x}", rax.w[I_PRED], outs[i].w[I_PRED]));
+                    diffs.push(format!(
+                        "P:rax={:#x},hw={:#x}",
+                        rax.w[I_PRED], outs[i].w[I_PRED]
+                    ));
                 }
                 if rax.w[I_USR] != outs[i].w[I_USR] {
-                    diffs.push(format!("USR:rax={:#x},hw={:#x}", rax.w[I_USR], outs[i].w[I_USR]));
+                    diffs.push(format!(
+                        "USR:rax={:#x},hw={:#x}",
+                        rax.w[I_USR], outs[i].w[I_USR]
+                    ));
                 }
                 if !diffs.is_empty() {
                     entry.diverged += 1;
@@ -1107,7 +1202,10 @@ fn survey_spec_corpus() {
             n_ok += 1;
         }
     }
-    eprintln!("\n==== Hexagon spec-corpus survey ({} instructions) ====", stats.len());
+    eprintln!(
+        "\n==== Hexagon spec-corpus survey ({} instructions) ====",
+        stats.len()
+    );
     eprintln!("  OK (rax == hw):       {n_ok}");
     eprintln!("  DIVERGED (rax bug):   {n_div}");
     eprintln!("  REJECTED (unimpl):    {n_rej}");
@@ -1149,6 +1247,9 @@ fn diff_corpus_no_divergence() {
         for line in &diverged {
             eprintln!("{line}");
         }
-        panic!("{} Hexagon instructions diverge from the oracle", diverged.len());
+        panic!(
+            "{} Hexagon instructions diverge from the oracle",
+            diverged.len()
+        );
     }
 }

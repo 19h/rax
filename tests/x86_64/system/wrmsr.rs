@@ -27,8 +27,8 @@ fn test_wrmsr_basic() {
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1 (low 32 bits)
         0x48, 0xC7, 0xC2, 0x00, 0x00, 0x00, 0x00, // MOV RDX, 0 (high 32 bits)
-        0x0F, 0x30,                               // WRMSR
-        0xF4,                                      // HLT
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -49,12 +49,12 @@ fn test_wrmsr_write_then_read() {
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0x42, 0x42, 0x42, 0x42, // MOV RAX, 0x42424242
         0x48, 0xC7, 0xC2, 0x99, 0x99, 0x99, 0x99, // MOV RDX, 0x99999999
-        0x0F, 0x30,                               // WRMSR
+        0x0F, 0x30, // WRMSR
         // Read phase
-        0x48, 0x31, 0xC0,                         // XOR RAX, RAX (clear)
-        0x48, 0x31, 0xD2,                         // XOR RDX, RDX (clear)
-        0x0F, 0x32,                               // RDMSR
-        0xF4,                                      // HLT
+        0x48, 0x31, 0xC0, // XOR RAX, RAX (clear)
+        0x48, 0x31, 0xD2, // XOR RDX, RDX (clear)
+        0x0F, 0x32, // RDMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -69,12 +69,12 @@ fn test_wrmsr_preserves_flags() {
     // WRMSR should not modify flags
     let code = [
         0x48, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
-        0x48, 0x83, 0xC0, 0x01,                   // ADD RAX, 1 (sets ZF)
+        0x48, 0x83, 0xC0, 0x01, // ADD RAX, 1 (sets ZF)
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0
         0x48, 0xC7, 0xC2, 0x00, 0x00, 0x00, 0x00, // MOV RDX, 0
-        0x0F, 0x30,                               // WRMSR
-        0xF4,                                      // HLT
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -95,8 +95,8 @@ fn test_wrmsr_preserves_other_registers() {
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0
         0x48, 0xC7, 0xC2, 0x00, 0x00, 0x00, 0x00, // MOV RDX, 0
-        0x0F, 0x30,                               // WRMSR
-        0xF4,                                      // HLT
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -116,10 +116,10 @@ fn test_wrmsr_zero_value() {
     // Write zero to an MSR
     let code = [
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
-        0x48, 0x31, 0xC0,                         // XOR RAX, RAX
-        0x48, 0x31, 0xD2,                         // XOR RDX, RDX
-        0x0F, 0x30,                               // WRMSR
-        0xF4,                                      // HLT
+        0x48, 0x31, 0xC0, // XOR RAX, RAX
+        0x48, 0x31, 0xD2, // XOR RDX, RDX
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -134,8 +134,8 @@ fn test_wrmsr_all_ones() {
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, 0xFFFFFFFF
         0x48, 0xC7, 0xC2, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RDX, 0xFFFFFFFF
-        0x0F, 0x30,                               // WRMSR
-        0xF4,                                      // HLT
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -150,8 +150,8 @@ fn test_wrmsr_pattern_values() {
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0xAA, 0xAA, 0xAA, 0xAA, // MOV RAX, 0xAAAAAAAA
         0x48, 0xC7, 0xC2, 0x55, 0x55, 0x55, 0x55, // MOV RDX, 0x55555555
-        0x0F, 0x30,                               // WRMSR
-        0xF4,                                      // HLT
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -163,10 +163,10 @@ fn test_wrmsr_high_32_bits_only() {
     // Write value with only high 32 bits set
     let code = [
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
-        0x48, 0x31, 0xC0,                         // XOR RAX, RAX (low = 0)
+        0x48, 0x31, 0xC0, // XOR RAX, RAX (low = 0)
         0x48, 0xC7, 0xC2, 0x12, 0x34, 0x56, 0x78, // MOV RDX, 0x78563412
-        0x0F, 0x30,                               // WRMSR
-        0xF4,                                      // HLT
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -179,9 +179,9 @@ fn test_wrmsr_low_32_bits_only() {
     let code = [
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0x87, 0x65, 0x43, 0x21, // MOV RAX, 0x21436587
-        0x48, 0x31, 0xD2,                         // XOR RDX, RDX (high = 0)
-        0x0F, 0x30,                               // WRMSR
-        0xF4,                                      // HLT
+        0x48, 0x31, 0xD2, // XOR RDX, RDX (high = 0)
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -196,11 +196,12 @@ fn test_wrmsr_low_32_bits_only() {
 fn test_wrmsr_high_rcx_ignored() {
     // High 32 bits of RCX should be ignored in 64-bit mode
     let code = [
-        0x48, 0xB9, 0x00, 0x01, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RCX, 0xFFFFFFFF_00000100
-        0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00,                   // MOV RAX, 1
-        0x48, 0x31, 0xD2,                                           // XOR RDX, RDX
-        0x0F, 0x30,                                                  // WRMSR
-        0xF4,                                                         // HLT
+        0x48, 0xB9, 0x00, 0x01, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
+        0xFF, // MOV RCX, 0xFFFFFFFF_00000100
+        0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
+        0x48, 0x31, 0xD2, // XOR RDX, RDX
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -213,10 +214,10 @@ fn test_wrmsr_preserves_ecx() {
     // ECX should not be modified by WRMSR
     let code = [
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
-        0x48, 0x31, 0xC0,                         // XOR RAX, RAX
-        0x48, 0x31, 0xD2,                         // XOR RDX, RDX
-        0x0F, 0x30,                               // WRMSR
-        0xF4,                                      // HLT
+        0x48, 0x31, 0xC0, // XOR RAX, RAX
+        0x48, 0x31, 0xD2, // XOR RDX, RDX
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -235,11 +236,11 @@ fn test_wrmsr_multiple_writes() {
     let code = [
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0x11, 0x11, 0x11, 0x11, // MOV RAX, 0x11111111
-        0x48, 0x31, 0xD2,                         // XOR RDX, RDX
-        0x0F, 0x30,                               // WRMSR #1
+        0x48, 0x31, 0xD2, // XOR RDX, RDX
+        0x0F, 0x30, // WRMSR #1
         0x48, 0xC7, 0xC0, 0x22, 0x22, 0x22, 0x22, // MOV RAX, 0x22222222
-        0x0F, 0x30,                               // WRMSR #2 (overwrites)
-        0xF4,                                      // HLT
+        0x0F, 0x30, // WRMSR #2 (overwrites)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -253,12 +254,12 @@ fn test_wrmsr_different_msrs() {
     let code = [
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0x11, 0x00, 0x00, 0x00, // MOV RAX, 0x11
-        0x48, 0x31, 0xD2,                         // XOR RDX, RDX
-        0x0F, 0x30,                               // WRMSR (MSR 0x100)
+        0x48, 0x31, 0xD2, // XOR RDX, RDX
+        0x0F, 0x30, // WRMSR (MSR 0x100)
         0x48, 0xC7, 0xC1, 0x01, 0x01, 0x00, 0x00, // MOV RCX, 0x101
         0x48, 0xC7, 0xC0, 0x22, 0x00, 0x00, 0x00, // MOV RAX, 0x22
-        0x0F, 0x30,                               // WRMSR (MSR 0x101)
-        0xF4,                                      // HLT
+        0x0F, 0x30, // WRMSR (MSR 0x101)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -274,14 +275,14 @@ fn test_wrmsr_loop() {
     let code = [
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC3, 0x03, 0x00, 0x00, 0x00, // MOV RBX, 3 (loop counter)
-        0x48, 0x31, 0xC0,                         // XOR RAX, RAX
-        0x48, 0x31, 0xD2,                         // XOR RDX, RDX
+        0x48, 0x31, 0xC0, // XOR RAX, RAX
+        0x48, 0x31, 0xD2, // XOR RDX, RDX
         // loop_start (offset 20):
-        0x0F, 0x30,                               // WRMSR
-        0x48, 0xFF, 0xC0,                         // INC RAX (change value)
-        0x48, 0xFF, 0xCB,                         // DEC RBX
-        0x75, 0xF6,                               // JNZ loop_start (offset -10)
-        0xF4,                                      // HLT
+        0x0F, 0x30, // WRMSR
+        0x48, 0xFF, 0xC0, // INC RAX (change value)
+        0x48, 0xFF, 0xCB, // DEC RBX
+        0x75, 0xF6, // JNZ loop_start (offset -10)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -302,13 +303,13 @@ fn test_wrmsr_write_read_verify() {
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0xEF, 0xBE, 0xAD, 0xDE, // MOV RAX, 0xDEADBEEF
         0x48, 0xC7, 0xC2, 0xFE, 0xCA, 0xEF, 0xBE, // MOV RDX, 0xBEEFCAFE
-        0x0F, 0x30,                               // WRMSR
+        0x0F, 0x30, // WRMSR
         // Clear registers
-        0x48, 0x31, 0xC0,                         // XOR RAX, RAX
-        0x48, 0x31, 0xD2,                         // XOR RDX, RDX
+        0x48, 0x31, 0xC0, // XOR RAX, RAX
+        0x48, 0x31, 0xD2, // XOR RDX, RDX
         // Read
-        0x0F, 0x32,                               // RDMSR
-        0xF4,                                      // HLT
+        0x0F, 0x32, // RDMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -323,15 +324,15 @@ fn test_wrmsr_increment_pattern() {
     // Write incrementing values
     let code = [
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
-        0x48, 0x31, 0xC0,                         // XOR RAX, RAX (start at 0)
-        0x48, 0x31, 0xD2,                         // XOR RDX, RDX
+        0x48, 0x31, 0xC0, // XOR RAX, RAX (start at 0)
+        0x48, 0x31, 0xD2, // XOR RDX, RDX
         0x48, 0xC7, 0xC3, 0x05, 0x00, 0x00, 0x00, // MOV RBX, 5
         // loop:
-        0x0F, 0x30,                               // WRMSR
-        0x48, 0x05, 0x00, 0x10, 0x00, 0x00,       // ADD RAX, 0x1000
-        0x48, 0xFF, 0xCB,                         // DEC RBX
-        0x75, 0xF5,                               // JNZ loop
-        0xF4,                                      // HLT
+        0x0F, 0x30, // WRMSR
+        0x48, 0x05, 0x00, 0x10, 0x00, 0x00, // ADD RAX, 0x1000
+        0x48, 0xFF, 0xCB, // DEC RBX
+        0x75, 0xF5, // JNZ loop
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -349,11 +350,13 @@ fn test_wrmsr_increment_pattern() {
 fn test_wrmsr_uses_only_lower_32bits() {
     // Upper 32 bits of RAX and RDX should be ignored
     let code = [
-        0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00,                   // MOV RCX, 0x100
-        0x48, 0xB8, 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, 0xFFFFFFFF_00000001
-        0x48, 0xBA, 0x02, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RDX, 0xFFFFFFFF_00000002
-        0x0F, 0x30,                                                  // WRMSR
-        0xF4,                                                         // HLT
+        0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
+        0x48, 0xB8, 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
+        0xFF, // MOV RAX, 0xFFFFFFFF_00000001
+        0x48, 0xBA, 0x02, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
+        0xFF, // MOV RDX, 0xFFFFFFFF_00000002
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -368,11 +371,11 @@ fn test_wrmsr_edx_eax_composition() {
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0x78, 0x56, 0x34, 0x12, // MOV RAX, 0x12345678 (low)
         0x48, 0xC7, 0xC2, 0xF0, 0xDE, 0xBC, 0x9A, // MOV RDX, 0x9ABCDEF0 (high)
-        0x0F, 0x30,                               // WRMSR (writes 0x9ABCDEF0_12345678)
-        0x48, 0x31, 0xC0,                         // XOR RAX, RAX
-        0x48, 0x31, 0xD2,                         // XOR RDX, RDX
-        0x0F, 0x32,                               // RDMSR
-        0xF4,                                      // HLT
+        0x0F, 0x30, // WRMSR (writes 0x9ABCDEF0_12345678)
+        0x48, 0x31, 0xC0, // XOR RAX, RAX
+        0x48, 0x31, 0xD2, // XOR RDX, RDX
+        0x0F, 0x32, // RDMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -394,8 +397,8 @@ fn test_wrmsr_boundary_values() {
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0x7F, // MOV RAX, 0x7FFFFFFF (max positive)
         0x48, 0xC7, 0xC2, 0x00, 0x00, 0x00, 0x80, // MOV RDX, 0x80000000 (min negative)
-        0x0F, 0x30,                               // WRMSR
-        0xF4,                                      // HLT
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -409,8 +412,8 @@ fn test_wrmsr_single_bit_patterns() {
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 0x00000001
         0x48, 0xC7, 0xC2, 0x00, 0x00, 0x00, 0x80, // MOV RDX, 0x80000000
-        0x0F, 0x30,                               // WRMSR
-        0xF4,                                      // HLT
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -424,15 +427,15 @@ fn test_wrmsr_alternating_writes() {
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         // First write
         0x48, 0xC7, 0xC0, 0xAA, 0xAA, 0xAA, 0xAA, // MOV RAX, 0xAAAAAAAA
-        0x48, 0x31, 0xD2,                         // XOR RDX, RDX
-        0x0F, 0x30,                               // WRMSR
+        0x48, 0x31, 0xD2, // XOR RDX, RDX
+        0x0F, 0x30, // WRMSR
         // Second write
         0x48, 0xC7, 0xC0, 0x55, 0x55, 0x55, 0x55, // MOV RAX, 0x55555555
-        0x0F, 0x30,                               // WRMSR
+        0x0F, 0x30, // WRMSR
         // Third write
         0x48, 0xC7, 0xC0, 0xAA, 0xAA, 0xAA, 0xAA, // MOV RAX, 0xAAAAAAAA
-        0x0F, 0x30,                               // WRMSR
-        0xF4,                                      // HLT
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -445,10 +448,10 @@ fn test_wrmsr_with_computation() {
     let code = [
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0x10, 0x00, 0x00, 0x00, // MOV RAX, 0x10
-        0x48, 0xC1, 0xE0, 0x04,                   // SHL RAX, 4 (RAX = 0x100)
-        0x48, 0x31, 0xD2,                         // XOR RDX, RDX
-        0x0F, 0x30,                               // WRMSR
-        0xF4,                                      // HLT
+        0x48, 0xC1, 0xE0, 0x04, // SHL RAX, 4 (RAX = 0x100)
+        0x48, 0x31, 0xD2, // XOR RDX, RDX
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -464,8 +467,8 @@ fn test_wrmsr_preserves_rax_rdx() {
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0x42, 0x00, 0x00, 0x00, // MOV RAX, 0x42
         0x48, 0xC7, 0xC2, 0x99, 0x00, 0x00, 0x00, // MOV RDX, 0x99
-        0x0F, 0x30,                               // WRMSR
-        0xF4,                                      // HLT
+        0x0F, 0x30, // WRMSR
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -642,17 +645,33 @@ fn msr_round_trip(msr: u32, value: u64) -> u64 {
     let hi = (value >> 32) as u32;
     let code = [
         // MOV RCX, msr  (mov ecx, imm32 zero-extends)
-        0xb9, msr as u8, (msr >> 8) as u8, (msr >> 16) as u8, (msr >> 24) as u8,
+        0xb9,
+        msr as u8,
+        (msr >> 8) as u8,
+        (msr >> 16) as u8,
+        (msr >> 24) as u8,
         // MOV EAX, lo
-        0xb8, lo as u8, (lo >> 8) as u8, (lo >> 16) as u8, (lo >> 24) as u8,
+        0xb8,
+        lo as u8,
+        (lo >> 8) as u8,
+        (lo >> 16) as u8,
+        (lo >> 24) as u8,
         // MOV EDX, hi
-        0xba, hi as u8, (hi >> 8) as u8, (hi >> 16) as u8, (hi >> 24) as u8,
-        0x0f, 0x30, // WRMSR
+        0xba,
+        hi as u8,
+        (hi >> 8) as u8,
+        (hi >> 16) as u8,
+        (hi >> 24) as u8,
+        0x0f,
+        0x30, // WRMSR
         // Clobber EAX/EDX to prove RDMSR repopulates them.
-        0x31, 0xc0, // XOR EAX, EAX
-        0x31, 0xd2, // XOR EDX, EDX
-        0x0f, 0x32, // RDMSR
-        0xf4,       // HLT
+        0x31,
+        0xc0, // XOR EAX, EAX
+        0x31,
+        0xd2, // XOR EDX, EDX
+        0x0f,
+        0x32, // RDMSR
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -710,7 +729,11 @@ fn test_msr_roundtrip_gs_base() {
 #[test]
 fn test_msr_roundtrip_kernel_gs_base() {
     let v = 0xFFFF_8800_0000_1000u64;
-    assert_eq!(msr_round_trip(0xC0000102, v), v, "KERNEL_GS_BASE round-trip");
+    assert_eq!(
+        msr_round_trip(0xC0000102, v),
+        v,
+        "KERNEL_GS_BASE round-trip"
+    );
 }
 
 #[test]
@@ -734,7 +757,11 @@ fn test_msr_roundtrip_sysenter_eip() {
 #[test]
 fn test_msr_unimplemented_reads_zero() {
     // MSR 0x100 is not implemented: writes are ignored, reads return 0.
-    assert_eq!(msr_round_trip(0x100, 0xDEAD_BEEF_CAFE_BABE), 0, "unimpl MSR reads 0");
+    assert_eq!(
+        msr_round_trip(0x100, 0xDEAD_BEEF_CAFE_BABE),
+        0,
+        "unimpl MSR reads 0"
+    );
 }
 
 #[test]

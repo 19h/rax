@@ -14,8 +14,16 @@ fn test_xchg_eax_ebx() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should have EBX's value");
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x11111111, "EBX should have EAX's value");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should have EBX's value"
+    );
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0x11111111,
+        "EBX should have EAX's value"
+    );
 }
 
 // Short form XCHG with RAX/EAX
@@ -27,8 +35,16 @@ fn test_xchg_eax_ecx_short_form() {
     regs.rcx = 0xBBBBBBBB;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xBBBBBBBB, "EAX should have ECX's value");
-    assert_eq!(regs.rcx & 0xFFFFFFFF, 0xAAAAAAAA, "ECX should have EAX's value");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xBBBBBBBB,
+        "EAX should have ECX's value"
+    );
+    assert_eq!(
+        regs.rcx & 0xFFFFFFFF,
+        0xAAAAAAAA,
+        "ECX should have EAX's value"
+    );
 }
 
 // 16-bit exchange
@@ -42,8 +58,16 @@ fn test_xchg_ax_bx() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFFFF, 0xBBBB, "AX should have BX's value");
     assert_eq!(regs.rbx & 0xFFFF, 0xAAAA, "BX should have AX's value");
-    assert_eq!(regs.rax & 0xFFFFFFFFFFFF0000, 0xFFFFFFFF00000000, "Upper bits of RAX preserved");
-    assert_eq!(regs.rbx & 0xFFFFFFFFFFFF0000, 0xFFFFFFFF00000000, "Upper bits of RBX preserved");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFFFFFF0000,
+        0xFFFFFFFF00000000,
+        "Upper bits of RAX preserved"
+    );
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFFFFFF0000,
+        0xFFFFFFFF00000000,
+        "Upper bits of RBX preserved"
+    );
 }
 
 // 64-bit exchange
@@ -68,8 +92,14 @@ fn test_xchg_eax_ebx_zeros_upper() {
     regs.rbx = 0xCAFEBABE22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000022222222, "RAX upper bits should be zeroed");
-    assert_eq!(regs.rbx, 0x0000000011111111, "RBX upper bits should be zeroed");
+    assert_eq!(
+        regs.rax, 0x0000000022222222,
+        "RAX upper bits should be zeroed"
+    );
+    assert_eq!(
+        regs.rbx, 0x0000000011111111,
+        "RBX upper bits should be zeroed"
+    );
 }
 
 // Exchange with different registers
@@ -81,8 +111,16 @@ fn test_xchg_ecx_edx() {
     regs.rdx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx & 0xFFFFFFFF, 0x44444444, "ECX should have EDX's value");
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x33333333, "EDX should have ECX's value");
+    assert_eq!(
+        regs.rcx & 0xFFFFFFFF,
+        0x44444444,
+        "ECX should have EDX's value"
+    );
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x33333333,
+        "EDX should have ECX's value"
+    );
 }
 
 #[test]
@@ -93,8 +131,16 @@ fn test_xchg_esi_edi() {
     regs.rdi = 0x66666666;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rsi & 0xFFFFFFFF, 0x66666666, "ESI should have EDI's value");
-    assert_eq!(regs.rdi & 0xFFFFFFFF, 0x55555555, "EDI should have ESI's value");
+    assert_eq!(
+        regs.rsi & 0xFFFFFFFF,
+        0x66666666,
+        "ESI should have EDI's value"
+    );
+    assert_eq!(
+        regs.rdi & 0xFFFFFFFF,
+        0x55555555,
+        "EDI should have ESI's value"
+    );
 }
 
 // Test short form with all general purpose registers
@@ -192,7 +238,11 @@ fn test_xchg_with_zero() {
     regs.rbx = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX should have EBX's value");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX should have EBX's value"
+    );
     assert_eq!(regs.rbx & 0xFFFFFFFF, 0, "EBX should be 0");
 }
 
@@ -205,8 +255,16 @@ fn test_xchg_same_value() {
     regs.rbx = 0xFFFFFFFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX should remain 0xFFFFFFFF");
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0xFFFFFFFF, "EBX should remain 0xFFFFFFFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX should remain 0xFFFFFFFF"
+    );
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EBX should remain 0xFFFFFFFF"
+    );
 }
 
 // Test XCHG with same register (NOP-like behavior)
@@ -217,7 +275,10 @@ fn test_xchg_eax_eax() {
     regs.rax = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000012345678, "RAX upper bits zeroed, value unchanged");
+    assert_eq!(
+        regs.rax, 0x0000000012345678,
+        "RAX upper bits zeroed, value unchanged"
+    );
 }
 
 // Test that flags are not affected
@@ -248,8 +309,16 @@ fn test_xchg_al_bl() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFF, 0x22, "AL should have BL's value");
     assert_eq!(regs.rbx & 0xFF, 0x11, "BL should have AL's value");
-    assert_eq!(regs.rax & 0xFFFFFFFFFFFFFF00, 0xFFFFFFFFFFFFFF00, "Upper bits of RAX preserved");
-    assert_eq!(regs.rbx & 0xFFFFFFFFFFFFFF00, 0xFFFFFFFFFFFFFF00, "Upper bits of RBX preserved");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFFFFFFFF00,
+        0xFFFFFFFFFFFFFF00,
+        "Upper bits of RAX preserved"
+    );
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFFFFFFFF00,
+        0xFFFFFFFFFFFFFF00,
+        "Upper bits of RBX preserved"
+    );
 }
 
 #[test]
@@ -357,8 +426,14 @@ fn test_xchg_eax_esp() {
     regs.rsp = 0xCAFEBABE22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000022222222, "RAX should have ESP's value (upper bits zeroed)");
-    assert_eq!(regs.rsp, 0x0000000011111111, "RSP should have EAX's value (upper bits zeroed)");
+    assert_eq!(
+        regs.rax, 0x0000000022222222,
+        "RAX should have ESP's value (upper bits zeroed)"
+    );
+    assert_eq!(
+        regs.rsp, 0x0000000011111111,
+        "RSP should have EAX's value (upper bits zeroed)"
+    );
 }
 
 // ============================================================================
@@ -418,7 +493,11 @@ fn test_strict_xchg_r64_mem_atomic_swap() {
     crate::common::write_mem_at_u64(&mem, crate::common::DATA_ADDR, 0x1122_3344_5566_7788);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x1122_3344_5566_7788, "RAX got memory value");
-    assert_eq!(crate::common::read_mem_at_u64(&mem, crate::common::DATA_ADDR), 0xCAFE_BABE_DEAD_BEEF, "memory got RAX");
+    assert_eq!(
+        crate::common::read_mem_at_u64(&mem, crate::common::DATA_ADDR),
+        0xCAFE_BABE_DEAD_BEEF,
+        "memory got RAX"
+    );
 }
 
 #[test]
@@ -431,8 +510,15 @@ fn test_strict_xchg_r32_mem_zero_extends() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     crate::common::write_mem_at_u32(&mem, crate::common::DATA_ADDR, 0x1234_5678);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000_0000_1234_5678, "EAX got mem value, upper cleared");
-    assert_eq!(crate::common::read_mem_at_u32(&mem, crate::common::DATA_ADDR), 0xAABB_CCDD, "mem got EAX");
+    assert_eq!(
+        regs.rax, 0x0000_0000_1234_5678,
+        "EAX got mem value, upper cleared"
+    );
+    assert_eq!(
+        crate::common::read_mem_at_u32(&mem, crate::common::DATA_ADDR),
+        0xAABB_CCDD,
+        "mem got EAX"
+    );
 }
 
 #[test]
@@ -446,7 +532,10 @@ fn test_strict_xchg_lock_prefix_mem() {
     crate::common::write_mem_at_u64(&mem, crate::common::DATA_ADDR, 0xFF00_FF00_FF00_FF00);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0xFF00_FF00_FF00_FF00);
-    assert_eq!(crate::common::read_mem_at_u64(&mem, crate::common::DATA_ADDR), 0x00FF_00FF_00FF_00FF);
+    assert_eq!(
+        crate::common::read_mem_at_u64(&mem, crate::common::DATA_ADDR),
+        0x00FF_00FF_00FF_00FF
+    );
 }
 
 #[test]
@@ -462,5 +551,9 @@ fn test_strict_xchg_does_not_touch_flags() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 2);
     assert_eq!(regs.rbx, 1);
-    assert_eq!(regs.rflags & 0x8D5, before & 0x8D5, "XCHG must not alter status flags");
+    assert_eq!(
+        regs.rflags & 0x8D5,
+        before & 0x8D5,
+        "XCHG must not alter status flags"
+    );
 }

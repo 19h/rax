@@ -25,8 +25,8 @@
 // - AF: Undefined for non-zero count
 // - Count is 0: No flags affected
 
-use rax::cpu::Registers;
 use rax::backend::emulator::x86_64::flags;
+use rax::cpu::Registers;
 use std::sync::Arc;
 
 use crate::common::*;
@@ -47,7 +47,11 @@ fn test_sar_al_1_positive() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0x21, "AL: 0x42 >> 1 = 0x21 (sign extended)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x21,
+        "AL: 0x42 >> 1 = 0x21 (sign extended)"
+    );
     assert!(!cf_set(regs.rflags), "CF: LSB shifted out was 0");
     assert!(!of_set(regs.rflags), "OF: always cleared for 1-bit SAR");
     assert!(!sf_set(regs.rflags), "SF: result is positive");
@@ -66,7 +70,11 @@ fn test_sar_al_1_negative() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0xC1, "AL: 0x82 >> 1 = 0xC1 (sign bit extended)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0xC1,
+        "AL: 0x82 >> 1 = 0xC1 (sign bit extended)"
+    );
     assert!(!cf_set(regs.rflags), "CF: LSB shifted out was 0");
     assert!(!of_set(regs.rflags), "OF: always cleared for 1-bit SAR");
     assert!(sf_set(regs.rflags), "SF: result is still negative");
@@ -102,7 +110,11 @@ fn test_sar_al_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0xFF, "AL: 0x80 >> 7 = 0xFF (all bits set by sign extension)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0xFF,
+        "AL: 0x80 >> 7 = 0xFF (all bits set by sign extension)"
+    );
     assert!(!cf_set(regs.rflags), "CF: last bit shifted out");
     assert!(sf_set(regs.rflags), "SF: result is negative");
 }
@@ -119,7 +131,11 @@ fn test_sar_al_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0xF1, "AL: 0x88 >> 3 = 0xF1 (sign extended)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0xF1,
+        "AL: 0x88 >> 3 = 0xF1 (sign extended)"
+    );
     assert!(!cf_set(regs.rflags), "CF: last bit shifted out was 0");
     assert!(sf_set(regs.rflags), "SF: result is negative");
 }
@@ -172,7 +188,10 @@ fn test_sar_count_zero_preserves_flags() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x42, "AL unchanged");
-    assert_eq!(regs.rflags, initial_flags, "Flags unchanged when count is 0");
+    assert_eq!(
+        regs.rflags, initial_flags,
+        "Flags unchanged when count is 0"
+    );
 }
 
 // ============================================================================
@@ -208,7 +227,11 @@ fn test_sar_ax_1_negative() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0xC000, "AX: 0x8000 >> 1 = 0xC000 (sign extended)");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0xC000,
+        "AX: 0x8000 >> 1 = 0xC000 (sign extended)"
+    );
     assert!(!cf_set(regs.rflags), "CF: LSB was 0");
     assert!(sf_set(regs.rflags), "SF: result is negative");
 }
@@ -226,7 +249,11 @@ fn test_sar_ax_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0xFFFF, "AX: 0xFF00 >> 8 = 0xFFFF (sign extended)");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0xFFFF,
+        "AX: 0xFF00 >> 8 = 0xFFFF (sign extended)"
+    );
     assert!(sf_set(regs.rflags), "SF: result is negative");
 }
 
@@ -262,7 +289,11 @@ fn test_sar_eax_1_positive() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x091A2B3C, "EAX: 0x12345678 >> 1 = 0x091A2B3C");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x091A2B3C,
+        "EAX: 0x12345678 >> 1 = 0x091A2B3C"
+    );
     assert!(!cf_set(regs.rflags), "CF: LSB was 0");
     assert!(!of_set(regs.rflags), "OF: cleared for 1-bit SAR");
 }
@@ -279,7 +310,11 @@ fn test_sar_eax_1_negative() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xC0000000, "EAX: 0x80000000 >> 1 = 0xC0000000");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xC0000000,
+        "EAX: 0x80000000 >> 1 = 0xC0000000"
+    );
     assert!(!cf_set(regs.rflags), "CF: LSB was 0");
     assert!(sf_set(regs.rflags), "SF: result is still negative");
 }
@@ -297,7 +332,11 @@ fn test_sar_eax_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX: 0xFFFF0000 >> 16 = 0xFFFFFFFF");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX: 0xFFFF0000 >> 16 = 0xFFFFFFFF"
+    );
     assert!(sf_set(regs.rflags), "SF: result is negative");
 }
 
@@ -313,7 +352,11 @@ fn test_sar_eax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00123456, "EAX: 0x12345600 >> 8 = 0x00123456");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00123456,
+        "EAX: 0x12345600 >> 8 = 0x00123456"
+    );
     assert!(!sf_set(regs.rflags), "SF: result is positive");
 }
 
@@ -330,7 +373,11 @@ fn test_sar_count_masked_32bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX: 0x80000000 >> 31 = 0xFFFFFFFF (all ones)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX: 0x80000000 >> 31 = 0xFFFFFFFF (all ones)"
+    );
 }
 
 // ============================================================================
@@ -366,7 +413,10 @@ fn test_sar_rax_1_negative() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xC000000000000000, "RAX: 0x8000000000000000 >> 1 = 0xC000000000000000");
+    assert_eq!(
+        regs.rax, 0xC000000000000000,
+        "RAX: 0x8000000000000000 >> 1 = 0xC000000000000000"
+    );
     assert!(!cf_set(regs.rflags), "CF: LSB was 0");
     assert!(sf_set(regs.rflags), "SF: result is still negative");
 }
@@ -384,7 +434,10 @@ fn test_sar_rax_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "RAX: 0xFFFFFFFFFFFF0000 >> 16 = 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "RAX: 0xFFFFFFFFFFFF0000 >> 16 = 0xFFFFFFFFFFFFFFFF"
+    );
     assert!(sf_set(regs.rflags), "SF: result is negative");
 }
 
@@ -400,7 +453,10 @@ fn test_sar_rax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0000000012345678, "RAX: high 32 bits shifted to low 32");
+    assert_eq!(
+        regs.rax, 0x0000000012345678,
+        "RAX: high 32 bits shifted to low 32"
+    );
     assert!(!sf_set(regs.rflags), "SF: result is positive");
 }
 
@@ -417,7 +473,10 @@ fn test_sar_count_masked_64bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "RAX: sign extended to all ones");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "RAX: sign extended to all ones"
+    );
 }
 
 // ============================================================================
@@ -436,7 +495,11 @@ fn test_sar_r8b_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r8 & 0xFF, 0xD5, "R8B: 0xAA >> 1 = 0xD5 (sign extended)");
+    assert_eq!(
+        regs.r8 & 0xFF,
+        0xD5,
+        "R8B: 0xAA >> 1 = 0xD5 (sign extended)"
+    );
     assert!(!cf_set(regs.rflags), "CF: LSB was 0");
     assert!(sf_set(regs.rflags), "SF: result is negative");
 }
@@ -454,7 +517,11 @@ fn test_sar_r10w_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r10 & 0xFFFF, 0xFF00, "R10W: 0xF000 >> 4 = 0xFF00 (sign extended)");
+    assert_eq!(
+        regs.r10 & 0xFFFF,
+        0xFF00,
+        "R10W: 0xF000 >> 4 = 0xFF00 (sign extended)"
+    );
 }
 
 #[test]
@@ -469,7 +536,11 @@ fn test_sar_r12d_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r12 & 0xFFFFFFFF, 0x00123456, "R12D: 0x12345678 >> 8 = 0x00123456");
+    assert_eq!(
+        regs.r12 & 0xFFFFFFFF,
+        0x00123456,
+        "R12D: 0x12345678 >> 8 = 0x00123456"
+    );
 }
 
 #[test]
@@ -496,7 +567,9 @@ fn test_sar_r15_1() {
 fn test_sar_byte_ptr_1() {
     // SAR byte ptr [DATA_ADDR], 1
     let code = [
-        0xd0, 0x3c, 0x25, // SAR byte ptr [DATA_ADDR], 1
+        0xd0,
+        0x3c,
+        0x25, // SAR byte ptr [DATA_ADDR], 1
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -517,7 +590,10 @@ fn test_sar_byte_ptr_1() {
 fn test_sar_word_ptr_cl() {
     // SAR word ptr [DATA_ADDR], CL
     let code = [
-        0x66, 0xd3, 0x3c, 0x25, // SAR word ptr [DATA_ADDR], CL
+        0x66,
+        0xd3,
+        0x3c,
+        0x25, // SAR word ptr [DATA_ADDR], CL
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -532,14 +608,19 @@ fn test_sar_word_ptr_cl() {
     run_until_hlt(&mut vcpu).unwrap();
     let result = read_mem_u16(&mem);
 
-    assert_eq!(result, 0xFFF0, "Memory: 0xF000 >> 8 = 0xFFF0 (sign extended)");
+    assert_eq!(
+        result, 0xFFF0,
+        "Memory: 0xF000 >> 8 = 0xFFF0 (sign extended)"
+    );
 }
 
 #[test]
 fn test_sar_dword_ptr_imm8() {
     // SAR dword ptr [DATA_ADDR], imm8
     let code = [
-        0xc1, 0x3c, 0x25, // SAR dword ptr [DATA_ADDR], imm8
+        0xc1,
+        0x3c,
+        0x25, // SAR dword ptr [DATA_ADDR], imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -560,7 +641,10 @@ fn test_sar_dword_ptr_imm8() {
 fn test_sar_qword_ptr_cl() {
     // SAR qword ptr [DATA_ADDR], CL
     let code = [
-        0x48, 0xd3, 0x3c, 0x25, // SAR qword ptr [DATA_ADDR], CL
+        0x48,
+        0xd3,
+        0x3c,
+        0x25, // SAR qword ptr [DATA_ADDR], CL
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -575,7 +659,10 @@ fn test_sar_qword_ptr_cl() {
     run_until_hlt(&mut vcpu).unwrap();
     let result = read_mem_u64(&mem);
 
-    assert_eq!(result, 0xFFFFFFFFFFFFFFFF, "Memory: 0xFFFFFFFF00000000 >> 32 = all ones");
+    assert_eq!(
+        result, 0xFFFFFFFFFFFFFFFF,
+        "Memory: 0xFFFFFFFF00000000 >> 32 = all ones"
+    );
 }
 
 // ============================================================================
@@ -612,7 +699,11 @@ fn test_sar_rounding_toward_negative_infinity() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!((regs.rax & 0xFFFFFFFF) as i32, -3, "EAX: -9 >> 2 = -3 (rounds toward -∞)");
+    assert_eq!(
+        (regs.rax & 0xFFFFFFFF) as i32,
+        -3,
+        "EAX: -9 >> 2 = -3 (rounds toward -∞)"
+    );
 }
 
 #[test]
@@ -644,7 +735,11 @@ fn test_sar_all_ones_stays_negative_one() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX: -1 >> 1 = -1 (stays all ones)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX: -1 >> 1 = -1 (stays all ones)"
+    );
     assert!(cf_set(regs.rflags), "CF: LSB was 1");
     assert!(sf_set(regs.rflags), "SF: result is negative");
 }
@@ -678,7 +773,11 @@ fn test_sar_to_negative_one() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX: negative number >> 31 = -1 (all ones)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX: negative number >> 31 = -1 (all ones)"
+    );
     assert!(sf_set(regs.rflags), "SF: result is negative");
 }
 
@@ -706,7 +805,11 @@ fn test_sar_extract_sign_bit() {
     let (mut vcpu2, _) = setup_vm(&code2, Some(regs2));
     let regs2 = run_until_hlt(&mut vcpu2).unwrap();
 
-    assert_eq!(regs2.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX: negative >> 31 = -1");
+    assert_eq!(
+        regs2.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX: negative >> 31 = -1"
+    );
 }
 
 #[test]
@@ -740,7 +843,11 @@ fn test_sar_chained_shifts() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFF000000, "EAX: 0xF8000000 >> 3 = 0xFF000000");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFF000000,
+        "EAX: 0xF8000000 >> 3 = 0xFF000000"
+    );
     assert!(sf_set(regs.rflags), "SF: result is still negative");
 }
 
@@ -757,6 +864,10 @@ fn test_sar_sign_extension_propagation() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Should preserve sign bit in MSB
-    assert_eq!(regs.rax & 0x8000000000000000, 0x8000000000000000, "MSB should remain 1");
+    assert_eq!(
+        regs.rax & 0x8000000000000000,
+        0x8000000000000000,
+        "MSB should remain 1"
+    );
     assert!(sf_set(regs.rflags), "SF: result is negative");
 }

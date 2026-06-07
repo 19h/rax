@@ -58,11 +58,17 @@ fn test_pcmpistri_equal_any_ubytes_match_first() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // XMM0: "abcd\0"
-    let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x64, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let data1: [u8; 16] = [
+        0x61, 0x62, 0x63, 0x64, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
     // XMM1: "cabc\0" - 'c' matches at index 0
-    let data2: [u8; 16] = [0x63, 0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x63, 0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -72,9 +78,7 @@ fn test_pcmpistri_equal_any_ubytes_no_match() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x00,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x00,
         0xf4,
     ]);
 
@@ -83,8 +87,10 @@ fn test_pcmpistri_equal_any_ubytes_no_match() {
     let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     // XMM1: "xyz\0" - no matches
     let data2: [u8; 16] = [0x78, 0x79, 0x7a, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -94,19 +100,23 @@ fn test_pcmpistri_equal_any_ubytes_all_match() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x00,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x00,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // XMM0: "aaaa\0"
-    let data1: [u8; 16] = [0x61, 0x61, 0x61, 0x61, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let data1: [u8; 16] = [
+        0x61, 0x61, 0x61, 0x61, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
     // XMM1: "aaaa\0" - all match
-    let data2: [u8; 16] = [0x61, 0x61, 0x61, 0x61, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x61, 0x61, 0x61, 0x61, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -117,19 +127,23 @@ fn test_pcmpistri_equal_any_uwords() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x01,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x01,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // XMM0: words [0x1234, 0x5678, 0x0000, ...]
-    let data1: [u8; 16] = [0x34, 0x12, 0x78, 0x56, 0x00, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let data1: [u8; 16] = [
+        0x34, 0x12, 0x78, 0x56, 0x00, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
     // XMM1: words [0x5678, 0x1234, 0x0000, ...]
-    let data2: [u8; 16] = [0x78, 0x56, 0x34, 0x12, 0x00, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x78, 0x56, 0x34, 0x12, 0x00, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -144,19 +158,23 @@ fn test_pcmpistri_ranges_ubytes() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x04,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x04,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // XMM0: range pairs 'a'-'z', 'A'-'Z'
-    let data1: [u8; 16] = [0x61, 0x7a, 0x41, 0x5a, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let data1: [u8; 16] = [
+        0x61, 0x7a, 0x41, 0x5a, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
     // XMM1: "Hello123\0"
-    let data2: [u8; 16] = [0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x31, 0x32, 0x33, 0x00, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x31, 0x32, 0x33, 0x00, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -167,9 +185,7 @@ fn test_pcmpistri_ranges_digits() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x04,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x04,
         0xf4,
     ]);
 
@@ -177,9 +193,13 @@ fn test_pcmpistri_ranges_digits() {
     // XMM0: range pair '0'-'9'
     let data1: [u8; 16] = [0x30, 0x39, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     // XMM1: "abc123xyz\0"
-    let data2: [u8; 16] = [0x61, 0x62, 0x63, 0x31, 0x32, 0x33, 0x78, 0x79, 0x7a, 0x00, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x61, 0x62, 0x63, 0x31, 0x32, 0x33, 0x78, 0x79, 0x7a, 0x00, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -194,19 +214,23 @@ fn test_pcmpistri_equal_each_match() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x08,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x08,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // XMM0: "abcd\0"
-    let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x64, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let data1: [u8; 16] = [
+        0x61, 0x62, 0x63, 0x64, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
     // XMM1: "abcd\0" - all match
-    let data2: [u8; 16] = [0x61, 0x62, 0x63, 0x64, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x61, 0x62, 0x63, 0x64, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -217,19 +241,23 @@ fn test_pcmpistri_equal_each_mismatch() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x08,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x08,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // XMM0: "abcd\0"
-    let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x64, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let data1: [u8; 16] = [
+        0x61, 0x62, 0x63, 0x64, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
     // XMM1: "abXd\0" - mismatch at index 2
-    let data2: [u8; 16] = [0x61, 0x62, 0x58, 0x64, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x61, 0x62, 0x58, 0x64, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -240,19 +268,21 @@ fn test_pcmpistri_equal_each_partial() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x08,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x08,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // XMM0: "abcd\0"
-    let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x64, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let data1: [u8; 16] = [
+        0x61, 0x62, 0x63, 0x64, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
     // XMM1: "ab\0" - shorter string
     let data2: [u8; 16] = [0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -267,9 +297,7 @@ fn test_pcmpistri_equal_ordered_substring() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x0c,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x0c,
         0xf4,
     ]);
 
@@ -277,9 +305,13 @@ fn test_pcmpistri_equal_ordered_substring() {
     // XMM0: "cd\0" - substring to find
     let data1: [u8; 16] = [0x63, 0x64, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     // XMM1: "abcdef\0" - contains "cd" at index 2
-    let data2: [u8; 16] = [0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -290,9 +322,7 @@ fn test_pcmpistri_equal_ordered_no_substring() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x0c,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x0c,
         0xf4,
     ]);
 
@@ -300,9 +330,13 @@ fn test_pcmpistri_equal_ordered_no_substring() {
     // XMM0: "xyz\0"
     let data1: [u8; 16] = [0x78, 0x79, 0x7a, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     // XMM1: "abcdef\0" - doesn't contain "xyz"
-    let data2: [u8; 16] = [0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -313,9 +347,7 @@ fn test_pcmpistri_equal_ordered_at_start() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x0c,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x0c,
         0xf4,
     ]);
 
@@ -323,9 +355,13 @@ fn test_pcmpistri_equal_ordered_at_start() {
     // XMM0: "ab\0"
     let data1: [u8; 16] = [0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     // XMM1: "abcdef\0" - contains "ab" at index 0
-    let data2: [u8; 16] = [0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -340,19 +376,23 @@ fn test_pcmpistri_negative_polarity() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x10,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x10,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // XMM0: "aeiou\0" - vowels
-    let data1: [u8; 16] = [0x61, 0x65, 0x69, 0x6f, 0x75, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let data1: [u8; 16] = [
+        0x61, 0x65, 0x69, 0x6f, 0x75, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
     // XMM1: "bcdfg\0" - consonants, first non-vowel at index 0
-    let data2: [u8; 16] = [0x62, 0x63, 0x64, 0x66, 0x67, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x62, 0x63, 0x64, 0x66, 0x67, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -363,9 +403,7 @@ fn test_pcmpistri_negative_polarity_ranges() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x14,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x14,
         0xf4,
     ]);
 
@@ -373,9 +411,13 @@ fn test_pcmpistri_negative_polarity_ranges() {
     // XMM0: range '0'-'9'
     let data1: [u8; 16] = [0x30, 0x39, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     // XMM1: "123abc\0" - first non-digit at index 3 ('a')
-    let data2: [u8; 16] = [0x31, 0x32, 0x33, 0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x31, 0x32, 0x33, 0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -390,9 +432,7 @@ fn test_pcmpistri_most_significant_index() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x20,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x20,
         0xf4,
     ]);
 
@@ -400,9 +440,13 @@ fn test_pcmpistri_most_significant_index() {
     // XMM0: "ab\0"
     let data1: [u8; 16] = [0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     // XMM1: "xaxbxax\0" - last 'a' or 'b' at index 6 ('a')
-    let data2: [u8; 16] = [0x78, 0x61, 0x78, 0x62, 0x78, 0x61, 0x78, 0x00, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x78, 0x61, 0x78, 0x62, 0x78, 0x61, 0x78, 0x00, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -413,9 +457,7 @@ fn test_pcmpistri_msb_equal_ordered() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x2c,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x2c,
         0xf4,
     ]);
 
@@ -423,9 +465,13 @@ fn test_pcmpistri_msb_equal_ordered() {
     // XMM0: "ab\0"
     let data1: [u8; 16] = [0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     // XMM1: "xabxabx\0" - last occurrence of "ab" at index 4
-    let data2: [u8; 16] = [0x78, 0x61, 0x62, 0x78, 0x61, 0x62, 0x78, 0x00, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x78, 0x61, 0x62, 0x78, 0x61, 0x62, 0x78, 0x00, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -440,19 +486,21 @@ fn test_pcmpistri_signed_bytes() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x02,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x02,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // XMM0: signed bytes including negative
-    let data1: [u8; 16] = [0x01, 0xFF, 0x7F, 0x80, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let data1: [u8; 16] = [
+        0x01, 0xFF, 0x7F, 0x80, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
     // XMM1: test string with negative value
     let data2: [u8; 16] = [0x05, 0xFF, 0x03, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -463,19 +511,23 @@ fn test_pcmpistri_signed_words() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x03,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x03,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // XMM0: signed words [0x1234, 0x8000, 0x0000]
-    let data1: [u8; 16] = [0x34, 0x12, 0x00, 0x80, 0x00, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let data1: [u8; 16] = [
+        0x34, 0x12, 0x00, 0x80, 0x00, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
     // XMM1: words with 0x8000 (negative)
-    let data2: [u8; 16] = [0x56, 0x78, 0x00, 0x80, 0x00, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x56, 0x78, 0x00, 0x80, 0x00, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -498,8 +550,10 @@ fn test_pcmpistri_memory_operand() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let data2: [u8; 16] = [0x78, 0x62, 0x79, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -522,8 +576,10 @@ fn test_pcmpistri_xmm8_xmm9() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let data2: [u8; 16] = [0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -541,9 +597,13 @@ fn test_pcmpistri_xmm10_xmm11() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    let data2: [u8; 16] = [0x78, 0x61, 0x62, 0x79, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x78, 0x61, 0x62, 0x79, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -562,8 +622,10 @@ fn test_pcmpistri_xmm12_xmm13() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x30, 0x39, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let data2: [u8; 16] = [0x61, 0x35, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -582,8 +644,10 @@ fn test_pcmpistri_xmm14_xmm15() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let data2: [u8; 16] = [0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -597,18 +661,24 @@ fn test_pcmpistri_empty_strings() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x00,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x00,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // Both strings empty (null at start)
-    let data1: [u8; 16] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-    let data2: [u8; 16] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data1: [u8; 16] = [
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00,
+    ];
+    let data2: [u8; 16] = [
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -619,18 +689,23 @@ fn test_pcmpistri_full_16_bytes() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x00,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x00,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data1: [u8; 16] = [0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61]; // All 'a'
-    let data2: [u8; 16] = [0x62, 0x61, 0x62, 0x61, 0x62, 0x61, 0x62, 0x61,
-                           0x62, 0x61, 0x62, 0x61, 0x62, 0x61, 0x62, 0x61];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data1: [u8; 16] = [
+        0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61,
+        0x61,
+    ]; // All 'a'
+    let data2: [u8; 16] = [
+        0x62, 0x61, 0x62, 0x61, 0x62, 0x61, 0x62, 0x61, 0x62, 0x61, 0x62, 0x61, 0x62, 0x61, 0x62,
+        0x61,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -641,17 +716,17 @@ fn test_pcmpistri_override_bit() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x40,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x40,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let data2: [u8; 16] = [0x78, 0x62, 0x79, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -668,8 +743,8 @@ fn test_pcmpistri_control_0x3a_basic() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,           // MOVDQA XMM0, [RAX]
-        0x66, 0x0f, 0x6f, 0x48, 0x10,     // MOVDQA XMM1, [RAX+0x10]
+        0x66, 0x0f, 0x6f, 0x00, // MOVDQA XMM0, [RAX]
+        0x66, 0x0f, 0x6f, 0x48, 0x10, // MOVDQA XMM1, [RAX+0x10]
         0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x3a, // PCMPISTRI XMM0, XMM1, 0x3a
         0xf4,
     ]);
@@ -678,16 +753,24 @@ fn test_pcmpistri_control_0x3a_basic() {
     // XMM0: "ab\0" - pattern to search for
     let data1: [u8; 16] = [0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     // XMM1: "xxab\0" - should find "ab" at position 2
-    let data2: [u8; 16] = [0x78, 0x78, 0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x78, 0x78, 0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
-    
+
     let regs = vcpu.get_regs().unwrap();
     // With masked negative polarity on equal ordered, we get inverted match bits
     // For substring "ab" in "xxab", the match at position 2 gets inverted
     // ECX should indicate where the pattern is NOT found (before position 2)
-    assert!(regs.rcx <= 16, "ECX should be valid index, got {}", regs.rcx);
+    assert!(
+        regs.rcx <= 16,
+        "ECX should be valid index, got {}",
+        regs.rcx
+    );
 }
 
 #[test]
@@ -696,9 +779,7 @@ fn test_pcmpistri_control_0x3a_no_match() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x3a,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x3a,
         0xf4,
     ]);
 
@@ -707,13 +788,19 @@ fn test_pcmpistri_control_0x3a_no_match() {
     let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     // XMM1: "xyz\0" - no match
     let data2: [u8; 16] = [0x78, 0x79, 0x7a, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
-    
+
     let regs = vcpu.get_regs().unwrap();
     // No match found - with negative polarity, should return first position (0)
-    assert!(regs.rcx <= 16, "ECX should be valid index, got {}", regs.rcx);
+    assert!(
+        regs.rcx <= 16,
+        "ECX should be valid index, got {}",
+        regs.rcx
+    );
 }
 
 #[test]
@@ -723,9 +810,7 @@ fn test_pcmpistri_control_0x3a_single_char() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x3a,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x3a,
         0xf4,
     ]);
 
@@ -733,13 +818,21 @@ fn test_pcmpistri_control_0x3a_single_char() {
     // XMM0: "=\0" - looking for '='
     let data1: [u8; 16] = [0x3d, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     // XMM1: "VAR=value\0" - '=' at position 3
-    let data2: [u8; 16] = [0x56, 0x41, 0x52, 0x3d, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x00, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x56, 0x41, 0x52, 0x3d, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x00, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
-    
+
     let regs = vcpu.get_regs().unwrap();
-    assert!(regs.rcx <= 16, "ECX should be valid index, got {}", regs.rcx);
+    assert!(
+        regs.rcx <= 16,
+        "ECX should be valid index, got {}",
+        regs.rcx
+    );
 }
 
 #[test]
@@ -749,22 +842,26 @@ fn test_pcmpistri_control_0x02_equal_any_signed() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x02,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x02,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let data2: [u8; 16] = [0x78, 0x62, 0x79, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
-    
+
     let regs = vcpu.get_regs().unwrap();
     // 'b' (0x62) from data1 matches at position 1 in data2
-    assert_eq!(regs.rcx, 1, "Expected match at position 1, got {}", regs.rcx);
+    assert_eq!(
+        regs.rcx, 1,
+        "Expected match at position 1, got {}",
+        regs.rcx
+    );
 }
 
 // ============================================================================
@@ -777,9 +874,8 @@ fn test_pcmpistri_sequence() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x00, // PCMPISTRI XMM0, XMM1, 0x00
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1,
+        0x00, // PCMPISTRI XMM0, XMM1, 0x00
         0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x08, // PCMPISTRI XMM0, XMM1, 0x08
         0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x0c, // PCMPISTRI XMM0, XMM1, 0x0C
         0xf4,
@@ -788,8 +884,10 @@ fn test_pcmpistri_sequence() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let data2: [u8; 16] = [0x78, 0x62, 0x79, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -812,8 +910,10 @@ fn test_pcmpistri_xmm2_xmm3() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let data2: [u8; 16] = [0x78, 0x61, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -832,8 +932,10 @@ fn test_pcmpistri_xmm4_xmm5() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let data2: [u8; 16] = [0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -851,9 +953,13 @@ fn test_pcmpistri_xmm6_xmm7() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    let data2: [u8; 16] = [0x78, 0x61, 0x62, 0x79, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x78, 0x61, 0x62, 0x79, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -868,17 +974,17 @@ fn test_pcmpistri_control_0x18() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x18,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x18,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let data2: [u8; 16] = [0x61, 0x62, 0x58, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -889,17 +995,19 @@ fn test_pcmpistri_control_0x1c() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x1c,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x1c,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    let data2: [u8; 16] = [0x78, 0x79, 0x7a, 0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x78, 0x79, 0x7a, 0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -910,17 +1018,19 @@ fn test_pcmpistri_control_0x30() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x30,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x30,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    let data2: [u8; 16] = [0x62, 0x78, 0x79, 0x7a, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x62, 0x78, 0x79, 0x7a, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -931,19 +1041,23 @@ fn test_pcmpistri_ranges_multiple() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x04,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x04,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // XMM0: ranges 'a'-'z', '0'-'9'
-    let data1: [u8; 16] = [0x61, 0x7a, 0x30, 0x39, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let data1: [u8; 16] = [
+        0x61, 0x7a, 0x30, 0x39, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
     // XMM1: "Test123!@#"
-    let data2: [u8; 16] = [0x54, 0x65, 0x73, 0x74, 0x31, 0x32, 0x33, 0x21, 0x40, 0x23, 0x00, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x54, 0x65, 0x73, 0x74, 0x31, 0x32, 0x33, 0x21, 0x40, 0x23, 0x00, 0, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -954,19 +1068,23 @@ fn test_pcmpistri_case_insensitive_pattern() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x04,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x04,
         0xf4,
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // XMM0: 'A'-'Z', 'a'-'z' ranges
-    let data1: [u8; 16] = [0x41, 0x5a, 0x61, 0x7a, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let data1: [u8; 16] = [
+        0x41, 0x5a, 0x61, 0x7a, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
     // XMM1: "Hello123!@#"
-    let data2: [u8; 16] = [0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x31, 0x32, 0x33, 0x21, 0x40, 0x23, 0x00, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    let data2: [u8; 16] = [
+        0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x31, 0x32, 0x33, 0x21, 0x40, 0x23, 0x00, 0, 0, 0, 0,
+    ];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -976,9 +1094,7 @@ fn test_pcmpistri_boundary_characters() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x00,
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x00,
         0xf4,
     ]);
 
@@ -987,8 +1103,10 @@ fn test_pcmpistri_boundary_characters() {
     let data1: [u8; 16] = [0x00, 0xFF, 0x7F, 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     // XMM1: test against boundary values
     let data2: [u8; 16] = [0x01, 0x80, 0x02, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -999,9 +1117,8 @@ fn test_pcmpistri_xmm0_xmm1_various_modes() {
     let mut full_code = code.to_vec();
     full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
     full_code.extend_from_slice(&[
-        0x66, 0x0f, 0x6f, 0x00,
-        0x66, 0x0f, 0x6f, 0x48, 0x10,
-        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x00, // Equal any
+        0x66, 0x0f, 0x6f, 0x00, 0x66, 0x0f, 0x6f, 0x48, 0x10, 0x66, 0x0f, 0x3a, 0x63, 0xc1,
+        0x00, // Equal any
         0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x04, // Ranges
         0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x08, // Equal each
         0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x0c, // Equal ordered
@@ -1011,11 +1128,12 @@ fn test_pcmpistri_xmm0_xmm1_various_modes() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let data2: [u8; 16] = [0x78, 0x62, 0x79, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
-
 
 // ============================================================================
 // Known-answer value tests (implicit-length string compare, index in ECX).
@@ -1052,5 +1170,8 @@ fn kat_pcmpistri_equal_any_no_match() {
     crate::common::set_xmm(&mem, &mut vcpu, 1, 0x0000000000000000000000007a7978); // "xyz"
     let regs = crate::common::run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx & 0xFFFF_FFFF, 16, "PCMPISTRI ECX = {}", regs.rcx);
-    assert!(!crate::common::cf_set(regs.rflags), "CF should be clear (no match)");
+    assert!(
+        !crate::common::cf_set(regs.rflags),
+        "CF should be clear (no match)"
+    );
 }

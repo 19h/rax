@@ -9,7 +9,7 @@
 //! the `qemu-hexagon` reference oracle (`tests/hexagon_diff.rs`).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fld, SemCtx};
+use super::{SemCtx, fld};
 
 // --- H.264 / Hexagon CABAC decode tables (S2_cabacdecbin) ------------------
 //
@@ -177,6 +177,10 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
 #[inline]
 fn insert_range(reg: u32, hibit: u32, lobit: u32, val: u32) -> u32 {
     let width = hibit - lobit + 1;
-    let field_mask = if width >= 32 { u32::MAX } else { (1u32 << width) - 1 };
+    let field_mask = if width >= 32 {
+        u32::MAX
+    } else {
+        (1u32 << width) - 1
+    };
     (reg & !(field_mask << lobit)) | ((val & field_mask) << lobit)
 }

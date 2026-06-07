@@ -48,7 +48,11 @@ fn test_bzhi_32bit_all_indices_0_to_32() {
         if index >= 32 {
             assert!(cf_set(regs.rflags), "CF should be set for index {}", index);
         } else {
-            assert!(!cf_set(regs.rflags), "CF should be clear for index {}", index);
+            assert!(
+                !cf_set(regs.rflags),
+                "CF should be clear for index {}",
+                index
+            );
         }
     }
 }
@@ -144,13 +148,21 @@ fn test_bzhi_64bit_all_indices_0_to_64() {
         } else {
             (1u64 << index).wrapping_sub(1)
         };
-        assert_eq!(regs.rax, expected, "BZHI 64-bit with index {} failed", index);
+        assert_eq!(
+            regs.rax, expected,
+            "BZHI 64-bit with index {} failed",
+            index
+        );
 
         // Check CF flag
         if index >= 64 {
             assert!(cf_set(regs.rflags), "CF should be set for index {}", index);
         } else {
-            assert!(!cf_set(regs.rflags), "CF should be clear for index {}", index);
+            assert!(
+                !cf_set(regs.rflags),
+                "CF should be clear for index {}",
+                index
+            );
         }
     }
 }
@@ -207,7 +219,11 @@ fn test_bzhi_64bit_boundary_indices() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax, expected, "BZHI 64-bit index {} result mismatch", index);
+        assert_eq!(
+            regs.rax, expected,
+            "BZHI 64-bit index {} result mismatch",
+            index
+        );
         assert_eq!(
             cf_set(regs.rflags),
             expect_cf,
@@ -252,7 +268,10 @@ fn test_bzhi_32bit_zf_clear_on_nonzero_result() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_ne!(regs.rax & 0xFFFFFFFF, 0, "Result should be non-zero");
-    assert!(!zf_set(regs.rflags), "ZF should be clear for non-zero result");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear for non-zero result"
+    );
 }
 
 #[test]
@@ -268,7 +287,11 @@ fn test_bzhi_32bit_sf_set_on_negative_result() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x7FFFFFFF, "Result should have bit 30 set");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x7FFFFFFF,
+        "Result should have bit 30 set"
+    );
     assert!(!sf_set(regs.rflags), "SF should be clear (bit 31 clear)");
 }
 
@@ -285,7 +308,11 @@ fn test_bzhi_32bit_sf_clear_on_positive_result() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0000FFFF, "Result should be 16-bit mask");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x0000FFFF,
+        "Result should be 16-bit mask"
+    );
     assert!(!sf_set(regs.rflags), "SF should be clear");
 }
 
@@ -325,13 +352,13 @@ fn test_bzhi_64bit_sf_behavior() {
 fn test_bzhi_32bit_extract_specific_fields() {
     // Extract specific bit fields from complex patterns
     let test_cases = vec![
-        (0xABCD1234, 4, 0x00000004),   // Lower nibble
-        (0xABCD1234, 8, 0x00000034),   // Lower byte
-        (0xABCD1234, 12, 0x00000234),  // Lower 12 bits
-        (0xABCD1234, 16, 0x00001234),  // Lower word
-        (0xABCD1234, 20, 0x000D1234),  // Lower 20 bits
-        (0xABCD1234, 24, 0x00CD1234),  // Lower 24 bits
-        (0xABCD1234, 28, 0x0BCD1234),  // Lower 28 bits
+        (0xABCD1234, 4, 0x00000004),  // Lower nibble
+        (0xABCD1234, 8, 0x00000034),  // Lower byte
+        (0xABCD1234, 12, 0x00000234), // Lower 12 bits
+        (0xABCD1234, 16, 0x00001234), // Lower word
+        (0xABCD1234, 20, 0x000D1234), // Lower 20 bits
+        (0xABCD1234, 24, 0x00CD1234), // Lower 24 bits
+        (0xABCD1234, 28, 0x0BCD1234), // Lower 28 bits
     ];
 
     for (value, index, expected) in test_cases {
@@ -424,7 +451,8 @@ fn test_bzhi_32bit_memory_all_indices() {
     // Test BZHI with memory operand for various indices
     for index in vec![0, 4, 8, 12, 16, 20, 24, 28, 32] {
         let code = [
-            0xc4, 0xe2, 0x70, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // BZHI EAX, [0x2000], ECX
+            0xc4, 0xe2, 0x70, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00,
+            0x00, // BZHI EAX, [0x2000], ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -453,7 +481,8 @@ fn test_bzhi_64bit_memory_all_indices() {
     // Test BZHI 64-bit with memory operand
     for index in vec![0, 8, 16, 24, 32, 40, 48, 56, 64] {
         let code = [
-            0xc4, 0xe2, 0xf0, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // BZHI RAX, [0x2000], RCX
+            0xc4, 0xe2, 0xf0, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00,
+            0x00, // BZHI RAX, [0x2000], RCX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -488,7 +517,8 @@ fn test_bzhi_32bit_memory_complex_patterns() {
 
     for (value, index, expected) in patterns {
         let code = [
-            0xc4, 0xe2, 0x70, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // BZHI EAX, [0x2000], ECX
+            0xc4, 0xe2, 0x70, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00,
+            0x00, // BZHI EAX, [0x2000], ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -516,10 +546,10 @@ fn test_bzhi_32bit_memory_complex_patterns() {
 fn test_bzhi_index_only_uses_low_8_bits() {
     // Index uses only bits [7:0], so 256 wraps to 0
     let test_cases = vec![
-        (256, 0),   // 256 & 0xFF = 0
-        (257, 1),   // 257 & 0xFF = 1
-        (264, 8),   // 264 & 0xFF = 8
-        (272, 16),  // 272 & 0xFF = 16
+        (256, 0),  // 256 & 0xFF = 0
+        (257, 1),  // 257 & 0xFF = 1
+        (264, 8),  // 264 & 0xFF = 8
+        (272, 16), // 272 & 0xFF = 16
     ];
 
     for (count_value, effective_index) in test_cases {
@@ -561,8 +591,16 @@ fn test_bzhi_preserves_source_operands() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x12345678, "Source should be unchanged");
-    assert_eq!(regs.rcx & 0xFFFFFFFF, 16, "Index register should be unchanged");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0x12345678,
+        "Source should be unchanged"
+    );
+    assert_eq!(
+        regs.rcx & 0xFFFFFFFF,
+        16,
+        "Index register should be unchanged"
+    );
 }
 
 #[test]
@@ -570,7 +608,7 @@ fn test_bzhi_consecutive_operations() {
     // Chain multiple BZHI operations
     let code = [
         0xc4, 0xe2, 0x70, 0xf5, 0xc3, // BZHI EAX, EBX, ECX
-        0x48, 0x89, 0xc3,             // MOV RBX, RAX
+        0x48, 0x89, 0xc3, // MOV RBX, RAX
         0x48, 0xc7, 0xc1, 0x08, 0x00, 0x00, 0x00, // MOV RCX, 8
         0xc4, 0xe2, 0x70, 0xf5, 0xc3, // BZHI EAX, EBX, ECX
         0xf4,
@@ -630,7 +668,11 @@ fn test_bzhi_with_zero_source() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax, 0, "BZHI of zero should be zero for index {}", index);
+        assert_eq!(
+            regs.rax, 0,
+            "BZHI of zero should be zero for index {}",
+            index
+        );
         assert!(zf_set(regs.rflags), "ZF should be set for zero result");
     }
 }

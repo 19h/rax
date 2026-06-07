@@ -32,7 +32,7 @@ use rax::cpu::Registers;
 fn test_and_al_imm8_basic() {
     let code = [
         0x24, 0x0F, // AND AL, 0x0F
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0xAB; // AL = 0xAB (10101011)
@@ -365,7 +365,11 @@ fn test_and_mask_low_nibble() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0x07, "Extract low nibble: 0xB7 & 0x0F = 0x07");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x07,
+        "Extract low nibble: 0xB7 & 0x0F = 0x07"
+    );
 }
 
 #[test]
@@ -573,7 +577,8 @@ fn test_and_byte_ptr_mem() {
 #[test]
 fn test_and_dword_ptr_mem() {
     let code = [
-        0x81, 0x25, 0xf6, 0x0f, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, // AND DWORD PTR [rip+0x0FF6], 0x000000FF
+        0x81, 0x25, 0xf6, 0x0f, 0x00, 0x00, 0xFF, 0x00, 0x00,
+        0x00, // AND DWORD PTR [rip+0x0FF6], 0x000000FF
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -588,7 +593,8 @@ fn test_and_dword_ptr_mem() {
 #[test]
 fn test_and_qword_ptr_mem() {
     let code = [
-        0x48, 0x81, 0x25, 0xf5, 0x0f, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, // AND QWORD PTR [rip+0x0FF5], 0x0000FFFF
+        0x48, 0x81, 0x25, 0xf5, 0x0f, 0x00, 0x00, 0xFF, 0xFF, 0x00,
+        0x00, // AND QWORD PTR [rip+0x0FF5], 0x0000FFFF
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

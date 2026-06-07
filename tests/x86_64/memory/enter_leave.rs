@@ -35,7 +35,11 @@ fn test_enter_basic_no_locals() {
     // Verify old RBP is on stack
     let mut stack_val = [0u8; 8];
     vm.read_slice(&mut stack_val, GuestAddress(0x0FF8)).unwrap();
-    assert_eq!(u64::from_le_bytes(stack_val), 0, "Old RBP should be on stack");
+    assert_eq!(
+        u64::from_le_bytes(stack_val),
+        0,
+        "Old RBP should be on stack"
+    );
 }
 
 // ENTER with local space allocation (8 bytes)
@@ -89,7 +93,10 @@ fn test_enter_with_max_locals() {
 
     // ENTER: PUSH RBP (RSP=0x1FFF8), FrameTemp=RSP, RSP-=65535, RBP=FrameTemp
     assert_eq!(regs.rbp, 0x1FFF8, "RBP = RSP after push");
-    assert_eq!(regs.rsp, 0x0FFF9, "RSP = FrameTemp - 65535 bytes for locals");
+    assert_eq!(
+        regs.rsp, 0x0FFF9,
+        "RSP = FrameTemp - 65535 bytes for locals"
+    );
 }
 
 // LEAVE basic - restore RBP and RSP
@@ -149,7 +156,8 @@ fn test_enter_nesting_level_1() {
 
     // Verify RBP is on stack
     let mut stack_val = [0u8; 8];
-    vm.read_slice(&mut stack_val, GuestAddress(regs.rbp)).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(regs.rbp))
+        .unwrap();
     // Previous frame's RBP should be there
     let _ = u64::from_le_bytes(stack_val);
 }
@@ -169,7 +177,10 @@ fn test_enter_nesting_level_1_with_locals() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Verify stack management is correct
-    assert!(regs.rsp < 0x2000 - 8 - 16, "RSP properly adjusted for nested frame");
+    assert!(
+        regs.rsp < 0x2000 - 8 - 16,
+        "RSP properly adjusted for nested frame"
+    );
 }
 
 // ENTER with nesting level 2
@@ -188,7 +199,10 @@ fn test_enter_nesting_level_2() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // RSP should be much lower due to nested frames
-    assert!(regs.rsp < 0x3000, "RSP adjusted for multiple nesting levels");
+    assert!(
+        regs.rsp < 0x3000,
+        "RSP adjusted for multiple nesting levels"
+    );
 }
 
 // Multiple ENTER without LEAVE (stack growth)
@@ -207,7 +221,11 @@ fn test_multiple_enter_no_leave() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Total stack used: 8 + 8 + 16 + 8 + 32 + 8 = 80 bytes
-    assert_eq!(regs.rsp, 0x4000 - 80, "Stack correctly grown for multiple frames");
+    assert_eq!(
+        regs.rsp,
+        0x4000 - 80,
+        "Stack correctly grown for multiple frames"
+    );
 }
 
 // ENTER/LEAVE pairs
@@ -298,10 +316,8 @@ fn test_enter_leave_function_prologue_epilogue() {
     let code = [
         // Function prologue
         0xc8, 0x20, 0x00, 0x00, // ENTER 32, 0 (32 bytes for local variables)
-
         // Function body - use RAX
         0x48, 0xc7, 0xc0, 0x42, 0x00, 0x00, 0x00, // MOV RAX, 0x42
-
         // Function epilogue
         0xc9, // LEAVE
         0xf4, // HLT
@@ -322,13 +338,10 @@ fn test_nested_frame_management() {
     let code = [
         // Outer function prologue
         0xc8, 0x08, 0x00, 0x00, // ENTER 8, 0 (outer: 8 bytes locals)
-
         // Inner function prologue
         0xc8, 0x10, 0x00, 0x00, // ENTER 16, 0 (inner: 16 bytes locals)
-
         // Inner function epilogue
         0xc9, // LEAVE
-
         // Outer function epilogue
         0xc9, // LEAVE
         0xf4, // HLT
@@ -339,7 +352,10 @@ fn test_nested_frame_management() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rsp, 0x2000, "Stack fully cleaned up from nested frames");
+    assert_eq!(
+        regs.rsp, 0x2000,
+        "Stack fully cleaned up from nested frames"
+    );
 }
 
 // ENTER with very small local space (1 byte)
@@ -355,7 +371,11 @@ fn test_enter_1_byte_locals() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rsp, 0x1000 - 8 - 1, "RSP correctly adjusted for 1 byte locals");
+    assert_eq!(
+        regs.rsp,
+        0x1000 - 8 - 1,
+        "RSP correctly adjusted for 1 byte locals"
+    );
 }
 
 // ENTER preserves flags
@@ -422,10 +442,8 @@ fn test_nested_frames_different_sizes() {
 fn test_enter_leave_with_memory_ops() {
     let code = [
         0xc8, 0x08, 0x00, 0x00, // ENTER 8, 0
-
         // Write value to local variable (at [RBP-8])
         0x48, 0xc7, 0x45, 0xf8, 0x42, 0x00, 0x00, 0x00, // MOV qword [RBP-8], 0x42
-
         0xc9, // LEAVE
         0xf4, // HLT
     ];
@@ -456,7 +474,10 @@ fn test_enter_nesting_level_3() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(regs.rsp < 0x4000, "RSP adjusted for multiple nesting levels");
+    assert!(
+        regs.rsp < 0x4000,
+        "RSP adjusted for multiple nesting levels"
+    );
 }
 
 // ENTER then immediate LEAVE
@@ -498,10 +519,8 @@ fn test_enter_256_locals() {
 fn test_rbp_access_after_enter() {
     let code = [
         0xc8, 0x10, 0x00, 0x00, // ENTER 16, 0
-
         // Try to read from [RBP] to get the saved RBP
         0x48, 0x8b, 0x45, 0x00, // MOV RAX, [RBP]
-
         0xc9, // LEAVE
         0xf4, // HLT
     ];
@@ -520,14 +539,12 @@ fn test_rbp_access_after_enter() {
 fn test_access_frame_locals_various_offsets() {
     let code = [
         0xc8, 0x20, 0x00, 0x00, // ENTER 32, 0
-
         // Write to [RBP-8]
         0x48, 0xc7, 0x45, 0xf8, 0x11, 0x00, 0x00, 0x00, // MOV [RBP-8], 0x11
         // Write to [RBP-16]
         0x48, 0xc7, 0x45, 0xf0, 0x22, 0x00, 0x00, 0x00, // MOV [RBP-16], 0x22
         // Write to [RBP-24]
         0x48, 0xc7, 0x45, 0xe8, 0x33, 0x00, 0x00, 0x00, // MOV [RBP-24], 0x33
-
         0xc9, // LEAVE
         0xf4, // HLT
     ];
@@ -559,7 +576,11 @@ fn test_enter_with_nonzero_rbp() {
     // Verify old RBP is on stack
     let mut stack_val = [0u8; 8];
     vm.read_slice(&mut stack_val, GuestAddress(0x0FF8)).unwrap();
-    assert_eq!(u64::from_le_bytes(stack_val), 0xDEADBEEFDEADBEEF, "Old RBP saved");
+    assert_eq!(
+        u64::from_le_bytes(stack_val),
+        0xDEADBEEFDEADBEEF,
+        "Old RBP saved"
+    );
 }
 
 // LEAVE restores from current RBP value
@@ -570,7 +591,6 @@ fn test_leave_after_rbp_modification() {
     // So if RBP is modified, LEAVE reads from the new RBP location
     let code = [
         0xc8, 0x00, 0x00, 0x00, // ENTER 0, 0 (saves RBP=0 at 0xFF8, RBP=0xFF8)
-
         // Restore RBP back to frame pointer (no modification)
         // Just do LEAVE directly
         0xc9, // LEAVE

@@ -9,7 +9,7 @@
 //! intermediate (e.g. `~Ps`) is truncated to 8 bits on write, matching hardware.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fimm_s, fimm_u, fld, SemCtx};
+use super::{SemCtx, fimm_s, fimm_u, fld};
 
 /// Execute a compare-class opcode. Returns `false` if `op` is not in this class.
 pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
@@ -25,13 +25,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
     let rd = fld(d, b'd');
 
     // f8BITSOF(x): splat a boolean to all 8 predicate bits.
-    let bits8 = |cond: bool| -> u8 {
-        if cond {
-            0xff
-        } else {
-            0x00
-        }
-    };
+    let bits8 = |cond: bool| -> u8 { if cond { 0xff } else { 0x00 } };
 
     match op {
         // ---- scalar register compares (-> predicate) ----

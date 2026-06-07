@@ -371,11 +371,23 @@ impl Fpscr {
 
 impl fmt::Debug for Fpscr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "FPSCR {{ N:{} Z:{} C:{} V:{} FZ:{} DN:{} RM:{:?} IOC:{} DZC:{} OFC:{} UFC:{} IXC:{} IDC:{} }}",
-            self.n() as u8, self.z() as u8, self.c() as u8, self.v() as u8,
-            self.fz() as u8, self.dn() as u8, self.rmode(),
-            self.ioc() as u8, self.dzc() as u8, self.ofc() as u8,
-            self.ufc() as u8, self.ixc() as u8, self.idc() as u8)
+        write!(
+            f,
+            "FPSCR {{ N:{} Z:{} C:{} V:{} FZ:{} DN:{} RM:{:?} IOC:{} DZC:{} OFC:{} UFC:{} IXC:{} IDC:{} }}",
+            self.n() as u8,
+            self.z() as u8,
+            self.c() as u8,
+            self.v() as u8,
+            self.fz() as u8,
+            self.dn() as u8,
+            self.rmode(),
+            self.ioc() as u8,
+            self.dzc() as u8,
+            self.ofc() as u8,
+            self.ufc() as u8,
+            self.ixc() as u8,
+            self.idc() as u8
+        )
     }
 }
 

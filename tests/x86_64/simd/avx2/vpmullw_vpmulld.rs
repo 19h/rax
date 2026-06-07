@@ -111,7 +111,15 @@ fn test_vpmullw_ymm2_ymm3_mem_max_values() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -126,8 +134,11 @@ fn test_vpmullw_ymm4_ymm5_mem_powers_of_two() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let powers: Vec<u8> = (0..16).flat_map(|i| (1u16 << (i % 16)).to_le_bytes()).collect();
-    mem.write_slice(&powers, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let powers: Vec<u8> = (0..16)
+        .flat_map(|i| (1u16 << (i % 16)).to_le_bytes())
+        .collect();
+    mem.write_slice(&powers, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -212,10 +223,11 @@ fn test_vpmullw_mem_different_patterns() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let pattern: Vec<u8> = (0..16).flat_map(|i| {
-        if i % 2 == 0 { 0x000Au16 } else { 0x0005u16 }.to_le_bytes()
-    }).collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let pattern: Vec<u8> = (0..16)
+        .flat_map(|i| if i % 2 == 0 { 0x000Au16 } else { 0x0005u16 }.to_le_bytes())
+        .collect();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -331,7 +343,15 @@ fn test_vpmulld_ymm2_ymm3_mem_max_values() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -347,7 +367,8 @@ fn test_vpmulld_ymm4_ymm5_mem_powers_of_two() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let powers: Vec<u8> = (0..8).flat_map(|i| (1u32 << i).to_le_bytes()).collect();
-    mem.write_slice(&powers, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&powers, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -432,10 +453,11 @@ fn test_vpmulld_mem_different_patterns() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let pattern: Vec<u8> = (0..8).flat_map(|i| {
-        if i % 2 == 0 { 10u32 } else { 5u32 }.to_le_bytes()
-    }).collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let pattern: Vec<u8> = (0..8)
+        .flat_map(|i| if i % 2 == 0 { 10u32 } else { 5u32 }.to_le_bytes())
+        .collect();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -470,7 +492,8 @@ fn test_vpmulld_mem_prime_numbers() {
         .into_iter()
         .flat_map(|p| p.to_le_bytes())
         .collect();
-    mem.write_slice(&primes, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&primes, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -485,7 +508,15 @@ fn test_vpmullw_mem_unaligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
+            0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
+            0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -500,7 +531,15 @@ fn test_vpmulld_mem_unaligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
+            0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
+            0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -531,7 +570,14 @@ fn vex_ymm_get(vcpu: &X86_64Vcpu, idx: usize) -> (u128, u128) {
     (lo, hi)
 }
 /// Run `code` (HLT appended) after seeding two source registers; return dst (lo,hi).
-fn vex_run3(code: &[u8], s1: usize, v1: (u128, u128), s2: usize, v2: (u128, u128), dst: usize) -> (u128, u128) {
+fn vex_run3(
+    code: &[u8],
+    s1: usize,
+    v1: (u128, u128),
+    s2: usize,
+    v2: (u128, u128),
+    dst: usize,
+) -> (u128, u128) {
     let mut full = code.to_vec();
     full.push(0xf4);
     let (mut vcpu, _) = setup_vm(&full, None);
@@ -544,7 +590,14 @@ fn vex_run3(code: &[u8], s1: usize, v1: (u128, u128), s2: usize, v2: (u128, u128
 #[test]
 fn test_vpaddusb_unsigned_saturate_both_lanes() {
     // VPADDUSB ymm0, ymm1, ymm2 : 0xF0 + 0x20 -> 0xFF (unsigned saturate) in both lanes.
-    let (lo, hi) = vex_run3(&[0xc5, 0xf5, 0xdc, 0xc2], 1, (0xF0, 0xF0), 2, (0x20, 0x20), 0);
+    let (lo, hi) = vex_run3(
+        &[0xc5, 0xf5, 0xdc, 0xc2],
+        1,
+        (0xF0, 0xF0),
+        2,
+        (0x20, 0x20),
+        0,
+    );
     assert_eq!(lo & 0xFF, 0xFF);
     assert_eq!(hi & 0xFF, 0xFF);
 }
@@ -553,16 +606,34 @@ fn test_vpaddusb_unsigned_saturate_both_lanes() {
 fn test_vpacksswb_128_upper_zeroed_and_quadword_layout() {
     // VPACKSSWB xmm0, xmm1, xmm2 : src1 packs into low qword, src2 into high qword.
     // src1 word0 = 256 -> +0x7F; src2 word0 = -128 -> 0x80; upper 128 zeroed.
-    let (lo, hi) = vex_run3(&[0xc5, 0xf1, 0x63, 0xc2], 1, (0x0100, 0xAA), 2, (0xFF80, 0xBB), 0);
+    let (lo, hi) = vex_run3(
+        &[0xc5, 0xf1, 0x63, 0xc2],
+        1,
+        (0x0100, 0xAA),
+        2,
+        (0xFF80, 0xBB),
+        0,
+    );
     assert_eq!(lo & 0xFF, 0x7F, "src1 word saturated into low qword");
-    assert_eq!((lo >> 64) & 0xFF, 0x80, "src2 word saturated into high qword");
+    assert_eq!(
+        (lo >> 64) & 0xFF,
+        0x80,
+        "src2 word saturated into high qword"
+    );
     assert_eq!(hi, 0, "VEX.128 must zero upper 128 bits");
 }
 
 #[test]
 fn test_vpacksswb_256_independent_lanes() {
     // VPACKSSWB ymm0, ymm1, ymm2 : per-128-bit-lane interleave of src1/src2.
-    let (lo, hi) = vex_run3(&[0xc5, 0xf5, 0x63, 0xc2], 1, (0x0100, 0x0100), 2, (0xFF80, 0xFF80), 0);
+    let (lo, hi) = vex_run3(
+        &[0xc5, 0xf5, 0x63, 0xc2],
+        1,
+        (0x0100, 0x0100),
+        2,
+        (0xFF80, 0xFF80),
+        0,
+    );
     assert_eq!(lo & 0xFF, 0x7F);
     assert_eq!((lo >> 64) & 0xFF, 0x80);
     assert_eq!(hi & 0xFF, 0x7F);
@@ -574,7 +645,12 @@ fn test_vpackusdw_signed_to_unsigned_saturate_128_upper_zeroed() {
     // VPACKUSDW xmm0, xmm1, xmm2 : -1 -> 0, 0x12345 -> 0xFFFF.
     let (lo, hi) = vex_run3(
         &[0xc4, 0xe2, 0x71, 0x2b, 0xc2],
-        1, (0xFFFFFFFF | (0x00012345u128 << 32), 0), 2, (0, 0), 0);
+        1,
+        (0xFFFFFFFF | (0x00012345u128 << 32), 0),
+        2,
+        (0, 0),
+        0,
+    );
     assert_eq!(lo & 0xFFFF, 0x0000);
     assert_eq!((lo >> 16) & 0xFFFF, 0xFFFF);
     assert_eq!(hi, 0);
@@ -593,17 +669,38 @@ fn test_vpmulhw_vs_vpmulhuw_signedness() {
 #[test]
 fn test_vpmuldq_vs_vpmuludq_signedness() {
     // VPMULDQ (signed low dword -> qword): -1 * -1 = 1.
-    let (lo, _) = vex_run3(&[0xc4, 0xe2, 0x75, 0x28, 0xc2], 1, (0xFFFFFFFF, 0), 2, (0xFFFFFFFF, 0), 0);
+    let (lo, _) = vex_run3(
+        &[0xc4, 0xe2, 0x75, 0x28, 0xc2],
+        1,
+        (0xFFFFFFFF, 0),
+        2,
+        (0xFFFFFFFF, 0),
+        0,
+    );
     assert_eq!(lo, 1);
     // VPMULUDQ (unsigned low dword -> qword): 0xFFFFFFFF^2 = 0xFFFFFFFE00000001.
-    let (lo, _) = vex_run3(&[0xc5, 0xf5, 0xf4, 0xc2], 1, (0xFFFFFFFF, 0), 2, (0xFFFFFFFF, 0), 0);
+    let (lo, _) = vex_run3(
+        &[0xc5, 0xf5, 0xf4, 0xc2],
+        1,
+        (0xFFFFFFFF, 0),
+        2,
+        (0xFFFFFFFF, 0),
+        0,
+    );
     assert_eq!(lo as u64, 0xFFFFFFFE00000001u64);
 }
 
 #[test]
 fn test_vpminsb_128_upper_zeroed() {
     // VPMINSB xmm0, xmm1, xmm2 : min(-128, 127) = -128; upper zeroed.
-    let (lo, hi) = vex_run3(&[0xc4, 0xe2, 0x71, 0x38, 0xc2], 1, (0x80, 0), 2, (0x7F, 0), 0);
+    let (lo, hi) = vex_run3(
+        &[0xc4, 0xe2, 0x71, 0x38, 0xc2],
+        1,
+        (0x80, 0),
+        2,
+        (0x7F, 0),
+        0,
+    );
     assert_eq!(lo & 0xFF, 0x80);
     assert_eq!(hi, 0);
 }
@@ -611,14 +708,28 @@ fn test_vpminsb_128_upper_zeroed() {
 #[test]
 fn test_vpsravd_arithmetic_fill_both_lanes() {
     // VPSRAVD ymm: 0x80000000 >> 4 (arithmetic) = 0xF8000000.
-    let (lo, _) = vex_run3(&[0xc4, 0xe2, 0x75, 0x46, 0xc2], 1, (0x80000000, 0), 2, (4, 0), 0);
+    let (lo, _) = vex_run3(
+        &[0xc4, 0xe2, 0x75, 0x46, 0xc2],
+        1,
+        (0x80000000, 0),
+        2,
+        (4, 0),
+        0,
+    );
     assert_eq!(lo & 0xFFFFFFFF, 0xF8000000);
 }
 
 #[test]
 fn test_vpcmpeqd_256_independent_lanes() {
     // VPCMPEQD ymm: low lane equal -> all ones; high lane low dword not equal -> 0.
-    let (lo, hi) = vex_run3(&[0xc5, 0xf5, 0x76, 0xc2], 1, (0x12345678, 0x12345678), 2, (0x12345678, 0x99), 0);
+    let (lo, hi) = vex_run3(
+        &[0xc5, 0xf5, 0x76, 0xc2],
+        1,
+        (0x12345678, 0x12345678),
+        2,
+        (0x12345678, 0x99),
+        0,
+    );
     assert_eq!(lo & 0xFFFFFFFF, 0xFFFFFFFF);
     assert_eq!(hi & 0xFFFFFFFF, 0);
 }
@@ -626,7 +737,14 @@ fn test_vpcmpeqd_256_independent_lanes() {
 #[test]
 fn test_vpcmpgtq_128_upper_zeroed() {
     // VPCMPGTQ xmm: (-1) > 0 is false -> 0; upper zeroed.
-    let (lo, hi) = vex_run3(&[0xc4, 0xe2, 0x71, 0x37, 0xc2], 1, (0xFFFFFFFFFFFFFFFF, 0), 2, (0, 0), 0);
+    let (lo, hi) = vex_run3(
+        &[0xc4, 0xe2, 0x71, 0x37, 0xc2],
+        1,
+        (0xFFFFFFFFFFFFFFFF, 0),
+        2,
+        (0, 0),
+        0,
+    );
     assert_eq!(lo as u64, 0);
     assert_eq!(hi, 0);
 }

@@ -7,10 +7,10 @@
 // - Count masking behavior
 // - Comprehensive register coverage
 
-use crate::common::{run_until_hlt, setup_vm};
-use rax::cpu::Registers;
-use rax::backend::emulator::x86_64::flags;
 use crate::common::{cf_set, of_set};
+use crate::common::{run_until_hlt, setup_vm};
+use rax::backend::emulator::x86_64::flags;
+use rax::cpu::Registers;
 
 // ============================================================================
 // ROL comprehensive shift count tests
@@ -270,7 +270,11 @@ fn test_rol_count_masking_32bit() {
     let (mut vcpu2, _) = setup_vm(&code2, Some(regs2));
     let regs2 = run_until_hlt(&mut vcpu2).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, regs2.rax & 0xFFFFFFFF, "Count masking for 32-bit");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        regs2.rax & 0xFFFFFFFF,
+        "Count masking for 32-bit"
+    );
 }
 
 #[test]
@@ -288,7 +292,11 @@ fn test_ror_count_masking_32bit() {
     let (mut vcpu2, _) = setup_vm(&code2, Some(regs2));
     let regs2 = run_until_hlt(&mut vcpu2).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, regs2.rax & 0xFFFFFFFF, "Count masking for 32-bit");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        regs2.rax & 0xFFFFFFFF,
+        "Count masking for 32-bit"
+    );
 }
 
 #[test]
@@ -383,7 +391,11 @@ fn test_rol_cf_all_bits() {
         if bit_pos == 7 {
             assert!(cf_set(regs.rflags), "CF should be set for bit 7");
         } else {
-            assert!(!cf_set(regs.rflags), "CF should be clear for bit {}", bit_pos);
+            assert!(
+                !cf_set(regs.rflags),
+                "CF should be clear for bit {}",
+                bit_pos
+            );
         }
     }
 }
@@ -402,7 +414,11 @@ fn test_ror_cf_all_bits() {
         if bit_pos == 0 {
             assert!(cf_set(regs.rflags), "CF should be set for bit 0");
         } else {
-            assert!(!cf_set(regs.rflags), "CF should be clear for bit {}", bit_pos);
+            assert!(
+                !cf_set(regs.rflags),
+                "CF should be clear for bit {}",
+                bit_pos
+            );
         }
     }
 }
@@ -485,6 +501,11 @@ fn test_rol_power_of_two() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = ((value << 3) | (value >> 5)) & 0xFF;
-        assert_eq!(regs.rax & 0xFF, expected as u64, "ROL power of 2 value 0x{:02X}", value);
+        assert_eq!(
+            regs.rax & 0xFF,
+            expected as u64,
+            "ROL power of 2 value 0x{:02X}",
+            value
+        );
     }
 }

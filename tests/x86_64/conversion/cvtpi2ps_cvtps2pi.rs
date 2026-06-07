@@ -1,6 +1,6 @@
 use rax::cpu::Registers;
 
-use crate::common::{get_xmm, run_until_hlt, set_xmm, setup_vm, VCpu};
+use crate::common::{VCpu, get_xmm, run_until_hlt, set_xmm, setup_vm};
 use rax::backend::emulator::x86_64::X86_64Vcpu;
 
 // CVTPI2PS — Convert Packed Dword Integers to Packed Single Precision Floating-Point Values
@@ -47,7 +47,11 @@ fn test_cvtpi2ps_basic() {
     set_mm(&mut vcpu, 0, pack_i32x2(1, 2));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     let lo64 = get_xmm(&regs, 0) as u64;
-    assert_eq!(lo64, pack_f32x2(1.0, 2.0) as u64, "CVTPI2PS [1,2] -> [1.0f,2.0f]");
+    assert_eq!(
+        lo64,
+        pack_f32x2(1.0, 2.0) as u64,
+        "CVTPI2PS [1,2] -> [1.0f,2.0f]"
+    );
 }
 
 #[test]
@@ -93,7 +97,11 @@ fn test_cvtpi2ps_high_quadword_unchanged() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     let val = get_xmm(&regs, 0);
     assert_eq!(val >> 64, high, "CVTPI2PS must preserve high quadword");
-    assert_eq!(val as u64, pack_f32x2(1.0, 2.0) as u64, "CVTPI2PS low qword");
+    assert_eq!(
+        val as u64,
+        pack_f32x2(1.0, 2.0) as u64,
+        "CVTPI2PS low qword"
+    );
 }
 
 // ============================================================================
@@ -107,7 +115,11 @@ fn test_cvtps2pi_basic() {
     let (mut vcpu, mem) = setup_vm(&code, Some(Registers::default()));
     set_xmm(&mem, &mut vcpu, 0, pack_f32x2(5.0, 10.0));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(get_mm(&regs, 0), pack_i32x2(5, 10), "CVTPS2PI [5.0,10.0] -> [5,10]");
+    assert_eq!(
+        get_mm(&regs, 0),
+        pack_i32x2(5, 10),
+        "CVTPS2PI [5.0,10.0] -> [5,10]"
+    );
 }
 
 #[test]
@@ -116,7 +128,11 @@ fn test_cvtps2pi_negative() {
     let (mut vcpu, mem) = setup_vm(&code, Some(Registers::default()));
     set_xmm(&mem, &mut vcpu, 0, pack_f32x2(-3.0, -8.0));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(get_mm(&regs, 0), pack_i32x2(-3, -8), "CVTPS2PI [-3.0,-8.0] -> [-3,-8]");
+    assert_eq!(
+        get_mm(&regs, 0),
+        pack_i32x2(-3, -8),
+        "CVTPS2PI [-3.0,-8.0] -> [-3,-8]"
+    );
 }
 
 #[test]
@@ -126,7 +142,11 @@ fn test_cvtps2pi_round_half_to_even() {
     let (mut vcpu, mem) = setup_vm(&code, Some(Registers::default()));
     set_xmm(&mem, &mut vcpu, 0, pack_f32x2(2.5, 3.5));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(get_mm(&regs, 0), pack_i32x2(2, 4), "CVTPS2PI [2.5,3.5] round-even -> [2,4]");
+    assert_eq!(
+        get_mm(&regs, 0),
+        pack_i32x2(2, 4),
+        "CVTPS2PI [2.5,3.5] round-even -> [2,4]"
+    );
 }
 
 #[test]
@@ -137,7 +157,11 @@ fn test_cvtps2pi_uses_low_quadword_only() {
     let val: u128 = (0xFFFF_FFFF_FFFF_FFFFu128 << 64) | (pack_f32x2(7.0, 9.0) as u64 as u128);
     set_xmm(&mem, &mut vcpu, 0, val);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(get_mm(&regs, 0), pack_i32x2(7, 9), "CVTPS2PI ignores high qword");
+    assert_eq!(
+        get_mm(&regs, 0),
+        pack_i32x2(7, 9),
+        "CVTPS2PI ignores high qword"
+    );
 }
 
 #[test]
@@ -151,5 +175,9 @@ fn test_cvtpi2ps_then_cvtps2pi_roundtrip() {
     let (mut vcpu, _mem) = setup_vm(&code, Some(Registers::default()));
     set_mm(&mut vcpu, 0, pack_i32x2(3, -4));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(get_mm(&regs, 1), pack_i32x2(3, -4), "CVTPI2PS/CVTPS2PI roundtrip [3,-4]");
+    assert_eq!(
+        get_mm(&regs, 1),
+        pack_i32x2(3, -4),
+        "CVTPI2PS/CVTPS2PI roundtrip [3,-4]"
+    );
 }

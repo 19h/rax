@@ -23,7 +23,11 @@ fn test_pext_basic_single_bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0001, "Bit 0 should be extracted to position 0");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0001,
+        "Bit 0 should be extracted to position 0"
+    );
 }
 
 #[test]
@@ -39,7 +43,11 @@ fn test_pext_extract_from_higher_position() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0001, "Bit 4 from source should be extracted to position 0");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0001,
+        "Bit 4 from source should be extracted to position 0"
+    );
 }
 
 #[test]
@@ -89,7 +97,11 @@ fn test_pext_zero_source() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "Zero source should produce zero result");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "Zero source should produce zero result"
+    );
 }
 
 #[test]
@@ -105,7 +117,11 @@ fn test_pext_zero_mask() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "Zero mask should produce zero result");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "Zero mask should produce zero result"
+    );
 }
 
 #[test]
@@ -121,7 +137,11 @@ fn test_pext_identity() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "Full mask should give identity");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "Full mask should give identity"
+    );
 }
 
 #[test]
@@ -170,7 +190,11 @@ fn test_pext_alternating_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFF, "16 alternating bits extracted to lower 16");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFF,
+        "16 alternating bits extracted to lower 16"
+    );
 }
 
 #[test]
@@ -186,7 +210,11 @@ fn test_pext_inverse_alternating() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFF, "16 odd bits extracted to lower 16");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFF,
+        "16 odd bits extracted to lower 16"
+    );
 }
 
 #[test]
@@ -218,7 +246,11 @@ fn test_pext_extended_registers_r8_r9_r10() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0xFFFF, "Extended registers should work");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0xFFFF,
+        "Extended registers should work"
+    );
 }
 
 #[test]
@@ -241,7 +273,8 @@ fn test_pext_r15_r14_r13() {
 fn test_pext_mem32() {
     // PEXT EAX, EBX, [mem]
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PEXT EAX, EBX, [DATA_ADDR]
+        0xc4, 0xe2, 0x62, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00,
+        0x00, // PEXT EAX, EBX, [DATA_ADDR]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -257,7 +290,8 @@ fn test_pext_mem32() {
 fn test_pext_mem64() {
     // PEXT RAX, RBX, [mem]
     let code = [
-        0xc4, 0xe2, 0xe2, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PEXT RAX, RBX, [DATA_ADDR]
+        0xc4, 0xe2, 0xe2, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00,
+        0x00, // PEXT RAX, RBX, [DATA_ADDR]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -283,7 +317,12 @@ fn test_pext_single_mask_bit_positions() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, 1, "Extract from position {} to bit 0", pos);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            1,
+            "Extract from position {} to bit 0",
+            pos
+        );
     }
 }
 
@@ -334,7 +373,12 @@ fn test_pext_power_of_two_mask() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, 1, "Power of 2 mask at position {} extracts to bit 0", i);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            1,
+            "Power of 2 mask at position {} extracts to bit 0",
+            i
+        );
     }
 }
 
@@ -342,10 +386,26 @@ fn test_pext_power_of_two_mask() {
 fn test_pext_64bit_all_positions() {
     // Test 64-bit extraction from various positions
     let test_cases = [
-        (0x0000_0000_0000_0001u64, 0x0000_0000_0000_0001u64, 0x0000_0000_0000_0001u64),
-        (0x8000_0000_0000_0000u64, 0x8000_0000_0000_0000u64, 0x0000_0000_0000_0001u64),
-        (0x0000_0001_0000_0001u64, 0x0000_0001_0000_0001u64, 0x0000_0000_0000_0003u64),
-        (0x0101_0101_0101_0101u64, 0x0101_0101_0101_0101u64, 0x0000_0000_0000_00FFu64),
+        (
+            0x0000_0000_0000_0001u64,
+            0x0000_0000_0000_0001u64,
+            0x0000_0000_0000_0001u64,
+        ),
+        (
+            0x8000_0000_0000_0000u64,
+            0x8000_0000_0000_0000u64,
+            0x0000_0000_0000_0001u64,
+        ),
+        (
+            0x0000_0001_0000_0001u64,
+            0x0000_0001_0000_0001u64,
+            0x0000_0000_0000_0003u64,
+        ),
+        (
+            0x0101_0101_0101_0101u64,
+            0x0101_0101_0101_0101u64,
+            0x0000_0000_0000_00FFu64,
+        ),
     ];
 
     for (src, mask, expected) in &test_cases {
@@ -359,7 +419,11 @@ fn test_pext_64bit_all_positions() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax, *expected, "PEXT({:016x}, {:016x}) = {:016x}", src, mask, expected);
+        assert_eq!(
+            regs.rax, *expected,
+            "PEXT({:016x}, {:016x}) = {:016x}",
+            src, mask, expected
+        );
     }
 }
 
@@ -493,7 +557,11 @@ fn test_pext_signed_interpretation() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b11, "Signed values handled correctly");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b11,
+        "Signed values handled correctly"
+    );
 }
 
 #[test]
@@ -691,7 +759,11 @@ fn test_pext_bit_permutation() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x2468, "Bit permutation via extraction");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x2468,
+        "Bit permutation via extraction"
+    );
 }
 
 #[test]
@@ -760,7 +832,10 @@ fn test_pext_compress_sparse_data() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0001_0001_0001_0001, "Sparse data identity with full mask");
+    assert_eq!(
+        regs.rax, 0x0001_0001_0001_0001,
+        "Sparse data identity with full mask"
+    );
 }
 
 #[test]

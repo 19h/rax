@@ -4,8 +4,8 @@ use std::path::PathBuf;
 use clap::{Parser, ValueEnum};
 use rax::config::{Endianness, HexagonIsa};
 use rax::isa_oracle::{
-    decode_to_json, decode_to_json_with_seed, parse_hex_bytes, ArmState, OracleIsa, OracleOptions,
-    OracleSeed, RiscVIsaProfile,
+    ArmState, OracleIsa, OracleOptions, OracleSeed, RiscVIsaProfile, decode_to_json,
+    decode_to_json_with_seed, parse_hex_bytes,
 };
 use rax::riscv::Xlen;
 use rax::smir::SourceArch;

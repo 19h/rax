@@ -8,7 +8,7 @@
 use crate::cpu::VcpuExit;
 use crate::error::Result;
 
-use super::cpu::{InsnContext, X86_64Vcpu, DECODE_CACHE_MASK, MAX_INSN_LEN};
+use super::cpu::{DECODE_CACHE_MASK, InsnContext, MAX_INSN_LEN, X86_64Vcpu};
 use super::decoder::Decoder;
 
 /// Batch size for threaded execution before checking for exits
@@ -67,9 +67,8 @@ impl X86_64Vcpu {
     fn threaded_step(&mut self) -> Result<Option<VcpuExit>> {
         let rip = self.regs.rip;
         let cache_idx = (rip as usize) & DECODE_CACHE_MASK;
-        let mode_tag = (self.sregs.cr3 & !0xFFF)
-            | (self.sregs.cs.l as u64)
-            | ((self.sregs.cs.db as u64) << 1);
+        let mode_tag =
+            (self.sregs.cr3 & !0xFFF) | (self.sregs.cs.l as u64) | ((self.sregs.cs.db as u64) << 1);
 
         // Check decode cache
         let cached = self.decode_cache[cache_idx];
@@ -113,21 +112,20 @@ impl X86_64Vcpu {
         } else {
             let default_16bit = !self.sregs.cs.db;
             let is_16bit = default_16bit ^ ctx.operand_size_override;
-            if is_16bit {
-                2
-            } else {
-                4
-            }
+            if is_16bit { 2 } else { 4 }
         };
 
         let opcode_cursor = ctx.cursor;
-        let opcode = if ctx.rex2_m() { 0x0F } else { ctx.consume_u8()? };
+        let opcode = if ctx.rex2_m() {
+            0x0F
+        } else {
+            ctx.consume_u8()?
+        };
         ctx.opcode = opcode;
 
         // Resolve the fn-pointer handler so a later hit (via the main `step()`
         // path) can dispatch directly. Unmapped opcodes fall back to the match.
-        let handler =
-            Self::resolve_handler(opcode).unwrap_or(X86_64Vcpu::execute_via_match);
+        let handler = Self::resolve_handler(opcode).unwrap_or(X86_64Vcpu::execute_via_match);
 
         // Cache the LOCK-present verdict so a later `step()` hit can skip the scan.
         let has_lock = ctx.bytes[..opcode_cursor.min(ctx.bytes_len)].contains(&0xF0);

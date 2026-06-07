@@ -5,7 +5,7 @@
 //! against the qemu-hexagon HVX oracle (tests/hexagon_hvx_diff.rs).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fld, SemCtx};
+use super::{SemCtx, fld};
 
 /// 128-byte vector viewed as raw bytes (little-endian within each u32 word).
 type Bytes = [u8; 128];
@@ -107,9 +107,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         // ---- unsigned saturating add/sub ----
         Opcode::V6_vaddubsat => map_b(&vu, &vv, |a, b| (a as u16 + b as u16).min(255) as u8),
         Opcode::V6_vadduhsat => map_h(&vu, &vv, |a, b| (a as u32 + b as u32).min(65535) as u16),
-        Opcode::V6_vadduwsat => {
-            map_w(&vu, &vv, |a, b| a.checked_add(b).unwrap_or(u32::MAX))
-        }
+        Opcode::V6_vadduwsat => map_w(&vu, &vv, |a, b| a.checked_add(b).unwrap_or(u32::MAX)),
         Opcode::V6_vsububsat => map_b(&vu, &vv, |a, b| a.saturating_sub(b)),
         Opcode::V6_vsubuhsat => map_h(&vu, &vv, |a, b| a.saturating_sub(b)),
         // ---- bitwise ----

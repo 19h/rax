@@ -4,7 +4,7 @@
 //! verified against the qemu-hexagon vector oracle (tests/hexagon_hvx_diff.rs).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fimm_u, fld, SemCtx};
+use super::{SemCtx, fimm_u, fld};
 
 type Bytes = [u8; 128];
 
@@ -87,7 +87,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let rt = ctx.r(fld(d, b't'));
             let acc = op == Opcode::V6_vrmpyub_acc;
             let dst = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut out = if acc { to_bytes(&ctx.vread(dst)) } else { [0u8; 128] };
+            let mut out = if acc {
+                to_bytes(&ctx.vread(dst))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..32 {
                 let mut s = if acc { get_w(&out, i) } else { 0 };
                 for k in 0..4 {
@@ -102,7 +106,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let rt = ctx.r(fld(d, b't'));
             let acc = op == Opcode::V6_vrmpybus_acc;
             let dst = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut out = if acc { to_bytes(&ctx.vread(dst)) } else { [0u8; 128] };
+            let mut out = if acc {
+                to_bytes(&ctx.vread(dst))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..32 {
                 let mut s = if acc { get_w(&out, i) } else { 0 };
                 for k in 0..4 {
@@ -118,7 +126,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let vv = to_bytes(&ctx.vread(fld(d, b'v')));
             let acc = op == Opcode::V6_vrmpyubv_acc;
             let dst = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut out = if acc { to_bytes(&ctx.vread(dst)) } else { [0u8; 128] };
+            let mut out = if acc {
+                to_bytes(&ctx.vread(dst))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..32 {
                 let mut s = if acc { get_w(&out, i) } else { 0 };
                 for k in 0..4 {
@@ -133,7 +145,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let vv = to_bytes(&ctx.vread(fld(d, b'v')));
             let acc = op == Opcode::V6_vrmpybv_acc;
             let dst = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut out = if acc { to_bytes(&ctx.vread(dst)) } else { [0u8; 128] };
+            let mut out = if acc {
+                to_bytes(&ctx.vread(dst))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..32 {
                 let mut s = if acc { get_w(&out, i) } else { 0 };
                 for k in 0..4 {
@@ -148,7 +164,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let vv = to_bytes(&ctx.vread(fld(d, b'v')));
             let acc = op == Opcode::V6_vrmpybusv_acc;
             let dst = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut out = if acc { to_bytes(&ctx.vread(dst)) } else { [0u8; 128] };
+            let mut out = if acc {
+                to_bytes(&ctx.vread(dst))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..32 {
                 let mut s = if acc { get_w(&out, i) } else { 0 };
                 for k in 0..4 {
@@ -174,8 +194,16 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let rt = ctx.r(fld(d, b't'));
             let imm = fimm_u(d, b'i', ctx.immext) as usize & 1;
             let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut o0 = if acc { to_bytes(&ctx.vread(dbase)) } else { [0u8; 128] };
-            let mut o1 = if acc { to_bytes(&ctx.vread(dbase + 1)) } else { [0u8; 128] };
+            let mut o0 = if acc {
+                to_bytes(&ctx.vread(dbase))
+            } else {
+                [0u8; 128]
+            };
+            let mut o1 = if acc {
+                to_bytes(&ctx.vread(dbase + 1))
+            } else {
+                [0u8; 128]
+            };
             let lo = |sel: usize| if sel == 0 { &v0 } else { &v1 };
             for i in 0..32 {
                 let base = i * 4;
@@ -207,8 +235,16 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let r0 = rt_uh(rt, 0);
             let r1 = rt_uh(rt, 1);
             let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut o0 = if acc { to_bytes(&ctx.vread(dbase)) } else { [0u8; 128] };
-            let mut o1 = if acc { to_bytes(&ctx.vread(dbase + 1)) } else { [0u8; 128] };
+            let mut o0 = if acc {
+                to_bytes(&ctx.vread(dbase))
+            } else {
+                [0u8; 128]
+            };
+            let mut o1 = if acc {
+                to_bytes(&ctx.vread(dbase + 1))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..32 {
                 // each word lane holds two unsigned halfwords (h[0], h[1])
                 let a0 = get_uh(&v0, i * 2 + 0);
@@ -232,7 +268,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let rt = ctx.r(fld(d, b't'));
             let acc = op == Opcode::V6_vdmpybus_acc;
             let dst = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut out = if acc { to_bytes(&ctx.vread(dst)) } else { [0u8; 128] };
+            let mut out = if acc {
+                to_bytes(&ctx.vread(dst))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..64 {
                 let mut s = if acc { get_h(&out, i) } else { 0 };
                 s += ub(&vu, i * 2 + 0) * rt_sb(rt, (2 * i) % 4);
@@ -249,8 +289,16 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let v1 = to_bytes(&ctx.vread(ubase + 1));
             let rt = ctx.r(fld(d, b't'));
             let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut o0 = if acc { to_bytes(&ctx.vread(dbase)) } else { [0u8; 128] };
-            let mut o1 = if acc { to_bytes(&ctx.vread(dbase + 1)) } else { [0u8; 128] };
+            let mut o0 = if acc {
+                to_bytes(&ctx.vread(dbase))
+            } else {
+                [0u8; 128]
+            };
+            let mut o1 = if acc {
+                to_bytes(&ctx.vread(dbase + 1))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..64 {
                 let mut s0 = if acc { get_h(&o0, i) } else { 0 };
                 s0 += ub(&v0, i * 2 + 0) * rt_sb(rt, (2 * i) % 4);
@@ -270,7 +318,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let rt = ctx.r(fld(d, b't'));
             let acc = op == Opcode::V6_vdmpyhb_acc;
             let dst = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut out = if acc { to_bytes(&ctx.vread(dst)) } else { [0u8; 128] };
+            let mut out = if acc {
+                to_bytes(&ctx.vread(dst))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..32 {
                 let mut s = if acc { get_w(&out, i) } else { 0 };
                 s += get_h(&vu, i * 2 + 0) * rt_sb(rt, (2 * i) % 4);
@@ -287,8 +339,16 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let v1 = to_bytes(&ctx.vread(ubase + 1));
             let rt = ctx.r(fld(d, b't'));
             let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut o0 = if acc { to_bytes(&ctx.vread(dbase)) } else { [0u8; 128] };
-            let mut o1 = if acc { to_bytes(&ctx.vread(dbase + 1)) } else { [0u8; 128] };
+            let mut o0 = if acc {
+                to_bytes(&ctx.vread(dbase))
+            } else {
+                [0u8; 128]
+            };
+            let mut o1 = if acc {
+                to_bytes(&ctx.vread(dbase + 1))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..32 {
                 let mut s0 = if acc { get_w(&o0, i) } else { 0 };
                 s0 += get_h(&v0, i * 2 + 0) * rt_sb(rt, (2 * i) % 4);
@@ -308,7 +368,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let rt = ctx.r(fld(d, b't'));
             let acc = op == Opcode::V6_vdmpyhsat_acc;
             let dst = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut out = if acc { to_bytes(&ctx.vread(dst)) } else { [0u8; 128] };
+            let mut out = if acc {
+                to_bytes(&ctx.vread(dst))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..32 {
                 let prev = if acc { get_w(&out, i) } else { 0 };
                 let mut s = prev;
@@ -325,7 +389,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let rt = ctx.r(fld(d, b't'));
             let acc = op == Opcode::V6_vdmpyhsusat_acc;
             let dst = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut out = if acc { to_bytes(&ctx.vread(dst)) } else { [0u8; 128] };
+            let mut out = if acc {
+                to_bytes(&ctx.vread(dst))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..32 {
                 let prev = if acc { get_w(&out, i) } else { 0 };
                 let mut s = prev;
@@ -344,7 +412,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let v1 = to_bytes(&ctx.vread(ubase + 1));
             let rt = ctx.r(fld(d, b't'));
             let dst = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut out = if acc { to_bytes(&ctx.vread(dst)) } else { [0u8; 128] };
+            let mut out = if acc {
+                to_bytes(&ctx.vread(dst))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..32 {
                 let prev = if acc { get_w(&out, i) } else { 0 };
                 let mut s = prev;
@@ -364,7 +436,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let v1 = to_bytes(&ctx.vread(ubase + 1));
             let rt = ctx.r(fld(d, b't'));
             let dst = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut out = if acc { to_bytes(&ctx.vread(dst)) } else { [0u8; 128] };
+            let mut out = if acc {
+                to_bytes(&ctx.vread(dst))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..32 {
                 let prev = if acc { get_w(&out, i) } else { 0 };
                 let mut s = prev;
@@ -381,7 +457,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let vv = to_bytes(&ctx.vread(fld(d, b'v')));
             let acc = op == Opcode::V6_vdmpyhvsat_acc;
             let dst = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut out = if acc { to_bytes(&ctx.vread(dst)) } else { [0u8; 128] };
+            let mut out = if acc {
+                to_bytes(&ctx.vread(dst))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..32 {
                 let mut s = get_h(&vu, i * 2 + 0) * get_h(&vv, i * 2 + 0);
                 s += get_h(&vu, i * 2 + 1) * get_h(&vv, i * 2 + 1);
@@ -408,8 +488,16 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let v1 = to_bytes(&ctx.vread(ubase + 1));
             let rt = ctx.r(fld(d, b't'));
             let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut o0 = if acc { to_bytes(&ctx.vread(dbase)) } else { [0u8; 128] };
-            let mut o1 = if acc { to_bytes(&ctx.vread(dbase + 1)) } else { [0u8; 128] };
+            let mut o0 = if acc {
+                to_bytes(&ctx.vread(dbase))
+            } else {
+                [0u8; 128]
+            };
+            let mut o1 = if acc {
+                to_bytes(&ctx.vread(dbase + 1))
+            } else {
+                [0u8; 128]
+            };
             for i in 0..32 {
                 // each word holds two halfwords h[0],h[1]
                 let v0h0 = get_h(&v0, i * 2 + 0);
@@ -447,9 +535,23 @@ fn rmpy_pair_imm(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx, acc_op: Opcode, un
     let rt = ctx.r(fld(d, b't'));
     let imm = fimm_u(d, b'i', ctx.immext) as usize & 1;
     let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-    let mut o0 = if acc { to_bytes(&ctx.vread(dbase)) } else { [0u8; 128] };
-    let mut o1 = if acc { to_bytes(&ctx.vread(dbase + 1)) } else { [0u8; 128] };
-    let rb = |n: usize| if unsigned_rt { rt_ub(rt, n) } else { rt_sb(rt, n) };
+    let mut o0 = if acc {
+        to_bytes(&ctx.vread(dbase))
+    } else {
+        [0u8; 128]
+    };
+    let mut o1 = if acc {
+        to_bytes(&ctx.vread(dbase + 1))
+    } else {
+        [0u8; 128]
+    };
+    let rb = |n: usize| {
+        if unsigned_rt {
+            rt_ub(rt, n)
+        } else {
+            rt_sb(rt, n)
+        }
+    };
     // Vuu.v[#u ? 1:0]
     let sel = if imm != 0 { &v1 } else { &v0 };
     for i in 0..32 {
@@ -480,8 +582,16 @@ fn tmpy_b(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx, acc_op: Opcode, unsigned_
     let v1 = to_bytes(&ctx.vread(ubase + 1));
     let rt = ctx.r(fld(d, b't'));
     let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-    let mut o0 = if acc { to_bytes(&ctx.vread(dbase)) } else { [0u8; 128] };
-    let mut o1 = if acc { to_bytes(&ctx.vread(dbase + 1)) } else { [0u8; 128] };
+    let mut o0 = if acc {
+        to_bytes(&ctx.vread(dbase))
+    } else {
+        [0u8; 128]
+    };
+    let mut o1 = if acc {
+        to_bytes(&ctx.vread(dbase + 1))
+    } else {
+        [0u8; 128]
+    };
     let vb = |b: &Bytes, i: usize| if unsigned_vu { ub(b, i) } else { sb(b, i) };
     for i in 0..64 {
         // each halfword holds two bytes b[0],b[1]

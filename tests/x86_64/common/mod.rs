@@ -33,7 +33,10 @@ pub const IDT_BASE: u64 = 0x11000;
 pub const GDT_BASE: u64 = 0x10000;
 
 /// Create a test VM with the given code and initial register state.
-pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
+pub fn setup_vm(
+    code: &[u8],
+    initial_regs: Option<Registers>,
+) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
     // Create 16MB of guest memory
     let mem_size = 16 * 1024 * 1024;
     let regions = vec![(GuestAddress(0), mem_size)];
@@ -48,7 +51,8 @@ pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Ar
 
     // Install a minimal interrupt handler that does IRETQ
     let int_handler = [0x48, 0xcf, 0xf4]; // REX.W IRET (IRETQ); HLT fallback
-    mem.write_slice(&int_handler, GuestAddress(INT_HANDLER_ADDR)).unwrap();
+    mem.write_slice(&int_handler, GuestAddress(INT_HANDLER_ADDR))
+        .unwrap();
 
     // Set up GDT with null descriptor (entry 0) and 64-bit code segment (entry 1, selector 0x08)
     // GDT entry format (8 bytes):
@@ -62,13 +66,15 @@ pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Ar
     let code64_descriptor: [u8; 8] = [
         0x00, 0x00, // Limit 0-15
         0x00, 0x00, // Base 0-15
-        0x00,       // Base 16-23
-        0x9A,       // Access: P=1, DPL=0, S=1, Type=0xA (code, readable)
-        0x20,       // Flags: L=1, D=0, G=0 + Limit 16-19 = 0
-        0x00,       // Base 24-31
+        0x00, // Base 16-23
+        0x9A, // Access: P=1, DPL=0, S=1, Type=0xA (code, readable)
+        0x20, // Flags: L=1, D=0, G=0 + Limit 16-19 = 0
+        0x00, // Base 24-31
     ];
-    mem.write_slice(&null_descriptor, GuestAddress(GDT_BASE)).unwrap();
-    mem.write_slice(&code64_descriptor, GuestAddress(GDT_BASE + 8)).unwrap();
+    mem.write_slice(&null_descriptor, GuestAddress(GDT_BASE))
+        .unwrap();
+    mem.write_slice(&code64_descriptor, GuestAddress(GDT_BASE + 8))
+        .unwrap();
 
     // Set up IDT entries for all 256 interrupt vectors
     // Each IDT entry in 64-bit mode is 16 bytes:
@@ -110,7 +116,8 @@ pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Ar
         entry[14] = 0;
         entry[15] = 0;
 
-        mem.write_slice(&entry, GuestAddress(idt_entry_addr)).unwrap();
+        mem.write_slice(&entry, GuestAddress(idt_entry_addr))
+            .unwrap();
     }
 
     // Create vcpu
@@ -141,9 +148,9 @@ pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Ar
     sregs.cs.selector = 0x8;
     // Initialize GDT and IDT with reasonable defaults for testing
     sregs.gdt.base = GDT_BASE;
-    sregs.gdt.limit = 0x1F;   // 4 descriptors (32 bytes - 1)
+    sregs.gdt.limit = 0x1F; // 4 descriptors (32 bytes - 1)
     sregs.idt.base = IDT_BASE;
-    sregs.idt.limit = 0xFFF;  // 256 entries * 16 bytes = 4096 bytes - 1
+    sregs.idt.limit = 0xFFF; // 256 entries * 16 bytes = 4096 bytes - 1
     vcpu.set_sregs(&sregs).unwrap();
 
     (vcpu, mem)
@@ -153,7 +160,10 @@ pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Ar
 /// Use this for instructions that are only valid in 32-bit mode (BOUND, PUSHA, POPA, etc.)
 /// In compatibility mode: CS.L=0, CS.D determines operand size (D=1 means 32-bit default)
 /// Memory addressing uses absolute [disp32] instead of RIP-relative.
-pub fn setup_vm_compat(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
+pub fn setup_vm_compat(
+    code: &[u8],
+    initial_regs: Option<Registers>,
+) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
     // Create 16MB of guest memory
     let mem_size = 16 * 1024 * 1024;
     let regions = vec![(GuestAddress(0), mem_size)];
@@ -165,7 +175,8 @@ pub fn setup_vm_compat(code: &[u8], initial_regs: Option<Registers>) -> (X86_64V
     // Install a minimal interrupt handler that does IRETQ
     // (Long mode uses 64-bit IDT format even in compatibility mode)
     let int_handler = [0x48, 0xcf, 0xf4]; // REX.W IRET (IRETQ); HLT fallback
-    mem.write_slice(&int_handler, GuestAddress(INT_HANDLER_ADDR)).unwrap();
+    mem.write_slice(&int_handler, GuestAddress(INT_HANDLER_ADDR))
+        .unwrap();
 
     // Set up GDT with null descriptor (entry 0) and 64-bit code segment (entry 1, selector 0x08)
     // The interrupt handler needs to run in 64-bit mode so REX.W prefix is recognized
@@ -173,13 +184,15 @@ pub fn setup_vm_compat(code: &[u8], initial_regs: Option<Registers>) -> (X86_64V
     let code64_descriptor: [u8; 8] = [
         0x00, 0x00, // Limit 0-15
         0x00, 0x00, // Base 0-15
-        0x00,       // Base 16-23
-        0x9A,       // Access: P=1, DPL=0, S=1, Type=0xA (code, readable)
-        0x20,       // Flags: L=1, D=0, G=0 + Limit 16-19 = 0
-        0x00,       // Base 24-31
+        0x00, // Base 16-23
+        0x9A, // Access: P=1, DPL=0, S=1, Type=0xA (code, readable)
+        0x20, // Flags: L=1, D=0, G=0 + Limit 16-19 = 0
+        0x00, // Base 24-31
     ];
-    mem.write_slice(&null_descriptor, GuestAddress(GDT_BASE)).unwrap();
-    mem.write_slice(&code64_descriptor, GuestAddress(GDT_BASE + 8)).unwrap();
+    mem.write_slice(&null_descriptor, GuestAddress(GDT_BASE))
+        .unwrap();
+    mem.write_slice(&code64_descriptor, GuestAddress(GDT_BASE + 8))
+        .unwrap();
 
     // Set up IDT entries for all 256 interrupt vectors (64-bit format)
     let handler_addr = INT_HANDLER_ADDR;
@@ -205,7 +218,8 @@ pub fn setup_vm_compat(code: &[u8], initial_regs: Option<Registers>) -> (X86_64V
         entry[13] = 0;
         entry[14] = 0;
         entry[15] = 0;
-        mem.write_slice(&entry, GuestAddress(idt_entry_addr)).unwrap();
+        mem.write_slice(&entry, GuestAddress(idt_entry_addr))
+            .unwrap();
     }
 
     // Create vcpu
@@ -237,7 +251,7 @@ pub fn setup_vm_compat(code: &[u8], initial_regs: Option<Registers>) -> (X86_64V
     sregs.gdt.base = GDT_BASE;
     sregs.gdt.limit = 0x1F;
     sregs.idt.base = IDT_BASE;
-    sregs.idt.limit = 0xFFF;  // 256 entries * 16 bytes = 4096 bytes - 1
+    sregs.idt.limit = 0xFFF; // 256 entries * 16 bytes = 4096 bytes - 1
     vcpu.set_sregs(&sregs).unwrap();
 
     (vcpu, mem)
@@ -246,7 +260,10 @@ pub fn setup_vm_compat(code: &[u8], initial_regs: Option<Registers>) -> (X86_64V
 /// Create a test VM without IDT entries.
 /// Use this for tests that verify exception behavior - without IDT entries,
 /// exceptions will return errors rather than being handled (and looping).
-pub fn setup_vm_no_idt(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
+pub fn setup_vm_no_idt(
+    code: &[u8],
+    initial_regs: Option<Registers>,
+) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
     let mem_size = 16 * 1024 * 1024;
     let regions = vec![(GuestAddress(0), mem_size)];
     let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&regions).unwrap());
@@ -287,7 +304,9 @@ pub fn run_until_hlt(vcpu: &mut X86_64Vcpu) -> Result<Registers> {
         iterations += 1;
         if iterations > MAX_ITERATIONS {
             return Err(rax::error::Error::Emulator(format!(
-                "exceeded {} iterations at RIP={:#x}", MAX_ITERATIONS, vcpu.get_regs()?.rip
+                "exceeded {} iterations at RIP={:#x}",
+                MAX_ITERATIONS,
+                vcpu.get_regs()?.rip
             )));
         }
         // Use step() directly so we count individual instructions, not run() calls
@@ -402,15 +421,18 @@ pub fn write_mem_u8(mem: &GuestMemoryMmap, value: u8) {
 }
 
 pub fn write_mem_u16(mem: &GuestMemoryMmap, value: u16) {
-    mem.write_slice(&value.to_le_bytes(), GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&value.to_le_bytes(), GuestAddress(DATA_ADDR))
+        .unwrap();
 }
 
 pub fn write_mem_u32(mem: &GuestMemoryMmap, value: u32) {
-    mem.write_slice(&value.to_le_bytes(), GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&value.to_le_bytes(), GuestAddress(DATA_ADDR))
+        .unwrap();
 }
 
 pub fn write_mem_u64(mem: &GuestMemoryMmap, value: u64) {
-    mem.write_slice(&value.to_le_bytes(), GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&value.to_le_bytes(), GuestAddress(DATA_ADDR))
+        .unwrap();
 }
 
 /// Write a value to memory at a specific address
@@ -419,15 +441,18 @@ pub fn write_mem_at_u8(mem: &GuestMemoryMmap, addr: u64, value: u8) {
 }
 
 pub fn write_mem_at_u16(mem: &GuestMemoryMmap, addr: u64, value: u16) {
-    mem.write_slice(&value.to_le_bytes(), GuestAddress(addr)).unwrap();
+    mem.write_slice(&value.to_le_bytes(), GuestAddress(addr))
+        .unwrap();
 }
 
 pub fn write_mem_at_u32(mem: &GuestMemoryMmap, addr: u64, value: u32) {
-    mem.write_slice(&value.to_le_bytes(), GuestAddress(addr)).unwrap();
+    mem.write_slice(&value.to_le_bytes(), GuestAddress(addr))
+        .unwrap();
 }
 
 pub fn write_mem_at_u64(mem: &GuestMemoryMmap, addr: u64, value: u64) {
-    mem.write_slice(&value.to_le_bytes(), GuestAddress(addr)).unwrap();
+    mem.write_slice(&value.to_le_bytes(), GuestAddress(addr))
+        .unwrap();
 }
 
 /// Read a value from memory at DATA_ADDR
@@ -731,7 +756,11 @@ pub fn run_until_hlt_legacy(mut vm: VM) -> VM {
     loop {
         iterations += 1;
         if iterations > MAX_ITERATIONS {
-            panic!("exceeded {} iterations at RIP={:#x}", MAX_ITERATIONS, vm.vcpu.get_regs().unwrap().rip);
+            panic!(
+                "exceeded {} iterations at RIP={:#x}",
+                MAX_ITERATIONS,
+                vm.vcpu.get_regs().unwrap().rip
+            );
         }
         match vm.vcpu.step().unwrap() {
             Some(VcpuExit::Hlt) => {

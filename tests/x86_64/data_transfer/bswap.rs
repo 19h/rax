@@ -24,7 +24,11 @@ fn test_bswap_eax_basic() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x78563412, "EAX bytes should be reversed");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x78563412,
+        "EAX bytes should be reversed"
+    );
 }
 
 #[test]
@@ -39,7 +43,11 @@ fn test_bswap_ebx() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0xDDCCBBAA, "EBX bytes should be reversed");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0xDDCCBBAA,
+        "EBX bytes should be reversed"
+    );
 }
 
 #[test]
@@ -54,7 +62,11 @@ fn test_bswap_ecx() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rcx & 0xFFFFFFFF, 0x04030201, "ECX bytes should be reversed");
+    assert_eq!(
+        regs.rcx & 0xFFFFFFFF,
+        0x04030201,
+        "ECX bytes should be reversed"
+    );
 }
 
 #[test]
@@ -69,7 +81,11 @@ fn test_bswap_edx() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0xEFBEADDE, "EDX bytes should be reversed");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0xEFBEADDE,
+        "EDX bytes should be reversed"
+    );
 }
 
 #[test]
@@ -84,7 +100,11 @@ fn test_bswap_esi() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rsi & 0xFFFFFFFF, 0x44332211, "ESI bytes should be reversed");
+    assert_eq!(
+        regs.rsi & 0xFFFFFFFF,
+        0x44332211,
+        "ESI bytes should be reversed"
+    );
 }
 
 #[test]
@@ -99,7 +119,11 @@ fn test_bswap_edi() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rdi & 0xFFFFFFFF, 0xDDCCBBAA, "EDI bytes should be reversed");
+    assert_eq!(
+        regs.rdi & 0xFFFFFFFF,
+        0xDDCCBBAA,
+        "EDI bytes should be reversed"
+    );
 }
 
 #[test]
@@ -204,7 +228,11 @@ fn test_bswap_all_ones_32bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX should remain all ones");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX should remain all ones"
+    );
 }
 
 #[test]
@@ -234,7 +262,11 @@ fn test_bswap_alternating_bytes_32bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x55AA55AA, "EAX bytes should be reversed");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x55AA55AA,
+        "EAX bytes should be reversed"
+    );
 }
 
 #[test]
@@ -249,7 +281,11 @@ fn test_bswap_sequential_bytes_32bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x03020100, "EAX bytes should be reversed");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x03020100,
+        "EAX bytes should be reversed"
+    );
 }
 
 #[test]
@@ -264,7 +300,11 @@ fn test_bswap_with_r8d() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0x44332211, "R8D bytes should be reversed");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0x44332211,
+        "R8D bytes should be reversed"
+    );
 }
 
 #[test]
@@ -279,7 +319,11 @@ fn test_bswap_with_r9d() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r9 & 0xFFFFFFFF, 0x01EFCDAB, "R9D bytes should be reversed");
+    assert_eq!(
+        regs.r9 & 0xFFFFFFFF,
+        0x01EFCDAB,
+        "R9D bytes should be reversed"
+    );
 }
 
 #[test]
@@ -294,7 +338,11 @@ fn test_bswap_with_r15d() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r15 & 0xFFFFFFFF, 0xEFBEADDE, "R15D bytes should be reversed");
+    assert_eq!(
+        regs.r15 & 0xFFFFFFFF,
+        0xEFBEADDE,
+        "R15D bytes should be reversed"
+    );
 }
 
 #[test]
@@ -340,7 +388,11 @@ fn test_bswap_idempotent() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX should return to original after double BSWAP");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX should return to original after double BSWAP"
+    );
 }
 
 #[test]
@@ -355,7 +407,11 @@ fn test_bswap_endianness_conversion() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000080, "Endianness should be converted");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000080,
+        "Endianness should be converted"
+    );
 }
 
 #[test]
@@ -396,7 +452,13 @@ fn test_bswap_single_byte_values() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "BSWAP(0x{:08X}) should be 0x{:08X}", input, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "BSWAP(0x{:08X}) should be 0x{:08X}",
+            input,
+            expected
+        );
     }
 }
 
@@ -412,7 +474,11 @@ fn test_bswap_network_byte_order() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00010000, "Should convert network to host byte order");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00010000,
+        "Should convert network to host byte order"
+    );
 }
 
 #[test]
@@ -428,7 +494,10 @@ fn test_bswap_64bit_full_reversal() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0807060504030201, "64-bit value should be fully byte-reversed");
+    assert_eq!(
+        regs.rax, 0x0807060504030201,
+        "64-bit value should be fully byte-reversed"
+    );
 }
 
 #[test]
@@ -458,7 +527,11 @@ fn test_bswap_high_low_word_swap() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00003412, "High word moves to low with byte swap");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00003412,
+        "High word moves to low with byte swap"
+    );
 }
 
 #[test]
@@ -473,17 +546,21 @@ fn test_bswap_ascii_to_reversed() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x44434241, "ASCII bytes should be reversed");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x44434241,
+        "ASCII bytes should be reversed"
+    );
 }
 
 #[test]
 fn test_bswap_powers_of_256() {
     // Test with powers of 256
     let test_cases = vec![
-        (0x00000001, 0x01000000),      // 256^0
-        (0x00000100, 0x00010000),      // 256^1
-        (0x00010000, 0x00000100),      // 256^2
-        (0x01000000, 0x00000001),      // 256^3
+        (0x00000001, 0x01000000), // 256^0
+        (0x00000100, 0x00010000), // 256^1
+        (0x00010000, 0x00000100), // 256^2
+        (0x01000000, 0x00000001), // 256^3
     ];
 
     for (input, expected) in test_cases {
@@ -496,7 +573,13 @@ fn test_bswap_powers_of_256() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "BSWAP(0x{:08X}) should be 0x{:08X}", input, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "BSWAP(0x{:08X}) should be 0x{:08X}",
+            input,
+            expected
+        );
     }
 }
 
@@ -533,7 +616,10 @@ fn test_bswap_64bit_upper_lower_independence() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xF0DEBC9A_78563412, "Both halves should be byte-swapped and position-swapped");
+    assert_eq!(
+        regs.rax, 0xF0DEBC9A_78563412,
+        "Both halves should be byte-swapped and position-swapped"
+    );
 }
 
 #[test]
@@ -548,7 +634,11 @@ fn test_bswap_pattern_mirror() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x34123412, "Mirrored pattern should swap correctly");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x34123412,
+        "Mirrored pattern should swap correctly"
+    );
 }
 
 #[test]
@@ -563,7 +653,10 @@ fn test_bswap_64bit_pattern_mirror() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x7856341278563412, "64-bit mirrored pattern should swap correctly");
+    assert_eq!(
+        regs.rax, 0x7856341278563412,
+        "64-bit mirrored pattern should swap correctly"
+    );
 }
 
 #[test]
@@ -578,7 +671,11 @@ fn test_bswap_max_32bit_value() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFF7F, "Maximum 32-bit signed value swapped");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFF7F,
+        "Maximum 32-bit signed value swapped"
+    );
 }
 
 #[test]
@@ -593,7 +690,11 @@ fn test_bswap_min_32bit_value() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000080, "Minimum 32-bit signed value swapped");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000080,
+        "Minimum 32-bit signed value swapped"
+    );
 }
 
 #[test]
@@ -608,7 +709,10 @@ fn test_bswap_64bit_max_signed_value() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFF7F, "Maximum 64-bit signed value swapped");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFF7F,
+        "Maximum 64-bit signed value swapped"
+    );
 }
 
 #[test]
@@ -623,7 +727,10 @@ fn test_bswap_64bit_min_signed_value() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0000000000000080, "Minimum 64-bit signed value swapped");
+    assert_eq!(
+        regs.rax, 0x0000000000000080,
+        "Minimum 64-bit signed value swapped"
+    );
 }
 
 #[test]
@@ -711,7 +818,10 @@ fn test_bswap_preserves_upper_32bits() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Lower 32 bits should be swapped, upper 32 bits cleared (due to 32-bit op)
-    assert_eq!(regs.rax, 0x00000000_78563412, "32-bit BSWAP should clear upper bits");
+    assert_eq!(
+        regs.rax, 0x00000000_78563412,
+        "32-bit BSWAP should clear upper bits"
+    );
 }
 
 #[test]
@@ -744,7 +854,10 @@ fn test_strict_bswap_r32_exact_and_clears_upper() {
     regs.rax = 0xFFFF_FFFF_1122_3344;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000_0000_4433_2211, "BSWAP EAX reverses 4 bytes, clears upper");
+    assert_eq!(
+        regs.rax, 0x0000_0000_4433_2211,
+        "BSWAP EAX reverses 4 bytes, clears upper"
+    );
 }
 
 #[test]
@@ -755,7 +868,10 @@ fn test_strict_bswap_r64_exact() {
     regs.rax = 0x0102_0304_0506_0708;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0807_0605_0403_0201, "BSWAP RAX reverses 8 bytes");
+    assert_eq!(
+        regs.rax, 0x0807_0605_0403_0201,
+        "BSWAP RAX reverses 8 bytes"
+    );
 }
 
 #[test]
@@ -777,5 +893,8 @@ fn test_strict_bswap_r32_round_trip() {
     regs.rbx = 0x0000_0000_ABCD_1234;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbx, 0x0000_0000_ABCD_1234, "double BSWAP is identity (32-bit)");
+    assert_eq!(
+        regs.rbx, 0x0000_0000_ABCD_1234,
+        "double BSWAP is identity (32-bit)"
+    );
 }

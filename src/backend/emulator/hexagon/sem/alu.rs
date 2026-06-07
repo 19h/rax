@@ -2,7 +2,7 @@
 //! abs/neg, saturate, sign-extend, combine. Semantics from the Hexagon V68 spec.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fimm_s, fld, SemCtx};
+use super::{SemCtx, fimm_s, fld};
 
 /// Execute an ALU-class opcode. Returns `false` if `op` is not in this class.
 pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {

@@ -1,6 +1,6 @@
 use rax::cpu::Registers;
 
-use crate::common::{run_until_hlt, setup_vm, write_mem_at_u16, zf_set, DATA_ADDR};
+use crate::common::{DATA_ADDR, run_until_hlt, setup_vm, write_mem_at_u16, zf_set};
 
 // LSL - Load Segment Limit
 // Opcode: 0F 03 /r
@@ -399,15 +399,21 @@ fn test_lsl_preserves_source() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000008, "Source should be preserved");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000008,
+        "Source should be preserved"
+    );
 }
 
 // LSL preserves other registers
 #[test]
 fn test_lsl_preserves_registers() {
     let code = [
-        0x48, 0xb9, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, // MOV RCX, 0x1111111111111111
-        0x48, 0xba, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, // MOV RDX, 0x2222222222222222
+        0x48, 0xb9, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+        0x11, // MOV RCX, 0x1111111111111111
+        0x48, 0xba, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
+        0x22, // MOV RDX, 0x2222222222222222
         0xb8, 0x08, 0x00, 0x00, 0x00, // MOV EAX, 0x0008
         0x0f, 0x03, 0xd8, // LSL EBX, EAX
         0xf4, // HLT

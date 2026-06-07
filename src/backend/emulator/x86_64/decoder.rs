@@ -131,14 +131,14 @@ impl Decoder {
                     // Decode REX2 payload: [M:R4:X4:B4:W:R:X:B].
                     // Extension bits are non-inverted; see LLVM's APX decoder.
                     ctx.rex2 = Some(Rex2Prefix {
-                        m: (payload & 0x80) != 0,      // bit 7: map select
-                        r3: (payload & 0x40) != 0,    // bit 6: R4 (+16)
-                        x3: (payload & 0x20) != 0,    // bit 5: X4 (+16)
-                        b3: (payload & 0x10) != 0,    // bit 4: B4 (+16)
-                        w: (payload & 0x08) != 0,     // bit 3: W (operand size)
-                        r4: (payload & 0x04) != 0,    // bit 2: R (+8)
-                        x4: (payload & 0x02) != 0,    // bit 1: X (+8)
-                        b4: (payload & 0x01) != 0,    // bit 0: B (+8)
+                        m: (payload & 0x80) != 0,  // bit 7: map select
+                        r3: (payload & 0x40) != 0, // bit 6: R4 (+16)
+                        x3: (payload & 0x20) != 0, // bit 5: X4 (+16)
+                        b3: (payload & 0x10) != 0, // bit 4: B4 (+16)
+                        w: (payload & 0x08) != 0,  // bit 3: W (operand size)
+                        r4: (payload & 0x04) != 0, // bit 2: R (+8)
+                        x4: (payload & 0x02) != 0, // bit 1: X (+8)
+                        b4: (payload & 0x01) != 0, // bit 0: B (+8)
                     });
                     ctx.cursor += 1;
                     // REX2 is always the last prefix
@@ -209,10 +209,10 @@ mod tests {
         let ctx = Decoder::decode_prefixes(bytes, 3, true).unwrap();
         assert!(ctx.rex2.is_some());
         let rex2 = ctx.rex2.unwrap();
-        assert!(!rex2.m);    // M=0 (legacy map)
-        assert!(rex2.w);     // W=1 (64-bit)
-        assert!(rex2.r3);    // High R extension bit (+16)
-        assert!(rex2.r4);    // Low R extension bit (+8)
+        assert!(!rex2.m); // M=0 (legacy map)
+        assert!(rex2.w); // W=1 (64-bit)
+        assert!(rex2.r3); // High R extension bit (+16)
+        assert!(rex2.r4); // Low R extension bit (+8)
         assert_eq!(ctx.cursor, 2); // Cursor should be after REX2
 
         // REX2 with M=1 (0F map), W=0, all extension bits cleared.
@@ -220,8 +220,8 @@ mod tests {
         bytes[1] = 0x80;
         let ctx = Decoder::decode_prefixes(bytes, 3, true).unwrap();
         let rex2 = ctx.rex2.unwrap();
-        assert!(rex2.m);      // M=1 (0F map)
-        assert!(!rex2.w);     // W=0
+        assert!(rex2.m); // M=1 (0F map)
+        assert!(!rex2.w); // W=0
         assert!(!rex2.r3);
         assert!(!rex2.r4);
     }
@@ -234,9 +234,8 @@ mod tests {
     /// Build a minimal 64-bit vcpu (CS.L=1) for exercising decode_modrm_addr.
     /// decode_modrm_addr only reads registers/sregs, so a tiny memory region is fine.
     fn make_vcpu_64() -> X86_64Vcpu {
-        let mem = Arc::new(
-            GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap(),
-        );
+        let mem =
+            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
         let mut vcpu = X86_64Vcpu::new(0, mem);
         vcpu.sregs.cs.l = true; // 64-bit mode
         vcpu
@@ -263,7 +262,11 @@ mod tests {
         }
         let ctx = Decoder::decode_prefixes(bytes, len, true).unwrap();
         // After prefixes, cursor points at the opcode; ModR/M starts one byte later.
-        assert_eq!(ctx.cursor + 1, modrm_offset, "prefix scan / offset mismatch");
+        assert_eq!(
+            ctx.cursor + 1,
+            modrm_offset,
+            "prefix scan / offset mismatch"
+        );
         let (addr, _extra) = vcpu.decode_modrm_addr(&ctx, modrm_offset).unwrap();
         addr
     }
@@ -324,7 +327,10 @@ mod tests {
         // No prefix: opcode at offset 0, ModR/M at offset 1.
         // rip_after = RIP + modrm_offset(1) + 1 (modrm) + 4 (disp32) = RIP + 6; disp32 = 0.
         let no_override = ea(&vcpu, &[], &[0x05, 0x00, 0x00, 0x00, 0x00]);
-        assert!(no_override > 0xFFFF_FFFF, "64-bit RIP-rel should keep high bits");
+        assert!(
+            no_override > 0xFFFF_FFFF,
+            "64-bit RIP-rel should keep high bits"
+        );
         assert_eq!(no_override, 0x1_0000_1000u64 + 6);
 
         // With 0x67: opcode at offset 1, ModR/M at offset 2.
@@ -402,7 +408,11 @@ impl X86_64Vcpu {
         // ModR/M follow it; for single-byte opcodes the ModR/M (if any) sits at
         // the cursor. Resolve the effective opcode and the ModR/M offset.
         let (eff_opcode, modrm_off, two_byte) = if opcode == 0x0F {
-            (ctx.bytes.get(ctx.cursor).copied().unwrap_or(0), ctx.cursor + 1, true)
+            (
+                ctx.bytes.get(ctx.cursor).copied().unwrap_or(0),
+                ctx.cursor + 1,
+                true,
+            )
         } else {
             (opcode, ctx.cursor, false)
         };
@@ -545,8 +555,7 @@ impl X86_64Vcpu {
                     if bytes.len() < 5 {
                         return Err(Error::Emulator("ModR/M: missing disp32".to_string()));
                     }
-                    let disp =
-                        i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]) as i64;
+                    let disp = i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]) as i64;
                     Ok(((base as i64).wrapping_add(disp) as u64, 4))
                 }
             };

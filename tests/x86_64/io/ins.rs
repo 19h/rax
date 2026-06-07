@@ -11,8 +11,8 @@
 //! Reference: docs/ins:insb:insw:insd.txt
 
 use crate::common::*;
-use rax::cpu::{Registers, VcpuExit};
 use rax::backend::emulator::x86_64::flags;
+use rax::cpu::{Registers, VcpuExit};
 
 // ============================================================================
 // INSB (opcode 6C) - Input byte string
@@ -117,7 +117,11 @@ fn test_insb_preserves_flags() {
     }
 
     let regs = vcpu.get_regs().unwrap();
-    assert_eq!(regs.rflags & 0xFFF, initial_flags & 0xFFF, "Flags should be preserved");
+    assert_eq!(
+        regs.rflags & 0xFFF,
+        initial_flags & 0xFFF,
+        "Flags should be preserved"
+    );
 }
 
 #[test]
@@ -179,7 +183,11 @@ fn test_insw_basic() {
     }
 
     let regs = vcpu.get_regs().unwrap();
-    assert_eq!(read_mem_u16(&mem), 0x1234, "Word should be written to [RDI]");
+    assert_eq!(
+        read_mem_u16(&mem),
+        0x1234,
+        "Word should be written to [RDI]"
+    );
     assert_eq!(regs.rdi, DATA_ADDR + 2, "RDI should increment by 2");
 }
 
@@ -290,7 +298,11 @@ fn test_insd_basic() {
     }
 
     let regs = vcpu.get_regs().unwrap();
-    assert_eq!(read_mem_u32(&mem), 0x12345678, "Dword should be written to [RDI]");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0x12345678,
+        "Dword should be written to [RDI]"
+    );
     assert_eq!(regs.rdi, DATA_ADDR + 4, "RDI should increment by 4");
 }
 
@@ -502,7 +514,11 @@ fn test_rep_insw_basic() {
     assert_eq!(count, 4);
     let regs = vcpu.get_regs().unwrap();
     assert_eq!(regs.rcx, 0);
-    assert_eq!(regs.rdi, DATA_ADDR + 8, "RDI should increment by 8 (4 words)");
+    assert_eq!(
+        regs.rdi,
+        DATA_ADDR + 8,
+        "RDI should increment by 8 (4 words)"
+    );
 
     // Verify memory
     assert_eq!(read_mem_at_u16(&mem, DATA_ADDR), 0x1000);
@@ -561,7 +577,11 @@ fn test_rep_insw_df_set() {
 
     let regs = vcpu.get_regs().unwrap();
     assert_eq!(regs.rcx, 0);
-    assert_eq!(regs.rdi, DATA_ADDR + 100 - 6, "RDI should decrement by 6 (3 words)");
+    assert_eq!(
+        regs.rdi,
+        DATA_ADDR + 100 - 6,
+        "RDI should decrement by 6 (3 words)"
+    );
 }
 
 // ============================================================================
@@ -597,7 +617,11 @@ fn test_rep_insd_basic() {
     assert_eq!(count, 3);
     let regs = vcpu.get_regs().unwrap();
     assert_eq!(regs.rcx, 0);
-    assert_eq!(regs.rdi, DATA_ADDR + 12, "RDI should increment by 12 (3 dwords)");
+    assert_eq!(
+        regs.rdi,
+        DATA_ADDR + 12,
+        "RDI should increment by 12 (3 dwords)"
+    );
 
     // Verify memory
     assert_eq!(read_mem_at_u32(&mem, DATA_ADDR), 0x10000000);
@@ -655,7 +679,11 @@ fn test_rep_insd_df_set() {
 
     let regs = vcpu.get_regs().unwrap();
     assert_eq!(regs.rcx, 0);
-    assert_eq!(regs.rdi, DATA_ADDR + 200 - 8, "RDI should decrement by 8 (2 dwords)");
+    assert_eq!(
+        regs.rdi,
+        DATA_ADDR + 200 - 8,
+        "RDI should decrement by 8 (2 dwords)"
+    );
 }
 
 // ============================================================================

@@ -90,7 +90,10 @@ fn test_nop_multiple_nops() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x42, "RAX should be unchanged after multiple NOPs");
+    assert_eq!(
+        regs.rax, 0x42,
+        "RAX should be unchanged after multiple NOPs"
+    );
 }
 
 #[test]
@@ -162,7 +165,11 @@ fn test_nop_two_byte_0f_1f_00() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "RAX should be unchanged after 2-byte NOP");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "RAX should be unchanged after 2-byte NOP"
+    );
 }
 
 #[test]
@@ -178,17 +185,21 @@ fn test_nop_two_byte_multiple() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xDEADBEEF, "RAX should be unchanged after multiple 2-byte NOPs");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xDEADBEEF,
+        "RAX should be unchanged after multiple 2-byte NOPs"
+    );
 }
 
 #[test]
 fn test_nop_sequences_for_alignment() {
     // NOPs for instruction alignment (4-byte alignment)
     let code = [
-        0x90,             // 1-byte NOP
-        0x90,             // 1-byte NOP
-        0x90,             // 1-byte NOP
-        0x90,             // 1-byte NOP (total 4 bytes)
+        0x90, // 1-byte NOP
+        0x90, // 1-byte NOP
+        0x90, // 1-byte NOP
+        0x90, // 1-byte NOP (total 4 bytes)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -196,7 +207,10 @@ fn test_nop_sequences_for_alignment() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFFFFFFFF, "RAX should be unchanged after alignment NOPs");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFF,
+        "RAX should be unchanged after alignment NOPs"
+    );
 }
 
 #[test]
@@ -319,7 +333,10 @@ fn test_nop_does_not_affect_stack() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rsp, initial_rsp, "RSP should be unchanged (stack setup preserved)");
+    assert_eq!(
+        regs.rsp, initial_rsp,
+        "RSP should be unchanged (stack setup preserved)"
+    );
 }
 
 #[test]
@@ -342,15 +359,19 @@ fn test_nop_between_instructions() {
     // NOP between two MOV instructions
     let code = [
         0xb8, 0x42, 0x00, 0x00, 0x00, // MOV EAX, 0x42
-        0x90,                          // NOP
-        0x89, 0xc3,                    // MOV EBX, EAX
+        0x90, // NOP
+        0x89, 0xc3, // MOV EBX, EAX
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0x42, "EAX should be 0x42");
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x42, "EBX should be 0x42 (MOV succeeded)");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0x42,
+        "EBX should be 0x42 (MOV succeeded)"
+    );
 }
 
 #[test]
@@ -394,7 +415,7 @@ fn test_nop_after_flags_modification() {
     // NOP after flag modification doesn't undo it
     let code = [
         0x83, 0xc0, 0x01, // ADD EAX, 1 (sets flags)
-        0x90,             // NOP
+        0x90, // NOP
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -434,7 +455,7 @@ fn test_nop_preserves_rip_increment() {
     // NOP properly increments RIP for subsequent instructions
     let code = [
         0xb8, 0x11, 0x00, 0x00, 0x00, // MOV EAX, 0x11
-        0x90,                          // NOP
+        0x90, // NOP
         0xbb, 0x22, 0x00, 0x00, 0x00, // MOV EBX, 0x22
         0xf4,
     ];
@@ -503,7 +524,11 @@ fn test_nop_typical_alignment_before_code() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x42, "MOV executed correctly after NOP padding");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x42,
+        "MOV executed correctly after NOP padding"
+    );
 }
 
 #[test]
@@ -520,7 +545,11 @@ fn test_nop_does_not_cause_prefetch_issues() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "MOV correctly executed after NOPs");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "MOV correctly executed after NOPs"
+    );
 }
 
 #[test]
@@ -580,5 +609,9 @@ fn test_nop_pattern_for_code_caves() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "Code after NOP padding executed correctly");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "Code after NOP padding executed correctly"
+    );
 }

@@ -40,12 +40,12 @@ mod stats;
 
 // Re-export public types and functions
 pub use collector::{
-    cache_stats, end_instruction, init, is_enabled, record_cache_hit, record_cache_miss,
-    set_current_opcode_key, should_output_live, shutdown, take_current_opcode_key,
-    total_instructions, ProfilingConfig,
+    ProfilingConfig, cache_stats, end_instruction, init, is_enabled, record_cache_hit,
+    record_cache_miss, set_current_opcode_key, should_output_live, shutdown,
+    take_current_opcode_key, total_instructions,
 };
-pub use mnemonics::{categorize, get_mnemonic, InstructionCategory};
-pub use reporter::{export_json, print_live_stats, print_summary, ProfileReport};
+pub use mnemonics::{InstructionCategory, categorize, get_mnemonic};
+pub use reporter::{ProfileReport, export_json, print_live_stats, print_summary};
 pub use stats::{InstructionReport, MemoryAccessStats, OpcodeKey, OpcodeStats};
 
 use std::time::Instant;

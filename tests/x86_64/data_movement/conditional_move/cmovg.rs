@@ -20,7 +20,11 @@ fn test_cmovg_eax_ebx_positive_greater() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved when 10 > 5");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved when 10 > 5"
+    );
 }
 
 // CMOVG when values are equal (should not move)
@@ -38,7 +42,11 @@ fn test_cmovg_eax_ebx_equal() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000005, "EAX should not be moved when equal");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000005,
+        "EAX should not be moved when equal"
+    );
 }
 
 // CMOVG when less (should not move)
@@ -56,7 +64,11 @@ fn test_cmovg_eax_ebx_less() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000005, "EAX should not be moved when 5 < 10");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000005,
+        "EAX should not be moved when 5 < 10"
+    );
 }
 
 // CMOVNLE (same as CMOVG)
@@ -74,7 +86,11 @@ fn test_cmovnle_edx_ecx() {
     regs.rcx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x0000000a, "EDX should be moved when not less or equal");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x0000000a,
+        "EDX should be moved when not less or equal"
+    );
 }
 
 // Test signed comparison: positive > negative
@@ -92,7 +108,11 @@ fn test_cmovg_positive_vs_negative() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved (1 > -1 signed)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved (1 > -1 signed)"
+    );
 }
 
 // Test signed comparison: negative > negative (less negative)
@@ -110,7 +130,11 @@ fn test_cmovg_negative_vs_negative() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved (-1 > -2 signed)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved (-1 > -2 signed)"
+    );
 }
 
 // Test 16-bit operand
@@ -182,7 +206,11 @@ fn test_cmovg_greater_than_zero() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222222, "EAX should be moved when 1 > 0");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x22222222,
+        "EAX should be moved when 1 > 0"
+    );
 }
 
 #[test]
@@ -199,7 +227,11 @@ fn test_cmovg_negative_vs_zero() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xffffffff, "EAX should not be moved (-1 < 0 signed)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xffffffff,
+        "EAX should not be moved (-1 < 0 signed)"
+    );
 }
 
 // Test that flags are preserved
@@ -236,7 +268,10 @@ fn test_cmovg_zeros_upper_32() {
     regs.rbx = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000012345678, "Upper 32 bits should be zeroed");
+    assert_eq!(
+        regs.rax, 0x0000000012345678,
+        "Upper 32 bits should be zeroed"
+    );
 }
 
 // Test practical use case: max of two signed values
@@ -270,7 +305,10 @@ fn test_cmovg_practical_signed_max_with_negative() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // -16 < -11, so RAX gets RBX (-11)
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFF5, "RAX should be -11 (max of -16 and -11)");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFF5,
+        "RAX should be -11 (max of -16 and -11)"
+    );
 }
 
 // Test edge case: comparing with itself
@@ -286,7 +324,11 @@ fn test_cmovg_self_comparison() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x11111111, "EAX should not change (not greater, equal)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x11111111,
+        "EAX should not change (not greater, equal)"
+    );
 }
 
 // Test different register combinations
@@ -323,7 +365,11 @@ fn test_cmovg_signed_vs_unsigned_semantics() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX should not move (signed comparison)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX should not move (signed comparison)"
+    );
 }
 
 // Test maximum signed values
@@ -359,7 +405,11 @@ fn test_cmovg_after_sub() {
     regs.rbx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0x44444444, "EDX should be moved (result > 0)");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0x44444444,
+        "EDX should be moved (result > 0)"
+    );
 }
 
 // Test chaining operations

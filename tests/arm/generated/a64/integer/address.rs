@@ -25,7 +25,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_op_0_min_0_10000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -41,7 +46,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_op_1_max_0_90000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -57,7 +67,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immlo_0_zero_0_10000000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -73,7 +88,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immlo_1_poweroftwo_0_300
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -89,7 +109,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immlo_3_max_0_70000000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -105,7 +130,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_0_zero_0_10000000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -121,7 +151,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_1_poweroftwo_0_100
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -137,7 +172,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_3_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -153,7 +193,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_4_poweroftwo_0_100
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -169,7 +214,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_7_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -185,7 +235,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_8_poweroftwo_0_100
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -201,7 +256,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_15_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -217,7 +277,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_16_poweroftwo_0_10
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -233,7 +298,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_31_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -249,7 +319,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_32_poweroftwo_0_10
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -265,7 +340,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_63_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -281,7 +361,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_64_poweroftwo_0_10
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -297,7 +382,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_127_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -313,7 +403,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_128_poweroftwo_0_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -329,7 +424,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_255_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -345,7 +445,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_256_poweroftwo_0_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -361,7 +466,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_511_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -377,7 +487,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_512_poweroftwo_0_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -393,7 +508,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_1023_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -409,7 +529,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_1024_poweroftwo_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -425,7 +550,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_2047_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -441,7 +571,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_2048_poweroftwo_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -457,7 +592,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_4095_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -473,7 +613,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_4096_poweroftwo_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -489,7 +634,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_8191_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -505,7 +655,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_8192_poweroftwo_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -513,7 +668,8 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_8192_poweroftwo_0_
 /// Requirement: FieldBoundary { field: "immhi", value: 16383, boundary: PowerOfTwoMinusOne }
 /// 2^14 - 1 = 16383
 #[test]
-fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_16383_poweroftwominusone_0_1007ffe0() {
+fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_16383_poweroftwominusone_0_1007ffe0()
+{
     // Encoding: 0x1007FFE0
     // Test aarch64_integer_arithmetic_address_pc_rel field immhi = 16383 (PowerOfTwoMinusOne)
     // Fields: op=0, immhi=16383, immlo=0, Rd=0
@@ -521,7 +677,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_16383_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -537,7 +698,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_16384_poweroftwo_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -545,7 +711,8 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_16384_poweroftwo_0
 /// Requirement: FieldBoundary { field: "immhi", value: 32767, boundary: PowerOfTwoMinusOne }
 /// 2^15 - 1 = 32767
 #[test]
-fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_32767_poweroftwominusone_0_100fffe0() {
+fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_32767_poweroftwominusone_0_100fffe0()
+{
     // Encoding: 0x100FFFE0
     // Test aarch64_integer_arithmetic_address_pc_rel field immhi = 32767 (PowerOfTwoMinusOne)
     // Fields: op=0, immlo=0, immhi=32767, Rd=0
@@ -553,7 +720,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_32767_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -569,7 +741,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_32768_poweroftwo_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -577,7 +754,8 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_32768_poweroftwo_0
 /// Requirement: FieldBoundary { field: "immhi", value: 65535, boundary: PowerOfTwoMinusOne }
 /// 2^16 - 1 = 65535
 #[test]
-fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_65535_poweroftwominusone_0_101fffe0() {
+fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_65535_poweroftwominusone_0_101fffe0()
+{
     // Encoding: 0x101FFFE0
     // Test aarch64_integer_arithmetic_address_pc_rel field immhi = 65535 (PowerOfTwoMinusOne)
     // Fields: immlo=0, Rd=0, op=0, immhi=65535
@@ -585,7 +763,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_65535_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -601,7 +784,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_65536_poweroftwo_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -609,7 +797,8 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_65536_poweroftwo_0
 /// Requirement: FieldBoundary { field: "immhi", value: 131071, boundary: PowerOfTwoMinusOne }
 /// 2^17 - 1 = 131071
 #[test]
-fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_131071_poweroftwominusone_0_103fffe0() {
+fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_131071_poweroftwominusone_0_103fffe0()
+{
     // Encoding: 0x103FFFE0
     // Test aarch64_integer_arithmetic_address_pc_rel field immhi = 131071 (PowerOfTwoMinusOne)
     // Fields: op=0, immhi=131071, Rd=0, immlo=0
@@ -617,7 +806,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_131071_poweroftwom
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -633,7 +827,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_131072_poweroftwo_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -641,7 +840,8 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_131072_poweroftwo_
 /// Requirement: FieldBoundary { field: "immhi", value: 262143, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (262143)
 #[test]
-fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_262143_poweroftwominusone_0_107fffe0() {
+fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_262143_poweroftwominusone_0_107fffe0()
+{
     // Encoding: 0x107FFFE0
     // Test aarch64_integer_arithmetic_address_pc_rel field immhi = 262143 (PowerOfTwoMinusOne)
     // Fields: op=0, immhi=262143, Rd=0, immlo=0
@@ -649,7 +849,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_262143_poweroftwom
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -665,7 +870,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_262144_poweroftwo_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -681,7 +891,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_immhi_524287_max_0_10fff
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -697,7 +912,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_rd_0_min_0_10000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -713,7 +933,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_rd_1_poweroftwo_0_100000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -729,7 +954,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_rd_30_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -745,7 +975,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_field_rd_31_max_0_1000001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -761,7 +996,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_0_0_10000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -777,7 +1017,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_1_0_90000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -793,7 +1038,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_2_0_10000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -809,7 +1059,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_3_0_30000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -825,7 +1080,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_4_0_70000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -841,7 +1101,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_5_0_10000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -857,7 +1122,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_6_0_10000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -873,7 +1143,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_7_0_10000060() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -889,7 +1164,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_8_0_10000080() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -905,7 +1185,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_9_0_100000e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -921,7 +1206,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_10_0_10000100() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -937,7 +1227,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_11_0_100001e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -953,7 +1248,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_12_0_10000200() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -969,7 +1269,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_13_0_100003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -985,7 +1290,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_14_0_10000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1001,7 +1311,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_15_0_100007e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1017,7 +1332,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_16_0_10000800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1033,7 +1353,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_17_0_10000fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1049,7 +1374,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_18_0_10001000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1065,7 +1395,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_19_0_10001fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1081,7 +1416,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_20_0_10002000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1097,7 +1437,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_21_0_10003fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1113,7 +1458,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_22_0_10004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1129,7 +1479,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_23_0_10007fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1145,7 +1500,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_24_0_10008000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1161,7 +1521,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_25_0_1000ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1177,7 +1542,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_26_0_10010000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1193,7 +1563,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_27_0_1001ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1209,7 +1584,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_28_0_10020000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1225,7 +1605,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_29_0_1003ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1241,7 +1626,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_30_0_10040000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1257,7 +1647,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_31_0_1007ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1273,7 +1668,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_32_0_10080000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1289,7 +1689,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_33_0_100fffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1305,7 +1710,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_34_0_10100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1321,7 +1731,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_35_0_101fffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1337,7 +1752,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_36_0_10200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1353,7 +1773,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_37_0_103fffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1369,7 +1794,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_38_0_10400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1385,7 +1815,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_39_0_107fffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1401,7 +1836,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_40_0_10800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1417,7 +1857,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_41_0_10ffffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1433,7 +1878,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_42_0_10000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1449,7 +1899,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_43_0_10000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1465,7 +1920,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_44_0_1000001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1481,7 +1941,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_45_0_1000001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1489,7 +1954,8 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_combo_45_0_1000001f() {
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_arithmetic_address_pc_rel_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_3000003f() {
+fn test_aarch64_integer_arithmetic_address_pc_rel_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_3000003f()
+ {
     // Encoding: 0x3000003F
     // Test aarch64_integer_arithmetic_address_pc_rel special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: immlo=1, immhi=1, op=0, Rd=31
@@ -1497,7 +1963,12 @@ fn test_aarch64_integer_arithmetic_address_pc_rel_special_rd_31_zero_register_xz
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_address_pc_rel
@@ -1593,7 +2064,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xm_0_mi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1601,7 +2077,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xm_0_mi
 /// Requirement: FieldBoundary { field: "Xm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xm_1_poweroftwo_0_9ac10000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xm_1_poweroftwo_0_9ac10000()
+ {
     // Encoding: 0x9AC10000
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress field Xm = 1 (PowerOfTwo)
     // Fields: Xn=0, Xm=1, Xd=0
@@ -1609,7 +2086,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xm_1_po
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1617,7 +2099,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xm_1_po
 /// Requirement: FieldBoundary { field: "Xm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xm_30_poweroftwominusone_0_9ade0000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xm_30_poweroftwominusone_0_9ade0000()
+ {
     // Encoding: 0x9ADE0000
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress field Xm = 30 (PowerOfTwoMinusOne)
     // Fields: Xn=0, Xd=0, Xm=30
@@ -1625,7 +2108,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xm_30_p
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1641,7 +2129,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xm_31_m
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1657,7 +2150,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xn_0_mi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1665,7 +2163,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xn_0_mi
 /// Requirement: FieldBoundary { field: "Xn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xn_1_poweroftwo_0_9ac00020() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xn_1_poweroftwo_0_9ac00020()
+ {
     // Encoding: 0x9AC00020
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress field Xn = 1 (PowerOfTwo)
     // Fields: Xm=0, Xn=1, Xd=0
@@ -1673,7 +2172,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xn_1_po
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1681,7 +2185,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xn_1_po
 /// Requirement: FieldBoundary { field: "Xn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xn_30_poweroftwominusone_0_9ac003c0() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xn_30_poweroftwominusone_0_9ac003c0()
+ {
     // Encoding: 0x9AC003C0
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress field Xn = 30 (PowerOfTwoMinusOne)
     // Fields: Xm=0, Xn=30, Xd=0
@@ -1689,7 +2194,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xn_30_p
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1705,7 +2215,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xn_31_m
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1721,7 +2236,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xd_0_mi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1729,7 +2249,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xd_0_mi
 /// Requirement: FieldBoundary { field: "Xd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xd_1_poweroftwo_0_9ac00001() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xd_1_poweroftwo_0_9ac00001()
+ {
     // Encoding: 0x9AC00001
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress field Xd = 1 (PowerOfTwo)
     // Fields: Xd=1, Xm=0, Xn=0
@@ -1737,7 +2258,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xd_1_po
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1745,7 +2271,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xd_1_po
 /// Requirement: FieldBoundary { field: "Xd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xd_30_poweroftwominusone_0_9ac0001e() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xd_30_poweroftwominusone_0_9ac0001e()
+ {
     // Encoding: 0x9AC0001E
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress field Xd = 30 (PowerOfTwoMinusOne)
     // Fields: Xm=0, Xn=0, Xd=30
@@ -1753,7 +2280,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xd_30_p
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1769,7 +2301,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_field_xd_31_m
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1785,7 +2322,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_0_0_9ac
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1801,7 +2343,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_1_0_9ac
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1817,7 +2364,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_2_0_9ad
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1833,7 +2385,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_3_0_9ad
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1849,7 +2406,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_4_0_9ac
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1865,7 +2427,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_5_0_9ac
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1881,7 +2448,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_6_0_9ac
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1897,7 +2469,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_7_0_9ac
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1913,7 +2490,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_8_0_9ac
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1929,7 +2511,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_9_0_9ac
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1945,7 +2532,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_10_0_9a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1961,7 +2553,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_11_0_9a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1977,7 +2574,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_12_0_9a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -1993,7 +2595,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_13_0_9a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -2009,7 +2616,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_14_0_9a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -2025,7 +2637,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_15_0_9a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -2041,7 +2658,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_16_0_9a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -2057,7 +2679,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_17_0_9a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -2065,7 +2692,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_combo_17_0_9a
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_special_xn_31_stack_pointer_sp_may_require_alignment_0_9ac003e0() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_special_xn_31_stack_pointer_sp_may_require_alignment_0_9ac003e0()
+ {
     // Encoding: 0x9AC003E0
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress special value Xn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Xm=0, Xn=31, Xd=0
@@ -2073,7 +2701,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_special_xn_31
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -2127,7 +2760,11 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_umulh_oracle_
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFFE, "X0 should be 0xFFFFFFFFFFFFFFFE");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFFFFE,
+        "X0 should be 0xFFFFFFFFFFFFFFFE"
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -2145,7 +2782,11 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_umulh_oracle_
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0x3FFFFFFFFFFFFFFF, "X0 should be 0x3FFFFFFFFFFFFFFF");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0x3FFFFFFFFFFFFFFF,
+        "X0 should be 0x3FFFFFFFFFFFFFFF"
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress
@@ -2243,7 +2884,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_zerores
 /// Requirement: FlagComputation { flag: N, scenario: NegativeResult }
 /// negative value (N=1)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_negativeresult_2_9ac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_negativeresult_2_9ac00000()
+{
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress flag computation: NegativeResult
     // Encoding: 0x9AC00000
     let mut cpu = create_test_cpu();
@@ -2264,7 +2906,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_negativ
 /// Requirement: FlagComputation { flag: N, scenario: UnsignedOverflow }
 /// max + 1 = 0 (C=1, Z=1)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_unsignedoverflow_3_9ac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_unsignedoverflow_3_9ac00000()
+ {
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress flag computation: UnsignedOverflow
     // Encoding: 0x9AC00000
     let mut cpu = create_test_cpu();
@@ -2285,7 +2928,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_unsigne
 /// Requirement: FlagComputation { flag: N, scenario: UnsignedOverflow }
 /// max + 2 = 1 (C=1)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_unsignedoverflow_4_9ac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_unsignedoverflow_4_9ac00000()
+ {
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress flag computation: UnsignedOverflow
     // Encoding: 0x9AC00000
     let mut cpu = create_test_cpu();
@@ -2306,7 +2950,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_unsigne
 /// Requirement: FlagComputation { flag: N, scenario: SignedOverflow }
 /// max_signed + 1 = min_signed (V=1, N=1)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_signedoverflow_5_9ac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_signedoverflow_5_9ac00000()
+{
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress flag computation: SignedOverflow
     // Encoding: 0x9AC00000
     let mut cpu = create_test_cpu();
@@ -2327,7 +2972,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_signedo
 /// Requirement: FlagComputation { flag: N, scenario: SignedOverflow }
 /// min_signed + (-1) = max_signed (V=1)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_signedoverflow_6_9ac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_signedoverflow_6_9ac00000()
+{
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress flag computation: SignedOverflow
     // Encoding: 0x9AC00000
     let mut cpu = create_test_cpu();
@@ -2348,7 +2994,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_signedo
 /// Requirement: FlagComputation { flag: N, scenario: PositiveResult }
 /// 100 + 50 = 150 (no flags)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_positiveresult_7_9ac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_positiveresult_7_9ac00000()
+{
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress flag computation: PositiveResult
     // Encoding: 0x9AC00000
     let mut cpu = create_test_cpu();
@@ -2373,7 +3020,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddress_flags_positiv
 /// Requirement: FieldBoundary { field: "Xm", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xm_0_min_0_bac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xm_0_min_0_bac00000()
+ {
     // Encoding: 0xBAC00000
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags field Xm = 0 (Min)
     // Fields: Xn=0, Xd=0, Xm=0
@@ -2381,7 +3029,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2389,7 +3042,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
 /// Requirement: FieldBoundary { field: "Xm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xm_1_poweroftwo_0_bac10000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xm_1_poweroftwo_0_bac10000()
+ {
     // Encoding: 0xBAC10000
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags field Xm = 1 (PowerOfTwo)
     // Fields: Xm=1, Xd=0, Xn=0
@@ -2397,7 +3051,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2405,7 +3064,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
 /// Requirement: FieldBoundary { field: "Xm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xm_30_poweroftwominusone_0_bade0000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xm_30_poweroftwominusone_0_bade0000()
+ {
     // Encoding: 0xBADE0000
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags field Xm = 30 (PowerOfTwoMinusOne)
     // Fields: Xm=30, Xn=0, Xd=0
@@ -2413,7 +3073,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2421,7 +3086,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
 /// Requirement: FieldBoundary { field: "Xm", value: 31, boundary: Max }
 /// register index 31 (special)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xm_31_max_0_badf0000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xm_31_max_0_badf0000()
+ {
     // Encoding: 0xBADF0000
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags field Xm = 31 (Max)
     // Fields: Xm=31, Xn=0, Xd=0
@@ -2429,7 +3095,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2437,7 +3108,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
 /// Requirement: FieldBoundary { field: "Xn", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xn_0_min_0_bac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xn_0_min_0_bac00000()
+ {
     // Encoding: 0xBAC00000
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags field Xn = 0 (Min)
     // Fields: Xm=0, Xn=0, Xd=0
@@ -2445,7 +3117,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2453,7 +3130,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
 /// Requirement: FieldBoundary { field: "Xn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xn_1_poweroftwo_0_bac00020() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xn_1_poweroftwo_0_bac00020()
+ {
     // Encoding: 0xBAC00020
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags field Xn = 1 (PowerOfTwo)
     // Fields: Xd=0, Xn=1, Xm=0
@@ -2461,7 +3139,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2469,7 +3152,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
 /// Requirement: FieldBoundary { field: "Xn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xn_30_poweroftwominusone_0_bac003c0() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xn_30_poweroftwominusone_0_bac003c0()
+ {
     // Encoding: 0xBAC003C0
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags field Xn = 30 (PowerOfTwoMinusOne)
     // Fields: Xn=30, Xm=0, Xd=0
@@ -2477,7 +3161,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2485,7 +3174,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
 /// Requirement: FieldBoundary { field: "Xn", value: 31, boundary: Max }
 /// register index 31 (SP - stack pointer)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xn_31_max_0_bac003e0() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xn_31_max_0_bac003e0()
+ {
     // Encoding: 0xBAC003E0
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags field Xn = 31 (Max)
     // Fields: Xn=31, Xd=0, Xm=0
@@ -2493,7 +3183,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2501,7 +3196,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
 /// Requirement: FieldBoundary { field: "Xd", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xd_0_min_0_bac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xd_0_min_0_bac00000()
+ {
     // Encoding: 0xBAC00000
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags field Xd = 0 (Min)
     // Fields: Xn=0, Xm=0, Xd=0
@@ -2509,7 +3205,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2517,7 +3218,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
 /// Requirement: FieldBoundary { field: "Xd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xd_1_poweroftwo_0_bac00001() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xd_1_poweroftwo_0_bac00001()
+ {
     // Encoding: 0xBAC00001
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags field Xd = 1 (PowerOfTwo)
     // Fields: Xm=0, Xn=0, Xd=1
@@ -2525,7 +3227,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2533,7 +3240,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
 /// Requirement: FieldBoundary { field: "Xd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xd_30_poweroftwominusone_0_bac0001e() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xd_30_poweroftwominusone_0_bac0001e()
+ {
     // Encoding: 0xBAC0001E
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags field Xd = 30 (PowerOfTwoMinusOne)
     // Fields: Xn=0, Xm=0, Xd=30
@@ -2541,7 +3249,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2549,7 +3262,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
 /// Requirement: FieldBoundary { field: "Xd", value: 31, boundary: Max }
 /// register index 31 (special)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xd_31_max_0_bac0001f() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field_xd_31_max_0_bac0001f()
+ {
     // Encoding: 0xBAC0001F
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags field Xd = 31 (Max)
     // Fields: Xn=0, Xd=31, Xm=0
@@ -2557,7 +3271,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_field
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2573,7 +3292,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2589,7 +3313,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2605,7 +3334,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2621,7 +3355,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2637,7 +3376,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2653,7 +3397,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2669,7 +3418,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2685,7 +3439,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2701,7 +3460,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2717,7 +3481,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2733,7 +3502,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2749,7 +3523,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2765,7 +3544,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2781,7 +3565,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2797,7 +3586,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2813,7 +3607,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2829,7 +3628,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2845,7 +3649,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2853,7 +3662,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_combo
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_special_xn_31_stack_pointer_sp_may_require_alignment_0_bac003e0() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_special_xn_31_stack_pointer_sp_may_require_alignment_0_bac003e0()
+ {
     // Encoding: 0xBAC003E0
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags special value Xn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Xd=0, Xn=31, Xm=0
@@ -2861,7 +3671,12 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_speci
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags
@@ -2899,7 +3714,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_sp_xn
 /// Requirement: FlagComputation { flag: N, scenario: ZeroResult }
 /// 0 + 0 = 0 (Z=1)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_zeroresult_0_bac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_zeroresult_0_bac00000()
+ {
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags flag computation: ZeroResult
     // Encoding: 0xBAC00000
     let mut cpu = create_test_cpu();
@@ -2920,7 +3736,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags
 /// Requirement: FlagComputation { flag: N, scenario: ZeroResult }
 /// 1 + (-1) = 0 (Z=1, C=1)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_zeroresult_1_bac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_zeroresult_1_bac00000()
+ {
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags flag computation: ZeroResult
     // Encoding: 0xBAC00000
     let mut cpu = create_test_cpu();
@@ -2941,7 +3758,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags
 /// Requirement: FlagComputation { flag: N, scenario: NegativeResult }
 /// negative value (N=1)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_negativeresult_2_bac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_negativeresult_2_bac00000()
+ {
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags flag computation: NegativeResult
     // Encoding: 0xBAC00000
     let mut cpu = create_test_cpu();
@@ -2962,7 +3780,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags
 /// Requirement: FlagComputation { flag: N, scenario: UnsignedOverflow }
 /// max + 1 = 0 (C=1, Z=1)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_unsignedoverflow_3_bac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_unsignedoverflow_3_bac00000()
+ {
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags flag computation: UnsignedOverflow
     // Encoding: 0xBAC00000
     let mut cpu = create_test_cpu();
@@ -2983,7 +3802,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags
 /// Requirement: FlagComputation { flag: N, scenario: UnsignedOverflow }
 /// max + 2 = 1 (C=1)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_unsignedoverflow_4_bac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_unsignedoverflow_4_bac00000()
+ {
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags flag computation: UnsignedOverflow
     // Encoding: 0xBAC00000
     let mut cpu = create_test_cpu();
@@ -3004,7 +3824,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags
 /// Requirement: FlagComputation { flag: N, scenario: SignedOverflow }
 /// max_signed + 1 = min_signed (V=1, N=1)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_signedoverflow_5_bac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_signedoverflow_5_bac00000()
+ {
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags flag computation: SignedOverflow
     // Encoding: 0xBAC00000
     let mut cpu = create_test_cpu();
@@ -3025,7 +3846,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags
 /// Requirement: FlagComputation { flag: N, scenario: SignedOverflow }
 /// min_signed + (-1) = max_signed (V=1)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_signedoverflow_6_bac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_signedoverflow_6_bac00000()
+ {
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags flag computation: SignedOverflow
     // Encoding: 0xBAC00000
     let mut cpu = create_test_cpu();
@@ -3046,7 +3868,8 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags
 /// Requirement: FlagComputation { flag: N, scenario: PositiveResult }
 /// 100 + 50 = 150 (no flags)
 #[test]
-fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_positiveresult_7_bac00000() {
+fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags_positiveresult_7_bac00000()
+ {
     // Test aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags flag computation: PositiveResult
     // Encoding: 0xBAC00000
     let mut cpu = create_test_cpu();
@@ -3061,4 +3884,3 @@ fn test_aarch64_integer_arithmetic_pointer_mcsubtracttaggedaddresssetflags_flags
     assert_eq!(cpu.get_pstate().c, false, "C should be false");
     assert_eq!(cpu.get_pstate().v, false, "V should be false");
 }
-

@@ -35,11 +35,11 @@ use rax::cpu::{Registers, VCpu};
 fn test_div_al_basic() {
     let code = [
         0xf6, 0xf3, // DIV BL (F6 /6, ModRM=11_110_011)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 100; // AX = 100 (dividend)
-    regs.rbx = 10;  // BL = 10 (divisor)
+    regs.rbx = 10; // BL = 10 (divisor)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -52,7 +52,7 @@ fn test_div_al_with_remainder() {
     let code = [0xf6, 0xf3, 0xf4]; // DIV BL
     let mut regs = Registers::default();
     regs.rax = 107; // AX = 107
-    regs.rbx = 10;  // BL = 10
+    regs.rbx = 10; // BL = 10
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -65,7 +65,7 @@ fn test_div_al_by_one() {
     let code = [0xf6, 0xf3, 0xf4]; // DIV BL
     let mut regs = Registers::default();
     regs.rax = 255; // AX = 255
-    regs.rbx = 1;   // BL = 1
+    regs.rbx = 1; // BL = 1
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -78,7 +78,7 @@ fn test_div_al_dividend_less_than_divisor() {
     // When dividend < divisor: quotient = 0, remainder = dividend
     let code = [0xf6, 0xf3, 0xf4]; // DIV BL
     let mut regs = Registers::default();
-    regs.rax = 5;  // AX = 5
+    regs.rax = 5; // AX = 5
     regs.rbx = 10; // BL = 10
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -92,7 +92,7 @@ fn test_div_al_exact_division() {
     let code = [0xf6, 0xf3, 0xf4]; // DIV BL
     let mut regs = Registers::default();
     regs.rax = 200; // AX = 200
-    regs.rbx = 20;  // BL = 20
+    regs.rbx = 20; // BL = 20
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -107,10 +107,13 @@ fn test_div_al_max_dividend() {
     let code = [0xf6, 0xf3, 0xf4]; // DIV BL
     let mut regs = Registers::default();
     regs.rax = 0xFFFF; // AX = 65535
-    regs.rbx = 0xFF;   // BL = 255
+    regs.rbx = 0xFF; // BL = 255
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu);
-    assert!(regs.is_err(), "DIV should fault when quotient overflows 8-bit");
+    assert!(
+        regs.is_err(),
+        "DIV should fault when quotient overflows 8-bit"
+    );
 }
 
 #[test]
@@ -119,7 +122,7 @@ fn test_div_al_small_values() {
     let code = [0xf6, 0xf3, 0xf4]; // DIV BL
     let mut regs = Registers::default();
     regs.rax = 15; // AX = 15
-    regs.rbx = 4;  // BL = 4
+    regs.rbx = 4; // BL = 4
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -132,7 +135,7 @@ fn test_div_cl_register() {
     let code = [0xf6, 0xf1, 0xf4]; // DIV CL
     let mut regs = Registers::default();
     regs.rax = 100; // AX = 100
-    regs.rcx = 7;   // CL = 7
+    regs.rcx = 7; // CL = 7
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -151,7 +154,11 @@ fn test_div_preserves_upper_bytes() {
 
     assert_eq!(regs.rax & 0xFF, 10, "AL = quotient");
     assert_eq!((regs.rax >> 8) & 0xFF, 0, "AH = remainder");
-    assert_eq!(regs.rax & !0xFFFF, 0xDEADBEEF_CAFE0000, "Upper bytes preserved");
+    assert_eq!(
+        regs.rax & !0xFFFF,
+        0xDEADBEEF_CAFE0000,
+        "Upper bytes preserved"
+    );
 }
 
 // ============================================================================
@@ -166,8 +173,8 @@ fn test_div_ax_basic() {
     ];
     let mut regs = Registers::default();
     regs.rax = 10000; // AX = 10000 (low word of dividend)
-    regs.rdx = 0;     // DX = 0 (high word of dividend)
-    regs.rbx = 100;   // BX = 100 (divisor)
+    regs.rdx = 0; // DX = 0 (high word of dividend)
+    regs.rbx = 100; // BX = 100 (divisor)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -260,8 +267,8 @@ fn test_div_eax_basic() {
     ];
     let mut regs = Registers::default();
     regs.rax = 1000000; // EAX = 1000000 (low dword of dividend)
-    regs.rdx = 0;       // EDX = 0 (high dword of dividend)
-    regs.rbx = 1000;    // EBX = 1000 (divisor)
+    regs.rdx = 0; // EDX = 0 (high dword of dividend)
+    regs.rbx = 1000; // EBX = 1000 (divisor)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -355,8 +362,8 @@ fn test_div_rax_basic() {
     ];
     let mut regs = Registers::default();
     regs.rax = 1000000000000; // RAX (low qword)
-    regs.rdx = 0;             // RDX (high qword)
-    regs.rbx = 1000000;       // RBX (divisor)
+    regs.rdx = 0; // RDX (high qword)
+    regs.rbx = 1000000; // RBX (divisor)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -450,7 +457,7 @@ fn test_div_r8b_extended_register() {
     ];
     let mut regs = Registers::default();
     regs.rax = 200; // AX = 200
-    regs.r8 = 15;   // R8B = 15
+    regs.r8 = 15; // R8B = 15
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 

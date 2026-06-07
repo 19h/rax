@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm, read_mem_at_u64};
+use crate::common::{read_mem_at_u64, run_until_hlt, setup_vm};
 use rax::cpu::Registers;
 
 // Comprehensive tests for PUSH with immediate operands
@@ -149,9 +149,17 @@ fn test_push_imm8_boundary_values() {
 
     assert_eq!(regs.rsp, 0x1000 - 32, "Four values pushed");
     assert_eq!(read_mem_at_u64(&vm, 0x1000 - 8), 127, "First push");
-    assert_eq!(read_mem_at_u64(&vm, 0x1000 - 16), 0xFFFFFFFFFFFFFF80, "Second push");
+    assert_eq!(
+        read_mem_at_u64(&vm, 0x1000 - 16),
+        0xFFFFFFFFFFFFFF80,
+        "Second push"
+    );
     assert_eq!(read_mem_at_u64(&vm, 0x1000 - 24), 0, "Third push");
-    assert_eq!(read_mem_at_u64(&vm, 0x1000 - 32), 0xFFFFFFFFFFFFFFFF, "Fourth push");
+    assert_eq!(
+        read_mem_at_u64(&vm, 0x1000 - 32),
+        0xFFFFFFFFFFFFFFFF,
+        "Fourth push"
+    );
 }
 
 // ============================================================================
@@ -543,11 +551,9 @@ fn test_push_imm_at_low_stack() {
 #[test]
 fn test_push_imm_rapid_sequence() {
     let code = [
-        0x6a, 0x00, 0x6a, 0x01, 0x6a, 0x02, 0x6a, 0x03,
-        0x6a, 0x04, 0x6a, 0x05, 0x6a, 0x06, 0x6a, 0x07,
-        0x6a, 0x08, 0x6a, 0x09, 0x6a, 0x0a, 0x6a, 0x0b,
-        0x6a, 0x0c, 0x6a, 0x0d, 0x6a, 0x0e, 0x6a, 0x0f,
-        0xf4, // HLT
+        0x6a, 0x00, 0x6a, 0x01, 0x6a, 0x02, 0x6a, 0x03, 0x6a, 0x04, 0x6a, 0x05, 0x6a, 0x06, 0x6a,
+        0x07, 0x6a, 0x08, 0x6a, 0x09, 0x6a, 0x0a, 0x6a, 0x0b, 0x6a, 0x0c, 0x6a, 0x0d, 0x6a, 0x0e,
+        0x6a, 0x0f, 0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x2000;
@@ -592,7 +598,10 @@ fn test_push_imm32_inverse_alternating() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let val = read_mem_at_u64(&vm, 0x0FF8);
-    assert_eq!(val, 0xFFFFFFFFAAAAAAAA, "Inverse alternating (sign-extended)");
+    assert_eq!(
+        val, 0xFFFFFFFFAAAAAAAA,
+        "Inverse alternating (sign-extended)"
+    );
 }
 
 #[test]

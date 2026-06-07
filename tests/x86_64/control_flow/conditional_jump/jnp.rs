@@ -1,4 +1,4 @@
-use crate::common::{setup_vm_legacy as setup_vm, run_until_hlt_legacy as run_until_hlt, VM};
+use crate::common::{VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm};
 
 // JNP/JPO - Jump if Not Parity / Jump if Parity Odd
 // Jumps when PF=0 (odd number of 1 bits in low byte of result)
@@ -106,7 +106,8 @@ fn test_jnp_max_backward_offset() {
     code.extend([
         0x48, 0xc7, 0xc0, 0x07, 0x00, 0x00, 0x00, // MOV RAX, 7 (odd parity) at offset 126
         0x48, 0x85, 0xc0, // TEST RAX, RAX (sets PF=0) at offset 133
-        0x7b, 0x80, // JNP -128 (max negative offset) at offset 136, jumps to offset 138-128=10
+        0x7b,
+        0x80, // JNP -128 (max negative offset) at offset 136, jumps to offset 138-128=10
     ]);
 
     let vm = setup_vm(&code);

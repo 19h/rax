@@ -1,5 +1,5 @@
-use crate::common::{run_until_hlt, setup_vm};
 use crate::common::*;
+use crate::common::{run_until_hlt, setup_vm};
 use rax::cpu::Registers;
 
 // NOT — One's Complement Negation
@@ -386,7 +386,10 @@ fn test_not_not_rax() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x123456789ABCDEF0, "Double NOT RAX returns original");
+    assert_eq!(
+        regs.rax, 0x123456789ABCDEF0,
+        "Double NOT RAX returns original"
+    );
 }
 
 // ============================================================================
@@ -403,7 +406,11 @@ fn test_not_preserves_flags() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rflags & 0x8D5, initial_flags & 0x8D5, "NOT preserves all flags");
+    assert_eq!(
+        regs.rflags & 0x8D5,
+        initial_flags & 0x8D5,
+        "NOT preserves all flags"
+    );
 }
 
 // ============================================================================
@@ -431,7 +438,10 @@ fn test_strict_not_r32_zero_extends() {
     regs.rax = 0xFFFF_FFFF_0000_FFFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000_0000_FFFF_0000, "NOT EAX complements low32 and zero-extends");
+    assert_eq!(
+        regs.rax, 0x0000_0000_FFFF_0000,
+        "NOT EAX complements low32 and zero-extends"
+    );
 }
 
 #[test]
@@ -442,7 +452,10 @@ fn test_strict_not_r16_preserves_upper() {
     regs.rax = 0x1234_5678_9ABC_00FF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x1234_5678_9ABC_FF00, "NOT AX complements only low 16");
+    assert_eq!(
+        regs.rax, 0x1234_5678_9ABC_FF00,
+        "NOT AX complements only low 16"
+    );
 }
 
 #[test]
@@ -454,5 +467,9 @@ fn test_strict_not_mem64() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     write_mem_at_u64(&mem, DATA_ADDR, 0x0000_FFFF_0000_FFFF);
     let _ = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_at_u64(&mem, DATA_ADDR), 0xFFFF_0000_FFFF_0000, "NOT memory operand");
+    assert_eq!(
+        read_mem_at_u64(&mem, DATA_ADDR),
+        0xFFFF_0000_FFFF_0000,
+        "NOT memory operand"
+    );
 }

@@ -25,7 +25,12 @@ fn test_aarch64_vector_shift_right_sisd_field_u_0_min_400_5f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -41,7 +46,12 @@ fn test_aarch64_vector_shift_right_sisd_field_u_1_max_400_7f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -57,7 +67,12 @@ fn test_aarch64_vector_shift_right_sisd_field_immh_0_zero_400_5f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -73,7 +88,12 @@ fn test_aarch64_vector_shift_right_sisd_field_immh_1_poweroftwo_400_5f080400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -89,7 +109,12 @@ fn test_aarch64_vector_shift_right_sisd_field_immh_3_poweroftwominusone_400_5f18
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -105,7 +130,12 @@ fn test_aarch64_vector_shift_right_sisd_field_immh_4_poweroftwo_400_5f200400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -121,7 +151,12 @@ fn test_aarch64_vector_shift_right_sisd_field_immh_7_poweroftwominusone_400_5f38
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -137,7 +172,12 @@ fn test_aarch64_vector_shift_right_sisd_field_immh_8_poweroftwo_400_5f400400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -153,7 +193,12 @@ fn test_aarch64_vector_shift_right_sisd_field_immh_15_max_400_5f780400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -169,7 +214,12 @@ fn test_aarch64_vector_shift_right_sisd_field_immb_0_zero_400_5f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -185,7 +235,12 @@ fn test_aarch64_vector_shift_right_sisd_field_immb_1_poweroftwo_400_5f010400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -201,7 +256,12 @@ fn test_aarch64_vector_shift_right_sisd_field_immb_3_poweroftwominusone_400_5f03
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -217,7 +277,12 @@ fn test_aarch64_vector_shift_right_sisd_field_immb_7_max_400_5f070400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -233,7 +298,12 @@ fn test_aarch64_vector_shift_right_sisd_field_o1_0_min_400_5f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -249,7 +319,12 @@ fn test_aarch64_vector_shift_right_sisd_field_o1_1_max_400_5f002400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -265,7 +340,12 @@ fn test_aarch64_vector_shift_right_sisd_field_o0_0_min_400_5f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -281,7 +361,12 @@ fn test_aarch64_vector_shift_right_sisd_field_o0_1_max_400_5f001400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -297,7 +382,12 @@ fn test_aarch64_vector_shift_right_sisd_field_rn_0_min_400_5f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -313,7 +403,12 @@ fn test_aarch64_vector_shift_right_sisd_field_rn_1_poweroftwo_400_5f000420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -329,7 +424,12 @@ fn test_aarch64_vector_shift_right_sisd_field_rn_30_poweroftwominusone_400_5f000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -345,7 +445,12 @@ fn test_aarch64_vector_shift_right_sisd_field_rn_31_max_400_5f0007e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -361,7 +466,12 @@ fn test_aarch64_vector_shift_right_sisd_field_rd_0_min_400_5f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -377,7 +487,12 @@ fn test_aarch64_vector_shift_right_sisd_field_rd_1_poweroftwo_400_5f000401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -393,7 +508,12 @@ fn test_aarch64_vector_shift_right_sisd_field_rd_30_poweroftwominusone_400_5f000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -409,7 +529,12 @@ fn test_aarch64_vector_shift_right_sisd_field_rd_31_max_400_5f00041f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -425,7 +550,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_0_400_5f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -441,7 +571,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_1_400_7f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -457,7 +592,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_2_400_5f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -473,7 +613,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_3_400_5f080400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -489,7 +634,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_4_400_5f180400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -505,7 +655,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_5_400_5f200400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -521,7 +676,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_6_400_5f380400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -537,7 +697,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_7_400_5f400400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -553,7 +718,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_8_400_5f780400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -569,7 +739,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_9_400_5f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -585,7 +760,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_10_400_5f010400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -601,7 +781,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_11_400_5f030400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -617,7 +802,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_12_400_5f070400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -633,7 +823,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_13_400_5f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -649,7 +844,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_14_400_5f002400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -665,7 +865,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_15_400_5f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -681,7 +886,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_16_400_5f001400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -697,7 +907,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_17_400_5f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -713,7 +928,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_18_400_5f000420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -729,7 +949,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_19_400_5f0007c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -745,7 +970,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_20_400_5f0007e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -761,7 +991,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_21_400_5f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -777,7 +1012,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_22_400_5f000401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -793,7 +1033,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_23_400_5f00041e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -809,7 +1054,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_24_400_5f00041f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -825,7 +1075,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_25_400_5f000421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -841,7 +1096,12 @@ fn test_aarch64_vector_shift_right_sisd_combo_26_400_5f0007ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -849,7 +1109,8 @@ fn test_aarch64_vector_shift_right_sisd_combo_26_400_5f0007ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_right_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_1024_5f0907e0() {
+fn test_aarch64_vector_shift_right_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_1024_5f0907e0()
+ {
     // Encoding: 0x5F0907E0
     // Test aarch64_vector_shift_right_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: U=0, immh=1, o0=0, Rn=31, Rd=0, immb=1, o1=0
@@ -857,7 +1118,12 @@ fn test_aarch64_vector_shift_right_sisd_special_rn_31_stack_pointer_sp_may_requi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -865,7 +1131,8 @@ fn test_aarch64_vector_shift_right_sisd_special_rn_31_stack_pointer_sp_may_requi
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_right_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_5f09041f() {
+fn test_aarch64_vector_shift_right_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_5f09041f()
+ {
     // Encoding: 0x5F09041F
     // Test aarch64_vector_shift_right_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: o0=0, Rn=0, o1=0, Rd=31, U=0, immh=1, immb=1
@@ -873,7 +1140,12 @@ fn test_aarch64_vector_shift_right_sisd_special_rd_31_zero_register_xzr_wzr_read
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -889,7 +1161,12 @@ fn test_aarch64_vector_shift_right_simd_field_q_0_min_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -905,7 +1182,12 @@ fn test_aarch64_vector_shift_right_simd_field_q_1_max_400_4f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -921,7 +1203,12 @@ fn test_aarch64_vector_shift_right_simd_field_u_0_min_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -937,7 +1224,12 @@ fn test_aarch64_vector_shift_right_simd_field_u_1_max_400_2f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -953,7 +1245,12 @@ fn test_aarch64_vector_shift_right_simd_field_immh_0_zero_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -969,7 +1266,12 @@ fn test_aarch64_vector_shift_right_simd_field_immh_1_poweroftwo_400_0f080400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -985,7 +1287,12 @@ fn test_aarch64_vector_shift_right_simd_field_immh_3_poweroftwominusone_400_0f18
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1001,7 +1308,12 @@ fn test_aarch64_vector_shift_right_simd_field_immh_4_poweroftwo_400_0f200400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1017,7 +1329,12 @@ fn test_aarch64_vector_shift_right_simd_field_immh_7_poweroftwominusone_400_0f38
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1033,7 +1350,12 @@ fn test_aarch64_vector_shift_right_simd_field_immh_8_poweroftwo_400_0f400400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1049,7 +1371,12 @@ fn test_aarch64_vector_shift_right_simd_field_immh_15_max_400_0f780400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1065,7 +1392,12 @@ fn test_aarch64_vector_shift_right_simd_field_immb_0_zero_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1081,7 +1413,12 @@ fn test_aarch64_vector_shift_right_simd_field_immb_1_poweroftwo_400_0f010400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1097,7 +1434,12 @@ fn test_aarch64_vector_shift_right_simd_field_immb_3_poweroftwominusone_400_0f03
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1113,7 +1455,12 @@ fn test_aarch64_vector_shift_right_simd_field_immb_7_max_400_0f070400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1129,7 +1476,12 @@ fn test_aarch64_vector_shift_right_simd_field_o1_0_min_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1145,7 +1497,12 @@ fn test_aarch64_vector_shift_right_simd_field_o1_1_max_400_0f002400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1161,7 +1518,12 @@ fn test_aarch64_vector_shift_right_simd_field_o0_0_min_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1177,7 +1539,12 @@ fn test_aarch64_vector_shift_right_simd_field_o0_1_max_400_0f001400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1193,7 +1560,12 @@ fn test_aarch64_vector_shift_right_simd_field_rn_0_min_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1209,7 +1581,12 @@ fn test_aarch64_vector_shift_right_simd_field_rn_1_poweroftwo_400_0f000420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1225,7 +1602,12 @@ fn test_aarch64_vector_shift_right_simd_field_rn_30_poweroftwominusone_400_0f000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1241,7 +1623,12 @@ fn test_aarch64_vector_shift_right_simd_field_rn_31_max_400_0f0007e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1257,7 +1644,12 @@ fn test_aarch64_vector_shift_right_simd_field_rd_0_min_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1273,7 +1665,12 @@ fn test_aarch64_vector_shift_right_simd_field_rd_1_poweroftwo_400_0f000401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1289,7 +1686,12 @@ fn test_aarch64_vector_shift_right_simd_field_rd_30_poweroftwominusone_400_0f000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1305,7 +1707,12 @@ fn test_aarch64_vector_shift_right_simd_field_rd_31_max_400_0f00041f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1321,7 +1728,12 @@ fn test_aarch64_vector_shift_right_simd_combo_0_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1337,7 +1749,12 @@ fn test_aarch64_vector_shift_right_simd_combo_1_400_4f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1353,7 +1770,12 @@ fn test_aarch64_vector_shift_right_simd_combo_2_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1369,7 +1791,12 @@ fn test_aarch64_vector_shift_right_simd_combo_3_400_2f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1385,7 +1812,12 @@ fn test_aarch64_vector_shift_right_simd_combo_4_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1401,7 +1833,12 @@ fn test_aarch64_vector_shift_right_simd_combo_5_400_0f080400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1417,7 +1854,12 @@ fn test_aarch64_vector_shift_right_simd_combo_6_400_0f180400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1433,7 +1875,12 @@ fn test_aarch64_vector_shift_right_simd_combo_7_400_0f200400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1449,7 +1896,12 @@ fn test_aarch64_vector_shift_right_simd_combo_8_400_0f380400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1465,7 +1917,12 @@ fn test_aarch64_vector_shift_right_simd_combo_9_400_0f400400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1481,7 +1938,12 @@ fn test_aarch64_vector_shift_right_simd_combo_10_400_0f780400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1497,7 +1959,12 @@ fn test_aarch64_vector_shift_right_simd_combo_11_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1513,7 +1980,12 @@ fn test_aarch64_vector_shift_right_simd_combo_12_400_0f010400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1529,7 +2001,12 @@ fn test_aarch64_vector_shift_right_simd_combo_13_400_0f030400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1545,7 +2022,12 @@ fn test_aarch64_vector_shift_right_simd_combo_14_400_0f070400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1561,7 +2043,12 @@ fn test_aarch64_vector_shift_right_simd_combo_15_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1577,7 +2064,12 @@ fn test_aarch64_vector_shift_right_simd_combo_16_400_0f002400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1593,7 +2085,12 @@ fn test_aarch64_vector_shift_right_simd_combo_17_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1609,7 +2106,12 @@ fn test_aarch64_vector_shift_right_simd_combo_18_400_0f001400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1625,7 +2127,12 @@ fn test_aarch64_vector_shift_right_simd_combo_19_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1641,7 +2148,12 @@ fn test_aarch64_vector_shift_right_simd_combo_20_400_0f000420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1657,7 +2169,12 @@ fn test_aarch64_vector_shift_right_simd_combo_21_400_0f0007c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1673,7 +2190,12 @@ fn test_aarch64_vector_shift_right_simd_combo_22_400_0f0007e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1689,7 +2211,12 @@ fn test_aarch64_vector_shift_right_simd_combo_23_400_0f000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1705,7 +2232,12 @@ fn test_aarch64_vector_shift_right_simd_combo_24_400_0f000401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1721,7 +2253,12 @@ fn test_aarch64_vector_shift_right_simd_combo_25_400_0f00041e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1737,7 +2274,12 @@ fn test_aarch64_vector_shift_right_simd_combo_26_400_0f00041f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1753,7 +2295,12 @@ fn test_aarch64_vector_shift_right_simd_combo_27_400_0f000421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1769,7 +2316,12 @@ fn test_aarch64_vector_shift_right_simd_combo_28_400_0f0007ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1785,7 +2337,12 @@ fn test_aarch64_vector_shift_right_simd_special_q_0_size_variant_0_1024_0f090400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1801,7 +2358,12 @@ fn test_aarch64_vector_shift_right_simd_special_q_1_size_variant_1_1024_4f090400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1809,7 +2371,8 @@ fn test_aarch64_vector_shift_right_simd_special_q_1_size_variant_1_1024_4f090400
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_right_simd_special_rn_31_stack_pointer_sp_may_require_alignment_1024_0f0907e0() {
+fn test_aarch64_vector_shift_right_simd_special_rn_31_stack_pointer_sp_may_require_alignment_1024_0f0907e0()
+ {
     // Encoding: 0x0F0907E0
     // Test aarch64_vector_shift_right_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: immh=1, U=0, immb=1, Rd=0, Q=0, o0=0, Rn=31, o1=0
@@ -1817,7 +2380,12 @@ fn test_aarch64_vector_shift_right_simd_special_rn_31_stack_pointer_sp_may_requi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_simd
@@ -1825,7 +2393,8 @@ fn test_aarch64_vector_shift_right_simd_special_rn_31_stack_pointer_sp_may_requi
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_right_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_0f09041f() {
+fn test_aarch64_vector_shift_right_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_0f09041f()
+ {
     // Encoding: 0x0F09041F
     // Test aarch64_vector_shift_right_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: immh=1, Rn=0, Q=0, immb=1, o1=0, Rd=31, U=0, o0=0
@@ -1833,7 +2402,12 @@ fn test_aarch64_vector_shift_right_simd_special_rd_31_zero_register_xzr_wzr_read
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_sisd
@@ -1945,7 +2519,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immh_0_zero_8400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -1961,7 +2540,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immh_1_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -1969,7 +2553,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immh_1_poweroftw
 /// Requirement: FieldBoundary { field: "immh", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immh_3_poweroftwominusone_8400_7f188400() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immh_3_poweroftwominusone_8400_7f188400()
+ {
     // Encoding: 0x7F188400
     // Test aarch64_vector_shift_right_narrow_nonuniform_sisd field immh = 3 (PowerOfTwoMinusOne)
     // Fields: immb=0, immh=3, op=0, Rn=0, Rd=0
@@ -1977,7 +2562,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immh_3_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -1993,7 +2583,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immh_4_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2001,7 +2596,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immh_4_poweroftw
 /// Requirement: FieldBoundary { field: "immh", value: 7, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (7)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immh_7_poweroftwominusone_8400_7f388400() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immh_7_poweroftwominusone_8400_7f388400()
+ {
     // Encoding: 0x7F388400
     // Test aarch64_vector_shift_right_narrow_nonuniform_sisd field immh = 7 (PowerOfTwoMinusOne)
     // Fields: op=0, immb=0, Rn=0, immh=7, Rd=0
@@ -2009,7 +2605,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immh_7_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2025,7 +2626,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immh_8_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2041,7 +2647,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immh_15_max_8400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2057,7 +2668,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immb_0_zero_8400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2073,7 +2689,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immb_1_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2081,7 +2702,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immb_1_poweroftw
 /// Requirement: FieldBoundary { field: "immb", value: 3, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (3)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immb_3_poweroftwominusone_8400_7f038400() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immb_3_poweroftwominusone_8400_7f038400()
+ {
     // Encoding: 0x7F038400
     // Test aarch64_vector_shift_right_narrow_nonuniform_sisd field immb = 3 (PowerOfTwoMinusOne)
     // Fields: op=0, Rn=0, immb=3, Rd=0, immh=0
@@ -2089,7 +2711,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immb_3_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2105,7 +2732,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_immb_7_max_8400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2121,7 +2753,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_op_0_min_8400_7f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2137,7 +2774,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_op_1_max_8400_7f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2153,7 +2795,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_rn_0_min_8400_7f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2169,7 +2816,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_rn_1_poweroftwo_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2177,7 +2829,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_rn_1_poweroftwo_
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_rn_30_poweroftwominusone_8400_7f0087c0() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_rn_30_poweroftwominusone_8400_7f0087c0()
+ {
     // Encoding: 0x7F0087C0
     // Test aarch64_vector_shift_right_narrow_nonuniform_sisd field Rn = 30 (PowerOfTwoMinusOne)
     // Fields: Rn=30, op=0, immb=0, immh=0, Rd=0
@@ -2185,7 +2838,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_rn_30_poweroftwo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2201,7 +2859,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_rn_31_max_8400_7
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2217,7 +2880,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_rd_0_min_8400_7f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2233,7 +2901,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_rd_1_poweroftwo_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2241,7 +2914,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_rd_1_poweroftwo_
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_rd_30_poweroftwominusone_8400_7f00841e() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_rd_30_poweroftwominusone_8400_7f00841e()
+ {
     // Encoding: 0x7F00841E
     // Test aarch64_vector_shift_right_narrow_nonuniform_sisd field Rd = 30 (PowerOfTwoMinusOne)
     // Fields: Rd=30, Rn=0, immh=0, immb=0, op=0
@@ -2249,7 +2923,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_rd_30_poweroftwo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2265,7 +2944,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_field_rd_31_max_8400_7
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2281,7 +2965,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_0_8400_7f008400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2297,7 +2986,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_1_8400_7f088400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2313,7 +3007,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_2_8400_7f188400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2329,7 +3028,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_3_8400_7f208400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2345,7 +3049,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_4_8400_7f388400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2361,7 +3070,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_5_8400_7f408400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2377,7 +3091,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_6_8400_7f788400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2393,7 +3112,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_7_8400_7f008400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2409,7 +3133,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_8_8400_7f018400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2425,7 +3154,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_9_8400_7f038400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2441,7 +3175,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_10_8400_7f078400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2457,7 +3196,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_11_8400_7f008400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2473,7 +3217,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_12_8400_7f008c00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2489,7 +3238,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_13_8400_7f008400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2505,7 +3259,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_14_8400_7f008420
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2521,7 +3280,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_15_8400_7f0087c0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2537,7 +3301,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_16_8400_7f0087e0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2553,7 +3322,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_17_8400_7f008400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2569,7 +3343,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_18_8400_7f008401
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2585,7 +3364,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_19_8400_7f00841e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2601,7 +3385,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_20_8400_7f00841f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2617,7 +3406,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_21_8400_7f008421
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2633,7 +3427,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_22_8400_7f0087ff
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2641,7 +3440,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_combo_22_8400_7f0087ff
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_33792_7f0987e0() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_33792_7f0987e0()
+ {
     // Encoding: 0x7F0987E0
     // Test aarch64_vector_shift_right_narrow_nonuniform_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: op=0, Rd=0, immb=1, immh=1, Rn=31
@@ -2649,7 +3449,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_special_rn_31_stack_po
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -2657,7 +3462,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_special_rn_31_stack_po
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_7f09841f() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_7f09841f()
+ {
     // Encoding: 0x7F09841F
     // Test aarch64_vector_shift_right_narrow_nonuniform_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: immb=1, Rd=31, immh=1, op=0, Rn=0
@@ -2665,7 +3471,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_sisd_special_rd_31_zero_reg
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2681,7 +3492,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_q_0_min_8400_2f0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2697,7 +3513,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_q_1_max_8400_6f0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2713,7 +3534,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immh_0_zero_8400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2729,7 +3555,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immh_1_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2737,7 +3568,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immh_1_poweroftw
 /// Requirement: FieldBoundary { field: "immh", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immh_3_poweroftwominusone_8400_2f188400() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immh_3_poweroftwominusone_8400_2f188400()
+ {
     // Encoding: 0x2F188400
     // Test aarch64_vector_shift_right_narrow_nonuniform_simd field immh = 3 (PowerOfTwoMinusOne)
     // Fields: Rn=0, immb=0, Rd=0, Q=0, op=0, immh=3
@@ -2745,7 +3577,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immh_3_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2761,7 +3598,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immh_4_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2769,7 +3611,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immh_4_poweroftw
 /// Requirement: FieldBoundary { field: "immh", value: 7, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (7)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immh_7_poweroftwominusone_8400_2f388400() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immh_7_poweroftwominusone_8400_2f388400()
+ {
     // Encoding: 0x2F388400
     // Test aarch64_vector_shift_right_narrow_nonuniform_simd field immh = 7 (PowerOfTwoMinusOne)
     // Fields: Q=0, Rn=0, Rd=0, immh=7, immb=0, op=0
@@ -2777,7 +3620,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immh_7_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2793,7 +3641,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immh_8_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2809,7 +3662,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immh_15_max_8400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2825,7 +3683,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immb_0_zero_8400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2841,7 +3704,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immb_1_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2849,7 +3717,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immb_1_poweroftw
 /// Requirement: FieldBoundary { field: "immb", value: 3, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (3)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immb_3_poweroftwominusone_8400_2f038400() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immb_3_poweroftwominusone_8400_2f038400()
+ {
     // Encoding: 0x2F038400
     // Test aarch64_vector_shift_right_narrow_nonuniform_simd field immb = 3 (PowerOfTwoMinusOne)
     // Fields: Q=0, immh=0, Rn=0, Rd=0, op=0, immb=3
@@ -2857,7 +3726,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immb_3_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2873,7 +3747,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_immb_7_max_8400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2889,7 +3768,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_op_0_min_8400_2f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2905,7 +3789,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_op_1_max_8400_2f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2921,7 +3810,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_rn_0_min_8400_2f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2937,7 +3831,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_rn_1_poweroftwo_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2945,7 +3844,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_rn_1_poweroftwo_
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_rn_30_poweroftwominusone_8400_2f0087c0() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_rn_30_poweroftwominusone_8400_2f0087c0()
+ {
     // Encoding: 0x2F0087C0
     // Test aarch64_vector_shift_right_narrow_nonuniform_simd field Rn = 30 (PowerOfTwoMinusOne)
     // Fields: op=0, Q=0, immh=0, Rd=0, Rn=30, immb=0
@@ -2953,7 +3853,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_rn_30_poweroftwo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2969,7 +3874,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_rn_31_max_8400_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -2985,7 +3895,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_rd_0_min_8400_2f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3001,7 +3916,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_rd_1_poweroftwo_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3009,7 +3929,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_rd_1_poweroftwo_
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_rd_30_poweroftwominusone_8400_2f00841e() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_rd_30_poweroftwominusone_8400_2f00841e()
+ {
     // Encoding: 0x2F00841E
     // Test aarch64_vector_shift_right_narrow_nonuniform_simd field Rd = 30 (PowerOfTwoMinusOne)
     // Fields: op=0, immb=0, Q=0, immh=0, Rn=0, Rd=30
@@ -3017,7 +3938,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_rd_30_poweroftwo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3033,7 +3959,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_field_rd_31_max_8400_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3049,7 +3980,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_0_8400_2f008400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3065,7 +4001,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_1_8400_6f008400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3081,7 +4022,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_2_8400_2f008400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3097,7 +4043,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_3_8400_2f088400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3113,7 +4064,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_4_8400_2f188400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3129,7 +4085,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_5_8400_2f208400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3145,7 +4106,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_6_8400_2f388400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3161,7 +4127,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_7_8400_2f408400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3177,7 +4148,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_8_8400_2f788400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3193,7 +4169,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_9_8400_2f008400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3209,7 +4190,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_10_8400_2f018400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3225,7 +4211,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_11_8400_2f038400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3241,7 +4232,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_12_8400_2f078400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3257,7 +4253,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_13_8400_2f008400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3273,7 +4274,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_14_8400_2f008c00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3289,7 +4295,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_15_8400_2f008400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3305,7 +4316,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_16_8400_2f008420
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3321,7 +4337,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_17_8400_2f0087c0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3337,7 +4358,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_18_8400_2f0087e0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3353,7 +4379,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_19_8400_2f008400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3369,7 +4400,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_20_8400_2f008401
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3385,7 +4421,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_21_8400_2f00841e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3401,7 +4442,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_22_8400_2f00841f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3417,7 +4463,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_23_8400_2f008421
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3433,7 +4484,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_24_8400_2f0087ff
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3441,7 +4497,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_combo_24_8400_2f0087ff
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_special_q_0_size_variant_0_33792_2f098400() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_special_q_0_size_variant_0_33792_2f098400()
+ {
     // Encoding: 0x2F098400
     // Test aarch64_vector_shift_right_narrow_nonuniform_simd special value Q = 0 (Size variant 0)
     // Fields: Rn=0, immb=1, Q=0, Rd=0, op=0, immh=1
@@ -3449,7 +4506,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_special_q_0_size_varia
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3457,7 +4519,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_special_q_0_size_varia
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_special_q_1_size_variant_1_33792_6f098400() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_special_q_1_size_variant_1_33792_6f098400()
+ {
     // Encoding: 0x6F098400
     // Test aarch64_vector_shift_right_narrow_nonuniform_simd special value Q = 1 (Size variant 1)
     // Fields: Rd=0, op=0, Rn=0, immb=1, immh=1, Q=1
@@ -3465,7 +4528,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_special_q_1_size_varia
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3473,7 +4541,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_special_q_1_size_varia
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_special_rn_31_stack_pointer_sp_may_require_alignment_33792_2f0987e0() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_special_rn_31_stack_pointer_sp_may_require_alignment_33792_2f0987e0()
+ {
     // Encoding: 0x2F0987E0
     // Test aarch64_vector_shift_right_narrow_nonuniform_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, immh=1, Q=0, op=0, Rn=31, immb=1
@@ -3481,7 +4550,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_special_rn_31_stack_po
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_simd
@@ -3489,7 +4563,8 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_special_rn_31_stack_po
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_2f09841f() {
+fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_2f09841f()
+ {
     // Encoding: 0x2F09841F
     // Test aarch64_vector_shift_right_narrow_nonuniform_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, Rn=0, Q=0, immb=1, op=0, immh=1
@@ -3497,7 +4572,12 @@ fn test_aarch64_vector_shift_right_narrow_nonuniform_simd_special_rd_31_zero_reg
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_nonuniform_sisd
@@ -3579,7 +4659,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_u_0_min_9400_5f0094
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3595,7 +4680,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_u_1_max_9400_7f0094
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3611,7 +4701,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immh_0_zero_9400_5f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3627,7 +4722,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immh_1_poweroftwo_9
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3635,7 +4735,8 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immh_1_poweroftwo_9
 /// Requirement: FieldBoundary { field: "immh", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immh_3_poweroftwominusone_9400_5f189400() {
+fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immh_3_poweroftwominusone_9400_5f189400()
+ {
     // Encoding: 0x5F189400
     // Test aarch64_vector_shift_right_narrow_uniform_sisd field immh = 3 (PowerOfTwoMinusOne)
     // Fields: U=0, Rd=0, op=0, immb=0, immh=3, Rn=0
@@ -3643,7 +4744,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immh_3_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3659,7 +4765,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immh_4_poweroftwo_9
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3667,7 +4778,8 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immh_4_poweroftwo_9
 /// Requirement: FieldBoundary { field: "immh", value: 7, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (7)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immh_7_poweroftwominusone_9400_5f389400() {
+fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immh_7_poweroftwominusone_9400_5f389400()
+ {
     // Encoding: 0x5F389400
     // Test aarch64_vector_shift_right_narrow_uniform_sisd field immh = 7 (PowerOfTwoMinusOne)
     // Fields: immh=7, U=0, op=0, Rn=0, Rd=0, immb=0
@@ -3675,7 +4787,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immh_7_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3691,7 +4808,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immh_8_poweroftwo_9
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3707,7 +4829,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immh_15_max_9400_5f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3723,7 +4850,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immb_0_zero_9400_5f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3739,7 +4871,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immb_1_poweroftwo_9
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3747,7 +4884,8 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immb_1_poweroftwo_9
 /// Requirement: FieldBoundary { field: "immb", value: 3, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (3)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immb_3_poweroftwominusone_9400_5f039400() {
+fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immb_3_poweroftwominusone_9400_5f039400()
+ {
     // Encoding: 0x5F039400
     // Test aarch64_vector_shift_right_narrow_uniform_sisd field immb = 3 (PowerOfTwoMinusOne)
     // Fields: immb=3, Rd=0, op=0, U=0, immh=0, Rn=0
@@ -3755,7 +4893,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immb_3_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3771,7 +4914,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_immb_7_max_9400_5f0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3787,7 +4935,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_op_0_min_9400_5f009
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3803,7 +4956,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_op_1_max_9400_5f009
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3819,7 +4977,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_rn_0_min_9400_5f009
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3835,7 +4998,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_rn_1_poweroftwo_940
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3843,7 +5011,8 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_rn_1_poweroftwo_940
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_rn_30_poweroftwominusone_9400_5f0097c0() {
+fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_rn_30_poweroftwominusone_9400_5f0097c0()
+ {
     // Encoding: 0x5F0097C0
     // Test aarch64_vector_shift_right_narrow_uniform_sisd field Rn = 30 (PowerOfTwoMinusOne)
     // Fields: op=0, immh=0, Rd=0, immb=0, Rn=30, U=0
@@ -3851,7 +5020,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_rn_30_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3867,7 +5041,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_rn_31_max_9400_5f00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3883,7 +5062,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_rd_0_min_9400_5f009
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3899,7 +5083,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_rd_1_poweroftwo_940
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3907,7 +5096,8 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_rd_1_poweroftwo_940
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_rd_30_poweroftwominusone_9400_5f00941e() {
+fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_rd_30_poweroftwominusone_9400_5f00941e()
+ {
     // Encoding: 0x5F00941E
     // Test aarch64_vector_shift_right_narrow_uniform_sisd field Rd = 30 (PowerOfTwoMinusOne)
     // Fields: Rd=30, Rn=0, op=0, immh=0, U=0, immb=0
@@ -3915,7 +5105,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_rd_30_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3931,7 +5126,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_field_rd_31_max_9400_5f00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3947,7 +5147,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_0_9400_5f009400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3963,7 +5168,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_1_9400_7f009400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3979,7 +5189,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_2_9400_5f009400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -3995,7 +5210,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_3_9400_5f089400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4011,7 +5231,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_4_9400_5f189400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4027,7 +5252,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_5_9400_5f209400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4043,7 +5273,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_6_9400_5f389400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4059,7 +5294,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_7_9400_5f409400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4075,7 +5315,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_8_9400_5f789400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4091,7 +5336,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_9_9400_5f009400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4107,7 +5357,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_10_9400_5f019400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4123,7 +5378,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_11_9400_5f039400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4139,7 +5399,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_12_9400_5f079400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4155,7 +5420,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_13_9400_5f009400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4171,7 +5441,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_14_9400_5f009c00() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4187,7 +5462,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_15_9400_5f009400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4203,7 +5483,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_16_9400_5f009420() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4219,7 +5504,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_17_9400_5f0097c0() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4235,7 +5525,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_18_9400_5f0097e0() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4251,7 +5546,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_19_9400_5f009400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4267,7 +5567,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_20_9400_5f009401() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4283,7 +5588,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_21_9400_5f00941e() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4299,7 +5609,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_22_9400_5f00941f() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4315,7 +5630,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_23_9400_5f009421() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4331,7 +5651,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_24_9400_5f0097ff() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4339,7 +5664,8 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_combo_24_9400_5f0097ff() 
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_right_narrow_uniform_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_37888_5f0997e0() {
+fn test_aarch64_vector_shift_right_narrow_uniform_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_37888_5f0997e0()
+ {
     // Encoding: 0x5F0997E0
     // Test aarch64_vector_shift_right_narrow_uniform_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: immh=1, Rd=0, immb=1, Rn=31, U=0, op=0
@@ -4347,7 +5673,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_special_rn_31_stack_point
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -4355,7 +5686,8 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_special_rn_31_stack_point
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_right_narrow_uniform_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_37888_5f09941f() {
+fn test_aarch64_vector_shift_right_narrow_uniform_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_37888_5f09941f()
+ {
     // Encoding: 0x5F09941F
     // Test aarch64_vector_shift_right_narrow_uniform_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: op=0, immh=1, U=0, Rn=0, Rd=31, immb=1
@@ -4363,7 +5695,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_sisd_special_rd_31_zero_regist
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4379,7 +5716,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_q_0_min_9400_0f0094
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4395,7 +5737,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_q_1_max_9400_4f0094
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4411,7 +5758,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_u_0_min_9400_0f0094
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4427,7 +5779,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_u_1_max_9400_2f0094
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4443,7 +5800,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immh_0_zero_9400_0f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4459,7 +5821,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immh_1_poweroftwo_9
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4467,7 +5834,8 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immh_1_poweroftwo_9
 /// Requirement: FieldBoundary { field: "immh", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immh_3_poweroftwominusone_9400_0f189400() {
+fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immh_3_poweroftwominusone_9400_0f189400()
+ {
     // Encoding: 0x0F189400
     // Test aarch64_vector_shift_right_narrow_uniform_simd field immh = 3 (PowerOfTwoMinusOne)
     // Fields: op=0, Q=0, U=0, immh=3, immb=0, Rd=0, Rn=0
@@ -4475,7 +5843,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immh_3_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4491,7 +5864,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immh_4_poweroftwo_9
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4499,7 +5877,8 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immh_4_poweroftwo_9
 /// Requirement: FieldBoundary { field: "immh", value: 7, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (7)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immh_7_poweroftwominusone_9400_0f389400() {
+fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immh_7_poweroftwominusone_9400_0f389400()
+ {
     // Encoding: 0x0F389400
     // Test aarch64_vector_shift_right_narrow_uniform_simd field immh = 7 (PowerOfTwoMinusOne)
     // Fields: immh=7, op=0, immb=0, Rn=0, Rd=0, Q=0, U=0
@@ -4507,7 +5886,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immh_7_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4523,7 +5907,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immh_8_poweroftwo_9
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4539,7 +5928,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immh_15_max_9400_0f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4555,7 +5949,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immb_0_zero_9400_0f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4571,7 +5970,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immb_1_poweroftwo_9
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4579,7 +5983,8 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immb_1_poweroftwo_9
 /// Requirement: FieldBoundary { field: "immb", value: 3, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (3)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immb_3_poweroftwominusone_9400_0f039400() {
+fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immb_3_poweroftwominusone_9400_0f039400()
+ {
     // Encoding: 0x0F039400
     // Test aarch64_vector_shift_right_narrow_uniform_simd field immb = 3 (PowerOfTwoMinusOne)
     // Fields: immh=0, Rd=0, Q=0, immb=3, op=0, U=0, Rn=0
@@ -4587,7 +5992,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immb_3_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4603,7 +6013,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_immb_7_max_9400_0f0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4619,7 +6034,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_op_0_min_9400_0f009
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4635,7 +6055,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_op_1_max_9400_0f009
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4651,7 +6076,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_rn_0_min_9400_0f009
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4667,7 +6097,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_rn_1_poweroftwo_940
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4675,7 +6110,8 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_rn_1_poweroftwo_940
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_rn_30_poweroftwominusone_9400_0f0097c0() {
+fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_rn_30_poweroftwominusone_9400_0f0097c0()
+ {
     // Encoding: 0x0F0097C0
     // Test aarch64_vector_shift_right_narrow_uniform_simd field Rn = 30 (PowerOfTwoMinusOne)
     // Fields: Q=0, U=0, immb=0, op=0, immh=0, Rn=30, Rd=0
@@ -4683,7 +6119,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_rn_30_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4699,7 +6140,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_rn_31_max_9400_0f00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4715,7 +6161,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_rd_0_min_9400_0f009
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4731,7 +6182,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_rd_1_poweroftwo_940
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4739,7 +6195,8 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_rd_1_poweroftwo_940
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_rd_30_poweroftwominusone_9400_0f00941e() {
+fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_rd_30_poweroftwominusone_9400_0f00941e()
+ {
     // Encoding: 0x0F00941E
     // Test aarch64_vector_shift_right_narrow_uniform_simd field Rd = 30 (PowerOfTwoMinusOne)
     // Fields: Rd=30, Q=0, U=0, immb=0, op=0, Rn=0, immh=0
@@ -4747,7 +6204,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_rd_30_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4763,7 +6225,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_field_rd_31_max_9400_0f00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4779,7 +6246,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_0_9400_0f009400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4795,7 +6267,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_1_9400_4f009400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4811,7 +6288,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_2_9400_0f009400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4827,7 +6309,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_3_9400_2f009400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4843,7 +6330,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_4_9400_0f009400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4859,7 +6351,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_5_9400_0f089400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4875,7 +6372,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_6_9400_0f189400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4891,7 +6393,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_7_9400_0f209400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4907,7 +6414,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_8_9400_0f389400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4923,7 +6435,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_9_9400_0f409400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4939,7 +6456,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_10_9400_0f789400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4955,7 +6477,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_11_9400_0f009400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4971,7 +6498,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_12_9400_0f019400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -4987,7 +6519,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_13_9400_0f039400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5003,7 +6540,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_14_9400_0f079400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5019,7 +6561,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_15_9400_0f009400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5035,7 +6582,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_16_9400_0f009c00() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5051,7 +6603,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_17_9400_0f009400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5067,7 +6624,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_18_9400_0f009420() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5083,7 +6645,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_19_9400_0f0097c0() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5099,7 +6666,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_20_9400_0f0097e0() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5115,7 +6687,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_21_9400_0f009400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5131,7 +6708,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_22_9400_0f009401() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5147,7 +6729,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_23_9400_0f00941e() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5163,7 +6750,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_24_9400_0f00941f() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5179,7 +6771,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_25_9400_0f009421() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5195,7 +6792,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_combo_26_9400_0f0097ff() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5211,7 +6813,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_special_q_0_size_variant_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5227,7 +6834,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_special_q_1_size_variant_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5235,7 +6847,8 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_special_q_1_size_variant_
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_right_narrow_uniform_simd_special_rn_31_stack_pointer_sp_may_require_alignment_37888_0f0997e0() {
+fn test_aarch64_vector_shift_right_narrow_uniform_simd_special_rn_31_stack_pointer_sp_may_require_alignment_37888_0f0997e0()
+ {
     // Encoding: 0x0F0997E0
     // Test aarch64_vector_shift_right_narrow_uniform_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: immh=1, op=0, immb=1, Q=0, Rd=0, U=0, Rn=31
@@ -5243,7 +6856,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_special_rn_31_stack_point
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_simd
@@ -5251,7 +6869,8 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_special_rn_31_stack_point
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_right_narrow_uniform_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_37888_0f09941f() {
+fn test_aarch64_vector_shift_right_narrow_uniform_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_37888_0f09941f()
+ {
     // Encoding: 0x0F09941F
     // Test aarch64_vector_shift_right_narrow_uniform_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, op=0, Q=0, immh=1, immb=1, Rd=31, U=0
@@ -5259,7 +6878,12 @@ fn test_aarch64_vector_shift_right_narrow_uniform_simd_special_rd_31_zero_regist
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_uniform_sisd
@@ -5341,7 +6965,12 @@ fn test_aarch64_vector_shift_left_long_field_q_0_min_a400_0f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5357,7 +6986,12 @@ fn test_aarch64_vector_shift_left_long_field_q_1_max_a400_4f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5373,7 +7007,12 @@ fn test_aarch64_vector_shift_left_long_field_u_0_min_a400_0f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5389,7 +7028,12 @@ fn test_aarch64_vector_shift_left_long_field_u_1_max_a400_2f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5405,7 +7049,12 @@ fn test_aarch64_vector_shift_left_long_field_immh_0_zero_a400_0f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5421,7 +7070,12 @@ fn test_aarch64_vector_shift_left_long_field_immh_1_poweroftwo_a400_0f08a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5437,7 +7091,12 @@ fn test_aarch64_vector_shift_left_long_field_immh_3_poweroftwominusone_a400_0f18
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5453,7 +7112,12 @@ fn test_aarch64_vector_shift_left_long_field_immh_4_poweroftwo_a400_0f20a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5469,7 +7133,12 @@ fn test_aarch64_vector_shift_left_long_field_immh_7_poweroftwominusone_a400_0f38
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5485,7 +7154,12 @@ fn test_aarch64_vector_shift_left_long_field_immh_8_poweroftwo_a400_0f40a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5501,7 +7175,12 @@ fn test_aarch64_vector_shift_left_long_field_immh_15_max_a400_0f78a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5517,7 +7196,12 @@ fn test_aarch64_vector_shift_left_long_field_immb_0_zero_a400_0f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5533,7 +7217,12 @@ fn test_aarch64_vector_shift_left_long_field_immb_1_poweroftwo_a400_0f01a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5549,7 +7238,12 @@ fn test_aarch64_vector_shift_left_long_field_immb_3_poweroftwominusone_a400_0f03
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5565,7 +7259,12 @@ fn test_aarch64_vector_shift_left_long_field_immb_7_max_a400_0f07a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5581,7 +7280,12 @@ fn test_aarch64_vector_shift_left_long_field_rn_0_min_a400_0f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5597,7 +7301,12 @@ fn test_aarch64_vector_shift_left_long_field_rn_1_poweroftwo_a400_0f00a420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5613,7 +7322,12 @@ fn test_aarch64_vector_shift_left_long_field_rn_30_poweroftwominusone_a400_0f00a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5629,7 +7343,12 @@ fn test_aarch64_vector_shift_left_long_field_rn_31_max_a400_0f00a7e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5645,7 +7364,12 @@ fn test_aarch64_vector_shift_left_long_field_rd_0_min_a400_0f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5661,7 +7385,12 @@ fn test_aarch64_vector_shift_left_long_field_rd_1_poweroftwo_a400_0f00a401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5677,7 +7406,12 @@ fn test_aarch64_vector_shift_left_long_field_rd_30_poweroftwominusone_a400_0f00a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5693,7 +7427,12 @@ fn test_aarch64_vector_shift_left_long_field_rd_31_max_a400_0f00a41f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5709,7 +7448,12 @@ fn test_aarch64_vector_shift_left_long_combo_0_a400_0f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5725,7 +7469,12 @@ fn test_aarch64_vector_shift_left_long_combo_1_a400_4f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5741,7 +7490,12 @@ fn test_aarch64_vector_shift_left_long_combo_2_a400_0f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5757,7 +7511,12 @@ fn test_aarch64_vector_shift_left_long_combo_3_a400_2f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5773,7 +7532,12 @@ fn test_aarch64_vector_shift_left_long_combo_4_a400_0f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5789,7 +7553,12 @@ fn test_aarch64_vector_shift_left_long_combo_5_a400_0f08a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5805,7 +7574,12 @@ fn test_aarch64_vector_shift_left_long_combo_6_a400_0f18a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5821,7 +7595,12 @@ fn test_aarch64_vector_shift_left_long_combo_7_a400_0f20a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5837,7 +7616,12 @@ fn test_aarch64_vector_shift_left_long_combo_8_a400_0f38a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5853,7 +7637,12 @@ fn test_aarch64_vector_shift_left_long_combo_9_a400_0f40a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5869,7 +7658,12 @@ fn test_aarch64_vector_shift_left_long_combo_10_a400_0f78a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5885,7 +7679,12 @@ fn test_aarch64_vector_shift_left_long_combo_11_a400_0f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5901,7 +7700,12 @@ fn test_aarch64_vector_shift_left_long_combo_12_a400_0f01a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5917,7 +7721,12 @@ fn test_aarch64_vector_shift_left_long_combo_13_a400_0f03a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5933,7 +7742,12 @@ fn test_aarch64_vector_shift_left_long_combo_14_a400_0f07a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5949,7 +7763,12 @@ fn test_aarch64_vector_shift_left_long_combo_15_a400_0f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5965,7 +7784,12 @@ fn test_aarch64_vector_shift_left_long_combo_16_a400_0f00a420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5981,7 +7805,12 @@ fn test_aarch64_vector_shift_left_long_combo_17_a400_0f00a7c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -5997,7 +7826,12 @@ fn test_aarch64_vector_shift_left_long_combo_18_a400_0f00a7e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -6013,7 +7847,12 @@ fn test_aarch64_vector_shift_left_long_combo_19_a400_0f00a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -6029,7 +7868,12 @@ fn test_aarch64_vector_shift_left_long_combo_20_a400_0f00a401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -6045,7 +7889,12 @@ fn test_aarch64_vector_shift_left_long_combo_21_a400_0f00a41e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -6061,7 +7910,12 @@ fn test_aarch64_vector_shift_left_long_combo_22_a400_0f00a41f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -6077,7 +7931,12 @@ fn test_aarch64_vector_shift_left_long_combo_23_a400_0f00a421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -6093,7 +7952,12 @@ fn test_aarch64_vector_shift_left_long_combo_24_a400_0f00a7ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -6109,7 +7973,12 @@ fn test_aarch64_vector_shift_left_long_special_q_0_size_variant_0_41984_0f09a400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -6125,7 +7994,12 @@ fn test_aarch64_vector_shift_left_long_special_q_1_size_variant_1_41984_4f09a400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -6133,7 +8007,8 @@ fn test_aarch64_vector_shift_left_long_special_q_1_size_variant_1_41984_4f09a400
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_left_long_special_rn_31_stack_pointer_sp_may_require_alignment_41984_0f09a7e0() {
+fn test_aarch64_vector_shift_left_long_special_rn_31_stack_pointer_sp_may_require_alignment_41984_0f09a7e0()
+ {
     // Encoding: 0x0F09A7E0
     // Test aarch64_vector_shift_left_long special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: U=0, immb=1, immh=1, Rn=31, Rd=0, Q=0
@@ -6141,7 +8016,12 @@ fn test_aarch64_vector_shift_left_long_special_rn_31_stack_pointer_sp_may_requir
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -6149,7 +8029,8 @@ fn test_aarch64_vector_shift_left_long_special_rn_31_stack_pointer_sp_may_requir
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_left_long_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_41984_0f09a41f() {
+fn test_aarch64_vector_shift_left_long_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_41984_0f09a41f()
+ {
     // Encoding: 0x0F09A41F
     // Test aarch64_vector_shift_left_long special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: immb=1, Rn=0, Rd=31, Q=0, U=0, immh=1
@@ -6157,7 +8038,12 @@ fn test_aarch64_vector_shift_left_long_special_rd_31_zero_register_xzr_wzr_reads
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_long
@@ -6223,7 +8109,12 @@ fn test_aarch64_vector_shift_left_sisd_field_immh_0_zero_5400_5f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6239,7 +8130,12 @@ fn test_aarch64_vector_shift_left_sisd_field_immh_1_poweroftwo_5400_5f085400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6255,7 +8151,12 @@ fn test_aarch64_vector_shift_left_sisd_field_immh_3_poweroftwominusone_5400_5f18
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6271,7 +8172,12 @@ fn test_aarch64_vector_shift_left_sisd_field_immh_4_poweroftwo_5400_5f205400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6287,7 +8193,12 @@ fn test_aarch64_vector_shift_left_sisd_field_immh_7_poweroftwominusone_5400_5f38
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6303,7 +8214,12 @@ fn test_aarch64_vector_shift_left_sisd_field_immh_8_poweroftwo_5400_5f405400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6319,7 +8235,12 @@ fn test_aarch64_vector_shift_left_sisd_field_immh_15_max_5400_5f785400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6335,7 +8256,12 @@ fn test_aarch64_vector_shift_left_sisd_field_immb_0_zero_5400_5f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6351,7 +8277,12 @@ fn test_aarch64_vector_shift_left_sisd_field_immb_1_poweroftwo_5400_5f015400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6367,7 +8298,12 @@ fn test_aarch64_vector_shift_left_sisd_field_immb_3_poweroftwominusone_5400_5f03
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6383,7 +8319,12 @@ fn test_aarch64_vector_shift_left_sisd_field_immb_7_max_5400_5f075400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6399,7 +8340,12 @@ fn test_aarch64_vector_shift_left_sisd_field_rn_0_min_5400_5f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6415,7 +8361,12 @@ fn test_aarch64_vector_shift_left_sisd_field_rn_1_poweroftwo_5400_5f005420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6431,7 +8382,12 @@ fn test_aarch64_vector_shift_left_sisd_field_rn_30_poweroftwominusone_5400_5f005
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6447,7 +8403,12 @@ fn test_aarch64_vector_shift_left_sisd_field_rn_31_max_5400_5f0057e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6463,7 +8424,12 @@ fn test_aarch64_vector_shift_left_sisd_field_rd_0_min_5400_5f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6479,7 +8445,12 @@ fn test_aarch64_vector_shift_left_sisd_field_rd_1_poweroftwo_5400_5f005401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6495,7 +8466,12 @@ fn test_aarch64_vector_shift_left_sisd_field_rd_30_poweroftwominusone_5400_5f005
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6511,7 +8487,12 @@ fn test_aarch64_vector_shift_left_sisd_field_rd_31_max_5400_5f00541f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6527,7 +8508,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_0_5400_5f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6543,7 +8529,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_1_5400_5f085400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6559,7 +8550,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_2_5400_5f185400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6575,7 +8571,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_3_5400_5f205400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6591,7 +8592,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_4_5400_5f385400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6607,7 +8613,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_5_5400_5f405400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6623,7 +8634,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_6_5400_5f785400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6639,7 +8655,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_7_5400_5f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6655,7 +8676,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_8_5400_5f015400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6671,7 +8697,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_9_5400_5f035400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6687,7 +8718,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_10_5400_5f075400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6703,7 +8739,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_11_5400_5f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6719,7 +8760,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_12_5400_5f005420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6735,7 +8781,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_13_5400_5f0057c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6751,7 +8802,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_14_5400_5f0057e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6767,7 +8823,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_15_5400_5f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6783,7 +8844,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_16_5400_5f005401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6799,7 +8865,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_17_5400_5f00541e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6815,7 +8886,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_18_5400_5f00541f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6831,7 +8907,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_19_5400_5f005421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6847,7 +8928,12 @@ fn test_aarch64_vector_shift_left_sisd_combo_20_5400_5f0057ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6855,7 +8941,8 @@ fn test_aarch64_vector_shift_left_sisd_combo_20_5400_5f0057ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_left_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_21504_5f0957e0() {
+fn test_aarch64_vector_shift_left_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_21504_5f0957e0()
+ {
     // Encoding: 0x5F0957E0
     // Test aarch64_vector_shift_left_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: immh=1, Rn=31, immb=1, Rd=0
@@ -6863,7 +8950,12 @@ fn test_aarch64_vector_shift_left_sisd_special_rn_31_stack_pointer_sp_may_requir
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -6871,7 +8963,8 @@ fn test_aarch64_vector_shift_left_sisd_special_rn_31_stack_pointer_sp_may_requir
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_left_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_21504_5f09541f() {
+fn test_aarch64_vector_shift_left_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_21504_5f09541f()
+ {
     // Encoding: 0x5F09541F
     // Test aarch64_vector_shift_left_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: immh=1, Rd=31, Rn=0, immb=1
@@ -6879,7 +8972,12 @@ fn test_aarch64_vector_shift_left_sisd_special_rd_31_zero_register_xzr_wzr_reads
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -6895,7 +8993,12 @@ fn test_aarch64_vector_shift_left_simd_field_q_0_min_5400_0f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -6911,7 +9014,12 @@ fn test_aarch64_vector_shift_left_simd_field_q_1_max_5400_4f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -6927,7 +9035,12 @@ fn test_aarch64_vector_shift_left_simd_field_immh_0_zero_5400_0f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -6943,7 +9056,12 @@ fn test_aarch64_vector_shift_left_simd_field_immh_1_poweroftwo_5400_0f085400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -6959,7 +9077,12 @@ fn test_aarch64_vector_shift_left_simd_field_immh_3_poweroftwominusone_5400_0f18
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -6975,7 +9098,12 @@ fn test_aarch64_vector_shift_left_simd_field_immh_4_poweroftwo_5400_0f205400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -6991,7 +9119,12 @@ fn test_aarch64_vector_shift_left_simd_field_immh_7_poweroftwominusone_5400_0f38
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7007,7 +9140,12 @@ fn test_aarch64_vector_shift_left_simd_field_immh_8_poweroftwo_5400_0f405400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7023,7 +9161,12 @@ fn test_aarch64_vector_shift_left_simd_field_immh_15_max_5400_0f785400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7039,7 +9182,12 @@ fn test_aarch64_vector_shift_left_simd_field_immb_0_zero_5400_0f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7055,7 +9203,12 @@ fn test_aarch64_vector_shift_left_simd_field_immb_1_poweroftwo_5400_0f015400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7071,7 +9224,12 @@ fn test_aarch64_vector_shift_left_simd_field_immb_3_poweroftwominusone_5400_0f03
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7087,7 +9245,12 @@ fn test_aarch64_vector_shift_left_simd_field_immb_7_max_5400_0f075400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7103,7 +9266,12 @@ fn test_aarch64_vector_shift_left_simd_field_rn_0_min_5400_0f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7119,7 +9287,12 @@ fn test_aarch64_vector_shift_left_simd_field_rn_1_poweroftwo_5400_0f005420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7135,7 +9308,12 @@ fn test_aarch64_vector_shift_left_simd_field_rn_30_poweroftwominusone_5400_0f005
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7151,7 +9329,12 @@ fn test_aarch64_vector_shift_left_simd_field_rn_31_max_5400_0f0057e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7167,7 +9350,12 @@ fn test_aarch64_vector_shift_left_simd_field_rd_0_min_5400_0f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7183,7 +9371,12 @@ fn test_aarch64_vector_shift_left_simd_field_rd_1_poweroftwo_5400_0f005401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7199,7 +9392,12 @@ fn test_aarch64_vector_shift_left_simd_field_rd_30_poweroftwominusone_5400_0f005
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7215,7 +9413,12 @@ fn test_aarch64_vector_shift_left_simd_field_rd_31_max_5400_0f00541f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7231,7 +9434,12 @@ fn test_aarch64_vector_shift_left_simd_combo_0_5400_0f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7247,7 +9455,12 @@ fn test_aarch64_vector_shift_left_simd_combo_1_5400_4f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7263,7 +9476,12 @@ fn test_aarch64_vector_shift_left_simd_combo_2_5400_0f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7279,7 +9497,12 @@ fn test_aarch64_vector_shift_left_simd_combo_3_5400_0f085400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7295,7 +9518,12 @@ fn test_aarch64_vector_shift_left_simd_combo_4_5400_0f185400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7311,7 +9539,12 @@ fn test_aarch64_vector_shift_left_simd_combo_5_5400_0f205400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7327,7 +9560,12 @@ fn test_aarch64_vector_shift_left_simd_combo_6_5400_0f385400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7343,7 +9581,12 @@ fn test_aarch64_vector_shift_left_simd_combo_7_5400_0f405400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7359,7 +9602,12 @@ fn test_aarch64_vector_shift_left_simd_combo_8_5400_0f785400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7375,7 +9623,12 @@ fn test_aarch64_vector_shift_left_simd_combo_9_5400_0f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7391,7 +9644,12 @@ fn test_aarch64_vector_shift_left_simd_combo_10_5400_0f015400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7407,7 +9665,12 @@ fn test_aarch64_vector_shift_left_simd_combo_11_5400_0f035400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7423,7 +9686,12 @@ fn test_aarch64_vector_shift_left_simd_combo_12_5400_0f075400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7439,7 +9707,12 @@ fn test_aarch64_vector_shift_left_simd_combo_13_5400_0f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7455,7 +9728,12 @@ fn test_aarch64_vector_shift_left_simd_combo_14_5400_0f005420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7471,7 +9749,12 @@ fn test_aarch64_vector_shift_left_simd_combo_15_5400_0f0057c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7487,7 +9770,12 @@ fn test_aarch64_vector_shift_left_simd_combo_16_5400_0f0057e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7503,7 +9791,12 @@ fn test_aarch64_vector_shift_left_simd_combo_17_5400_0f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7519,7 +9812,12 @@ fn test_aarch64_vector_shift_left_simd_combo_18_5400_0f005401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7535,7 +9833,12 @@ fn test_aarch64_vector_shift_left_simd_combo_19_5400_0f00541e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7551,7 +9854,12 @@ fn test_aarch64_vector_shift_left_simd_combo_20_5400_0f00541f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7567,7 +9875,12 @@ fn test_aarch64_vector_shift_left_simd_combo_21_5400_0f005421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7583,7 +9896,12 @@ fn test_aarch64_vector_shift_left_simd_combo_22_5400_0f0057ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7599,7 +9917,12 @@ fn test_aarch64_vector_shift_left_simd_special_q_0_size_variant_0_21504_0f095400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7615,7 +9938,12 @@ fn test_aarch64_vector_shift_left_simd_special_q_1_size_variant_1_21504_4f095400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7623,7 +9951,8 @@ fn test_aarch64_vector_shift_left_simd_special_q_1_size_variant_1_21504_4f095400
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_left_simd_special_rn_31_stack_pointer_sp_may_require_alignment_21504_0f0957e0() {
+fn test_aarch64_vector_shift_left_simd_special_rn_31_stack_pointer_sp_may_require_alignment_21504_0f0957e0()
+ {
     // Encoding: 0x0F0957E0
     // Test aarch64_vector_shift_left_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: immh=1, Rn=31, immb=1, Q=0, Rd=0
@@ -7631,7 +9960,12 @@ fn test_aarch64_vector_shift_left_simd_special_rn_31_stack_pointer_sp_may_requir
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_simd
@@ -7639,7 +9973,8 @@ fn test_aarch64_vector_shift_left_simd_special_rn_31_stack_pointer_sp_may_requir
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_left_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_21504_0f09541f() {
+fn test_aarch64_vector_shift_left_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_21504_0f09541f()
+ {
     // Encoding: 0x0F09541F
     // Test aarch64_vector_shift_left_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: immb=1, Rd=31, immh=1, Q=0, Rn=0
@@ -7647,7 +9982,12 @@ fn test_aarch64_vector_shift_left_simd_special_rd_31_zero_register_xzr_wzr_reads
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sisd
@@ -7759,7 +10099,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_u_0_min_6400_5f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -7775,7 +10120,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_u_1_max_6400_7f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -7791,7 +10141,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_immh_0_zero_6400_5f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -7807,7 +10162,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_immh_1_poweroftwo_6400_5f086400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -7823,7 +10183,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_immh_3_poweroftwominusone_6400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -7839,7 +10204,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_immh_4_poweroftwo_6400_5f206400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -7855,7 +10225,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_immh_7_poweroftwominusone_6400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -7871,7 +10246,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_immh_8_poweroftwo_6400_5f406400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -7887,7 +10267,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_immh_15_max_6400_5f786400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -7903,7 +10288,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_immb_0_zero_6400_5f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -7919,7 +10309,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_immb_1_poweroftwo_6400_5f016400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -7935,7 +10330,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_immb_3_poweroftwominusone_6400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -7951,7 +10351,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_immb_7_max_6400_5f076400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -7967,7 +10372,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_op_0_min_6400_5f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -7983,7 +10393,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_op_1_max_6400_5f007400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -7999,7 +10414,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_rn_0_min_6400_5f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8015,7 +10435,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_rn_1_poweroftwo_6400_5f006420()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8031,7 +10456,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_rn_30_poweroftwominusone_6400_5
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8047,7 +10477,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_rn_31_max_6400_5f0067e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8063,7 +10498,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_rd_0_min_6400_5f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8079,7 +10519,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_rd_1_poweroftwo_6400_5f006401()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8095,7 +10540,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_rd_30_poweroftwominusone_6400_5
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8111,7 +10561,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_field_rd_31_max_6400_5f00641f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8127,7 +10582,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_0_6400_5f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8143,7 +10603,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_1_6400_7f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8159,7 +10624,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_2_6400_5f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8175,7 +10645,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_3_6400_5f086400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8191,7 +10666,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_4_6400_5f186400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8207,7 +10687,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_5_6400_5f206400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8223,7 +10708,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_6_6400_5f386400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8239,7 +10729,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_7_6400_5f406400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8255,7 +10750,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_8_6400_5f786400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8271,7 +10771,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_9_6400_5f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8287,7 +10792,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_10_6400_5f016400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8303,7 +10813,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_11_6400_5f036400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8319,7 +10834,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_12_6400_5f076400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8335,7 +10855,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_13_6400_5f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8351,7 +10876,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_14_6400_5f007400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8367,7 +10897,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_15_6400_5f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8383,7 +10918,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_16_6400_5f006420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8399,7 +10939,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_17_6400_5f0067c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8415,7 +10960,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_18_6400_5f0067e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8431,7 +10981,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_19_6400_5f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8447,7 +11002,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_20_6400_5f006401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8463,7 +11023,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_21_6400_5f00641e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8479,7 +11044,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_22_6400_5f00641f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8495,7 +11065,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_23_6400_5f006421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8511,7 +11086,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_24_6400_5f0067ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8519,7 +11099,8 @@ fn test_aarch64_vector_shift_left_sat_sisd_combo_24_6400_5f0067ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_left_sat_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_25600_5f0967e0() {
+fn test_aarch64_vector_shift_left_sat_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_25600_5f0967e0()
+ {
     // Encoding: 0x5F0967E0
     // Test aarch64_vector_shift_left_sat_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: U=0, immb=1, op=0, immh=1, Rn=31, Rd=0
@@ -8527,7 +11108,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_special_rn_31_stack_pointer_sp_may_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -8535,7 +11121,8 @@ fn test_aarch64_vector_shift_left_sat_sisd_special_rn_31_stack_pointer_sp_may_re
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_left_sat_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_25600_5f09641f() {
+fn test_aarch64_vector_shift_left_sat_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_25600_5f09641f()
+ {
     // Encoding: 0x5F09641F
     // Test aarch64_vector_shift_left_sat_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, immb=1, op=0, U=0, immh=1, Rn=0
@@ -8543,7 +11130,12 @@ fn test_aarch64_vector_shift_left_sat_sisd_special_rd_31_zero_register_xzr_wzr_r
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8559,7 +11151,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_q_0_min_6400_0f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8575,7 +11172,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_q_1_max_6400_4f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8591,7 +11193,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_u_0_min_6400_0f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8607,7 +11214,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_u_1_max_6400_2f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8623,7 +11235,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_immh_0_zero_6400_0f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8639,7 +11256,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_immh_1_poweroftwo_6400_0f086400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8655,7 +11277,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_immh_3_poweroftwominusone_6400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8671,7 +11298,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_immh_4_poweroftwo_6400_0f206400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8687,7 +11319,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_immh_7_poweroftwominusone_6400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8703,7 +11340,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_immh_8_poweroftwo_6400_0f406400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8719,7 +11361,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_immh_15_max_6400_0f786400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8735,7 +11382,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_immb_0_zero_6400_0f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8751,7 +11403,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_immb_1_poweroftwo_6400_0f016400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8767,7 +11424,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_immb_3_poweroftwominusone_6400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8783,7 +11445,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_immb_7_max_6400_0f076400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8799,7 +11466,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_op_0_min_6400_0f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8815,7 +11487,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_op_1_max_6400_0f007400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8831,7 +11508,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_rn_0_min_6400_0f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8847,7 +11529,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_rn_1_poweroftwo_6400_0f006420()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8863,7 +11550,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_rn_30_poweroftwominusone_6400_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8879,7 +11571,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_rn_31_max_6400_0f0067e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8895,7 +11592,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_rd_0_min_6400_0f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8911,7 +11613,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_rd_1_poweroftwo_6400_0f006401()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8927,7 +11634,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_rd_30_poweroftwominusone_6400_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8943,7 +11655,12 @@ fn test_aarch64_vector_shift_left_sat_simd_field_rd_31_max_6400_0f00641f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8959,7 +11676,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_0_6400_0f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8975,7 +11697,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_1_6400_4f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -8991,7 +11718,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_2_6400_0f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9007,7 +11739,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_3_6400_2f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9023,7 +11760,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_4_6400_0f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9039,7 +11781,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_5_6400_0f086400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9055,7 +11802,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_6_6400_0f186400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9071,7 +11823,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_7_6400_0f206400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9087,7 +11844,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_8_6400_0f386400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9103,7 +11865,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_9_6400_0f406400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9119,7 +11886,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_10_6400_0f786400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9135,7 +11907,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_11_6400_0f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9151,7 +11928,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_12_6400_0f016400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9167,7 +11949,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_13_6400_0f036400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9183,7 +11970,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_14_6400_0f076400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9199,7 +11991,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_15_6400_0f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9215,7 +12012,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_16_6400_0f007400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9231,7 +12033,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_17_6400_0f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9247,7 +12054,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_18_6400_0f006420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9263,7 +12075,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_19_6400_0f0067c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9279,7 +12096,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_20_6400_0f0067e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9295,7 +12117,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_21_6400_0f006400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9311,7 +12138,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_22_6400_0f006401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9327,7 +12159,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_23_6400_0f00641e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9343,7 +12180,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_24_6400_0f00641f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9359,7 +12201,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_25_6400_0f006421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9375,7 +12222,12 @@ fn test_aarch64_vector_shift_left_sat_simd_combo_26_6400_0f0067ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9391,7 +12243,12 @@ fn test_aarch64_vector_shift_left_sat_simd_special_q_0_size_variant_0_25600_0f09
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9407,7 +12264,12 @@ fn test_aarch64_vector_shift_left_sat_simd_special_q_1_size_variant_1_25600_4f09
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9415,7 +12277,8 @@ fn test_aarch64_vector_shift_left_sat_simd_special_q_1_size_variant_1_25600_4f09
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_left_sat_simd_special_rn_31_stack_pointer_sp_may_require_alignment_25600_0f0967e0() {
+fn test_aarch64_vector_shift_left_sat_simd_special_rn_31_stack_pointer_sp_may_require_alignment_25600_0f0967e0()
+ {
     // Encoding: 0x0F0967E0
     // Test aarch64_vector_shift_left_sat_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Q=0, op=0, immb=1, Rd=0, Rn=31, U=0, immh=1
@@ -9423,7 +12286,12 @@ fn test_aarch64_vector_shift_left_sat_simd_special_rn_31_stack_pointer_sp_may_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_simd
@@ -9431,7 +12299,8 @@ fn test_aarch64_vector_shift_left_sat_simd_special_rn_31_stack_pointer_sp_may_re
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_left_sat_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_25600_0f09641f() {
+fn test_aarch64_vector_shift_left_sat_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_25600_0f09641f()
+ {
     // Encoding: 0x0F09641F
     // Test aarch64_vector_shift_left_sat_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, Rd=31, U=0, Q=0, immh=1, immb=1, op=0
@@ -9439,7 +12308,12 @@ fn test_aarch64_vector_shift_left_sat_simd_special_rd_31_zero_register_xzr_wzr_r
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_sat_sisd
@@ -9551,7 +12425,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_u_0_min_fc00_5f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9567,7 +12446,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_u_1_max_fc00_7f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9583,7 +12467,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_immh_0_zero_fc00_5f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9599,7 +12488,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_immh_1_poweroftwo_fc00_5f08fc
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9615,7 +12509,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_immh_3_poweroftwominusone_fc0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9631,7 +12530,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_immh_4_poweroftwo_fc00_5f20fc
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9647,7 +12551,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_immh_7_poweroftwominusone_fc0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9663,7 +12572,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_immh_8_poweroftwo_fc00_5f40fc
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9679,7 +12593,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_immh_15_max_fc00_5f78fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9695,7 +12614,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_immb_0_zero_fc00_5f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9711,7 +12635,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_immb_1_poweroftwo_fc00_5f01fc
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9727,7 +12656,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_immb_3_poweroftwominusone_fc0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9743,7 +12677,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_immb_7_max_fc00_5f07fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9759,7 +12698,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_rn_0_min_fc00_5f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9775,7 +12719,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_rn_1_poweroftwo_fc00_5f00fc20
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9791,7 +12740,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_rn_30_poweroftwominusone_fc00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9807,7 +12761,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_rn_31_max_fc00_5f00ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9823,7 +12782,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_rd_0_min_fc00_5f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9839,7 +12803,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_rd_1_poweroftwo_fc00_5f00fc01
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9855,7 +12824,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_rd_30_poweroftwominusone_fc00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9871,7 +12845,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_field_rd_31_max_fc00_5f00fc1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9887,7 +12866,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_0_fc00_5f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9903,7 +12887,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_1_fc00_7f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9919,7 +12908,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_2_fc00_5f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9935,7 +12929,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_3_fc00_5f08fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9951,7 +12950,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_4_fc00_5f18fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9967,7 +12971,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_5_fc00_5f20fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9983,7 +12992,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_6_fc00_5f38fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -9999,7 +13013,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_7_fc00_5f40fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10015,7 +13034,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_8_fc00_5f78fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10031,7 +13055,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_9_fc00_5f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10047,7 +13076,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_10_fc00_5f01fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10063,7 +13097,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_11_fc00_5f03fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10079,7 +13118,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_12_fc00_5f07fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10095,7 +13139,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_13_fc00_5f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10111,7 +13160,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_14_fc00_5f00fc20() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10127,7 +13181,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_15_fc00_5f00ffc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10143,7 +13202,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_16_fc00_5f00ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10159,7 +13223,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_17_fc00_5f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10175,7 +13244,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_18_fc00_5f00fc01() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10191,7 +13265,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_19_fc00_5f00fc1e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10207,7 +13286,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_20_fc00_5f00fc1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10223,7 +13307,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_21_fc00_5f00fc21() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10239,7 +13328,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_22_fc00_5f00ffff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10247,7 +13341,8 @@ fn test_aarch64_vector_shift_conv_float_sisd_combo_22_fc00_5f00ffff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_conv_float_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_64512_5f09ffe0() {
+fn test_aarch64_vector_shift_conv_float_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_64512_5f09ffe0()
+ {
     // Encoding: 0x5F09FFE0
     // Test aarch64_vector_shift_conv_float_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, immh=1, immb=1, Rn=31, U=0
@@ -10255,7 +13350,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_special_rn_31_stack_pointer_sp_may_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -10263,7 +13363,8 @@ fn test_aarch64_vector_shift_conv_float_sisd_special_rn_31_stack_pointer_sp_may_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_conv_float_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_64512_5f09fc1f() {
+fn test_aarch64_vector_shift_conv_float_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_64512_5f09fc1f()
+ {
     // Encoding: 0x5F09FC1F
     // Test aarch64_vector_shift_conv_float_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, U=0, Rn=0, immh=1, immb=1
@@ -10271,7 +13372,12 @@ fn test_aarch64_vector_shift_conv_float_sisd_special_rd_31_zero_register_xzr_wzr
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10287,7 +13393,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_q_0_min_fc00_0f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10303,7 +13414,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_q_1_max_fc00_4f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10319,7 +13435,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_u_0_min_fc00_0f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10335,7 +13456,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_u_1_max_fc00_2f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10351,7 +13477,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_immh_0_zero_fc00_0f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10367,7 +13498,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_immh_1_poweroftwo_fc00_0f08fc
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10383,7 +13519,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_immh_3_poweroftwominusone_fc0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10399,7 +13540,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_immh_4_poweroftwo_fc00_0f20fc
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10415,7 +13561,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_immh_7_poweroftwominusone_fc0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10431,7 +13582,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_immh_8_poweroftwo_fc00_0f40fc
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10447,7 +13603,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_immh_15_max_fc00_0f78fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10463,7 +13624,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_immb_0_zero_fc00_0f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10479,7 +13645,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_immb_1_poweroftwo_fc00_0f01fc
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10495,7 +13666,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_immb_3_poweroftwominusone_fc0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10511,7 +13687,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_immb_7_max_fc00_0f07fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10527,7 +13708,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_rn_0_min_fc00_0f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10543,7 +13729,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_rn_1_poweroftwo_fc00_0f00fc20
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10559,7 +13750,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_rn_30_poweroftwominusone_fc00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10575,7 +13771,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_rn_31_max_fc00_0f00ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10591,7 +13792,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_rd_0_min_fc00_0f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10607,7 +13813,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_rd_1_poweroftwo_fc00_0f00fc01
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10623,7 +13834,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_rd_30_poweroftwominusone_fc00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10639,7 +13855,12 @@ fn test_aarch64_vector_shift_conv_float_simd_field_rd_31_max_fc00_0f00fc1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10655,7 +13876,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_0_fc00_0f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10671,7 +13897,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_1_fc00_4f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10687,7 +13918,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_2_fc00_0f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10703,7 +13939,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_3_fc00_2f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10719,7 +13960,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_4_fc00_0f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10735,7 +13981,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_5_fc00_0f08fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10751,7 +14002,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_6_fc00_0f18fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10767,7 +14023,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_7_fc00_0f20fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10783,7 +14044,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_8_fc00_0f38fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10799,7 +14065,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_9_fc00_0f40fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10815,7 +14086,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_10_fc00_0f78fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10831,7 +14107,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_11_fc00_0f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10847,7 +14128,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_12_fc00_0f01fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10863,7 +14149,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_13_fc00_0f03fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10879,7 +14170,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_14_fc00_0f07fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10895,7 +14191,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_15_fc00_0f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10911,7 +14212,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_16_fc00_0f00fc20() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10927,7 +14233,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_17_fc00_0f00ffc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10943,7 +14254,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_18_fc00_0f00ffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10959,7 +14275,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_19_fc00_0f00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10975,7 +14296,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_20_fc00_0f00fc01() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -10991,7 +14317,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_21_fc00_0f00fc1e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -11007,7 +14338,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_22_fc00_0f00fc1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -11023,7 +14359,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_23_fc00_0f00fc21() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -11039,7 +14380,12 @@ fn test_aarch64_vector_shift_conv_float_simd_combo_24_fc00_0f00ffff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -11055,7 +14401,12 @@ fn test_aarch64_vector_shift_conv_float_simd_special_q_0_size_variant_0_64512_0f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -11071,7 +14422,12 @@ fn test_aarch64_vector_shift_conv_float_simd_special_q_1_size_variant_1_64512_4f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -11079,7 +14435,8 @@ fn test_aarch64_vector_shift_conv_float_simd_special_q_1_size_variant_1_64512_4f
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_conv_float_simd_special_rn_31_stack_pointer_sp_may_require_alignment_64512_0f09ffe0() {
+fn test_aarch64_vector_shift_conv_float_simd_special_rn_31_stack_pointer_sp_may_require_alignment_64512_0f09ffe0()
+ {
     // Encoding: 0x0F09FFE0
     // Test aarch64_vector_shift_conv_float_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rn=31, U=0, Rd=0, immh=1, Q=0, immb=1
@@ -11087,7 +14444,12 @@ fn test_aarch64_vector_shift_conv_float_simd_special_rn_31_stack_pointer_sp_may_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_simd
@@ -11095,7 +14457,8 @@ fn test_aarch64_vector_shift_conv_float_simd_special_rn_31_stack_pointer_sp_may_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_conv_float_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_64512_0f09fc1f() {
+fn test_aarch64_vector_shift_conv_float_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_64512_0f09fc1f()
+ {
     // Encoding: 0x0F09FC1F
     // Test aarch64_vector_shift_conv_float_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Q=0, immb=1, U=0, Rn=0, immh=1, Rd=31
@@ -11103,7 +14466,12 @@ fn test_aarch64_vector_shift_conv_float_simd_special_rd_31_zero_register_xzr_wzr
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_float_sisd
@@ -11215,7 +14583,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_q_0_min_8400_0f008400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11231,7 +14604,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_q_1_max_8400_4f008400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11247,7 +14625,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_immh_0_zero_8400_0f00840
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11263,7 +14646,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_immh_1_poweroftwo_8400_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11279,7 +14667,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_immh_3_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11295,7 +14688,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_immh_4_poweroftwo_8400_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11311,7 +14709,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_immh_7_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11327,7 +14730,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_immh_8_poweroftwo_8400_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11343,7 +14751,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_immh_15_max_8400_0f78840
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11359,7 +14772,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_immb_0_zero_8400_0f00840
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11375,7 +14793,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_immb_1_poweroftwo_8400_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11391,7 +14814,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_immb_3_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11407,7 +14835,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_immb_7_max_8400_0f078400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11423,7 +14856,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_op_0_min_8400_0f008400()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11439,7 +14877,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_op_1_max_8400_0f008c00()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11455,7 +14898,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_rn_0_min_8400_0f008400()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11471,7 +14919,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_rn_1_poweroftwo_8400_0f0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11487,7 +14940,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_rn_30_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11503,7 +14961,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_rn_31_max_8400_0f0087e0(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11519,7 +14982,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_rd_0_min_8400_0f008400()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11535,7 +15003,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_rd_1_poweroftwo_8400_0f0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11551,7 +15024,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_rd_30_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11567,7 +15045,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_field_rd_31_max_8400_0f00841f(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11583,7 +15066,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_0_8400_0f008400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11599,7 +15087,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_1_8400_4f008400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11615,7 +15108,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_2_8400_0f008400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11631,7 +15129,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_3_8400_0f088400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11647,7 +15150,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_4_8400_0f188400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11663,7 +15171,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_5_8400_0f208400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11679,7 +15192,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_6_8400_0f388400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11695,7 +15213,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_7_8400_0f408400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11711,7 +15234,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_8_8400_0f788400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11727,7 +15255,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_9_8400_0f008400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11743,7 +15276,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_10_8400_0f018400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11759,7 +15297,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_11_8400_0f038400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11775,7 +15318,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_12_8400_0f078400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11791,7 +15339,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_13_8400_0f008400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11807,7 +15360,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_14_8400_0f008c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11823,7 +15381,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_15_8400_0f008400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11839,7 +15402,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_16_8400_0f008420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11855,7 +15423,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_17_8400_0f0087c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11871,7 +15444,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_18_8400_0f0087e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11887,7 +15465,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_19_8400_0f008400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11903,7 +15486,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_20_8400_0f008401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11919,7 +15507,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_21_8400_0f00841e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11935,7 +15528,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_22_8400_0f00841f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11951,7 +15549,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_23_8400_0f008421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11967,7 +15570,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_combo_24_8400_0f0087ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11983,7 +15591,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_special_q_0_size_variant_0_337
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -11999,7 +15612,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_special_q_1_size_variant_1_337
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -12007,7 +15625,8 @@ fn test_aarch64_vector_shift_right_narrow_logical_special_q_1_size_variant_1_337
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_right_narrow_logical_special_rn_31_stack_pointer_sp_may_require_alignment_33792_0f0987e0() {
+fn test_aarch64_vector_shift_right_narrow_logical_special_rn_31_stack_pointer_sp_may_require_alignment_33792_0f0987e0()
+ {
     // Encoding: 0x0F0987E0
     // Test aarch64_vector_shift_right_narrow_logical special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Q=0, immh=1, op=0, Rn=31, Rd=0, immb=1
@@ -12015,7 +15634,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_special_rn_31_stack_pointer_sp
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -12023,7 +15647,8 @@ fn test_aarch64_vector_shift_right_narrow_logical_special_rn_31_stack_pointer_sp
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_right_narrow_logical_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_0f09841f() {
+fn test_aarch64_vector_shift_right_narrow_logical_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_0f09841f()
+ {
     // Encoding: 0x0F09841F
     // Test aarch64_vector_shift_right_narrow_logical special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, immh=1, Q=0, immb=1, op=0, Rd=31
@@ -12031,7 +15656,12 @@ fn test_aarch64_vector_shift_right_narrow_logical_special_rd_31_zero_register_xz
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_narrow_logical
@@ -12082,7 +15712,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_u_0_min_e400_5f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12098,7 +15733,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_u_1_max_e400_7f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12114,7 +15754,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_immh_0_zero_e400_5f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12130,7 +15775,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_immh_1_poweroftwo_e400_5f08e400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12146,7 +15796,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_immh_3_poweroftwominusone_e400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12162,7 +15817,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_immh_4_poweroftwo_e400_5f20e400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12178,7 +15838,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_immh_7_poweroftwominusone_e400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12194,7 +15859,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_immh_8_poweroftwo_e400_5f40e400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12210,7 +15880,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_immh_15_max_e400_5f78e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12226,7 +15901,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_immb_0_zero_e400_5f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12242,7 +15922,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_immb_1_poweroftwo_e400_5f01e400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12258,7 +15943,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_immb_3_poweroftwominusone_e400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12274,7 +15964,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_immb_7_max_e400_5f07e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12290,7 +15985,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_rn_0_min_e400_5f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12306,7 +16006,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_rn_1_poweroftwo_e400_5f00e420()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12322,7 +16027,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_rn_30_poweroftwominusone_e400_5
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12338,7 +16048,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_rn_31_max_e400_5f00e7e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12354,7 +16069,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_rd_0_min_e400_5f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12370,7 +16090,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_rd_1_poweroftwo_e400_5f00e401()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12386,7 +16111,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_rd_30_poweroftwominusone_e400_5
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12402,7 +16132,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_field_rd_31_max_e400_5f00e41f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12418,7 +16153,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_0_e400_5f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12434,7 +16174,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_1_e400_7f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12450,7 +16195,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_2_e400_5f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12466,7 +16216,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_3_e400_5f08e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12482,7 +16237,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_4_e400_5f18e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12498,7 +16258,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_5_e400_5f20e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12514,7 +16279,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_6_e400_5f38e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12530,7 +16300,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_7_e400_5f40e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12546,7 +16321,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_8_e400_5f78e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12562,7 +16342,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_9_e400_5f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12578,7 +16363,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_10_e400_5f01e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12594,7 +16384,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_11_e400_5f03e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12610,7 +16405,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_12_e400_5f07e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12626,7 +16426,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_13_e400_5f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12642,7 +16447,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_14_e400_5f00e420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12658,7 +16468,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_15_e400_5f00e7c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12674,7 +16489,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_16_e400_5f00e7e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12690,7 +16510,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_17_e400_5f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12706,7 +16531,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_18_e400_5f00e401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12722,7 +16552,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_19_e400_5f00e41e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12738,7 +16573,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_20_e400_5f00e41f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12754,7 +16594,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_21_e400_5f00e421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12770,7 +16615,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_22_e400_5f00e7ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12778,7 +16628,8 @@ fn test_aarch64_vector_shift_conv_int_sisd_combo_22_e400_5f00e7ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_conv_int_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_58368_5f09e7e0() {
+fn test_aarch64_vector_shift_conv_int_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_58368_5f09e7e0()
+ {
     // Encoding: 0x5F09E7E0
     // Test aarch64_vector_shift_conv_int_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: immh=1, U=0, immb=1, Rn=31, Rd=0
@@ -12786,7 +16637,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_special_rn_31_stack_pointer_sp_may_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -12794,7 +16650,8 @@ fn test_aarch64_vector_shift_conv_int_sisd_special_rn_31_stack_pointer_sp_may_re
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_conv_int_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_58368_5f09e41f() {
+fn test_aarch64_vector_shift_conv_int_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_58368_5f09e41f()
+ {
     // Encoding: 0x5F09E41F
     // Test aarch64_vector_shift_conv_int_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: immb=1, Rd=31, immh=1, Rn=0, U=0
@@ -12802,7 +16659,12 @@ fn test_aarch64_vector_shift_conv_int_sisd_special_rd_31_zero_register_xzr_wzr_r
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -12818,7 +16680,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_q_0_min_e400_0f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -12834,7 +16701,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_q_1_max_e400_4f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -12850,7 +16722,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_u_0_min_e400_0f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -12866,7 +16743,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_u_1_max_e400_2f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -12882,7 +16764,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_immh_0_zero_e400_0f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -12898,7 +16785,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_immh_1_poweroftwo_e400_0f08e400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -12914,7 +16806,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_immh_3_poweroftwominusone_e400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -12930,7 +16827,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_immh_4_poweroftwo_e400_0f20e400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -12946,7 +16848,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_immh_7_poweroftwominusone_e400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -12962,7 +16869,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_immh_8_poweroftwo_e400_0f40e400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -12978,7 +16890,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_immh_15_max_e400_0f78e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -12994,7 +16911,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_immb_0_zero_e400_0f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13010,7 +16932,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_immb_1_poweroftwo_e400_0f01e400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13026,7 +16953,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_immb_3_poweroftwominusone_e400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13042,7 +16974,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_immb_7_max_e400_0f07e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13058,7 +16995,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_rn_0_min_e400_0f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13074,7 +17016,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_rn_1_poweroftwo_e400_0f00e420()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13090,7 +17037,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_rn_30_poweroftwominusone_e400_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13106,7 +17058,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_rn_31_max_e400_0f00e7e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13122,7 +17079,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_rd_0_min_e400_0f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13138,7 +17100,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_rd_1_poweroftwo_e400_0f00e401()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13154,7 +17121,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_rd_30_poweroftwominusone_e400_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13170,7 +17142,12 @@ fn test_aarch64_vector_shift_conv_int_simd_field_rd_31_max_e400_0f00e41f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13186,7 +17163,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_0_e400_0f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13202,7 +17184,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_1_e400_4f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13218,7 +17205,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_2_e400_0f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13234,7 +17226,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_3_e400_2f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13250,7 +17247,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_4_e400_0f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13266,7 +17268,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_5_e400_0f08e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13282,7 +17289,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_6_e400_0f18e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13298,7 +17310,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_7_e400_0f20e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13314,7 +17331,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_8_e400_0f38e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13330,7 +17352,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_9_e400_0f40e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13346,7 +17373,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_10_e400_0f78e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13362,7 +17394,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_11_e400_0f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13378,7 +17415,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_12_e400_0f01e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13394,7 +17436,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_13_e400_0f03e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13410,7 +17457,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_14_e400_0f07e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13426,7 +17478,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_15_e400_0f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13442,7 +17499,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_16_e400_0f00e420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13458,7 +17520,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_17_e400_0f00e7c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13474,7 +17541,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_18_e400_0f00e7e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13490,7 +17562,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_19_e400_0f00e400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13506,7 +17583,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_20_e400_0f00e401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13522,7 +17604,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_21_e400_0f00e41e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13538,7 +17625,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_22_e400_0f00e41f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13554,7 +17646,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_23_e400_0f00e421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13570,7 +17667,12 @@ fn test_aarch64_vector_shift_conv_int_simd_combo_24_e400_0f00e7ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13586,7 +17688,12 @@ fn test_aarch64_vector_shift_conv_int_simd_special_q_0_size_variant_0_58368_0f09
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13602,7 +17709,12 @@ fn test_aarch64_vector_shift_conv_int_simd_special_q_1_size_variant_1_58368_4f09
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13610,7 +17722,8 @@ fn test_aarch64_vector_shift_conv_int_simd_special_q_1_size_variant_1_58368_4f09
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_conv_int_simd_special_rn_31_stack_pointer_sp_may_require_alignment_58368_0f09e7e0() {
+fn test_aarch64_vector_shift_conv_int_simd_special_rn_31_stack_pointer_sp_may_require_alignment_58368_0f09e7e0()
+ {
     // Encoding: 0x0F09E7E0
     // Test aarch64_vector_shift_conv_int_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: immh=1, Rn=31, immb=1, Q=0, U=0, Rd=0
@@ -13618,7 +17731,12 @@ fn test_aarch64_vector_shift_conv_int_simd_special_rn_31_stack_pointer_sp_may_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_simd
@@ -13626,7 +17744,8 @@ fn test_aarch64_vector_shift_conv_int_simd_special_rn_31_stack_pointer_sp_may_re
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_conv_int_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_58368_0f09e41f() {
+fn test_aarch64_vector_shift_conv_int_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_58368_0f09e41f()
+ {
     // Encoding: 0x0F09E41F
     // Test aarch64_vector_shift_conv_int_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, U=0, Q=0, immh=1, immb=1, Rn=0
@@ -13634,7 +17753,12 @@ fn test_aarch64_vector_shift_conv_int_simd_special_rd_31_zero_register_xzr_wzr_r
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_conv_int_sisd
@@ -13746,7 +17870,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_immh_0_zero_5400_7f005400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -13762,7 +17891,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_immh_1_poweroftwo_5400_7f085
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -13778,7 +17912,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_immh_3_poweroftwominusone_54
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -13794,7 +17933,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_immh_4_poweroftwo_5400_7f205
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -13810,7 +17954,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_immh_7_poweroftwominusone_54
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -13826,7 +17975,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_immh_8_poweroftwo_5400_7f405
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -13842,7 +17996,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_immh_15_max_5400_7f785400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -13858,7 +18017,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_immb_0_zero_5400_7f005400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -13874,7 +18038,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_immb_1_poweroftwo_5400_7f015
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -13890,7 +18059,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_immb_3_poweroftwominusone_54
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -13906,7 +18080,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_immb_7_max_5400_7f075400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -13922,7 +18101,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_rn_0_min_5400_7f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -13938,7 +18122,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_rn_1_poweroftwo_5400_7f00542
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -13954,7 +18143,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_rn_30_poweroftwominusone_540
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -13970,7 +18164,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_rn_31_max_5400_7f0057e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -13986,7 +18185,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_rd_0_min_5400_7f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14002,7 +18206,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_rd_1_poweroftwo_5400_7f00540
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14018,7 +18227,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_rd_30_poweroftwominusone_540
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14034,7 +18248,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_field_rd_31_max_5400_7f00541f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14050,7 +18269,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_0_5400_7f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14066,7 +18290,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_1_5400_7f085400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14082,7 +18311,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_2_5400_7f185400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14098,7 +18332,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_3_5400_7f205400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14114,7 +18353,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_4_5400_7f385400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14130,7 +18374,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_5_5400_7f405400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14146,7 +18395,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_6_5400_7f785400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14162,7 +18416,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_7_5400_7f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14178,7 +18437,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_8_5400_7f015400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14194,7 +18458,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_9_5400_7f035400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14210,7 +18479,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_10_5400_7f075400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14226,7 +18500,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_11_5400_7f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14242,7 +18521,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_12_5400_7f005420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14258,7 +18542,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_13_5400_7f0057c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14274,7 +18563,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_14_5400_7f0057e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14290,7 +18584,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_15_5400_7f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14306,7 +18605,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_16_5400_7f005401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14322,7 +18626,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_17_5400_7f00541e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14338,7 +18647,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_18_5400_7f00541f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14354,7 +18668,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_19_5400_7f005421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14370,7 +18689,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_20_5400_7f0057ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14378,7 +18702,8 @@ fn test_aarch64_vector_shift_left_insert_sisd_combo_20_5400_7f0057ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_left_insert_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_21504_7f0957e0() {
+fn test_aarch64_vector_shift_left_insert_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_21504_7f0957e0()
+ {
     // Encoding: 0x7F0957E0
     // Test aarch64_vector_shift_left_insert_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rn=31, immh=1, immb=1, Rd=0
@@ -14386,7 +18711,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_special_rn_31_stack_pointer_sp_may
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -14394,7 +18724,8 @@ fn test_aarch64_vector_shift_left_insert_sisd_special_rn_31_stack_pointer_sp_may
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_left_insert_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_21504_7f09541f() {
+fn test_aarch64_vector_shift_left_insert_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_21504_7f09541f()
+ {
     // Encoding: 0x7F09541F
     // Test aarch64_vector_shift_left_insert_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, immh=1, immb=1, Rd=31
@@ -14402,7 +18733,12 @@ fn test_aarch64_vector_shift_left_insert_sisd_special_rd_31_zero_register_xzr_wz
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14418,7 +18754,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_q_0_min_5400_2f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14434,7 +18775,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_q_1_max_5400_6f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14450,7 +18796,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_immh_0_zero_5400_2f005400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14466,7 +18817,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_immh_1_poweroftwo_5400_2f085
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14482,7 +18838,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_immh_3_poweroftwominusone_54
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14498,7 +18859,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_immh_4_poweroftwo_5400_2f205
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14514,7 +18880,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_immh_7_poweroftwominusone_54
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14530,7 +18901,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_immh_8_poweroftwo_5400_2f405
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14546,7 +18922,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_immh_15_max_5400_2f785400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14562,7 +18943,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_immb_0_zero_5400_2f005400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14578,7 +18964,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_immb_1_poweroftwo_5400_2f015
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14594,7 +18985,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_immb_3_poweroftwominusone_54
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14610,7 +19006,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_immb_7_max_5400_2f075400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14626,7 +19027,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_rn_0_min_5400_2f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14642,7 +19048,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_rn_1_poweroftwo_5400_2f00542
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14658,7 +19069,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_rn_30_poweroftwominusone_540
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14674,7 +19090,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_rn_31_max_5400_2f0057e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14690,7 +19111,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_rd_0_min_5400_2f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14706,7 +19132,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_rd_1_poweroftwo_5400_2f00540
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14722,7 +19153,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_rd_30_poweroftwominusone_540
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14738,7 +19174,12 @@ fn test_aarch64_vector_shift_left_insert_simd_field_rd_31_max_5400_2f00541f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14754,7 +19195,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_0_5400_2f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14770,7 +19216,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_1_5400_6f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14786,7 +19237,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_2_5400_2f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14802,7 +19258,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_3_5400_2f085400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14818,7 +19279,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_4_5400_2f185400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14834,7 +19300,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_5_5400_2f205400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14850,7 +19321,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_6_5400_2f385400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14866,7 +19342,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_7_5400_2f405400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14882,7 +19363,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_8_5400_2f785400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14898,7 +19384,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_9_5400_2f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14914,7 +19405,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_10_5400_2f015400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14930,7 +19426,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_11_5400_2f035400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14946,7 +19447,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_12_5400_2f075400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14962,7 +19468,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_13_5400_2f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14978,7 +19489,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_14_5400_2f005420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -14994,7 +19510,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_15_5400_2f0057c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -15010,7 +19531,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_16_5400_2f0057e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -15026,7 +19552,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_17_5400_2f005400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -15042,7 +19573,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_18_5400_2f005401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -15058,7 +19594,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_19_5400_2f00541e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -15074,7 +19615,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_20_5400_2f00541f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -15090,7 +19636,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_21_5400_2f005421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -15106,7 +19657,12 @@ fn test_aarch64_vector_shift_left_insert_simd_combo_22_5400_2f0057ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -15122,7 +19678,12 @@ fn test_aarch64_vector_shift_left_insert_simd_special_q_0_size_variant_0_21504_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -15138,7 +19699,12 @@ fn test_aarch64_vector_shift_left_insert_simd_special_q_1_size_variant_1_21504_6
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -15146,7 +19712,8 @@ fn test_aarch64_vector_shift_left_insert_simd_special_q_1_size_variant_1_21504_6
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_left_insert_simd_special_rn_31_stack_pointer_sp_may_require_alignment_21504_2f0957e0() {
+fn test_aarch64_vector_shift_left_insert_simd_special_rn_31_stack_pointer_sp_may_require_alignment_21504_2f0957e0()
+ {
     // Encoding: 0x2F0957E0
     // Test aarch64_vector_shift_left_insert_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rn=31, Rd=0, immh=1, Q=0, immb=1
@@ -15154,7 +19721,12 @@ fn test_aarch64_vector_shift_left_insert_simd_special_rn_31_stack_pointer_sp_may
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_simd
@@ -15162,7 +19734,8 @@ fn test_aarch64_vector_shift_left_insert_simd_special_rn_31_stack_pointer_sp_may
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_left_insert_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_21504_2f09541f() {
+fn test_aarch64_vector_shift_left_insert_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_21504_2f09541f()
+ {
     // Encoding: 0x2F09541F
     // Test aarch64_vector_shift_left_insert_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, Rn=0, Q=0, immh=1, immb=1
@@ -15170,7 +19743,12 @@ fn test_aarch64_vector_shift_left_insert_simd_special_rd_31_zero_register_xzr_wz
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_left_insert_sisd
@@ -15282,7 +19860,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_immh_0_zero_4400_7f004400()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15298,7 +19881,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_immh_1_poweroftwo_4400_7f08
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15314,7 +19902,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_immh_3_poweroftwominusone_4
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15330,7 +19923,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_immh_4_poweroftwo_4400_7f20
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15346,7 +19944,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_immh_7_poweroftwominusone_4
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15362,7 +19965,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_immh_8_poweroftwo_4400_7f40
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15378,7 +19986,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_immh_15_max_4400_7f784400()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15394,7 +20007,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_immb_0_zero_4400_7f004400()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15410,7 +20028,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_immb_1_poweroftwo_4400_7f01
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15426,7 +20049,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_immb_3_poweroftwominusone_4
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15442,7 +20070,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_immb_7_max_4400_7f074400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15458,7 +20091,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_rn_0_min_4400_7f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15474,7 +20112,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_rn_1_poweroftwo_4400_7f0044
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15490,7 +20133,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_rn_30_poweroftwominusone_44
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15506,7 +20154,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_rn_31_max_4400_7f0047e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15522,7 +20175,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_rd_0_min_4400_7f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15538,7 +20196,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_rd_1_poweroftwo_4400_7f0044
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15554,7 +20217,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_rd_30_poweroftwominusone_44
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15570,7 +20238,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_field_rd_31_max_4400_7f00441f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15586,7 +20259,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_0_4400_7f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15602,7 +20280,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_1_4400_7f084400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15618,7 +20301,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_2_4400_7f184400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15634,7 +20322,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_3_4400_7f204400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15650,7 +20343,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_4_4400_7f384400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15666,7 +20364,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_5_4400_7f404400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15682,7 +20385,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_6_4400_7f784400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15698,7 +20406,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_7_4400_7f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15714,7 +20427,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_8_4400_7f014400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15730,7 +20448,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_9_4400_7f034400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15746,7 +20469,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_10_4400_7f074400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15762,7 +20490,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_11_4400_7f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15778,7 +20511,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_12_4400_7f004420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15794,7 +20532,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_13_4400_7f0047c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15810,7 +20553,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_14_4400_7f0047e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15826,7 +20574,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_15_4400_7f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15842,7 +20595,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_16_4400_7f004401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15858,7 +20616,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_17_4400_7f00441e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15874,7 +20637,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_18_4400_7f00441f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15890,7 +20658,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_19_4400_7f004421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15906,7 +20679,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_20_4400_7f0047ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15914,7 +20692,8 @@ fn test_aarch64_vector_shift_right_insert_sisd_combo_20_4400_7f0047ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_right_insert_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_17408_7f0947e0() {
+fn test_aarch64_vector_shift_right_insert_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_17408_7f0947e0()
+ {
     // Encoding: 0x7F0947E0
     // Test aarch64_vector_shift_right_insert_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rn=31, immh=1, Rd=0, immb=1
@@ -15922,7 +20701,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_special_rn_31_stack_pointer_sp_ma
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -15930,7 +20714,8 @@ fn test_aarch64_vector_shift_right_insert_sisd_special_rn_31_stack_pointer_sp_ma
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_right_insert_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_17408_7f09441f() {
+fn test_aarch64_vector_shift_right_insert_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_17408_7f09441f()
+ {
     // Encoding: 0x7F09441F
     // Test aarch64_vector_shift_right_insert_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: immb=1, immh=1, Rn=0, Rd=31
@@ -15938,7 +20723,12 @@ fn test_aarch64_vector_shift_right_insert_sisd_special_rd_31_zero_register_xzr_w
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -15954,7 +20744,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_q_0_min_4400_2f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -15970,7 +20765,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_q_1_max_4400_6f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -15986,7 +20786,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_immh_0_zero_4400_2f004400()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16002,7 +20807,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_immh_1_poweroftwo_4400_2f08
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16018,7 +20828,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_immh_3_poweroftwominusone_4
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16034,7 +20849,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_immh_4_poweroftwo_4400_2f20
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16050,7 +20870,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_immh_7_poweroftwominusone_4
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16066,7 +20891,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_immh_8_poweroftwo_4400_2f40
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16082,7 +20912,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_immh_15_max_4400_2f784400()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16098,7 +20933,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_immb_0_zero_4400_2f004400()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16114,7 +20954,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_immb_1_poweroftwo_4400_2f01
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16130,7 +20975,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_immb_3_poweroftwominusone_4
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16146,7 +20996,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_immb_7_max_4400_2f074400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16162,7 +21017,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_rn_0_min_4400_2f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16178,7 +21038,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_rn_1_poweroftwo_4400_2f0044
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16194,7 +21059,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_rn_30_poweroftwominusone_44
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16210,7 +21080,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_rn_31_max_4400_2f0047e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16226,7 +21101,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_rd_0_min_4400_2f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16242,7 +21122,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_rd_1_poweroftwo_4400_2f0044
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16258,7 +21143,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_rd_30_poweroftwominusone_44
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16274,7 +21164,12 @@ fn test_aarch64_vector_shift_right_insert_simd_field_rd_31_max_4400_2f00441f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16290,7 +21185,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_0_4400_2f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16306,7 +21206,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_1_4400_6f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16322,7 +21227,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_2_4400_2f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16338,7 +21248,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_3_4400_2f084400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16354,7 +21269,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_4_4400_2f184400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16370,7 +21290,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_5_4400_2f204400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16386,7 +21311,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_6_4400_2f384400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16402,7 +21332,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_7_4400_2f404400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16418,7 +21353,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_8_4400_2f784400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16434,7 +21374,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_9_4400_2f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16450,7 +21395,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_10_4400_2f014400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16466,7 +21416,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_11_4400_2f034400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16482,7 +21437,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_12_4400_2f074400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16498,7 +21458,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_13_4400_2f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16514,7 +21479,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_14_4400_2f004420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16530,7 +21500,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_15_4400_2f0047c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16546,7 +21521,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_16_4400_2f0047e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16562,7 +21542,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_17_4400_2f004400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16578,7 +21563,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_18_4400_2f004401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16594,7 +21584,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_19_4400_2f00441e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16610,7 +21605,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_20_4400_2f00441f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16626,7 +21626,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_21_4400_2f004421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16642,7 +21647,12 @@ fn test_aarch64_vector_shift_right_insert_simd_combo_22_4400_2f0047ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16658,7 +21668,12 @@ fn test_aarch64_vector_shift_right_insert_simd_special_q_0_size_variant_0_17408_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16674,7 +21689,12 @@ fn test_aarch64_vector_shift_right_insert_simd_special_q_1_size_variant_1_17408_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16682,7 +21702,8 @@ fn test_aarch64_vector_shift_right_insert_simd_special_q_1_size_variant_1_17408_
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_shift_right_insert_simd_special_rn_31_stack_pointer_sp_may_require_alignment_17408_2f0947e0() {
+fn test_aarch64_vector_shift_right_insert_simd_special_rn_31_stack_pointer_sp_may_require_alignment_17408_2f0947e0()
+ {
     // Encoding: 0x2F0947E0
     // Test aarch64_vector_shift_right_insert_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: immb=1, Q=0, Rn=31, immh=1, Rd=0
@@ -16690,7 +21711,12 @@ fn test_aarch64_vector_shift_right_insert_simd_special_rn_31_stack_pointer_sp_ma
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_simd
@@ -16698,7 +21724,8 @@ fn test_aarch64_vector_shift_right_insert_simd_special_rn_31_stack_pointer_sp_ma
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_shift_right_insert_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_17408_2f09441f() {
+fn test_aarch64_vector_shift_right_insert_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_17408_2f09441f()
+ {
     // Encoding: 0x2F09441F
     // Test aarch64_vector_shift_right_insert_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, Q=0, immh=1, Rd=31, immb=1
@@ -16706,7 +21733,12 @@ fn test_aarch64_vector_shift_right_insert_simd_special_rd_31_zero_register_xzr_w
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_shift_right_insert_sisd
@@ -16800,4 +21832,3 @@ fn test_aarch64_vector_shift_right_insert_simd_zr_rd_2f00441f() {
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
     assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
 }
-

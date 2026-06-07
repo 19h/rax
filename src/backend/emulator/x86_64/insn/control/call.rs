@@ -14,11 +14,7 @@ use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 /// push a 4-byte return address and misalign the callee's stack frame.
 pub(super) fn near_branch_op_size(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
     if vcpu.sregs.cs.l {
-        if ctx.operand_size_override {
-            2
-        } else {
-            8
-        }
+        if ctx.operand_size_override { 2 } else { 8 }
     } else {
         ctx.op_size
     }

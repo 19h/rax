@@ -3,7 +3,7 @@
 //! This module decodes 32-bit ARM instructions (AArch32/A32).
 //! All A32 instructions are 32 bits wide.
 
-use super::{operand::*, Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
+use super::{Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType, operand::*};
 use crate::arm::ExecutionState;
 
 /// AArch32 instruction decoder.
@@ -588,9 +588,7 @@ impl Aarch32Decoder {
             (0b001, 0b10) => Mnemonic::VRINTX_F32,
             (0b011, 0b01) => Mnemonic::VRINTZ_F16,
             (0b011, 0b10) => Mnemonic::VRINTZ_F32,
-            (0b000 | 0b001 | 0b010 | 0b011 | 0b101 | 0b111, 0b00 | 0b11) => {
-                Mnemonic::UNDEFINED
-            }
+            (0b000 | 0b001 | 0b010 | 0b011 | 0b101 | 0b111, 0b00 | 0b11) => Mnemonic::UNDEFINED,
             _ => return None,
         };
 
@@ -1435,10 +1433,7 @@ impl Aarch32Decoder {
     }
 
     fn decode_neon_fp_compare(raw: u32) -> Option<DecodedInsn> {
-        if (raw >> 25) != 0b1111001
-            || ((raw >> 23) & 1) != 0
-            || ((raw >> 8) & 0xF) != 0b1110
-        {
+        if (raw >> 25) != 0b1111001 || ((raw >> 23) & 1) != 0 || ((raw >> 8) & 0xF) != 0b1110 {
             return None;
         }
 
@@ -1693,7 +1688,12 @@ impl Aarch32Decoder {
             ));
         }
 
-        Some(DecodedInsn::new(Mnemonic::VMUL, ExecutionState::Aarch32, raw, 4))
+        Some(DecodedInsn::new(
+            Mnemonic::VMUL,
+            ExecutionState::Aarch32,
+            raw,
+            4,
+        ))
     }
 
     fn decode_neon_integer_multiply_scalar(raw: u32) -> Option<DecodedInsn> {
@@ -1791,7 +1791,12 @@ impl Aarch32Decoder {
             ));
         }
 
-        Some(DecodedInsn::new(Mnemonic::VMULL, ExecutionState::Aarch32, raw, 4))
+        Some(DecodedInsn::new(
+            Mnemonic::VMULL,
+            ExecutionState::Aarch32,
+            raw,
+            4,
+        ))
     }
 
     fn decode_neon_modified_immediate(raw: u32) -> Option<DecodedInsn> {

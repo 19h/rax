@@ -120,7 +120,10 @@ fn test_serialize_between_memory_ops() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // RCX should have the value we stored
-    assert_eq!(regs.rcx, 0x42, "Memory write should be visible after SERIALIZE");
+    assert_eq!(
+        regs.rcx, 0x42,
+        "Memory write should be visible after SERIALIZE"
+    );
 }
 
 // Test SERIALIZE with all flags set
@@ -369,14 +372,18 @@ fn test_serialize_no_exception() {
 #[test]
 fn test_serialize_64bit_values() {
     let code = [
-        0x48, 0xb8, 0xef, 0xbe, 0xad, 0xde, 0xef, 0xbe, 0xad, 0xde, // MOV RAX, 0xdeadbeefdeadbeef
+        0x48, 0xb8, 0xef, 0xbe, 0xad, 0xde, 0xef, 0xbe, 0xad,
+        0xde, // MOV RAX, 0xdeadbeefdeadbeef
         0x0f, 0x01, 0xe8, // SERIALIZE
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xdeadbeefdeadbeef, "RAX should preserve 64-bit value");
+    assert_eq!(
+        regs.rax, 0xdeadbeefdeadbeef,
+        "RAX should preserve 64-bit value"
+    );
 }
 
 // Test SERIALIZE execution completes quickly

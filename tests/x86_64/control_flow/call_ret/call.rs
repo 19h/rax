@@ -25,7 +25,8 @@ fn test_call_relative() {
 
     // Return address should be on stack (address after CALL instruction)
     let mut return_addr = [0u8; 8];
-    vm.read_slice(&mut return_addr, GuestAddress(0x0FF8)).unwrap();
+    vm.read_slice(&mut return_addr, GuestAddress(0x0FF8))
+        .unwrap();
     let addr = u64::from_le_bytes(return_addr);
     // Return address should point to the HLT after CALL
     assert_eq!(addr, CODE_ADDR + 5, "Return address is after CALL");

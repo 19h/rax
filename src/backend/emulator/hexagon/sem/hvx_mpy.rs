@@ -4,7 +4,7 @@
 //! Verified against the qemu-hexagon vector oracle (tests/hexagon_hvx_diff.rs).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fld, SemCtx};
+use super::{SemCtx, fld};
 
 type Bytes = [u8; 128];
 

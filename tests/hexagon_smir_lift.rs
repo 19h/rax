@@ -17,19 +17,19 @@ use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
-use std::sync::{Mutex, OnceLock};
 use std::sync::Arc;
+use std::sync::{Mutex, OnceLock};
 
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
 use rax::backend::emulator::hexagon::HexagonVcpu;
 use rax::config::{Endianness, HexagonIsa};
 use rax::cpu::{CpuState, HexagonRegisters, VCpu, VcpuExit};
-use rax::smir::{
-    ArchRegState, BlockResult, ControlFlow, ExitReason, HexagonLifter, LiftContext,
-    LiftError, SmirBlock, SmirContext, SmirInterpreter, SmirLifter, Terminator, TrapKind,
-};
 use rax::smir::types::{ArchReg, BlockId, HexagonReg, OpId, SourceArch};
+use rax::smir::{
+    ArchRegState, BlockResult, ControlFlow, ExitReason, HexagonLifter, LiftContext, LiftError,
+    SmirBlock, SmirContext, SmirInterpreter, SmirLifter, Terminator, TrapKind,
+};
 
 const NREG: usize = 32;
 const CODE_ADDR: u32 = 0x1000;
@@ -54,7 +54,9 @@ const OVF_DEFERRED_HVX: &[&str] = &[];
 
 fn which(prog: &str) -> Option<PathBuf> {
     let path = std::env::var_os("PATH")?;
-    std::env::split_paths(&path).map(|d| d.join(prog)).find(|c| c.is_file())
+    std::env::split_paths(&path)
+        .map(|d| d.join(prog))
+        .find(|c| c.is_file())
 }
 
 /// Assemble single-packet sources with llvm-mc; one word-vec per input string.
@@ -69,7 +71,13 @@ fn assemble(packets: &[String]) -> Option<Vec<Vec<u32>>> {
             continue;
         }
         let mut child = Command::new("llvm-mc")
-            .args(["-triple=hexagon", "-mcpu=hexagonv69", "-mhvx", "-mattr=+audio", "-show-encoding"])
+            .args([
+                "-triple=hexagon",
+                "-mcpu=hexagonv69",
+                "-mhvx",
+                "-mattr=+audio",
+                "-show-encoding",
+            ])
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
@@ -154,10 +162,12 @@ fn run_interp(words: &[u32], init: &State) -> Option<State> {
     let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x20000)]).ok()?);
     let mut off = CODE_ADDR;
     for &w in words {
-        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64)).ok()?;
+        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64))
+            .ok()?;
         off += 4;
     }
-    mem.write_slice(&trap_word().to_le_bytes(), GuestAddress(off as u64)).ok()?;
+    mem.write_slice(&trap_word().to_le_bytes(), GuestAddress(off as u64))
+        .ok()?;
     let mut regs = HexagonRegisters::default();
     regs.r = init.r;
     regs.p = init.p;
@@ -220,7 +230,9 @@ fn lift_and_run(words: &[u32], init: &State) -> Result<Option<State>, String> {
         guest_pc: CODE_ADDR as u64,
         phis: vec![],
         ops,
-        terminator: Terminator::Trap { kind: TrapKind::Breakpoint },
+        terminator: Terminator::Trap {
+            kind: TrapKind::Breakpoint,
+        },
         exec_count: 0,
     };
     let mut ctx = SmirContext::new_hexagon();
@@ -412,7 +424,10 @@ fn lift_family(name: &str, cases: &[(&str, &str)], n: usize, seed: u64) {
         for m in mismatches.iter().take(20) {
             eprintln!("  {m}");
         }
-        panic!("{name}: {} SMIR-lift divergences vs interpreter", mismatches.len());
+        panic!(
+            "{name}: {} SMIR-lift divergences vs interpreter",
+            mismatches.len()
+        );
     }
 }
 
@@ -441,10 +456,12 @@ fn run_interp_mem(words: &[u32], init: &State, data: &[u8]) -> Option<(State, Ve
     let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x20000)]).ok()?);
     let mut off = CODE_ADDR;
     for &w in words {
-        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64)).ok()?;
+        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64))
+            .ok()?;
         off += 4;
     }
-    mem.write_slice(&trap_word().to_le_bytes(), GuestAddress(off as u64)).ok()?;
+    mem.write_slice(&trap_word().to_le_bytes(), GuestAddress(off as u64))
+        .ok()?;
     // Seed the DATA region with the random bytes.
     mem.write_slice(data, GuestAddress(DATA_ADDR as u64)).ok()?;
     let mut regs = HexagonRegisters::default();
@@ -481,7 +498,8 @@ fn run_interp_mem(words: &[u32], init: &State, data: &[u8]) -> Option<(State, Ve
         _ => return None,
     };
     let mut out_data = vec![0u8; DATA_LEN];
-    mem.read_slice(&mut out_data, GuestAddress(DATA_ADDR as u64)).ok()?;
+    mem.read_slice(&mut out_data, GuestAddress(DATA_ADDR as u64))
+        .ok()?;
     Some((
         State {
             r: regs.r,
@@ -527,7 +545,9 @@ fn lift_and_run_mem(
         guest_pc: CODE_ADDR as u64,
         phis: vec![],
         ops,
-        terminator: Terminator::Trap { kind: TrapKind::Breakpoint },
+        terminator: Terminator::Trap {
+            kind: TrapKind::Breakpoint,
+        },
         exec_count: 0,
     };
     let mut ctx = SmirContext::new_hexagon();
@@ -583,13 +603,7 @@ fn lift_and_run_mem(
 /// either is reported. The `extra_bases` registers are also forced into the DATA
 /// region (for ops with two address bases, e.g. dword stores never need it but
 /// some `_rr`/index forms might want the index small — handled per-call).
-fn lift_mem_family(
-    name: &str,
-    cases: &[(&str, &str)],
-    base_reg: usize,
-    n: usize,
-    seed: u64,
-) {
+fn lift_mem_family(name: &str, cases: &[(&str, &str)], base_reg: usize, n: usize, seed: u64) {
     lift_mem_family_idx(name, cases, base_reg, &[], n, seed)
 }
 
@@ -707,9 +721,7 @@ fn lift_mem_family_idx(
                     }
                     // Byte-for-byte memory compare over the DATA region.
                     if idata != ldata {
-                        let first = (0..DATA_LEN)
-                            .find(|&i| idata[i] != ldata[i])
-                            .unwrap_or(0);
+                        let first = (0..DATA_LEN).find(|&i| idata[i] != ldata[i]).unwrap_or(0);
                         diffs.push(format!(
                             "mem@{:#x}:i={:#04x},l={:#04x}",
                             DATA_ADDR as usize + first,
@@ -729,11 +741,17 @@ fn lift_mem_family_idx(
         eprintln!("[hexagon_smir_lift] {name}: UNLIFTED (gap): {:?}", unlifted);
     }
     if !mismatches.is_empty() {
-        eprintln!("\n==== {name}: {} mem-lift mismatches ====", mismatches.len());
+        eprintln!(
+            "\n==== {name}: {} mem-lift mismatches ====",
+            mismatches.len()
+        );
         for m in mismatches.iter().take(20) {
             eprintln!("  {m}");
         }
-        panic!("{name}: {} SMIR-lift divergences vs interpreter (mem)", mismatches.len());
+        panic!(
+            "{name}: {} SMIR-lift divergences vs interpreter (mem)",
+            mismatches.len()
+        );
     }
 }
 
@@ -782,14 +800,16 @@ fn bid(pc: u64) -> BlockId {
 fn cf_terminator(control_flow: &ControlFlow, fallthrough_pc: u64) -> Option<Terminator> {
     Some(match control_flow {
         ControlFlow::Fallthrough | ControlFlow::NextInsn => return None,
-        ControlFlow::Branch { target } | ControlFlow::DirectBranch(target) => {
-            Terminator::Branch { target: bid(*target) }
-        }
+        ControlFlow::Branch { target } | ControlFlow::DirectBranch(target) => Terminator::Branch {
+            target: bid(*target),
+        },
         ControlFlow::CondBranch { .. } => {
             // The lifter no longer emits this for predicate branches (it uses
             // CondBranchReg). If it ever does, we cannot recover the cond vreg —
             // fail loudly rather than silently mis-resolve.
-            panic!("cf_terminator: bare CondBranch has no cond vreg; lifter must emit CondBranchReg");
+            panic!(
+                "cf_terminator: bare CondBranch has no cond vreg; lifter must emit CondBranchReg"
+            );
         }
         ControlFlow::CondBranchReg {
             cond,
@@ -815,7 +835,9 @@ fn cf_terminator(control_flow: &ControlFlow, fallthrough_pc: u64) -> Option<Term
         },
         ControlFlow::Return => Terminator::Return { values: vec![] },
         ControlFlow::Trap { kind } => Terminator::Trap { kind: *kind },
-        ControlFlow::Syscall => Terminator::Trap { kind: TrapKind::SystemCall },
+        ControlFlow::Syscall => Terminator::Trap {
+            kind: TrapKind::SystemCall,
+        },
     })
 }
 
@@ -831,13 +853,15 @@ fn run_interp_cf(words: &[u32], init: &State) -> Option<(u32, State)> {
     let end = CODE_ADDR + CF_WINDOW;
     let mut a = start;
     while a < end {
-        mem.write_slice(&tw.to_le_bytes(), GuestAddress(a as u64)).ok()?;
+        mem.write_slice(&tw.to_le_bytes(), GuestAddress(a as u64))
+            .ok()?;
         a += 4;
     }
     // Overwrite CODE_ADDR with the test packet.
     let mut off = CODE_ADDR;
     for &w in words {
-        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64)).ok()?;
+        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64))
+            .ok()?;
         off += 4;
     }
     let mut regs = HexagonRegisters::default();
@@ -878,7 +902,7 @@ fn run_interp_cf(words: &[u32], init: &State) -> Option<(u32, State)> {
             usr: regs.c[8],
             v: regs.v,
             q: regs.q,
-            m: [regs.c[1], regs.c[3]], // lc0, lc1
+            m: [regs.c[1], regs.c[3]],  // lc0, lc1
             cs: [regs.c[0], regs.c[2]], // sa0, sa1
             gp: regs.c[11],
         },
@@ -913,7 +937,9 @@ fn lift_and_run_cf(words: &[u32], init: &State) -> Result<Option<(u64, State)>, 
     let fallthrough_pc = CODE_ADDR as u64 + 4 * words.len() as u64;
     let terminator = match cf_terminator(&control_flow, fallthrough_pc) {
         Some(t) => t,
-        None => Terminator::Branch { target: bid(fallthrough_pc) },
+        None => Terminator::Branch {
+            target: bid(fallthrough_pc),
+        },
     };
     let block = SmirBlock {
         id: BlockId(0),
@@ -1063,7 +1089,8 @@ fn lift_cf_family_inner(
                             diffs.push(format!("lc{k}:i={:#x},l={:#x}", istate.m[k], lstate.m[k]));
                         }
                         if istate.cs[k] != lstate.cs[k] {
-                            diffs.push(format!("sa{k}:i={:#x},l={:#x}", istate.cs[k], lstate.cs[k]));
+                            diffs
+                                .push(format!("sa{k}:i={:#x},l={:#x}", istate.cs[k], lstate.cs[k]));
                         }
                     }
                     if !diffs.is_empty() {
@@ -1082,11 +1109,17 @@ fn lift_cf_family_inner(
         return mismatches.len();
     }
     if !mismatches.is_empty() {
-        eprintln!("\n==== {name}: {} CF-lift mismatches ====", mismatches.len());
+        eprintln!(
+            "\n==== {name}: {} CF-lift mismatches ====",
+            mismatches.len()
+        );
         for m in mismatches.iter().take(20) {
             eprintln!("  {m}");
         }
-        panic!("{name}: {} SMIR-lift control-flow divergences vs interpreter", mismatches.len());
+        panic!(
+            "{name}: {} SMIR-lift control-flow divergences vs interpreter",
+            mismatches.len()
+        );
     }
     let _ = checked;
     0
@@ -1143,10 +1176,7 @@ fn cf_self_check_catches_wrong_branch() {
 fn cf_jump_plain() {
     lift_cf_family(
         "cf_jump_plain",
-        &[
-            ("jump", "{ jump #0x10 }"),
-            ("jumpr", "{ jumpr r1 }"),
-        ],
+        &[("jump", "{ jump #0x10 }"), ("jumpr", "{ jumpr r1 }")],
         40,
         0xCF01,
     );
@@ -1240,12 +1270,7 @@ fn cf_sploop_setup() {
 // runs fine). A2_nop's lift is already covered by the audit.
 #[test]
 fn lift_pause() {
-    lift_family(
-        "pause",
-        &[("pause", "{ pause(#3) }")],
-        40,
-        0xCF06,
-    );
+    lift_family("pause", &[("pause", "{ pause(#3) }")], 40, 0xCF06);
 }
 
 // ---- J4 compound compare-and-jump ----
@@ -1255,15 +1280,42 @@ fn cf_cmpjump_rr() {
     lift_cf_family(
         "cf_cmpjump_rr",
         &[
-            ("eq_tp0_nt", "{ p0 = cmp.eq(r0,r1); if (p0.new) jump:nt #0x10 }"),
-            ("eq_tp0_t", "{ p0 = cmp.eq(r0,r1); if (p0.new) jump:t #0x10 }"),
-            ("eq_fp0_nt", "{ p0 = cmp.eq(r0,r1); if (!p0.new) jump:nt #0x10 }"),
-            ("eq_tp1_nt", "{ p1 = cmp.eq(r0,r1); if (p1.new) jump:nt #0x10 }"),
-            ("eq_fp1_nt", "{ p1 = cmp.eq(r0,r1); if (!p1.new) jump:nt #0x10 }"),
-            ("gt_tp0_nt", "{ p0 = cmp.gt(r0,r1); if (p0.new) jump:nt #0x10 }"),
-            ("gt_fp0_nt", "{ p0 = cmp.gt(r0,r1); if (!p0.new) jump:nt #0x10 }"),
-            ("gtu_tp0_nt", "{ p0 = cmp.gtu(r0,r1); if (p0.new) jump:nt #0x10 }"),
-            ("gtu_fp0_nt", "{ p0 = cmp.gtu(r0,r1); if (!p0.new) jump:nt #0x10 }"),
+            (
+                "eq_tp0_nt",
+                "{ p0 = cmp.eq(r0,r1); if (p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "eq_tp0_t",
+                "{ p0 = cmp.eq(r0,r1); if (p0.new) jump:t #0x10 }",
+            ),
+            (
+                "eq_fp0_nt",
+                "{ p0 = cmp.eq(r0,r1); if (!p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "eq_tp1_nt",
+                "{ p1 = cmp.eq(r0,r1); if (p1.new) jump:nt #0x10 }",
+            ),
+            (
+                "eq_fp1_nt",
+                "{ p1 = cmp.eq(r0,r1); if (!p1.new) jump:nt #0x10 }",
+            ),
+            (
+                "gt_tp0_nt",
+                "{ p0 = cmp.gt(r0,r1); if (p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "gt_fp0_nt",
+                "{ p0 = cmp.gt(r0,r1); if (!p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "gtu_tp0_nt",
+                "{ p0 = cmp.gtu(r0,r1); if (p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "gtu_fp0_nt",
+                "{ p0 = cmp.gtu(r0,r1); if (!p0.new) jump:nt #0x10 }",
+            ),
         ],
         40,
         0xCF05,
@@ -1275,18 +1327,54 @@ fn cf_cmpjump_ri() {
     lift_cf_family(
         "cf_cmpjump_ri",
         &[
-            ("eqi_tp0_nt", "{ p0 = cmp.eq(r0,#5); if (p0.new) jump:nt #0x10 }"),
-            ("eqi_fp0_nt", "{ p0 = cmp.eq(r0,#5); if (!p0.new) jump:nt #0x10 }"),
-            ("gti_tp0_nt", "{ p0 = cmp.gt(r0,#5); if (p0.new) jump:nt #0x10 }"),
-            ("gti_fp0_nt", "{ p0 = cmp.gt(r0,#5); if (!p0.new) jump:nt #0x10 }"),
-            ("gtui_tp0_nt", "{ p0 = cmp.gtu(r0,#5); if (p0.new) jump:nt #0x10 }"),
-            ("gtui_fp0_nt", "{ p0 = cmp.gtu(r0,#5); if (!p0.new) jump:nt #0x10 }"),
-            ("eqn1_tp0_nt", "{ p0 = cmp.eq(r0,#-1); if (p0.new) jump:nt #0x10 }"),
-            ("eqn1_fp0_nt", "{ p0 = cmp.eq(r0,#-1); if (!p0.new) jump:nt #0x10 }"),
-            ("gtn1_tp0_nt", "{ p0 = cmp.gt(r0,#-1); if (p0.new) jump:nt #0x10 }"),
-            ("gtn1_fp0_nt", "{ p0 = cmp.gt(r0,#-1); if (!p0.new) jump:nt #0x10 }"),
-            ("tstbit_tp0_nt", "{ p0 = tstbit(r0,#0); if (p0.new) jump:nt #0x10 }"),
-            ("tstbit_fp0_nt", "{ p0 = tstbit(r0,#0); if (!p0.new) jump:nt #0x10 }"),
+            (
+                "eqi_tp0_nt",
+                "{ p0 = cmp.eq(r0,#5); if (p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "eqi_fp0_nt",
+                "{ p0 = cmp.eq(r0,#5); if (!p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "gti_tp0_nt",
+                "{ p0 = cmp.gt(r0,#5); if (p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "gti_fp0_nt",
+                "{ p0 = cmp.gt(r0,#5); if (!p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "gtui_tp0_nt",
+                "{ p0 = cmp.gtu(r0,#5); if (p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "gtui_fp0_nt",
+                "{ p0 = cmp.gtu(r0,#5); if (!p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "eqn1_tp0_nt",
+                "{ p0 = cmp.eq(r0,#-1); if (p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "eqn1_fp0_nt",
+                "{ p0 = cmp.eq(r0,#-1); if (!p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "gtn1_tp0_nt",
+                "{ p0 = cmp.gt(r0,#-1); if (p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "gtn1_fp0_nt",
+                "{ p0 = cmp.gt(r0,#-1); if (!p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "tstbit_tp0_nt",
+                "{ p0 = tstbit(r0,#0); if (p0.new) jump:nt #0x10 }",
+            ),
+            (
+                "tstbit_fp0_nt",
+                "{ p0 = tstbit(r0,#0); if (!p0.new) jump:nt #0x10 }",
+            ),
         ],
         40,
         0xCF06,
@@ -1301,9 +1389,18 @@ fn cf_cmpjump_nv() {
     lift_cf_family(
         "cf_cmpjump_nv",
         &[
-            ("eq_nv_t", "{ r0 = r4; if (cmp.eq(r0.new,r1)) jump:nt #0x10 }"),
-            ("gt_nv_t", "{ r0 = r4; if (cmp.gt(r0.new,r1)) jump:nt #0x10 }"),
-            ("gtu_nv_t", "{ r0 = r4; if (cmp.gtu(r0.new,r1)) jump:nt #0x10 }"),
+            (
+                "eq_nv_t",
+                "{ r0 = r4; if (cmp.eq(r0.new,r1)) jump:nt #0x10 }",
+            ),
+            (
+                "gt_nv_t",
+                "{ r0 = r4; if (cmp.gt(r0.new,r1)) jump:nt #0x10 }",
+            ),
+            (
+                "gtu_nv_t",
+                "{ r0 = r4; if (cmp.gtu(r0.new,r1)) jump:nt #0x10 }",
+            ),
         ],
         40,
         0xCF07,
@@ -1839,12 +1936,7 @@ fn lift_hvx_vshiftv() {
 
 #[test]
 fn lift_hvx_vassign() {
-    lift_family(
-        "hvx_vassign",
-        &[("vassign", "{ v2 = v0 }")],
-        12,
-        0x7005,
-    );
+    lift_family("hvx_vassign", &[("vassign", "{ v2 = v0 }")], 12, 0x7005);
 }
 
 #[test]
@@ -2748,7 +2840,10 @@ fn lift_hvx_vmpyewuh_vmpyowh() {
             ("vmpyowh", "{ v2.w = vmpyo(v0.w,v1.h):<<1:sat }"),
             ("vmpyowh_rnd", "{ v2.w = vmpyo(v0.w,v1.h):<<1:rnd:sat }"),
             ("vmpyowh_sacc", "{ v2.w += vmpyo(v0.w,v1.h):<<1:sat:shift }"),
-            ("vmpyowh_rnd_sacc", "{ v2.w += vmpyo(v0.w,v1.h):<<1:rnd:sat:shift }"),
+            (
+                "vmpyowh_rnd_sacc",
+                "{ v2.w += vmpyo(v0.w,v1.h):<<1:rnd:sat:shift }",
+            ),
         ],
         16,
         0x18c0,
@@ -3470,11 +3565,14 @@ fn run_interp_hist(words: &[u32], init: &State, input: &[u8; 128]) -> Option<Sta
     let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x20000)]).ok()?);
     let mut off = CODE_ADDR;
     for &w in words {
-        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64)).ok()?;
+        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64))
+            .ok()?;
         off += 4;
     }
-    mem.write_slice(&trap_word().to_le_bytes(), GuestAddress(off as u64)).ok()?;
-    mem.write_slice(&input[..], GuestAddress(HIST_INPUT_ADDR as u64)).ok()?;
+    mem.write_slice(&trap_word().to_le_bytes(), GuestAddress(off as u64))
+        .ok()?;
+    mem.write_slice(&input[..], GuestAddress(HIST_INPUT_ADDR as u64))
+        .ok()?;
     let mut regs = HexagonRegisters::default();
     regs.r = init.r;
     regs.p = init.p;
@@ -3546,7 +3644,9 @@ fn lift_and_run_hist(
         guest_pc: CODE_ADDR as u64,
         phis: vec![],
         ops,
-        terminator: Terminator::Trap { kind: TrapKind::Breakpoint },
+        terminator: Terminator::Trap {
+            kind: TrapKind::Breakpoint,
+        },
         exec_count: 0,
     };
     let mut ctx = SmirContext::new_hexagon();
@@ -3721,7 +3821,10 @@ fn lift_hist_family(name: &str, cases: &[(&str, &str)], n: usize, seed: u64) {
         for m in mismatches.iter().take(20) {
             eprintln!("  {m}");
         }
-        panic!("{name}: {} SMIR-lift divergences vs interpreter", mismatches.len());
+        panic!(
+            "{name}: {} SMIR-lift divergences vs interpreter",
+            mismatches.len()
+        );
     }
 }
 
@@ -3761,7 +3864,10 @@ fn lift_hvx_vwhist256() {
             ("vwhist256", "{ v0.tmp = vmem(r0+#0); vwhist256 }"),
             ("vwhist256q", "{ v0.tmp = vmem(r0+#0); vwhist256(q1) }"),
             ("vwhist256_sat", "{ v0.tmp = vmem(r0+#0); vwhist256:sat }"),
-            ("vwhist256q_sat", "{ v0.tmp = vmem(r0+#0); vwhist256(q1):sat }"),
+            (
+                "vwhist256q_sat",
+                "{ v0.tmp = vmem(r0+#0); vwhist256(q1):sat }",
+            ),
         ],
         16,
         0x1c03,
@@ -4031,12 +4137,7 @@ fn lift_s2_bit_r() {
 
 #[test]
 fn lift_s4_lsli() {
-    lift_family(
-        "s4_lsli",
-        &[("lsli", "{ r0 = lsl(#6,r2) }")],
-        40,
-        0x7406,
-    );
+    lift_family("s4_lsli", &[("lsli", "{ r0 = lsl(#6,r2) }")], 40, 0x7406);
 }
 
 #[test]
@@ -4575,7 +4676,6 @@ fn lift_m7_dcmpy() {
         0x9a13,
     );
 }
-
 
 // ============================================================================
 // WAVE: remaining tractable scalar register ops (no mem/CF).
@@ -6005,9 +6105,15 @@ fn lift_mem_storenew_io() {
             ("storerinew", "{ r1 = #0x778899 ; memw(r0+#0) = r1.new }"),
             ("storerinew4", "{ r1 = #0x778899 ; memw(r0+#4) = r1.new }"),
             // Producer is a reg-reg op; new-value store of the result.
-            ("storerinew_add", "{ r1 = add(r5,r6) ; memw(r0+#0) = r1.new }"),
+            (
+                "storerinew_add",
+                "{ r1 = add(r5,r6) ; memw(r0+#0) = r1.new }",
+            ),
             // Two producers in the packet: the .new store must pick r2 (Nt8).
-            ("storerinew_2prod", "{ r1 = #3 ; r2 = #7 ; memw(r0+#0) = r2.new }"),
+            (
+                "storerinew_2prod",
+                "{ r1 = #3 ; r2 = #7 ; memw(r0+#0) = r2.new }",
+            ),
         ],
         0,
         40,
@@ -6023,7 +6129,10 @@ fn lift_mem_storenew_pi() {
         &[
             ("storerbnew_pi", "{ r1 = #0x55 ; memb(r0++#1) = r1.new }"),
             ("storerhnew_pi", "{ r1 = #0x1234 ; memh(r0++#2) = r1.new }"),
-            ("storerinew_pi", "{ r1 = #0x778899 ; memw(r0++#4) = r1.new }"),
+            (
+                "storerinew_pi",
+                "{ r1 = #0x778899 ; memw(r0++#4) = r1.new }",
+            ),
         ],
         0,
         40,
@@ -6038,8 +6147,14 @@ fn lift_mem_storenew_rr() {
         "mem_storenew_rr",
         &[
             ("storerbnew_rr", "{ r1 = #0x55 ; memb(r0+r2<<#0) = r1.new }"),
-            ("storerhnew_rr", "{ r1 = #0x1234 ; memh(r0+r2<<#1) = r1.new }"),
-            ("storerinew_rr", "{ r1 = #0x778899 ; memw(r0+r2<<#2) = r1.new }"),
+            (
+                "storerhnew_rr",
+                "{ r1 = #0x1234 ; memh(r0+r2<<#1) = r1.new }",
+            ),
+            (
+                "storerinew_rr",
+                "{ r1 = #0x778899 ; memw(r0+r2<<#2) = r1.new }",
+            ),
         ],
         0,
         &[2],
@@ -6054,9 +6169,18 @@ fn lift_mem_storenew_ur() {
     lift_mem_family_idx(
         "mem_storenew_ur",
         &[
-            ("storerbnew_ur", "{ r1 = #0x55 ; memb(r2<<#0+##0x8000) = r1.new }"),
-            ("storerhnew_ur", "{ r1 = #0x1234 ; memh(r2<<#1+##0x8000) = r1.new }"),
-            ("storerinew_ur", "{ r1 = #0x778899 ; memw(r2<<#2+##0x8000) = r1.new }"),
+            (
+                "storerbnew_ur",
+                "{ r1 = #0x55 ; memb(r2<<#0+##0x8000) = r1.new }",
+            ),
+            (
+                "storerhnew_ur",
+                "{ r1 = #0x1234 ; memh(r2<<#1+##0x8000) = r1.new }",
+            ),
+            (
+                "storerinew_ur",
+                "{ r1 = #0x778899 ; memw(r2<<#2+##0x8000) = r1.new }",
+            ),
         ],
         9,
         &[2],
@@ -6074,12 +6198,24 @@ fn lift_mem_storenew_pr() {
     lift_mem_family(
         "mem_storenew_pr",
         &[
-            ("storerinew_pr", "{ r1 = #0x778899 ; memw(r0++m0) = r1.new }"),
+            (
+                "storerinew_pr",
+                "{ r1 = #0x778899 ; memw(r0++m0) = r1.new }",
+            ),
             ("storerhnew_pr", "{ r1 = #0x1234 ; memh(r0++m0) = r1.new }"),
             ("storerbnew_pr", "{ r1 = #0x55 ; memb(r0++m0) = r1.new }"),
-            ("storerinew_pci", "{ r1 = #0x778899 ; memw(r0++#4:circ(m0)) = r1.new }"),
-            ("storerinew_pcr", "{ r1 = #0x778899 ; memw(r0++I:circ(m0)) = r1.new }"),
-            ("storerinew_pbr", "{ r1 = #0x778899 ; memw(r0++m0:brev) = r1.new }"),
+            (
+                "storerinew_pci",
+                "{ r1 = #0x778899 ; memw(r0++#4:circ(m0)) = r1.new }",
+            ),
+            (
+                "storerinew_pcr",
+                "{ r1 = #0x778899 ; memw(r0++I:circ(m0)) = r1.new }",
+            ),
+            (
+                "storerinew_pbr",
+                "{ r1 = #0x778899 ; memw(r0++m0:brev) = r1.new }",
+            ),
         ],
         0,
         40,
@@ -6093,9 +6229,18 @@ fn lift_mem_storenew_ap() {
     lift_mem_family(
         "mem_storenew_ap",
         &[
-            ("storerbnew_ap", "{ r1 = #0x55 ; memb(r2=##0x8000) = r1.new }"),
-            ("storerhnew_ap", "{ r1 = #0x1234 ; memh(r2=##0x8000) = r1.new }"),
-            ("storerinew_ap", "{ r1 = #0x778899 ; memw(r2=##0x8000) = r1.new }"),
+            (
+                "storerbnew_ap",
+                "{ r1 = #0x55 ; memb(r2=##0x8000) = r1.new }",
+            ),
+            (
+                "storerhnew_ap",
+                "{ r1 = #0x1234 ; memh(r2=##0x8000) = r1.new }",
+            ),
+            (
+                "storerinew_ap",
+                "{ r1 = #0x778899 ; memw(r2=##0x8000) = r1.new }",
+            ),
         ],
         9,
         40,
@@ -6116,26 +6261,77 @@ fn lift_cf_cmpjump_nv() {
         "cf_cmpjump_nv",
         &[
             // reg/reg compares (producer r0 = r4)
-            ("eq_t_nt", "{ r0 = r4 ; if (cmp.eq(r0.new,r1)) jump:nt #0x10 }"),
-            ("eq_t_t", "{ r0 = r4 ; if (cmp.eq(r0.new,r1)) jump:t #0x10 }"),
-            ("eq_f_nt", "{ r0 = r4 ; if (!cmp.eq(r0.new,r1)) jump:nt #0x10 }"),
-            ("gt_t_nt", "{ r0 = r4 ; if (cmp.gt(r0.new,r1)) jump:nt #0x10 }"),
-            ("gt_f_nt", "{ r0 = r4 ; if (!cmp.gt(r0.new,r1)) jump:nt #0x10 }"),
-            ("gtu_t_nt", "{ r0 = r4 ; if (cmp.gtu(r0.new,r1)) jump:nt #0x10 }"),
-            ("gtu_f_nt", "{ r0 = r4 ; if (!cmp.gtu(r0.new,r1)) jump:nt #0x10 }"),
+            (
+                "eq_t_nt",
+                "{ r0 = r4 ; if (cmp.eq(r0.new,r1)) jump:nt #0x10 }",
+            ),
+            (
+                "eq_t_t",
+                "{ r0 = r4 ; if (cmp.eq(r0.new,r1)) jump:t #0x10 }",
+            ),
+            (
+                "eq_f_nt",
+                "{ r0 = r4 ; if (!cmp.eq(r0.new,r1)) jump:nt #0x10 }",
+            ),
+            (
+                "gt_t_nt",
+                "{ r0 = r4 ; if (cmp.gt(r0.new,r1)) jump:nt #0x10 }",
+            ),
+            (
+                "gt_f_nt",
+                "{ r0 = r4 ; if (!cmp.gt(r0.new,r1)) jump:nt #0x10 }",
+            ),
+            (
+                "gtu_t_nt",
+                "{ r0 = r4 ; if (cmp.gtu(r0.new,r1)) jump:nt #0x10 }",
+            ),
+            (
+                "gtu_f_nt",
+                "{ r0 = r4 ; if (!cmp.gtu(r0.new,r1)) jump:nt #0x10 }",
+            ),
             // reversed (cmplt/cmpltu): producer is the .new operand on the RHS
-            ("lt_t_nt", "{ r0 = r4 ; if (cmp.gt(r1,r0.new)) jump:nt #0x10 }"),
-            ("ltu_t_nt", "{ r0 = r4 ; if (cmp.gtu(r1,r0.new)) jump:nt #0x10 }"),
+            (
+                "lt_t_nt",
+                "{ r0 = r4 ; if (cmp.gt(r1,r0.new)) jump:nt #0x10 }",
+            ),
+            (
+                "ltu_t_nt",
+                "{ r0 = r4 ; if (cmp.gtu(r1,r0.new)) jump:nt #0x10 }",
+            ),
             // reg/imm compares
-            ("eqi_t_nt", "{ r0 = r4 ; if (cmp.eq(r0.new,#5)) jump:nt #0x10 }"),
-            ("eqi_f_nt", "{ r0 = r4 ; if (!cmp.eq(r0.new,#5)) jump:nt #0x10 }"),
-            ("gti_t_nt", "{ r0 = r4 ; if (cmp.gt(r0.new,#5)) jump:nt #0x10 }"),
-            ("gtui_t_nt", "{ r0 = r4 ; if (cmp.gtu(r0.new,#5)) jump:nt #0x10 }"),
+            (
+                "eqi_t_nt",
+                "{ r0 = r4 ; if (cmp.eq(r0.new,#5)) jump:nt #0x10 }",
+            ),
+            (
+                "eqi_f_nt",
+                "{ r0 = r4 ; if (!cmp.eq(r0.new,#5)) jump:nt #0x10 }",
+            ),
+            (
+                "gti_t_nt",
+                "{ r0 = r4 ; if (cmp.gt(r0.new,#5)) jump:nt #0x10 }",
+            ),
+            (
+                "gtui_t_nt",
+                "{ r0 = r4 ; if (cmp.gtu(r0.new,#5)) jump:nt #0x10 }",
+            ),
             // compare vs -1 / bit 0
-            ("eqn1_t_nt", "{ r0 = r4 ; if (cmp.eq(r0.new,#-1)) jump:nt #0x10 }"),
-            ("gtn1_t_nt", "{ r0 = r4 ; if (cmp.gt(r0.new,#-1)) jump:nt #0x10 }"),
-            ("tstbit0_t_nt", "{ r0 = r4 ; if (tstbit(r0.new,#0)) jump:nt #0x10 }"),
-            ("tstbit0_f_nt", "{ r0 = r4 ; if (!tstbit(r0.new,#0)) jump:nt #0x10 }"),
+            (
+                "eqn1_t_nt",
+                "{ r0 = r4 ; if (cmp.eq(r0.new,#-1)) jump:nt #0x10 }",
+            ),
+            (
+                "gtn1_t_nt",
+                "{ r0 = r4 ; if (cmp.gt(r0.new,#-1)) jump:nt #0x10 }",
+            ),
+            (
+                "tstbit0_t_nt",
+                "{ r0 = r4 ; if (tstbit(r0.new,#0)) jump:nt #0x10 }",
+            ),
+            (
+                "tstbit0_f_nt",
+                "{ r0 = r4 ; if (!tstbit(r0.new,#0)) jump:nt #0x10 }",
+            ),
         ],
         40,
         0xd00b,
@@ -6466,7 +6662,10 @@ fn audit_final_scalar_gap_rescan() {
     }
     let mut mnems: Vec<_> = by_mnem.iter().collect();
     mnems.sort_by(|a, b| b.1.cmp(a.1));
-    eprintln!("[audit] {} non-V6 opcodes still Unsupported; by reason:", unlifted.len());
+    eprintln!(
+        "[audit] {} non-V6 opcodes still Unsupported; by reason:",
+        unlifted.len()
+    );
     for (m, n) in &mnems {
         eprintln!("    {m}: {n}");
     }
@@ -6492,14 +6691,12 @@ fn audit_final_scalar_gap_rescan() {
         name == "F2_dfmpylh"             // buggy-oracle FP  (boundary a) — ONLY F2 boundary left
             || name.starts_with("Y2_")   // system           (boundary b)
             || name.starts_with("Y4_")   // tlb              (boundary b)
-            || name.starts_with("Y5_")   // barrier/tlb      (boundary b)
+            || name.starts_with("Y5_") // barrier/tlb      (boundary b)
     };
 
     let unexpected: Vec<_> = unlifted
         .iter()
-        .filter(|(name, m)| {
-            !KNOWN_MNEMONICS.contains(&m.as_str()) && !is_boundary_by_name(name)
-        })
+        .filter(|(name, m)| !KNOWN_MNEMONICS.contains(&m.as_str()) && !is_boundary_by_name(name))
         .collect();
     if !unexpected.is_empty() {
         eprintln!("[audit] UNEXPECTED unlifted scalar ops (not a known boundary):");
@@ -6637,12 +6834,30 @@ fn lift_mem_pload_io_new() {
     lift_mem_family(
         "mem_pload_io_new",
         &[
-            ("ploadritnew", "{ p0 = cmp.eq(r4,r5) ; if (p0.new) r1 = memw(r0+#0) }"),
-            ("ploadrifnew", "{ p0 = cmp.eq(r4,r5) ; if (!p0.new) r1 = memw(r0+#4) }"),
-            ("ploadrbtnew", "{ p0 = cmp.gt(r4,r5) ; if (p0.new) r1 = memb(r0+#3) }"),
-            ("ploadrubfnew", "{ p0 = cmp.eq(r4,r5) ; if (!p0.new) r1 = memub(r0+#5) }"),
-            ("ploadrhtnew", "{ p0 = cmp.eq(r4,r5) ; if (p0.new) r1 = memh(r0+#2) }"),
-            ("ploadrdtnew", "{ p0 = cmp.eq(r4,r5) ; if (p0.new) r3:2 = memd(r0+#0) }"),
+            (
+                "ploadritnew",
+                "{ p0 = cmp.eq(r4,r5) ; if (p0.new) r1 = memw(r0+#0) }",
+            ),
+            (
+                "ploadrifnew",
+                "{ p0 = cmp.eq(r4,r5) ; if (!p0.new) r1 = memw(r0+#4) }",
+            ),
+            (
+                "ploadrbtnew",
+                "{ p0 = cmp.gt(r4,r5) ; if (p0.new) r1 = memb(r0+#3) }",
+            ),
+            (
+                "ploadrubfnew",
+                "{ p0 = cmp.eq(r4,r5) ; if (!p0.new) r1 = memub(r0+#5) }",
+            ),
+            (
+                "ploadrhtnew",
+                "{ p0 = cmp.eq(r4,r5) ; if (p0.new) r1 = memh(r0+#2) }",
+            ),
+            (
+                "ploadrdtnew",
+                "{ p0 = cmp.eq(r4,r5) ; if (p0.new) r3:2 = memd(r0+#0) }",
+            ),
         ],
         0,
         40,
@@ -6748,12 +6963,30 @@ fn lift_mem_pstore_io_new() {
     lift_mem_family(
         "mem_pstore_io_new",
         &[
-            ("pstoreritnew", "{ p0 = cmp.eq(r4,r5) ; if (p0.new) memw(r0+#0) = r1 }"),
-            ("pstorerifnew", "{ p0 = cmp.eq(r4,r5) ; if (!p0.new) memw(r0+#8) = r1 }"),
-            ("pstorerbtnew", "{ p0 = cmp.gt(r4,r5) ; if (p0.new) memb(r0+#3) = r1 }"),
-            ("pstorerhtnew", "{ p0 = cmp.eq(r4,r5) ; if (p0.new) memh(r0+#2) = r1 }"),
-            ("pstorerftnew", "{ p0 = cmp.eq(r4,r5) ; if (p0.new) memh(r0+#4) = r1.h }"),
-            ("pstorerdtnew", "{ p0 = cmp.eq(r4,r5) ; if (p0.new) memd(r0+#0) = r3:2 }"),
+            (
+                "pstoreritnew",
+                "{ p0 = cmp.eq(r4,r5) ; if (p0.new) memw(r0+#0) = r1 }",
+            ),
+            (
+                "pstorerifnew",
+                "{ p0 = cmp.eq(r4,r5) ; if (!p0.new) memw(r0+#8) = r1 }",
+            ),
+            (
+                "pstorerbtnew",
+                "{ p0 = cmp.gt(r4,r5) ; if (p0.new) memb(r0+#3) = r1 }",
+            ),
+            (
+                "pstorerhtnew",
+                "{ p0 = cmp.eq(r4,r5) ; if (p0.new) memh(r0+#2) = r1 }",
+            ),
+            (
+                "pstorerftnew",
+                "{ p0 = cmp.eq(r4,r5) ; if (p0.new) memh(r0+#4) = r1.h }",
+            ),
+            (
+                "pstorerdtnew",
+                "{ p0 = cmp.eq(r4,r5) ; if (p0.new) memd(r0+#0) = r3:2 }",
+            ),
         ],
         0,
         40,
@@ -6849,10 +7082,22 @@ fn lift_mem_pstore_imm_new() {
     lift_mem_family(
         "mem_pstore_imm_new",
         &[
-            ("storeiritnew", "{ p0 = cmp.eq(r4,r5) ; if (p0.new) memw(r0+#0) = #20 }"),
-            ("storeirifnew", "{ p0 = cmp.eq(r4,r5) ; if (!p0.new) memw(r0+#4) = #-1 }"),
-            ("storeirbtnew", "{ p0 = cmp.gt(r4,r5) ; if (p0.new) memb(r0+#3) = #15 }"),
-            ("storeirhtnew", "{ p0 = cmp.eq(r4,r5) ; if (p0.new) memh(r0+#2) = #-7 }"),
+            (
+                "storeiritnew",
+                "{ p0 = cmp.eq(r4,r5) ; if (p0.new) memw(r0+#0) = #20 }",
+            ),
+            (
+                "storeirifnew",
+                "{ p0 = cmp.eq(r4,r5) ; if (!p0.new) memw(r0+#4) = #-1 }",
+            ),
+            (
+                "storeirbtnew",
+                "{ p0 = cmp.gt(r4,r5) ; if (p0.new) memb(r0+#3) = #15 }",
+            ),
+            (
+                "storeirhtnew",
+                "{ p0 = cmp.eq(r4,r5) ; if (p0.new) memh(r0+#2) = #-7 }",
+            ),
         ],
         0,
         40,
@@ -6869,10 +7114,16 @@ fn lift_mem_pstorenew_io() {
         "mem_pstorenew_io",
         &[
             ("pstorerbnewt", "{ r1 = r6 ; if (p0) memb(r0+#0) = r1.new }"),
-            ("pstorerbnewf", "{ r1 = r6 ; if (!p0) memb(r0+#0) = r1.new }"),
+            (
+                "pstorerbnewf",
+                "{ r1 = r6 ; if (!p0) memb(r0+#0) = r1.new }",
+            ),
             ("pstorerhnewt", "{ r1 = r6 ; if (p0) memh(r0+#2) = r1.new }"),
             ("pstorerinewt", "{ r1 = r6 ; if (p0) memw(r0+#0) = r1.new }"),
-            ("pstorerinewf", "{ r1 = r6 ; if (!p0) memw(r0+#4) = r1.new }"),
+            (
+                "pstorerinewf",
+                "{ r1 = r6 ; if (!p0) memw(r0+#4) = r1.new }",
+            ),
         ],
         0,
         40,
@@ -6889,10 +7140,22 @@ fn lift_mem_pstorenew_io_new() {
     lift_mem_family(
         "mem_pstorenew_io_new",
         &[
-            ("pstorerinewtnew", "{ p0 = cmp.eq(r4,r5) ; r1 = r6 ; if (p0.new) memw(r0+#0) = r1.new }"),
-            ("pstorerinewfnew", "{ p0 = cmp.eq(r4,r5) ; r1 = r6 ; if (!p0.new) memw(r0+#4) = r1.new }"),
-            ("pstorerbnewtnew", "{ p0 = cmp.gt(r4,r5) ; r1 = r6 ; if (p0.new) memb(r0+#3) = r1.new }"),
-            ("pstorerhnewtnew", "{ p0 = cmp.eq(r4,r5) ; r1 = r6 ; if (p0.new) memh(r0+#2) = r1.new }"),
+            (
+                "pstorerinewtnew",
+                "{ p0 = cmp.eq(r4,r5) ; r1 = r6 ; if (p0.new) memw(r0+#0) = r1.new }",
+            ),
+            (
+                "pstorerinewfnew",
+                "{ p0 = cmp.eq(r4,r5) ; r1 = r6 ; if (!p0.new) memw(r0+#4) = r1.new }",
+            ),
+            (
+                "pstorerbnewtnew",
+                "{ p0 = cmp.gt(r4,r5) ; r1 = r6 ; if (p0.new) memb(r0+#3) = r1.new }",
+            ),
+            (
+                "pstorerhnewtnew",
+                "{ p0 = cmp.eq(r4,r5) ; r1 = r6 ; if (p0.new) memh(r0+#2) = r1.new }",
+            ),
         ],
         0,
         40,
@@ -6906,12 +7169,30 @@ fn lift_mem_pstorenew_modes() {
     lift_mem_family_idx(
         "mem_pstorenew_modes",
         &[
-            ("pstorerinewt_pi", "{ r1 = r6 ; if (p0) memw(r0++#4) = r1.new }"),
-            ("pstorerinewf_pi", "{ r1 = r6 ; if (!p0) memw(r0++#4) = r1.new }"),
-            ("pstorerbnewt_rr", "{ r1 = r6 ; if (p0) memb(r0+r2<<#0) = r1.new }"),
-            ("pstorerinewt_rr", "{ r1 = r6 ; if (p0) memw(r0+r2<<#2) = r1.new }"),
-            ("pstorerinewt_abs", "{ r1 = r6 ; if (p0) memw(##0x8000) = r1.new }"),
-            ("pstorerbnewf_abs", "{ r1 = r6 ; if (!p0) memb(##0x8000) = r1.new }"),
+            (
+                "pstorerinewt_pi",
+                "{ r1 = r6 ; if (p0) memw(r0++#4) = r1.new }",
+            ),
+            (
+                "pstorerinewf_pi",
+                "{ r1 = r6 ; if (!p0) memw(r0++#4) = r1.new }",
+            ),
+            (
+                "pstorerbnewt_rr",
+                "{ r1 = r6 ; if (p0) memb(r0+r2<<#0) = r1.new }",
+            ),
+            (
+                "pstorerinewt_rr",
+                "{ r1 = r6 ; if (p0) memw(r0+r2<<#2) = r1.new }",
+            ),
+            (
+                "pstorerinewt_abs",
+                "{ r1 = r6 ; if (p0) memw(##0x8000) = r1.new }",
+            ),
+            (
+                "pstorerbnewf_abs",
+                "{ r1 = r6 ; if (!p0) memb(##0x8000) = r1.new }",
+            ),
         ],
         0,
         &[2],
@@ -7232,7 +7513,10 @@ fn lift_fp_special_family(name: &str, cases: &[(&str, &str)], n: usize, seed: u6
         for m in mismatches.iter().take(20) {
             eprintln!("  {m}");
         }
-        panic!("{name}: {} SMIR-lift divergences vs interpreter", mismatches.len());
+        panic!(
+            "{name}: {} SMIR-lift divergences vs interpreter",
+            mismatches.len()
+        );
     }
 }
 
@@ -7413,7 +7697,10 @@ fn lift_df_special_family(name: &str, cases: &[(&str, &str)], n: usize, seed: u6
         for m in mismatches.iter().take(20) {
             eprintln!("  {m}");
         }
-        panic!("{name}: {} SMIR-lift divergences vs interpreter", mismatches.len());
+        panic!(
+            "{name}: {} SMIR-lift divergences vs interpreter",
+            mismatches.len()
+        );
     }
 }
 
@@ -7465,7 +7752,11 @@ fn lift_s2_cabacdecbin() {
     // Sweep every state 0..=63 plus extra random rounds, biasing range/offset to
     // realistic CABAC magnitudes (top bits set) and both MPS/LPS regions.
     for round in 0..400usize {
-        let state = if round < 64 { round as u32 } else { (rng.next() % 64) as u32 };
+        let state = if round < 64 {
+            round as u32
+        } else {
+            (rng.next() % 64) as u32
+        };
         let val_mps = (rng.next() & 1) as u32;
         let bitpos = (rng.next() % 8) as u32; // small shift, keeps range in range
         let mut st = State::zeroed();
@@ -7510,11 +7801,17 @@ fn lift_s2_cabacdecbin() {
         }
     }
     if !mismatches.is_empty() {
-        eprintln!("\n==== s2_cabacdecbin: {} lift mismatches ====", mismatches.len());
+        eprintln!(
+            "\n==== s2_cabacdecbin: {} lift mismatches ====",
+            mismatches.len()
+        );
         for m in mismatches.iter().take(20) {
             eprintln!("  {m}");
         }
-        panic!("s2_cabacdecbin: {} SMIR-lift divergences vs interpreter", mismatches.len());
+        panic!(
+            "s2_cabacdecbin: {} SMIR-lift divergences vs interpreter",
+            mismatches.len()
+        );
     }
 }
 
@@ -7577,10 +7874,16 @@ fn lift_a4_tlbmatch() {
         }
     }
     if !mismatches.is_empty() {
-        eprintln!("\n==== a4_tlbmatch: {} lift mismatches ====", mismatches.len());
+        eprintln!(
+            "\n==== a4_tlbmatch: {} lift mismatches ====",
+            mismatches.len()
+        );
         for m in mismatches.iter().take(20) {
             eprintln!("  {m}");
         }
-        panic!("a4_tlbmatch: {} SMIR-lift divergences vs interpreter", mismatches.len());
+        panic!(
+            "a4_tlbmatch: {} SMIR-lift divergences vs interpreter",
+            mismatches.len()
+        );
     }
 }

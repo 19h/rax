@@ -27,7 +27,8 @@ fn sb(rs2: u32, rs1: u32, imm: i32) -> u32 {
 const ECALL: u32 = 0x0000_0073;
 
 fn run_program(code: &[u32]) -> (Vec<u8>, RiscVRegisters) {
-    let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 64 * 1024)]).unwrap());
+    let mem =
+        Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 64 * 1024)]).unwrap());
     let bytes: Vec<u8> = code.iter().flat_map(|w| w.to_le_bytes()).collect();
     mem.write_slice(&bytes, GuestAddress(CODE_ADDR)).unwrap();
 
@@ -90,8 +91,8 @@ fn loads_and_stores_to_ram() {
         (((imm as u32) & 0xfff) << 20) | (rs1 << 15) | (3 << 12) | (rd << 7) | 0x03
     }
     let prog = [
-        lui(5, 2),          // x5 = 0x2000
-        addi(6, 0, 0x123),  // x6 = 0x123
+        lui(5, 2),         // x5 = 0x2000
+        addi(6, 0, 0x123), // x6 = 0x123
         sd(6, 5, 0),
         ld(7, 5, 0),
         ECALL,

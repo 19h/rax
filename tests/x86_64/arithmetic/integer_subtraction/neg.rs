@@ -27,15 +27,22 @@ use rax::cpu::Registers;
 fn test_neg_al_positive() {
     let code = [
         0xf6, 0xd8, // NEG AL (F6 /3, ModRM=11_011_000)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x42; // 66
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0xBE, "NEG 0x42 (66) = 0xBE (-66 in two's complement)");
-    assert!(cf_set(regs.rflags), "CF should be set (operand was non-zero)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0xBE,
+        "NEG 0x42 (66) = 0xBE (-66 in two's complement)"
+    );
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (operand was non-zero)"
+    );
     assert!(sf_set(regs.rflags), "SF should be set (negative result)");
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
@@ -48,7 +55,11 @@ fn test_neg_al_one() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0xFF, "NEG 1 = 0xFF (-1 in two's complement)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0xFF,
+        "NEG 1 = 0xFF (-1 in two's complement)"
+    );
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(sf_set(regs.rflags), "SF should be set");
 }
@@ -77,7 +88,10 @@ fn test_neg_al_zero() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0, "NEG 0 = 0");
-    assert!(!cf_set(regs.rflags), "CF should be CLEAR (operand was zero)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be CLEAR (operand was zero)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set");
     assert!(!sf_set(regs.rflags), "SF should be clear");
 }
@@ -148,7 +162,11 @@ fn test_neg_preserves_high_bytes_8bit() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x88, "AL: NEG 0x78 = 0x88");
-    assert_eq!(regs.rax & !0xFF, 0xDEADBEEF_12345600, "High bytes preserved");
+    assert_eq!(
+        regs.rax & !0xFF,
+        0xDEADBEEF_12345600,
+        "High bytes preserved"
+    );
 }
 
 // ============================================================================
@@ -231,7 +249,11 @@ fn test_neg_preserves_high_bytes_16bit() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0xA988, "AX: NEG 0x5678");
-    assert_eq!(regs.rax & !0xFFFF, 0xDEADBEEF_12340000, "Upper bits preserved");
+    assert_eq!(
+        regs.rax & !0xFFFF,
+        0xDEADBEEF_12340000,
+        "Upper bits preserved"
+    );
 }
 
 // ============================================================================
@@ -276,7 +298,10 @@ fn test_neg_eax_signed_overflow() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x80000000, "NEG 0x80000000 = 0x80000000 (overflow)");
+    assert_eq!(
+        regs.rax, 0x80000000,
+        "NEG 0x80000000 = 0x80000000 (overflow)"
+    );
     assert!(of_set(regs.rflags), "OF should be set");
     assert!(cf_set(regs.rflags), "CF should be set");
 }
@@ -645,7 +670,7 @@ fn test_neg_double_negation() {
     let code = [
         0xf6, 0xd8, // NEG AL (first time)
         0xf6, 0xd8, // NEG AL (second time)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x42;

@@ -378,7 +378,8 @@ fn test_pshufb_xmm0_mem_identity() {
 
     // Write identity pattern to memory
     let pattern: [u8; 16] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-    mem.write_slice(&pattern, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -400,7 +401,8 @@ fn test_pshufb_xmm1_mem_reverse() {
 
     // Write reverse pattern to memory
     let pattern: [u8; 16] = [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
-    mem.write_slice(&pattern, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -421,7 +423,14 @@ fn test_pshufb_xmm2_mem_all_zeros() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     // Write all 0x80 (high bit set for zeros)
-    mem.write_slice(&[0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+            0x80, 0x80,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -442,7 +451,14 @@ fn test_pshufb_xmm3_mem_broadcast_byte0() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     // All zeros (broadcast byte 0)
-    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -463,9 +479,12 @@ fn test_pshufb_xmm7_mem_mixed() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     // Mixed pattern
-    let pattern: [u8; 16] = [0x00, 0x0F, 0x01, 0x0E, 0x02, 0x0D, 0x03, 0x0C,
-                              0x04, 0x0B, 0x05, 0x0A, 0x06, 0x09, 0x07, 0x08];
-    mem.write_slice(&pattern, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    let pattern: [u8; 16] = [
+        0x00, 0x0F, 0x01, 0x0E, 0x02, 0x0D, 0x03, 0x0C, 0x04, 0x0B, 0x05, 0x0A, 0x06, 0x09, 0x07,
+        0x08,
+    ];
+    mem.write_slice(&pattern, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -488,7 +507,14 @@ fn test_pshufb_xmm0_mem_displacement() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77,
+            0x77, 0x77,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -506,7 +532,14 @@ fn test_pshufb_xmm1_mem_rbx() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88,
+            0x88, 0x88,
+        ],
+        vm_memory::GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

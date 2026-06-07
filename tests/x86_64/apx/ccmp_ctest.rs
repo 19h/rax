@@ -40,10 +40,7 @@ fn test_ccmp_false_condition_uses_encoded_default_flags_match_llvm() {
     regs.rax = 1;
     regs.rbx = 1;
     regs.rflags = 0x2;
-    let code = [
-        0x62, 0xF4, 0x9C, 0x00, 0x39, 0xD8,
-        0xF4,
-    ];
+    let code = [0x62, 0xF4, 0x9C, 0x00, 0x39, 0xD8, 0xF4];
 
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -63,10 +60,7 @@ fn test_ccmp_true_condition_performs_compare_match_llvm() {
     regs.rax = 1;
     regs.rbx = 1;
     regs.rflags = 0x2;
-    let code = [
-        0x62, 0xF4, 0x9C, 0x01, 0x39, 0xD8,
-        0xF4,
-    ];
+    let code = [0x62, 0xF4, 0x9C, 0x01, 0x39, 0xD8, 0xF4];
 
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -86,10 +80,7 @@ fn test_ctest_false_condition_uses_encoded_default_flags_match_llvm() {
     regs.rax = 0;
     regs.rbx = 0;
     regs.rflags = 0x2;
-    let code = [
-        0x62, 0xF4, 0xE4, 0x00, 0x85, 0xD8,
-        0xF4,
-    ];
+    let code = [0x62, 0xF4, 0xE4, 0x00, 0x85, 0xD8, 0xF4];
 
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -105,10 +96,10 @@ fn test_ccmpo_r64_r64() {
     // CCMPO rcx, rdx, dfv=0
     // EVEX.NDS CCMPO encoding with condition=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x00,  // EVEX prefix (CCMPO condition=0)
-        0x39, 0xD1,              // CMP rcx, rdx
-        0x00,                    // dfv = 0
-        0xF4,                    // HLT
+        0x62, 0xF4, 0xE4, 0x00, // EVEX prefix (CCMPO condition=0)
+        0x39, 0xD1, // CMP rcx, rdx
+        0x00, // dfv = 0
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -119,9 +110,9 @@ fn test_ccmpo_r64_r64() {
 fn test_ccmpno_r64_r64() {
     // CCMPNO rax, rbx, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x01,  // EVEX prefix (CCMPNO condition=1)
-        0x39, 0xD8,              // CMP rax, rbx
-        0x00,                    // dfv = 0
+        0x62, 0xF4, 0xE4, 0x01, // EVEX prefix (CCMPNO condition=1)
+        0x39, 0xD8, // CMP rax, rbx
+        0x00, // dfv = 0
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -133,10 +124,9 @@ fn test_ccmpno_r64_r64() {
 fn test_ccmpb_r32_r32() {
     // CCMPB ecx, edx, dfv=0
     let code = [
-        0x62, 0xF4, 0x64, 0x02,  // EVEX prefix (CCMPB condition=2)
-        0x39, 0xD1,              // CMP ecx, edx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0x64, 0x02, // EVEX prefix (CCMPB condition=2)
+        0x39, 0xD1, // CMP ecx, edx
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -147,10 +137,9 @@ fn test_ccmpb_r32_r32() {
 fn test_ccmpnb_r64_imm8() {
     // CCMPNB rax, 100, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x03,  // EVEX prefix (CCMPNB condition=3)
-        0x83, 0xF8, 0x64,        // CMP rax, 100
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x03, // EVEX prefix (CCMPNB condition=3)
+        0x83, 0xF8, 0x64, // CMP rax, 100
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -161,10 +150,9 @@ fn test_ccmpnb_r64_imm8() {
 fn test_ccmpz_r64_r64() {
     // CCMPZ r8, r9, dfv=0
     let code = [
-        0x62, 0xD4, 0xE4, 0x04,  // EVEX prefix (CCMPZ condition=4)
-        0x4D, 0x39, 0xC8,        // CMP r8, r9
-        0x00,
-        0xF4,
+        0x62, 0xD4, 0xE4, 0x04, // EVEX prefix (CCMPZ condition=4)
+        0x4D, 0x39, 0xC8, // CMP r8, r9
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -175,10 +163,9 @@ fn test_ccmpz_r64_r64() {
 fn test_ccmpnz_r64_mem() {
     // CCMPNZ rax, [rbx], dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x05,  // EVEX prefix (CCMPNZ condition=5)
-        0x3B, 0x03,              // CMP rax, [rbx]
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x05, // EVEX prefix (CCMPNZ condition=5)
+        0x3B, 0x03, // CMP rax, [rbx]
+        0x00, 0xF4,
     ];
     let mut regs = Registers::default();
     regs.rbx = DATA_ADDR;
@@ -192,10 +179,9 @@ fn test_ccmpnz_r64_mem() {
 fn test_ccmpbe_r64_r64() {
     // CCMPBE rcx, rdx, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x06,  // EVEX prefix (CCMPBE condition=6)
-        0x39, 0xD1,              // CMP rcx, rdx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x06, // EVEX prefix (CCMPBE condition=6)
+        0x39, 0xD1, // CMP rcx, rdx
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -206,10 +192,9 @@ fn test_ccmpbe_r64_r64() {
 fn test_ccmpnbe_r64_r64() {
     // CCMPNBE rax, rbx, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x07,  // EVEX prefix (CCMPNBE condition=7)
-        0x39, 0xD8,              // CMP rax, rbx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x07, // EVEX prefix (CCMPNBE condition=7)
+        0x39, 0xD8, // CMP rax, rbx
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -220,10 +205,9 @@ fn test_ccmpnbe_r64_r64() {
 fn test_ccmps_r64_r64() {
     // CCMPS rax, rbx, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x08,  // EVEX prefix (CCMPS condition=8)
-        0x39, 0xD8,              // CMP rax, rbx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x08, // EVEX prefix (CCMPS condition=8)
+        0x39, 0xD8, // CMP rax, rbx
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -234,10 +218,9 @@ fn test_ccmps_r64_r64() {
 fn test_ccmpns_r64_r64() {
     // CCMPNS rax, rbx, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x09,  // EVEX prefix (CCMPNS condition=9)
-        0x39, 0xD8,              // CMP rax, rbx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x09, // EVEX prefix (CCMPNS condition=9)
+        0x39, 0xD8, // CMP rax, rbx
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -248,10 +231,9 @@ fn test_ccmpns_r64_r64() {
 fn test_ccmpp_r64_r64() {
     // CCMPP rax, rbx, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x0A,  // EVEX prefix (CCMPP condition=10)
-        0x39, 0xD8,              // CMP rax, rbx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x0A, // EVEX prefix (CCMPP condition=10)
+        0x39, 0xD8, // CMP rax, rbx
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -262,10 +244,9 @@ fn test_ccmpp_r64_r64() {
 fn test_ccmpnp_r64_r64() {
     // CCMPNP rax, rbx, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x0B,  // EVEX prefix (CCMPNP condition=11)
-        0x39, 0xD8,              // CMP rax, rbx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x0B, // EVEX prefix (CCMPNP condition=11)
+        0x39, 0xD8, // CMP rax, rbx
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -276,10 +257,9 @@ fn test_ccmpnp_r64_r64() {
 fn test_ccmpl_r64_r64() {
     // CCMPL rax, rbx, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x0C,  // EVEX prefix (CCMPL condition=12)
-        0x39, 0xD8,              // CMP rax, rbx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x0C, // EVEX prefix (CCMPL condition=12)
+        0x39, 0xD8, // CMP rax, rbx
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -290,10 +270,9 @@ fn test_ccmpl_r64_r64() {
 fn test_ccmpge_r64_r64() {
     // CCMPGE rax, rbx, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x0D,  // EVEX prefix (CCMPGE condition=13)
-        0x39, 0xD8,              // CMP rax, rbx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x0D, // EVEX prefix (CCMPGE condition=13)
+        0x39, 0xD8, // CMP rax, rbx
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -304,10 +283,9 @@ fn test_ccmpge_r64_r64() {
 fn test_ccmple_r64_r64() {
     // CCMPLE rax, rbx, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x0E,  // EVEX prefix (CCMPLE condition=14)
-        0x39, 0xD8,              // CMP rax, rbx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x0E, // EVEX prefix (CCMPLE condition=14)
+        0x39, 0xD8, // CMP rax, rbx
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -318,10 +296,9 @@ fn test_ccmple_r64_r64() {
 fn test_ccmpg_r64_r64() {
     // CCMPG rax, rbx, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x0F,  // EVEX prefix (CCMPG condition=15)
-        0x39, 0xD8,              // CMP rax, rbx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x0F, // EVEX prefix (CCMPG condition=15)
+        0x39, 0xD8, // CMP rax, rbx
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -336,10 +313,9 @@ fn test_ccmpg_r64_r64() {
 fn test_ctesto_r64_r64() {
     // CTESTO rax, rbx, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x40,  // EVEX prefix (CTESTO condition=0, test=1)
-        0x85, 0xD8,              // TEST rax, rbx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x40, // EVEX prefix (CTESTO condition=0, test=1)
+        0x85, 0xD8, // TEST rax, rbx
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -350,10 +326,9 @@ fn test_ctesto_r64_r64() {
 fn test_ctestz_r32_r32() {
     // CTESTZ ecx, edx, dfv=0
     let code = [
-        0x62, 0xF4, 0x64, 0x44,  // EVEX prefix (CTESTZ condition=4)
-        0x85, 0xD1,              // TEST ecx, edx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0x64, 0x44, // EVEX prefix (CTESTZ condition=4)
+        0x85, 0xD1, // TEST ecx, edx
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -364,10 +339,10 @@ fn test_ctestz_r32_r32() {
 fn test_ctestnz_r64_imm32() {
     // CTESTNZ rax, 0x0F, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x45,  // EVEX prefix (CTESTNZ condition=5)
-        0xF7, 0xC0,              // TEST rax, imm32
-        0x0F, 0x00, 0x00, 0x00,  // imm32 = 0x0F
-        0x00,                    // dfv
+        0x62, 0xF4, 0xE4, 0x45, // EVEX prefix (CTESTNZ condition=5)
+        0xF7, 0xC0, // TEST rax, imm32
+        0x0F, 0x00, 0x00, 0x00, // imm32 = 0x0F
+        0x00, // dfv
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -379,10 +354,9 @@ fn test_ctestnz_r64_imm32() {
 fn test_ctestb_r64_r64() {
     // CTESTB rax, rbx, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x42,  // EVEX prefix (CTESTB condition=2)
-        0x85, 0xD8,              // TEST rax, rbx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x42, // EVEX prefix (CTESTB condition=2)
+        0x85, 0xD8, // TEST rax, rbx
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -393,11 +367,10 @@ fn test_ctestb_r64_r64() {
 fn test_ctests_mem_imm() {
     // CTESTS [rbx], 0xF0, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x48,  // EVEX prefix (CTESTS condition=8)
-        0xF7, 0x03,              // TEST [rbx], imm32
-        0xF0, 0x00, 0x00, 0x00,  // imm32 = 0xF0
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x48, // EVEX prefix (CTESTS condition=8)
+        0xF7, 0x03, // TEST [rbx], imm32
+        0xF0, 0x00, 0x00, 0x00, // imm32 = 0xF0
+        0x00, 0xF4,
     ];
     let mut regs = Registers::default();
     regs.rbx = DATA_ADDR;
@@ -415,9 +388,7 @@ fn test_ctests_mem_imm() {
 fn test_ccmp_dfv_all_set() {
     // CCMPO rax, rbx, dfv=0x0F (CF|ZF|SF|OF)
     let code = [
-        0x62, 0xF4, 0xE4, 0x00,
-        0x39, 0xD8,
-        0x0F,  // dfv = all 4 flags set
+        0x62, 0xF4, 0xE4, 0x00, 0x39, 0xD8, 0x0F, // dfv = all 4 flags set
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -429,9 +400,7 @@ fn test_ccmp_dfv_all_set() {
 fn test_ccmp_dfv_selective() {
     // CCMPO rax, rbx, dfv=0x05 (CF|SF)
     let code = [
-        0x62, 0xF4, 0xE4, 0x00,
-        0x39, 0xD8,
-        0x05,  // dfv = CF + SF
+        0x62, 0xF4, 0xE4, 0x00, 0x39, 0xD8, 0x05, // dfv = CF + SF
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -447,10 +416,9 @@ fn test_ccmp_dfv_selective() {
 fn test_ccmpz_r16_r17() {
     // CCMPZ r16, r17, dfv=0 - using extended EVEX for EGPR
     let code = [
-        0x62, 0xEC, 0xE4, 0x04,  // EVEX with EGPR bits
-        0x39, 0xC8,              // CMP r16, r17 (modrm)
-        0x00,
-        0xF4,
+        0x62, 0xEC, 0xE4, 0x04, // EVEX with EGPR bits
+        0x39, 0xC8, // CMP r16, r17 (modrm)
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -461,11 +429,9 @@ fn test_ccmpz_r16_r17() {
 fn test_ctestnz_r20_imm() {
     // CTESTNZ r20, 0x0F, dfv=0
     let code = [
-        0x62, 0xEC, 0x64, 0x45,  // EVEX with EGPR
-        0xF7, 0xC4,              // TEST r20, imm32
-        0x0F, 0x00, 0x00, 0x00,
-        0x00,
-        0xF4,
+        0x62, 0xEC, 0x64, 0x45, // EVEX with EGPR
+        0xF7, 0xC4, // TEST r20, imm32
+        0x0F, 0x00, 0x00, 0x00, 0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -480,10 +446,9 @@ fn test_ctestnz_r20_imm() {
 fn test_ccmpz_r8_r8() {
     // CCMPZ al, bl, dfv=0
     let code = [
-        0x62, 0xF4, 0x24, 0x04,  // EVEX 8-bit
-        0x38, 0xD8,              // CMP al, bl
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0x24, 0x04, // EVEX 8-bit
+        0x38, 0xD8, // CMP al, bl
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -494,10 +459,9 @@ fn test_ccmpz_r8_r8() {
 fn test_ccmpnz_r16_r16_operands() {
     // CCMPNZ ax, bx, dfv=0
     let code = [
-        0x62, 0xF4, 0x25, 0x05,  // EVEX 16-bit (OSO)
-        0x39, 0xD8,              // CMP ax, bx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0x25, 0x05, // EVEX 16-bit (OSO)
+        0x39, 0xD8, // CMP ax, bx
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -508,10 +472,8 @@ fn test_ccmpnz_r16_r16_operands() {
 fn test_ctestb_r8_imm8() {
     // CTESTB al, 0x0F, dfv=0
     let code = [
-        0x62, 0xF4, 0x24, 0x42,
-        0xF6, 0xC0, 0x0F,  // TEST al, 0x0F
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0x24, 0x42, 0xF6, 0xC0, 0x0F, // TEST al, 0x0F
+        0x00, 0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -526,15 +488,15 @@ fn test_ctestb_r8_imm8() {
 fn test_ccmp_chain() {
     // CMP rax, 10; CCMPG rbx, 20, dfv=0x02
     let code = [
-        0x48, 0x83, 0xF8, 0x0A,  // CMP rax, 10
-        0x62, 0xF4, 0xE4, 0x0F,  // CCMPG
-        0x83, 0xFB, 0x14,        // CMP rbx, 20
-        0x02,                    // dfv = ZF set
+        0x48, 0x83, 0xF8, 0x0A, // CMP rax, 10
+        0x62, 0xF4, 0xE4, 0x0F, // CCMPG
+        0x83, 0xFB, 0x14, // CMP rbx, 20
+        0x02, // dfv = ZF set
         0xF4,
     ];
     let mut regs = Registers::default();
-    regs.rax = 15;  // > 10
-    regs.rbx = 12;  // < 20
+    regs.rax = 15; // > 10
+    regs.rbx = 12; // < 20
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
@@ -547,12 +509,7 @@ fn test_ccmp_chain() {
 #[test]
 fn test_ccmpnz_r64_mem64() {
     // CCMPNZ rax, [rbx], dfv=0
-    let code = [
-        0x62, 0xF4, 0xE4, 0x05,
-        0x3B, 0x03,
-        0x00,
-        0xF4,
-    ];
+    let code = [0x62, 0xF4, 0xE4, 0x05, 0x3B, 0x03, 0x00, 0xF4];
     let mut regs = Registers::default();
     regs.rax = 1000;
     regs.rbx = DATA_ADDR;
@@ -566,10 +523,8 @@ fn test_ccmpnz_r64_mem64() {
 fn test_ctestb_mem_r64() {
     // CTESTB [rbx], rcx, dfv=0
     let code = [
-        0x62, 0xF4, 0xE4, 0x42,
-        0x85, 0x0B,  // TEST [rbx], rcx
-        0x00,
-        0xF4,
+        0x62, 0xF4, 0xE4, 0x42, 0x85, 0x0B, // TEST [rbx], rcx
+        0x00, 0xF4,
     ];
     let mut regs = Registers::default();
     regs.rbx = DATA_ADDR;

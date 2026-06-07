@@ -19,7 +19,11 @@ fn test_cmpxchg_eax_ebx_equal() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFFFFFFFF, 0x11, "EAX should remain 0x11");
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x22, "EBX should be set to ECX (0x22)");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0x22,
+        "EBX should be set to ECX (0x22)"
+    );
     assert!(regs.rflags & 0x40 != 0, "ZF should be set (equal)");
 }
 
@@ -35,7 +39,11 @@ fn test_cmpxchg_eax_ebx_not_equal() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x33, "EAX should be loaded with EBX (0x33)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x33,
+        "EAX should be loaded with EBX (0x33)"
+    );
     assert_eq!(regs.rbx & 0xFFFFFFFF, 0x33, "EBX should remain 0x33");
     assert!(regs.rflags & 0x40 == 0, "ZF should be clear (not equal)");
 }
@@ -184,8 +192,14 @@ fn test_cmpxchg_sets_arithmetic_flags() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // The comparison is EAX - EBX = 5 - 10 = -5 (borrow/carry)
-    assert!(regs.rflags & 0x01 != 0, "CF should be set (5 < 10 unsigned)");
-    assert!(regs.rflags & 0x80 != 0, "SF should be set (negative result)");
+    assert!(
+        regs.rflags & 0x01 != 0,
+        "CF should be set (5 < 10 unsigned)"
+    );
+    assert!(
+        regs.rflags & 0x80 != 0,
+        "SF should be set (negative result)"
+    );
     assert!(regs.rflags & 0x40 == 0, "ZF should be clear (not equal)");
 }
 
@@ -196,7 +210,8 @@ fn test_cmpxchg_32bit_zeros_upper() {
         0x48, 0xc7, 0xc0, 0x11, 0x00, 0x00, 0x00, // MOV RAX, 0x11
         0x48, 0xc7, 0xc3, 0x33, 0x00, 0x00, 0x00, // MOV RBX, 0x33 (not equal)
         0x48, 0xc7, 0xc1, 0x22, 0x00, 0x00, 0x00, // MOV RCX, 0x22
-        0x48, 0xb8, 0xef, 0xbe, 0xad, 0xde, 0xef, 0xbe, 0xad, 0xde, // MOV RAX, 0xDEADBEEFDEADBEEF
+        0x48, 0xb8, 0xef, 0xbe, 0xad, 0xde, 0xef, 0xbe, 0xad,
+        0xde, // MOV RAX, 0xDEADBEEFDEADBEEF
         0x48, 0xc7, 0xc0, 0x11, 0x00, 0x00, 0x00, // MOV RAX, 0x11 again
         0x48, 0xbb, 0xef, 0xbe, 0xad, 0xde, 0xef, 0xbe, 0xad, 0xde, // MOV RBX, garbage
         0x48, 0xc7, 0xc3, 0x33, 0x00, 0x00, 0x00, // MOV RBX, 0x33
@@ -205,7 +220,10 @@ fn test_cmpxchg_32bit_zeros_upper() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000000000033, "RAX upper bits should be zeroed");
+    assert_eq!(
+        regs.rax, 0x0000000000000033,
+        "RAX upper bits should be zeroed"
+    );
 }
 
 // Test practical use case: atomic compare-and-swap
@@ -274,9 +292,15 @@ fn test_cmpxchg_chain() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 2, "RAX should have loaded RBX's value from failed CMPXCHG");
+    assert_eq!(
+        regs.rax, 2,
+        "RAX should have loaded RBX's value from failed CMPXCHG"
+    );
     assert_eq!(regs.rbx, 2, "RBX should remain 2");
-    assert!(regs.rflags & 0x40 == 0, "ZF should be clear from failed CMPXCHG");
+    assert!(
+        regs.rflags & 0x40 == 0,
+        "ZF should be clear from failed CMPXCHG"
+    );
 }
 
 // Test boundary case: same register (though not typical)

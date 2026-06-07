@@ -30,7 +30,7 @@
 //! exponent + the IEEE specials; result, Pe predicate, AND USR flags bit-exact).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fld, SemCtx};
+use super::{SemCtx, fld};
 
 const USR_FPINVF: u32 = 1 << 1; // invalid operation sticky flag
 const USR_FPDBZF: u32 = 1 << 2; // divide-by-zero sticky flag
@@ -78,10 +78,18 @@ fn sf_decode(b: u32) -> Sf {
     let frac = (b & 0x007f_ffff) as u128;
     if exp == 0 {
         // subnormal (or zero): value = frac * 2^(-126-23)
-        Sf { neg, m: frac, e: -149 }
+        Sf {
+            neg,
+            m: frac,
+            e: -149,
+        }
     } else {
         // normal: value = (1.frac) * 2^(exp-127) = (2^23 + frac) * 2^(exp-150)
-        Sf { neg, m: frac | 0x0080_0000, e: exp - 150 }
+        Sf {
+            neg,
+            m: frac | 0x0080_0000,
+            e: exp - 150,
+        }
     }
 }
 
@@ -89,7 +97,14 @@ fn sf_decode(b: u32) -> Sf {
 /// `sticky` carries OR of any value bits that were already dropped below `e`
 /// during alignment (so this routine sees the full inexactness). `m == 0 &&
 /// !sticky` yields signed zero.
-fn round_exact_to_f32(neg: bool, mut m: u128, mut e: i32, sticky: bool, ties_away: bool, ctx: &mut SemCtx) -> u32 {
+fn round_exact_to_f32(
+    neg: bool,
+    mut m: u128,
+    mut e: i32,
+    sticky: bool,
+    ties_away: bool,
+    ctx: &mut SemCtx,
+) -> u32 {
     let sign = if neg { 0x8000_0000u32 } else { 0 };
     if m == 0 {
         // Pure underflow to zero only if there were dropped bits; that is handled
@@ -115,9 +130,17 @@ fn round_exact_to_f32(neg: bool, mut m: u128, mut e: i32, sticky: bool, ties_awa
     let mut inexact = sticky;
     if drop > 0 {
         let drop = drop as u32;
-        let dropped_mask = if drop >= 128 { u128::MAX } else { (1u128 << drop) - 1 };
+        let dropped_mask = if drop >= 128 {
+            u128::MAX
+        } else {
+            (1u128 << drop) - 1
+        };
         let dropped = m & dropped_mask;
-        let half = if (1..=128).contains(&drop) { 1u128 << (drop - 1) } else { 0 };
+        let half = if (1..=128).contains(&drop) {
+            1u128 << (drop - 1)
+        } else {
+            0
+        };
         m = if drop >= 128 { 0 } else { m >> drop };
         e += drop as i32;
         if dropped != 0 {
@@ -348,8 +371,20 @@ const DF_GUARD: i32 = 72;
 
 /// Exact fused multiply-add: `a*b + c` with a single rounding (matches
 /// `internal_fmafx(a,b,c,0)`), full NaN/inf handling, and exact-then-round flags.
-fn sf_fma(araw: u32, braw: u32, craw: u32, negate_prod: bool, ties_away: bool, scale: i32, ctx: &mut SemCtx) -> u32 {
-    let a = if negate_prod { araw ^ 0x8000_0000 } else { araw };
+fn sf_fma(
+    araw: u32,
+    braw: u32,
+    craw: u32,
+    negate_prod: bool,
+    ties_away: bool,
+    scale: i32,
+    ctx: &mut SemCtx,
+) -> u32 {
+    let a = if negate_prod {
+        araw ^ 0x8000_0000
+    } else {
+        araw
+    };
     let b = braw;
     let c = craw;
     let any_snan = f32_is_snan(araw) || f32_is_snan(braw) || f32_is_snan(craw);
@@ -407,8 +442,7 @@ fn sf_fma(araw: u32, braw: u32, craw: u32, negate_prod: bool, ties_away: bool, s
         return round_exact_to_f32(prod_neg, prod_m, prod_e + scale, false, ties_away, ctx);
     }
     // Exactly add the (48-bit) product and c, apply the (exact) 2^scale, round once.
-    let (neg, mag, e, sticky) =
-        add_scaled(prod_neg, prod_m, prod_e, dc.neg, dc.m, dc.e, SF_GUARD);
+    let (neg, mag, e, sticky) = add_scaled(prod_neg, prod_m, prod_e, dc.neg, dc.m, dc.e, SF_GUARD);
     if mag == 0 && !sticky {
         return 0;
     }
@@ -477,10 +511,18 @@ fn df_decode(b: u64) -> Df {
     let frac = (b & 0x000f_ffff_ffff_ffff) as u128;
     if exp == 0 {
         // subnormal (or zero): value = frac * 2^(-1022-52)
-        Df { neg, m: frac, e: -1074 }
+        Df {
+            neg,
+            m: frac,
+            e: -1074,
+        }
     } else {
         // normal: value = (1.frac) * 2^(exp-1023) = (2^52 + frac) * 2^(exp-1075)
-        Df { neg, m: frac | 0x0010_0000_0000_0000, e: exp - 1075 }
+        Df {
+            neg,
+            m: frac | 0x0010_0000_0000_0000,
+            e: exp - 1075,
+        }
     }
 }
 
@@ -506,9 +548,17 @@ fn round_exact_to_f64(neg: bool, mut m: u128, mut e: i32, sticky: bool, ctx: &mu
     let mut inexact = sticky;
     if drop > 0 {
         let drop = drop as u32;
-        let dropped_mask = if drop >= 128 { u128::MAX } else { (1u128 << drop) - 1 };
+        let dropped_mask = if drop >= 128 {
+            u128::MAX
+        } else {
+            (1u128 << drop) - 1
+        };
         let dropped = m & dropped_mask;
-        let half = if (1..=128).contains(&drop) { 1u128 << (drop - 1) } else { 0 };
+        let half = if (1..=128).contains(&drop) {
+            1u128 << (drop - 1)
+        } else {
+            0
+        };
         m = if drop >= 128 { 0 } else { m >> drop };
         e += drop as i32;
         if dropped != 0 {
@@ -569,7 +619,11 @@ fn round_exact_to_f64(neg: bool, mut m: u128, mut e: i32, sticky: bool, ctx: &mu
 /// Exact f64 add/sub: `a + (sub ? -b : b)`, full softfloat NaN/inf handling and
 /// exact-then-round flag derivation.
 fn df_addsub(a: u64, braw: u64, sub: bool, ctx: &mut SemCtx) -> u64 {
-    let b = if sub { braw ^ 0x8000_0000_0000_0000 } else { braw };
+    let b = if sub {
+        braw ^ 0x8000_0000_0000_0000
+    } else {
+        braw
+    };
     let a_nan = f64_is_nan(a);
     let b_nan = f64_is_nan(braw);
     let a_inf = (a & 0x7fff_ffff_ffff_ffff) == 0x7ff0_0000_0000_0000;
@@ -649,15 +703,27 @@ fn df_mpyhh(araw: u64, braw: u64, acc: u64, ctx: &mut SemCtx) -> u64 {
             ctx.usr_or |= USR_FPINVF;
             return 0xFFFF_FFFF_FFFF_FFFF;
         }
-        return if neg { 0xfff0_0000_0000_0000 } else { 0x7ff0_0000_0000_0000 };
+        return if neg {
+            0xfff0_0000_0000_0000
+        } else {
+            0x7ff0_0000_0000_0000
+        };
     }
 
     // Flush subnormal inputs to signed zero.
     let a_sub = (araw >> 52) & 0x7ff == 0 && (araw & 0x000f_ffff_ffff_ffff) != 0;
     let b_sub = (braw >> 52) & 0x7ff == 0 && (braw & 0x000f_ffff_ffff_ffff) != 0;
     let flushed = a_sub || b_sub;
-    let a = if a_sub { araw & 0x8000_0000_0000_0000 } else { araw };
-    let b = if b_sub { braw & 0x8000_0000_0000_0000 } else { braw };
+    let a = if a_sub {
+        araw & 0x8000_0000_0000_0000
+    } else {
+        araw
+    };
+    let b = if b_sub {
+        braw & 0x8000_0000_0000_0000
+    } else {
+        braw
+    };
 
     // Mask each operand's mantissa to its high 32 bits, then decode.
     let da = df_decode(a & 0xffff_ffff_0000_0000);
@@ -772,11 +838,7 @@ fn f32_getexp(b: u32) -> i32 {
 }
 #[inline]
 fn infinite_f32(neg: bool) -> u32 {
-    if neg {
-        0xff80_0000
-    } else {
-        0x7f80_0000
-    }
+    if neg { 0xff80_0000 } else { 0x7f80_0000 }
 }
 
 /// softfloat `float32_scalbn(f, n)` for finite, *nonzero* `f` (the only kind
@@ -1134,7 +1196,8 @@ fn sf_fma_lib(rs: u32, rt: u32, rx: u32, sub: bool, ctx: &mut SemCtx) -> u32 {
     }
     let frx = f32::from_bits(rx);
     let prod = f32::from_bits(rs) * f32::from_bits(rt); // inf-ness only; sign irrelevant
-    let infinp = frx.is_infinite() || f32::from_bits(rt).is_infinite() || f32::from_bits(rs).is_infinite();
+    let infinp =
+        frx.is_infinite() || f32::from_bits(rt).is_infinite() || f32::from_bits(rs).is_infinite();
     // sign(Rs) ^ sign(Rx) ^ sign(Rt): fma fires inf-minus-inf when != 0, fms when == 0.
     let xor_sign = ((rs >> 31) ^ (rx >> 31) ^ (rt >> 31)) & 1;
     let inf_minus_inf = frx.is_infinite()
@@ -1142,7 +1205,11 @@ fn sf_fma_lib(rs: u32, rt: u32, rx: u32, sub: bool, ctx: &mut SemCtx) -> u32 {
         && (if sub { xor_sign == 0 } else { xor_sign != 0 });
 
     // Preserve a true-zero accumulator (keep Rx, including its sign).
-    let mut res = if frx == 0.0 && sf_true_zero_product(rs, rt) { rx } else { tmp };
+    let mut res = if frx == 0.0 && sf_true_zero_product(rs, rt) {
+        rx
+    } else {
+        tmp
+    };
     // Spurious overflow to infinity (no infinite input) -> max finite (bit decrement).
     if f32::from_bits(res).is_infinite() && !infinp {
         res = res.wrapping_sub(1);

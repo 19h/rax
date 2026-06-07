@@ -43,8 +43,8 @@ fn test_lfence_preserves_registers() {
         0x48, 0xC7, 0xC3, 0x22, 0x22, 0x22, 0x22, // MOV RBX, 0x22222222
         0x48, 0xC7, 0xC1, 0x33, 0x33, 0x33, 0x33, // MOV RCX, 0x33333333
         0x48, 0xC7, 0xC2, 0x44, 0x44, 0x44, 0x44, // MOV RDX, 0x44444444
-        0x0F, 0xAE, 0xE8,                         // LFENCE
-        0xF4,                                      // HLT
+        0x0F, 0xAE, 0xE8, // LFENCE
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -61,9 +61,9 @@ fn test_lfence_preserves_flags() {
     // LFENCE should not modify flags
     let code = [
         0x48, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
-        0x48, 0x83, 0xC0, 0x01,                   // ADD RAX, 1 (sets ZF)
-        0x0F, 0xAE, 0xE8,                         // LFENCE
-        0xF4,                                      // HLT
+        0x48, 0x83, 0xC0, 0x01, // ADD RAX, 1 (sets ZF)
+        0x0F, 0xAE, 0xE8, // LFENCE
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -77,11 +77,11 @@ fn test_lfence_after_load() {
     // LFENCE after memory load
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0xC7, 0x00, 0x42, 0x42, 0x42, 0x42,       // MOV DWORD PTR [RAX], 0x42424242
-        0x8B, 0x08,                               // MOV ECX, [RAX]
-        0x0F, 0xAE, 0xE8,                         // LFENCE (serializes load)
-        0x8B, 0x10,                               // MOV EDX, [RAX]
-        0xF4,                                      // HLT
+        0xC7, 0x00, 0x42, 0x42, 0x42, 0x42, // MOV DWORD PTR [RAX], 0x42424242
+        0x8B, 0x08, // MOV ECX, [RAX]
+        0x0F, 0xAE, 0xE8, // LFENCE (serializes load)
+        0x8B, 0x10, // MOV EDX, [RAX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -98,7 +98,7 @@ fn test_lfence_multiple() {
         0x0F, 0xAE, 0xE8, // LFENCE #1
         0x0F, 0xAE, 0xE8, // LFENCE #2
         0x0F, 0xAE, 0xE8, // LFENCE #3
-        0xF4,             // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -114,10 +114,10 @@ fn test_lfence_with_loop() {
     let code = [
         0x48, 0xC7, 0xC1, 0x03, 0x00, 0x00, 0x00, // MOV RCX, 3
         // loop:
-        0x0F, 0xAE, 0xE8,                         // LFENCE
-        0x48, 0xFF, 0xC9,                         // DEC RCX
-        0x75, 0xF8,                               // JNZ loop (-8)
-        0xF4,                                      // HLT
+        0x0F, 0xAE, 0xE8, // LFENCE
+        0x48, 0xFF, 0xC9, // DEC RCX
+        0x75, 0xF8, // JNZ loop (-8)
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -152,8 +152,8 @@ fn test_mfence_preserves_registers() {
         0x48, 0xC7, 0xC3, 0xBB, 0xBB, 0xBB, 0xBB, // MOV RBX, 0xBBBBBBBB (sign-ext)
         0x48, 0xC7, 0xC1, 0xCC, 0xCC, 0xCC, 0xCC, // MOV RCX, 0xCCCCCCCC (sign-ext)
         0x48, 0xC7, 0xC2, 0xDD, 0xDD, 0xDD, 0xDD, // MOV RDX, 0xDDDDDDDD (sign-ext)
-        0x0F, 0xAE, 0xF0,                         // MFENCE
-        0xF4,                                      // HLT
+        0x0F, 0xAE, 0xF0, // MFENCE
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -171,9 +171,9 @@ fn test_mfence_preserves_flags() {
     // MFENCE should not modify flags
     let code = [
         0x48, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
-        0x48, 0x83, 0xC0, 0x01,                   // ADD RAX, 1 (sets ZF)
-        0x0F, 0xAE, 0xF0,                         // MFENCE
-        0xF4,                                      // HLT
+        0x48, 0x83, 0xC0, 0x01, // ADD RAX, 1 (sets ZF)
+        0x0F, 0xAE, 0xF0, // MFENCE
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -187,10 +187,10 @@ fn test_mfence_between_store_load() {
     // MFENCE between store and load
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0xC7, 0x00, 0x11, 0x22, 0x33, 0x44,       // MOV DWORD PTR [RAX], 0x44332211
-        0x0F, 0xAE, 0xF0,                         // MFENCE (serializes)
-        0x8B, 0x08,                               // MOV ECX, [RAX]
-        0xF4,                                      // HLT
+        0xC7, 0x00, 0x11, 0x22, 0x33, 0x44, // MOV DWORD PTR [RAX], 0x44332211
+        0x0F, 0xAE, 0xF0, // MFENCE (serializes)
+        0x8B, 0x08, // MOV ECX, [RAX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -206,7 +206,7 @@ fn test_mfence_multiple() {
         0x0F, 0xAE, 0xF0, // MFENCE #1
         0x0F, 0xAE, 0xF0, // MFENCE #2
         0x0F, 0xAE, 0xF0, // MFENCE #3
-        0xF4,             // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -218,12 +218,12 @@ fn test_mfence_with_multiple_stores() {
     // MFENCE after multiple stores
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0xC7, 0x00, 0x01, 0x00, 0x00, 0x00,       // MOV DWORD PTR [RAX], 1
+        0xC7, 0x00, 0x01, 0x00, 0x00, 0x00, // MOV DWORD PTR [RAX], 1
         0xC7, 0x40, 0x04, 0x02, 0x00, 0x00, 0x00, // MOV DWORD PTR [RAX+4], 2
         0xC7, 0x40, 0x08, 0x03, 0x00, 0x00, 0x00, // MOV DWORD PTR [RAX+8], 3
-        0x0F, 0xAE, 0xF0,                         // MFENCE
-        0x8B, 0x08,                               // MOV ECX, [RAX]
-        0xF4,                                      // HLT
+        0x0F, 0xAE, 0xF0, // MFENCE
+        0x8B, 0x08, // MOV ECX, [RAX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -258,8 +258,8 @@ fn test_sfence_preserves_registers() {
         0x48, 0xC7, 0xC3, 0x66, 0x66, 0x66, 0x66, // MOV RBX, 0x66666666 (no sign-ext)
         0x48, 0xC7, 0xC1, 0x77, 0x77, 0x77, 0x77, // MOV RCX, 0x77777777 (no sign-ext)
         0x48, 0xC7, 0xC2, 0x88, 0x88, 0x88, 0x88, // MOV RDX, 0x88888888 (sign-ext)
-        0x0F, 0xAE, 0xF8,                         // SFENCE
-        0xF4,                                      // HLT
+        0x0F, 0xAE, 0xF8, // SFENCE
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -276,9 +276,9 @@ fn test_sfence_preserves_flags() {
     // SFENCE should not modify flags
     let code = [
         0x48, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
-        0x48, 0x83, 0xC0, 0x01,                   // ADD RAX, 1 (sets ZF)
-        0x0F, 0xAE, 0xF8,                         // SFENCE
-        0xF4,                                      // HLT
+        0x48, 0x83, 0xC0, 0x01, // ADD RAX, 1 (sets ZF)
+        0x0F, 0xAE, 0xF8, // SFENCE
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -292,10 +292,10 @@ fn test_sfence_after_store() {
     // SFENCE after memory store
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0xC7, 0x00, 0x99, 0x99, 0x99, 0x99,       // MOV DWORD PTR [RAX], 0x99999999
-        0x0F, 0xAE, 0xF8,                         // SFENCE (ensures store completes)
-        0x8B, 0x08,                               // MOV ECX, [RAX]
-        0xF4,                                      // HLT
+        0xC7, 0x00, 0x99, 0x99, 0x99, 0x99, // MOV DWORD PTR [RAX], 0x99999999
+        0x0F, 0xAE, 0xF8, // SFENCE (ensures store completes)
+        0x8B, 0x08, // MOV ECX, [RAX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -311,7 +311,7 @@ fn test_sfence_multiple() {
         0x0F, 0xAE, 0xF8, // SFENCE #1
         0x0F, 0xAE, 0xF8, // SFENCE #2
         0x0F, 0xAE, 0xF8, // SFENCE #3
-        0xF4,             // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -323,10 +323,10 @@ fn test_sfence_between_stores() {
     // SFENCE between stores
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0xC7, 0x00, 0x01, 0x00, 0x00, 0x00,       // MOV DWORD PTR [RAX], 1
-        0x0F, 0xAE, 0xF8,                         // SFENCE
+        0xC7, 0x00, 0x01, 0x00, 0x00, 0x00, // MOV DWORD PTR [RAX], 1
+        0x0F, 0xAE, 0xF8, // SFENCE
         0xC7, 0x40, 0x04, 0x02, 0x00, 0x00, 0x00, // MOV DWORD PTR [RAX+4], 2
-        0xF4,                                      // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -344,7 +344,7 @@ fn test_all_fences_sequence() {
         0x0F, 0xAE, 0xE8, // LFENCE
         0x0F, 0xAE, 0xF0, // MFENCE
         0x0F, 0xAE, 0xF8, // SFENCE
-        0xF4,             // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -356,11 +356,11 @@ fn test_lfence_mfence_combination() {
     // LFENCE followed by MFENCE
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0x8B, 0x08,                               // MOV ECX, [RAX]
-        0x0F, 0xAE, 0xE8,                         // LFENCE
-        0xC7, 0x00, 0x42, 0x42, 0x42, 0x42,       // MOV DWORD PTR [RAX], 0x42424242
-        0x0F, 0xAE, 0xF0,                         // MFENCE
-        0xF4,                                      // HLT
+        0x8B, 0x08, // MOV ECX, [RAX]
+        0x0F, 0xAE, 0xE8, // LFENCE
+        0xC7, 0x00, 0x42, 0x42, 0x42, 0x42, // MOV DWORD PTR [RAX], 0x42424242
+        0x0F, 0xAE, 0xF0, // MFENCE
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -372,11 +372,11 @@ fn test_sfence_lfence_combination() {
     // SFENCE followed by LFENCE
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0xC7, 0x00, 0x11, 0x11, 0x11, 0x11,       // MOV DWORD PTR [RAX], 0x11111111
-        0x0F, 0xAE, 0xF8,                         // SFENCE
-        0x8B, 0x08,                               // MOV ECX, [RAX]
-        0x0F, 0xAE, 0xE8,                         // LFENCE
-        0xF4,                                      // HLT
+        0xC7, 0x00, 0x11, 0x11, 0x11, 0x11, // MOV DWORD PTR [RAX], 0x11111111
+        0x0F, 0xAE, 0xF8, // SFENCE
+        0x8B, 0x08, // MOV ECX, [RAX]
+        0x0F, 0xAE, 0xE8, // LFENCE
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -390,10 +390,10 @@ fn test_mfence_replaces_both() {
     // MFENCE provides both LFENCE and SFENCE guarantees
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0xC7, 0x00, 0x22, 0x22, 0x22, 0x22,       // MOV DWORD PTR [RAX], 0x22222222
-        0x0F, 0xAE, 0xF0,                         // MFENCE (replaces SFENCE+LFENCE)
-        0x8B, 0x08,                               // MOV ECX, [RAX]
-        0xF4,                                      // HLT
+        0xC7, 0x00, 0x22, 0x22, 0x22, 0x22, // MOV DWORD PTR [RAX], 0x22222222
+        0x0F, 0xAE, 0xF0, // MFENCE (replaces SFENCE+LFENCE)
+        0x8B, 0x08, // MOV ECX, [RAX]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -407,14 +407,14 @@ fn test_fence_pattern_loads_stores() {
     // Complex pattern with loads, stores, and fences
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
-        0xC7, 0x00, 0x01, 0x00, 0x00, 0x00,       // MOV DWORD PTR [RAX], 1
-        0x0F, 0xAE, 0xF8,                         // SFENCE
-        0x8B, 0x08,                               // MOV ECX, [RAX]
-        0x0F, 0xAE, 0xE8,                         // LFENCE
+        0xC7, 0x00, 0x01, 0x00, 0x00, 0x00, // MOV DWORD PTR [RAX], 1
+        0x0F, 0xAE, 0xF8, // SFENCE
+        0x8B, 0x08, // MOV ECX, [RAX]
+        0x0F, 0xAE, 0xE8, // LFENCE
         0xC7, 0x40, 0x04, 0x02, 0x00, 0x00, 0x00, // MOV DWORD PTR [RAX+4], 2
-        0x0F, 0xAE, 0xF0,                         // MFENCE
-        0x8B, 0x50, 0x04,                         // MOV EDX, [RAX+4]
-        0xF4,                                      // HLT
+        0x0F, 0xAE, 0xF0, // MFENCE
+        0x8B, 0x50, 0x04, // MOV EDX, [RAX+4]
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -430,16 +430,16 @@ fn test_fence_in_loop() {
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x50, 0x00, 0x00, // MOV RAX, 0x5000
         0x48, 0xC7, 0xC1, 0x03, 0x00, 0x00, 0x00, // MOV RCX, 3
-        0x48, 0x31, 0xDB,                         // XOR RBX, RBX
+        0x48, 0x31, 0xDB, // XOR RBX, RBX
         // loop:
-        0x48, 0xFF, 0xC3,                         // INC RBX
-        0x48, 0x89, 0x18,                         // MOV [RAX], RBX
-        0x0F, 0xAE, 0xF8,                         // SFENCE
-        0x48, 0x8B, 0x10,                         // MOV RDX, [RAX]
-        0x0F, 0xAE, 0xE8,                         // LFENCE
-        0x48, 0xFF, 0xC9,                         // DEC RCX
-        0x75, 0xED,                               // JNZ loop
-        0xF4,                                      // HLT
+        0x48, 0xFF, 0xC3, // INC RBX
+        0x48, 0x89, 0x18, // MOV [RAX], RBX
+        0x0F, 0xAE, 0xF8, // SFENCE
+        0x48, 0x8B, 0x10, // MOV RDX, [RAX]
+        0x0F, 0xAE, 0xE8, // LFENCE
+        0x48, 0xFF, 0xC9, // DEC RCX
+        0x75, 0xED, // JNZ loop
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -456,7 +456,7 @@ fn test_double_mfence() {
     let code = [
         0x0F, 0xAE, 0xF0, // MFENCE
         0x0F, 0xAE, 0xF0, // MFENCE
-        0xF4,             // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
@@ -473,7 +473,7 @@ fn test_all_fences_repeated() {
         0x0F, 0xAE, 0xE8, // LFENCE
         0x0F, 0xAE, 0xF0, // MFENCE
         0x0F, 0xAE, 0xF8, // SFENCE
-        0xF4,             // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 

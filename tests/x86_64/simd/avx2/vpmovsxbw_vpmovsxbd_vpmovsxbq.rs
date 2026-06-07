@@ -536,7 +536,8 @@ fn test_vpmovsxbw_mem_pattern() {
         .cycle()
         .take(16)
         .collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -552,7 +553,8 @@ fn test_vpmovsxbd_mem_pattern() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let pattern: Vec<u8> = vec![0x00, 0x01, 0x7F, 0x80, 0xFF, 0xFE, 0x40, 0xC0];
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -568,7 +570,8 @@ fn test_vpmovsxbq_mem_pattern() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let pattern: Vec<u8> = vec![0x00, 0x01, 0x7F, 0x80];
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

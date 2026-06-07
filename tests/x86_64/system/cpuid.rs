@@ -67,9 +67,23 @@ fn test_cpuid_function_1_features() {
     // PGE(13) CMOV(15) CLFLUSH(19) MMX(23) FXSR(24) SSE(25) SSE2(26).
     let edx = regs.rdx as u32;
     assert_eq!(edx, 0x0788A379, "leaf 1 EDX feature bits");
-    for (bit, name) in [(0, "FPU"), (4, "TSC"), (5, "MSR"), (8, "CX8"),
-                        (15, "CMOV"), (23, "MMX"), (24, "FXSR"), (25, "SSE"), (26, "SSE2")] {
-        assert!(edx & (1 << bit) != 0, "leaf1 EDX bit {} ({}) should be set", bit, name);
+    for (bit, name) in [
+        (0, "FPU"),
+        (4, "TSC"),
+        (5, "MSR"),
+        (8, "CX8"),
+        (15, "CMOV"),
+        (23, "MMX"),
+        (24, "FXSR"),
+        (25, "SSE"),
+        (26, "SSE2"),
+    ] {
+        assert!(
+            edx & (1 << bit) != 0,
+            "leaf1 EDX bit {} ({}) should be set",
+            bit,
+            name
+        );
     }
 
     // ECX with default CR4 (OSXSAVE=0): SSE3(0) SSSE3(9) SSE4.1(19) SSE4.2(20)
@@ -483,7 +497,10 @@ fn test_cpuid_feature_bits_function_1() {
 
     // At least one feature bit should be set in EDX or ECX
     // For a modern x86_64, we expect FPU (bit 0 of EDX) to be set
-    assert!((regs.rdx as u32) & 0x01 != 0 || (regs.rcx as u32) != 0, "Should have some features");
+    assert!(
+        (regs.rdx as u32) & 0x01 != 0 || (regs.rcx as u32) != 0,
+        "Should have some features"
+    );
 }
 
 // CPUID ECX input for cache descriptors
@@ -496,12 +513,10 @@ fn test_cpuid_function_4_with_different_ecx() {
         0x0f, 0xa2, // CPUID
         0x50, // PUSH RAX
         0x51, // PUSH RCX
-
         // Second call with ECX=1
         0x48, 0xc7, 0xc0, 0x04, 0x00, 0x00, 0x00, // MOV RAX, 4
         0x48, 0xc7, 0xc1, 0x01, 0x00, 0x00, 0x00, // MOV RCX, 1
         0x0f, 0xa2, // CPUID
-
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -613,11 +628,9 @@ fn test_cpuid_boundary_standard_extended() {
         0x48, 0xc7, 0xc0, 0x0f, 0x00, 0x00, 0x00, // MOV RAX, 15
         0x0f, 0xa2, // CPUID
         0x50, // PUSH RAX
-
         // Low extended function
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x80, // MOV RAX, 0x80000000
         0x0f, 0xa2, // CPUID
-
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -638,12 +651,10 @@ fn test_cpuid_function_7_subleaves() {
         0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0
         0x0f, 0xa2, // CPUID
         0x50, // PUSH RAX
-
         // Leaf 7, sub-leaf 1
         0x48, 0xc7, 0xc0, 0x07, 0x00, 0x00, 0x00, // MOV RAX, 7
         0x48, 0xc7, 0xc1, 0x01, 0x00, 0x00, 0x00, // MOV RCX, 1
         0x0f, 0xa2, // CPUID
-
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -668,9 +679,9 @@ fn test_cpuid_function_7_subleaves() {
 fn test_cpuid_leaf_d_subleaf0_xsave_area() {
     let code = [
         0xb8, 0x0d, 0x00, 0x00, 0x00, // MOV EAX, 0xD
-        0x31, 0xc9,                   // XOR ECX, ECX (subleaf 0)
-        0x0f, 0xa2,                   // CPUID
-        0xf4,                         // HLT
+        0x31, 0xc9, // XOR ECX, ECX (subleaf 0)
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x1000;
@@ -680,7 +691,10 @@ fn test_cpuid_leaf_d_subleaf0_xsave_area() {
     // EAX = supported XCR0 low bits = x87|SSE|AVX|APX_F = 0x80007.
     // EBX = current enabled area size (XCR0 default has AVX disabled => 576).
     // ECX = max area size for all supported (1088). EDX = high XCR0 bits = 0.
-    assert_eq!(regs.rax as u32, 0x80007, "XCR0 valid low bits x87|SSE|AVX|APX_F");
+    assert_eq!(
+        regs.rax as u32, 0x80007,
+        "XCR0 valid low bits x87|SSE|AVX|APX_F"
+    );
     assert_eq!(regs.rbx as u32, 576, "current XSAVE area (AVX disabled)");
     assert_eq!(regs.rcx as u32, 1088, "max XSAVE area");
     assert_eq!(regs.rdx as u32, 0, "XCR0 high bits");
@@ -692,8 +706,8 @@ fn test_cpuid_leaf_d_subleaf2_avx_component() {
     let code = [
         0xb8, 0x0d, 0x00, 0x00, 0x00, // MOV EAX, 0xD
         0xb9, 0x02, 0x00, 0x00, 0x00, // MOV ECX, 2
-        0x0f, 0xa2,                   // CPUID
-        0xf4,                         // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x1000;
@@ -711,8 +725,8 @@ fn test_cpuid_leaf_d_subleaf19_apx_component() {
     let code = [
         0xb8, 0x0d, 0x00, 0x00, 0x00, // MOV EAX, 0xD
         0xb9, 0x13, 0x00, 0x00, 0x00, // MOV ECX, 19
-        0x0f, 0xa2,                   // CPUID
-        0xf4,                         // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x1000;
@@ -729,9 +743,9 @@ fn test_cpuid_leaf_d_subleaf19_apx_component() {
 fn test_cpuid_leaf_29_apx_features() {
     let code = [
         0xb8, 0x29, 0x00, 0x00, 0x00, // MOV EAX, 0x29
-        0x31, 0xc9,                   // XOR ECX, ECX
-        0x0f, 0xa2,                   // CPUID
-        0xf4,                         // HLT
+        0x31, 0xc9, // XOR ECX, ECX
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x1000;
@@ -749,8 +763,8 @@ fn test_cpuid_leaf_29_apx_features() {
 fn test_cpuid_leaf_80000007_invariant_tsc() {
     let code = [
         0xb8, 0x07, 0x00, 0x00, 0x80, // MOV EAX, 0x80000007
-        0x0f, 0xa2,                   // CPUID
-        0xf4,                         // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x1000;
@@ -766,12 +780,12 @@ fn test_cpuid_leaf_80000007_invariant_tsc() {
 fn test_cpuid_leaf1_osxsave_reflects_cr4() {
     // Read CR4, set OSXSAVE (bit 18), write CR4, then CPUID leaf 1.
     let code = [
-        0x0f, 0x20, 0xe0,             // MOV RAX, CR4
+        0x0f, 0x20, 0xe0, // MOV RAX, CR4
         0x48, 0x0d, 0x00, 0x00, 0x04, 0x00, // OR RAX, 0x40000 (bit 18 OSXSAVE)
-        0x0f, 0x22, 0xe0,             // MOV CR4, RAX
+        0x0f, 0x22, 0xe0, // MOV CR4, RAX
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1
-        0x0f, 0xa2,                   // CPUID
-        0xf4,                         // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x1000;
@@ -789,8 +803,8 @@ fn test_cpuid_leaf1_osxsave_reflects_cr4() {
 fn test_cpuid_unsupported_leaf_zeros() {
     let code = [
         0xb8, 0x00, 0x00, 0x00, 0x40, // MOV EAX, 0x40000000 (hypervisor leaf, unimpl)
-        0x0f, 0xa2,                   // CPUID
-        0xf4,                         // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x1000;

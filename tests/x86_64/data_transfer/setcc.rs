@@ -1,4 +1,4 @@
-use crate::common::{read_mem_u8, run_until_hlt, setup_vm, write_mem_u8, DATA_ADDR};
+use crate::common::{DATA_ADDR, read_mem_u8, run_until_hlt, setup_vm, write_mem_u8};
 use rax::cpu::Registers;
 
 // SETcc - Conditional Set Instructions (0F 9x family)
@@ -521,7 +521,8 @@ fn test_setp_al_parity_odd() {
 fn test_setpe_bl_parity_even() {
     // SETPE is alias for SETP
     let code = [
-        0xb8, 0x07, 0x00, 0x00, 0x00, // MOV EAX, 0x07 (3 bits, odd count but only low byte matters)
+        0xb8, 0x07, 0x00, 0x00,
+        0x00, // MOV EAX, 0x07 (3 bits, odd count but only low byte matters)
         0x85, 0xc0, // TEST EAX, EAX
         0x0f, 0x9a, 0xc3, // SETPE BL
         0xf4, // HLT
@@ -657,7 +658,11 @@ fn test_setge_al_greater_equal() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFF, 0x01, "AL should be 1 when greater or equal");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x01,
+        "AL should be 1 when greater or equal"
+    );
 }
 
 #[test]
@@ -1094,7 +1099,11 @@ fn test_setp_zero_byte() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFF, 0x01, "AL should be 1 (zero has even parity)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x01,
+        "AL should be 1 (zero has even parity)"
+    );
 }
 
 #[test]
@@ -1108,5 +1117,9 @@ fn test_setp_all_bits_set() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFF, 0x01, "AL should be 1 (0xFF has even parity)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x01,
+        "AL should be 1 (0xFF has even parity)"
+    );
 }

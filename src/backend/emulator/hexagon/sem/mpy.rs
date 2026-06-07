@@ -8,7 +8,7 @@
 //! `imported/macros.def`. Verified against the qemu-hexagon oracle.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fimm_s, fimm_u, fld, SemCtx};
+use super::{SemCtx, fimm_s, fimm_u, fld};
 
 // --- macro-equivalent field/extension helpers ------------------------------
 //
@@ -369,14 +369,28 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let (rs, rt) = (s(ctx) as u64, t(ctx) as u64);
             let h1 = ctx.sat_n(mpy16ss(get_half(rs, 1), get_half(rt, 1)) + 0x8000, 32);
             let h0 = ctx.sat_n(mpy16ss(get_half(rs, 0), get_half(rt, 0)) + 0x8000, 32);
-            let v = set_half(set_half(0, 1, get_half(h1 as u64, 1)), 0, get_half(h0 as u64, 1));
+            let v = set_half(
+                set_half(0, 1, get_half(h1 as u64, 1)),
+                0,
+                get_half(h0 as u64, 1),
+            );
             ctx.set_r(rd, v as u32);
         }
         Opcode::M2_vmpy2s_s1pack => {
             let (rs, rt) = (s(ctx) as u64, t(ctx) as u64);
-            let h1 = ctx.sat_n((mpy16ss(get_half(rs, 1), get_half(rt, 1)) << 1) + 0x8000, 32);
-            let h0 = ctx.sat_n((mpy16ss(get_half(rs, 0), get_half(rt, 0)) << 1) + 0x8000, 32);
-            let v = set_half(set_half(0, 1, get_half(h1 as u64, 1)), 0, get_half(h0 as u64, 1));
+            let h1 = ctx.sat_n(
+                (mpy16ss(get_half(rs, 1), get_half(rt, 1)) << 1) + 0x8000,
+                32,
+            );
+            let h0 = ctx.sat_n(
+                (mpy16ss(get_half(rs, 0), get_half(rt, 0)) << 1) + 0x8000,
+                32,
+            );
+            let v = set_half(
+                set_half(0, 1, get_half(h1 as u64, 1)),
+                0,
+                get_half(h0 as u64, 1),
+            );
             ctx.set_r(rd, v as u32);
         }
         Opcode::M2_vmac2 => {
@@ -389,29 +403,53 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M2_vmac2s_s0 => {
             let (rs, rt) = (s(ctx) as u64, t(ctx) as u64);
             let acc = xx(ctx);
-            let w0 = ctx.sat_n(get_word(acc, 0) + mpy16ss(get_half(rs, 0), get_half(rt, 0)), 32);
-            let w1 = ctx.sat_n(get_word(acc, 1) + mpy16ss(get_half(rs, 1), get_half(rt, 1)), 32);
+            let w0 = ctx.sat_n(
+                get_word(acc, 0) + mpy16ss(get_half(rs, 0), get_half(rt, 0)),
+                32,
+            );
+            let w1 = ctx.sat_n(
+                get_word(acc, 1) + mpy16ss(get_half(rs, 1), get_half(rt, 1)),
+                32,
+            );
             ctx.set_rp(rx, set_word(set_word(acc, 0, w0), 1, w1));
         }
         Opcode::M2_vmac2s_s1 => {
             let (rs, rt) = (s(ctx) as u64, t(ctx) as u64);
             let acc = xx(ctx);
-            let w0 = ctx.sat_n(get_word(acc, 0) + (mpy16ss(get_half(rs, 0), get_half(rt, 0)) << 1), 32);
-            let w1 = ctx.sat_n(get_word(acc, 1) + (mpy16ss(get_half(rs, 1), get_half(rt, 1)) << 1), 32);
+            let w0 = ctx.sat_n(
+                get_word(acc, 0) + (mpy16ss(get_half(rs, 0), get_half(rt, 0)) << 1),
+                32,
+            );
+            let w1 = ctx.sat_n(
+                get_word(acc, 1) + (mpy16ss(get_half(rs, 1), get_half(rt, 1)) << 1),
+                32,
+            );
             ctx.set_rp(rx, set_word(set_word(acc, 0, w0), 1, w1));
         }
         Opcode::M2_vmac2su_s0 => {
             let (rs, rt) = (s(ctx) as u64, t(ctx) as u64);
             let acc = xx(ctx);
-            let w0 = ctx.sat_n(get_word(acc, 0) + mpy16su(get_half(rs, 0), get_uhalf(rt, 0)), 32);
-            let w1 = ctx.sat_n(get_word(acc, 1) + mpy16su(get_half(rs, 1), get_uhalf(rt, 1)), 32);
+            let w0 = ctx.sat_n(
+                get_word(acc, 0) + mpy16su(get_half(rs, 0), get_uhalf(rt, 0)),
+                32,
+            );
+            let w1 = ctx.sat_n(
+                get_word(acc, 1) + mpy16su(get_half(rs, 1), get_uhalf(rt, 1)),
+                32,
+            );
             ctx.set_rp(rx, set_word(set_word(acc, 0, w0), 1, w1));
         }
         Opcode::M2_vmac2su_s1 => {
             let (rs, rt) = (s(ctx) as u64, t(ctx) as u64);
             let acc = xx(ctx);
-            let w0 = ctx.sat_n(get_word(acc, 0) + (mpy16su(get_half(rs, 0), get_uhalf(rt, 0)) << 1), 32);
-            let w1 = ctx.sat_n(get_word(acc, 1) + (mpy16su(get_half(rs, 1), get_uhalf(rt, 1)) << 1), 32);
+            let w0 = ctx.sat_n(
+                get_word(acc, 0) + (mpy16su(get_half(rs, 0), get_uhalf(rt, 0)) << 1),
+                32,
+            );
+            let w1 = ctx.sat_n(
+                get_word(acc, 1) + (mpy16su(get_half(rs, 1), get_uhalf(rt, 1)) << 1),
+                32,
+            );
             ctx.set_rp(rx, set_word(set_word(acc, 0, w0), 1, w1));
         }
 
@@ -438,15 +476,27 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M2_vmac2es_s0 => {
             let (rss, rtt) = (sp(ctx), tp(ctx));
             let acc = xx(ctx);
-            let w0 = ctx.sat_n(get_word(acc, 0) + mpy16ss(get_half(rss, 0), get_half(rtt, 0)), 32);
-            let w1 = ctx.sat_n(get_word(acc, 1) + mpy16ss(get_half(rss, 2), get_half(rtt, 2)), 32);
+            let w0 = ctx.sat_n(
+                get_word(acc, 0) + mpy16ss(get_half(rss, 0), get_half(rtt, 0)),
+                32,
+            );
+            let w1 = ctx.sat_n(
+                get_word(acc, 1) + mpy16ss(get_half(rss, 2), get_half(rtt, 2)),
+                32,
+            );
             ctx.set_rp(rx, set_word(set_word(acc, 0, w0), 1, w1));
         }
         Opcode::M2_vmac2es_s1 => {
             let (rss, rtt) = (sp(ctx), tp(ctx));
             let acc = xx(ctx);
-            let w0 = ctx.sat_n(get_word(acc, 0) + (mpy16ss(get_half(rss, 0), get_half(rtt, 0)) << 1), 32);
-            let w1 = ctx.sat_n(get_word(acc, 1) + (mpy16ss(get_half(rss, 2), get_half(rtt, 2)) << 1), 32);
+            let w0 = ctx.sat_n(
+                get_word(acc, 0) + (mpy16ss(get_half(rss, 0), get_half(rtt, 0)) << 1),
+                32,
+            );
+            let w1 = ctx.sat_n(
+                get_word(acc, 1) + (mpy16ss(get_half(rss, 2), get_half(rtt, 2)) << 1),
+                32,
+            );
             ctx.set_rp(rx, set_word(set_word(acc, 0, w0), 1, w1));
         }
 
@@ -454,11 +504,13 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M2_vdmpys_s0 => {
             let (rss, rtt) = (sp(ctx), tp(ctx));
             let w0 = ctx.sat_n(
-                mpy16ss(get_half(rss, 0), get_half(rtt, 0)) + mpy16ss(get_half(rss, 1), get_half(rtt, 1)),
+                mpy16ss(get_half(rss, 0), get_half(rtt, 0))
+                    + mpy16ss(get_half(rss, 1), get_half(rtt, 1)),
                 32,
             );
             let w1 = ctx.sat_n(
-                mpy16ss(get_half(rss, 2), get_half(rtt, 2)) + mpy16ss(get_half(rss, 3), get_half(rtt, 3)),
+                mpy16ss(get_half(rss, 2), get_half(rtt, 2))
+                    + mpy16ss(get_half(rss, 3), get_half(rtt, 3)),
                 32,
             );
             ctx.set_rp(rd, set_word(set_word(0, 0, w0), 1, w1));
@@ -526,7 +578,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                 32,
             );
             // fSETHALF(0,Rd,fGETHALF(1,s0)); fSETHALF(1,Rd,fGETHALF(1,s1));
-            let v = set_half(set_half(0, 0, get_half(s0 as u64, 1)), 1, get_half(s1 as u64, 1));
+            let v = set_half(
+                set_half(0, 0, get_half(s0 as u64, 1)),
+                1,
+                get_half(s1 as u64, 1),
+            );
             ctx.set_r(rd, v as u32);
         }
         Opcode::M2_vdmpyrs_s1 => {
@@ -543,7 +599,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                     + 0x8000,
                 32,
             );
-            let v = set_half(set_half(0, 0, get_half(s0 as u64, 1)), 1, get_half(s1 as u64, 1));
+            let v = set_half(
+                set_half(0, 0, get_half(s0 as u64, 1)),
+                1,
+                get_half(s1 as u64, 1),
+            );
             ctx.set_r(rd, v as u32);
         }
 
@@ -586,23 +646,27 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M2_cmpyi_s0 => {
             let (rs, rt) = (s(ctx) as u64, t(ctx) as u64);
             // imaginary: Rs.H*Rt.L + Rs.L*Rt.H
-            let v = mpy16ss(get_half(rs, 1), get_half(rt, 0)) + mpy16ss(get_half(rs, 0), get_half(rt, 1));
+            let v = mpy16ss(get_half(rs, 1), get_half(rt, 0))
+                + mpy16ss(get_half(rs, 0), get_half(rt, 1));
             ctx.set_rp(rd, v as u64);
         }
         Opcode::M2_cmpyr_s0 => {
             let (rs, rt) = (s(ctx) as u64, t(ctx) as u64);
             // real: Rs.L*Rt.L - Rs.H*Rt.H
-            let v = mpy16ss(get_half(rs, 0), get_half(rt, 0)) - mpy16ss(get_half(rs, 1), get_half(rt, 1));
+            let v = mpy16ss(get_half(rs, 0), get_half(rt, 0))
+                - mpy16ss(get_half(rs, 1), get_half(rt, 1));
             ctx.set_rp(rd, v as u64);
         }
         Opcode::M2_cmpys_s0 => {
             let (rs, rt) = (s(ctx) as u64, t(ctx) as u64);
             let w1 = ctx.sat_n(
-                mpy16ss(get_half(rs, 1), get_half(rt, 0)) + mpy16ss(get_half(rs, 0), get_half(rt, 1)),
+                mpy16ss(get_half(rs, 1), get_half(rt, 0))
+                    + mpy16ss(get_half(rs, 0), get_half(rt, 1)),
                 32,
             );
             let w0 = ctx.sat_n(
-                mpy16ss(get_half(rs, 0), get_half(rt, 0)) - mpy16ss(get_half(rs, 1), get_half(rt, 1)),
+                mpy16ss(get_half(rs, 0), get_half(rt, 0))
+                    - mpy16ss(get_half(rs, 1), get_half(rt, 1)),
                 32,
             );
             ctx.set_rp(rd, set_word(set_word(0, 1, w1), 0, w0));
@@ -625,11 +689,13 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             // conjugate: imag uses '-', real uses '+'
             let (rs, rt) = (s(ctx) as u64, t(ctx) as u64);
             let w1 = ctx.sat_n(
-                mpy16ss(get_half(rs, 1), get_half(rt, 0)) - mpy16ss(get_half(rs, 0), get_half(rt, 1)),
+                mpy16ss(get_half(rs, 1), get_half(rt, 0))
+                    - mpy16ss(get_half(rs, 0), get_half(rt, 1)),
                 32,
             );
             let w0 = ctx.sat_n(
-                mpy16ss(get_half(rs, 0), get_half(rt, 0)) + mpy16ss(get_half(rs, 1), get_half(rt, 1)),
+                mpy16ss(get_half(rs, 0), get_half(rt, 0))
+                    + mpy16ss(get_half(rs, 1), get_half(rt, 1)),
                 32,
             );
             ctx.set_rp(rd, set_word(set_word(0, 1, w1), 0, w0));
@@ -717,12 +783,14 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let acc = xx(ctx);
             let w1 = ctx.sat_n(
                 get_word(acc, 1)
-                    - (mpy16ss(get_half(rs, 1), get_half(rt, 0)) + mpy16ss(get_half(rs, 0), get_half(rt, 1))),
+                    - (mpy16ss(get_half(rs, 1), get_half(rt, 0))
+                        + mpy16ss(get_half(rs, 0), get_half(rt, 1))),
                 32,
             );
             let w0 = ctx.sat_n(
                 get_word(acc, 0)
-                    - (mpy16ss(get_half(rs, 0), get_half(rt, 0)) - mpy16ss(get_half(rs, 1), get_half(rt, 1))),
+                    - (mpy16ss(get_half(rs, 0), get_half(rt, 0))
+                        - mpy16ss(get_half(rs, 1), get_half(rt, 1))),
                 32,
             );
             ctx.set_rp(rx, set_word(set_word(acc, 1, w1), 0, w0));
@@ -749,12 +817,14 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let acc = xx(ctx);
             let w1 = ctx.sat_n(
                 get_word(acc, 1)
-                    - (mpy16ss(get_half(rs, 1), get_half(rt, 0)) - mpy16ss(get_half(rs, 0), get_half(rt, 1))),
+                    - (mpy16ss(get_half(rs, 1), get_half(rt, 0))
+                        - mpy16ss(get_half(rs, 0), get_half(rt, 1))),
                 32,
             );
             let w0 = ctx.sat_n(
                 get_word(acc, 0)
-                    - (mpy16ss(get_half(rs, 0), get_half(rt, 0)) + mpy16ss(get_half(rs, 1), get_half(rt, 1))),
+                    - (mpy16ss(get_half(rs, 0), get_half(rt, 0))
+                        + mpy16ss(get_half(rs, 1), get_half(rt, 1))),
                 32,
             );
             ctx.set_rp(rx, set_word(set_word(acc, 1, w1), 0, w0));
@@ -778,13 +848,15 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         }
         Opcode::M2_cmaci_s0 => {
             let (rs, rt) = (s(ctx) as u64, t(ctx) as u64);
-            let p = mpy16ss(get_half(rs, 1), get_half(rt, 0)) + mpy16ss(get_half(rs, 0), get_half(rt, 1));
+            let p = mpy16ss(get_half(rs, 1), get_half(rt, 0))
+                + mpy16ss(get_half(rs, 0), get_half(rt, 1));
             let v = (xx(ctx) as i64).wrapping_add(p);
             ctx.set_rp(rx, v as u64);
         }
         Opcode::M2_cmacr_s0 => {
             let (rs, rt) = (s(ctx) as u64, t(ctx) as u64);
-            let p = mpy16ss(get_half(rs, 0), get_half(rt, 0)) - mpy16ss(get_half(rs, 1), get_half(rt, 1));
+            let p = mpy16ss(get_half(rs, 0), get_half(rt, 0))
+                - mpy16ss(get_half(rs, 1), get_half(rt, 1));
             let v = (xx(ctx) as i64).wrapping_add(p);
             ctx.set_rp(rx, v as u64);
         }
@@ -793,14 +865,22 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M2_cmpyrs_s0 => {
             let (rs, rt) = (s(ctx) as u64, t(ctx) as u64);
             let h1 = ctx.sat_n(
-                mpy16ss(get_half(rs, 1), get_half(rt, 0)) + mpy16ss(get_half(rs, 0), get_half(rt, 1)) + 0x8000,
+                mpy16ss(get_half(rs, 1), get_half(rt, 0))
+                    + mpy16ss(get_half(rs, 0), get_half(rt, 1))
+                    + 0x8000,
                 32,
             );
             let h0 = ctx.sat_n(
-                mpy16ss(get_half(rs, 0), get_half(rt, 0)) - mpy16ss(get_half(rs, 1), get_half(rt, 1)) + 0x8000,
+                mpy16ss(get_half(rs, 0), get_half(rt, 0))
+                    - mpy16ss(get_half(rs, 1), get_half(rt, 1))
+                    + 0x8000,
                 32,
             );
-            let v = set_half(set_half(0, 1, get_half(h1 as u64, 1)), 0, get_half(h0 as u64, 1));
+            let v = set_half(
+                set_half(0, 1, get_half(h1 as u64, 1)),
+                0,
+                get_half(h0 as u64, 1),
+            );
             ctx.set_r(rd, v as u32);
         }
         Opcode::M2_cmpyrs_s1 => {
@@ -817,20 +897,32 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                     + 0x8000,
                 32,
             );
-            let v = set_half(set_half(0, 1, get_half(h1 as u64, 1)), 0, get_half(h0 as u64, 1));
+            let v = set_half(
+                set_half(0, 1, get_half(h1 as u64, 1)),
+                0,
+                get_half(h0 as u64, 1),
+            );
             ctx.set_r(rd, v as u32);
         }
         Opcode::M2_cmpyrsc_s0 => {
             let (rs, rt) = (s(ctx) as u64, t(ctx) as u64);
             let h1 = ctx.sat_n(
-                mpy16ss(get_half(rs, 1), get_half(rt, 0)) - mpy16ss(get_half(rs, 0), get_half(rt, 1)) + 0x8000,
+                mpy16ss(get_half(rs, 1), get_half(rt, 0))
+                    - mpy16ss(get_half(rs, 0), get_half(rt, 1))
+                    + 0x8000,
                 32,
             );
             let h0 = ctx.sat_n(
-                mpy16ss(get_half(rs, 0), get_half(rt, 0)) + mpy16ss(get_half(rs, 1), get_half(rt, 1)) + 0x8000,
+                mpy16ss(get_half(rs, 0), get_half(rt, 0))
+                    + mpy16ss(get_half(rs, 1), get_half(rt, 1))
+                    + 0x8000,
                 32,
             );
-            let v = set_half(set_half(0, 1, get_half(h1 as u64, 1)), 0, get_half(h0 as u64, 1));
+            let v = set_half(
+                set_half(0, 1, get_half(h1 as u64, 1)),
+                0,
+                get_half(h0 as u64, 1),
+            );
             ctx.set_r(rd, v as u32);
         }
         Opcode::M2_cmpyrsc_s1 => {
@@ -847,7 +939,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                     + 0x8000,
                 32,
             );
-            let v = set_half(set_half(0, 1, get_half(h1 as u64, 1)), 0, get_half(h0 as u64, 1));
+            let v = set_half(
+                set_half(0, 1, get_half(h1 as u64, 1)),
+                0,
+                get_half(h0 as u64, 1),
+            );
             ctx.set_r(rd, v as u32);
         }
 
@@ -942,11 +1038,13 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M2_vcmpy_s0_sat_r => {
             let (rss, rtt) = (sp(ctx), tp(ctx));
             let w0 = ctx.sat_n(
-                mpy16ss(get_half(rss, 0), get_half(rtt, 0)) - mpy16ss(get_half(rss, 1), get_half(rtt, 1)),
+                mpy16ss(get_half(rss, 0), get_half(rtt, 0))
+                    - mpy16ss(get_half(rss, 1), get_half(rtt, 1)),
                 32,
             );
             let w1 = ctx.sat_n(
-                mpy16ss(get_half(rss, 2), get_half(rtt, 2)) - mpy16ss(get_half(rss, 3), get_half(rtt, 3)),
+                mpy16ss(get_half(rss, 2), get_half(rtt, 2))
+                    - mpy16ss(get_half(rss, 3), get_half(rtt, 3)),
                 32,
             );
             ctx.set_rp(rd, set_word(set_word(0, 0, w0), 1, w1));
@@ -954,11 +1052,15 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M2_vcmpy_s1_sat_r => {
             let (rss, rtt) = (sp(ctx), tp(ctx));
             let w0 = ctx.sat_n(
-                (mpy16ss(get_half(rss, 0), get_half(rtt, 0)) - mpy16ss(get_half(rss, 1), get_half(rtt, 1))) << 1,
+                (mpy16ss(get_half(rss, 0), get_half(rtt, 0))
+                    - mpy16ss(get_half(rss, 1), get_half(rtt, 1)))
+                    << 1,
                 32,
             );
             let w1 = ctx.sat_n(
-                (mpy16ss(get_half(rss, 2), get_half(rtt, 2)) - mpy16ss(get_half(rss, 3), get_half(rtt, 3))) << 1,
+                (mpy16ss(get_half(rss, 2), get_half(rtt, 2))
+                    - mpy16ss(get_half(rss, 3), get_half(rtt, 3)))
+                    << 1,
                 32,
             );
             ctx.set_rp(rd, set_word(set_word(0, 0, w0), 1, w1));
@@ -966,11 +1068,13 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M2_vcmpy_s0_sat_i => {
             let (rss, rtt) = (sp(ctx), tp(ctx));
             let w0 = ctx.sat_n(
-                mpy16ss(get_half(rss, 1), get_half(rtt, 0)) + mpy16ss(get_half(rss, 0), get_half(rtt, 1)),
+                mpy16ss(get_half(rss, 1), get_half(rtt, 0))
+                    + mpy16ss(get_half(rss, 0), get_half(rtt, 1)),
                 32,
             );
             let w1 = ctx.sat_n(
-                mpy16ss(get_half(rss, 3), get_half(rtt, 2)) + mpy16ss(get_half(rss, 2), get_half(rtt, 3)),
+                mpy16ss(get_half(rss, 3), get_half(rtt, 2))
+                    + mpy16ss(get_half(rss, 2), get_half(rtt, 3)),
                 32,
             );
             ctx.set_rp(rd, set_word(set_word(0, 0, w0), 1, w1));
@@ -978,11 +1082,15 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M2_vcmpy_s1_sat_i => {
             let (rss, rtt) = (sp(ctx), tp(ctx));
             let w0 = ctx.sat_n(
-                (mpy16ss(get_half(rss, 1), get_half(rtt, 0)) + mpy16ss(get_half(rss, 0), get_half(rtt, 1))) << 1,
+                (mpy16ss(get_half(rss, 1), get_half(rtt, 0))
+                    + mpy16ss(get_half(rss, 0), get_half(rtt, 1)))
+                    << 1,
                 32,
             );
             let w1 = ctx.sat_n(
-                (mpy16ss(get_half(rss, 3), get_half(rtt, 2)) + mpy16ss(get_half(rss, 2), get_half(rtt, 3))) << 1,
+                (mpy16ss(get_half(rss, 3), get_half(rtt, 2))
+                    + mpy16ss(get_half(rss, 2), get_half(rtt, 3)))
+                    << 1,
                 32,
             );
             ctx.set_rp(rd, set_word(set_word(0, 0, w0), 1, w1));
@@ -992,12 +1100,14 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let acc = xx(ctx);
             let w0 = ctx.sat_n(
                 get_word(acc, 0)
-                    + (mpy16ss(get_half(rss, 0), get_half(rtt, 0)) - mpy16ss(get_half(rss, 1), get_half(rtt, 1))),
+                    + (mpy16ss(get_half(rss, 0), get_half(rtt, 0))
+                        - mpy16ss(get_half(rss, 1), get_half(rtt, 1))),
                 32,
             );
             let w1 = ctx.sat_n(
                 get_word(acc, 1)
-                    + (mpy16ss(get_half(rss, 2), get_half(rtt, 2)) - mpy16ss(get_half(rss, 3), get_half(rtt, 3))),
+                    + (mpy16ss(get_half(rss, 2), get_half(rtt, 2))
+                        - mpy16ss(get_half(rss, 3), get_half(rtt, 3))),
                 32,
             );
             ctx.set_rp(rx, set_word(set_word(acc, 0, w0), 1, w1));
@@ -1007,12 +1117,14 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let acc = xx(ctx);
             let w0 = ctx.sat_n(
                 get_word(acc, 0)
-                    + (mpy16ss(get_half(rss, 1), get_half(rtt, 0)) + mpy16ss(get_half(rss, 0), get_half(rtt, 1))),
+                    + (mpy16ss(get_half(rss, 1), get_half(rtt, 0))
+                        + mpy16ss(get_half(rss, 0), get_half(rtt, 1))),
                 32,
             );
             let w1 = ctx.sat_n(
                 get_word(acc, 1)
-                    + (mpy16ss(get_half(rss, 3), get_half(rtt, 2)) + mpy16ss(get_half(rss, 2), get_half(rtt, 3))),
+                    + (mpy16ss(get_half(rss, 3), get_half(rtt, 2))
+                        + mpy16ss(get_half(rss, 2), get_half(rtt, 3))),
                 32,
             );
             ctx.set_rp(rx, set_word(set_word(acc, 0, w0), 1, w1));
@@ -1170,7 +1282,8 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         // ============ vrmpyweh / vrmpywoh: 2x (32x16) -> 64 ============
         Opcode::M4_vrmpyeh_s0 => {
             let (rss, rtt) = (sp(ctx), tp(ctx));
-            let v = mpy3216ss(get_word(rss, 1), get_half(rtt, 2)) + mpy3216ss(get_word(rss, 0), get_half(rtt, 0));
+            let v = mpy3216ss(get_word(rss, 1), get_half(rtt, 2))
+                + mpy3216ss(get_word(rss, 0), get_half(rtt, 0));
             ctx.set_rp(rd, v as u64);
         }
         Opcode::M4_vrmpyeh_s1 => {
@@ -1181,7 +1294,8 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         }
         Opcode::M4_vrmpyoh_s0 => {
             let (rss, rtt) = (sp(ctx), tp(ctx));
-            let v = mpy3216ss(get_word(rss, 1), get_half(rtt, 3)) + mpy3216ss(get_word(rss, 0), get_half(rtt, 1));
+            let v = mpy3216ss(get_word(rss, 1), get_half(rtt, 3))
+                + mpy3216ss(get_word(rss, 0), get_half(rtt, 1));
             ctx.set_rp(rd, v as u64);
         }
         Opcode::M4_vrmpyoh_s1 => {
@@ -1192,7 +1306,8 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         }
         Opcode::M4_vrmpyeh_acc_s0 => {
             let (rss, rtt) = (sp(ctx), tp(ctx));
-            let p = mpy3216ss(get_word(rss, 1), get_half(rtt, 2)) + mpy3216ss(get_word(rss, 0), get_half(rtt, 0));
+            let p = mpy3216ss(get_word(rss, 1), get_half(rtt, 2))
+                + mpy3216ss(get_word(rss, 0), get_half(rtt, 0));
             let v = (xx(ctx) as i64).wrapping_add(p);
             ctx.set_rp(rx, v as u64);
         }
@@ -1205,7 +1320,8 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         }
         Opcode::M4_vrmpyoh_acc_s0 => {
             let (rss, rtt) = (sp(ctx), tp(ctx));
-            let p = mpy3216ss(get_word(rss, 1), get_half(rtt, 3)) + mpy3216ss(get_word(rss, 0), get_half(rtt, 1));
+            let p = mpy3216ss(get_word(rss, 1), get_half(rtt, 3))
+                + mpy3216ss(get_word(rss, 0), get_half(rtt, 1));
             let v = (xx(ctx) as i64).wrapping_add(p);
             ctx.set_rp(rx, v as u64);
         }
@@ -1221,7 +1337,9 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M4_cmpyi_wh => {
             let (rss, rt) = (sp(ctx), t(ctx) as u64);
             let v = ctx.sat_n(
-                (mpy3216ss(get_word(rss, 0), get_half(rt, 1)) + mpy3216ss(get_word(rss, 1), get_half(rt, 0)) + 0x4000)
+                (mpy3216ss(get_word(rss, 0), get_half(rt, 1))
+                    + mpy3216ss(get_word(rss, 1), get_half(rt, 0))
+                    + 0x4000)
                     >> 15,
                 32,
             );
@@ -1230,7 +1348,9 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M4_cmpyi_whc => {
             let (rss, rt) = (sp(ctx), t(ctx) as u64);
             let v = ctx.sat_n(
-                (mpy3216ss(get_word(rss, 1), get_half(rt, 0)) - mpy3216ss(get_word(rss, 0), get_half(rt, 1)) + 0x4000)
+                (mpy3216ss(get_word(rss, 1), get_half(rt, 0))
+                    - mpy3216ss(get_word(rss, 0), get_half(rt, 1))
+                    + 0x4000)
                     >> 15,
                 32,
             );
@@ -1239,7 +1359,9 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M4_cmpyr_wh => {
             let (rss, rt) = (sp(ctx), t(ctx) as u64);
             let v = ctx.sat_n(
-                (mpy3216ss(get_word(rss, 0), get_half(rt, 0)) - mpy3216ss(get_word(rss, 1), get_half(rt, 1)) + 0x4000)
+                (mpy3216ss(get_word(rss, 0), get_half(rt, 0))
+                    - mpy3216ss(get_word(rss, 1), get_half(rt, 1))
+                    + 0x4000)
                     >> 15,
                 32,
             );
@@ -1248,7 +1370,9 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::M4_cmpyr_whc => {
             let (rss, rt) = (sp(ctx), t(ctx) as u64);
             let v = ctx.sat_n(
-                (mpy3216ss(get_word(rss, 0), get_half(rt, 0)) + mpy3216ss(get_word(rss, 1), get_half(rt, 1)) + 0x4000)
+                (mpy3216ss(get_word(rss, 0), get_half(rt, 0))
+                    + mpy3216ss(get_word(rss, 1), get_half(rt, 1))
+                    + 0x4000)
                     >> 15,
                 32,
             );
@@ -1260,11 +1384,13 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let (rss, rtt) = (sp(ctx), tp(ctx));
             let h = get_word(rtt, 1) as u64;
             let w1 = ctx.sat_n(
-                (mpy16ss(get_half(rss, 1), get_half(h, 0)) << 1) + (mpy16ss(get_half(rss, 3), get_half(h, 1)) << 1),
+                (mpy16ss(get_half(rss, 1), get_half(h, 0)) << 1)
+                    + (mpy16ss(get_half(rss, 3), get_half(h, 1)) << 1),
                 32,
             );
             let w0 = ctx.sat_n(
-                (mpy16ss(get_half(rss, 0), get_half(h, 0)) << 1) + (mpy16ss(get_half(rss, 2), get_half(h, 1)) << 1),
+                (mpy16ss(get_half(rss, 0), get_half(h, 0)) << 1)
+                    + (mpy16ss(get_half(rss, 2), get_half(h, 1)) << 1),
                 32,
             );
             ctx.set_rp(rd, set_word(set_word(0, 1, w1), 0, w0));
@@ -1273,11 +1399,13 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let (rss, rtt) = (sp(ctx), tp(ctx));
             let h = get_word(rtt, 0) as u64;
             let w1 = ctx.sat_n(
-                (mpy16ss(get_half(rss, 1), get_half(h, 0)) << 1) + (mpy16ss(get_half(rss, 3), get_half(h, 1)) << 1),
+                (mpy16ss(get_half(rss, 1), get_half(h, 0)) << 1)
+                    + (mpy16ss(get_half(rss, 3), get_half(h, 1)) << 1),
                 32,
             );
             let w0 = ctx.sat_n(
-                (mpy16ss(get_half(rss, 0), get_half(h, 0)) << 1) + (mpy16ss(get_half(rss, 2), get_half(h, 1)) << 1),
+                (mpy16ss(get_half(rss, 0), get_half(h, 0)) << 1)
+                    + (mpy16ss(get_half(rss, 2), get_half(h, 1)) << 1),
                 32,
             );
             ctx.set_rp(rd, set_word(set_word(0, 1, w1), 0, w0));
@@ -1333,7 +1461,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                     + 0x8000,
                 32,
             );
-            let v = set_half(set_half(0, 1, get_half(h1 as u64, 1)), 0, get_half(h0 as u64, 1));
+            let v = set_half(
+                set_half(0, 1, get_half(h1 as u64, 1)),
+                0,
+                get_half(h0 as u64, 1),
+            );
             ctx.set_r(rd, v as u32);
         }
         Opcode::M2_vrcmpys_s1rp_l => {
@@ -1351,7 +1483,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                     + 0x8000,
                 32,
             );
-            let v = set_half(set_half(0, 1, get_half(h1 as u64, 1)), 0, get_half(h0 as u64, 1));
+            let v = set_half(
+                set_half(0, 1, get_half(h1 as u64, 1)),
+                0,
+                get_half(h0 as u64, 1),
+            );
             ctx.set_r(rd, v as u32);
         }
 
@@ -1377,7 +1513,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let acc = xx(ctx);
             let mut v: u64 = 0;
             for i in 0..4 {
-                v = set_half(v, i, get_half(acc, i) + mpy16ss(get_ubyte(rs, i), get_ubyte(rt, i)));
+                v = set_half(
+                    v,
+                    i,
+                    get_half(acc, i) + mpy16ss(get_ubyte(rs, i), get_ubyte(rt, i)),
+                );
             }
             ctx.set_rp(rx, v);
         }
@@ -1386,7 +1526,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let acc = xx(ctx);
             let mut v: u64 = 0;
             for i in 0..4 {
-                v = set_half(v, i, get_half(acc, i) + mpy16ss(get_byte(rs, i), get_ubyte(rt, i)));
+                v = set_half(
+                    v,
+                    i,
+                    get_half(acc, i) + mpy16ss(get_byte(rs, i), get_ubyte(rt, i)),
+                );
             }
             ctx.set_rp(rx, v);
         }

@@ -56,11 +56,7 @@ fn stos_common(
     // Fast path: REP-prefixed, forward (DF==0), count > 1. Disabled under the
     // 32-bit address-size override, since the bulk path advances RDI as a full
     // 64-bit linear address with no masking.
-    if is_rep
-        && !addr32
-        && (vcpu.regs.rflags & flags::bits::DF) == 0
-        && vcpu.regs.rcx > 1
-    {
+    if is_rep && !addr32 && (vcpu.regs.rflags & flags::bits::DF) == 0 && vcpu.regs.rcx > 1 {
         stos_fast_path(vcpu, op_size)?;
         // Any remaining count (page-straddling element, code/MMIO page) falls
         // through to the slow loop below, resuming from current register state.

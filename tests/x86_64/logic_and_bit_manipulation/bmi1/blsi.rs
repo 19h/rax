@@ -23,8 +23,15 @@ fn test_blsi_eax_ebx_bit_0() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_0001, "EAX should contain isolated bit 0");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (source is non-zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0000_0001,
+        "EAX should contain isolated bit 0"
+    );
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (source is non-zero)"
+    );
     assert!(cf_set(regs.rflags), "CF should be set (source is non-zero)");
 }
 
@@ -40,7 +47,11 @@ fn test_blsi_eax_ebx_bit_31() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX should contain isolated bit 31");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX should contain isolated bit 31"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -72,7 +83,10 @@ fn test_blsi_rax_rbx_bit_63() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x8000_0000_0000_0000, "RAX should contain isolated bit 63");
+    assert_eq!(
+        regs.rax, 0x8000_0000_0000_0000,
+        "RAX should contain isolated bit 63"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -105,7 +119,11 @@ fn test_blsi_multiple_bits_isolates_lowest() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_1000, "EAX should contain only bit 3 (lowest)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0000_1000,
+        "EAX should contain only bit 3 (lowest)"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -170,8 +188,17 @@ fn test_blsi_single_bit_positions() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, 1u64 << bit_pos, "EAX should contain isolated bit {}", bit_pos);
-        assert!(!zf_set(regs.rflags), "ZF should be clear for bit {}", bit_pos);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            1u64 << bit_pos,
+            "EAX should contain isolated bit {}",
+            bit_pos
+        );
+        assert!(
+            !zf_set(regs.rflags),
+            "ZF should be clear for bit {}",
+            bit_pos
+        );
     }
 }
 
@@ -187,7 +214,11 @@ fn test_blsi_with_extended_registers() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0b0000_1000, "R8D should contain bit 3");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0b0000_1000,
+        "R8D should contain bit 3"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -203,7 +234,10 @@ fn test_blsi_r15() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r15, 0x1_0000_0000, "R15 should contain isolated bit 32");
+    assert_eq!(
+        regs.r15, 0x1_0000_0000,
+        "R15 should contain isolated bit 32"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -218,7 +252,11 @@ fn test_blsi_mem32() {
     write_mem_u32(&mem, 0xFFFFF000); // bits 12-31 set
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x1000, "EAX should contain isolated bit 12");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x1000,
+        "EAX should contain isolated bit 12"
+    );
 }
 
 #[test]
@@ -232,7 +270,10 @@ fn test_blsi_mem64() {
     write_mem_u64(&mem, 0x100_0000_0000); // bit 40 set
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x100_0000_0000, "RAX should contain isolated bit 40");
+    assert_eq!(
+        regs.rax, 0x100_0000_0000,
+        "RAX should contain isolated bit 40"
+    );
 }
 
 #[test]
@@ -262,7 +303,11 @@ fn test_blsi_sparse_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x1000, "EAX should contain bit 12 (lowest)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x1000,
+        "EAX should contain bit 12 (lowest)"
+    );
 }
 
 #[test]
@@ -294,7 +339,11 @@ fn test_blsi_vs_and_neg() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let expected = value & value.wrapping_neg();
-    assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "BLSI should equal src & -src");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        expected as u64,
+        "BLSI should equal src & -src"
+    );
 }
 
 #[test]
@@ -310,7 +359,13 @@ fn test_blsi_power_of_two() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, 1u64 << i, "BLSI(2^{}) should equal 2^{}", i, i);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            1u64 << i,
+            "BLSI(2^{}) should equal 2^{}",
+            i,
+            i
+        );
     }
 }
 
@@ -326,7 +381,11 @@ fn test_blsi_consecutive_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00010000, "EAX should contain bit 16 (lowest of consecutive)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00010000,
+        "EAX should contain bit 16 (lowest of consecutive)"
+    );
 }
 
 #[test]
@@ -341,7 +400,11 @@ fn test_blsi_sign_bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX should contain bit 31");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX should contain bit 31"
+    );
 }
 
 #[test]
@@ -361,7 +424,12 @@ fn test_blsi_iterative_isolation() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, 1u64 << expected_bit, "Should isolate bit {}", expected_bit);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            1u64 << expected_bit,
+            "Should isolate bit {}",
+            expected_bit
+        );
 
         // Remove lowest bit for next iteration
         value = value & (value - 1);
@@ -380,7 +448,10 @@ fn test_blsi_high_bits_64() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0800_0000_0000_0000, "RAX should contain isolated bit 59");
+    assert_eq!(
+        regs.rax, 0x0800_0000_0000_0000,
+        "RAX should contain isolated bit 59"
+    );
 }
 
 #[test]

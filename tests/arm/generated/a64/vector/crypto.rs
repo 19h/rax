@@ -25,7 +25,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_field_rm_0_min_c400_ce60c400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -41,7 +46,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_field_rm_1_poweroftwo_c400_ce61c400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -57,7 +67,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_field_rm_30_poweroftwominusone_c400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -73,7 +88,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_field_rm_31_max_c400_ce7fc400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -89,7 +109,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_field_rn_0_min_c400_ce60c400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -105,7 +130,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_field_rn_1_poweroftwo_c400_ce60c420(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -121,7 +151,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_field_rn_30_poweroftwominusone_c400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -137,7 +172,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_field_rn_31_max_c400_ce60c7e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -153,7 +193,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_field_rd_0_min_c400_ce60c400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -169,7 +214,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_field_rd_1_poweroftwo_c400_ce60c401(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -185,7 +235,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_field_rd_30_poweroftwominusone_c400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -201,7 +256,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_field_rd_31_max_c400_ce60c41f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -217,7 +277,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_0_c400_ce60c400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -233,7 +298,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_1_c400_ce61c400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -249,7 +319,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_2_c400_ce7ec400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -265,7 +340,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_3_c400_ce7fc400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -281,7 +361,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_4_c400_ce60c400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -297,7 +382,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_5_c400_ce60c420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -313,7 +403,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_6_c400_ce60c7c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -329,7 +424,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_7_c400_ce60c7e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -345,7 +445,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_8_c400_ce60c400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -361,7 +466,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_9_c400_ce60c401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -377,7 +487,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_10_c400_ce60c41e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -393,7 +508,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_11_c400_ce60c41f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -409,7 +529,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_12_c400_ce61c420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -425,7 +550,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_13_c400_ce7fc7e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -441,7 +571,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_14_c400_ce61c401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -457,7 +592,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_15_c400_ce7fc41f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -473,7 +613,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_16_c400_ce60c421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -489,7 +634,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_17_c400_ce60c7ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -497,7 +647,8 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_combo_17_c400_ce60c7ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sm3_sm3partw2_special_rn_31_stack_pointer_sp_may_require_alignment_50176_ce60c7e0() {
+fn test_aarch64_vector_crypto_sm3_sm3partw2_special_rn_31_stack_pointer_sp_may_require_alignment_50176_ce60c7e0()
+ {
     // Encoding: 0xCE60C7E0
     // Test aarch64_vector_crypto_sm3_sm3partw2 special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Rn=31, Rm=0
@@ -505,7 +656,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_special_rn_31_stack_pointer_sp_may_r
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -513,7 +669,8 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_special_rn_31_stack_pointer_sp_may_r
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sm3_sm3partw2_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_50176_ce60c41f() {
+fn test_aarch64_vector_crypto_sm3_sm3partw2_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_50176_ce60c41f()
+ {
     // Encoding: 0xCE60C41F
     // Test aarch64_vector_crypto_sm3_sm3partw2 special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, Rm=0, Rd=31
@@ -521,7 +678,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw2_special_rd_31_zero_register_xzr_wzr_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw2
@@ -587,7 +749,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_field_rn_0_min_1800_5e281800() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -603,7 +770,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_field_rn_1_poweroftwo_1800_5e28
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -619,7 +791,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_field_rn_30_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -635,7 +812,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_field_rn_31_max_1800_5e281be0()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -651,7 +833,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_field_rd_0_min_1800_5e281800() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -667,7 +854,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_field_rd_1_poweroftwo_1800_5e28
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -683,7 +875,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_field_rd_30_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -699,7 +896,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_field_rd_31_max_1800_5e28181f()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -715,7 +917,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_combo_0_1800_5e281800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -731,7 +938,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_combo_1_1800_5e281820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -747,7 +959,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_combo_2_1800_5e281bc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -763,7 +980,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_combo_3_1800_5e281be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -779,7 +1001,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_combo_4_1800_5e281800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -795,7 +1022,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_combo_5_1800_5e281801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -811,7 +1043,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_combo_6_1800_5e28181e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -827,7 +1064,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_combo_7_1800_5e28181f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -843,7 +1085,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_combo_8_1800_5e281821() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -859,7 +1106,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_combo_9_1800_5e281bff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -867,7 +1119,8 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_combo_9_1800_5e281bff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha2op_sha1_sched1_special_rn_31_stack_pointer_sp_may_require_alignment_6144_5e281be0() {
+fn test_aarch64_vector_crypto_sha2op_sha1_sched1_special_rn_31_stack_pointer_sp_may_require_alignment_6144_5e281be0()
+ {
     // Encoding: 0x5E281BE0
     // Test aarch64_vector_crypto_sha2op_sha1_sched1 special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rn=31, Rd=0
@@ -875,7 +1128,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_special_rn_31_stack_pointer_sp_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -883,7 +1141,8 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_special_rn_31_stack_pointer_sp_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha2op_sha1_sched1_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_6144_5e28181f() {
+fn test_aarch64_vector_crypto_sha2op_sha1_sched1_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_6144_5e28181f()
+ {
     // Encoding: 0x5E28181F
     // Test aarch64_vector_crypto_sha2op_sha1_sched1 special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, Rd=31
@@ -891,7 +1150,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_sched1_special_rd_31_zero_register_xzr
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_sched1
@@ -957,7 +1221,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_field_rm_0_min_8c00_ce408c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -973,7 +1242,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_field_rm_1_poweroftwo_8c00_ce418c00() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -989,7 +1263,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_field_rm_30_poweroftwominusone_8c00_ce
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1005,7 +1284,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_field_rm_31_max_8c00_ce5f8c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1021,7 +1305,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_field_imm2_0_zero_8c00_ce408c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1037,7 +1326,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_field_imm2_1_poweroftwo_8c00_ce409c00(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1053,7 +1347,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_field_imm2_3_max_8c00_ce40bc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1069,7 +1368,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_field_rn_0_min_8c00_ce408c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1085,7 +1389,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_field_rn_1_poweroftwo_8c00_ce408c20() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1101,7 +1410,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_field_rn_30_poweroftwominusone_8c00_ce
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1117,7 +1431,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_field_rn_31_max_8c00_ce408fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1133,7 +1452,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_field_rd_0_min_8c00_ce408c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1149,7 +1473,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_field_rd_1_poweroftwo_8c00_ce408c01() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1165,7 +1494,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_field_rd_30_poweroftwominusone_8c00_ce
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1181,7 +1515,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_field_rd_31_max_8c00_ce408c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1197,7 +1536,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_0_8c00_ce408c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1213,7 +1557,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_1_8c00_ce418c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1229,7 +1578,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_2_8c00_ce5e8c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1245,7 +1599,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_3_8c00_ce5f8c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1261,7 +1620,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_4_8c00_ce408c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1277,7 +1641,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_5_8c00_ce409c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1293,7 +1662,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_6_8c00_ce40bc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1309,7 +1683,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_7_8c00_ce408c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1325,7 +1704,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_8_8c00_ce408c20() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1341,7 +1725,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_9_8c00_ce408fc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1357,7 +1746,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_10_8c00_ce408fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1373,7 +1767,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_11_8c00_ce408c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1389,7 +1788,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_12_8c00_ce408c01() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1405,7 +1809,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_13_8c00_ce408c1e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1421,7 +1830,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_14_8c00_ce408c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1437,7 +1851,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_15_8c00_ce418c20() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1453,7 +1872,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_16_8c00_ce5f8fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1469,7 +1893,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_17_8c00_ce418c01() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1485,7 +1914,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_18_8c00_ce5f8c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1501,7 +1935,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_19_8c00_ce408c21() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1517,7 +1956,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_20_8c00_ce408fff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1525,7 +1969,8 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_combo_20_8c00_ce408fff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sm3_sm3tt2b_special_rn_31_stack_pointer_sp_may_require_alignment_35840_ce409fe0() {
+fn test_aarch64_vector_crypto_sm3_sm3tt2b_special_rn_31_stack_pointer_sp_may_require_alignment_35840_ce409fe0()
+ {
     // Encoding: 0xCE409FE0
     // Test aarch64_vector_crypto_sm3_sm3tt2b special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rm=0, imm2=1, Rn=31, Rd=0
@@ -1533,7 +1978,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_special_rn_31_stack_pointer_sp_may_req
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1541,7 +1991,8 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sm3_sm3tt2b_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_35840_ce409c1f() {
+fn test_aarch64_vector_crypto_sm3_sm3tt2b_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_35840_ce409c1f()
+ {
     // Encoding: 0xCE409C1F
     // Test aarch64_vector_crypto_sm3_sm3tt2b special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, imm2=1, Rm=0, Rn=0
@@ -1549,7 +2000,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2b_special_rd_31_zero_register_xzr_wzr_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2b
@@ -1615,7 +2071,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rm_0_min_2000_5e00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1631,7 +2092,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rm_1_poweroftwo_20
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1639,7 +2105,8 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rm_1_poweroftwo_20
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rm_30_poweroftwominusone_2000_5e1e2000() {
+fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rm_30_poweroftwominusone_2000_5e1e2000()
+ {
     // Encoding: 0x5E1E2000
     // Test aarch64_vector_crypto_sha3op_sha1_hash_majority field Rm = 30 (PowerOfTwoMinusOne)
     // Fields: Rm=30, Rn=0, Rd=0
@@ -1647,7 +2114,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rm_30_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1663,7 +2135,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rm_31_max_2000_5e1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1679,7 +2156,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rn_0_min_2000_5e00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1695,7 +2177,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rn_1_poweroftwo_20
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1703,7 +2190,8 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rn_1_poweroftwo_20
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rn_30_poweroftwominusone_2000_5e0023c0() {
+fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rn_30_poweroftwominusone_2000_5e0023c0()
+ {
     // Encoding: 0x5E0023C0
     // Test aarch64_vector_crypto_sha3op_sha1_hash_majority field Rn = 30 (PowerOfTwoMinusOne)
     // Fields: Rn=30, Rm=0, Rd=0
@@ -1711,7 +2199,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rn_30_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1727,7 +2220,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rn_31_max_2000_5e0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1743,7 +2241,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rd_0_min_2000_5e00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1759,7 +2262,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rd_1_poweroftwo_20
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1767,7 +2275,8 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rd_1_poweroftwo_20
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rd_30_poweroftwominusone_2000_5e00201e() {
+fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rd_30_poweroftwominusone_2000_5e00201e()
+ {
     // Encoding: 0x5E00201E
     // Test aarch64_vector_crypto_sha3op_sha1_hash_majority field Rd = 30 (PowerOfTwoMinusOne)
     // Fields: Rm=0, Rn=0, Rd=30
@@ -1775,7 +2284,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rd_30_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1791,7 +2305,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_field_rd_31_max_2000_5e0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1807,7 +2326,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_0_2000_5e002000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1823,7 +2347,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_1_2000_5e012000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1839,7 +2368,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_2_2000_5e1e2000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1855,7 +2389,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_3_2000_5e1f2000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1871,7 +2410,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_4_2000_5e002000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1887,7 +2431,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_5_2000_5e002020() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1903,7 +2452,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_6_2000_5e0023c0() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1919,7 +2473,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_7_2000_5e0023e0() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1935,7 +2494,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_8_2000_5e002000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1951,7 +2515,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_9_2000_5e002001() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1967,7 +2536,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_10_2000_5e00201e()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1983,7 +2557,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_11_2000_5e00201f()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -1999,7 +2578,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_12_2000_5e012020()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -2015,7 +2599,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_13_2000_5e1f23e0()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -2031,7 +2620,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_14_2000_5e012001()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -2047,7 +2641,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_15_2000_5e1f201f()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -2063,7 +2662,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_16_2000_5e002021()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -2079,7 +2683,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_17_2000_5e0023ff()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -2087,7 +2696,8 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_combo_17_2000_5e0023ff()
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_special_rn_31_stack_pointer_sp_may_require_alignment_8192_5e0023e0() {
+fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_special_rn_31_stack_pointer_sp_may_require_alignment_8192_5e0023e0()
+ {
     // Encoding: 0x5E0023E0
     // Test aarch64_vector_crypto_sha3op_sha1_hash_majority special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Rm=0, Rn=31
@@ -2095,7 +2705,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_special_rn_31_stack_poin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -2103,7 +2718,8 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_special_rn_31_stack_poin
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_8192_5e00201f() {
+fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_8192_5e00201f()
+ {
     // Encoding: 0x5E00201F
     // Test aarch64_vector_crypto_sha3op_sha1_hash_majority special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, Rn=0, Rm=0
@@ -2111,7 +2727,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_majority_special_rd_31_zero_regis
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_majority
@@ -2177,7 +2798,12 @@ fn test_aarch64_vector_crypto_aes_round_field_d_0_min_4800_4e284800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2193,7 +2819,12 @@ fn test_aarch64_vector_crypto_aes_round_field_d_1_max_4800_4e285800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2209,7 +2840,12 @@ fn test_aarch64_vector_crypto_aes_round_field_rn_0_min_4800_4e284800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2225,7 +2861,12 @@ fn test_aarch64_vector_crypto_aes_round_field_rn_1_poweroftwo_4800_4e284820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2241,7 +2882,12 @@ fn test_aarch64_vector_crypto_aes_round_field_rn_30_poweroftwominusone_4800_4e28
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2257,7 +2903,12 @@ fn test_aarch64_vector_crypto_aes_round_field_rn_31_max_4800_4e284be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2273,7 +2924,12 @@ fn test_aarch64_vector_crypto_aes_round_field_rd_0_min_4800_4e284800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2289,7 +2945,12 @@ fn test_aarch64_vector_crypto_aes_round_field_rd_1_poweroftwo_4800_4e284801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2305,7 +2966,12 @@ fn test_aarch64_vector_crypto_aes_round_field_rd_30_poweroftwominusone_4800_4e28
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2321,7 +2987,12 @@ fn test_aarch64_vector_crypto_aes_round_field_rd_31_max_4800_4e28481f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2337,7 +3008,12 @@ fn test_aarch64_vector_crypto_aes_round_combo_0_4800_4e284800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2353,7 +3029,12 @@ fn test_aarch64_vector_crypto_aes_round_combo_1_4800_4e285800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2369,7 +3050,12 @@ fn test_aarch64_vector_crypto_aes_round_combo_2_4800_4e284800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2385,7 +3071,12 @@ fn test_aarch64_vector_crypto_aes_round_combo_3_4800_4e284820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2401,7 +3092,12 @@ fn test_aarch64_vector_crypto_aes_round_combo_4_4800_4e284bc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2417,7 +3113,12 @@ fn test_aarch64_vector_crypto_aes_round_combo_5_4800_4e284be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2433,7 +3134,12 @@ fn test_aarch64_vector_crypto_aes_round_combo_6_4800_4e284800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2449,7 +3155,12 @@ fn test_aarch64_vector_crypto_aes_round_combo_7_4800_4e284801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2465,7 +3176,12 @@ fn test_aarch64_vector_crypto_aes_round_combo_8_4800_4e28481e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2481,7 +3197,12 @@ fn test_aarch64_vector_crypto_aes_round_combo_9_4800_4e28481f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2497,7 +3218,12 @@ fn test_aarch64_vector_crypto_aes_round_combo_10_4800_4e284821() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2513,7 +3239,12 @@ fn test_aarch64_vector_crypto_aes_round_combo_11_4800_4e284bff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2521,7 +3252,8 @@ fn test_aarch64_vector_crypto_aes_round_combo_11_4800_4e284bff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_aes_round_special_rn_31_stack_pointer_sp_may_require_alignment_18432_4e284be0() {
+fn test_aarch64_vector_crypto_aes_round_special_rn_31_stack_pointer_sp_may_require_alignment_18432_4e284be0()
+ {
     // Encoding: 0x4E284BE0
     // Test aarch64_vector_crypto_aes_round special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Rn=31, D=0
@@ -2529,7 +3261,12 @@ fn test_aarch64_vector_crypto_aes_round_special_rn_31_stack_pointer_sp_may_requi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2537,7 +3274,8 @@ fn test_aarch64_vector_crypto_aes_round_special_rn_31_stack_pointer_sp_may_requi
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_aes_round_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_18432_4e28481f() {
+fn test_aarch64_vector_crypto_aes_round_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_18432_4e28481f()
+ {
     // Encoding: 0x4E28481F
     // Test aarch64_vector_crypto_aes_round special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: D=0, Rn=0, Rd=31
@@ -2545,7 +3283,12 @@ fn test_aarch64_vector_crypto_aes_round_special_rd_31_zero_register_xzr_wzr_read
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_round
@@ -2611,7 +3354,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_field_rn_0_min_800_5e280800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2627,7 +3375,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_field_rn_1_poweroftwo_800_5e28082
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2643,7 +3396,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_field_rn_30_poweroftwominusone_80
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2659,7 +3417,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_field_rn_31_max_800_5e280be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2675,7 +3438,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_field_rd_0_min_800_5e280800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2691,7 +3459,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_field_rd_1_poweroftwo_800_5e28080
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2707,7 +3480,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_field_rd_30_poweroftwominusone_80
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2723,7 +3501,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_field_rd_31_max_800_5e28081f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2739,7 +3522,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_combo_0_800_5e280800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2755,7 +3543,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_combo_1_800_5e280820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2771,7 +3564,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_combo_2_800_5e280bc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2787,7 +3585,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_combo_3_800_5e280be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2803,7 +3606,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_combo_4_800_5e280800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2819,7 +3627,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_combo_5_800_5e280801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2835,7 +3648,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_combo_6_800_5e28081e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2851,7 +3669,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_combo_7_800_5e28081f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2867,7 +3690,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_combo_8_800_5e280821() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2883,7 +3711,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_combo_9_800_5e280bff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2891,7 +3724,8 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_combo_9_800_5e280bff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha2op_sha1_hash_special_rn_31_stack_pointer_sp_may_require_alignment_2048_5e280be0() {
+fn test_aarch64_vector_crypto_sha2op_sha1_hash_special_rn_31_stack_pointer_sp_may_require_alignment_2048_5e280be0()
+ {
     // Encoding: 0x5E280BE0
     // Test aarch64_vector_crypto_sha2op_sha1_hash special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Rn=31
@@ -2899,7 +3733,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_special_rn_31_stack_pointer_sp_ma
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2907,7 +3746,8 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_special_rn_31_stack_pointer_sp_ma
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha2op_sha1_hash_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_2048_5e28081f() {
+fn test_aarch64_vector_crypto_sha2op_sha1_hash_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_2048_5e28081f()
+ {
     // Encoding: 0x5E28081F
     // Test aarch64_vector_crypto_sha2op_sha1_hash special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, Rn=0
@@ -2915,7 +3755,12 @@ fn test_aarch64_vector_crypto_sha2op_sha1_hash_special_rd_31_zero_register_xzr_w
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha1_hash
@@ -2981,7 +3826,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_field_rn_0_min_8400_cec08400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -2997,7 +3847,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_field_rn_1_poweroftwo_8400_cec08420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3013,7 +3868,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_field_rn_30_poweroftwominusone_8400_cec
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3029,7 +3889,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_field_rn_31_max_8400_cec087e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3045,7 +3910,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_field_rd_0_min_8400_cec08400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3061,7 +3931,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_field_rd_1_poweroftwo_8400_cec08401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3077,7 +3952,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_field_rd_30_poweroftwominusone_8400_cec
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3093,7 +3973,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_field_rd_31_max_8400_cec0841f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3109,7 +3994,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_combo_0_8400_cec08400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3125,7 +4015,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_combo_1_8400_cec08420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3141,7 +4036,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_combo_2_8400_cec087c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3157,7 +4057,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_combo_3_8400_cec087e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3173,7 +4078,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_combo_4_8400_cec08400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3189,7 +4099,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_combo_5_8400_cec08401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3205,7 +4120,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_combo_6_8400_cec0841e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3221,7 +4141,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_combo_7_8400_cec0841f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3237,7 +4162,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_combo_8_8400_cec08421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3253,7 +4183,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_combo_9_8400_cec087ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3261,7 +4196,8 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_combo_9_8400_cec087ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sm4_sm4enc_special_rn_31_stack_pointer_sp_may_require_alignment_33792_cec087e0() {
+fn test_aarch64_vector_crypto_sm4_sm4enc_special_rn_31_stack_pointer_sp_may_require_alignment_33792_cec087e0()
+ {
     // Encoding: 0xCEC087E0
     // Test aarch64_vector_crypto_sm4_sm4enc special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Rn=31
@@ -3269,7 +4205,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_special_rn_31_stack_pointer_sp_may_requ
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3277,7 +4218,8 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_special_rn_31_stack_pointer_sp_may_requ
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sm4_sm4enc_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_cec0841f() {
+fn test_aarch64_vector_crypto_sm4_sm4enc_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_cec0841f()
+ {
     // Encoding: 0xCEC0841F
     // Test aarch64_vector_crypto_sm4_sm4enc special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, Rd=31
@@ -3285,7 +4227,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enc_special_rd_31_zero_register_xzr_wzr_rea
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enc
@@ -3351,7 +4298,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_field_rm_0_min_8c00_ce608c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3367,7 +4319,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_field_rm_1_poweroftwo_8c00_ce618c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3383,7 +4340,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_field_rm_30_poweroftwominusone_8c00_ce7e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3399,7 +4361,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_field_rm_31_max_8c00_ce7f8c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3415,7 +4382,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_field_rn_0_min_8c00_ce608c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3431,7 +4403,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_field_rn_1_poweroftwo_8c00_ce608c20() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3447,7 +4424,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_field_rn_30_poweroftwominusone_8c00_ce60
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3463,7 +4445,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_field_rn_31_max_8c00_ce608fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3479,7 +4466,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_field_rd_0_min_8c00_ce608c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3495,7 +4487,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_field_rd_1_poweroftwo_8c00_ce608c01() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3511,7 +4508,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_field_rd_30_poweroftwominusone_8c00_ce60
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3527,7 +4529,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_field_rd_31_max_8c00_ce608c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3543,7 +4550,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_0_8c00_ce608c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3559,7 +4571,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_1_8c00_ce618c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3575,7 +4592,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_2_8c00_ce7e8c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3591,7 +4613,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_3_8c00_ce7f8c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3607,7 +4634,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_4_8c00_ce608c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3623,7 +4655,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_5_8c00_ce608c20() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3639,7 +4676,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_6_8c00_ce608fc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3655,7 +4697,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_7_8c00_ce608fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3671,7 +4718,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_8_8c00_ce608c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3687,7 +4739,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_9_8c00_ce608c01() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3703,7 +4760,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_10_8c00_ce608c1e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3719,7 +4781,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_11_8c00_ce608c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3735,7 +4802,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_12_8c00_ce618c20() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3751,7 +4823,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_13_8c00_ce7f8fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3767,7 +4844,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_14_8c00_ce618c01() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3783,7 +4865,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_15_8c00_ce7f8c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3799,7 +4886,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_16_8c00_ce608c21() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3815,7 +4907,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_17_8c00_ce608fff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3823,7 +4920,8 @@ fn test_aarch64_vector_crypto_sha3_rax1_combo_17_8c00_ce608fff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha3_rax1_special_rn_31_stack_pointer_sp_may_require_alignment_35840_ce608fe0() {
+fn test_aarch64_vector_crypto_sha3_rax1_special_rn_31_stack_pointer_sp_may_require_alignment_35840_ce608fe0()
+ {
     // Encoding: 0xCE608FE0
     // Test aarch64_vector_crypto_sha3_rax1 special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rm=0, Rn=31, Rd=0
@@ -3831,7 +4929,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_special_rn_31_stack_pointer_sp_may_requi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3839,7 +4942,8 @@ fn test_aarch64_vector_crypto_sha3_rax1_special_rn_31_stack_pointer_sp_may_requi
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha3_rax1_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_35840_ce608c1f() {
+fn test_aarch64_vector_crypto_sha3_rax1_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_35840_ce608c1f()
+ {
     // Encoding: 0xCE608C1F
     // Test aarch64_vector_crypto_sha3_rax1 special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rm=0, Rd=31, Rn=0
@@ -3847,7 +4951,12 @@ fn test_aarch64_vector_crypto_sha3_rax1_special_rd_31_zero_register_xzr_wzr_read
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_rax1
@@ -3913,7 +5022,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_field_rm_0_min_c800_ce60c800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -3929,7 +5043,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_field_rm_1_poweroftwo_c800_ce61c800(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -3945,7 +5064,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_field_rm_30_poweroftwominusone_c800_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -3961,7 +5085,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_field_rm_31_max_c800_ce7fc800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -3977,7 +5106,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_field_rn_0_min_c800_ce60c800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -3993,7 +5127,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_field_rn_1_poweroftwo_c800_ce60c820(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4009,7 +5148,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_field_rn_30_poweroftwominusone_c800_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4025,7 +5169,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_field_rn_31_max_c800_ce60cbe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4041,7 +5190,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_field_rd_0_min_c800_ce60c800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4057,7 +5211,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_field_rd_1_poweroftwo_c800_ce60c801(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4073,7 +5232,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_field_rd_30_poweroftwominusone_c800_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4089,7 +5253,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_field_rd_31_max_c800_ce60c81f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4105,7 +5274,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_0_c800_ce60c800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4121,7 +5295,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_1_c800_ce61c800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4137,7 +5316,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_2_c800_ce7ec800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4153,7 +5337,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_3_c800_ce7fc800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4169,7 +5358,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_4_c800_ce60c800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4185,7 +5379,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_5_c800_ce60c820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4201,7 +5400,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_6_c800_ce60cbc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4217,7 +5421,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_7_c800_ce60cbe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4233,7 +5442,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_8_c800_ce60c800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4249,7 +5463,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_9_c800_ce60c801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4265,7 +5484,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_10_c800_ce60c81e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4281,7 +5505,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_11_c800_ce60c81f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4297,7 +5526,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_12_c800_ce61c820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4313,7 +5547,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_13_c800_ce7fcbe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4329,7 +5568,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_14_c800_ce61c801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4345,7 +5589,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_15_c800_ce7fc81f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4361,7 +5610,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_16_c800_ce60c821() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4377,7 +5631,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_17_c800_ce60cbff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4385,7 +5644,8 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_combo_17_c800_ce60cbff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sm4_sm4enckey_special_rn_31_stack_pointer_sp_may_require_alignment_51200_ce60cbe0() {
+fn test_aarch64_vector_crypto_sm4_sm4enckey_special_rn_31_stack_pointer_sp_may_require_alignment_51200_ce60cbe0()
+ {
     // Encoding: 0xCE60CBE0
     // Test aarch64_vector_crypto_sm4_sm4enckey special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Rm=0, Rn=31
@@ -4393,7 +5653,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_special_rn_31_stack_pointer_sp_may_r
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4401,7 +5666,8 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_special_rn_31_stack_pointer_sp_may_r
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sm4_sm4enckey_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_51200_ce60c81f() {
+fn test_aarch64_vector_crypto_sm4_sm4enckey_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_51200_ce60c81f()
+ {
     // Encoding: 0xCE60C81F
     // Test aarch64_vector_crypto_sm4_sm4enckey special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, Rn=0, Rm=0
@@ -4409,7 +5675,12 @@ fn test_aarch64_vector_crypto_sm4_sm4enckey_special_rd_31_zero_register_xzr_wzr_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm4_sm4enckey
@@ -4475,7 +5746,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_rm_0_min_0_ce000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4491,7 +5767,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_rm_1_poweroftwo_0_ce010000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4507,7 +5788,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_rm_30_poweroftwominusone_0_ce1e000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4523,7 +5809,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_rm_31_max_0_ce1f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4539,7 +5830,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_ra_0_min_0_ce000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4555,7 +5851,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_ra_1_poweroftwo_0_ce000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4571,7 +5872,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_ra_30_poweroftwominusone_0_ce00780
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4587,7 +5893,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_ra_31_max_0_ce007c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4603,7 +5914,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_rn_0_min_0_ce000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4619,7 +5935,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_rn_1_poweroftwo_0_ce000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4635,7 +5956,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_rn_30_poweroftwominusone_0_ce0003c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4651,7 +5977,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_rn_31_max_0_ce0003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4667,7 +5998,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_rd_0_min_0_ce000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4683,7 +6019,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_rd_1_poweroftwo_0_ce000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4699,7 +6040,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_rd_30_poweroftwominusone_0_ce00001
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4715,7 +6061,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_field_rd_31_max_0_ce00001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4731,7 +6082,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_0_0_ce000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4747,7 +6103,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_1_0_ce010000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4763,7 +6124,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_2_0_ce1e0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4779,7 +6145,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_3_0_ce1f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4795,7 +6166,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_4_0_ce000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4811,7 +6187,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_5_0_ce000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4827,7 +6208,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_6_0_ce007800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4843,7 +6229,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_7_0_ce007c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4859,7 +6250,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_8_0_ce000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4875,7 +6271,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_9_0_ce000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4891,7 +6292,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_10_0_ce0003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4907,7 +6313,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_11_0_ce0003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4923,7 +6334,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_12_0_ce000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4939,7 +6355,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_13_0_ce000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4955,7 +6376,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_14_0_ce00001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4971,7 +6397,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_15_0_ce00001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -4987,7 +6418,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_16_0_ce010400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -5003,7 +6439,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_17_0_ce1f7c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -5019,7 +6460,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_18_0_ce010020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -5035,7 +6481,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_19_0_ce1f03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -5051,7 +6502,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_20_0_ce010001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -5067,7 +6523,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_21_0_ce1f001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -5083,7 +6544,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_22_0_ce000420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -5099,7 +6565,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_23_0_ce007fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -5115,7 +6586,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_24_0_ce000401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -5131,7 +6607,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_25_0_ce007c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -5147,7 +6628,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_26_0_ce000021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -5163,7 +6649,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_27_0_ce0003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -5171,7 +6662,8 @@ fn test_aarch64_vector_crypto_sha3_eor3_combo_27_0_ce0003ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha3_eor3_special_rn_31_stack_pointer_sp_may_require_alignment_0_ce0003e0() {
+fn test_aarch64_vector_crypto_sha3_eor3_special_rn_31_stack_pointer_sp_may_require_alignment_0_ce0003e0()
+ {
     // Encoding: 0xCE0003E0
     // Test aarch64_vector_crypto_sha3_eor3 special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Rn=31, Rm=0, Ra=0
@@ -5179,7 +6671,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_special_rn_31_stack_pointer_sp_may_requi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -5187,7 +6684,8 @@ fn test_aarch64_vector_crypto_sha3_eor3_special_rn_31_stack_pointer_sp_may_requi
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha3_eor3_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_ce00001f() {
+fn test_aarch64_vector_crypto_sha3_eor3_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_ce00001f()
+ {
     // Encoding: 0xCE00001F
     // Test aarch64_vector_crypto_sha3_eor3 special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Ra=0, Rd=31, Rn=0, Rm=0
@@ -5195,7 +6693,12 @@ fn test_aarch64_vector_crypto_sha3_eor3_special_rd_31_zero_register_xzr_wzr_read
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_eor3
@@ -5261,7 +6764,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_field_rm_0_min_4000_5e004000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5277,7 +6785,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_field_rm_1_poweroftwo_4000_5e01
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5293,7 +6806,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_field_rm_30_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5309,7 +6827,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_field_rm_31_max_4000_5e1f4000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5325,7 +6848,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_field_p_0_min_4000_5e004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5341,7 +6869,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_field_p_1_max_4000_5e005000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5357,7 +6890,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_field_rn_0_min_4000_5e004000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5373,7 +6911,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_field_rn_1_poweroftwo_4000_5e00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5389,7 +6932,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_field_rn_30_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5405,7 +6953,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_field_rn_31_max_4000_5e0043e0()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5421,7 +6974,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_field_rd_0_min_4000_5e004000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5437,7 +6995,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_field_rd_1_poweroftwo_4000_5e00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5453,7 +7016,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_field_rd_30_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5469,7 +7037,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_field_rd_31_max_4000_5e00401f()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5485,7 +7058,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_0_4000_5e004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5501,7 +7079,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_1_4000_5e014000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5517,7 +7100,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_2_4000_5e1e4000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5533,7 +7121,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_3_4000_5e1f4000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5549,7 +7142,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_4_4000_5e004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5565,7 +7163,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_5_4000_5e005000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5581,7 +7184,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_6_4000_5e004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5597,7 +7205,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_7_4000_5e004020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5613,7 +7226,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_8_4000_5e0043c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5629,7 +7247,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_9_4000_5e0043e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5645,7 +7268,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_10_4000_5e004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5661,7 +7289,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_11_4000_5e004001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5677,7 +7310,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_12_4000_5e00401e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5693,7 +7331,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_13_4000_5e00401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5709,7 +7352,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_14_4000_5e014020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5725,7 +7373,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_15_4000_5e1f43e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5741,7 +7394,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_16_4000_5e014001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5757,7 +7415,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_17_4000_5e1f401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5773,7 +7436,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_18_4000_5e004021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5789,7 +7457,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_19_4000_5e0043ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5797,7 +7470,8 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_combo_19_4000_5e0043ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha256_hash_special_rn_31_stack_pointer_sp_may_require_alignment_16384_5e0043e0() {
+fn test_aarch64_vector_crypto_sha3op_sha256_hash_special_rn_31_stack_pointer_sp_may_require_alignment_16384_5e0043e0()
+ {
     // Encoding: 0x5E0043E0
     // Test aarch64_vector_crypto_sha3op_sha256_hash special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: P=0, Rm=0, Rd=0, Rn=31
@@ -5805,7 +7479,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_special_rn_31_stack_pointer_sp_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5813,7 +7492,8 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_special_rn_31_stack_pointer_sp_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha256_hash_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_16384_5e00401f() {
+fn test_aarch64_vector_crypto_sha3op_sha256_hash_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_16384_5e00401f()
+ {
     // Encoding: 0x5E00401F
     // Test aarch64_vector_crypto_sha3op_sha256_hash special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, Rm=0, P=0, Rd=31
@@ -5821,7 +7501,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_hash_special_rd_31_zero_register_xzr
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_hash
@@ -5887,7 +7572,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_field_rm_0_min_8800_ce608800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -5903,7 +7593,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_field_rm_1_poweroftwo_8800_ce6188
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -5919,7 +7614,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_field_rm_30_poweroftwominusone_88
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -5935,7 +7635,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_field_rm_31_max_8800_ce7f8800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -5951,7 +7656,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_field_rn_0_min_8800_ce608800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -5967,7 +7677,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_field_rn_1_poweroftwo_8800_ce6088
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -5983,7 +7698,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_field_rn_30_poweroftwominusone_88
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -5999,7 +7719,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_field_rn_31_max_8800_ce608be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6015,7 +7740,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_field_rd_0_min_8800_ce608800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6031,7 +7761,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_field_rd_1_poweroftwo_8800_ce6088
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6047,7 +7782,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_field_rd_30_poweroftwominusone_88
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6063,7 +7803,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_field_rd_31_max_8800_ce60881f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6079,7 +7824,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_0_8800_ce608800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6095,7 +7845,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_1_8800_ce618800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6111,7 +7866,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_2_8800_ce7e8800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6127,7 +7887,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_3_8800_ce7f8800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6143,7 +7908,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_4_8800_ce608800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6159,7 +7929,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_5_8800_ce608820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6175,7 +7950,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_6_8800_ce608bc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6191,7 +7971,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_7_8800_ce608be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6207,7 +7992,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_8_8800_ce608800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6223,7 +8013,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_9_8800_ce608801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6239,7 +8034,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_10_8800_ce60881e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6255,7 +8055,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_11_8800_ce60881f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6271,7 +8076,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_12_8800_ce618820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6287,7 +8097,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_13_8800_ce7f8be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6303,7 +8118,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_14_8800_ce618801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6319,7 +8139,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_15_8800_ce7f881f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6335,7 +8160,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_16_8800_ce608821() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6351,7 +8181,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_17_8800_ce608bff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6359,7 +8194,8 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_combo_17_8800_ce608bff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha512_sha512su1_special_rn_31_stack_pointer_sp_may_require_alignment_34816_ce608be0() {
+fn test_aarch64_vector_crypto_sha512_sha512su1_special_rn_31_stack_pointer_sp_may_require_alignment_34816_ce608be0()
+ {
     // Encoding: 0xCE608BE0
     // Test aarch64_vector_crypto_sha512_sha512su1 special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rm=0, Rn=31, Rd=0
@@ -6367,7 +8203,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_special_rn_31_stack_pointer_sp_ma
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6375,7 +8216,8 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_special_rn_31_stack_pointer_sp_ma
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha512_sha512su1_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_34816_ce60881f() {
+fn test_aarch64_vector_crypto_sha512_sha512su1_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_34816_ce60881f()
+ {
     // Encoding: 0xCE60881F
     // Test aarch64_vector_crypto_sha512_sha512su1 special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, Rn=0, Rm=0
@@ -6383,7 +8225,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su1_special_rd_31_zero_register_xzr_w
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su1
@@ -6449,7 +8296,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_field_rm_0_min_6000_5e006000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6465,7 +8317,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_field_rm_1_poweroftwo_6000_5e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6481,7 +8338,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_field_rm_30_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6497,7 +8359,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_field_rm_31_max_6000_5e1f6000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6513,7 +8380,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_field_rn_0_min_6000_5e006000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6529,7 +8401,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_field_rn_1_poweroftwo_6000_5e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6545,7 +8422,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_field_rn_30_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6561,7 +8443,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_field_rn_31_max_6000_5e0063e0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6577,7 +8464,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_field_rd_0_min_6000_5e006000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6593,7 +8485,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_field_rd_1_poweroftwo_6000_5e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6609,7 +8506,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_field_rd_30_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6625,7 +8527,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_field_rd_31_max_6000_5e00601f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6641,7 +8548,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_0_6000_5e006000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6657,7 +8569,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_1_6000_5e016000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6673,7 +8590,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_2_6000_5e1e6000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6689,7 +8611,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_3_6000_5e1f6000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6705,7 +8632,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_4_6000_5e006000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6721,7 +8653,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_5_6000_5e006020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6737,7 +8674,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_6_6000_5e0063c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6753,7 +8695,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_7_6000_5e0063e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6769,7 +8716,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_8_6000_5e006000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6785,7 +8737,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_9_6000_5e006001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6801,7 +8758,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_10_6000_5e00601e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6817,7 +8779,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_11_6000_5e00601f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6833,7 +8800,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_12_6000_5e016020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6849,7 +8821,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_13_6000_5e1f63e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6865,7 +8842,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_14_6000_5e016001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6881,7 +8863,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_15_6000_5e1f601f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6897,7 +8884,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_16_6000_5e006021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6913,7 +8905,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_17_6000_5e0063ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6921,7 +8918,8 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_combo_17_6000_5e0063ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha256_sched1_special_rn_31_stack_pointer_sp_may_require_alignment_24576_5e0063e0() {
+fn test_aarch64_vector_crypto_sha3op_sha256_sched1_special_rn_31_stack_pointer_sp_may_require_alignment_24576_5e0063e0()
+ {
     // Encoding: 0x5E0063E0
     // Test aarch64_vector_crypto_sha3op_sha256_sched1 special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rm=0, Rn=31, Rd=0
@@ -6929,7 +8927,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_special_rn_31_stack_pointer_s
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -6937,7 +8940,8 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_special_rn_31_stack_pointer_s
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha256_sched1_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_24576_5e00601f() {
+fn test_aarch64_vector_crypto_sha3op_sha256_sched1_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_24576_5e00601f()
+ {
     // Encoding: 0x5E00601F
     // Test aarch64_vector_crypto_sha3op_sha256_sched1 special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, Rm=0, Rn=0
@@ -6945,7 +8949,12 @@ fn test_aarch64_vector_crypto_sha3op_sha256_sched1_special_rd_31_zero_register_x
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha256_sched1
@@ -7011,7 +9020,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_field_rm_0_min_8800_ce408800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7027,7 +9041,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_field_rm_1_poweroftwo_8800_ce418800() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7043,7 +9062,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_field_rm_30_poweroftwominusone_8800_ce
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7059,7 +9083,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_field_rm_31_max_8800_ce5f8800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7075,7 +9104,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_field_imm2_0_zero_8800_ce408800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7091,7 +9125,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_field_imm2_1_poweroftwo_8800_ce409800(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7107,7 +9146,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_field_imm2_3_max_8800_ce40b800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7123,7 +9167,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_field_rn_0_min_8800_ce408800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7139,7 +9188,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_field_rn_1_poweroftwo_8800_ce408820() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7155,7 +9209,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_field_rn_30_poweroftwominusone_8800_ce
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7171,7 +9230,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_field_rn_31_max_8800_ce408be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7187,7 +9251,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_field_rd_0_min_8800_ce408800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7203,7 +9272,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_field_rd_1_poweroftwo_8800_ce408801() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7219,7 +9293,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_field_rd_30_poweroftwominusone_8800_ce
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7235,7 +9314,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_field_rd_31_max_8800_ce40881f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7251,7 +9335,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_0_8800_ce408800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7267,7 +9356,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_1_8800_ce418800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7283,7 +9377,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_2_8800_ce5e8800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7299,7 +9398,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_3_8800_ce5f8800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7315,7 +9419,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_4_8800_ce408800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7331,7 +9440,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_5_8800_ce409800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7347,7 +9461,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_6_8800_ce40b800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7363,7 +9482,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_7_8800_ce408800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7379,7 +9503,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_8_8800_ce408820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7395,7 +9524,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_9_8800_ce408bc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7411,7 +9545,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_10_8800_ce408be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7427,7 +9566,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_11_8800_ce408800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7443,7 +9587,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_12_8800_ce408801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7459,7 +9608,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_13_8800_ce40881e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7475,7 +9629,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_14_8800_ce40881f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7491,7 +9650,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_15_8800_ce418820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7507,7 +9671,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_16_8800_ce5f8be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7523,7 +9692,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_17_8800_ce418801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7539,7 +9713,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_18_8800_ce5f881f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7555,7 +9734,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_19_8800_ce408821() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7571,7 +9755,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_20_8800_ce408bff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7579,7 +9768,8 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_combo_20_8800_ce408bff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sm3_sm3tt2a_special_rn_31_stack_pointer_sp_may_require_alignment_34816_ce409be0() {
+fn test_aarch64_vector_crypto_sm3_sm3tt2a_special_rn_31_stack_pointer_sp_may_require_alignment_34816_ce409be0()
+ {
     // Encoding: 0xCE409BE0
     // Test aarch64_vector_crypto_sm3_sm3tt2a special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Rm=0, Rn=31, imm2=1
@@ -7587,7 +9777,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_special_rn_31_stack_pointer_sp_may_req
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7595,7 +9790,8 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sm3_sm3tt2a_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_34816_ce40981f() {
+fn test_aarch64_vector_crypto_sm3_sm3tt2a_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_34816_ce40981f()
+ {
     // Encoding: 0xCE40981F
     // Test aarch64_vector_crypto_sm3_sm3tt2a special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, imm2=1, Rm=0, Rd=31
@@ -7603,7 +9799,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt2a_special_rd_31_zero_register_xzr_wzr_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt2a
@@ -7669,7 +9870,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_field_rm_0_min_c000_ce60c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7685,7 +9891,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_field_rm_1_poweroftwo_c000_ce61c000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7701,7 +9912,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_field_rm_30_poweroftwominusone_c000_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7717,7 +9933,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_field_rm_31_max_c000_ce7fc000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7733,7 +9954,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_field_rn_0_min_c000_ce60c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7749,7 +9975,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_field_rn_1_poweroftwo_c000_ce60c020(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7765,7 +9996,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_field_rn_30_poweroftwominusone_c000_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7781,7 +10017,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_field_rn_31_max_c000_ce60c3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7797,7 +10038,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_field_rd_0_min_c000_ce60c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7813,7 +10059,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_field_rd_1_poweroftwo_c000_ce60c001(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7829,7 +10080,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_field_rd_30_poweroftwominusone_c000_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7845,7 +10101,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_field_rd_31_max_c000_ce60c01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7861,7 +10122,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_0_c000_ce60c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7877,7 +10143,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_1_c000_ce61c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7893,7 +10164,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_2_c000_ce7ec000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7909,7 +10185,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_3_c000_ce7fc000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7925,7 +10206,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_4_c000_ce60c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7941,7 +10227,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_5_c000_ce60c020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7957,7 +10248,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_6_c000_ce60c3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7973,7 +10269,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_7_c000_ce60c3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -7989,7 +10290,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_8_c000_ce60c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -8005,7 +10311,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_9_c000_ce60c001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -8021,7 +10332,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_10_c000_ce60c01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -8037,7 +10353,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_11_c000_ce60c01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -8053,7 +10374,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_12_c000_ce61c020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -8069,7 +10395,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_13_c000_ce7fc3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -8085,7 +10416,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_14_c000_ce61c001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -8101,7 +10437,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_15_c000_ce7fc01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -8117,7 +10458,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_16_c000_ce60c021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -8133,7 +10479,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_17_c000_ce60c3ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -8141,7 +10492,8 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_combo_17_c000_ce60c3ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sm3_sm3partw1_special_rn_31_stack_pointer_sp_may_require_alignment_49152_ce60c3e0() {
+fn test_aarch64_vector_crypto_sm3_sm3partw1_special_rn_31_stack_pointer_sp_may_require_alignment_49152_ce60c3e0()
+ {
     // Encoding: 0xCE60C3E0
     // Test aarch64_vector_crypto_sm3_sm3partw1 special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rn=31, Rm=0, Rd=0
@@ -8149,7 +10501,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_special_rn_31_stack_pointer_sp_may_r
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -8157,7 +10514,8 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_special_rn_31_stack_pointer_sp_may_r
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sm3_sm3partw1_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_49152_ce60c01f() {
+fn test_aarch64_vector_crypto_sm3_sm3partw1_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_49152_ce60c01f()
+ {
     // Encoding: 0xCE60C01F
     // Test aarch64_vector_crypto_sm3_sm3partw1 special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rm=0, Rn=0, Rd=31
@@ -8165,7 +10523,12 @@ fn test_aarch64_vector_crypto_sm3_sm3partw1_special_rd_31_zero_register_xzr_wzr_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3partw1
@@ -8231,7 +10594,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_field_rm_0_min_8000_ce608000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8247,7 +10615,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_field_rm_1_poweroftwo_8000_ce618000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8263,7 +10636,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_field_rm_30_poweroftwominusone_8000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8279,7 +10657,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_field_rm_31_max_8000_ce7f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8295,7 +10678,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_field_rn_0_min_8000_ce608000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8311,7 +10699,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_field_rn_1_poweroftwo_8000_ce608020
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8327,7 +10720,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_field_rn_30_poweroftwominusone_8000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8343,7 +10741,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_field_rn_31_max_8000_ce6083e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8359,7 +10762,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_field_rd_0_min_8000_ce608000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8375,7 +10783,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_field_rd_1_poweroftwo_8000_ce608001
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8391,7 +10804,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_field_rd_30_poweroftwominusone_8000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8407,7 +10825,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_field_rd_31_max_8000_ce60801f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8423,7 +10846,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_0_8000_ce608000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8439,7 +10867,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_1_8000_ce618000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8455,7 +10888,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_2_8000_ce7e8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8471,7 +10909,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_3_8000_ce7f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8487,7 +10930,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_4_8000_ce608000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8503,7 +10951,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_5_8000_ce608020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8519,7 +10972,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_6_8000_ce6083c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8535,7 +10993,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_7_8000_ce6083e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8551,7 +11014,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_8_8000_ce608000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8567,7 +11035,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_9_8000_ce608001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8583,7 +11056,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_10_8000_ce60801e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8599,7 +11077,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_11_8000_ce60801f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8615,7 +11098,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_12_8000_ce618020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8631,7 +11119,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_13_8000_ce7f83e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8647,7 +11140,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_14_8000_ce618001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8663,7 +11161,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_15_8000_ce7f801f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8679,7 +11182,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_16_8000_ce608021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8695,7 +11203,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_17_8000_ce6083ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8703,7 +11216,8 @@ fn test_aarch64_vector_crypto_sha512_sha512h_combo_17_8000_ce6083ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha512_sha512h_special_rn_31_stack_pointer_sp_may_require_alignment_32768_ce6083e0() {
+fn test_aarch64_vector_crypto_sha512_sha512h_special_rn_31_stack_pointer_sp_may_require_alignment_32768_ce6083e0()
+ {
     // Encoding: 0xCE6083E0
     // Test aarch64_vector_crypto_sha512_sha512h special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Rm=0, Rn=31
@@ -8711,7 +11225,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_special_rn_31_stack_pointer_sp_may_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8719,7 +11238,8 @@ fn test_aarch64_vector_crypto_sha512_sha512h_special_rn_31_stack_pointer_sp_may_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha512_sha512h_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_32768_ce60801f() {
+fn test_aarch64_vector_crypto_sha512_sha512h_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_32768_ce60801f()
+ {
     // Encoding: 0xCE60801F
     // Test aarch64_vector_crypto_sha512_sha512h special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rm=0, Rn=0, Rd=31
@@ -8727,7 +11247,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h_special_rd_31_zero_register_xzr_wzr
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h
@@ -8793,7 +11318,12 @@ fn test_aarch64_vector_crypto_aes_mix_field_d_0_min_6800_4e286800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -8809,7 +11339,12 @@ fn test_aarch64_vector_crypto_aes_mix_field_d_1_max_6800_4e287800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -8825,7 +11360,12 @@ fn test_aarch64_vector_crypto_aes_mix_field_rn_0_min_6800_4e286800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -8841,7 +11381,12 @@ fn test_aarch64_vector_crypto_aes_mix_field_rn_1_poweroftwo_6800_4e286820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -8857,7 +11402,12 @@ fn test_aarch64_vector_crypto_aes_mix_field_rn_30_poweroftwominusone_6800_4e286b
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -8873,7 +11423,12 @@ fn test_aarch64_vector_crypto_aes_mix_field_rn_31_max_6800_4e286be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -8889,7 +11444,12 @@ fn test_aarch64_vector_crypto_aes_mix_field_rd_0_min_6800_4e286800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -8905,7 +11465,12 @@ fn test_aarch64_vector_crypto_aes_mix_field_rd_1_poweroftwo_6800_4e286801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -8921,7 +11486,12 @@ fn test_aarch64_vector_crypto_aes_mix_field_rd_30_poweroftwominusone_6800_4e2868
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -8937,7 +11507,12 @@ fn test_aarch64_vector_crypto_aes_mix_field_rd_31_max_6800_4e28681f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -8953,7 +11528,12 @@ fn test_aarch64_vector_crypto_aes_mix_combo_0_6800_4e286800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -8969,7 +11549,12 @@ fn test_aarch64_vector_crypto_aes_mix_combo_1_6800_4e287800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -8985,7 +11570,12 @@ fn test_aarch64_vector_crypto_aes_mix_combo_2_6800_4e286800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -9001,7 +11591,12 @@ fn test_aarch64_vector_crypto_aes_mix_combo_3_6800_4e286820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -9017,7 +11612,12 @@ fn test_aarch64_vector_crypto_aes_mix_combo_4_6800_4e286bc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -9033,7 +11633,12 @@ fn test_aarch64_vector_crypto_aes_mix_combo_5_6800_4e286be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -9049,7 +11654,12 @@ fn test_aarch64_vector_crypto_aes_mix_combo_6_6800_4e286800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -9065,7 +11675,12 @@ fn test_aarch64_vector_crypto_aes_mix_combo_7_6800_4e286801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -9081,7 +11696,12 @@ fn test_aarch64_vector_crypto_aes_mix_combo_8_6800_4e28681e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -9097,7 +11717,12 @@ fn test_aarch64_vector_crypto_aes_mix_combo_9_6800_4e28681f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -9113,7 +11738,12 @@ fn test_aarch64_vector_crypto_aes_mix_combo_10_6800_4e286821() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -9129,7 +11759,12 @@ fn test_aarch64_vector_crypto_aes_mix_combo_11_6800_4e286bff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -9137,7 +11772,8 @@ fn test_aarch64_vector_crypto_aes_mix_combo_11_6800_4e286bff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_aes_mix_special_rn_31_stack_pointer_sp_may_require_alignment_26624_4e286be0() {
+fn test_aarch64_vector_crypto_aes_mix_special_rn_31_stack_pointer_sp_may_require_alignment_26624_4e286be0()
+ {
     // Encoding: 0x4E286BE0
     // Test aarch64_vector_crypto_aes_mix special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rn=31, Rd=0, D=0
@@ -9145,7 +11781,12 @@ fn test_aarch64_vector_crypto_aes_mix_special_rn_31_stack_pointer_sp_may_require
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -9153,7 +11794,8 @@ fn test_aarch64_vector_crypto_aes_mix_special_rn_31_stack_pointer_sp_may_require
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_aes_mix_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_26624_4e28681f() {
+fn test_aarch64_vector_crypto_aes_mix_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_26624_4e28681f()
+ {
     // Encoding: 0x4E28681F
     // Test aarch64_vector_crypto_aes_mix special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: D=0, Rn=0, Rd=31
@@ -9161,7 +11803,12 @@ fn test_aarch64_vector_crypto_aes_mix_special_rd_31_zero_register_xzr_wzr_reads_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_aes_mix
@@ -9227,7 +11874,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_rm_0_min_0_ce200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9243,7 +11895,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_rm_1_poweroftwo_0_ce210000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9259,7 +11916,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_rm_30_poweroftwominusone_0_ce3e000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9275,7 +11937,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_rm_31_max_0_ce3f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9291,7 +11958,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_ra_0_min_0_ce200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9307,7 +11979,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_ra_1_poweroftwo_0_ce200400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9323,7 +12000,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_ra_30_poweroftwominusone_0_ce20780
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9339,7 +12021,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_ra_31_max_0_ce207c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9355,7 +12042,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_rn_0_min_0_ce200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9371,7 +12063,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_rn_1_poweroftwo_0_ce200020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9387,7 +12084,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_rn_30_poweroftwominusone_0_ce2003c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9403,7 +12105,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_rn_31_max_0_ce2003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9419,7 +12126,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_rd_0_min_0_ce200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9435,7 +12147,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_rd_1_poweroftwo_0_ce200001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9451,7 +12168,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_rd_30_poweroftwominusone_0_ce20001
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9467,7 +12189,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_field_rd_31_max_0_ce20001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9483,7 +12210,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_0_0_ce200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9499,7 +12231,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_1_0_ce210000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9515,7 +12252,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_2_0_ce3e0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9531,7 +12273,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_3_0_ce3f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9547,7 +12294,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_4_0_ce200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9563,7 +12315,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_5_0_ce200400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9579,7 +12336,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_6_0_ce207800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9595,7 +12357,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_7_0_ce207c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9611,7 +12378,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_8_0_ce200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9627,7 +12399,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_9_0_ce200020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9643,7 +12420,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_10_0_ce2003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9659,7 +12441,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_11_0_ce2003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9675,7 +12462,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_12_0_ce200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9691,7 +12483,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_13_0_ce200001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9707,7 +12504,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_14_0_ce20001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9723,7 +12525,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_15_0_ce20001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9739,7 +12546,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_16_0_ce210400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9755,7 +12567,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_17_0_ce3f7c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9771,7 +12588,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_18_0_ce210020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9787,7 +12609,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_19_0_ce3f03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9803,7 +12630,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_20_0_ce210001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9819,7 +12651,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_21_0_ce3f001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9835,7 +12672,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_22_0_ce200420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9851,7 +12693,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_23_0_ce207fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9867,7 +12714,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_24_0_ce200401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9883,7 +12735,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_25_0_ce207c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9899,7 +12756,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_26_0_ce200021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9915,7 +12777,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_27_0_ce2003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9923,7 +12790,8 @@ fn test_aarch64_vector_crypto_sha3_bcax_combo_27_0_ce2003ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha3_bcax_special_rn_31_stack_pointer_sp_may_require_alignment_0_ce2003e0() {
+fn test_aarch64_vector_crypto_sha3_bcax_special_rn_31_stack_pointer_sp_may_require_alignment_0_ce2003e0()
+ {
     // Encoding: 0xCE2003E0
     // Test aarch64_vector_crypto_sha3_bcax special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rm=0, Rn=31, Rd=0, Ra=0
@@ -9931,7 +12799,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_special_rn_31_stack_pointer_sp_may_requi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -9939,7 +12812,8 @@ fn test_aarch64_vector_crypto_sha3_bcax_special_rn_31_stack_pointer_sp_may_requi
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha3_bcax_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_ce20001f() {
+fn test_aarch64_vector_crypto_sha3_bcax_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_ce20001f()
+ {
     // Encoding: 0xCE20001F
     // Test aarch64_vector_crypto_sha3_bcax special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, Rn=0, Rm=0, Ra=0
@@ -9947,7 +12821,12 @@ fn test_aarch64_vector_crypto_sha3_bcax_special_rd_31_zero_register_xzr_wzr_read
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_bcax
@@ -10013,7 +12892,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_rm_0_min_0_ce800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10029,7 +12913,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_rm_1_poweroftwo_0_ce810000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10045,7 +12934,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_rm_30_poweroftwominusone_0_ce9e0000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10061,7 +12955,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_rm_31_max_0_ce9f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10077,7 +12976,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_imm6_0_zero_0_ce800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10093,7 +12997,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_imm6_1_poweroftwo_0_ce800400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10109,7 +13018,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_imm6_3_poweroftwominusone_0_ce800c0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10125,7 +13039,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_imm6_4_poweroftwo_0_ce801000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10141,7 +13060,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_imm6_7_poweroftwominusone_0_ce801c0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10157,7 +13081,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_imm6_8_poweroftwo_0_ce802000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10173,7 +13102,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_imm6_15_poweroftwominusone_0_ce803c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10189,7 +13123,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_imm6_16_poweroftwo_0_ce804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10205,7 +13144,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_imm6_31_poweroftwominusone_0_ce807c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10221,7 +13165,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_imm6_32_poweroftwo_0_ce808000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10237,7 +13186,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_imm6_63_max_0_ce80fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10253,7 +13207,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_rn_0_min_0_ce800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10269,7 +13228,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_rn_1_poweroftwo_0_ce800020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10285,7 +13249,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_rn_30_poweroftwominusone_0_ce8003c0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10301,7 +13270,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_rn_31_max_0_ce8003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10317,7 +13291,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_rd_0_min_0_ce800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10333,7 +13312,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_rd_1_poweroftwo_0_ce800001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10349,7 +13333,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_rd_30_poweroftwominusone_0_ce80001e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10365,7 +13354,12 @@ fn test_aarch64_vector_crypto_sha3_xar_field_rd_31_max_0_ce80001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10381,7 +13375,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_0_0_ce800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10397,7 +13396,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_1_0_ce810000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10413,7 +13417,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_2_0_ce9e0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10429,7 +13438,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_3_0_ce9f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10445,7 +13459,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_4_0_ce800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10461,7 +13480,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_5_0_ce800400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10477,7 +13501,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_6_0_ce800c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10493,7 +13522,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_7_0_ce801000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10509,7 +13543,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_8_0_ce801c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10525,7 +13564,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_9_0_ce802000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10541,7 +13585,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_10_0_ce803c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10557,7 +13606,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_11_0_ce804000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10573,7 +13627,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_12_0_ce807c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10589,7 +13648,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_13_0_ce808000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10605,7 +13669,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_14_0_ce80fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10621,7 +13690,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_15_0_ce800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10637,7 +13711,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_16_0_ce800020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10653,7 +13732,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_17_0_ce8003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10669,7 +13753,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_18_0_ce8003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10685,7 +13774,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_19_0_ce800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10701,7 +13795,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_20_0_ce800001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10717,7 +13816,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_21_0_ce80001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10733,7 +13837,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_22_0_ce80001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10749,7 +13858,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_23_0_ce810020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10765,7 +13879,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_24_0_ce9f03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10781,7 +13900,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_25_0_ce810001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10797,7 +13921,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_26_0_ce9f001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10813,7 +13942,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_27_0_ce800021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10829,7 +13963,12 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_28_0_ce8003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10837,7 +13976,8 @@ fn test_aarch64_vector_crypto_sha3_xar_combo_28_0_ce8003ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha3_xar_special_rn_31_stack_pointer_sp_may_require_alignment_0_ce8007e0() {
+fn test_aarch64_vector_crypto_sha3_xar_special_rn_31_stack_pointer_sp_may_require_alignment_0_ce8007e0()
+ {
     // Encoding: 0xCE8007E0
     // Test aarch64_vector_crypto_sha3_xar special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Rn=31, Rm=0, imm6=1
@@ -10845,7 +13985,12 @@ fn test_aarch64_vector_crypto_sha3_xar_special_rn_31_stack_pointer_sp_may_requir
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10853,7 +13998,8 @@ fn test_aarch64_vector_crypto_sha3_xar_special_rn_31_stack_pointer_sp_may_requir
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha3_xar_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_ce80041f() {
+fn test_aarch64_vector_crypto_sha3_xar_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_ce80041f()
+ {
     // Encoding: 0xCE80041F
     // Test aarch64_vector_crypto_sha3_xar special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: imm6=1, Rd=31, Rm=0, Rn=0
@@ -10861,7 +14007,12 @@ fn test_aarch64_vector_crypto_sha3_xar_special_rd_31_zero_register_xzr_wzr_reads
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3_xar
@@ -10927,7 +14078,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_field_rm_0_min_8000_ce408000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -10943,7 +14099,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_field_rm_1_poweroftwo_8000_ce418000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -10959,7 +14120,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_field_rm_30_poweroftwominusone_8000_ce
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -10975,7 +14141,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_field_rm_31_max_8000_ce5f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -10991,7 +14162,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_field_imm2_0_zero_8000_ce408000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11007,7 +14183,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_field_imm2_1_poweroftwo_8000_ce409000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11023,7 +14204,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_field_imm2_3_max_8000_ce40b000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11039,7 +14225,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_field_rn_0_min_8000_ce408000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11055,7 +14246,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_field_rn_1_poweroftwo_8000_ce408020() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11071,7 +14267,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_field_rn_30_poweroftwominusone_8000_ce
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11087,7 +14288,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_field_rn_31_max_8000_ce4083e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11103,7 +14309,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_field_rd_0_min_8000_ce408000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11119,7 +14330,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_field_rd_1_poweroftwo_8000_ce408001() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11135,7 +14351,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_field_rd_30_poweroftwominusone_8000_ce
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11151,7 +14372,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_field_rd_31_max_8000_ce40801f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11167,7 +14393,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_0_8000_ce408000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11183,7 +14414,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_1_8000_ce418000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11199,7 +14435,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_2_8000_ce5e8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11215,7 +14456,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_3_8000_ce5f8000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11231,7 +14477,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_4_8000_ce408000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11247,7 +14498,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_5_8000_ce409000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11263,7 +14519,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_6_8000_ce40b000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11279,7 +14540,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_7_8000_ce408000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11295,7 +14561,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_8_8000_ce408020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11311,7 +14582,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_9_8000_ce4083c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11327,7 +14603,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_10_8000_ce4083e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11343,7 +14624,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_11_8000_ce408000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11359,7 +14645,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_12_8000_ce408001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11375,7 +14666,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_13_8000_ce40801e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11391,7 +14687,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_14_8000_ce40801f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11407,7 +14708,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_15_8000_ce418020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11423,7 +14729,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_16_8000_ce5f83e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11439,7 +14750,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_17_8000_ce418001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11455,7 +14771,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_18_8000_ce5f801f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11471,7 +14792,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_19_8000_ce408021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11487,7 +14813,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_20_8000_ce4083ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11495,7 +14826,8 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_combo_20_8000_ce4083ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sm3_sm3tt1a_special_rn_31_stack_pointer_sp_may_require_alignment_32768_ce4093e0() {
+fn test_aarch64_vector_crypto_sm3_sm3tt1a_special_rn_31_stack_pointer_sp_may_require_alignment_32768_ce4093e0()
+ {
     // Encoding: 0xCE4093E0
     // Test aarch64_vector_crypto_sm3_sm3tt1a special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rn=31, imm2=1, Rm=0, Rd=0
@@ -11503,7 +14835,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_special_rn_31_stack_pointer_sp_may_req
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11511,7 +14848,8 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sm3_sm3tt1a_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_32768_ce40901f() {
+fn test_aarch64_vector_crypto_sm3_sm3tt1a_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_32768_ce40901f()
+ {
     // Encoding: 0xCE40901F
     // Test aarch64_vector_crypto_sm3_sm3tt1a special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rm=0, Rn=0, Rd=31, imm2=1
@@ -11519,7 +14857,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1a_special_rd_31_zero_register_xzr_wzr_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1a
@@ -11585,7 +14928,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_field_rm_0_min_3000_5e003000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11601,7 +14949,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_field_rm_1_poweroftwo_3000_5e01
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11617,7 +14970,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_field_rm_30_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11633,7 +14991,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_field_rm_31_max_3000_5e1f3000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11649,7 +15012,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_field_rn_0_min_3000_5e003000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11665,7 +15033,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_field_rn_1_poweroftwo_3000_5e00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11681,7 +15054,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_field_rn_30_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11697,7 +15075,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_field_rn_31_max_3000_5e0033e0()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11713,7 +15096,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_field_rd_0_min_3000_5e003000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11729,7 +15117,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_field_rd_1_poweroftwo_3000_5e00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11745,7 +15138,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_field_rd_30_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11761,7 +15159,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_field_rd_31_max_3000_5e00301f()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11777,7 +15180,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_0_3000_5e003000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11793,7 +15201,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_1_3000_5e013000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11809,7 +15222,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_2_3000_5e1e3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11825,7 +15243,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_3_3000_5e1f3000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11841,7 +15264,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_4_3000_5e003000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11857,7 +15285,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_5_3000_5e003020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11873,7 +15306,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_6_3000_5e0033c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11889,7 +15327,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_7_3000_5e0033e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11905,7 +15348,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_8_3000_5e003000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11921,7 +15369,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_9_3000_5e003001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11937,7 +15390,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_10_3000_5e00301e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11953,7 +15411,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_11_3000_5e00301f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11969,7 +15432,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_12_3000_5e013020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -11985,7 +15453,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_13_3000_5e1f33e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -12001,7 +15474,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_14_3000_5e013001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -12017,7 +15495,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_15_3000_5e1f301f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -12033,7 +15516,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_16_3000_5e003021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -12049,7 +15537,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_17_3000_5e0033ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -12057,7 +15550,8 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_combo_17_3000_5e0033ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha1_sched0_special_rn_31_stack_pointer_sp_may_require_alignment_12288_5e0033e0() {
+fn test_aarch64_vector_crypto_sha3op_sha1_sched0_special_rn_31_stack_pointer_sp_may_require_alignment_12288_5e0033e0()
+ {
     // Encoding: 0x5E0033E0
     // Test aarch64_vector_crypto_sha3op_sha1_sched0 special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rm=0, Rd=0, Rn=31
@@ -12065,7 +15559,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_special_rn_31_stack_pointer_sp_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -12073,7 +15572,8 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_special_rn_31_stack_pointer_sp_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha1_sched0_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_12288_5e00301f() {
+fn test_aarch64_vector_crypto_sha3op_sha1_sched0_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_12288_5e00301f()
+ {
     // Encoding: 0x5E00301F
     // Test aarch64_vector_crypto_sha3op_sha1_sched0 special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, Rn=0, Rm=0
@@ -12081,7 +15581,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_sched0_special_rd_31_zero_register_xzr
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_sched0
@@ -12147,7 +15652,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_rm_0_min_0_ce400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12163,7 +15673,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_rm_1_poweroftwo_0_ce410000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12179,7 +15694,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_rm_30_poweroftwominusone_0_ce5e00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12195,7 +15715,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_rm_31_max_0_ce5f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12211,7 +15736,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_ra_0_min_0_ce400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12227,7 +15757,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_ra_1_poweroftwo_0_ce400400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12243,7 +15778,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_ra_30_poweroftwominusone_0_ce4078
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12259,7 +15799,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_ra_31_max_0_ce407c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12275,7 +15820,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_rn_0_min_0_ce400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12291,7 +15841,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_rn_1_poweroftwo_0_ce400020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12307,7 +15862,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_rn_30_poweroftwominusone_0_ce4003
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12323,7 +15883,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_rn_31_max_0_ce4003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12339,7 +15904,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_rd_0_min_0_ce400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12355,7 +15925,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_rd_1_poweroftwo_0_ce400001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12371,7 +15946,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_rd_30_poweroftwominusone_0_ce4000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12387,7 +15967,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_field_rd_31_max_0_ce40001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12403,7 +15988,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_0_0_ce400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12419,7 +16009,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_1_0_ce410000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12435,7 +16030,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_2_0_ce5e0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12451,7 +16051,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_3_0_ce5f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12467,7 +16072,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_4_0_ce400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12483,7 +16093,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_5_0_ce400400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12499,7 +16114,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_6_0_ce407800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12515,7 +16135,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_7_0_ce407c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12531,7 +16156,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_8_0_ce400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12547,7 +16177,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_9_0_ce400020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12563,7 +16198,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_10_0_ce4003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12579,7 +16219,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_11_0_ce4003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12595,7 +16240,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_12_0_ce400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12611,7 +16261,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_13_0_ce400001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12627,7 +16282,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_14_0_ce40001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12643,7 +16303,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_15_0_ce40001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12659,7 +16324,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_16_0_ce410400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12675,7 +16345,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_17_0_ce5f7c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12691,7 +16366,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_18_0_ce410020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12707,7 +16387,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_19_0_ce5f03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12723,7 +16408,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_20_0_ce410001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12739,7 +16429,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_21_0_ce5f001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12755,7 +16450,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_22_0_ce400420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12771,7 +16471,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_23_0_ce407fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12787,7 +16492,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_24_0_ce400401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12803,7 +16513,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_25_0_ce407c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12819,7 +16534,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_26_0_ce400021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12835,7 +16555,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_27_0_ce4003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12843,7 +16568,8 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_combo_27_0_ce4003ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sm3_sm3ss1_special_rn_31_stack_pointer_sp_may_require_alignment_0_ce4003e0() {
+fn test_aarch64_vector_crypto_sm3_sm3ss1_special_rn_31_stack_pointer_sp_may_require_alignment_0_ce4003e0()
+ {
     // Encoding: 0xCE4003E0
     // Test aarch64_vector_crypto_sm3_sm3ss1 special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Ra=0, Rn=31, Rm=0
@@ -12851,7 +16577,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_special_rn_31_stack_pointer_sp_may_requ
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12859,7 +16590,8 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_special_rn_31_stack_pointer_sp_may_requ
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sm3_sm3ss1_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_ce40001f() {
+fn test_aarch64_vector_crypto_sm3_sm3ss1_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_ce40001f()
+ {
     // Encoding: 0xCE40001F
     // Test aarch64_vector_crypto_sm3_sm3ss1 special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Ra=0, Rd=31, Rm=0, Rn=0
@@ -12867,7 +16599,12 @@ fn test_aarch64_vector_crypto_sm3_sm3ss1_special_rd_31_zero_register_xzr_wzr_rea
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3ss1
@@ -12933,7 +16670,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_field_rm_0_min_8400_ce408400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -12949,7 +16691,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_field_rm_1_poweroftwo_8400_ce418400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -12965,7 +16712,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_field_rm_30_poweroftwominusone_8400_ce
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -12981,7 +16733,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_field_rm_31_max_8400_ce5f8400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -12997,7 +16754,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_field_imm2_0_zero_8400_ce408400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13013,7 +16775,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_field_imm2_1_poweroftwo_8400_ce409400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13029,7 +16796,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_field_imm2_3_max_8400_ce40b400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13045,7 +16817,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_field_rn_0_min_8400_ce408400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13061,7 +16838,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_field_rn_1_poweroftwo_8400_ce408420() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13077,7 +16859,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_field_rn_30_poweroftwominusone_8400_ce
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13093,7 +16880,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_field_rn_31_max_8400_ce4087e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13109,7 +16901,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_field_rd_0_min_8400_ce408400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13125,7 +16922,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_field_rd_1_poweroftwo_8400_ce408401() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13141,7 +16943,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_field_rd_30_poweroftwominusone_8400_ce
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13157,7 +16964,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_field_rd_31_max_8400_ce40841f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13173,7 +16985,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_0_8400_ce408400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13189,7 +17006,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_1_8400_ce418400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13205,7 +17027,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_2_8400_ce5e8400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13221,7 +17048,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_3_8400_ce5f8400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13237,7 +17069,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_4_8400_ce408400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13253,7 +17090,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_5_8400_ce409400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13269,7 +17111,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_6_8400_ce40b400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13285,7 +17132,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_7_8400_ce408400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13301,7 +17153,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_8_8400_ce408420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13317,7 +17174,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_9_8400_ce4087c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13333,7 +17195,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_10_8400_ce4087e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13349,7 +17216,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_11_8400_ce408400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13365,7 +17237,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_12_8400_ce408401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13381,7 +17258,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_13_8400_ce40841e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13397,7 +17279,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_14_8400_ce40841f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13413,7 +17300,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_15_8400_ce418420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13429,7 +17321,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_16_8400_ce5f87e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13445,7 +17342,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_17_8400_ce418401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13461,7 +17363,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_18_8400_ce5f841f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13477,7 +17384,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_19_8400_ce408421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13493,7 +17405,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_20_8400_ce4087ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13501,7 +17418,8 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_combo_20_8400_ce4087ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sm3_sm3tt1b_special_rn_31_stack_pointer_sp_may_require_alignment_33792_ce4097e0() {
+fn test_aarch64_vector_crypto_sm3_sm3tt1b_special_rn_31_stack_pointer_sp_may_require_alignment_33792_ce4097e0()
+ {
     // Encoding: 0xCE4097E0
     // Test aarch64_vector_crypto_sm3_sm3tt1b special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rm=0, Rn=31, imm2=1, Rd=0
@@ -13509,7 +17427,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_special_rn_31_stack_pointer_sp_may_req
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13517,7 +17440,8 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sm3_sm3tt1b_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_ce40941f() {
+fn test_aarch64_vector_crypto_sm3_sm3tt1b_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_ce40941f()
+ {
     // Encoding: 0xCE40941F
     // Test aarch64_vector_crypto_sm3_sm3tt1b special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rm=0, Rn=0, imm2=1, Rd=31
@@ -13525,7 +17449,12 @@ fn test_aarch64_vector_crypto_sm3_sm3tt1b_special_rd_31_zero_register_xzr_wzr_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sm3_sm3tt1b
@@ -13591,7 +17520,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_field_rn_0_min_2800_5e282800(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13607,7 +17541,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_field_rn_1_poweroftwo_2800_5e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13623,7 +17562,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_field_rn_30_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13639,7 +17583,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_field_rn_31_max_2800_5e282be0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13655,7 +17604,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_field_rd_0_min_2800_5e282800(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13671,7 +17625,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_field_rd_1_poweroftwo_2800_5e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13687,7 +17646,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_field_rd_30_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13703,7 +17667,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_field_rd_31_max_2800_5e28281f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13719,7 +17688,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_combo_0_2800_5e282800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13735,7 +17709,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_combo_1_2800_5e282820() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13751,7 +17730,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_combo_2_2800_5e282bc0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13767,7 +17751,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_combo_3_2800_5e282be0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13783,7 +17772,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_combo_4_2800_5e282800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13799,7 +17793,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_combo_5_2800_5e282801() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13815,7 +17814,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_combo_6_2800_5e28281e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13831,7 +17835,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_combo_7_2800_5e28281f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13847,7 +17856,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_combo_8_2800_5e282821() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13863,7 +17877,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_combo_9_2800_5e282bff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13871,7 +17890,8 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_combo_9_2800_5e282bff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha2op_sha256_sched0_special_rn_31_stack_pointer_sp_may_require_alignment_10240_5e282be0() {
+fn test_aarch64_vector_crypto_sha2op_sha256_sched0_special_rn_31_stack_pointer_sp_may_require_alignment_10240_5e282be0()
+ {
     // Encoding: 0x5E282BE0
     // Test aarch64_vector_crypto_sha2op_sha256_sched0 special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Rn=31
@@ -13879,7 +17899,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_special_rn_31_stack_pointer_s
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13887,7 +17912,8 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_special_rn_31_stack_pointer_s
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha2op_sha256_sched0_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_10240_5e28281f() {
+fn test_aarch64_vector_crypto_sha2op_sha256_sched0_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_10240_5e28281f()
+ {
     // Encoding: 0x5E28281F
     // Test aarch64_vector_crypto_sha2op_sha256_sched0 special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, Rd=31
@@ -13895,7 +17921,12 @@ fn test_aarch64_vector_crypto_sha2op_sha256_sched0_special_rd_31_zero_register_x
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha2op_sha256_sched0
@@ -13961,7 +17992,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_field_rm_0_min_8400_ce608400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -13977,7 +18013,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_field_rm_1_poweroftwo_8400_ce61840
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -13993,7 +18034,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_field_rm_30_poweroftwominusone_840
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14009,7 +18055,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_field_rm_31_max_8400_ce7f8400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14025,7 +18076,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_field_rn_0_min_8400_ce608400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14041,7 +18097,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_field_rn_1_poweroftwo_8400_ce60842
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14057,7 +18118,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_field_rn_30_poweroftwominusone_840
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14073,7 +18139,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_field_rn_31_max_8400_ce6087e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14089,7 +18160,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_field_rd_0_min_8400_ce608400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14105,7 +18181,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_field_rd_1_poweroftwo_8400_ce60840
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14121,7 +18202,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_field_rd_30_poweroftwominusone_840
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14137,7 +18223,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_field_rd_31_max_8400_ce60841f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14153,7 +18244,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_0_8400_ce608400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14169,7 +18265,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_1_8400_ce618400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14185,7 +18286,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_2_8400_ce7e8400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14201,7 +18307,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_3_8400_ce7f8400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14217,7 +18328,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_4_8400_ce608400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14233,7 +18349,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_5_8400_ce608420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14249,7 +18370,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_6_8400_ce6087c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14265,7 +18391,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_7_8400_ce6087e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14281,7 +18412,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_8_8400_ce608400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14297,7 +18433,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_9_8400_ce608401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14313,7 +18454,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_10_8400_ce60841e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14329,7 +18475,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_11_8400_ce60841f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14345,7 +18496,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_12_8400_ce618420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14361,7 +18517,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_13_8400_ce7f87e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14377,7 +18538,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_14_8400_ce618401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14393,7 +18559,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_15_8400_ce7f841f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14409,7 +18580,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_16_8400_ce608421() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14425,7 +18601,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_17_8400_ce6087ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14433,7 +18614,8 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_combo_17_8400_ce6087ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha512_sha512h2_special_rn_31_stack_pointer_sp_may_require_alignment_33792_ce6087e0() {
+fn test_aarch64_vector_crypto_sha512_sha512h2_special_rn_31_stack_pointer_sp_may_require_alignment_33792_ce6087e0()
+ {
     // Encoding: 0xCE6087E0
     // Test aarch64_vector_crypto_sha512_sha512h2 special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rm=0, Rd=0, Rn=31
@@ -14441,7 +18623,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_special_rn_31_stack_pointer_sp_may
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14449,7 +18636,8 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_special_rn_31_stack_pointer_sp_may
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha512_sha512h2_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_ce60841f() {
+fn test_aarch64_vector_crypto_sha512_sha512h2_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_ce60841f()
+ {
     // Encoding: 0xCE60841F
     // Test aarch64_vector_crypto_sha512_sha512h2 special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rm=0, Rn=0, Rd=31
@@ -14457,7 +18645,12 @@ fn test_aarch64_vector_crypto_sha512_sha512h2_special_rd_31_zero_register_xzr_wz
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512h2
@@ -14523,7 +18716,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rm_0_min_1000_5e0010
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14539,7 +18737,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rm_1_poweroftwo_1000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14547,7 +18750,8 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rm_1_poweroftwo_1000
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rm_30_poweroftwominusone_1000_5e1e1000() {
+fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rm_30_poweroftwominusone_1000_5e1e1000()
+{
     // Encoding: 0x5E1E1000
     // Test aarch64_vector_crypto_sha3op_sha1_hash_parity field Rm = 30 (PowerOfTwoMinusOne)
     // Fields: Rn=0, Rd=0, Rm=30
@@ -14555,7 +18759,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rm_30_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14571,7 +18780,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rm_31_max_1000_5e1f1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14587,7 +18801,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rn_0_min_1000_5e0010
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14603,7 +18822,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rn_1_poweroftwo_1000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14611,7 +18835,8 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rn_1_poweroftwo_1000
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rn_30_poweroftwominusone_1000_5e0013c0() {
+fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rn_30_poweroftwominusone_1000_5e0013c0()
+{
     // Encoding: 0x5E0013C0
     // Test aarch64_vector_crypto_sha3op_sha1_hash_parity field Rn = 30 (PowerOfTwoMinusOne)
     // Fields: Rn=30, Rm=0, Rd=0
@@ -14619,7 +18844,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rn_30_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14635,7 +18865,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rn_31_max_1000_5e001
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14651,7 +18886,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rd_0_min_1000_5e0010
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14667,7 +18907,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rd_1_poweroftwo_1000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14675,7 +18920,8 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rd_1_poweroftwo_1000
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rd_30_poweroftwominusone_1000_5e00101e() {
+fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rd_30_poweroftwominusone_1000_5e00101e()
+{
     // Encoding: 0x5E00101E
     // Test aarch64_vector_crypto_sha3op_sha1_hash_parity field Rd = 30 (PowerOfTwoMinusOne)
     // Fields: Rn=0, Rm=0, Rd=30
@@ -14683,7 +18929,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rd_30_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14699,7 +18950,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_field_rd_31_max_1000_5e001
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14715,7 +18971,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_0_1000_5e001000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14731,7 +18992,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_1_1000_5e011000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14747,7 +19013,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_2_1000_5e1e1000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14763,7 +19034,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_3_1000_5e1f1000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14779,7 +19055,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_4_1000_5e001000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14795,7 +19076,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_5_1000_5e001020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14811,7 +19097,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_6_1000_5e0013c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14827,7 +19118,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_7_1000_5e0013e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14843,7 +19139,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_8_1000_5e001000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14859,7 +19160,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_9_1000_5e001001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14875,7 +19181,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_10_1000_5e00101e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14891,7 +19202,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_11_1000_5e00101f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14907,7 +19223,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_12_1000_5e011020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14923,7 +19244,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_13_1000_5e1f13e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14939,7 +19265,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_14_1000_5e011001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14955,7 +19286,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_15_1000_5e1f101f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14971,7 +19307,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_16_1000_5e001021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14987,7 +19328,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_17_1000_5e0013ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -14995,7 +19341,8 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_combo_17_1000_5e0013ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_special_rn_31_stack_pointer_sp_may_require_alignment_4096_5e0013e0() {
+fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_special_rn_31_stack_pointer_sp_may_require_alignment_4096_5e0013e0()
+ {
     // Encoding: 0x5E0013E0
     // Test aarch64_vector_crypto_sha3op_sha1_hash_parity special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Rm=0, Rn=31
@@ -15003,7 +19350,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_special_rn_31_stack_pointe
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -15011,7 +19363,8 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_special_rn_31_stack_pointe
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_4096_5e00101f() {
+fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_4096_5e00101f()
+ {
     // Encoding: 0x5E00101F
     // Test aarch64_vector_crypto_sha3op_sha1_hash_parity special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rm=0, Rn=0, Rd=31
@@ -15019,7 +19372,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_parity_special_rd_31_zero_registe
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_parity
@@ -15085,7 +19443,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_field_rn_0_min_8000_cec08000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15101,7 +19464,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_field_rn_1_poweroftwo_8000_cec080
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15117,7 +19485,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_field_rn_30_poweroftwominusone_80
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15133,7 +19506,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_field_rn_31_max_8000_cec083e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15149,7 +19527,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_field_rd_0_min_8000_cec08000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15165,7 +19548,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_field_rd_1_poweroftwo_8000_cec080
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15181,7 +19569,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_field_rd_30_poweroftwominusone_80
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15197,7 +19590,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_field_rd_31_max_8000_cec0801f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15213,7 +19611,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_combo_0_8000_cec08000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15229,7 +19632,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_combo_1_8000_cec08020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15245,7 +19653,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_combo_2_8000_cec083c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15261,7 +19674,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_combo_3_8000_cec083e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15277,7 +19695,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_combo_4_8000_cec08000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15293,7 +19716,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_combo_5_8000_cec08001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15309,7 +19737,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_combo_6_8000_cec0801e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15325,7 +19758,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_combo_7_8000_cec0801f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15341,7 +19779,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_combo_8_8000_cec08021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15357,7 +19800,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_combo_9_8000_cec083ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15365,7 +19813,8 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_combo_9_8000_cec083ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha512_sha512su0_special_rn_31_stack_pointer_sp_may_require_alignment_32768_cec083e0() {
+fn test_aarch64_vector_crypto_sha512_sha512su0_special_rn_31_stack_pointer_sp_may_require_alignment_32768_cec083e0()
+ {
     // Encoding: 0xCEC083E0
     // Test aarch64_vector_crypto_sha512_sha512su0 special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Rn=31
@@ -15373,7 +19822,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_special_rn_31_stack_pointer_sp_ma
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15381,7 +19835,8 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_special_rn_31_stack_pointer_sp_ma
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha512_sha512su0_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_32768_cec0801f() {
+fn test_aarch64_vector_crypto_sha512_sha512su0_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_32768_cec0801f()
+ {
     // Encoding: 0xCEC0801F
     // Test aarch64_vector_crypto_sha512_sha512su0 special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, Rn=0
@@ -15389,7 +19844,12 @@ fn test_aarch64_vector_crypto_sha512_sha512su0_special_rd_31_zero_register_xzr_w
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha512_sha512su0
@@ -15455,7 +19915,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_field_rm_0_min_0_5e000000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15471,7 +19936,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_field_rm_1_poweroftwo_0_5e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15487,7 +19957,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_field_rm_30_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15503,7 +19978,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_field_rm_31_max_0_5e1f0000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15519,7 +19999,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_field_rn_0_min_0_5e000000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15535,7 +20020,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_field_rn_1_poweroftwo_0_5e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15551,7 +20041,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_field_rn_30_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15567,7 +20062,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_field_rn_31_max_0_5e0003e0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15583,7 +20083,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_field_rd_0_min_0_5e000000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15599,7 +20104,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_field_rd_1_poweroftwo_0_5e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15615,7 +20125,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_field_rd_30_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15631,7 +20146,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_field_rd_31_max_0_5e00001f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15647,7 +20167,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_0_0_5e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15663,7 +20188,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_1_0_5e010000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15679,7 +20209,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_2_0_5e1e0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15695,7 +20230,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_3_0_5e1f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15711,7 +20251,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_4_0_5e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15727,7 +20272,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_5_0_5e000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15743,7 +20293,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_6_0_5e0003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15759,7 +20314,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_7_0_5e0003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15775,7 +20335,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_8_0_5e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15791,7 +20356,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_9_0_5e000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15807,7 +20377,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_10_0_5e00001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15823,7 +20398,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_11_0_5e00001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15839,7 +20419,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_12_0_5e010020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15855,7 +20440,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_13_0_5e1f03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15871,7 +20461,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_14_0_5e010001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15887,7 +20482,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_15_0_5e1f001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15903,7 +20503,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_16_0_5e000021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15919,7 +20524,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_17_0_5e0003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15927,7 +20537,8 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_combo_17_0_5e0003ff() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_special_rn_31_stack_pointer_sp_may_require_alignment_0_5e0003e0() {
+fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_special_rn_31_stack_pointer_sp_may_require_alignment_0_5e0003e0()
+ {
     // Encoding: 0x5E0003E0
     // Test aarch64_vector_crypto_sha3op_sha1_hash_choose special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rm=0, Rd=0, Rn=31
@@ -15935,7 +20546,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_special_rn_31_stack_pointe
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15943,7 +20559,8 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_special_rn_31_stack_pointe
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_5e00001f() {
+fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_5e00001f()
+ {
     // Encoding: 0x5E00001F
     // Test aarch64_vector_crypto_sha3op_sha1_hash_choose special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, Rm=0, Rd=31
@@ -15951,7 +20568,12 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_special_rd_31_zero_registe
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_vector_crypto_sha3op_sha1_hash_choose
@@ -15999,4 +20621,3 @@ fn test_aarch64_vector_crypto_sha3op_sha1_hash_choose_zr_rd_5e00001f() {
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
     assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
 }
-

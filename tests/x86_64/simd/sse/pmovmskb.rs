@@ -557,7 +557,12 @@ fn kat_pmovmskb_value() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     set_xmm(&mem, &mut vcpu, 0, 0x8001FF00807FFF0180010204080F1011);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0xaa80, "PMOVMSKB got {:#x}", regs.rax & 0xFFFF);
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0xaa80,
+        "PMOVMSKB got {:#x}",
+        regs.rax & 0xFFFF
+    );
 }
 
 #[test]

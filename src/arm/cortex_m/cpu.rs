@@ -21,7 +21,7 @@ use crate::arm::memory::{ArmMemory, FlatMemory, MemoryError, StandardMemory};
 use crate::arm::vfp::VfpState;
 
 use super::nvic::Nvic;
-use super::scb::{cfsr, hfsr, CortexMVariant, Scb};
+use super::scb::{CortexMVariant, Scb, cfsr, hfsr};
 use super::systick::SysTick;
 
 /// Exception frame size in bytes.
@@ -1406,8 +1406,8 @@ impl CortexMCpu {
     fn exec_unconditional_branch(&mut self, insn: u16) -> Result<CpuExit, ArmError> {
         let imm11 = (insn & 0x7FF) as i32;
         let offset = ((imm11 << 21) >> 20) as i32; // Sign extend and shift left 1
-                                                   // In ARM, PC during execution = current_instruction + 4
-                                                   // We've already advanced PC by 2, so add 2 more for ARM PC
+        // In ARM, PC during execution = current_instruction + 4
+        // We've already advanced PC by 2, so add 2 more for ARM PC
         self.pc = ((self.pc + 2) as i32).wrapping_add(offset) as u32;
         Ok(CpuExit::Continue)
     }
@@ -1945,7 +1945,7 @@ impl CortexMCpu {
                         return Err(ArmError::Unimplemented(format!(
                             "VFP64 op {:04b} {:04b} {:02b}",
                             opc1, opc2, opc3
-                        )))
+                        )));
                     }
                 };
 
@@ -1982,7 +1982,7 @@ impl CortexMCpu {
                         return Err(ArmError::Unimplemented(format!(
                             "VFP32 op {:04b} {:04b} {:02b}",
                             opc1, opc2, opc3
-                        )))
+                        )));
                     }
                 };
 
@@ -3068,11 +3068,7 @@ impl ArmCpu for CortexMCpu {
     }
 
     fn current_el(&self) -> u8 {
-        if self.thread_mode {
-            0
-        } else {
-            1
-        }
+        if self.thread_mode { 0 } else { 1 }
     }
 
     fn read_memory(&self, addr: u64, size: usize) -> Result<Vec<u8>, ArmError> {

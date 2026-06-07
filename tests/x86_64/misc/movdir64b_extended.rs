@@ -1,5 +1,7 @@
 // Module path for tests run via x86_64.rs
-use crate::common::{run_until_hlt, setup_vm, setup_vm_no_idt, read_mem_at_u64, write_mem_at_u64, DATA_ADDR};
+use crate::common::{
+    DATA_ADDR, read_mem_at_u64, run_until_hlt, setup_vm, setup_vm_no_idt, write_mem_at_u64,
+};
 use rax::cpu::{Registers, VCpu, VcpuExit};
 
 // MOVDIR64B - Move 64 Bytes as Direct Store
@@ -59,7 +61,10 @@ fn test_movdir64b_aligned_addresses() {
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..8 {
-        assert_eq!(read_mem_at_u64(&mem, 0x4000 + i * 8), 0xAAAAAAAAAAAAAAAA + i as u64);
+        assert_eq!(
+            read_mem_at_u64(&mem, 0x4000 + i * 8),
+            0xAAAAAAAAAAAAAAAA + i as u64
+        );
     }
 }
 
@@ -166,8 +171,8 @@ fn test_movdir64b_no_flags_modified() {
 fn test_movdir64b_sequential_operations() {
     // Multiple sequential MOVDIR64B operations
     let code = [
-        0x66, 0x0f, 0x38, 0xf8, 0x03,       // MOVDIR64B rax, [rbx]
-        0x66, 0x0f, 0x38, 0xf8, 0x0a,       // MOVDIR64B rcx, [rdx]
+        0x66, 0x0f, 0x38, 0xf8, 0x03, // MOVDIR64B rax, [rbx]
+        0x66, 0x0f, 0x38, 0xf8, 0x0a, // MOVDIR64B rcx, [rdx]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -187,8 +192,14 @@ fn test_movdir64b_sequential_operations() {
 
     // Verify both blocks were copied correctly
     for i in 0..8 {
-        assert_eq!(read_mem_at_u64(&mem, 0x3000 + i * 8), 0xAAAAAAAAAAAAAAAA + i as u64);
-        assert_eq!(read_mem_at_u64(&mem, 0x4000 + i * 8), 0xBBBBBBBBBBBBBBBB + i as u64);
+        assert_eq!(
+            read_mem_at_u64(&mem, 0x3000 + i * 8),
+            0xAAAAAAAAAAAAAAAA + i as u64
+        );
+        assert_eq!(
+            read_mem_at_u64(&mem, 0x4000 + i * 8),
+            0xBBBBBBBBBBBBBBBB + i as u64
+        );
     }
 }
 
@@ -316,7 +327,10 @@ fn test_movdir64b_with_r8() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..8 {
-        assert_eq!(read_mem_at_u64(&mem, 0x5000 + i * 8), 0x8888888888888888 + i as u64);
+        assert_eq!(
+            read_mem_at_u64(&mem, 0x5000 + i * 8),
+            0x8888888888888888 + i as u64
+        );
     }
     assert_eq!(regs.r8, 0x5000);
 }
@@ -340,7 +354,10 @@ fn test_movdir64b_increment_pattern() {
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..8 {
-        assert_eq!(read_mem_at_u64(&mem, 0x3000 + i * 8), i as u64 * 0x0101010101010101);
+        assert_eq!(
+            read_mem_at_u64(&mem, 0x3000 + i * 8),
+            i as u64 * 0x0101010101010101
+        );
     }
 }
 
@@ -374,10 +391,10 @@ fn test_movdir64b_high_memory() {
 fn test_movdir64b_loop_simulation() {
     // Simulate copying multiple cache lines in a loop
     let code = [
-        0x66, 0x0f, 0x38, 0xf8, 0x03,       // MOVDIR64B rax, [rbx]
-        0x48, 0x83, 0xc0, 0x40,             // ADD rax, 0x40
-        0x48, 0x83, 0xc3, 0x40,             // ADD rbx, 0x40
-        0x66, 0x0f, 0x38, 0xf8, 0x03,       // MOVDIR64B rax, [rbx]
+        0x66, 0x0f, 0x38, 0xf8, 0x03, // MOVDIR64B rax, [rbx]
+        0x48, 0x83, 0xc0, 0x40, // ADD rax, 0x40
+        0x48, 0x83, 0xc3, 0x40, // ADD rbx, 0x40
+        0x66, 0x0f, 0x38, 0xf8, 0x03, // MOVDIR64B rax, [rbx]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -525,7 +542,10 @@ fn test_movdir64b_unique_values() {
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..8 {
-        assert_eq!(read_mem_at_u64(&mem, 0x3000 + i * 8), unique_values[i as usize]);
+        assert_eq!(
+            read_mem_at_u64(&mem, 0x3000 + i * 8),
+            unique_values[i as usize]
+        );
     }
 }
 
@@ -550,7 +570,10 @@ fn test_movdir64b_sib_addressing() {
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..8 {
-        assert_eq!(read_mem_at_u64(&mem, 0x3000 + i * 8), 0x9999999999999999 + i as u64);
+        assert_eq!(
+            read_mem_at_u64(&mem, 0x3000 + i * 8),
+            0x9999999999999999 + i as u64
+        );
     }
 }
 
@@ -622,9 +645,7 @@ fn test_movdir64b_sequential_bytes() {
 #[test]
 fn test_movdir64b_prime_numbers() {
     // Use prime numbers as test data
-    let primes = [
-        2u64, 3, 5, 7, 11, 13, 17, 19,
-    ];
+    let primes = [2u64, 3, 5, 7, 11, 13, 17, 19];
 
     let code = [
         0x66, 0x0f, 0x38, 0xf8, 0x03, // MOVDIR64B rax, [rbx]
@@ -636,7 +657,11 @@ fn test_movdir64b_prime_numbers() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
 
     for i in 0..8 {
-        write_mem_at_u64(&mem, 0x2000 + i * 8, primes[i as usize] * 0x0101010101010101);
+        write_mem_at_u64(
+            &mem,
+            0x2000 + i * 8,
+            primes[i as usize] * 0x0101010101010101,
+        );
     }
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
@@ -691,7 +716,10 @@ fn test_movdir64b_negative_values() {
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..8 {
-        assert_eq!(read_mem_at_u64(&mem, 0x3000 + i * 8), 0x8000000000000000 + i as u64);
+        assert_eq!(
+            read_mem_at_u64(&mem, 0x3000 + i * 8),
+            0x8000000000000000 + i as u64
+        );
     }
 }
 

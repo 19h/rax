@@ -1,5 +1,5 @@
 // Module path for tests run via x86_64.rs
-use crate::common::{run_until_hlt, setup_vm, cf_set};
+use crate::common::{cf_set, run_until_hlt, setup_vm};
 use rax::cpu::Registers;
 
 // RDSEED - Read Random SEED
@@ -186,8 +186,8 @@ fn test_rdseed_64bit_preserves_other_registers() {
 fn test_rdseed_retry_pattern() {
     // Simulate retry pattern on failure (RDSEED may fail more often than RDRAND)
     let code = [
-        0x0f, 0xc7, 0xf8,       // RDSEED EAX
-        0x73, 0xfb,             // JNC retry (if CF=0)
+        0x0f, 0xc7, 0xf8, // RDSEED EAX
+        0x73, 0xfb, // JNC retry (if CF=0)
         0xf4,
     ];
     let (mut vcpu, _mem) = setup_vm(&code, None);
@@ -217,7 +217,7 @@ fn test_rdseed_seeding_rdrand() {
     // Use RDSEED to seed RDRAND-based PRNG
     let code = [
         0x48, 0x0f, 0xc7, 0xf8, // RDSEED RAX (get entropy)
-        0x48, 0x89, 0xc3,       // MOV RBX, RAX (save seed)
+        0x48, 0x89, 0xc3, // MOV RBX, RAX (save seed)
         0xf4,
     ];
     let (mut vcpu, _mem) = setup_vm(&code, None);
@@ -256,9 +256,9 @@ fn test_rdseed_32bit_with_extended_regs() {
 fn test_rdseed_clears_other_flags() {
     // RDSEED should clear OF, SF, ZF, AF, PF (CF is set on success)
     let code = [
-        0xf9,                   // STC
-        0xfd,                   // STD
-        0x0f, 0xc7, 0xf8,       // RDSEED EAX
+        0xf9, // STC
+        0xfd, // STD
+        0x0f, 0xc7, 0xf8, // RDSEED EAX
         0xf4,
     ];
     let (mut vcpu, _mem) = setup_vm(&code, None);
@@ -271,9 +271,9 @@ fn test_rdseed_clears_other_flags() {
 fn test_rdseed_interleaved_with_operations() {
     // RDSEED interleaved with other operations
     let code = [
-        0x0f, 0xc7, 0xf8,                   // RDSEED EAX
+        0x0f, 0xc7, 0xf8, // RDSEED EAX
         0x48, 0xc7, 0xc3, 0x42, 0x00, 0x00, 0x00, // MOV RBX, 0x42
-        0x0f, 0xc7, 0xf9,                   // RDSEED ECX
+        0x0f, 0xc7, 0xf9, // RDSEED ECX
         0x48, 0xc7, 0xc2, 0x84, 0x00, 0x00, 0x00, // MOV RDX, 0x84
         0xf4,
     ];
@@ -289,7 +289,7 @@ fn test_rdseed_interleaved_with_operations() {
 fn test_rdseed_save_to_memory_pattern() {
     // Pattern: RDSEED and save to memory
     let code = [
-        0x48, 0x0f, 0xc7, 0xf8,             // RDSEED RAX
+        0x48, 0x0f, 0xc7, 0xf8, // RDSEED RAX
         0x48, 0x89, 0x05, 0x00, 0x20, 0x00, 0x00, // MOV [0x2000], RAX
         0xf4,
     ];
@@ -383,7 +383,7 @@ fn test_rdseed_32bit_upper_bits_zeroed() {
     // RDSEED 32-bit should zero upper 32 bits in 64-bit mode
     let code = [
         0x48, 0xb8, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
-        0x0f, 0xc7, 0xf8,       // RDSEED EAX
+        0x0f, 0xc7, 0xf8, // RDSEED EAX
         0xf4,
     ];
     let (mut vcpu, _mem) = setup_vm(&code, None);
@@ -397,11 +397,11 @@ fn test_rdseed_32bit_upper_bits_zeroed() {
 fn test_rdseed_conditional_branch_pattern() {
     // Pattern using RDSEED with conditional branch
     let code = [
-        0x0f, 0xc7, 0xf8,       // RDSEED EAX
-        0x72, 0x04,             // JC success (if CF=1)
+        0x0f, 0xc7, 0xf8, // RDSEED EAX
+        0x72, 0x04, // JC success (if CF=1)
         // failure path:
-        0x31, 0xc0,             // XOR EAX, EAX
-        0xeb, 0x00,             // JMP end
+        0x31, 0xc0, // XOR EAX, EAX
+        0xeb, 0x00, // JMP end
         // success path:
         // end:
         0xf4,
@@ -433,8 +433,8 @@ fn test_rdseed_master_key_generation() {
 fn test_rdseed_initialization_vector() {
     // Generate initialization vector (IV) for encryption
     let code = [
-        0x48, 0x0f, 0xc7, 0xf8,             // RDSEED RAX
-        0x48, 0x0f, 0xc7, 0xf9,             // RDSEED RCX
+        0x48, 0x0f, 0xc7, 0xf8, // RDSEED RAX
+        0x48, 0x0f, 0xc7, 0xf9, // RDSEED RCX
         0xf4,
     ];
     let (mut vcpu, _mem) = setup_vm(&code, None);
@@ -447,7 +447,7 @@ fn test_rdseed_initialization_vector() {
 fn test_rdseed_salt_generation() {
     // Generate cryptographic salt
     let code = [
-        0x48, 0x0f, 0xc7, 0xf8,             // RDSEED RAX (salt)
+        0x48, 0x0f, 0xc7, 0xf8, // RDSEED RAX (salt)
         0x48, 0x89, 0x05, 0x00, 0x20, 0x00, 0x00, // MOV [0x2000], RAX
         0xf4,
     ];
@@ -461,7 +461,7 @@ fn test_rdseed_salt_generation() {
 fn test_rdseed_nonce_generation() {
     // Generate unique nonce
     let code = [
-        0x48, 0x0f, 0xc7, 0xf8,             // RDSEED RAX
+        0x48, 0x0f, 0xc7, 0xf8, // RDSEED RAX
         0x48, 0x89, 0x05, 0x00, 0x20, 0x00, 0x00, // MOV [0x2000], RAX
         0xf4,
     ];
@@ -489,7 +489,7 @@ fn test_rdseed_session_key() {
 fn test_rdseed_challenge_response() {
     // Generate challenge for challenge-response protocol
     let code = [
-        0x48, 0x0f, 0xc7, 0xf8,             // RDSEED RAX (challenge)
+        0x48, 0x0f, 0xc7, 0xf8, // RDSEED RAX (challenge)
         0xf4,
     ];
     let (mut vcpu, _mem) = setup_vm(&code, None);
@@ -503,9 +503,9 @@ fn test_rdseed_entropy_pool_seeding() {
     // Seed entropy pool with multiple RDSEED calls
     let code = [
         0x48, 0x0f, 0xc7, 0xf8, // RDSEED RAX
-        0x48, 0x33, 0xc3,       // XOR RAX, RBX
+        0x48, 0x33, 0xc3, // XOR RAX, RBX
         0x48, 0x0f, 0xc7, 0xfb, // RDSEED RBX
-        0x48, 0x33, 0xd8,       // XOR RBX, RAX
+        0x48, 0x33, 0xd8, // XOR RBX, RAX
         0x48, 0x0f, 0xc7, 0xf9, // RDSEED RCX
         0xf4,
     ];
@@ -547,10 +547,10 @@ fn test_rdseed_uuid_generation() {
 fn test_rdseed_fortuna_style_seeding() {
     // Fortuna-style PRNG seeding
     let code = [
-        0x48, 0x0f, 0xc7, 0xf8,             // RDSEED RAX (entropy)
-        0x48, 0x89, 0xc3,                   // MOV RBX, RAX
-        0x48, 0x0f, 0xc7, 0xf8,             // RDSEED RAX (more entropy)
-        0x48, 0x31, 0xc3,                   // XOR RBX, RAX (mix)
+        0x48, 0x0f, 0xc7, 0xf8, // RDSEED RAX (entropy)
+        0x48, 0x89, 0xc3, // MOV RBX, RAX
+        0x48, 0x0f, 0xc7, 0xf8, // RDSEED RAX (more entropy)
+        0x48, 0x31, 0xc3, // XOR RBX, RAX (mix)
         0xf4,
     ];
     let (mut vcpu, _mem) = setup_vm(&code, None);
@@ -593,10 +593,10 @@ fn test_rdseed_batch_generation() {
 fn test_rdseed_reseed_counter() {
     // Using RDSEED for PRNG reseed counter
     let code = [
-        0x48, 0x0f, 0xc7, 0xf8,             // RDSEED RAX
-        0x9c,                               // PUSHFQ
-        0x5b,                               // POP RBX (save CF before SHR)
-        0x48, 0xc1, 0xe8, 0x20,             // SHR RAX, 32 (use upper 32 bits)
+        0x48, 0x0f, 0xc7, 0xf8, // RDSEED RAX
+        0x9c, // PUSHFQ
+        0x5b, // POP RBX (save CF before SHR)
+        0x48, 0xc1, 0xe8, 0x20, // SHR RAX, 32 (use upper 32 bits)
         0xf4,
     ];
     let (mut vcpu, _mem) = setup_vm(&code, None);
@@ -611,7 +611,7 @@ fn test_rdseed_key_derivation_seed() {
     let code = [
         0x48, 0x0f, 0xc7, 0xf8, // RDSEED RAX (KDF seed)
         0x48, 0x0f, 0xc7, 0xf9, // RDSEED RCX (additional entropy)
-        0x48, 0x31, 0xc8,       // XOR RAX, RCX (combine)
+        0x48, 0x31, 0xc8, // XOR RAX, RCX (combine)
         0xf4,
     ];
     let (mut vcpu, _mem) = setup_vm(&code, None);

@@ -28,7 +28,7 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
-use rax::riscv::decode::{decode, decode_compressed, Op};
+use rax::riscv::decode::{Op, decode, decode_compressed};
 use rax::riscv::{FlatMemory, Isa, RiscVConfig, RiscVCpu, RiscVExit, Xlen};
 
 // ---------------------------------------------------------------------------
@@ -150,8 +150,14 @@ fn b_type(imm: i32, rs2: u32, rs1: u32, funct3: u32) -> u32 {
     let b11 = (u >> 11) & 1;
     let b10_5 = (u >> 5) & 0x3f;
     let b4_1 = (u >> 1) & 0xf;
-    (b12 << 31) | (b10_5 << 25) | (rs2 << 20) | (rs1 << 15) | (funct3 << 12) | (b4_1 << 8)
-        | (b11 << 7) | 0x63
+    (b12 << 31)
+        | (b10_5 << 25)
+        | (rs2 << 20)
+        | (rs1 << 15)
+        | (funct3 << 12)
+        | (b4_1 << 8)
+        | (b11 << 7)
+        | 0x63
 }
 
 // ---------------------------------------------------------------------------
@@ -179,11 +185,7 @@ fn oracle_path() -> Option<PathBuf> {
             return None;
         }
     }
-    if oracle.exists() {
-        Some(oracle)
-    } else {
-        None
-    }
+    if oracle.exists() { Some(oracle) } else { None }
 }
 
 fn run_oracle(oracle: &PathBuf, cases: &[(u32, u32, RvState)]) -> Option<Vec<OutCase>> {
@@ -367,10 +369,7 @@ fn compare_case(
         }
     }
     if cmp_pc && rax.pc != oracle.st.pc {
-        diffs.push(format!(
-            "pc-disp: rax={:#x} hw={:#x}",
-            rax.pc, oracle.st.pc
-        ));
+        diffs.push(format!("pc-disp: rax={:#x} hw={:#x}", rax.pc, oracle.st.pc));
     }
 
     if !diffs.is_empty() {
@@ -495,7 +494,11 @@ fn diff_alu_imm() {
         }
     }
     // Shift immediates (RV64: 6-bit shamt).
-    let shifts: &[(&str, u32, u32)] = &[("slli", 0b000000, 1), ("srli", 0b000000, 5), ("srai", 0b010000, 5)];
+    let shifts: &[(&str, u32, u32)] = &[
+        ("slli", 0b000000, 1),
+        ("srli", 0b000000, 5),
+        ("srai", 0b010000, 5),
+    ];
     for (name, f6, f3) in shifts {
         for sh in 0..64u32 {
             let rd = POOL[(rng.next() % 6) as usize];
@@ -533,14 +536,30 @@ fn diff_alu_word() {
             let rd = POOL[(rng.next() % 6) as usize];
             let rs1 = POOL[(rng.next() % 6) as usize];
             let imm = (rng.next() as i32 % 4096) - 2048;
-            batch.push(("addiw".into(), i_type(imm, rs1, 0, rd, 0x1b), rand_state(rng)));
+            batch.push((
+                "addiw".into(),
+                i_type(imm, rs1, 0, rd, 0x1b),
+                rand_state(rng),
+            ));
         }
         for sh in 0..32u32 {
             let rd = POOL[(rng.next() % 6) as usize];
             let rs1 = POOL[(rng.next() % 6) as usize];
-            batch.push(("slliw".into(), shift_imm_w(0b0000000, sh, rs1, 1, rd, 0x1b), rand_state(rng)));
-            batch.push(("srliw".into(), shift_imm_w(0b0000000, sh, rs1, 5, rd, 0x1b), rand_state(rng)));
-            batch.push(("sraiw".into(), shift_imm_w(0b0100000, sh, rs1, 5, rd, 0x1b), rand_state(rng)));
+            batch.push((
+                "slliw".into(),
+                shift_imm_w(0b0000000, sh, rs1, 1, rd, 0x1b),
+                rand_state(rng),
+            ));
+            batch.push((
+                "srliw".into(),
+                shift_imm_w(0b0000000, sh, rs1, 5, rd, 0x1b),
+                rand_state(rng),
+            ));
+            batch.push((
+                "sraiw".into(),
+                shift_imm_w(0b0100000, sh, rs1, 5, rd, 0x1b),
+                rand_state(rng),
+            ));
         }
     };
     push_imm(&mut batch, &mut rng);
@@ -559,7 +578,13 @@ fn diff_muldiv() {
         ("rem", 1, 6),
         ("remu", 1, 7),
     ];
-    let word_ops: &[(&str, u32)] = &[("mulw", 0), ("divw", 4), ("divuw", 5), ("remw", 6), ("remuw", 7)];
+    let word_ops: &[(&str, u32)] = &[
+        ("mulw", 0),
+        ("divw", 4),
+        ("divuw", 5),
+        ("remw", 6),
+        ("remuw", 7),
+    ];
     let mut rng = Rng::new(0x4444);
     let mut batch = Vec::new();
     for (name, f7, f3) in ops {
@@ -567,7 +592,11 @@ fn diff_muldiv() {
             let rd = POOL[(rng.next() % 6) as usize];
             let rs1 = POOL[(rng.next() % 6) as usize];
             let rs2 = POOL[(rng.next() % 6) as usize];
-            batch.push((name.to_string(), r_type(*f7, rs2, rs1, *f3, rd, 0x33), rand_state(&mut rng)));
+            batch.push((
+                name.to_string(),
+                r_type(*f7, rs2, rs1, *f3, rd, 0x33),
+                rand_state(&mut rng),
+            ));
         }
     }
     for (name, f3) in word_ops {
@@ -575,7 +604,11 @@ fn diff_muldiv() {
             let rd = POOL[(rng.next() % 6) as usize];
             let rs1 = POOL[(rng.next() % 6) as usize];
             let rs2 = POOL[(rng.next() % 6) as usize];
-            batch.push((name.to_string(), r_type(1, rs2, rs1, *f3, rd, 0x3b), rand_state(&mut rng)));
+            batch.push((
+                name.to_string(),
+                r_type(1, rs2, rs1, *f3, rd, 0x3b),
+                rand_state(&mut rng),
+            ));
         }
     }
     run_batch(&batch, false);
@@ -588,62 +621,146 @@ fn diff_bitmanip() {
     // Zba (OP, funct7=0x10)
     for (name, f3) in [("sh1add", 2u32), ("sh2add", 4), ("sh3add", 6)] {
         for _ in 0..30 {
-            let (rd, rs1, rs2) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
-            batch.push((name.into(), r_type(0b0010000, rs2, rs1, f3, rd, 0x33), rand_state(&mut rng)));
+            let (rd, rs1, rs2) = (
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+            );
+            batch.push((
+                name.into(),
+                r_type(0b0010000, rs2, rs1, f3, rd, 0x33),
+                rand_state(&mut rng),
+            ));
         }
     }
     // Zba (OP-32)
     for _ in 0..30 {
-        let (rd, rs1, rs2) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
-        batch.push(("add.uw".into(), r_type(0b0000100, rs2, rs1, 0, rd, 0x3b), rand_state(&mut rng)));
-        batch.push(("sh1add.uw".into(), r_type(0b0010000, rs2, rs1, 2, rd, 0x3b), rand_state(&mut rng)));
-        batch.push(("sh2add.uw".into(), r_type(0b0010000, rs2, rs1, 4, rd, 0x3b), rand_state(&mut rng)));
-        batch.push(("sh3add.uw".into(), r_type(0b0010000, rs2, rs1, 6, rd, 0x3b), rand_state(&mut rng)));
+        let (rd, rs1, rs2) = (
+            POOL[(rng.next() % 6) as usize],
+            POOL[(rng.next() % 6) as usize],
+            POOL[(rng.next() % 6) as usize],
+        );
+        batch.push((
+            "add.uw".into(),
+            r_type(0b0000100, rs2, rs1, 0, rd, 0x3b),
+            rand_state(&mut rng),
+        ));
+        batch.push((
+            "sh1add.uw".into(),
+            r_type(0b0010000, rs2, rs1, 2, rd, 0x3b),
+            rand_state(&mut rng),
+        ));
+        batch.push((
+            "sh2add.uw".into(),
+            r_type(0b0010000, rs2, rs1, 4, rd, 0x3b),
+            rand_state(&mut rng),
+        ));
+        batch.push((
+            "sh3add.uw".into(),
+            r_type(0b0010000, rs2, rs1, 6, rd, 0x3b),
+            rand_state(&mut rng),
+        ));
     }
     // slli.uw (OP-IMM-32, funct6=0b000010)
     for sh in 0..64u32 {
-        let (rd, rs1) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
-        batch.push(("slli.uw".into(), shift_imm(0b000010, sh, rs1, 1, rd, 0x1b), rand_state(&mut rng)));
+        let (rd, rs1) = (
+            POOL[(rng.next() % 6) as usize],
+            POOL[(rng.next() % 6) as usize],
+        );
+        batch.push((
+            "slli.uw".into(),
+            shift_imm(0b000010, sh, rs1, 1, rd, 0x1b),
+            rand_state(&mut rng),
+        ));
     }
     // Zbb logic-with-negate (OP, funct7=0x20)
     for (name, f3) in [("andn", 7u32), ("orn", 6), ("xnor", 4)] {
         for _ in 0..30 {
-            let (rd, rs1, rs2) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
-            batch.push((name.into(), r_type(0b0100000, rs2, rs1, f3, rd, 0x33), rand_state(&mut rng)));
+            let (rd, rs1, rs2) = (
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+            );
+            batch.push((
+                name.into(),
+                r_type(0b0100000, rs2, rs1, f3, rd, 0x33),
+                rand_state(&mut rng),
+            ));
         }
     }
     // Zbb rotate (OP, funct7=0x30)
     for (name, f3) in [("rol", 1u32), ("ror", 5)] {
         for _ in 0..30 {
-            let (rd, rs1, rs2) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
-            batch.push((name.into(), r_type(0b0110000, rs2, rs1, f3, rd, 0x33), rand_state(&mut rng)));
+            let (rd, rs1, rs2) = (
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+            );
+            batch.push((
+                name.into(),
+                r_type(0b0110000, rs2, rs1, f3, rd, 0x33),
+                rand_state(&mut rng),
+            ));
         }
     }
     // rolw/rorw (OP-32)
     for (name, f3) in [("rolw", 1u32), ("rorw", 5)] {
         for _ in 0..30 {
-            let (rd, rs1, rs2) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
-            batch.push((name.into(), r_type(0b0110000, rs2, rs1, f3, rd, 0x3b), rand_state(&mut rng)));
+            let (rd, rs1, rs2) = (
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+            );
+            batch.push((
+                name.into(),
+                r_type(0b0110000, rs2, rs1, f3, rd, 0x3b),
+                rand_state(&mut rng),
+            ));
         }
     }
     // Zbb min/max (OP, funct7=0x05)
     for (name, f3) in [("min", 4u32), ("minu", 5), ("max", 6), ("maxu", 7)] {
         for _ in 0..30 {
-            let (rd, rs1, rs2) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
-            batch.push((name.into(), r_type(0b0000101, rs2, rs1, f3, rd, 0x33), rand_state(&mut rng)));
+            let (rd, rs1, rs2) = (
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+            );
+            batch.push((
+                name.into(),
+                r_type(0b0000101, rs2, rs1, f3, rd, 0x33),
+                rand_state(&mut rng),
+            ));
         }
     }
     // Zbc clmul (OP, funct7=0x05)
     for (name, f3) in [("clmul", 1u32), ("clmulr", 2), ("clmulh", 3)] {
         for _ in 0..30 {
-            let (rd, rs1, rs2) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
-            batch.push((name.into(), r_type(0b0000101, rs2, rs1, f3, rd, 0x33), rand_state(&mut rng)));
+            let (rd, rs1, rs2) = (
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+            );
+            batch.push((
+                name.into(),
+                r_type(0b0000101, rs2, rs1, f3, rd, 0x33),
+                rand_state(&mut rng),
+            ));
         }
     }
     // Zbb unary (OP-IMM funct7=0x30): clz/ctz/cpop/sext.b/sext.h
-    for (name, rs2v) in [("clz", 0u32), ("ctz", 1), ("cpop", 2), ("sext.b", 4), ("sext.h", 5)] {
+    for (name, rs2v) in [
+        ("clz", 0u32),
+        ("ctz", 1),
+        ("cpop", 2),
+        ("sext.b", 4),
+        ("sext.h", 5),
+    ] {
         for _ in 0..30 {
-            let (rd, rs1) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
+            let (rd, rs1) = (
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+            );
             let insn = r_type(0b0110000, rs2v, rs1, 1, rd, 0x13);
             batch.push((name.into(), insn, rand_state(&mut rng)));
         }
@@ -651,41 +768,101 @@ fn diff_bitmanip() {
     // Zbb unary word (OP-IMM-32 funct7=0x30): clzw/ctzw/cpopw
     for (name, rs2v) in [("clzw", 0u32), ("ctzw", 1), ("cpopw", 2)] {
         for _ in 0..30 {
-            let (rd, rs1) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
+            let (rd, rs1) = (
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+            );
             let insn = r_type(0b0110000, rs2v, rs1, 1, rd, 0x1b);
             batch.push((name.into(), insn, rand_state(&mut rng)));
         }
     }
     // zext.h (OP-32 funct7=0x04, rs2=0, funct3=4)
     for _ in 0..30 {
-        let (rd, rs1) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
-        batch.push(("zext.h".into(), r_type(0b0000100, 0, rs1, 4, rd, 0x3b), rand_state(&mut rng)));
+        let (rd, rs1) = (
+            POOL[(rng.next() % 6) as usize],
+            POOL[(rng.next() % 6) as usize],
+        );
+        batch.push((
+            "zext.h".into(),
+            r_type(0b0000100, 0, rs1, 4, rd, 0x3b),
+            rand_state(&mut rng),
+        ));
     }
     // orc.b / rev8 / rori / roriw
     for _ in 0..30 {
-        let (rd, rs1) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
-        batch.push(("orc.b".into(), r_type(0b0010100, 0b00111, rs1, 5, rd, 0x13), rand_state(&mut rng)));
-        batch.push(("rev8".into(), i_type(0b011010111000, rs1, 5, rd, 0x13), rand_state(&mut rng)));
+        let (rd, rs1) = (
+            POOL[(rng.next() % 6) as usize],
+            POOL[(rng.next() % 6) as usize],
+        );
+        batch.push((
+            "orc.b".into(),
+            r_type(0b0010100, 0b00111, rs1, 5, rd, 0x13),
+            rand_state(&mut rng),
+        ));
+        batch.push((
+            "rev8".into(),
+            i_type(0b011010111000, rs1, 5, rd, 0x13),
+            rand_state(&mut rng),
+        ));
     }
     for sh in 0..64u32 {
-        let (rd, rs1) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
-        batch.push(("rori".into(), shift_imm(0b011000, sh, rs1, 5, rd, 0x13), rand_state(&mut rng)));
+        let (rd, rs1) = (
+            POOL[(rng.next() % 6) as usize],
+            POOL[(rng.next() % 6) as usize],
+        );
+        batch.push((
+            "rori".into(),
+            shift_imm(0b011000, sh, rs1, 5, rd, 0x13),
+            rand_state(&mut rng),
+        ));
     }
     for sh in 0..32u32 {
-        let (rd, rs1) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
-        batch.push(("roriw".into(), shift_imm_w(0b0110000, sh, rs1, 5, rd, 0x1b), rand_state(&mut rng)));
+        let (rd, rs1) = (
+            POOL[(rng.next() % 6) as usize],
+            POOL[(rng.next() % 6) as usize],
+        );
+        batch.push((
+            "roriw".into(),
+            shift_imm_w(0b0110000, sh, rs1, 5, rd, 0x1b),
+            rand_state(&mut rng),
+        ));
     }
     // Zbs (OP funct7) and immediate forms
-    for (name, f7, f3) in [("bclr", 0b0100100u32, 1u32), ("bext", 0b0100100, 5), ("binv", 0b0110100, 1), ("bset", 0b0010100, 1)] {
+    for (name, f7, f3) in [
+        ("bclr", 0b0100100u32, 1u32),
+        ("bext", 0b0100100, 5),
+        ("binv", 0b0110100, 1),
+        ("bset", 0b0010100, 1),
+    ] {
         for _ in 0..30 {
-            let (rd, rs1, rs2) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
-            batch.push((name.into(), r_type(f7, rs2, rs1, f3, rd, 0x33), rand_state(&mut rng)));
+            let (rd, rs1, rs2) = (
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+            );
+            batch.push((
+                name.into(),
+                r_type(f7, rs2, rs1, f3, rd, 0x33),
+                rand_state(&mut rng),
+            ));
         }
     }
-    for (name, f6, f3) in [("bclri", 0b010010u32, 1u32), ("bexti", 0b010010, 5), ("binvi", 0b011010, 1), ("bseti", 0b001010, 1)] {
+    for (name, f6, f3) in [
+        ("bclri", 0b010010u32, 1u32),
+        ("bexti", 0b010010, 5),
+        ("binvi", 0b011010, 1),
+        ("bseti", 0b001010, 1),
+    ] {
         for sh in (0..64u32).step_by(7) {
-            let (rd, rs1) = (POOL[(rng.next() % 6) as usize], POOL[(rng.next() % 6) as usize]);
-            batch.push((name.into(), shift_imm(f6, sh, rs1, f3, rd, 0x13), rand_state(&mut rng)));
+            let (rd, rs1) = (
+                POOL[(rng.next() % 6) as usize],
+                POOL[(rng.next() % 6) as usize],
+            );
+            batch.push((
+                name.into(),
+                shift_imm(f6, sh, rs1, f3, rd, 0x13),
+                rand_state(&mut rng),
+            ));
         }
     }
     run_batch(&batch, false);
@@ -696,7 +873,15 @@ fn diff_loads_stores() {
     let mut rng = Rng::new(0x6666);
     let mut batch = Vec::new();
     // Base register x10 -> SCRATCH_BASE; offsets small so we stay in the window.
-    let loads: &[(&str, u32)] = &[("lb", 0), ("lh", 1), ("lw", 2), ("ld", 3), ("lbu", 4), ("lhu", 5), ("lwu", 6)];
+    let loads: &[(&str, u32)] = &[
+        ("lb", 0),
+        ("lh", 1),
+        ("lw", 2),
+        ("ld", 3),
+        ("lbu", 4),
+        ("lhu", 5),
+        ("lwu", 6),
+    ];
     let stores: &[(&str, u32)] = &[("sb", 0), ("sh", 1), ("sw", 2), ("sd", 3)];
     let offs: [i32; 5] = [0, 8, 16, -8, 24];
     for (name, f3) in loads {
@@ -786,23 +971,49 @@ fn c_add(rd: u32, rs2: u32) -> u32 {
     (0b100 << 13) | (1 << 12) | (rd << 7) | (rs2 << 2) | 0b10
 }
 fn c_alu(rd_: u32, rs2_: u32, bit12: u32, sel: u32) -> u32 {
-    (0b100 << 13) | (bit12 << 12) | (0b11 << 10) | (cr(rd_) << 7) | (sel << 5) | (cr(rs2_) << 2) | 0b01
+    (0b100 << 13)
+        | (bit12 << 12)
+        | (0b11 << 10)
+        | (cr(rd_) << 7)
+        | (sel << 5)
+        | (cr(rs2_) << 2)
+        | 0b01
 }
 fn c_shift(rd_: u32, sh: u32, funct2: u32) -> u32 {
-    (0b100 << 13) | (((sh >> 5) & 1) << 12) | (funct2 << 10) | (cr(rd_) << 7) | ((sh & 0x1f) << 2) | 0b01
+    (0b100 << 13)
+        | (((sh >> 5) & 1) << 12)
+        | (funct2 << 10)
+        | (cr(rd_) << 7)
+        | ((sh & 0x1f) << 2)
+        | 0b01
 }
 fn c_andi(rd_: u32, imm: i32) -> u32 {
     let u = (imm as u32) & 0x3f;
-    (0b100 << 13) | (((u >> 5) & 1) << 12) | (0b10 << 10) | (cr(rd_) << 7) | ((u & 0x1f) << 2) | 0b01
+    (0b100 << 13)
+        | (((u >> 5) & 1) << 12)
+        | (0b10 << 10)
+        | (cr(rd_) << 7)
+        | ((u & 0x1f) << 2)
+        | 0b01
 }
 fn c_slli(rd: u32, sh: u32) -> u32 {
     (0b000 << 13) | (((sh >> 5) & 1) << 12) | (rd << 7) | ((sh & 0x1f) << 2) | 0b10
 }
 fn c_lwsp(rd: u32, u: u32) -> u32 {
-    (0b010 << 13) | (((u >> 5) & 1) << 12) | (rd << 7) | (((u >> 2) & 7) << 4) | (((u >> 6) & 3) << 2) | 0b10
+    (0b010 << 13)
+        | (((u >> 5) & 1) << 12)
+        | (rd << 7)
+        | (((u >> 2) & 7) << 4)
+        | (((u >> 6) & 3) << 2)
+        | 0b10
 }
 fn c_ldsp(rd: u32, u: u32) -> u32 {
-    (0b011 << 13) | (((u >> 5) & 1) << 12) | (rd << 7) | (((u >> 3) & 3) << 5) | (((u >> 6) & 7) << 2) | 0b10
+    (0b011 << 13)
+        | (((u >> 5) & 1) << 12)
+        | (rd << 7)
+        | (((u >> 3) & 3) << 5)
+        | (((u >> 6) & 7) << 2)
+        | 0b10
 }
 fn c_swsp(rs2: u32, u: u32) -> u32 {
     (0b110 << 13) | (((u >> 2) & 0xf) << 9) | (((u >> 6) & 3) << 7) | (rs2 << 2) | 0b10
@@ -811,16 +1022,38 @@ fn c_sdsp(rs2: u32, u: u32) -> u32 {
     (0b111 << 13) | (((u >> 3) & 7) << 10) | (((u >> 6) & 7) << 7) | (rs2 << 2) | 0b10
 }
 fn c_lw(rd_: u32, rs1_: u32, u: u32) -> u32 {
-    (0b010 << 13) | (((u >> 3) & 7) << 10) | (cr(rs1_) << 7) | (((u >> 2) & 1) << 6) | (((u >> 6) & 1) << 5) | (cr(rd_) << 2) | 0b00
+    (0b010 << 13)
+        | (((u >> 3) & 7) << 10)
+        | (cr(rs1_) << 7)
+        | (((u >> 2) & 1) << 6)
+        | (((u >> 6) & 1) << 5)
+        | (cr(rd_) << 2)
+        | 0b00
 }
 fn c_ld(rd_: u32, rs1_: u32, u: u32) -> u32 {
-    (0b011 << 13) | (((u >> 3) & 7) << 10) | (cr(rs1_) << 7) | (((u >> 6) & 3) << 5) | (cr(rd_) << 2) | 0b00
+    (0b011 << 13)
+        | (((u >> 3) & 7) << 10)
+        | (cr(rs1_) << 7)
+        | (((u >> 6) & 3) << 5)
+        | (cr(rd_) << 2)
+        | 0b00
 }
 fn c_sw(rs2_: u32, rs1_: u32, u: u32) -> u32 {
-    (0b110 << 13) | (((u >> 3) & 7) << 10) | (cr(rs1_) << 7) | (((u >> 2) & 1) << 6) | (((u >> 6) & 1) << 5) | (cr(rs2_) << 2) | 0b00
+    (0b110 << 13)
+        | (((u >> 3) & 7) << 10)
+        | (cr(rs1_) << 7)
+        | (((u >> 2) & 1) << 6)
+        | (((u >> 6) & 1) << 5)
+        | (cr(rs2_) << 2)
+        | 0b00
 }
 fn c_sd(rs2_: u32, rs1_: u32, u: u32) -> u32 {
-    (0b111 << 13) | (((u >> 3) & 7) << 10) | (cr(rs1_) << 7) | (((u >> 6) & 3) << 5) | (cr(rs2_) << 2) | 0b00
+    (0b111 << 13)
+        | (((u >> 3) & 7) << 10)
+        | (cr(rs1_) << 7)
+        | (((u >> 6) & 3) << 5)
+        | (cr(rs2_) << 2)
+        | 0b00
 }
 
 /// Ops the compressed differential test can compare (register/immediate only,
@@ -829,9 +1062,34 @@ fn diffable_compressed(op: Op) -> bool {
     use Op::*;
     matches!(
         op,
-        Lui | Addi | Slti | Sltiu | Xori | Ori | Andi | Slli | Srli | Srai | Add | Sub | Sll
-            | Slt | Sltu | Xor | Srl | Sra | Or | And | Addiw | Slliw | Srliw | Sraiw | Addw
-            | Subw | Sllw | Srlw | Sraw
+        Lui | Addi
+            | Slti
+            | Sltiu
+            | Xori
+            | Ori
+            | Andi
+            | Slli
+            | Srli
+            | Srai
+            | Add
+            | Sub
+            | Sll
+            | Slt
+            | Sltu
+            | Xor
+            | Srl
+            | Sra
+            | Or
+            | And
+            | Addiw
+            | Slliw
+            | Srliw
+            | Sraiw
+            | Addw
+            | Subw
+            | Sllw
+            | Srlw
+            | Sraw
     )
 }
 
@@ -966,7 +1224,13 @@ fn diff_compressed_fuzz() {
             continue;
         }
         // Reject encodings that read x3/x4 (reserved) as a source.
-        if insn.rs1 == 3 || insn.rs1 == 4 || insn.rs2 == 3 || insn.rs2 == 4 || insn.rd == 3 || insn.rd == 4 {
+        if insn.rs1 == 3
+            || insn.rs1 == 4
+            || insn.rs2 == 3
+            || insn.rs2 == 4
+            || insn.rd == 3
+            || insn.rd == 4
+        {
             continue;
         }
         batch.push(("fuzz".into(), half as u32, rand_state(&mut rng)));
@@ -1026,15 +1290,15 @@ fn rand_f32_bits(rng: &mut Rng) -> u32 {
     match rng.next() % 16 {
         0 => 0x0000_0000,
         1 => 0x8000_0000,
-        2 => 0x7f80_0000, // +inf
-        3 => 0xff80_0000, // -inf
-        4 => 0x7fc0_0000, // qNaN
-        5 => 0x7f80_0001, // sNaN
-        6 => 0x3f80_0000, // 1.0
-        7 => 0xbf80_0000, // -1.0
-        8 => 0x0000_0001, // min subnormal
-        9 => 0x0080_0000, // min normal
-        10 => 0x7f7f_ffff, // max normal
+        2 => 0x7f80_0000,                        // +inf
+        3 => 0xff80_0000,                        // -inf
+        4 => 0x7fc0_0000,                        // qNaN
+        5 => 0x7f80_0001,                        // sNaN
+        6 => 0x3f80_0000,                        // 1.0
+        7 => 0xbf80_0000,                        // -1.0
+        8 => 0x0000_0001,                        // min subnormal
+        9 => 0x0080_0000,                        // min normal
+        10 => 0x7f7f_ffff,                       // max normal
         11 => (rng.next() as u32) & 0x807f_ffff, // small exponent
         _ => rng.next() as u32,
     }
@@ -1043,14 +1307,14 @@ fn rand_f64_bits(rng: &mut Rng) -> u64 {
     match rng.next() % 16 {
         0 => 0x0000_0000_0000_0000,
         1 => 0x8000_0000_0000_0000,
-        2 => 0x7ff0_0000_0000_0000, // +inf
-        3 => 0xfff0_0000_0000_0000, // -inf
-        4 => 0x7ff8_0000_0000_0000, // qNaN
-        5 => 0x7ff0_0000_0000_0001, // sNaN
-        6 => 0x3ff0_0000_0000_0000, // 1.0
-        7 => 0xbff0_0000_0000_0000, // -1.0
-        8 => 0x0000_0000_0000_0001, // min subnormal
-        9 => 0x0010_0000_0000_0000, // min normal
+        2 => 0x7ff0_0000_0000_0000,  // +inf
+        3 => 0xfff0_0000_0000_0000,  // -inf
+        4 => 0x7ff8_0000_0000_0000,  // qNaN
+        5 => 0x7ff0_0000_0000_0001,  // sNaN
+        6 => 0x3ff0_0000_0000_0000,  // 1.0
+        7 => 0xbff0_0000_0000_0000,  // -1.0
+        8 => 0x0000_0000_0000_0001,  // min subnormal
+        9 => 0x0010_0000_0000_0000,  // min normal
         10 => 0x7fef_ffff_ffff_ffff, // max normal
         11 => rng.next() & 0x800f_ffff_ffff_ffff,
         _ => rng.next(),
@@ -1100,8 +1364,16 @@ fn diff_fp_arith() {
                 let fd = FPOOL[(rng.next() % 8) as usize];
                 let f1 = FPOOL[(rng.next() % 8) as usize];
                 let f2 = FPOOL[(rng.next() % 8) as usize];
-                batch.push((format!("{name}.s"), fp(*f7s, f2, f1, rm, fd), fp_state_s(&mut rng, f1, f2, 0, frm)));
-                batch.push((format!("{name}.d"), fp(*f7d, f2, f1, rm, fd), fp_state_d(&mut rng, f1, f2, 0, frm)));
+                batch.push((
+                    format!("{name}.s"),
+                    fp(*f7s, f2, f1, rm, fd),
+                    fp_state_s(&mut rng, f1, f2, 0, frm),
+                ));
+                batch.push((
+                    format!("{name}.d"),
+                    fp(*f7d, f2, f1, rm, fd),
+                    fp_state_d(&mut rng, f1, f2, 0, frm),
+                ));
             }
         }
     }
@@ -1110,8 +1382,16 @@ fn diff_fp_arith() {
         for _ in 0..40 {
             let fd = FPOOL[(rng.next() % 8) as usize];
             let f1 = FPOOL[(rng.next() % 8) as usize];
-            batch.push(("fsqrt.s".into(), fp(0x2c, 0, f1, rm, fd), fp_state_s(&mut rng, f1, 0, 0, frm)));
-            batch.push(("fsqrt.d".into(), fp(0x2d, 0, f1, rm, fd), fp_state_d(&mut rng, f1, 0, 0, frm)));
+            batch.push((
+                "fsqrt.s".into(),
+                fp(0x2c, 0, f1, rm, fd),
+                fp_state_s(&mut rng, f1, 0, 0, frm),
+            ));
+            batch.push((
+                "fsqrt.d".into(),
+                fp(0x2d, 0, f1, rm, fd),
+                fp_state_d(&mut rng, f1, 0, 0, frm),
+            ));
         }
     }
     run_batch(&batch, true);
@@ -1121,7 +1401,12 @@ fn diff_fp_arith() {
 fn diff_fp_fma() {
     let mut rng = Rng::new(0xFADD);
     let mut batch = Vec::new();
-    let fmas: &[(&str, u32)] = &[("fmadd", 0x43), ("fmsub", 0x47), ("fnmsub", 0x4b), ("fnmadd", 0x4f)];
+    let fmas: &[(&str, u32)] = &[
+        ("fmadd", 0x43),
+        ("fmsub", 0x47),
+        ("fnmsub", 0x4b),
+        ("fnmadd", 0x4f),
+    ];
     let modes: [(u32, u64); 6] = [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (7, 3)];
     for (name, opcode) in fmas {
         for &(rm, frm) in modes.iter() {
@@ -1130,8 +1415,16 @@ fn diff_fp_fma() {
                 let f1 = FPOOL[(rng.next() % 8) as usize];
                 let f2 = FPOOL[(rng.next() % 8) as usize];
                 let f3 = FPOOL[(rng.next() % 8) as usize];
-                batch.push((format!("{name}.s"), fma_enc(f3, 0b00, f2, f1, rm, fd, *opcode), fp_state_s(&mut rng, f1, f2, f3, frm)));
-                batch.push((format!("{name}.d"), fma_enc(f3, 0b01, f2, f1, rm, fd, *opcode), fp_state_d(&mut rng, f1, f2, f3, frm)));
+                batch.push((
+                    format!("{name}.s"),
+                    fma_enc(f3, 0b00, f2, f1, rm, fd, *opcode),
+                    fp_state_s(&mut rng, f1, f2, f3, frm),
+                ));
+                batch.push((
+                    format!("{name}.d"),
+                    fma_enc(f3, 0b01, f2, f1, rm, fd, *opcode),
+                    fp_state_d(&mut rng, f1, f2, f3, frm),
+                ));
             }
         }
     }
@@ -1147,14 +1440,38 @@ fn diff_fp_minmax_sgnj() {
         let f1 = FPOOL[(rng.next() % 8) as usize];
         let f2 = FPOOL[(rng.next() % 8) as usize];
         // min/max (funct3 0/1, funct7 0x14/0x15)
-        batch.push(("fmin.s".into(), fp(0x14, f2, f1, 0, fd), fp_state_s(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fmax.s".into(), fp(0x14, f2, f1, 1, fd), fp_state_s(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fmin.d".into(), fp(0x15, f2, f1, 0, fd), fp_state_d(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fmax.d".into(), fp(0x15, f2, f1, 1, fd), fp_state_d(&mut rng, f1, f2, 0, 0)));
+        batch.push((
+            "fmin.s".into(),
+            fp(0x14, f2, f1, 0, fd),
+            fp_state_s(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fmax.s".into(),
+            fp(0x14, f2, f1, 1, fd),
+            fp_state_s(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fmin.d".into(),
+            fp(0x15, f2, f1, 0, fd),
+            fp_state_d(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fmax.d".into(),
+            fp(0x15, f2, f1, 1, fd),
+            fp_state_d(&mut rng, f1, f2, 0, 0),
+        ));
         // sign inject (funct7 0x10/0x11, funct3 0/1/2)
         for f3 in 0..3u32 {
-            batch.push((format!("fsgnj.s{f3}"), fp(0x10, f2, f1, f3, fd), fp_state_s(&mut rng, f1, f2, 0, 0)));
-            batch.push((format!("fsgnj.d{f3}"), fp(0x11, f2, f1, f3, fd), fp_state_d(&mut rng, f1, f2, 0, 0)));
+            batch.push((
+                format!("fsgnj.s{f3}"),
+                fp(0x10, f2, f1, f3, fd),
+                fp_state_s(&mut rng, f1, f2, 0, 0),
+            ));
+            batch.push((
+                format!("fsgnj.d{f3}"),
+                fp(0x11, f2, f1, f3, fd),
+                fp_state_d(&mut rng, f1, f2, 0, 0),
+            ));
         }
     }
     run_batch(&batch, true);
@@ -1169,15 +1486,47 @@ fn diff_fp_compare_class() {
         let f1 = FPOOL[(rng.next() % 8) as usize];
         let f2 = FPOOL[(rng.next() % 8) as usize];
         // feq/flt/fle (funct7 0x50/0x51, funct3 2/1/0)
-        batch.push(("feq.s".into(), fp(0x50, f2, f1, 2, rd), fp_state_s(&mut rng, f1, f2, 0, 0)));
-        batch.push(("flt.s".into(), fp(0x50, f2, f1, 1, rd), fp_state_s(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fle.s".into(), fp(0x50, f2, f1, 0, rd), fp_state_s(&mut rng, f1, f2, 0, 0)));
-        batch.push(("feq.d".into(), fp(0x51, f2, f1, 2, rd), fp_state_d(&mut rng, f1, f2, 0, 0)));
-        batch.push(("flt.d".into(), fp(0x51, f2, f1, 1, rd), fp_state_d(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fle.d".into(), fp(0x51, f2, f1, 0, rd), fp_state_d(&mut rng, f1, f2, 0, 0)));
+        batch.push((
+            "feq.s".into(),
+            fp(0x50, f2, f1, 2, rd),
+            fp_state_s(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "flt.s".into(),
+            fp(0x50, f2, f1, 1, rd),
+            fp_state_s(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fle.s".into(),
+            fp(0x50, f2, f1, 0, rd),
+            fp_state_s(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "feq.d".into(),
+            fp(0x51, f2, f1, 2, rd),
+            fp_state_d(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "flt.d".into(),
+            fp(0x51, f2, f1, 1, rd),
+            fp_state_d(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fle.d".into(),
+            fp(0x51, f2, f1, 0, rd),
+            fp_state_d(&mut rng, f1, f2, 0, 0),
+        ));
         // fclass (funct7 0x70/0x71, funct3=1, rs2=0)
-        batch.push(("fclass.s".into(), fp(0x70, 0, f1, 1, rd), fp_state_s(&mut rng, f1, 0, 0, 0)));
-        batch.push(("fclass.d".into(), fp(0x71, 0, f1, 1, rd), fp_state_d(&mut rng, f1, 0, 0, 0)));
+        batch.push((
+            "fclass.s".into(),
+            fp(0x70, 0, f1, 1, rd),
+            fp_state_s(&mut rng, f1, 0, 0, 0),
+        ));
+        batch.push((
+            "fclass.d".into(),
+            fp(0x71, 0, f1, 1, rd),
+            fp_state_d(&mut rng, f1, 0, 0, 0),
+        ));
     }
     run_batch(&batch, true);
 }
@@ -1194,24 +1543,60 @@ fn diff_fp_convert() {
             let rs_i = POOL[(rng.next() % 6) as usize];
             let f1 = FPOOL[(rng.next() % 8) as usize];
             // float -> int (funct7 0x60 single / 0x61 double; rs2 selects width/sign)
-            for (name, rs2) in [("fcvt.w.s", 0u32), ("fcvt.wu.s", 1), ("fcvt.l.s", 2), ("fcvt.lu.s", 3)] {
-                batch.push((name.into(), fp(0x60, rs2, f1, rm, rd_i), fp_state_s(&mut rng, f1, 0, 0, frm)));
+            for (name, rs2) in [
+                ("fcvt.w.s", 0u32),
+                ("fcvt.wu.s", 1),
+                ("fcvt.l.s", 2),
+                ("fcvt.lu.s", 3),
+            ] {
+                batch.push((
+                    name.into(),
+                    fp(0x60, rs2, f1, rm, rd_i),
+                    fp_state_s(&mut rng, f1, 0, 0, frm),
+                ));
             }
-            for (name, rs2) in [("fcvt.w.d", 0u32), ("fcvt.wu.d", 1), ("fcvt.l.d", 2), ("fcvt.lu.d", 3)] {
-                batch.push((name.into(), fp(0x61, rs2, f1, rm, rd_i), fp_state_d(&mut rng, f1, 0, 0, frm)));
+            for (name, rs2) in [
+                ("fcvt.w.d", 0u32),
+                ("fcvt.wu.d", 1),
+                ("fcvt.l.d", 2),
+                ("fcvt.lu.d", 3),
+            ] {
+                batch.push((
+                    name.into(),
+                    fp(0x61, rs2, f1, rm, rd_i),
+                    fp_state_d(&mut rng, f1, 0, 0, frm),
+                ));
             }
             // int -> float (funct7 0x68 single / 0x69 double)
             let mut st_i = rand_state(&mut rng);
             st_i.fcsr = frm << 5;
-            for (name, rs2) in [("fcvt.s.w", 0u32), ("fcvt.s.wu", 1), ("fcvt.s.l", 2), ("fcvt.s.lu", 3)] {
+            for (name, rs2) in [
+                ("fcvt.s.w", 0u32),
+                ("fcvt.s.wu", 1),
+                ("fcvt.s.l", 2),
+                ("fcvt.s.lu", 3),
+            ] {
                 batch.push((name.into(), fp(0x68, rs2, rs_i, rm, rd_f), st_i));
             }
-            for (name, rs2) in [("fcvt.d.w", 0u32), ("fcvt.d.wu", 1), ("fcvt.d.l", 2), ("fcvt.d.lu", 3)] {
+            for (name, rs2) in [
+                ("fcvt.d.w", 0u32),
+                ("fcvt.d.wu", 1),
+                ("fcvt.d.l", 2),
+                ("fcvt.d.lu", 3),
+            ] {
                 batch.push((name.into(), fp(0x69, rs2, rs_i, rm, rd_f), st_i));
             }
             // float <-> float
-            batch.push(("fcvt.s.d".into(), fp(0x20, 1, f1, rm, rd_f), fp_state_d(&mut rng, f1, 0, 0, frm)));
-            batch.push(("fcvt.d.s".into(), fp(0x21, 0, f1, rm, rd_f), fp_state_s(&mut rng, f1, 0, 0, frm)));
+            batch.push((
+                "fcvt.s.d".into(),
+                fp(0x20, 1, f1, rm, rd_f),
+                fp_state_d(&mut rng, f1, 0, 0, frm),
+            ));
+            batch.push((
+                "fcvt.d.s".into(),
+                fp(0x21, 0, f1, rm, rd_f),
+                fp_state_s(&mut rng, f1, 0, 0, frm),
+            ));
         }
     }
     run_batch(&batch, true);
@@ -1225,8 +1610,16 @@ fn diff_fp_move() {
         let ri = POOL[(rng.next() % 6) as usize];
         let f1 = FPOOL[(rng.next() % 8) as usize];
         // fmv.x.w / fmv.x.d (funct7 0x70/0x71, funct3=0, rs2=0) -> int rd
-        batch.push(("fmv.x.w".into(), fp(0x70, 0, f1, 0, ri), fp_state_s(&mut rng, f1, 0, 0, 0)));
-        batch.push(("fmv.x.d".into(), fp(0x71, 0, f1, 0, ri), fp_state_d(&mut rng, f1, 0, 0, 0)));
+        batch.push((
+            "fmv.x.w".into(),
+            fp(0x70, 0, f1, 0, ri),
+            fp_state_s(&mut rng, f1, 0, 0, 0),
+        ));
+        batch.push((
+            "fmv.x.d".into(),
+            fp(0x71, 0, f1, 0, ri),
+            fp_state_d(&mut rng, f1, 0, 0, 0),
+        ));
         // fmv.w.x / fmv.d.x (funct7 0x78/0x79) -> fp rd from int rs1
         let rd_f = FPOOL[(rng.next() % 8) as usize];
         let mut st = rand_state(&mut rng);
@@ -1370,7 +1763,11 @@ fn diff_branches() {
             } else {
                 POOL[(rng.next() % 6) as usize]
             };
-            batch.push((name.to_string(), b_type(8, rs2, rs1, *f3), rand_state(&mut rng)));
+            batch.push((
+                name.to_string(),
+                b_type(8, rs2, rs1, *f3),
+                rand_state(&mut rng),
+            ));
         }
     }
     run_batch_opts(&batch, false, true);
@@ -1384,23 +1781,64 @@ fn diff_branches() {
 
 /// Valid (funct7, funct3) pairs for OP (0x33), covering base/M/Zb/Zicond.
 const OP_RR: &[(u32, u32)] = &[
-    (0x00, 0), (0x20, 0), (0x00, 1), (0x00, 2), (0x00, 3), (0x00, 4), (0x00, 5), (0x20, 5),
-    (0x00, 6), (0x00, 7), // base I
-    (0x01, 0), (0x01, 1), (0x01, 2), (0x01, 3), (0x01, 4), (0x01, 5), (0x01, 6), (0x01, 7), // M
-    (0x10, 2), (0x10, 4), (0x10, 6), // Zba sh*add
-    (0x20, 7), (0x20, 6), (0x20, 4), // Zbb andn/orn/xnor
-    (0x30, 1), (0x30, 5), // Zbb rol/ror
-    (0x05, 1), (0x05, 2), (0x05, 3), // Zbc clmul/clmulr/clmulh
-    (0x05, 4), (0x05, 5), (0x05, 6), (0x05, 7), // Zbb min/minu/max/maxu
-    (0x24, 1), (0x24, 5), (0x34, 1), (0x14, 1), // Zbs bclr/bext/binv/bset
-    (0x07, 5), (0x07, 7), // Zicond
+    (0x00, 0),
+    (0x20, 0),
+    (0x00, 1),
+    (0x00, 2),
+    (0x00, 3),
+    (0x00, 4),
+    (0x00, 5),
+    (0x20, 5),
+    (0x00, 6),
+    (0x00, 7), // base I
+    (0x01, 0),
+    (0x01, 1),
+    (0x01, 2),
+    (0x01, 3),
+    (0x01, 4),
+    (0x01, 5),
+    (0x01, 6),
+    (0x01, 7), // M
+    (0x10, 2),
+    (0x10, 4),
+    (0x10, 6), // Zba sh*add
+    (0x20, 7),
+    (0x20, 6),
+    (0x20, 4), // Zbb andn/orn/xnor
+    (0x30, 1),
+    (0x30, 5), // Zbb rol/ror
+    (0x05, 1),
+    (0x05, 2),
+    (0x05, 3), // Zbc clmul/clmulr/clmulh
+    (0x05, 4),
+    (0x05, 5),
+    (0x05, 6),
+    (0x05, 7), // Zbb min/minu/max/maxu
+    (0x24, 1),
+    (0x24, 5),
+    (0x34, 1),
+    (0x14, 1), // Zbs bclr/bext/binv/bset
+    (0x07, 5),
+    (0x07, 7), // Zicond
 ];
 /// Valid (funct7, funct3) for OP-32 (0x3b).
 const OP32_RR: &[(u32, u32)] = &[
-    (0x00, 0), (0x20, 0), (0x00, 1), (0x00, 5), (0x20, 5), // base W
-    (0x01, 0), (0x01, 4), (0x01, 5), (0x01, 6), (0x01, 7), // M W
-    (0x04, 0), (0x10, 2), (0x10, 4), (0x10, 6), // Zba add.uw/sh*add.uw
-    (0x30, 1), (0x30, 5), // Zbb rolw/rorw
+    (0x00, 0),
+    (0x20, 0),
+    (0x00, 1),
+    (0x00, 5),
+    (0x20, 5), // base W
+    (0x01, 0),
+    (0x01, 4),
+    (0x01, 5),
+    (0x01, 6),
+    (0x01, 7), // M W
+    (0x04, 0),
+    (0x10, 2),
+    (0x10, 4),
+    (0x10, 6), // Zba add.uw/sh*add.uw
+    (0x30, 1),
+    (0x30, 5), // Zbb rolw/rorw
 ];
 /// FP binary (funct7) for single/double arithmetic + sgnj/minmax.
 const FP_BIN: &[u32] = &[
@@ -1449,8 +1887,12 @@ fn fuzz_one(rng: &mut Rng) -> (u32, RvState) {
         }
         3 => {
             // shift immediates (RV64 6-bit)
-            let (f6, f3) = [(0b000000u32, 1u32), (0b000000, 5), (0b010000, 5), (0b011000, 5)]
-                [(rng.next() % 4) as usize];
+            let (f6, f3) = [
+                (0b000000u32, 1u32),
+                (0b000000, 5),
+                (0b010000, 5),
+                (0b011000, 5),
+            ][(rng.next() % 4) as usize];
             shift_imm(f6, (rng.next() % 64) as u32, rs1, f3, rd, 0x13)
         }
         4 => {
@@ -1524,9 +1966,15 @@ fn fuzz_one(rng: &mut Rng) -> (u32, RvState) {
             let dbl = rng.next() & 1 == 1;
             install_fp(&mut st, f1, f2, f2, 0, dbl);
             match rng.next() % 3 {
-                0 => fp(if dbl { 0x51 } else { 0x50 }, f2, f1, (rng.next() % 3) as u32, rd), // cmp
-                1 => fp(if dbl { 0x71 } else { 0x70 }, 0, f1, 1, rd),                        // fclass
-                _ => fp(if dbl { 0x71 } else { 0x70 }, 0, f1, 0, rd),                        // fmv.x
+                0 => fp(
+                    if dbl { 0x51 } else { 0x50 },
+                    f2,
+                    f1,
+                    (rng.next() % 3) as u32,
+                    rd,
+                ), // cmp
+                1 => fp(if dbl { 0x71 } else { 0x70 }, 0, f1, 1, rd), // fclass
+                _ => fp(if dbl { 0x71 } else { 0x70 }, 0, f1, 0, rd), // fmv.x
             }
         }
         11 => {
@@ -1557,7 +2005,13 @@ fn fuzz_one(rng: &mut Rng) -> (u32, RvState) {
                 }
                 _ => {
                     st.fcsr = 0;
-                    fp(if dbl { 0x79 } else { 0x78 }, 1, (rng.next() % 32) as u32, 0, fd)
+                    fp(
+                        if dbl { 0x79 } else { 0x78 },
+                        1,
+                        (rng.next() % 32) as u32,
+                        0,
+                        fd,
+                    )
                 }
             }
         }
@@ -1586,7 +2040,8 @@ fn fuzz_one(rng: &mut Rng) -> (u32, RvState) {
 
 /// Install random FP operands (NaN-boxed singles or raw doubles) and a frm.
 fn install_fp(st: &mut RvState, a: u32, b: u32, c: u32, frm: u64, dbl: bool) {
-    let mut rng = Rng::new((st.x[1] ^ st.x[5] ^ (a as u64) << 8 ^ (frm << 1)).wrapping_add(0x9e3779b9));
+    let mut rng =
+        Rng::new((st.x[1] ^ st.x[5] ^ (a as u64) << 8 ^ (frm << 1)).wrapping_add(0x9e3779b9));
     for i in 0..32usize {
         st.f[i] = if dbl {
             rand_f64_bits(&mut rng)
@@ -1624,20 +2079,52 @@ fn diff_zfa() {
         let fd = FPOOL[(rng.next() % 8) as usize];
         let f1 = FPOOL[(rng.next() % 8) as usize];
         let f2 = FPOOL[(rng.next() % 8) as usize];
-        batch.push(("fminm.s".into(), fp(0x14, f2, f1, 2, fd), fp_state_s(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fmaxm.s".into(), fp(0x14, f2, f1, 3, fd), fp_state_s(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fminm.d".into(), fp(0x15, f2, f1, 2, fd), fp_state_d(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fmaxm.d".into(), fp(0x15, f2, f1, 3, fd), fp_state_d(&mut rng, f1, f2, 0, 0)));
+        batch.push((
+            "fminm.s".into(),
+            fp(0x14, f2, f1, 2, fd),
+            fp_state_s(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fmaxm.s".into(),
+            fp(0x14, f2, f1, 3, fd),
+            fp_state_s(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fminm.d".into(),
+            fp(0x15, f2, f1, 2, fd),
+            fp_state_d(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fmaxm.d".into(),
+            fp(0x15, f2, f1, 3, fd),
+            fp_state_d(&mut rng, f1, f2, 0, 0),
+        ));
     }
     // fround / froundnx (rounding mode in funct3).
     for &(rm, frm) in modes.iter() {
         for _ in 0..15 {
             let fd = FPOOL[(rng.next() % 8) as usize];
             let f1 = FPOOL[(rng.next() % 8) as usize];
-            batch.push(("fround.s".into(), fp(0x20, 4, f1, rm, fd), fp_state_s(&mut rng, f1, 0, 0, frm)));
-            batch.push(("froundnx.s".into(), fp(0x20, 5, f1, rm, fd), fp_state_s(&mut rng, f1, 0, 0, frm)));
-            batch.push(("fround.d".into(), fp(0x21, 4, f1, rm, fd), fp_state_d(&mut rng, f1, 0, 0, frm)));
-            batch.push(("froundnx.d".into(), fp(0x21, 5, f1, rm, fd), fp_state_d(&mut rng, f1, 0, 0, frm)));
+            batch.push((
+                "fround.s".into(),
+                fp(0x20, 4, f1, rm, fd),
+                fp_state_s(&mut rng, f1, 0, 0, frm),
+            ));
+            batch.push((
+                "froundnx.s".into(),
+                fp(0x20, 5, f1, rm, fd),
+                fp_state_s(&mut rng, f1, 0, 0, frm),
+            ));
+            batch.push((
+                "fround.d".into(),
+                fp(0x21, 4, f1, rm, fd),
+                fp_state_d(&mut rng, f1, 0, 0, frm),
+            ));
+            batch.push((
+                "froundnx.d".into(),
+                fp(0x21, 5, f1, rm, fd),
+                fp_state_d(&mut rng, f1, 0, 0, frm),
+            ));
         }
     }
     // fleq / fltq -> integer rd.
@@ -1645,22 +2132,50 @@ fn diff_zfa() {
         let rd = POOL[(rng.next() % 6) as usize];
         let f1 = FPOOL[(rng.next() % 8) as usize];
         let f2 = FPOOL[(rng.next() % 8) as usize];
-        batch.push(("fleq.s".into(), fp(0x50, f2, f1, 4, rd), fp_state_s(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fltq.s".into(), fp(0x50, f2, f1, 5, rd), fp_state_s(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fleq.d".into(), fp(0x51, f2, f1, 4, rd), fp_state_d(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fltq.d".into(), fp(0x51, f2, f1, 5, rd), fp_state_d(&mut rng, f1, f2, 0, 0)));
+        batch.push((
+            "fleq.s".into(),
+            fp(0x50, f2, f1, 4, rd),
+            fp_state_s(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fltq.s".into(),
+            fp(0x50, f2, f1, 5, rd),
+            fp_state_s(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fleq.d".into(),
+            fp(0x51, f2, f1, 4, rd),
+            fp_state_d(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fltq.d".into(),
+            fp(0x51, f2, f1, 5, rd),
+            fp_state_d(&mut rng, f1, f2, 0, 0),
+        ));
     }
     // fli — exhaustively cover all 32 constant-table indices.
     for idx in 0..32u32 {
         let fd = FPOOL[(rng.next() % 8) as usize];
-        batch.push((format!("fli.s#{idx}"), fp(0x78, 1, idx, 0, fd), RvState::zeroed()));
-        batch.push((format!("fli.d#{idx}"), fp(0x79, 1, idx, 0, fd), RvState::zeroed()));
+        batch.push((
+            format!("fli.s#{idx}"),
+            fp(0x78, 1, idx, 0, fd),
+            RvState::zeroed(),
+        ));
+        batch.push((
+            format!("fli.d#{idx}"),
+            fp(0x79, 1, idx, 0, fd),
+            RvState::zeroed(),
+        ));
     }
     // fcvtmod.w.d -> integer rd (modular truncation of a double).
     for _ in 0..60 {
         let rd = POOL[(rng.next() % 6) as usize];
         let f1 = FPOOL[(rng.next() % 8) as usize];
-        batch.push(("fcvtmod.w.d".into(), fp(0x61, 8, f1, 1, rd), fp_state_d(&mut rng, f1, 0, 0, 0)));
+        batch.push((
+            "fcvtmod.w.d".into(),
+            fp(0x61, 8, f1, 1, rd),
+            fp_state_d(&mut rng, f1, 0, 0, 0),
+        ));
     }
     run_batch(&batch, true);
 }
@@ -1728,10 +2243,26 @@ fn diff_zbkb() {
         let rd = POOL[(rng.next() % 6) as usize];
         let rs1 = POOL[(rng.next() % 6) as usize];
         let rs2 = POOL[(rng.next() % 6) as usize]; // pool excludes 0, so packw != zext.h
-        batch.push(("pack".into(), r_type(0b0000100, rs2, rs1, 4, rd, 0x33), rand_state(&mut rng)));
-        batch.push(("packh".into(), r_type(0b0000100, rs2, rs1, 7, rd, 0x33), rand_state(&mut rng)));
-        batch.push(("packw".into(), r_type(0b0000100, rs2, rs1, 4, rd, 0x3b), rand_state(&mut rng)));
-        batch.push(("brev8".into(), r_type(0b0110100, 0b00111, rs1, 5, rd, 0x13), rand_state(&mut rng)));
+        batch.push((
+            "pack".into(),
+            r_type(0b0000100, rs2, rs1, 4, rd, 0x33),
+            rand_state(&mut rng),
+        ));
+        batch.push((
+            "packh".into(),
+            r_type(0b0000100, rs2, rs1, 7, rd, 0x33),
+            rand_state(&mut rng),
+        ));
+        batch.push((
+            "packw".into(),
+            r_type(0b0000100, rs2, rs1, 4, rd, 0x3b),
+            rand_state(&mut rng),
+        ));
+        batch.push((
+            "brev8".into(),
+            r_type(0b0110100, 0b00111, rs1, 5, rd, 0x13),
+            rand_state(&mut rng),
+        ));
     }
     run_batch(&batch, false);
 }
@@ -1747,15 +2278,15 @@ fn rand_f16_bits(rng: &mut Rng) -> u16 {
     match rng.next() % 16 {
         0 => 0x0000,
         1 => 0x8000,
-        2 => 0x7c00, // +inf
-        3 => 0xfc00, // -inf
-        4 => 0x7e00, // qNaN
-        5 => 0x7c01, // sNaN
-        6 => 0x3c00, // 1.0
-        7 => 0xbc00, // -1.0
-        8 => 0x0001, // min subnormal
-        9 => 0x0400, // min normal
-        10 => 0x7bff, // max normal
+        2 => 0x7c00,                        // +inf
+        3 => 0xfc00,                        // -inf
+        4 => 0x7e00,                        // qNaN
+        5 => 0x7c01,                        // sNaN
+        6 => 0x3c00,                        // 1.0
+        7 => 0xbc00,                        // -1.0
+        8 => 0x0001,                        // min subnormal
+        9 => 0x0400,                        // min normal
+        10 => 0x7bff,                       // max normal
         11 => (rng.next() as u16) & 0x83ff, // small exponent
         _ => rng.next() as u16,
     }
@@ -1778,74 +2309,209 @@ fn diff_zfh() {
     let mut batch = Vec::new();
     let modes: [(u32, u64); 6] = [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (7, 2)];
     // arithmetic (funct7 fmt=10)
-    let bin: &[(&str, u32)] = &[("fadd.h", 0x02), ("fsub.h", 0x06), ("fmul.h", 0x0a), ("fdiv.h", 0x0e)];
+    let bin: &[(&str, u32)] = &[
+        ("fadd.h", 0x02),
+        ("fsub.h", 0x06),
+        ("fmul.h", 0x0a),
+        ("fdiv.h", 0x0e),
+    ];
     for (name, f7) in bin {
         for &(rm, frm) in modes.iter() {
             for _ in 0..12 {
-                let (fd, f1, f2) = (FPOOL[(rng.next() % 8) as usize], FPOOL[(rng.next() % 8) as usize], FPOOL[(rng.next() % 8) as usize]);
-                batch.push((name.to_string(), fp(*f7, f2, f1, rm, fd), fp_state_h(&mut rng, f1, f2, 0, frm)));
+                let (fd, f1, f2) = (
+                    FPOOL[(rng.next() % 8) as usize],
+                    FPOOL[(rng.next() % 8) as usize],
+                    FPOOL[(rng.next() % 8) as usize],
+                );
+                batch.push((
+                    name.to_string(),
+                    fp(*f7, f2, f1, rm, fd),
+                    fp_state_h(&mut rng, f1, f2, 0, frm),
+                ));
             }
         }
     }
     for &(rm, frm) in modes.iter() {
         for _ in 0..15 {
-            let (fd, f1) = (FPOOL[(rng.next() % 8) as usize], FPOOL[(rng.next() % 8) as usize]);
-            batch.push(("fsqrt.h".into(), fp(0x2e, 0, f1, rm, fd), fp_state_h(&mut rng, f1, 0, 0, frm)));
+            let (fd, f1) = (
+                FPOOL[(rng.next() % 8) as usize],
+                FPOOL[(rng.next() % 8) as usize],
+            );
+            batch.push((
+                "fsqrt.h".into(),
+                fp(0x2e, 0, f1, rm, fd),
+                fp_state_h(&mut rng, f1, 0, 0, frm),
+            ));
         }
     }
     // fma half (funct2=10)
-    for (name, opc) in [("fmadd.h", 0x43u32), ("fmsub.h", 0x47), ("fnmsub.h", 0x4b), ("fnmadd.h", 0x4f)] {
+    for (name, opc) in [
+        ("fmadd.h", 0x43u32),
+        ("fmsub.h", 0x47),
+        ("fnmsub.h", 0x4b),
+        ("fnmadd.h", 0x4f),
+    ] {
         for &(rm, frm) in modes.iter() {
             for _ in 0..8 {
-                let (fd, f1, f2, f3) = (FPOOL[(rng.next() % 8) as usize], FPOOL[(rng.next() % 8) as usize], FPOOL[(rng.next() % 8) as usize], FPOOL[(rng.next() % 8) as usize]);
-                batch.push((name.into(), fma_enc(f3, 0b10, f2, f1, rm, fd, opc), fp_state_h(&mut rng, f1, f2, f3, frm)));
+                let (fd, f1, f2, f3) = (
+                    FPOOL[(rng.next() % 8) as usize],
+                    FPOOL[(rng.next() % 8) as usize],
+                    FPOOL[(rng.next() % 8) as usize],
+                    FPOOL[(rng.next() % 8) as usize],
+                );
+                batch.push((
+                    name.into(),
+                    fma_enc(f3, 0b10, f2, f1, rm, fd, opc),
+                    fp_state_h(&mut rng, f1, f2, f3, frm),
+                ));
             }
         }
     }
     // sgnj / min / max / minm / maxm
     for _ in 0..40 {
-        let (fd, f1, f2) = (FPOOL[(rng.next() % 8) as usize], FPOOL[(rng.next() % 8) as usize], FPOOL[(rng.next() % 8) as usize]);
+        let (fd, f1, f2) = (
+            FPOOL[(rng.next() % 8) as usize],
+            FPOOL[(rng.next() % 8) as usize],
+            FPOOL[(rng.next() % 8) as usize],
+        );
         for f3 in 0..3u32 {
-            batch.push((format!("fsgnj.h{f3}"), fp(0x12, f2, f1, f3, fd), fp_state_h(&mut rng, f1, f2, 0, 0)));
+            batch.push((
+                format!("fsgnj.h{f3}"),
+                fp(0x12, f2, f1, f3, fd),
+                fp_state_h(&mut rng, f1, f2, 0, 0),
+            ));
         }
-        batch.push(("fmin.h".into(), fp(0x16, f2, f1, 0, fd), fp_state_h(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fmax.h".into(), fp(0x16, f2, f1, 1, fd), fp_state_h(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fminm.h".into(), fp(0x16, f2, f1, 2, fd), fp_state_h(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fmaxm.h".into(), fp(0x16, f2, f1, 3, fd), fp_state_h(&mut rng, f1, f2, 0, 0)));
+        batch.push((
+            "fmin.h".into(),
+            fp(0x16, f2, f1, 0, fd),
+            fp_state_h(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fmax.h".into(),
+            fp(0x16, f2, f1, 1, fd),
+            fp_state_h(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fminm.h".into(),
+            fp(0x16, f2, f1, 2, fd),
+            fp_state_h(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fmaxm.h".into(),
+            fp(0x16, f2, f1, 3, fd),
+            fp_state_h(&mut rng, f1, f2, 0, 0),
+        ));
     }
     // compares / class -> int rd
     for _ in 0..40 {
-        let (rd, f1, f2) = (POOL[(rng.next() % 6) as usize], FPOOL[(rng.next() % 8) as usize], FPOOL[(rng.next() % 8) as usize]);
-        batch.push(("feq.h".into(), fp(0x52, f2, f1, 2, rd), fp_state_h(&mut rng, f1, f2, 0, 0)));
-        batch.push(("flt.h".into(), fp(0x52, f2, f1, 1, rd), fp_state_h(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fle.h".into(), fp(0x52, f2, f1, 0, rd), fp_state_h(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fleq.h".into(), fp(0x52, f2, f1, 4, rd), fp_state_h(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fltq.h".into(), fp(0x52, f2, f1, 5, rd), fp_state_h(&mut rng, f1, f2, 0, 0)));
-        batch.push(("fclass.h".into(), fp(0x72, 0, f1, 1, rd), fp_state_h(&mut rng, f1, 0, 0, 0)));
-        batch.push(("fmv.x.h".into(), fp(0x72, 0, f1, 0, rd), fp_state_h(&mut rng, f1, 0, 0, 0)));
+        let (rd, f1, f2) = (
+            POOL[(rng.next() % 6) as usize],
+            FPOOL[(rng.next() % 8) as usize],
+            FPOOL[(rng.next() % 8) as usize],
+        );
+        batch.push((
+            "feq.h".into(),
+            fp(0x52, f2, f1, 2, rd),
+            fp_state_h(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "flt.h".into(),
+            fp(0x52, f2, f1, 1, rd),
+            fp_state_h(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fle.h".into(),
+            fp(0x52, f2, f1, 0, rd),
+            fp_state_h(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fleq.h".into(),
+            fp(0x52, f2, f1, 4, rd),
+            fp_state_h(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fltq.h".into(),
+            fp(0x52, f2, f1, 5, rd),
+            fp_state_h(&mut rng, f1, f2, 0, 0),
+        ));
+        batch.push((
+            "fclass.h".into(),
+            fp(0x72, 0, f1, 1, rd),
+            fp_state_h(&mut rng, f1, 0, 0, 0),
+        ));
+        batch.push((
+            "fmv.x.h".into(),
+            fp(0x72, 0, f1, 0, rd),
+            fp_state_h(&mut rng, f1, 0, 0, 0),
+        ));
     }
     // round
     for &(rm, frm) in modes.iter() {
         for _ in 0..12 {
-            let (fd, f1) = (FPOOL[(rng.next() % 8) as usize], FPOOL[(rng.next() % 8) as usize]);
-            batch.push(("fround.h".into(), fp(0x22, 4, f1, rm, fd), fp_state_h(&mut rng, f1, 0, 0, frm)));
-            batch.push(("froundnx.h".into(), fp(0x22, 5, f1, rm, fd), fp_state_h(&mut rng, f1, 0, 0, frm)));
+            let (fd, f1) = (
+                FPOOL[(rng.next() % 8) as usize],
+                FPOOL[(rng.next() % 8) as usize],
+            );
+            batch.push((
+                "fround.h".into(),
+                fp(0x22, 4, f1, rm, fd),
+                fp_state_h(&mut rng, f1, 0, 0, frm),
+            ));
+            batch.push((
+                "froundnx.h".into(),
+                fp(0x22, 5, f1, rm, fd),
+                fp_state_h(&mut rng, f1, 0, 0, frm),
+            ));
         }
     }
     // conversions half<->single/double, half<->int, fli.h, fmv.h.x
     for &(rm, frm) in modes.iter() {
         for _ in 0..15 {
-            let (fd, f1, ri) = (FPOOL[(rng.next() % 8) as usize], FPOOL[(rng.next() % 8) as usize], POOL[(rng.next() % 6) as usize]);
-            batch.push(("fcvt.s.h".into(), fp(0x20, 2, f1, rm, fd), fp_state_h(&mut rng, f1, 0, 0, frm)));
-            batch.push(("fcvt.d.h".into(), fp(0x21, 2, f1, rm, fd), fp_state_h(&mut rng, f1, 0, 0, frm)));
-            batch.push(("fcvt.h.s".into(), fp(0x22, 0, f1, rm, fd), fp_state_s(&mut rng, f1, 0, 0, frm)));
-            batch.push(("fcvt.h.d".into(), fp(0x22, 1, f1, rm, fd), fp_state_d(&mut rng, f1, 0, 0, frm)));
-            for (name, rs2) in [("fcvt.w.h", 0u32), ("fcvt.wu.h", 1), ("fcvt.l.h", 2), ("fcvt.lu.h", 3)] {
-                batch.push((name.into(), fp(0x62, rs2, f1, rm, POOL[(rng.next() % 6) as usize]), fp_state_h(&mut rng, f1, 0, 0, frm)));
+            let (fd, f1, ri) = (
+                FPOOL[(rng.next() % 8) as usize],
+                FPOOL[(rng.next() % 8) as usize],
+                POOL[(rng.next() % 6) as usize],
+            );
+            batch.push((
+                "fcvt.s.h".into(),
+                fp(0x20, 2, f1, rm, fd),
+                fp_state_h(&mut rng, f1, 0, 0, frm),
+            ));
+            batch.push((
+                "fcvt.d.h".into(),
+                fp(0x21, 2, f1, rm, fd),
+                fp_state_h(&mut rng, f1, 0, 0, frm),
+            ));
+            batch.push((
+                "fcvt.h.s".into(),
+                fp(0x22, 0, f1, rm, fd),
+                fp_state_s(&mut rng, f1, 0, 0, frm),
+            ));
+            batch.push((
+                "fcvt.h.d".into(),
+                fp(0x22, 1, f1, rm, fd),
+                fp_state_d(&mut rng, f1, 0, 0, frm),
+            ));
+            for (name, rs2) in [
+                ("fcvt.w.h", 0u32),
+                ("fcvt.wu.h", 1),
+                ("fcvt.l.h", 2),
+                ("fcvt.lu.h", 3),
+            ] {
+                batch.push((
+                    name.into(),
+                    fp(0x62, rs2, f1, rm, POOL[(rng.next() % 6) as usize]),
+                    fp_state_h(&mut rng, f1, 0, 0, frm),
+                ));
             }
             let mut st_i = rand_state(&mut rng);
             st_i.fcsr = frm << 5;
-            for (name, rs2) in [("fcvt.h.w", 0u32), ("fcvt.h.wu", 1), ("fcvt.h.l", 2), ("fcvt.h.lu", 3)] {
+            for (name, rs2) in [
+                ("fcvt.h.w", 0u32),
+                ("fcvt.h.wu", 1),
+                ("fcvt.h.l", 2),
+                ("fcvt.h.lu", 3),
+            ] {
                 batch.push((name.into(), fp(0x6a, rs2, ri, rm, fd), st_i));
             }
             batch.push(("fmv.h.x".into(), fp(0x7a, 0, ri, 0, fd), st_i));
@@ -1853,7 +2519,11 @@ fn diff_zfh() {
     }
     for idx in 0..32u32 {
         let fd = FPOOL[(rng.next() % 8) as usize];
-        batch.push((format!("fli.h#{idx}"), fp(0x7a, 1, idx, 0, fd), RvState::zeroed()));
+        batch.push((
+            format!("fli.h#{idx}"),
+            fp(0x7a, 1, idx, 0, fd),
+            RvState::zeroed(),
+        ));
     }
     run_batch(&batch, true);
 }
@@ -1875,32 +2545,94 @@ fn diff_crypto() {
     for _ in 0..60 {
         let (rd, rs1, rs2) = (r(&mut rng), r(&mut rng), r(&mut rng));
         // Zbkx
-        batch.push(("xperm8".into(), r_type(0b0010100, rs2, rs1, 4, rd, 0x33), rand_state(&mut rng)));
-        batch.push(("xperm4".into(), r_type(0b0010100, rs2, rs1, 2, rd, 0x33), rand_state(&mut rng)));
+        batch.push((
+            "xperm8".into(),
+            r_type(0b0010100, rs2, rs1, 4, rd, 0x33),
+            rand_state(&mut rng),
+        ));
+        batch.push((
+            "xperm4".into(),
+            r_type(0b0010100, rs2, rs1, 2, rd, 0x33),
+            rand_state(&mut rng),
+        ));
         // Zknh (OP-IMM unary)
         for (name, sel) in [
-            ("sha256sum0", 0u32), ("sha256sum1", 1), ("sha256sig0", 2), ("sha256sig1", 3),
-            ("sha512sum0", 4), ("sha512sum1", 5), ("sha512sig0", 6), ("sha512sig1", 7),
+            ("sha256sum0", 0u32),
+            ("sha256sum1", 1),
+            ("sha256sig0", 2),
+            ("sha256sig1", 3),
+            ("sha512sum0", 4),
+            ("sha512sum1", 5),
+            ("sha512sig0", 6),
+            ("sha512sig1", 7),
         ] {
-            batch.push((name.into(), op_imm_u(0b0001000, sel, rs1, rd), rand_state(&mut rng)));
+            batch.push((
+                name.into(),
+                op_imm_u(0b0001000, sel, rs1, rd),
+                rand_state(&mut rng),
+            ));
         }
         // Zksh (SM3)
-        batch.push(("sm3p0".into(), op_imm_u(0b0001000, 8, rs1, rd), rand_state(&mut rng)));
-        batch.push(("sm3p1".into(), op_imm_u(0b0001000, 9, rs1, rd), rand_state(&mut rng)));
+        batch.push((
+            "sm3p0".into(),
+            op_imm_u(0b0001000, 8, rs1, rd),
+            rand_state(&mut rng),
+        ));
+        batch.push((
+            "sm3p1".into(),
+            op_imm_u(0b0001000, 9, rs1, rd),
+            rand_state(&mut rng),
+        ));
         // Zksed (SM4) all byte-selects
         for bs in 0..4u32 {
-            batch.push(("sm4ed".into(), r_type((bs << 5) | 0b11000, rs2, rs1, 0, rd, 0x33), rand_state(&mut rng)));
-            batch.push(("sm4ks".into(), r_type((bs << 5) | 0b11010, rs2, rs1, 0, rd, 0x33), rand_state(&mut rng)));
+            batch.push((
+                "sm4ed".into(),
+                r_type((bs << 5) | 0b11000, rs2, rs1, 0, rd, 0x33),
+                rand_state(&mut rng),
+            ));
+            batch.push((
+                "sm4ks".into(),
+                r_type((bs << 5) | 0b11010, rs2, rs1, 0, rd, 0x33),
+                rand_state(&mut rng),
+            ));
         }
         // Zkne / Zknd (AES-64)
-        batch.push(("aes64es".into(), r_type(0b0011001, rs2, rs1, 0, rd, 0x33), rand_state(&mut rng)));
-        batch.push(("aes64esm".into(), r_type(0b0011011, rs2, rs1, 0, rd, 0x33), rand_state(&mut rng)));
-        batch.push(("aes64ds".into(), r_type(0b0011101, rs2, rs1, 0, rd, 0x33), rand_state(&mut rng)));
-        batch.push(("aes64dsm".into(), r_type(0b0011111, rs2, rs1, 0, rd, 0x33), rand_state(&mut rng)));
-        batch.push(("aes64ks2".into(), r_type(0b0111111, rs2, rs1, 0, rd, 0x33), rand_state(&mut rng)));
-        batch.push(("aes64im".into(), op_imm_u(0b0011000, 0, rs1, rd), rand_state(&mut rng)));
+        batch.push((
+            "aes64es".into(),
+            r_type(0b0011001, rs2, rs1, 0, rd, 0x33),
+            rand_state(&mut rng),
+        ));
+        batch.push((
+            "aes64esm".into(),
+            r_type(0b0011011, rs2, rs1, 0, rd, 0x33),
+            rand_state(&mut rng),
+        ));
+        batch.push((
+            "aes64ds".into(),
+            r_type(0b0011101, rs2, rs1, 0, rd, 0x33),
+            rand_state(&mut rng),
+        ));
+        batch.push((
+            "aes64dsm".into(),
+            r_type(0b0011111, rs2, rs1, 0, rd, 0x33),
+            rand_state(&mut rng),
+        ));
+        batch.push((
+            "aes64ks2".into(),
+            r_type(0b0111111, rs2, rs1, 0, rd, 0x33),
+            rand_state(&mut rng),
+        ));
+        batch.push((
+            "aes64im".into(),
+            op_imm_u(0b0011000, 0, rs1, rd),
+            rand_state(&mut rng),
+        ));
         for rnum in 0..=0xAu32 {
-            batch.push(("aes64ks1i".into(), op_imm_u(0b0011000, 0x10 | rnum, rs1, rd), rand_state(&mut rng)));
+            batch.push((
+                "aes64ks1i".into(),
+                op_imm_u(0b0011000, 0x10 | rnum, rs1, rd),
+                rand_state(&mut rng),
+            ));
         }
     }
     run_batch(&batch, false);
@@ -1921,14 +2653,43 @@ fn diff_compressed_extra() {
         let rd = cpool[(rng.next() % 7) as usize];
         let rs2 = cpool[(rng.next() % 7) as usize];
         let base = |f6top: u32, f3lo: u32, rd: u32, rest: u32| -> u32 {
-            (0b100 << 13) | (1 << 12) | (0b11 << 10) | (cr(rd) << 7) | (f6top << 5) | (rest << 2) | 0b01
+            (0b100 << 13)
+                | (1 << 12)
+                | (0b11 << 10)
+                | (cr(rd) << 7)
+                | (f6top << 5)
+                | (rest << 2)
+                | 0b01
         };
         let _ = base;
         // c.mul
-        batch.push(("c.mul".into(), (0b100u32 << 13) | (1 << 12) | (0b11 << 10) | (cr(rd) << 7) | (0b10 << 5) | (cr(rs2) << 2) | 0b01, rand_state(&mut rng)));
+        batch.push((
+            "c.mul".into(),
+            (0b100u32 << 13)
+                | (1 << 12)
+                | (0b11 << 10)
+                | (cr(rd) << 7)
+                | (0b10 << 5)
+                | (cr(rs2) << 2)
+                | 0b01,
+            rand_state(&mut rng),
+        ));
         // c.zext.b/sext.b/zext.h/sext.h/zext.w/not
-        for (name, sel) in [("c.zext.b", 0u32), ("c.sext.b", 1), ("c.zext.h", 2), ("c.sext.h", 3), ("c.zext.w", 4), ("c.not", 5)] {
-            let w = (0b100u32 << 13) | (1 << 12) | (0b11 << 10) | (cr(rd) << 7) | (0b11 << 5) | (sel << 2) | 0b01;
+        for (name, sel) in [
+            ("c.zext.b", 0u32),
+            ("c.sext.b", 1),
+            ("c.zext.h", 2),
+            ("c.sext.h", 3),
+            ("c.zext.w", 4),
+            ("c.not", 5),
+        ] {
+            let w = (0b100u32 << 13)
+                | (1 << 12)
+                | (0b11 << 10)
+                | (cr(rd) << 7)
+                | (0b11 << 5)
+                | (sel << 2)
+                | 0b01;
             batch.push((name.into(), w, rand_state(&mut rng)));
         }
     }
@@ -1948,19 +2709,40 @@ fn diff_compressed_extra() {
         let u2 = (rng.next() % 4) as u32; // byte offset 0..3
         let u1 = (rng.next() % 2) as u32 * 2; // half offset 0/2
         // c.lbu (bits[12:10]=000): uimm bit5=uimm[1], bit6=uimm[0]
-        let lbu = (0b100u32 << 13) | (cr(10) << 7) | (((u2 >> 1) & 1) << 5) | ((u2 & 1) << 6) | (cr(rd) << 2) | 0b00;
+        let lbu = (0b100u32 << 13)
+            | (cr(10) << 7)
+            | (((u2 >> 1) & 1) << 5)
+            | ((u2 & 1) << 6)
+            | (cr(rd) << 2)
+            | 0b00;
         batch.push(("c.lbu".into(), lbu, mk_state(&mut rng)));
         // c.lhu (001,bit6=0)
-        let lhu = (0b100u32 << 13) | (0b001 << 10) | (cr(10) << 7) | (((u1 >> 1) & 1) << 5) | (cr(rd) << 2) | 0b00;
+        let lhu = (0b100u32 << 13)
+            | (0b001 << 10)
+            | (cr(10) << 7)
+            | (((u1 >> 1) & 1) << 5)
+            | (cr(rd) << 2)
+            | 0b00;
         batch.push(("c.lhu".into(), lhu, mk_state(&mut rng)));
         // c.lh (001,bit6=1)
         let lh = lhu | (1 << 6);
         batch.push(("c.lh".into(), lh, mk_state(&mut rng)));
         // c.sb (010)
-        let sb = (0b100u32 << 13) | (0b010 << 10) | (cr(10) << 7) | (((u2 >> 1) & 1) << 5) | ((u2 & 1) << 6) | (cr(rs2) << 2) | 0b00;
+        let sb = (0b100u32 << 13)
+            | (0b010 << 10)
+            | (cr(10) << 7)
+            | (((u2 >> 1) & 1) << 5)
+            | ((u2 & 1) << 6)
+            | (cr(rs2) << 2)
+            | 0b00;
         batch.push(("c.sb".into(), sb, mk_state(&mut rng)));
         // c.sh (011,bit6=0)
-        let sh = (0b100u32 << 13) | (0b011 << 10) | (cr(10) << 7) | (((u1 >> 1) & 1) << 5) | (cr(rs2) << 2) | 0b00;
+        let sh = (0b100u32 << 13)
+            | (0b011 << 10)
+            | (cr(10) << 7)
+            | (((u1 >> 1) & 1) << 5)
+            | (cr(rs2) << 2)
+            | 0b00;
         batch.push(("c.sh".into(), sh, mk_state(&mut rng)));
     }
 
@@ -1994,16 +2776,32 @@ fn diff_compressed_extra() {
         let rs2p = cpool[(rng.next() % 7) as usize];
         let ud = (rng.next() % 4) as u32 * 8; // dword offset within window
         // c.fldsp fd, ud(sp)
-        let fldsp = (0b001u32 << 13) | (((ud >> 5) & 1) << 12) | (rd << 7) | (((ud >> 3) & 3) << 5) | (((ud >> 6) & 7) << 2) | 0b10;
+        let fldsp = (0b001u32 << 13)
+            | (((ud >> 5) & 1) << 12)
+            | (rd << 7)
+            | (((ud >> 3) & 3) << 5)
+            | (((ud >> 6) & 7) << 2)
+            | 0b10;
         batch.push(("c.fldsp".into(), fldsp, mk_state_sp(&mut rng)));
         // c.fsdsp fs2, ud(sp)
-        let fsdsp = (0b101u32 << 13) | (((ud >> 3) & 7) << 10) | (((ud >> 6) & 7) << 7) | (rs2 << 2) | 0b10;
+        let fsdsp =
+            (0b101u32 << 13) | (((ud >> 3) & 7) << 10) | (((ud >> 6) & 7) << 7) | (rs2 << 2) | 0b10;
         batch.push(("c.fsdsp".into(), fsdsp, mk_state_sp(&mut rng)));
         // c.fld fd', ud(x10)
-        let fld = (0b001u32 << 13) | (((ud >> 3) & 7) << 10) | (cr(10) << 7) | (((ud >> 6) & 3) << 5) | (cr(rdp) << 2) | 0b00;
+        let fld = (0b001u32 << 13)
+            | (((ud >> 3) & 7) << 10)
+            | (cr(10) << 7)
+            | (((ud >> 6) & 3) << 5)
+            | (cr(rdp) << 2)
+            | 0b00;
         batch.push(("c.fld".into(), fld, mk_state_r(&mut rng)));
         // c.fsd fs2', ud(x10)
-        let fsd = (0b101u32 << 13) | (((ud >> 3) & 7) << 10) | (cr(10) << 7) | (((ud >> 6) & 3) << 5) | (cr(rs2p) << 2) | 0b00;
+        let fsd = (0b101u32 << 13)
+            | (((ud >> 3) & 7) << 10)
+            | (cr(10) << 7)
+            | (((ud >> 6) & 3) << 5)
+            | (cr(rs2p) << 2)
+            | 0b00;
         batch.push(("c.fsd".into(), fsd, mk_state_r(&mut rng)));
     }
 
@@ -2106,14 +2904,16 @@ fn diff_vsetvl() {
                 let mut st2 = rand_state(&mut rng);
                 st2.x[rs1 as usize] = avl;
                 st2.x[rs2 as usize] = vtype as u64;
-                let vsetvl = (1u32 << 31) | (rs2 << 20) | (rs1 << 15) | (7 << 12) | (rd << 7) | 0x57;
+                let vsetvl =
+                    (1u32 << 31) | (rs2 << 20) | (rs1 << 15) | (7 << 12) | (rd << 7) | 0x57;
                 batch.push(("vsetvl".into(), vsetvl, st2));
             }
         }
         // vsetivli rd, uimm, vtype  (AVL = 5-bit immediate)
         for uimm in [0u32, 1, 4, 15, 16, 17, 31] {
             let rd = POOL[(rng.next() % 6) as usize];
-            let vsetivli = (0b11u32 << 30) | (vtype << 20) | (uimm << 15) | (7 << 12) | (rd << 7) | 0x57;
+            let vsetivli =
+                (0b11u32 << 30) | (vtype << 20) | (uimm << 15) | (7 << 12) | (rd << 7) | 0x57;
             batch.push(("vsetivli".into(), vsetivli, rand_state(&mut rng)));
         }
     }

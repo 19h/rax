@@ -315,7 +315,8 @@ fn test_vextractf128_ymm15_xmm1_lane1() {
 fn test_vextractf128_ymm0_mem_lane0() {
     // VEXTRACTF128 [mem128], YMM0, 0
     let code = [
-        0xc4, 0xe3, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00, 0x00, 0x00, // VEXTRACTF128 [rip + 0x4000], YMM0, 0
+        0xc4, 0xe3, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00, 0x00,
+        0x00, // VEXTRACTF128 [rip + 0x4000], YMM0, 0
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -326,7 +327,8 @@ fn test_vextractf128_ymm0_mem_lane0() {
 fn test_vextractf128_ymm0_mem_lane1() {
     // VEXTRACTF128 [mem128], YMM0, 1
     let code = [
-        0xc4, 0xe3, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00, 0x00, 0x01, // VEXTRACTF128 [rip + 0x4000], YMM0, 1
+        0xc4, 0xe3, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00, 0x00,
+        0x01, // VEXTRACTF128 [rip + 0x4000], YMM0, 1
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -337,7 +339,8 @@ fn test_vextractf128_ymm0_mem_lane1() {
 fn test_vextractf128_ymm1_mem_lane0() {
     // VEXTRACTF128 [mem128], YMM1, 0
     let code = [
-        0xc4, 0xe3, 0x7d, 0x19, 0x0d, 0x00, 0x40, 0x00, 0x00, 0x00, // VEXTRACTF128 [rip + 0x4000], YMM1, 0
+        0xc4, 0xe3, 0x7d, 0x19, 0x0d, 0x00, 0x40, 0x00, 0x00,
+        0x00, // VEXTRACTF128 [rip + 0x4000], YMM1, 0
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -348,7 +351,8 @@ fn test_vextractf128_ymm1_mem_lane0() {
 fn test_vextractf128_ymm1_mem_lane1() {
     // VEXTRACTF128 [mem128], YMM1, 1
     let code = [
-        0xc4, 0xe3, 0x7d, 0x19, 0x0d, 0x00, 0x40, 0x00, 0x00, 0x01, // VEXTRACTF128 [rip + 0x4000], YMM1, 1
+        0xc4, 0xe3, 0x7d, 0x19, 0x0d, 0x00, 0x40, 0x00, 0x00,
+        0x01, // VEXTRACTF128 [rip + 0x4000], YMM1, 1
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -359,7 +363,8 @@ fn test_vextractf128_ymm1_mem_lane1() {
 fn test_vextractf128_ymm7_mem_lane0() {
     // VEXTRACTF128 [mem128], YMM7, 0
     let code = [
-        0xc4, 0xe3, 0x7d, 0x19, 0x3d, 0x00, 0x40, 0x00, 0x00, 0x00, // VEXTRACTF128 [rip + 0x4000], YMM7, 0
+        0xc4, 0xe3, 0x7d, 0x19, 0x3d, 0x00, 0x40, 0x00, 0x00,
+        0x00, // VEXTRACTF128 [rip + 0x4000], YMM7, 0
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -370,7 +375,8 @@ fn test_vextractf128_ymm7_mem_lane0() {
 fn test_vextractf128_ymm7_mem_lane1() {
     // VEXTRACTF128 [mem128], YMM7, 1
     let code = [
-        0xc4, 0xe3, 0x7d, 0x19, 0x3d, 0x00, 0x40, 0x00, 0x00, 0x01, // VEXTRACTF128 [rip + 0x4000], YMM7, 1
+        0xc4, 0xe3, 0x7d, 0x19, 0x3d, 0x00, 0x40, 0x00, 0x00,
+        0x01, // VEXTRACTF128 [rip + 0x4000], YMM7, 1
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -381,7 +387,8 @@ fn test_vextractf128_ymm7_mem_lane1() {
 fn test_vextractf128_ymm8_mem_lane0() {
     // VEXTRACTF128 [mem128], YMM8, 0
     let code = [
-        0xc4, 0xc3, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00, 0x00, 0x00, // VEXTRACTF128 [rip + 0x4000], YMM8, 0
+        0xc4, 0xc3, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00, 0x00,
+        0x00, // VEXTRACTF128 [rip + 0x4000], YMM8, 0
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -392,7 +399,8 @@ fn test_vextractf128_ymm8_mem_lane0() {
 fn test_vextractf128_ymm8_mem_lane1() {
     // VEXTRACTF128 [mem128], YMM8, 1
     let code = [
-        0xc4, 0xc3, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00, 0x00, 0x01, // VEXTRACTF128 [rip + 0x4000], YMM8, 1
+        0xc4, 0xc3, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00, 0x00,
+        0x01, // VEXTRACTF128 [rip + 0x4000], YMM8, 1
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -403,7 +411,8 @@ fn test_vextractf128_ymm8_mem_lane1() {
 fn test_vextractf128_ymm15_mem_lane0() {
     // VEXTRACTF128 [mem128], YMM15, 0
     let code = [
-        0xc4, 0xc3, 0x7d, 0x19, 0x3d, 0x00, 0x40, 0x00, 0x00, 0x00, // VEXTRACTF128 [rip + 0x4000], YMM15, 0
+        0xc4, 0xc3, 0x7d, 0x19, 0x3d, 0x00, 0x40, 0x00, 0x00,
+        0x00, // VEXTRACTF128 [rip + 0x4000], YMM15, 0
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -414,7 +423,8 @@ fn test_vextractf128_ymm15_mem_lane0() {
 fn test_vextractf128_ymm15_mem_lane1() {
     // VEXTRACTF128 [mem128], YMM15, 1
     let code = [
-        0xc4, 0xc3, 0x7d, 0x19, 0x3d, 0x00, 0x40, 0x00, 0x00, 0x01, // VEXTRACTF128 [rip + 0x4000], YMM15, 1
+        0xc4, 0xc3, 0x7d, 0x19, 0x3d, 0x00, 0x40, 0x00, 0x00,
+        0x01, // VEXTRACTF128 [rip + 0x4000], YMM15, 1
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

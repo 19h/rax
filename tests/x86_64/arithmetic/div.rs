@@ -30,11 +30,11 @@ fn test_div_al_simple() {
     // AX = 100 (AH=0, AL=100)
     let code = [
         0xf6, 0xf3, // DIV BL (F6 /6, ModRM=11_110_011)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
-    regs.rax = 100;  // AX = 100 (AH=0, AL=100)
-    regs.rbx = 10;   // BL = 10
+    regs.rax = 100; // AX = 100 (AH=0, AL=100)
+    regs.rbx = 10; // BL = 10
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -138,8 +138,8 @@ fn test_div_ax_dx_nonzero() {
     // (DX:AX) = 0x00011000 (69632) / 100 = 696 remainder 32
     let code = [0x66, 0xf7, 0xf3, 0xf4]; // DIV BX
     let mut regs = Registers::default();
-    regs.rax = 0x1000;  // 4096
-    regs.rdx = 0x0001;  // High 16 bits = 1
+    regs.rax = 0x1000; // 4096
+    regs.rdx = 0x0001; // High 16 bits = 1
     regs.rbx = 100;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -287,8 +287,8 @@ fn test_div_rax_rdx_nonzero() {
     let code = [0x48, 0xf7, 0xf3, 0xf4]; // DIV RBX
     let mut regs = Registers::default();
     regs.rax = 0x0000000000000000;
-    regs.rdx = 0x0000000000000001;  // RDX:RAX = 2^64
-    regs.rbx = 0x100000001;  // Divisor = 2^32 + 1 = 4294967297
+    regs.rdx = 0x0000000000000001; // RDX:RAX = 2^64
+    regs.rbx = 0x100000001; // Divisor = 2^32 + 1 = 4294967297
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -349,9 +349,9 @@ fn test_div_cx_16bit() {
     // Cannot use DX as divisor since DX is part of the dividend (DX:AX)
     let code = [0x66, 0xf7, 0xf1, 0xf4]; // DIV CX
     let mut regs = Registers::default();
-    regs.rax = 10000;  // AX = 10000
-    regs.rdx = 0;      // DX = 0 (high part of dividend)
-    regs.rcx = 100;    // CX = 100 (divisor)
+    regs.rax = 10000; // AX = 10000
+    regs.rdx = 0; // DX = 0 (high part of dividend)
+    regs.rcx = 100; // CX = 100 (divisor)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -527,8 +527,8 @@ fn test_div_result_in_upper() {
     let code = [0xf7, 0xf3, 0xf4]; // DIV EBX
     let mut regs = Registers::default();
     regs.rax = 0x00000000;
-    regs.rdx = 0x00000002;  // EDX:EAX = 2 * 2^32 = 2^33
-    regs.rbx = 0x80000000;  // Divisor = 2^31
+    regs.rdx = 0x00000002; // EDX:EAX = 2 * 2^32 = 2^33
+    regs.rbx = 0x80000000; // Divisor = 2^31
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 

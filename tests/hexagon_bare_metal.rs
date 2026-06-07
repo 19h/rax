@@ -466,7 +466,11 @@ fn hexagon_bare_metal_duplex_doubleword_stack_ops() {
     ];
 
     let (mut vcpu, mem) = setup_hexagon_vm(&code, Endianness::Little);
-    write_bytes(&mem, 0x6008, &[0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x11, 0x22]);
+    write_bytes(
+        &mem,
+        0x6008,
+        &[0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x11, 0x22],
+    );
 
     run_until_shutdown(&mut vcpu);
 
@@ -500,7 +504,11 @@ fn hexagon_bare_metal_big_endian_duplex_doubleword_stack_ops() {
     ];
 
     let (mut vcpu, mem) = setup_hexagon_vm(&code, Endianness::Big);
-    write_bytes(&mem, 0x7008, &[0x00, 0x00, 0x55, 0x66, 0x00, 0x00, 0x77, 0x88]);
+    write_bytes(
+        &mem,
+        0x7008,
+        &[0x00, 0x00, 0x55, 0x66, 0x00, 0x00, 0x77, 0x88],
+    );
 
     run_until_shutdown(&mut vcpu);
 

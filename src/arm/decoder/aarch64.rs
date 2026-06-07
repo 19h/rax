@@ -3,7 +3,7 @@
 //! This module decodes 64-bit ARM instructions (AArch64/A64).
 //! All A64 instructions are 32 bits wide.
 
-use super::{operand::*, Condition, DecodeError, DecodedInsn, ExtendType, Mnemonic, ShiftType};
+use super::{Condition, DecodeError, DecodedInsn, ExtendType, Mnemonic, ShiftType, operand::*};
 use crate::arm::ExecutionState;
 
 /// AArch64 instruction decoder.
@@ -368,7 +368,7 @@ impl Aarch64Decoder {
                     ExecutionState::Aarch64,
                     raw,
                     4,
-                ))
+                ));
             }
         };
 
@@ -410,7 +410,7 @@ impl Aarch64Decoder {
                     ExecutionState::Aarch64,
                     raw,
                     4,
-                ))
+                ));
             }
         };
 
@@ -712,12 +712,7 @@ impl Aarch64Decoder {
                 0b010 => Mnemonic::AXFLAG,
                 _ => Mnemonic::UNDEFINED,
             };
-            return Ok(DecodedInsn::new(
-                mnemonic,
-                ExecutionState::Aarch64,
-                raw,
-                4,
-            ));
+            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4));
         }
 
         // Hints: op0 = 0, op1 = 3, CRn = 2, Rt = 31
@@ -778,9 +773,11 @@ impl Aarch64Decoder {
         };
 
         if opc == 0b11 && v == 0 {
-            return Ok(DecodedInsn::new(Mnemonic::PRFM, ExecutionState::Aarch64, raw, 4)
-                .with_operand(Operand::Prfop(PrefetchOp::from_bits(rt)))
-                .with_operand(Operand::Label(offset)));
+            return Ok(
+                DecodedInsn::new(Mnemonic::PRFM, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(Operand::Prfop(PrefetchOp::from_bits(rt)))
+                    .with_operand(Operand::Label(offset)),
+            );
         }
 
         let (mnemonic, is_64bit) = match (opc, v) {
@@ -963,9 +960,7 @@ impl Aarch64Decoder {
             return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
                 .with_operand(Operand::Reg(Register::with_zr(rs, is_64bit)))
                 .with_operand(Operand::Reg(Register::with_zr(rt, is_64bit)))
-                .with_operand(Operand::Mem(MemOperand::base(Register::with_sp(
-                    rn, true,
-                )))));
+                .with_operand(Operand::Mem(MemOperand::base(Register::with_sp(rn, true)))));
         }
 
         let mnemonic = match (
@@ -1148,9 +1143,11 @@ impl Aarch64Decoder {
                 ));
             };
 
-            return Ok(DecodedInsn::new(Mnemonic::PRFM, ExecutionState::Aarch64, raw, 4)
-                .with_operand(Operand::Prfop(PrefetchOp::from_bits(rt)))
-                .with_operand(Operand::Mem(mem)));
+            return Ok(
+                DecodedInsn::new(Mnemonic::PRFM, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(Operand::Prfop(PrefetchOp::from_bits(rt)))
+                    .with_operand(Operand::Mem(mem)),
+            );
         }
 
         let (mnemonic, is_64bit) = match (size, v, opc) {
@@ -1275,9 +1272,7 @@ impl Aarch64Decoder {
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Reg(Register::with_zr(rs, is_64bit)))
             .with_operand(Operand::Reg(Register::with_zr(rt, is_64bit)))
-            .with_operand(Operand::Mem(MemOperand::base(Register::with_sp(
-                rn, true,
-            )))))
+            .with_operand(Operand::Mem(MemOperand::base(Register::with_sp(rn, true)))))
     }
 
     // =========================================================================
@@ -1687,7 +1682,7 @@ impl Aarch64Decoder {
                     ExecutionState::Aarch64,
                     raw,
                     4,
-                ))
+                ));
             }
         };
 
@@ -1718,8 +1713,7 @@ impl Aarch64Decoder {
             .with_operand(Operand::Reg(Register::with_zr(rd, is_64bit)));
 
         // For CSET/CSETM, don't add Rn/Rm.
-        let is_cset_alias =
-            rn == 31 && rm == 31 && matches!((op, op2), (0, 0b01) | (1, 0b00));
+        let is_cset_alias = rn == 31 && rm == 31 && matches!((op, op2), (0, 0b01) | (1, 0b00));
         if !is_cset_alias {
             insn = insn.with_operand(Operand::Reg(Register::with_zr(rn, is_64bit)));
 
@@ -2325,7 +2319,7 @@ impl Aarch64Decoder {
                     ExecutionState::Aarch64,
                     raw,
                     4,
-                ))
+                ));
             }
         };
 
@@ -2787,12 +2781,7 @@ mod tests {
     fn test_atomic_swp_decode() {
         // SWP X2, X0, [X1].
         let insn = Aarch64Decoder::decode(
-            (0b11 << 30)
-                | (0b111 << 27)
-                | (1 << 21)
-                | (2 << 16)
-                | (1 << 15)
-                | (1 << 5),
+            (0b11 << 30) | (0b111 << 27) | (1 << 21) | (2 << 16) | (1 << 15) | (1 << 5),
         )
         .unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::SWP);
@@ -2800,13 +2789,7 @@ mod tests {
 
         // SWPAL W2, W0, [X1].
         let insn = Aarch64Decoder::decode(
-            (0b111 << 27)
-                | (1 << 23)
-                | (1 << 22)
-                | (1 << 21)
-                | (2 << 16)
-                | (1 << 15)
-                | (1 << 5),
+            (0b111 << 27) | (1 << 23) | (1 << 22) | (1 << 21) | (2 << 16) | (1 << 15) | (1 << 5),
         )
         .unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::SWPAL);

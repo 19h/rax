@@ -13,7 +13,6 @@ pub use movs::*;
 pub use scas::*;
 pub use stos::*;
 
-
 // ---------------------------------------------------------------------------
 // 0x67 address-size override helpers, shared by all string instructions.
 //

@@ -22,7 +22,11 @@ fn test_blci_basic() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Should isolate bit 1: 0b0000_0010
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_0010, "Isolate lowest clear bit");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0000_0010,
+        "Isolate lowest clear bit"
+    );
 }
 
 #[test]
@@ -198,7 +202,12 @@ fn test_blci_formula() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = !value & value.wrapping_add(1);
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "Formula for 0x{:08x}", value);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected as u64,
+            "Formula for 0x{:08x}",
+            value
+        );
     }
 }
 
@@ -273,10 +282,10 @@ fn test_blci_preserves_source() {
 fn test_blci_find_lowest_clear() {
     // Use BLCI to find position of lowest clear bit
     let test_cases = [
-        (0b1111_1110u32, 0),  // bit 0 clear
-        (0b1111_1101u32, 1),  // bit 1 clear
-        (0b1111_1011u32, 2),  // bit 2 clear
-        (0b1111_0111u32, 3),  // bit 3 clear
+        (0b1111_1110u32, 0), // bit 0 clear
+        (0b1111_1101u32, 1), // bit 1 clear
+        (0b1111_1011u32, 2), // bit 2 clear
+        (0b1111_0111u32, 3), // bit 3 clear
     ];
 
     for (value, expected_pos) in &test_cases {

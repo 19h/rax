@@ -319,13 +319,7 @@ fn u64_to_bits<F: Sf>(v: u64) -> F::Bits {
 /// Given the round-to-nearest result `rne` and the exact residual
 /// `delta = true - rne`, produce the value for `mode`, setting NX/OF/UF.
 /// `inputs_finite` indicates whether both operands were finite (for overflow).
-fn correct<F: Sf>(
-    rne: F,
-    delta: F,
-    mode: RoundingMode,
-    inputs_finite: bool,
-    flags: &mut u32,
-) -> F {
+fn correct<F: Sf>(rne: F, delta: F, mode: RoundingMode, inputs_finite: bool, flags: &mut u32) -> F {
     // Overflow: native produced infinity from finite inputs.
     if rne.is_infinite() && inputs_finite {
         *flags |= fflags::OF | fflags::NX;
@@ -377,11 +371,7 @@ fn correct<F: Sf>(
             // Tie iff 2*|delta| == (hi - lo).
             let two_d = delta.abs().add(delta.abs());
             let ulp = hi.sub(lo);
-            if two_d == ulp {
-                max_mag(lo, hi)
-            } else {
-                rne
-            }
+            if two_d == ulp { max_mag(lo, hi) } else { rne }
         }
     };
 
@@ -397,18 +387,10 @@ fn correct<F: Sf>(
 }
 
 fn min_mag<F: Sf>(a: F, b: F) -> F {
-    if a.abs() <= b.abs() {
-        a
-    } else {
-        b
-    }
+    if a.abs() <= b.abs() { a } else { b }
 }
 fn max_mag<F: Sf>(a: F, b: F) -> F {
-    if a.abs() >= b.abs() {
-        a
-    } else {
-        b
-    }
+    if a.abs() >= b.abs() { a } else { b }
 }
 
 // ---------------------------------------------------------------------------
@@ -491,11 +473,7 @@ pub fn fmin<F: Sf>(a: F, b: F, flags: &mut u32) -> F {
         // -0 is less than +0
         return if a.is_sign_negative() { a } else { b };
     }
-    if a < b {
-        a
-    } else {
-        b
-    }
+    if a < b { a } else { b }
 }
 
 /// RISC-V `fmax`.
@@ -515,11 +493,7 @@ pub fn fmax<F: Sf>(a: F, b: F, flags: &mut u32) -> F {
     if a.is_zero() && b.is_zero() {
         return if a.is_sign_negative() { b } else { a };
     }
-    if a > b {
-        a
-    } else {
-        b
-    }
+    if a > b { a } else { b }
 }
 
 /// `feq` (quiet: only sNaN raises NV).
@@ -565,11 +539,7 @@ pub fn fclass<F: Sf>(x: F) -> u64 {
     }
     let subnormal = x.abs() < F::min_normal();
     if subnormal {
-        if neg {
-            1 << 2
-        } else {
-            1 << 5
-        }
+        if neg { 1 << 2 } else { 1 << 5 }
     } else if neg {
         1 << 1
     } else {
@@ -592,11 +562,7 @@ pub fn fminm<F: Sf>(a: F, b: F, flags: &mut u32) -> F {
     if a.is_zero() && b.is_zero() {
         return if a.is_sign_negative() { a } else { b };
     }
-    if a < b {
-        a
-    } else {
-        b
-    }
+    if a < b { a } else { b }
 }
 
 /// Zfa `fmaxm`: like `fmax` but a NaN operand yields the canonical NaN.
@@ -610,11 +576,7 @@ pub fn fmaxm<F: Sf>(a: F, b: F, flags: &mut u32) -> F {
     if a.is_zero() && b.is_zero() {
         return if a.is_sign_negative() { b } else { a };
     }
-    if a > b {
-        a
-    } else {
-        b
-    }
+    if a > b { a } else { b }
 }
 
 /// Zfa `fleq` — quiet `<=` (only a signaling NaN raises NV).
@@ -662,17 +624,43 @@ pub fn fround<F: Sf>(x: F, mode: RoundingMode, set_nx: bool, flags: &mut u32) ->
 pub fn fli(fmt: Fmt, idx: u8) -> u64 {
     // f64 values for indices 2..29; 0/1/30/31 are handled specially.
     const TBL: [f64; 32] = [
-        -1.0, 0.0, // 0: -1.0, 1: min normal (special)
-        0.0000152587890625, 0.000030517578125, 0.00390625, 0.0078125, 0.0625, 0.125, // 2^-16..2^-3
-        0.25, 0.3125, 0.375, 0.4375, 0.5, 0.625, 0.75, 0.875, // 8..15
-        1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0, // 16..23
-        8.0, 16.0, 128.0, 256.0, 32768.0, 65536.0, // 24..29 (incl 2^15, 2^16)
-        0.0, 0.0, // 30: +inf, 31: qNaN (special)
+        -1.0,
+        0.0, // 0: -1.0, 1: min normal (special)
+        0.0000152587890625,
+        0.000030517578125,
+        0.00390625,
+        0.0078125,
+        0.0625,
+        0.125, // 2^-16..2^-3
+        0.25,
+        0.3125,
+        0.375,
+        0.4375,
+        0.5,
+        0.625,
+        0.75,
+        0.875, // 8..15
+        1.0,
+        1.25,
+        1.5,
+        1.75,
+        2.0,
+        2.5,
+        3.0,
+        4.0, // 16..23
+        8.0,
+        16.0,
+        128.0,
+        256.0,
+        32768.0,
+        65536.0, // 24..29 (incl 2^15, 2^16)
+        0.0,
+        0.0, // 30: +inf, 31: qNaN (special)
     ];
     match idx & 31 {
-        1 => fmt.pack(false, 1, 0),      // minimum positive normal
-        30 => fmt.pack_inf(false),       // +inf
-        31 => fmt.canon(),               // canonical qNaN
+        1 => fmt.pack(false, 1, 0), // minimum positive normal
+        30 => fmt.pack_inf(false),  // +inf
+        31 => fmt.canon(),          // canonical qNaN
         i => {
             let v = TBL[i as usize];
             match fmt.p {
@@ -859,7 +847,11 @@ pub fn itof<F: Sf>(v: i128, mode: RoundingMode, flags: &mut u32) -> F {
     }
     *flags |= fflags::NX;
     let up = delta > 0;
-    let (lo, hi) = if up { (r, next_up(r)) } else { (next_down(r), r) };
+    let (lo, hi) = if up {
+        (r, next_up(r))
+    } else {
+        (next_down(r), r)
+    };
     match mode {
         RoundingMode::Rtz => min_mag(lo, hi),
         RoundingMode::Rdn => lo,
@@ -919,11 +911,7 @@ pub fn f64_to_f32(x: f64, mode: RoundingMode, flags: &mut u32) -> u32 {
         RoundingMode::Rmm => {
             let two_d = (delta.abs()) * 2.0;
             let ulp = (hi as f64) - (lo as f64);
-            if two_d == ulp {
-                max_mag(lo, hi)
-            } else {
-                r
-            }
+            if two_d == ulp { max_mag(lo, hi) } else { r }
         }
         _ => r,
     };
@@ -981,8 +969,16 @@ pub fn sf_add(fmt: Fmt, a: u64, b: u64, mode: RoundingMode, flags: &mut u32) -> 
         (Dec::Zero(_), _) => b,
         (_, Dec::Zero(_)) => a,
         (
-            Dec::Finite { sign: s1, mant: m1, exp: e1 },
-            Dec::Finite { sign: s2, mant: m2, exp: e2 },
+            Dec::Finite {
+                sign: s1,
+                mant: m1,
+                exp: e1,
+            },
+            Dec::Finite {
+                sign: s2,
+                mant: m2,
+                exp: e2,
+            },
         ) => add_wide(fmt, s1, m1 as u128, e1, s2, m2 as u128, e2, mode, flags),
         _ => unreachable!(),
     }
@@ -1095,11 +1091,7 @@ fn hmin(a: u16, b: u16, propagate: bool, flags: &mut u32) -> u16 {
     if af == 0.0 && bf == 0.0 {
         return if (a >> 15) & 1 == 1 { a } else { b };
     }
-    if af < bf {
-        a
-    } else {
-        b
-    }
+    if af < bf { a } else { b }
 }
 /// `fmax.h` / `fmaxm.h`.
 fn hmax(a: u16, b: u16, propagate: bool, flags: &mut u32) -> u16 {
@@ -1123,11 +1115,7 @@ fn hmax(a: u16, b: u16, propagate: bool, flags: &mut u32) -> u16 {
     if af == 0.0 && bf == 0.0 {
         return if (a >> 15) & 1 == 1 { b } else { a };
     }
-    if af > bf {
-        a
-    } else {
-        b
-    }
+    if af > bf { a } else { b }
 }
 pub fn fmin_h(a: u16, b: u16, flags: &mut u32) -> u16 {
     hmin(a, b, false, flags)
@@ -1198,8 +1186,7 @@ pub fn fround_h(bits: u16, mode: RoundingMode, set_nx: bool, flags: &mut u32) ->
         Dec::Inf(_) | Dec::Zero(_) => bits,
         Dec::Finite { .. } => {
             let r = h_widen(bits).round_integral(mode);
-            let rbits =
-                fcvt_round(F32, F16, r.to_bits() as u64, mode, &mut 0u32) as u16;
+            let rbits = fcvt_round(F32, F16, r.to_bits() as u64, mode, &mut 0u32) as u16;
             if set_nx && rbits != bits {
                 *flags |= fflags::NX;
             }
@@ -1232,7 +1219,10 @@ pub const F16: Fmt = Fmt { p: 11, exp_bits: 5 };
 /// Single precision (binary32).
 pub const F32: Fmt = Fmt { p: 24, exp_bits: 8 };
 /// Double precision (binary64).
-pub const F64: Fmt = Fmt { p: 53, exp_bits: 11 };
+pub const F64: Fmt = Fmt {
+    p: 53,
+    exp_bits: 11,
+};
 
 /// `vfrsqrt7.v` lookup table: 7 MSBs of the output significand indexed by
 /// (exp[0] << 6) | sig[MSB-:6]. (RISC-V V-spec Table 58.)
@@ -1400,17 +1390,15 @@ impl Fmt {
         ((self.max_field() as u64) << self.mant_bits()) | (1u64 << (self.mant_bits() - 1))
     }
     fn pack_zero(&self, sign: bool) -> u64 {
-        if sign {
-            self.sign_bit()
-        } else {
-            0
-        }
+        if sign { self.sign_bit() } else { 0 }
     }
     fn pack_inf(&self, sign: bool) -> u64 {
         self.pack_zero(sign) | ((self.max_field() as u64) << self.mant_bits())
     }
     fn pack_max(&self, sign: bool) -> u64 {
-        self.pack_zero(sign) | (((self.max_field() - 1) as u64) << self.mant_bits()) | self.frac_mask()
+        self.pack_zero(sign)
+            | (((self.max_field() - 1) as u64) << self.mant_bits())
+            | self.frac_mask()
     }
     fn pack(&self, sign: bool, field: u64, frac: u64) -> u64 {
         self.pack_zero(sign) | (field << self.mant_bits()) | (frac & self.frac_mask())
@@ -1424,7 +1412,11 @@ enum Dec {
     /// `signaling` true for an sNaN.
     Nan(bool),
     /// Finite nonzero: value = (-1)^sign * mant * 2^exp.
-    Finite { sign: bool, mant: u64, exp: i32 },
+    Finite {
+        sign: bool,
+        mant: u64,
+        exp: i32,
+    },
 }
 
 fn decompose(fmt: Fmt, bits: u64) -> Dec {
@@ -1883,14 +1875,39 @@ pub fn fp_writes_int_dst(op: RvFpInsn) -> bool {
     use RvFpInsn::*;
     matches!(
         op,
-        FeqS | FltS | FleS | FeqD | FltD | FleD | FeqH | FltH | FleH
-            | FleqS | FltqS | FleqD | FltqD | FleqH | FltqH
-            | FclassS | FclassD | FclassH
-            | FcvtWS | FcvtWuS | FcvtLS | FcvtLuS
-            | FcvtWD | FcvtWuD | FcvtLD | FcvtLuD
-            | FcvtWH | FcvtWuH | FcvtLH | FcvtLuH
+        FeqS | FltS
+            | FleS
+            | FeqD
+            | FltD
+            | FleD
+            | FeqH
+            | FltH
+            | FleH
+            | FleqS
+            | FltqS
+            | FleqD
+            | FltqD
+            | FleqH
+            | FltqH
+            | FclassS
+            | FclassD
+            | FclassH
+            | FcvtWS
+            | FcvtWuS
+            | FcvtLS
+            | FcvtLuS
+            | FcvtWD
+            | FcvtWuD
+            | FcvtLD
+            | FcvtLuD
+            | FcvtWH
+            | FcvtWuH
+            | FcvtLH
+            | FcvtLuH
             | FcvtmodWD
-            | FmvXW | FmvXD | FmvXH
+            | FmvXW
+            | FmvXD
+            | FmvXH
     )
 }
 
@@ -1901,10 +1918,21 @@ pub fn fp_uses_int_src1(op: RvFpInsn) -> bool {
     use RvFpInsn::*;
     matches!(
         op,
-        FcvtSW | FcvtSWu | FcvtSL | FcvtSLu
-            | FcvtDW | FcvtDWu | FcvtDL | FcvtDLu
-            | FcvtHW | FcvtHWu | FcvtHL | FcvtHLu
-            | FmvWX | FmvDX | FmvHX
+        FcvtSW
+            | FcvtSWu
+            | FcvtSL
+            | FcvtSLu
+            | FcvtDW
+            | FcvtDWu
+            | FcvtDL
+            | FcvtDLu
+            | FcvtHW
+            | FcvtHWu
+            | FcvtHL
+            | FcvtHLu
+            | FmvWX
+            | FmvDX
+            | FmvHX
     )
 }
 
@@ -1939,11 +1967,37 @@ pub fn eval_scalar_fp(
     // funct3 does not encode a rounding mode never consult it.
     let needs_rm = !matches!(
         op,
-        FminS | FmaxS | FminD | FmaxD | FminH | FmaxH
-            | FeqS | FltS | FleS | FeqD | FltD | FleD | FeqH | FltH | FleH
-            | FminmS | FmaxmS | FminmD | FmaxmD | FminmH | FmaxmH
-            | FleqS | FltqS | FleqD | FltqD | FleqH | FltqH
-            | FliS | FliD | FliH | FcvtmodWD
+        FminS
+            | FmaxS
+            | FminD
+            | FmaxD
+            | FminH
+            | FmaxH
+            | FeqS
+            | FltS
+            | FleS
+            | FeqD
+            | FltD
+            | FleD
+            | FeqH
+            | FltH
+            | FleH
+            | FminmS
+            | FmaxmS
+            | FminmD
+            | FmaxmD
+            | FminmH
+            | FmaxmH
+            | FleqS
+            | FltqS
+            | FleqD
+            | FltqD
+            | FleqH
+            | FltqH
+            | FliS
+            | FliD
+            | FliH
+            | FcvtmodWD
     );
     let rm = if needs_rm {
         let m = RoundingMode::from_bits(rm_field)?;
@@ -2077,14 +2131,38 @@ pub fn eval_scalar_fp(
         FcvtmodWD => fcvtmod_w_d(rf64(a), &mut flags),
 
         // ---- integer -> float conversions ----
-        FcvtSW => box_s({ let r: f32 = itof(a as i32 as i128, rm, &mut flags); r.to_bits() }),
-        FcvtSWu => box_s({ let r: f32 = itof(a as u32 as i128, rm, &mut flags); r.to_bits() }),
-        FcvtSL => box_s({ let r: f32 = itof(a as i64 as i128, rm, &mut flags); r.to_bits() }),
-        FcvtSLu => box_s({ let r: f32 = itof(a as i128, rm, &mut flags); r.to_bits() }),
-        FcvtDW => { let r: f64 = itof(a as i32 as i128, rm, &mut flags); r.to_bits() }
-        FcvtDWu => { let r: f64 = itof(a as u32 as i128, rm, &mut flags); r.to_bits() }
-        FcvtDL => { let r: f64 = itof(a as i64 as i128, rm, &mut flags); r.to_bits() }
-        FcvtDLu => { let r: f64 = itof(a as i128, rm, &mut flags); r.to_bits() }
+        FcvtSW => box_s({
+            let r: f32 = itof(a as i32 as i128, rm, &mut flags);
+            r.to_bits()
+        }),
+        FcvtSWu => box_s({
+            let r: f32 = itof(a as u32 as i128, rm, &mut flags);
+            r.to_bits()
+        }),
+        FcvtSL => box_s({
+            let r: f32 = itof(a as i64 as i128, rm, &mut flags);
+            r.to_bits()
+        }),
+        FcvtSLu => box_s({
+            let r: f32 = itof(a as i128, rm, &mut flags);
+            r.to_bits()
+        }),
+        FcvtDW => {
+            let r: f64 = itof(a as i32 as i128, rm, &mut flags);
+            r.to_bits()
+        }
+        FcvtDWu => {
+            let r: f64 = itof(a as u32 as i128, rm, &mut flags);
+            r.to_bits()
+        }
+        FcvtDL => {
+            let r: f64 = itof(a as i64 as i128, rm, &mut flags);
+            r.to_bits()
+        }
+        FcvtDLu => {
+            let r: f64 = itof(a as i128, rm, &mut flags);
+            r.to_bits()
+        }
         FcvtHW => box_h(itof_fmt(F16, a as i32 as i128, rm, &mut flags) as u16),
         FcvtHWu => box_h(itof_fmt(F16, a as u32 as i128, rm, &mut flags) as u16),
         FcvtHL => box_h(itof_fmt(F16, a as i64 as i128, rm, &mut flags) as u16),

@@ -30,7 +30,8 @@ fn lapic_base_to_rax() -> Vec<u8> {
 fn read_lapic_to_ebx(offset: u32) -> Vec<u8> {
     // mov ebx, [rax + offset] (32-bit displacement)
     vec![
-        0x8B, 0x98,
+        0x8B,
+        0x98,
         (offset & 0xFF) as u8,
         ((offset >> 8) & 0xFF) as u8,
         ((offset >> 16) & 0xFF) as u8,
@@ -42,7 +43,8 @@ fn read_lapic_to_ebx(offset: u32) -> Vec<u8> {
 fn write_ecx_to_lapic(offset: u32) -> Vec<u8> {
     // mov [rax + offset], ecx (32-bit displacement)
     vec![
-        0x89, 0x88,
+        0x89,
+        0x88,
         (offset & 0xFF) as u8,
         ((offset >> 8) & 0xFF) as u8,
         ((offset >> 16) & 0xFF) as u8,
@@ -82,10 +84,7 @@ fn test_lapic_read_id_register() {
     let (mut vcpu, _mem) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(
-        regs.rbx as u32, 0,
-        "LAPIC ID should be 0 for first CPU"
-    );
+    assert_eq!(regs.rbx as u32, 0, "LAPIC ID should be 0 for first CPU");
 }
 
 #[test]
@@ -141,10 +140,7 @@ fn test_lapic_tpr_masks_to_8bits() {
     let (mut vcpu, _mem) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(
-        regs.rbx as u32, 0x78,
-        "TPR should mask to lower 8 bits"
-    );
+    assert_eq!(regs.rbx as u32, 0x78, "TPR should mask to lower 8 bits");
 }
 
 #[test]
@@ -249,10 +245,7 @@ fn test_lapic_timer_divide_config() {
     let (mut vcpu, _mem) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(
-        regs.rbx as u32, 0x0B,
-        "DCR should be 0x0B (divide by 1)"
-    );
+    assert_eq!(regs.rbx as u32, 0x0B, "DCR should be 0x0B (divide by 1)");
 }
 
 #[test]
@@ -287,10 +280,7 @@ fn test_lapic_timer_ccr_zero_when_no_timer() {
     let (mut vcpu, _mem) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(
-        regs.rbx as u32, 0,
-        "CCR should be 0 when timer not started"
-    );
+    assert_eq!(regs.rbx as u32, 0, "CCR should be 0 when timer not started");
 }
 
 #[test]
@@ -326,11 +316,7 @@ fn test_lapic_timer_ccr_decreases() {
     // CCR should be less than or equal to initial count
     let ccr = regs.rbx as u32;
     let icr = regs.rcx as u32;
-    assert!(
-        ccr <= icr,
-        "CCR ({}) should be <= ICR ({})",
-        ccr, icr
-    );
+    assert!(ccr <= icr, "CCR ({}) should be <= ICR ({})", ccr, icr);
 }
 
 // ============================================================================
@@ -502,7 +488,10 @@ fn test_lapic_sequential_timer_configuration() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rbx as u32, 0x03, "DCR should be 0x03");
-    assert_eq!(regs.rcx as u32, 0x00020032, "LVT should be periodic with vector 0x32");
+    assert_eq!(
+        regs.rcx as u32, 0x00020032,
+        "LVT should be periodic with vector 0x32"
+    );
     assert_eq!(regs.rdx as u32, 0x00100000, "ICR should be 0x100000");
     // CCR should be non-zero and less than or equal to ICR (timer running)
     let ccr = regs.r8 as u32;
@@ -576,7 +565,8 @@ fn test_lapic_word_read() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(
-        (regs.rbx & 0xFFFF) as u16, 0xAB,
+        (regs.rbx & 0xFFFF) as u16,
+        0xAB,
         "Word read of TPR should be 0x00AB"
     );
 }

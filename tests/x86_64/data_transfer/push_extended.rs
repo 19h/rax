@@ -505,7 +505,7 @@ fn test_push_stack_alignment() {
 fn test_push_negative_imm8_values() {
     // Push negative immediate values (sign-extended)
     let test_cases = vec![
-        (0x80u8, 0xFFFFFFFFFFFFFF80u64), // -128
+        (0x80u8, 0xFFFFFFFFFFFFFF80u64),  // -128
         (0xFF_u8, 0xFFFFFFFFFFFFFFFFu64), // -1
         (0xFE_u8, 0xFFFFFFFFFFFFFFFEu64), // -2
     ];

@@ -168,14 +168,8 @@ pub const CMD_CF: u16 = 1 << 6;
 /// Max Packet. 0 = 32 bytes, 1 = 64 bytes (reclamation packet size).
 pub const CMD_MAXP: u16 = 1 << 7;
 /// Mask of writable USBCMD bits.
-pub const CMD_WRITE_MASK: u16 = CMD_RS
-    | CMD_HCRESET
-    | CMD_GRESET
-    | CMD_EGSM
-    | CMD_FGR
-    | CMD_SWDBG
-    | CMD_CF
-    | CMD_MAXP;
+pub const CMD_WRITE_MASK: u16 =
+    CMD_RS | CMD_HCRESET | CMD_GRESET | CMD_EGSM | CMD_FGR | CMD_SWDBG | CMD_CF | CMD_MAXP;
 
 // ---- USBSTS bit definitions (all write-1-to-clear) -------------------------
 
@@ -206,8 +200,7 @@ pub const INTR_IOC: u16 = 1 << 2;
 /// Short-packet interrupt enable.
 pub const INTR_SHORT: u16 = 1 << 3;
 /// Mask of writable USBINTR bits.
-pub const INTR_WRITE_MASK: u16 =
-    INTR_TIMEOUT_CRC | INTR_RESUME | INTR_IOC | INTR_SHORT;
+pub const INTR_WRITE_MASK: u16 = INTR_TIMEOUT_CRC | INTR_RESUME | INTR_IOC | INTR_SHORT;
 
 // ---- PORTSC bit definitions ------------------------------------------------
 
@@ -910,7 +903,11 @@ mod tests {
         write32(&mut hc, FRBASEADD, 0x4444_0000);
         write16(&mut hc, USBCMD, CMD_RS);
         write16(&mut hc, USBCMD, CMD_GRESET);
-        assert_eq!(read16(&mut hc, USBCMD) & CMD_GRESET, 0, "GRESET self-clears");
+        assert_eq!(
+            read16(&mut hc, USBCMD) & CMD_GRESET,
+            0,
+            "GRESET self-clears"
+        );
         assert!(hc.halted());
         assert_eq!(hc.frame_base(), 0);
     }

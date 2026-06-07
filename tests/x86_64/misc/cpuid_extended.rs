@@ -21,20 +21,26 @@ fn test_cpuid_leaf_0_vendor_id() {
     // EAX=0: Returns highest standard leaf and vendor ID
     let code = [
         0xb8, 0x00, 0x00, 0x00, 0x00, // MOV EAX, 0
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // EAX should be the highest standard leaf supported (at least 0)
-    assert!(regs.rax & 0xFFFFFFFF >= 0, "EAX should contain max standard leaf");
+    assert!(
+        regs.rax & 0xFFFFFFFF >= 0,
+        "EAX should contain max standard leaf"
+    );
     // EBX, ECX, EDX should contain vendor ID string
     let ebx = regs.rbx & 0xFFFFFFFF;
     let ecx = regs.rcx & 0xFFFFFFFF;
     let edx = regs.rdx & 0xFFFFFFFF;
     // At least one of these should be non-zero for a real vendor
-    assert!(ebx != 0 || ecx != 0 || edx != 0, "Vendor ID should not be all zeros");
+    assert!(
+        ebx != 0 || ecx != 0 || edx != 0,
+        "Vendor ID should not be all zeros"
+    );
 }
 
 #[test]
@@ -42,8 +48,8 @@ fn test_cpuid_leaf_0_max_leaf_valid() {
     // EAX=0: Max standard leaf should be reasonable (not absurdly high)
     let code = [
         0xb8, 0x00, 0x00, 0x00, 0x00, // MOV EAX, 0
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -58,8 +64,8 @@ fn test_cpuid_leaf_1_features() {
     // EAX=1: Returns processor version and feature flags
     let code = [
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -79,8 +85,8 @@ fn test_cpuid_leaf_1_feature_bits() {
     // EAX=1: Check specific feature bits
     let code = [
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -100,8 +106,8 @@ fn test_cpuid_leaf_2_cache_descriptor() {
     // EAX=2: Returns cache and TLB information
     let code = [
         0xb8, 0x02, 0x00, 0x00, 0x00, // MOV EAX, 2
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -116,8 +122,8 @@ fn test_cpuid_leaf_3_serial_number() {
     // EAX=3: Returns processor serial number (deprecated, mostly zeros)
     let code = [
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 3
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -135,8 +141,8 @@ fn test_cpuid_leaf_4_deterministic_cache() {
     let code = [
         0xb8, 0x04, 0x00, 0x00, 0x00, // MOV EAX, 4
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0 (cache index)
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -151,8 +157,8 @@ fn test_cpuid_leaf_5_monitor_mwait() {
     // EAX=5: Returns MONITOR/MWAIT parameters
     let code = [
         0xb8, 0x05, 0x00, 0x00, 0x00, // MOV EAX, 5
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -169,8 +175,8 @@ fn test_cpuid_leaf_6_thermal_power() {
     // EAX=6: Returns thermal and power management features
     let code = [
         0xb8, 0x06, 0x00, 0x00, 0x00, // MOV EAX, 6
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -186,8 +192,8 @@ fn test_cpuid_leaf_7_extended_features() {
     let code = [
         0xb8, 0x07, 0x00, 0x00, 0x00, // MOV EAX, 7
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0 (subleaf)
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -203,8 +209,8 @@ fn test_cpuid_leaf_7_bmi_features() {
     let code = [
         0xb8, 0x07, 0x00, 0x00, 0x00, // MOV EAX, 7
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -220,8 +226,8 @@ fn test_cpuid_leaf_9_direct_cache_access() {
     // EAX=9: Returns direct cache access (DCA) information
     let code = [
         0xb8, 0x09, 0x00, 0x00, 0x00, // MOV EAX, 9
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -235,8 +241,8 @@ fn test_cpuid_leaf_a_performance_monitoring() {
     // EAX=A: Returns performance monitoring capabilities
     let code = [
         0xb8, 0x0a, 0x00, 0x00, 0x00, // MOV EAX, 10
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -252,8 +258,8 @@ fn test_cpuid_leaf_b_extended_topology() {
     let code = [
         0xb8, 0x0b, 0x00, 0x00, 0x00, // MOV EAX, 11
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -270,8 +276,8 @@ fn test_cpuid_leaf_d_xsave_features() {
     let code = [
         0xb8, 0x0d, 0x00, 0x00, 0x00, // MOV EAX, 13
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -289,8 +295,8 @@ fn test_cpuid_leaf_f_qos_monitoring() {
     let code = [
         0xb8, 0x0f, 0x00, 0x00, 0x00, // MOV EAX, 15
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -305,8 +311,8 @@ fn test_cpuid_leaf_10_qos_enforcement() {
     let code = [
         0xb8, 0x10, 0x00, 0x00, 0x00, // MOV EAX, 16
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -321,8 +327,8 @@ fn test_cpuid_leaf_12_sgx_capabilities() {
     let code = [
         0xb8, 0x12, 0x00, 0x00, 0x00, // MOV EAX, 18
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -337,8 +343,8 @@ fn test_cpuid_leaf_14_processor_trace() {
     let code = [
         0xb8, 0x14, 0x00, 0x00, 0x00, // MOV EAX, 20
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -352,8 +358,8 @@ fn test_cpuid_leaf_15_tsc_frequency() {
     // EAX=15: Returns TSC/Core Crystal Clock frequency information
     let code = [
         0xb8, 0x15, 0x00, 0x00, 0x00, // MOV EAX, 21
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -369,17 +375,23 @@ fn test_cpuid_extended_leaf_80000000_max_extended() {
     // EAX=0x80000000: Returns highest extended leaf and vendor ID
     let code = [
         0xb8, 0x00, 0x00, 0x00, 0x80, // MOV EAX, 0x80000000
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // EAX should be at least 0x80000001
     let max_extended = regs.rax & 0xFFFFFFFF;
-    assert!(max_extended >= 0x80000001, "Max extended leaf should be >= 0x80000001");
+    assert!(
+        max_extended >= 0x80000001,
+        "Max extended leaf should be >= 0x80000001"
+    );
     // Usually should be <= 0x8000001F
-    assert!(max_extended <= 0x8000001F, "Max extended leaf should be reasonable");
+    assert!(
+        max_extended <= 0x8000001F,
+        "Max extended leaf should be reasonable"
+    );
 }
 
 #[test]
@@ -387,8 +399,8 @@ fn test_cpuid_extended_leaf_80000001_features() {
     // EAX=0x80000001: Returns extended features
     let code = [
         0xb8, 0x01, 0x00, 0x00, 0x80, // MOV EAX, 0x80000001
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -404,8 +416,8 @@ fn test_cpuid_extended_leaf_80000001_64bit_features() {
     // EAX=0x80000001: Check for 64-bit feature support
     let code = [
         0xb8, 0x01, 0x00, 0x00, 0x80, // MOV EAX, 0x80000001
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -422,8 +434,8 @@ fn test_cpuid_extended_leaf_80000002_brand_string_1() {
     // EAX=0x80000002: Returns processor brand string part 1
     let code = [
         0xb8, 0x02, 0x00, 0x00, 0x80, // MOV EAX, 0x80000002
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -435,7 +447,10 @@ fn test_cpuid_extended_leaf_80000002_brand_string_1() {
     let _ecx = regs.rcx & 0xFFFFFFFF;
     let _edx = regs.rdx & 0xFFFFFFFF;
     // Just verify we get some value
-    assert!(eax != 0 || _ebx != 0 || _ecx != 0 || _edx != 0, "Brand string should not be empty");
+    assert!(
+        eax != 0 || _ebx != 0 || _ecx != 0 || _edx != 0,
+        "Brand string should not be empty"
+    );
 }
 
 #[test]
@@ -443,8 +458,8 @@ fn test_cpuid_extended_leaf_80000003_brand_string_2() {
     // EAX=0x80000003: Returns processor brand string part 2
     let code = [
         0xb8, 0x03, 0x00, 0x00, 0x80, // MOV EAX, 0x80000003
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -458,8 +473,8 @@ fn test_cpuid_extended_leaf_80000004_brand_string_3() {
     // EAX=0x80000004: Returns processor brand string part 3
     let code = [
         0xb8, 0x04, 0x00, 0x00, 0x80, // MOV EAX, 0x80000004
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -473,8 +488,8 @@ fn test_cpuid_extended_leaf_80000005_tlb_cache_info() {
     // EAX=0x80000005: Returns TLB and cache information
     let code = [
         0xb8, 0x05, 0x00, 0x00, 0x80, // MOV EAX, 0x80000005
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -491,8 +506,8 @@ fn test_cpuid_extended_leaf_80000006_cache_info() {
     // EAX=0x80000006: Returns extended cache information
     let code = [
         0xb8, 0x06, 0x00, 0x00, 0x80, // MOV EAX, 0x80000006
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -506,8 +521,8 @@ fn test_cpuid_extended_leaf_80000007_advanced_power_management() {
     // EAX=0x80000007: Returns advanced power management information
     let code = [
         0xb8, 0x07, 0x00, 0x00, 0x80, // MOV EAX, 0x80000007
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -521,8 +536,8 @@ fn test_cpuid_extended_leaf_80000008_virtual_addressing() {
     // EAX=0x80000008: Returns virtual/physical addressing information
     let code = [
         0xb8, 0x08, 0x00, 0x00, 0x80, // MOV EAX, 0x80000008
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -533,8 +548,14 @@ fn test_cpuid_extended_leaf_80000008_virtual_addressing() {
     let linear_addr_bits = (eax >> 8) & 0xFF;
 
     // Reasonable values for modern x86-64
-    assert!(phys_addr_bits >= 32 && phys_addr_bits <= 52, "Physical address bits should be 32-52");
-    assert!(linear_addr_bits >= 32 && linear_addr_bits <= 57, "Linear address bits should be 32-57");
+    assert!(
+        phys_addr_bits >= 32 && phys_addr_bits <= 52,
+        "Physical address bits should be 32-52"
+    );
+    assert!(
+        linear_addr_bits >= 32 && linear_addr_bits <= 57,
+        "Linear address bits should be 32-57"
+    );
 }
 
 // ===== VENDOR STRING TESTS =====
@@ -544,8 +565,8 @@ fn test_cpuid_vendor_string_extraction() {
     // Extract and verify vendor string can be read
     let code = [
         0xb8, 0x00, 0x00, 0x00, 0x00, // MOV EAX, 0
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -574,7 +595,10 @@ fn test_cpuid_vendor_string_extraction() {
 
     // At least some bytes should be printable ASCII
     let has_printable = vendor_bytes.iter().any(|&b| b >= 0x20 && b < 0x7F);
-    assert!(has_printable, "Vendor string should contain printable ASCII");
+    assert!(
+        has_printable,
+        "Vendor string should contain printable ASCII"
+    );
 }
 
 // ===== LEAF CONSISTENCY TESTS =====
@@ -584,11 +608,11 @@ fn test_cpuid_extended_leaf_is_not_lower_than_standard() {
     // Extended max leaf should be >= standard max leaf (with high bit)
     let code = [
         0xb8, 0x00, 0x00, 0x00, 0x00, // MOV EAX, 0 (standard max)
-        0x0f, 0xa2,                    // CPUID
-        0x89, 0xc3,                    // MOV EBX, EAX (save standard max)
+        0x0f, 0xa2, // CPUID
+        0x89, 0xc3, // MOV EBX, EAX (save standard max)
         0xb8, 0x00, 0x00, 0x00, 0x80, // MOV EAX, 0x80000000 (extended max)
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -599,7 +623,10 @@ fn test_cpuid_extended_leaf_is_not_lower_than_standard() {
     // Extended leaves (0x80000000+) are separate from standard leaves (0+)
     // Both should be valid
     assert!(standard_max <= 0x100, "Standard max should be reasonable");
-    assert!(extended_max >= 0x80000000, "Extended max should be >= 0x80000000");
+    assert!(
+        extended_max >= 0x80000000,
+        "Extended max should be >= 0x80000000"
+    );
 }
 
 #[test]
@@ -608,11 +635,11 @@ fn test_cpuid_returns_consistent_values_for_same_input() {
     // Note: CPUID modifies EAX, EBX, ECX, EDX, so save to RSI which is not touched
     let code = [
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1 (first call)
-        0x0f, 0xa2,                    // CPUID
-        0x89, 0xc6,                    // MOV ESI, EAX (save EAX from first call)
+        0x0f, 0xa2, // CPUID
+        0x89, 0xc6, // MOV ESI, EAX (save EAX from first call)
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1 (second call)
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -620,7 +647,10 @@ fn test_cpuid_returns_consistent_values_for_same_input() {
     // Both calls should return same EAX value
     let eax_second = regs.rax & 0xFFFFFFFF;
     let eax_first = regs.rsi & 0xFFFFFFFF;
-    assert_eq!(eax_first, eax_second, "CPUID should return consistent values");
+    assert_eq!(
+        eax_first, eax_second,
+        "CPUID should return consistent values"
+    );
 }
 
 #[test]
@@ -628,14 +658,14 @@ fn test_cpuid_multiple_leaves_execution() {
     // Execute CPUID for multiple different leaves sequentially
     let code = [
         0xb8, 0x00, 0x00, 0x00, 0x00, // MOV EAX, 0
-        0x0f, 0xa2,                    // CPUID (leaf 0)
+        0x0f, 0xa2, // CPUID (leaf 0)
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1
-        0x0f, 0xa2,                    // CPUID (leaf 1)
+        0x0f, 0xa2, // CPUID (leaf 1)
         0xb8, 0x02, 0x00, 0x00, 0x00, // MOV EAX, 2
-        0x0f, 0xa2,                    // CPUID (leaf 2)
+        0x0f, 0xa2, // CPUID (leaf 2)
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 3
-        0x0f, 0xa2,                    // CPUID (leaf 3)
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID (leaf 3)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -651,14 +681,13 @@ fn test_cpuid_ecx_subleaf_parameter() {
         // Call leaf 4 (deterministic cache) with ECX=0
         0xb8, 0x04, 0x00, 0x00, 0x00, // MOV EAX, 4
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0xa2,                    // CPUID
-        0x89, 0xc3,                    // MOV EBX, EAX (save result)
-
+        0x0f, 0xa2, // CPUID
+        0x89, 0xc3, // MOV EBX, EAX (save result)
         // Call leaf 4 with ECX=1
         0xb8, 0x04, 0x00, 0x00, 0x00, // MOV EAX, 4
         0xb9, 0x01, 0x00, 0x00, 0x00, // MOV ECX, 1
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -674,8 +703,8 @@ fn test_cpuid_high_order_bits_cleared_in_32bit_leaves() {
     // In 32-bit leaves, RAX should contain valid EAX, but upper bits may be garbage
     let code = [
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1
-        0x0f, 0xa2,                    // CPUID
-        0xf4,                          // HLT
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();

@@ -6,7 +6,7 @@
 //! of `imported/shift.idef` + `imported/macros.def`).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fimm_s, fimm_u, fld, SemCtx};
+use super::{SemCtx, fimm_s, fimm_u, fld};
 
 // ---- core shift primitives (mirror the spec f-macros) ---------------------
 
@@ -385,11 +385,15 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
 
         // ---- register-amount pair shift-accumulate ----
         Opcode::S2_asl_r_p_acc => {
-            let v = ctx.rp(rx).wrapping_add(bidir_ashiftl_8_8(sp(ctx), shamt(ctx)));
+            let v = ctx
+                .rp(rx)
+                .wrapping_add(bidir_ashiftl_8_8(sp(ctx), shamt(ctx)));
             ctx.set_rp(rx, v);
         }
         Opcode::S2_asl_r_p_nac => {
-            let v = ctx.rp(rx).wrapping_sub(bidir_ashiftl_8_8(sp(ctx), shamt(ctx)));
+            let v = ctx
+                .rp(rx)
+                .wrapping_sub(bidir_ashiftl_8_8(sp(ctx), shamt(ctx)));
             ctx.set_rp(rx, v);
         }
         Opcode::S2_asl_r_p_and => {
@@ -405,11 +409,15 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             ctx.set_rp(rx, v);
         }
         Opcode::S2_asr_r_p_acc => {
-            let v = ctx.rp(rx).wrapping_add(bidir_ashiftr_8_8(sp(ctx), shamt(ctx)));
+            let v = ctx
+                .rp(rx)
+                .wrapping_add(bidir_ashiftr_8_8(sp(ctx), shamt(ctx)));
             ctx.set_rp(rx, v);
         }
         Opcode::S2_asr_r_p_nac => {
-            let v = ctx.rp(rx).wrapping_sub(bidir_ashiftr_8_8(sp(ctx), shamt(ctx)));
+            let v = ctx
+                .rp(rx)
+                .wrapping_sub(bidir_ashiftr_8_8(sp(ctx), shamt(ctx)));
             ctx.set_rp(rx, v);
         }
         Opcode::S2_asr_r_p_and => {
@@ -425,11 +433,15 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             ctx.set_rp(rx, v);
         }
         Opcode::S2_lsr_r_p_acc => {
-            let v = ctx.rp(rx).wrapping_add(bidir_lshiftr_8_8(sp(ctx), shamt(ctx)));
+            let v = ctx
+                .rp(rx)
+                .wrapping_add(bidir_lshiftr_8_8(sp(ctx), shamt(ctx)));
             ctx.set_rp(rx, v);
         }
         Opcode::S2_lsr_r_p_nac => {
-            let v = ctx.rp(rx).wrapping_sub(bidir_lshiftr_8_8(sp(ctx), shamt(ctx)));
+            let v = ctx
+                .rp(rx)
+                .wrapping_sub(bidir_lshiftr_8_8(sp(ctx), shamt(ctx)));
             ctx.set_rp(rx, v);
         }
         Opcode::S2_lsr_r_p_and => {
@@ -445,11 +457,15 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             ctx.set_rp(rx, v);
         }
         Opcode::S2_lsl_r_p_acc => {
-            let v = ctx.rp(rx).wrapping_add(bidir_lshiftl_8_8(sp(ctx), shamt(ctx)));
+            let v = ctx
+                .rp(rx)
+                .wrapping_add(bidir_lshiftl_8_8(sp(ctx), shamt(ctx)));
             ctx.set_rp(rx, v);
         }
         Opcode::S2_lsl_r_p_nac => {
-            let v = ctx.rp(rx).wrapping_sub(bidir_lshiftl_8_8(sp(ctx), shamt(ctx)));
+            let v = ctx
+                .rp(rx)
+                .wrapping_sub(bidir_lshiftl_8_8(sp(ctx), shamt(ctx)));
             ctx.set_rp(rx, v);
         }
         Opcode::S2_lsl_r_p_and => {

@@ -52,7 +52,10 @@ fn test_repe_cmpsb_all_equal() {
     assert_eq!(regs.rcx, 0, "All bytes equal, should scan all");
     assert_eq!(regs.rsi, 0x3008);
     assert_eq!(regs.rdi, 0x4008);
-    assert!(zf_set(regs.rflags), "ZF should be set (last comparison equal)");
+    assert!(
+        zf_set(regs.rflags),
+        "ZF should be set (last comparison equal)"
+    );
 }
 
 #[test]
@@ -987,7 +990,11 @@ fn test_repe_cmpsq_alternating() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     for i in 0..8 {
-        let val = if i % 2 == 0 { 0x1111111111111111 } else { 0x2222222222222222 };
+        let val = if i % 2 == 0 {
+            0x1111111111111111
+        } else {
+            0x2222222222222222
+        };
         write_mem_at_u64(&mem, 0x3000 + i * 8, val);
         write_mem_at_u64(&mem, 0x4000 + i * 8, val);
     }

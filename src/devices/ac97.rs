@@ -822,7 +822,14 @@ impl IoDevice for Ac97Pio {
 mod tests {
     use super::*;
 
-    fn write_bd(mem: &mut VecMem, bdl_base: u64, index: u8, buf_addr: u32, samples: u16, ctrl: u16) {
+    fn write_bd(
+        mem: &mut VecMem,
+        bdl_base: u64,
+        index: u8,
+        buf_addr: u32,
+        samples: u16,
+        ctrl: u16,
+    ) {
         let gpa = bdl_base + u64::from(index) * BD_SIZE;
         let mut raw = [0u8; 8];
         raw[0..4].copy_from_slice(&buf_addr.to_le_bytes());
@@ -920,22 +927,10 @@ mod tests {
 
     #[test]
     fn nabm_channel_decode() {
-        assert_eq!(
-            Ac97::decode_channel(0x00),
-            Some((ChannelId::PcmIn, 0x00))
-        );
-        assert_eq!(
-            Ac97::decode_channel(0x10),
-            Some((ChannelId::PcmOut, 0x00))
-        );
-        assert_eq!(
-            Ac97::decode_channel(0x1B),
-            Some((ChannelId::PcmOut, 0x0B))
-        );
-        assert_eq!(
-            Ac97::decode_channel(0x20),
-            Some((ChannelId::MicIn, 0x00))
-        );
+        assert_eq!(Ac97::decode_channel(0x00), Some((ChannelId::PcmIn, 0x00)));
+        assert_eq!(Ac97::decode_channel(0x10), Some((ChannelId::PcmOut, 0x00)));
+        assert_eq!(Ac97::decode_channel(0x1B), Some((ChannelId::PcmOut, 0x0B)));
+        assert_eq!(Ac97::decode_channel(0x20), Some((ChannelId::MicIn, 0x00)));
         assert_eq!(Ac97::decode_channel(NABM_GLOB_CNT), None);
         assert_eq!(Ac97::decode_channel(NABM_GLOB_STA), None);
     }
@@ -1150,10 +1145,7 @@ mod tests {
         // Program LVI via the bus-master window.
         pio.write(0x1400 + NABM_PCM_OUT + CH_LVI, 0x03);
         assert_eq!(pio.read(0x1400 + NABM_PCM_OUT + CH_LVI), 0x03);
-        assert_eq!(
-            pio.device_ref().channel_state(ChannelId::PcmOut).lvi,
-            0x03
-        );
+        assert_eq!(pio.device_ref().channel_state(ChannelId::PcmOut).lvi, 0x03);
     }
 
     #[test]

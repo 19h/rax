@@ -12,7 +12,7 @@
 //! and mmvec/macros.def (fBIDIR_*SHIFT*, fSXTN, fCL1_*, fVROUND, fVSAT*).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fld, SemCtx};
+use super::{SemCtx, fld};
 
 /// 128-byte vector viewed as raw bytes (little-endian within each u32 word).
 type Bytes = [u8; 128];
@@ -194,28 +194,44 @@ fn vsatub(v: i64) -> u8 {
 #[inline]
 fn shr_round_s_w(src: u32, shamt: u32, round: bool) -> i64 {
     let v = src as i32 as i64;
-    let v = if round && shamt > 0 { v + (1i64 << (shamt - 1)) } else { v };
+    let v = if round && shamt > 0 {
+        v + (1i64 << (shamt - 1))
+    } else {
+        v
+    };
     v >> shamt
 }
 /// Unsigned-source word.
 #[inline]
 fn shr_round_u_w(src: u32, shamt: u32, round: bool) -> i64 {
     let v = src as u64 as i64;
-    let v = if round && shamt > 0 { v + (1i64 << (shamt - 1)) } else { v };
+    let v = if round && shamt > 0 {
+        v + (1i64 << (shamt - 1))
+    } else {
+        v
+    };
     v >> shamt
 }
 /// Signed-source half.
 #[inline]
 fn shr_round_s_h(src: u16, shamt: u32, round: bool) -> i64 {
     let v = src as i16 as i64;
-    let v = if round && shamt > 0 { v + (1i64 << (shamt - 1)) } else { v };
+    let v = if round && shamt > 0 {
+        v + (1i64 << (shamt - 1))
+    } else {
+        v
+    };
     v >> shamt
 }
 /// Unsigned-source half.
 #[inline]
 fn shr_round_u_h(src: u16, shamt: u32, round: bool) -> i64 {
     let v = src as u64 as i64;
-    let v = if round && shamt > 0 { v + (1i64 << (shamt - 1)) } else { v };
+    let v = if round && shamt > 0 {
+        v + (1i64 << (shamt - 1))
+    } else {
+        v
+    };
     v >> shamt
 }
 

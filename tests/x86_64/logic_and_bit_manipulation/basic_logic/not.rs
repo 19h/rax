@@ -93,7 +93,11 @@ fn test_not_preserves_high_bytes_8bit() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x87, "AL: NOT 0x78 = 0x87");
-    assert_eq!(regs.rax & !0xFF, 0xDEADBEEF_12345600, "Upper bytes preserved");
+    assert_eq!(
+        regs.rax & !0xFF,
+        0xDEADBEEF_12345600,
+        "Upper bytes preserved"
+    );
 }
 
 // ============================================================================
@@ -235,7 +239,10 @@ fn test_not_rax_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x00FF00FF00FF00FF, "RAX: invert alternating bytes");
+    assert_eq!(
+        regs.rax, 0x00FF00FF00FF00FF,
+        "RAX: invert alternating bytes"
+    );
 }
 
 #[test]
@@ -383,14 +390,22 @@ fn test_not_preserves_flags() {
     let mut regs = Registers::default();
     regs.rax = 0x00;
     // Set all flags
-    regs.rflags = 0x2 | flags::bits::CF | flags::bits::PF | flags::bits::AF |
-                  flags::bits::ZF | flags::bits::SF | flags::bits::OF;
+    regs.rflags = 0x2
+        | flags::bits::CF
+        | flags::bits::PF
+        | flags::bits::AF
+        | flags::bits::ZF
+        | flags::bits::SF
+        | flags::bits::OF;
     let initial_flags = regs.rflags;
 
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rflags, initial_flags, "NOT should not affect any flags");
+    assert_eq!(
+        regs.rflags, initial_flags,
+        "NOT should not affect any flags"
+    );
 }
 
 // ============================================================================
@@ -447,5 +462,9 @@ fn test_not_equivalent_to_xor_minus_one() {
     let (mut vcpu, _) = setup_vm(&code_xor, Some(regs));
     let regs_xor = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs_not.rax & 0xFF, regs_xor.rax & 0xFF, "NOT x = x XOR 0xFF");
+    assert_eq!(
+        regs_not.rax & 0xFF,
+        regs_xor.rax & 0xFF,
+        "NOT x = x XOR 0xFF"
+    );
 }

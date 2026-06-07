@@ -3,8 +3,8 @@
 #[test]
 #[cfg(all(feature = "kvm", target_os = "linux"))]
 fn test_kvm_vcpu_creation_with_gap() {
+    use kvm_bindings::{kvm_pit_config, kvm_userspace_memory_region};
     use kvm_ioctls::Kvm;
-    use kvm_bindings::{kvm_userspace_memory_region, kvm_pit_config};
     use std::os::unix::io::AsRawFd;
 
     println!("Opening KVM...");
@@ -47,13 +47,20 @@ fn test_kvm_vcpu_creation_with_gap() {
         userspace_addr: mem_ptr as u64,
         flags: 0,
     };
-    unsafe { vm.set_user_memory_region(mem_region0).expect("Failed to set slot 0") };
+    unsafe {
+        vm.set_user_memory_region(mem_region0)
+            .expect("Failed to set slot 0")
+    };
 
     // Slot 1: [1GB, 2GB) - still below the gap at 3GB
     let slot1_guest_start: u64 = 1024 * 1024 * 1024; // 1GB
     let slot1_size: u64 = 1024 * 1024 * 1024; // 1GB
     let slot1_host_addr = (mem_ptr as u64) + slot1_guest_start;
-    println!("Registering slot 1: [0x{:x}, 0x{:x})", slot1_guest_start, slot1_guest_start + slot1_size);
+    println!(
+        "Registering slot 1: [0x{:x}, 0x{:x})",
+        slot1_guest_start,
+        slot1_guest_start + slot1_size
+    );
     let mem_region1 = kvm_userspace_memory_region {
         slot: 1,
         guest_phys_addr: slot1_guest_start,
@@ -61,7 +68,10 @@ fn test_kvm_vcpu_creation_with_gap() {
         userspace_addr: slot1_host_addr,
         flags: 0,
     };
-    unsafe { vm.set_user_memory_region(mem_region1).expect("Failed to set slot 1") };
+    unsafe {
+        vm.set_user_memory_region(mem_region1)
+            .expect("Failed to set slot 1")
+    };
 
     // Create IRQ chip
     println!("Creating IRQ chip...");
@@ -69,17 +79,26 @@ fn test_kvm_vcpu_creation_with_gap() {
 
     // Create PIT2
     println!("Creating PIT2...");
-    vm.create_pit2(kvm_pit_config { flags: 0, pad: [0; 15] }).expect("Failed to create PIT2");
+    vm.create_pit2(kvm_pit_config {
+        flags: 0,
+        pad: [0; 15],
+    })
+    .expect("Failed to create PIT2");
 
     // Set TSS address (in the gap)
     let tss_addr = gap_start + 0x1000;
     println!("Setting TSS address at 0x{:x}...", tss_addr);
-    vm.set_tss_address(tss_addr as usize).expect("Failed to set TSS address");
+    vm.set_tss_address(tss_addr as usize)
+        .expect("Failed to set TSS address");
 
     // Set identity map address (in the gap)
     let identity_map_addr = gap_start;
-    println!("Setting identity map address at 0x{:x}...", identity_map_addr);
-    vm.set_identity_map_address(identity_map_addr).expect("Failed to set identity map address");
+    println!(
+        "Setting identity map address at 0x{:x}...",
+        identity_map_addr
+    );
+    vm.set_identity_map_address(identity_map_addr)
+        .expect("Failed to set identity map address");
 
     // Try to create vCPU
     println!("Creating vCPU 0...");
@@ -97,8 +116,8 @@ fn test_kvm_vcpu_creation_with_gap() {
 #[test]
 #[cfg(all(feature = "kvm", target_os = "linux"))]
 fn test_kvm_vcpu_creation_simple() {
+    use kvm_bindings::{kvm_pit_config, kvm_userspace_memory_region};
     use kvm_ioctls::Kvm;
-    use kvm_bindings::{kvm_userspace_memory_region, kvm_pit_config};
     use std::os::unix::io::AsRawFd;
 
     println!("Opening KVM...");
@@ -135,7 +154,10 @@ fn test_kvm_vcpu_creation_simple() {
         userspace_addr: mem_ptr as u64,
         flags: 0,
     };
-    unsafe { vm.set_user_memory_region(mem_region).expect("Failed to set memory region") };
+    unsafe {
+        vm.set_user_memory_region(mem_region)
+            .expect("Failed to set memory region")
+    };
     println!("  Memory registered: slot=0, guest=[0x0, 0x{:x})", mem_size);
 
     // Create IRQ chip FIRST
@@ -144,15 +166,21 @@ fn test_kvm_vcpu_creation_simple() {
 
     // Create PIT2
     println!("Creating PIT2...");
-    vm.create_pit2(kvm_pit_config { flags: 0, pad: [0; 15] }).expect("Failed to create PIT2");
+    vm.create_pit2(kvm_pit_config {
+        flags: 0,
+        pad: [0; 15],
+    })
+    .expect("Failed to create PIT2");
 
     // Set TSS address (at high address, well above our 64MB)
     println!("Setting TSS address at 0xfffbd000...");
-    vm.set_tss_address(0xfffbd000).expect("Failed to set TSS address");
+    vm.set_tss_address(0xfffbd000)
+        .expect("Failed to set TSS address");
 
     // Set identity map address (at high address)
     println!("Setting identity map address at 0xffffc000...");
-    vm.set_identity_map_address(0xffffc000).expect("Failed to set identity map address");
+    vm.set_identity_map_address(0xffffc000)
+        .expect("Failed to set identity map address");
 
     // Try to create vCPU
     println!("Creating vCPU 0...");

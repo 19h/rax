@@ -339,17 +339,12 @@ impl Pit {
                 let out = in_period < half.max(1);
                 // Count decrements by 2 each tick (approximated to the half-period
                 // window for the purpose of reads).
-                let pos_in_half = if out {
-                    in_period
-                } else {
-                    in_period - half
-                };
+                let pos_in_half = if out { in_period } else { in_period - half };
                 let span = if out { half.max(1) } else { period - half };
                 let remaining = span.saturating_sub(pos_in_half).max(1);
                 (Self::to_count(remaining * 2, period, ch.bcd), out)
             }
-            OperatingMode::SoftwareTriggeredStrobe
-            | OperatingMode::HardwareTriggeredStrobe => {
+            OperatingMode::SoftwareTriggeredStrobe | OperatingMode::HardwareTriggeredStrobe => {
                 // OUT high until terminal count, strobes low for exactly one tick.
                 if elapsed_ticks >= period as u64 {
                     let pos = (elapsed_ticks % period as u64) as u32;
@@ -377,10 +372,7 @@ impl Pit {
     /// Convert a binary value (0..=9999) into packed BCD.
     fn bin_to_bcd(mut v: u16) -> u16 {
         v %= 10000;
-        ((v / 1000) << 12)
-            | (((v / 100) % 10) << 8)
-            | (((v / 10) % 10) << 4)
-            | (v % 10)
+        ((v / 1000) << 12) | (((v / 100) % 10) << 8) | (((v / 10) % 10) << 4) | (v % 10)
     }
 
     /// Convert packed BCD back into binary (for written reload values).
@@ -720,7 +712,7 @@ mod tests {
             (0x36, OperatingMode::SquareWaveGenerator),
             (0x38, OperatingMode::SoftwareTriggeredStrobe),
             (0x3A, OperatingMode::HardwareTriggeredStrobe),
-            (0x3C, OperatingMode::RateGenerator),     // mode 6 -> 2
+            (0x3C, OperatingMode::RateGenerator), // mode 6 -> 2
             (0x3E, OperatingMode::SquareWaveGenerator), // mode 7 -> 3
         ];
         for (cmd, expected) in cases {
@@ -1044,19 +1036,46 @@ mod tests {
         pit.channels[0].count = period as u16;
 
         // First half (0..500) -> OUT high.
-        assert!(pit.compute_from_ticks(0, 0).1, "start of first half OUT high");
-        assert!(pit.compute_from_ticks(0, 250).1, "middle of first half OUT high");
-        assert!(pit.compute_from_ticks(0, 499).1, "end of first half OUT high");
+        assert!(
+            pit.compute_from_ticks(0, 0).1,
+            "start of first half OUT high"
+        );
+        assert!(
+            pit.compute_from_ticks(0, 250).1,
+            "middle of first half OUT high"
+        );
+        assert!(
+            pit.compute_from_ticks(0, 499).1,
+            "end of first half OUT high"
+        );
 
         // Second half (500..1000) -> OUT low.
-        assert!(!pit.compute_from_ticks(0, 500).1, "start of second half OUT low");
-        assert!(!pit.compute_from_ticks(0, 750).1, "middle of second half OUT low");
-        assert!(!pit.compute_from_ticks(0, 999).1, "end of second half OUT low");
+        assert!(
+            !pit.compute_from_ticks(0, 500).1,
+            "start of second half OUT low"
+        );
+        assert!(
+            !pit.compute_from_ticks(0, 750).1,
+            "middle of second half OUT low"
+        );
+        assert!(
+            !pit.compute_from_ticks(0, 999).1,
+            "end of second half OUT low"
+        );
 
         // Next cycle wraps back to high.
-        assert!(pit.compute_from_ticks(0, 1000).1, "next cycle first half OUT high");
-        assert!(pit.compute_from_ticks(0, 1250).1, "next cycle first half OUT high");
-        assert!(!pit.compute_from_ticks(0, 1500).1, "next cycle second half OUT low");
+        assert!(
+            pit.compute_from_ticks(0, 1000).1,
+            "next cycle first half OUT high"
+        );
+        assert!(
+            pit.compute_from_ticks(0, 1250).1,
+            "next cycle first half OUT high"
+        );
+        assert!(
+            !pit.compute_from_ticks(0, 1500).1,
+            "next cycle second half OUT low"
+        );
     }
 
     #[test]
@@ -1083,7 +1102,10 @@ mod tests {
         assert_eq!(count_lo, 1);
 
         // Then reloads and OUT is high again next cycle.
-        assert!(pit.compute_from_ticks(0, period).1, "OUT high again after reload");
+        assert!(
+            pit.compute_from_ticks(0, period).1,
+            "OUT high again after reload"
+        );
     }
 
     #[test]
@@ -1100,10 +1122,16 @@ mod tests {
         assert!(pit.compute_from_ticks(0, 50).1, "mode 4 OUT high mid-count");
 
         // Strobes low for exactly the terminal-count tick.
-        assert!(!pit.compute_from_ticks(0, period).1, "mode 4 strobes low at TC");
+        assert!(
+            !pit.compute_from_ticks(0, period).1,
+            "mode 4 strobes low at TC"
+        );
 
         // Returns high on the following tick.
-        assert!(pit.compute_from_ticks(0, period + 1).1, "mode 4 OUT high after strobe");
+        assert!(
+            pit.compute_from_ticks(0, period + 1).1,
+            "mode 4 OUT high after strobe"
+        );
     }
 
     // ========== Channel 2 gate / OUT wiring ==========

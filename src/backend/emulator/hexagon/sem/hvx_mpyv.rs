@@ -7,7 +7,7 @@
 //! (tests/hexagon_hvx_diff.rs).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fld, SemCtx};
+use super::{SemCtx, fld};
 
 type Bytes = [u8; 128];
 
@@ -109,7 +109,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let vv = to_bytes(&ctx.vread(fld(d, b'v')));
             let acc = matches!(op, Opcode::V6_vmpybv_acc);
             let rd = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let (mut lo, mut hi) = if acc { read_pair(ctx, rd) } else { ([0u8; 128], [0u8; 128]) };
+            let (mut lo, mut hi) = if acc {
+                read_pair(ctx, rd)
+            } else {
+                ([0u8; 128], [0u8; 128])
+            };
             for i in 0..64 {
                 let p0 = get_b(&vu, 2 * i) * get_b(&vv, 2 * i);
                 let p1 = get_b(&vu, 2 * i + 1) * get_b(&vv, 2 * i + 1);
@@ -126,7 +130,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let vv = to_bytes(&ctx.vread(fld(d, b'v')));
             let acc = matches!(op, Opcode::V6_vmpybusv_acc);
             let rd = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let (mut lo, mut hi) = if acc { read_pair(ctx, rd) } else { ([0u8; 128], [0u8; 128]) };
+            let (mut lo, mut hi) = if acc {
+                read_pair(ctx, rd)
+            } else {
+                ([0u8; 128], [0u8; 128])
+            };
             for i in 0..64 {
                 let p0 = get_ub(&vu, 2 * i) * get_b(&vv, 2 * i);
                 let p1 = get_ub(&vu, 2 * i + 1) * get_b(&vv, 2 * i + 1);
@@ -143,7 +151,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let vv = to_bytes(&ctx.vread(fld(d, b'v')));
             let acc = matches!(op, Opcode::V6_vmpyubv_acc);
             let rd = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let (mut lo, mut hi) = if acc { read_pair(ctx, rd) } else { ([0u8; 128], [0u8; 128]) };
+            let (mut lo, mut hi) = if acc {
+                read_pair(ctx, rd)
+            } else {
+                ([0u8; 128], [0u8; 128])
+            };
             for i in 0..64 {
                 let p0 = get_ub(&vu, 2 * i) * get_ub(&vv, 2 * i);
                 let p1 = get_ub(&vu, 2 * i + 1) * get_ub(&vv, 2 * i + 1);
@@ -160,7 +172,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let vv = to_bytes(&ctx.vread(fld(d, b'v')));
             let acc = matches!(op, Opcode::V6_vmpyhv_acc);
             let rd = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let (mut lo, mut hi) = if acc { read_pair(ctx, rd) } else { ([0u8; 128], [0u8; 128]) };
+            let (mut lo, mut hi) = if acc {
+                read_pair(ctx, rd)
+            } else {
+                ([0u8; 128], [0u8; 128])
+            };
             for i in 0..32 {
                 let p0 = get_h(&vu, 2 * i) as i64 * get_h(&vv, 2 * i) as i64;
                 let p1 = get_h(&vu, 2 * i + 1) as i64 * get_h(&vv, 2 * i + 1) as i64;
@@ -177,7 +193,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let vv = to_bytes(&ctx.vread(fld(d, b'v')));
             let acc = matches!(op, Opcode::V6_vmpyhus_acc);
             let rd = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let (mut lo, mut hi) = if acc { read_pair(ctx, rd) } else { ([0u8; 128], [0u8; 128]) };
+            let (mut lo, mut hi) = if acc {
+                read_pair(ctx, rd)
+            } else {
+                ([0u8; 128], [0u8; 128])
+            };
             for i in 0..32 {
                 let p0 = get_h(&vu, 2 * i) as i64 * get_uh(&vv, 2 * i) as i64;
                 let p1 = get_h(&vu, 2 * i + 1) as i64 * get_uh(&vv, 2 * i + 1) as i64;
@@ -194,7 +214,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let vv = to_bytes(&ctx.vread(fld(d, b'v')));
             let acc = matches!(op, Opcode::V6_vmpyuhv_acc);
             let rd = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let (mut lo, mut hi) = if acc { read_pair(ctx, rd) } else { ([0u8; 128], [0u8; 128]) };
+            let (mut lo, mut hi) = if acc {
+                read_pair(ctx, rd)
+            } else {
+                ([0u8; 128], [0u8; 128])
+            };
             for i in 0..32 {
                 let p0 = get_uh(&vu, 2 * i) as i64 * get_uh(&vv, 2 * i) as i64;
                 let p1 = get_uh(&vu, 2 * i + 1) as i64 * get_uh(&vv, 2 * i + 1) as i64;
@@ -230,7 +254,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let rt = ctx.r(fld(d, b't'));
             let acc = matches!(op, Opcode::V6_vmpybus_acc);
             let rd = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let (mut lo, mut hi) = if acc { read_pair(ctx, rd) } else { ([0u8; 128], [0u8; 128]) };
+            let (mut lo, mut hi) = if acc {
+                read_pair(ctx, rd)
+            } else {
+                ([0u8; 128], [0u8; 128])
+            };
             for i in 0..64 {
                 let p0 = get_ub(&vu, 2 * i) * rt_byte(rt, (2 * i) % 4);
                 let p1 = get_ub(&vu, 2 * i + 1) * rt_byte(rt, (2 * i + 1) % 4);
@@ -247,7 +275,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let rt = ctx.r(fld(d, b't'));
             let acc = matches!(op, Opcode::V6_vmpyub_acc);
             let rd = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let (mut lo, mut hi) = if acc { read_pair(ctx, rd) } else { ([0u8; 128], [0u8; 128]) };
+            let (mut lo, mut hi) = if acc {
+                read_pair(ctx, rd)
+            } else {
+                ([0u8; 128], [0u8; 128])
+            };
             for i in 0..64 {
                 let p0 = get_ub(&vu, 2 * i) * rt_ubyte(rt, (2 * i) % 4);
                 let p1 = get_ub(&vu, 2 * i + 1) * rt_ubyte(rt, (2 * i + 1) % 4);
@@ -265,7 +297,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let rt = ctx.r(fld(d, b't'));
             let acc = matches!(op, Opcode::V6_vmpyh_acc);
             let rd = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let (mut lo, mut hi) = if acc { read_pair(ctx, rd) } else { ([0u8; 128], [0u8; 128]) };
+            let (mut lo, mut hi) = if acc {
+                read_pair(ctx, rd)
+            } else {
+                ([0u8; 128], [0u8; 128])
+            };
             for i in 0..32 {
                 let p0 = get_h(&vu, 2 * i) as i64 * rt_half(rt, 0) as i64;
                 let p1 = get_h(&vu, 2 * i + 1) as i64 * rt_half(rt, 1) as i64;
@@ -298,7 +334,11 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let rt = ctx.r(fld(d, b't'));
             let acc = matches!(op, Opcode::V6_vmpyuh_acc);
             let rd = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let (mut lo, mut hi) = if acc { read_pair(ctx, rd) } else { ([0u8; 128], [0u8; 128]) };
+            let (mut lo, mut hi) = if acc {
+                read_pair(ctx, rd)
+            } else {
+                ([0u8; 128], [0u8; 128])
+            };
             for i in 0..32 {
                 let p0 = get_uh(&vu, 2 * i) as i64 * rt_uhalf(rt, 0) as i64;
                 let p1 = get_uh(&vu, 2 * i + 1) as i64 * rt_uhalf(rt, 1) as i64;

@@ -102,7 +102,9 @@ fn test_vpmaddwd_ymm0_ymm1_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = (0..16).flat_map(|i| ((i as u16) * 0x0101).to_le_bytes()).collect();
+    let data: Vec<u8> = (0..16)
+        .flat_map(|i| ((i as u16) * 0x0101).to_le_bytes())
+        .collect();
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -118,7 +120,15 @@ fn test_vpmaddwd_ymm2_ymm3_mem_max() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -149,8 +159,11 @@ fn test_vpmaddwd_ymm6_ymm7_mem_alternating() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let pattern: Vec<u8> = (0..16).flat_map(|i| if i % 2 == 0 { 0x0001u16 } else { 0xFFFFu16 }.to_le_bytes()).collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let pattern: Vec<u8> = (0..16)
+        .flat_map(|i| if i % 2 == 0 { 0x0001u16 } else { 0xFFFFu16 }.to_le_bytes())
+        .collect();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -248,7 +261,15 @@ fn test_vpmaddwd_mem_unaligned_offset() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(
+        &[
+            0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42,
+            0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42,
+            0x42, 0x42, 0x42, 0x42, 0x42,
+        ],
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -294,7 +315,9 @@ fn test_vpmaddwd_identity_multiply() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = (0..16).flat_map(|i| if i % 2 == 0 { 0x0001u16 } else { 0x0000u16 }.to_le_bytes()).collect();
+    let data: Vec<u8> = (0..16)
+        .flat_map(|i| if i % 2 == 0 { 0x0001u16 } else { 0x0000u16 }.to_le_bytes())
+        .collect();
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -328,15 +351,20 @@ fn test_vpmaddwd_boundary_values() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let boundary: Vec<u8> = vec![
-        0x0000u16, 0x0001u16, 0x7FFFu16, 0x8000u16,
-        0x8001u16, 0xFFFEu16, 0xFFFFu16, 0x0000u16,
-    ].into_iter().flat_map(|v| v.to_le_bytes()).chain(
+        0x0000u16, 0x0001u16, 0x7FFFu16, 0x8000u16, 0x8001u16, 0xFFFEu16, 0xFFFFu16, 0x0000u16,
+    ]
+    .into_iter()
+    .flat_map(|v| v.to_le_bytes())
+    .chain(
         vec![
-            0x0000u16, 0x0001u16, 0x7FFFu16, 0x8000u16,
-            0x8001u16, 0xFFFEu16, 0xFFFFu16, 0x0000u16,
-        ].into_iter().flat_map(|v| v.to_le_bytes())
-    ).collect();
-    mem.write_slice(&boundary, GuestAddress(ALIGNED_ADDR)).unwrap();
+            0x0000u16, 0x0001u16, 0x7FFFu16, 0x8000u16, 0x8001u16, 0xFFFEu16, 0xFFFFu16, 0x0000u16,
+        ]
+        .into_iter()
+        .flat_map(|v| v.to_le_bytes()),
+    )
+    .collect();
+    mem.write_slice(&boundary, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -351,8 +379,11 @@ fn test_vpmaddwd_powers_of_two() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let powers: Vec<u8> = (0..16).flat_map(|i| (1u16 << (i % 15)).to_le_bytes()).collect();
-    mem.write_slice(&powers, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let powers: Vec<u8> = (0..16)
+        .flat_map(|i| (1u16 << (i % 15)).to_le_bytes())
+        .collect();
+    mem.write_slice(&powers, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -368,10 +399,11 @@ fn test_vpmaddwd_alternating_signs() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let pattern: Vec<u8> = (0..16).flat_map(|i|
-        if i % 2 == 0 { 0x0002u16 } else { 0xFFFEu16 }.to_le_bytes()
-    ).collect();
-    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let pattern: Vec<u8> = (0..16)
+        .flat_map(|i| if i % 2 == 0 { 0x0002u16 } else { 0xFFFEu16 }.to_le_bytes())
+        .collect();
+    mem.write_slice(&pattern, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -387,7 +419,8 @@ fn test_vpmaddwd_sequential_pattern() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let sequential: Vec<u8> = (1..=16).flat_map(|i| (i as u16).to_le_bytes()).collect();
-    mem.write_slice(&sequential, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&sequential, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -402,8 +435,12 @@ fn test_vpmaddwd_reverse_sequential() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let reverse: Vec<u8> = (1..=16).rev().flat_map(|i| (i as u16).to_le_bytes()).collect();
-    mem.write_slice(&reverse, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let reverse: Vec<u8> = (1..=16)
+        .rev()
+        .flat_map(|i| (i as u16).to_le_bytes())
+        .collect();
+    mem.write_slice(&reverse, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -419,12 +456,12 @@ fn test_vpmaddwd_symmetric_pattern() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let symmetric: Vec<u8> = vec![
-        0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00,
-        0x04, 0x00, 0x03, 0x00, 0x02, 0x00, 0x01, 0x00,
-        0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00,
-        0x04, 0x00, 0x03, 0x00, 0x02, 0x00, 0x01, 0x00,
+        0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x04, 0x00, 0x03, 0x00, 0x02, 0x00, 0x01,
+        0x00, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x04, 0x00, 0x03, 0x00, 0x02, 0x00,
+        0x01, 0x00,
     ];
-    mem.write_slice(&symmetric, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&symmetric, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -477,7 +514,8 @@ fn test_vpmaddwd_mixed_magnitudes() {
     let mixed: Vec<u8> = vec![
         0x01, 0x00, 0xFF, 0x0F, // 1, 4095
         0x00, 0x10, 0x01, 0x00, // 4096, 1
-    ].repeat(4);
+    ]
+    .repeat(4);
     mem.write_slice(&mixed, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -494,8 +532,11 @@ fn test_vpmaddwd_dot_product_pattern() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let dot_product: Vec<u8> = (0..16).flat_map(|i| ((i % 8) as u16 + 1).to_le_bytes()).collect();
-    mem.write_slice(&dot_product, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let dot_product: Vec<u8> = (0..16)
+        .flat_map(|i| ((i % 8) as u16 + 1).to_le_bytes())
+        .collect();
+    mem.write_slice(&dot_product, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -510,10 +551,11 @@ fn test_vpmaddwd_checkerboard() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let checkerboard: Vec<u8> = (0..16).flat_map(|i|
-        if i % 2 == 0 { 0x5555u16 } else { 0xAAAAu16 }.to_le_bytes()
-    ).collect();
-    mem.write_slice(&checkerboard, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let checkerboard: Vec<u8> = (0..16)
+        .flat_map(|i| if i % 2 == 0 { 0x5555u16 } else { 0xAAAAu16 }.to_le_bytes())
+        .collect();
+    mem.write_slice(&checkerboard, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

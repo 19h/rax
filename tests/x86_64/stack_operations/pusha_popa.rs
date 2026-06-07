@@ -23,8 +23,8 @@ fn test_pushad_basic_saves_all_registers() {
     // PUSHAD should push all 8 general-purpose 32-bit registers
     // Allocate sufficient stack space: 8 registers * 4 bytes = 32 bytes
     let code = [
-        0x66, 0x60,     // PUSHAD (with operand-size prefix for 32-bit)
-        0xf4,           // HLT
+        0x66, 0x60, // PUSHAD (with operand-size prefix for 32-bit)
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x11111111;
@@ -60,8 +60,8 @@ fn test_pushad_basic_saves_all_registers() {
 fn test_pushad_preserves_all_register_values() {
     // PUSHAD doesn't modify register values
     let code = [
-        0x66, 0x60,     // PUSHAD
-        0xf4,           // HLT
+        0x66, 0x60, // PUSHAD
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0xAAAAAAAA;
@@ -90,8 +90,8 @@ fn test_pushad_preserves_all_register_values() {
 fn test_pushad_decrements_stack_pointer() {
     // PUSHAD should decrement RSP by 32 (8 registers * 4 bytes)
     let code = [
-        0x66, 0x60,     // PUSHAD
-        0xf4,           // HLT
+        0x66, 0x60, // PUSHAD
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x8000;
@@ -100,15 +100,19 @@ fn test_pushad_decrements_stack_pointer() {
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // RSP should be decremented by 32 bytes
-    assert_eq!(result_regs.rsp, 0x8000 - 32, "RSP should be decremented by 32");
+    assert_eq!(
+        result_regs.rsp,
+        0x8000 - 32,
+        "RSP should be decremented by 32"
+    );
 }
 
 #[test]
 fn test_pushad_saves_original_sp_not_modified_sp() {
     // PUSHAD saves the original SP value before any pushes
     let code = [
-        0x66, 0x60,     // PUSHAD (saves original ESP)
-        0xf4,           // HLT
+        0x66, 0x60, // PUSHAD (saves original ESP)
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x8000;
@@ -119,15 +123,18 @@ fn test_pushad_saves_original_sp_not_modified_sp() {
     // The original ESP (0x8000) should be on the stack at position [ESP-16]
     // Stack layout: [ESP-32]=DI, [ESP-28]=SI, [ESP-24]=BP, [ESP-20]=original_ESP, [ESP-16]=BX, etc.
     let original_esp_on_stack = read_mem_at_u32(&mem, 0x8000 - 20);
-    assert_eq!(original_esp_on_stack, 0x8000, "Original ESP should be saved on stack");
+    assert_eq!(
+        original_esp_on_stack, 0x8000,
+        "Original ESP should be saved on stack"
+    );
 }
 
 #[test]
 fn test_pushad_with_zero_registers() {
     // PUSHAD with all zero registers
     let code = [
-        0x66, 0x60,     // PUSHAD
-        0xf4,           // HLT
+        0x66, 0x60, // PUSHAD
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0;
@@ -151,8 +158,8 @@ fn test_pushad_with_zero_registers() {
 fn test_pushad_with_max_registers() {
     // PUSHAD with 32-bit max values
     let code = [
-        0x66, 0x60,     // PUSHAD
-        0xf4,           // HLT
+        0x66, 0x60, // PUSHAD
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0xFFFFFFFF;
@@ -176,9 +183,9 @@ fn test_pushad_with_max_registers() {
 fn test_pushad_does_not_modify_flags() {
     // PUSHAD should not modify any flags
     let code = [
-        0xf9,           // STC (set carry flag)
-        0x66, 0x60,     // PUSHAD
-        0xf4,           // HLT
+        0xf9, // STC (set carry flag)
+        0x66, 0x60, // PUSHAD
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rflags = 0x2 | 1; // Reserve bit 1 set, plus CF
@@ -200,7 +207,7 @@ fn test_popad_restores_registers() {
     // Note: setup_vm_compat uses CS.D=0 (16-bit default), so 0x66 prefix needed for 32-bit ops
     let code = [
         // First push known values
-        0x66, 0x60,     // PUSHAD (saves current registers)
+        0x66, 0x60, // PUSHAD (saves current registers)
         0x66, 0xb8, 0x11, 0x11, 0x11, 0x11, // MOV EAX, 0x11111111
         0x66, 0xbb, 0x22, 0x22, 0x22, 0x22, // MOV EBX, 0x22222222
         0x66, 0xb9, 0x33, 0x33, 0x33, 0x33, // MOV ECX, 0x33333333
@@ -209,8 +216,8 @@ fn test_popad_restores_registers() {
         0x66, 0xbf, 0x66, 0x66, 0x66, 0x66, // MOV EDI, 0x66666666
         0x66, 0xbd, 0x77, 0x77, 0x77, 0x77, // MOV EBP, 0x77777777
         // Now restore original values
-        0x66, 0x61,     // POPAD
-        0xf4,           // HLT
+        0x66, 0x61, // POPAD
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0xAAAAAAAA;
@@ -239,9 +246,9 @@ fn test_popad_restores_registers() {
 fn test_popad_increments_stack_pointer() {
     // POPAD should increment RSP by 32 (8 registers * 4 bytes)
     let code = [
-        0x66, 0x60,     // PUSHAD
-        0x66, 0x61,     // POPAD
-        0xf4,           // HLT
+        0x66, 0x60, // PUSHAD
+        0x66, 0x61, // POPAD
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x8000;
@@ -257,11 +264,12 @@ fn test_popad_increments_stack_pointer() {
 fn test_popad_ignores_sp_on_stack() {
     // POPAD should ignore (skip) the SP value on the stack
     let code = [
-        0x66, 0x60,     // PUSHAD (saves ESP)
+        0x66, 0x60, // PUSHAD (saves ESP)
         0x48, 0x83, 0xec, 0x20, // SUB RSP, 32 (make space)
-        0x48, 0xc7, 0x84, 0x24, 0x00, 0xff, 0xff, 0xff, 0xEF, 0xBE, 0xAD, 0xDE, // MOV QWORD [RSP+offset], 0xDEADBEEF (corrupted ESP on stack)
-        0x66, 0x61,     // POPAD (should ignore the corrupted SP value)
-        0xf4,           // HLT
+        0x48, 0xc7, 0x84, 0x24, 0x00, 0xff, 0xff, 0xff, 0xEF, 0xBE, 0xAD,
+        0xDE, // MOV QWORD [RSP+offset], 0xDEADBEEF (corrupted ESP on stack)
+        0x66, 0x61, // POPAD (should ignore the corrupted SP value)
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x8000;
@@ -279,11 +287,11 @@ fn test_pusha_popa_roundtrip() {
     // PUSHA followed by POPA should preserve all values
     // Note: setup_vm_compat uses CS.D=0 (16-bit default), so 0x66 prefix needed for 32-bit ops
     let code = [
-        0x66, 0x60,     // PUSHAD
+        0x66, 0x60, // PUSHAD
         0x66, 0xb8, 0x11, 0x22, 0x33, 0x44, // MOV EAX, 0x44332211
         0x66, 0xbb, 0x55, 0x66, 0x77, 0x88, // MOV EBX, 0x88776655
-        0x66, 0x61,     // POPAD (restore original)
-        0xf4,           // HLT
+        0x66, 0x61, // POPAD (restore original)
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0xAAAAAAAA;
@@ -294,21 +302,29 @@ fn test_pusha_popa_roundtrip() {
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // After PUSHAD + modifications + POPAD, original values should be restored
-    assert_eq!(result_regs.rax & 0xFFFFFFFF, 0xAAAAAAAA, "RAX restored after POPAD");
-    assert_eq!(result_regs.rbx & 0xFFFFFFFF, 0xBBBBBBBB, "RBX restored after POPAD");
+    assert_eq!(
+        result_regs.rax & 0xFFFFFFFF,
+        0xAAAAAAAA,
+        "RAX restored after POPAD"
+    );
+    assert_eq!(
+        result_regs.rbx & 0xFFFFFFFF,
+        0xBBBBBBBB,
+        "RBX restored after POPAD"
+    );
 }
 
 #[test]
 fn test_pushad_popa_multiple_times() {
     // Multiple consecutive PUSHAD/POPAD pairs
     let code = [
-        0x66, 0x60,     // PUSHAD
-        0x66, 0x61,     // POPAD
-        0x66, 0x60,     // PUSHAD
-        0x66, 0x61,     // POPAD
-        0x66, 0x60,     // PUSHAD
-        0x66, 0x61,     // POPAD
-        0xf4,           // HLT
+        0x66, 0x60, // PUSHAD
+        0x66, 0x61, // POPAD
+        0x66, 0x60, // PUSHAD
+        0x66, 0x61, // POPAD
+        0x66, 0x60, // PUSHAD
+        0x66, 0x61, // POPAD
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x12345678;
@@ -327,11 +343,11 @@ fn test_pushad_popa_with_alternating_modification() {
     // PUSHAD, modify registers, POPAD, verify restoration
     // Note: setup_vm_compat uses CS.D=0 (16-bit default), so 0x66 prefix needed for 32-bit ops
     let code = [
-        0x66, 0x60,     // PUSHAD (save state 1)
+        0x66, 0x60, // PUSHAD (save state 1)
         0x66, 0xb8, 0xFF, 0xFF, 0xFF, 0xFF, // MOV EAX, 0xFFFFFFFF (modify)
-        0x66, 0x61,     // POPAD (restore state 1)
-        0x66, 0x89, 0xc1,     // MOV ECX, EAX (copy to ECX for verification)
-        0xf4,           // HLT
+        0x66, 0x61, // POPAD (restore state 1)
+        0x66, 0x89, 0xc1, // MOV ECX, EAX (copy to ECX for verification)
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x11111111;
@@ -343,17 +359,21 @@ fn test_pushad_popa_with_alternating_modification() {
     // EAX should be restored to original value
     assert_eq!(result_regs.rax & 0xFFFFFFFF, 0x11111111, "RAX restored");
     // ECX should also have the restored value
-    assert_eq!(result_regs.rcx & 0xFFFFFFFF, 0x11111111, "ECX contains restored value");
+    assert_eq!(
+        result_regs.rcx & 0xFFFFFFFF,
+        0x11111111,
+        "ECX contains restored value"
+    );
 }
 
 #[test]
 fn test_pushad_popa_does_not_affect_flags() {
     // PUSHAD and POPAD should not affect flags
     let code = [
-        0xf9,           // STC (set carry flag)
-        0x66, 0x60,     // PUSHAD
-        0x66, 0x61,     // POPAD
-        0xf4,           // HLT
+        0xf9, // STC (set carry flag)
+        0x66, 0x60, // PUSHAD
+        0x66, 0x61, // POPAD
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rflags = 0x2 | 1; // CF set
@@ -370,8 +390,8 @@ fn test_pushad_popa_does_not_affect_flags() {
 fn test_pushad_popa_stack_alignment() {
     // PUSHAD/POPAD should maintain proper stack alignment
     let code = [
-        0x66, 0x60,     // PUSHAD (RSP -= 32)
-        0xf4,           // HLT
+        0x66, 0x60, // PUSHAD (RSP -= 32)
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x8000; // 16-byte aligned
@@ -388,8 +408,8 @@ fn test_pushad_popa_stack_alignment() {
 fn test_pushad_with_different_register_patterns() {
     // Test PUSHAD with specific register value patterns
     let code = [
-        0x66, 0x60,     // PUSHAD
-        0xf4,           // HLT
+        0x66, 0x60, // PUSHAD
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x5A5A5A5A;
@@ -424,14 +444,14 @@ fn test_popad_overwrites_current_values() {
     // Note: setup_vm_compat uses CS.D=0 (16-bit default), so 0x66 prefix needed for 32-bit ops
     let code = [
         // Pre-load stack with known values via PUSHAD
-        0x66, 0x60,     // PUSHAD
+        0x66, 0x60, // PUSHAD
         // Now the original register values are on stack
         // Load different values into registers
         0x66, 0xb8, 0x99, 0x99, 0x99, 0x99, // MOV EAX, 0x99999999
         0x66, 0xbb, 0x88, 0x88, 0x88, 0x88, // MOV EBX, 0x88888888
         // Pop the original values back
-        0x66, 0x61,     // POPAD
-        0xf4,           // HLT
+        0x66, 0x61, // POPAD
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x11111111;
@@ -442,17 +462,25 @@ fn test_popad_overwrites_current_values() {
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Even though we set EAX to 0x99999999, POPAD should restore 0x11111111
-    assert_eq!(result_regs.rax & 0xFFFFFFFF, 0x11111111, "POPAD overwrites EAX");
-    assert_eq!(result_regs.rbx & 0xFFFFFFFF, 0x22222222, "POPAD overwrites EBX");
+    assert_eq!(
+        result_regs.rax & 0xFFFFFFFF,
+        0x11111111,
+        "POPAD overwrites EAX"
+    );
+    assert_eq!(
+        result_regs.rbx & 0xFFFFFFFF,
+        0x22222222,
+        "POPAD overwrites EBX"
+    );
 }
 
 #[test]
 fn test_pushad_popa_preserves_higher_bits_in_64bit() {
     // In 64-bit mode, only lower 32 bits of registers are involved in PUSHAD/POPAD
     let code = [
-        0x66, 0x60,     // PUSHAD
-        0x66, 0x61,     // POPAD
-        0xf4,           // HLT
+        0x66, 0x60, // PUSHAD
+        0x66, 0x61, // POPAD
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x1111111111111111u64;
@@ -462,9 +490,17 @@ fn test_pushad_popa_preserves_higher_bits_in_64bit() {
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // The lower 32 bits should be unchanged (PUSHAD/POPAD in 32-bit mode)
-    assert_eq!(result_regs.rax & 0xFFFFFFFF, 0x11111111, "Lower 32 bits unchanged");
+    assert_eq!(
+        result_regs.rax & 0xFFFFFFFF,
+        0x11111111,
+        "Lower 32 bits unchanged"
+    );
     // Upper 32 bits should also be unchanged
-    assert_eq!(result_regs.rax >> 32, 0x11111111u64, "Upper 32 bits unchanged");
+    assert_eq!(
+        result_regs.rax >> 32,
+        0x11111111u64,
+        "Upper 32 bits unchanged"
+    );
 }
 
 #[test]
@@ -472,8 +508,8 @@ fn test_pushad_does_not_fault_with_various_rsp() {
     // Test PUSHAD with various RSP values
     for rsp_val in &[0x8000u64, 0x9000u64, 0x10000u64, 0xFFF0u64] {
         let code = [
-            0x66, 0x60,     // PUSHAD
-            0xf4,           // HLT
+            0x66, 0x60, // PUSHAD
+            0xf4, // HLT
         ];
         let mut regs = Registers::default();
         regs.rsp = *rsp_val;
@@ -481,7 +517,11 @@ fn test_pushad_does_not_fault_with_various_rsp() {
         let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(result_regs.rsp, rsp_val - 32, "RSP decremented correctly for RSP={:x}", rsp_val);
+        assert_eq!(
+            result_regs.rsp,
+            rsp_val - 32,
+            "RSP decremented correctly for RSP={:x}",
+            rsp_val
+        );
     }
 }
-

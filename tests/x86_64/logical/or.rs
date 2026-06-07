@@ -1,5 +1,5 @@
-use crate::common::{run_until_hlt, setup_vm};
 use crate::common::*;
+use crate::common::{run_until_hlt, setup_vm};
 use rax::backend::emulator::x86_64::flags;
 use rax::cpu::Registers;
 
@@ -468,7 +468,10 @@ fn test_or_r64_rm64_rax_rbx() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "RAX: alternating bytes OR = all ones");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "RAX: alternating bytes OR = all ones"
+    );
 }
 
 // ============================================================================
@@ -496,7 +499,10 @@ fn test_or_ecx_edx() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rcx, 0xFFFFFFFF, "ECX: complementary patterns OR = all ones");
+    assert_eq!(
+        regs.rcx, 0xFFFFFFFF,
+        "ECX: complementary patterns OR = all ones"
+    );
 }
 
 #[test]
@@ -605,7 +611,8 @@ fn test_or_byte_ptr_imm8() {
 #[test]
 fn test_or_word_ptr_imm16() {
     let code = [
-        0x66, 0x81, 0x0d, 0xf7, 0x0f, 0x00, 0x00, 0x0F, 0x00, // OR WORD PTR [rip+0x0FF7], 0x000F
+        0x66, 0x81, 0x0d, 0xf7, 0x0f, 0x00, 0x00, 0x0F,
+        0x00, // OR WORD PTR [rip+0x0FF7], 0x000F
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -620,7 +627,8 @@ fn test_or_word_ptr_imm16() {
 #[test]
 fn test_or_dword_ptr_imm32() {
     let code = [
-        0x81, 0x0d, 0xf6, 0x0f, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, // OR DWORD PTR [rip+0x0FF6], 0x000000FF
+        0x81, 0x0d, 0xf6, 0x0f, 0x00, 0x00, 0xFF, 0x00, 0x00,
+        0x00, // OR DWORD PTR [rip+0x0FF6], 0x000000FF
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -635,7 +643,8 @@ fn test_or_dword_ptr_imm32() {
 #[test]
 fn test_or_qword_ptr_imm32() {
     let code = [
-        0x48, 0x81, 0x0d, 0xf5, 0x0f, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, // OR QWORD PTR [rip+0x0FF5], 0x0000FFFF
+        0x48, 0x81, 0x0d, 0xf5, 0x0f, 0x00, 0x00, 0xFF, 0xFF, 0x00,
+        0x00, // OR QWORD PTR [rip+0x0FF5], 0x0000FFFF
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -723,7 +732,10 @@ fn test_strict_or_r64_result_and_flags() {
     assert!(!of_set(regs.rflags), "OF cleared by OR");
     assert!(!zf_set(regs.rflags), "ZF clear (nonzero)");
     assert!(!sf_set(regs.rflags), "SF clear (bit 63 = 0)");
-    assert!(pf_set(regs.rflags), "PF set (low byte 0xF0 has even parity)");
+    assert!(
+        pf_set(regs.rflags),
+        "PF set (low byte 0xF0 has even parity)"
+    );
 }
 
 #[test]
@@ -738,7 +750,10 @@ fn test_strict_or_zero_sets_zf_clears_sf() {
     assert!(zf_set(regs.rflags), "ZF set");
     assert!(!sf_set(regs.rflags), "SF clear");
     assert!(pf_set(regs.rflags), "PF set for 0");
-    assert!(!cf_set(regs.rflags) && !of_set(regs.rflags), "CF/OF cleared");
+    assert!(
+        !cf_set(regs.rflags) && !of_set(regs.rflags),
+        "CF/OF cleared"
+    );
 }
 
 #[test]

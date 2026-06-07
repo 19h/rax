@@ -19,10 +19,10 @@
 // - AF: Undefined for non-zero count
 // - Count is 0: No flags affected
 
+use crate::common::{cf_set, of_set, pf_set, sf_set, zf_set};
 use crate::common::{run_until_hlt, setup_vm};
-use rax::cpu::Registers;
 use rax::backend::emulator::x86_64::flags;
-use crate::common::{cf_set, of_set, sf_set, zf_set, pf_set};
+use rax::cpu::Registers;
 
 // ============================================================================
 // 16-bit SHLD tests
@@ -39,7 +39,11 @@ fn test_shld_ax_bx_imm8() {
     // AX: 0001_0010_0011_0100 shifted left by 4
     // Bits from BX (1010_1011_1100_1101) fill from right
     // Result: 0010_0011_0100_1010
-    assert_eq!(regs.rax & 0xFFFF, 0x234A, "AX: 0x1234 SHLD 4 from 0xABCD = 0x234A");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x234A,
+        "AX: 0x1234 SHLD 4 from 0xABCD = 0x234A"
+    );
     assert!(cf_set(regs.rflags), "CF: bit shifted out was 1");
 }
 
@@ -52,7 +56,11 @@ fn test_shld_ax_bx_cl() {
     regs.rcx = 0x08; // Shift by 8
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x34AB, "AX: 0x1234 SHLD 8 from 0xABCD = 0x34AB");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x34AB,
+        "AX: 0x1234 SHLD 8 from 0xABCD = 0x34AB"
+    );
 }
 
 #[test]
@@ -113,8 +121,11 @@ fn test_shld_ax_zero_count() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFFFF, 0x1234, "AX: unchanged with count 0");
-    assert_eq!(regs.rflags & (flags::bits::CF | flags::bits::OF),
-               initial_flags & (flags::bits::CF | flags::bits::OF), "Flags preserved");
+    assert_eq!(
+        regs.rflags & (flags::bits::CF | flags::bits::OF),
+        initial_flags & (flags::bits::CF | flags::bits::OF),
+        "Flags preserved"
+    );
 }
 
 // ============================================================================
@@ -129,7 +140,11 @@ fn test_shld_eax_ebx_imm8() {
     regs.rbx = 0xABCDEF01;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x2345678A, "EAX: 0x12345678 SHLD 4 from 0xABCDEF01");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x2345678A,
+        "EAX: 0x12345678 SHLD 4 from 0xABCDEF01"
+    );
 }
 
 #[test]
@@ -141,7 +156,11 @@ fn test_shld_eax_ebx_cl() {
     regs.rcx = 0x08;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x345678AB, "EAX: 0x12345678 SHLD 8 from 0xABCDEF01");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x345678AB,
+        "EAX: 0x12345678 SHLD 8 from 0xABCDEF01"
+    );
 }
 
 #[test]
@@ -155,7 +174,10 @@ fn test_shld_eax_carry_flag() {
     regs.rbx = 0x00000000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert!(cf_set(regs.rflags), "CF: bit 28 (last bit shifted out) was 1");
+    assert!(
+        cf_set(regs.rflags),
+        "CF: bit 28 (last bit shifted out) was 1"
+    );
 }
 
 #[test]
@@ -179,7 +201,11 @@ fn test_shld_eax_full_replacement() {
     regs.rbx = 0xABCDEF01;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX: count masked to 0, no shift");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX: count masked to 0, no shift"
+    );
 }
 
 #[test]
@@ -322,7 +348,10 @@ fn test_shld_rax_full_replacement() {
     regs.rbx = 0xFEDCBA9876543210;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x123456789ABCDEF0, "RAX: count masked to 0, no shift");
+    assert_eq!(
+        regs.rax, 0x123456789ABCDEF0,
+        "RAX: count masked to 0, no shift"
+    );
 }
 
 #[test]
@@ -436,9 +465,13 @@ fn test_shld_rax_zero_count() {
 
 #[test]
 fn test_shld_mem16_imm8() {
-    use crate::common::{DATA_ADDR, write_mem_u16, read_mem_u16};
+    use crate::common::{DATA_ADDR, read_mem_u16, write_mem_u16};
     let code = [
-        0x66, 0x0f, 0xa4, 0x14, 0x25, // SHLD word ptr [disp32], DX, imm8
+        0x66,
+        0x0f,
+        0xa4,
+        0x14,
+        0x25, // SHLD word ptr [disp32], DX, imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -451,14 +484,21 @@ fn test_shld_mem16_imm8() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     write_mem_u16(&mem, 0x1234);
     run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_u16(&mem), 0x234A, "Memory: 0x1234 SHLD 4 from 0xABCD");
+    assert_eq!(
+        read_mem_u16(&mem),
+        0x234A,
+        "Memory: 0x1234 SHLD 4 from 0xABCD"
+    );
 }
 
 #[test]
 fn test_shld_mem32_cl() {
-    use crate::common::{DATA_ADDR, write_mem_u32, read_mem_u32};
+    use crate::common::{DATA_ADDR, read_mem_u32, write_mem_u32};
     let code = [
-        0x0f, 0xa5, 0x14, 0x25, // SHLD dword ptr [disp32], EDX, CL
+        0x0f,
+        0xa5,
+        0x14,
+        0x25, // SHLD dword ptr [disp32], EDX, CL
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -476,9 +516,13 @@ fn test_shld_mem32_cl() {
 
 #[test]
 fn test_shld_mem64_imm8() {
-    use crate::common::{DATA_ADDR, write_mem_u64, read_mem_u64};
+    use crate::common::{DATA_ADDR, read_mem_u64, write_mem_u64};
     let code = [
-        0x48, 0x0f, 0xa4, 0x14, 0x25, // SHLD qword ptr [disp32], RDX, imm8
+        0x48,
+        0x0f,
+        0xa4,
+        0x14,
+        0x25, // SHLD qword ptr [disp32], RDX, imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,

@@ -199,11 +199,7 @@ impl Nvic {
 
     /// Read ISER register.
     pub fn read_iser(&self, reg: usize) -> u32 {
-        if reg < 16 {
-            self.enabled[reg]
-        } else {
-            0
-        }
+        if reg < 16 { self.enabled[reg] } else { 0 }
     }
 
     /// Write ISER register (set-enable, write 1 to enable).
@@ -254,11 +250,7 @@ impl Nvic {
 
     /// Read ISPR register.
     pub fn read_ispr(&self, reg: usize) -> u32 {
-        if reg < 16 {
-            self.pending[reg]
-        } else {
-            0
-        }
+        if reg < 16 { self.pending[reg] } else { 0 }
     }
 
     /// Write ISPR register (set-pending).
@@ -309,11 +301,7 @@ impl Nvic {
 
     /// Read IABR register.
     pub fn read_iabr(&self, reg: usize) -> u32 {
-        if reg < 16 {
-            self.active[reg]
-        } else {
-            0
-        }
+        if reg < 16 { self.active[reg] } else { 0 }
     }
 
     // =========================================================================

@@ -23,10 +23,10 @@
 // - Other flags: Undefined
 // - Count is 0: No flags affected
 
-use crate::common::{run_until_hlt, setup_vm};
-use rax::cpu::Registers;
-use rax::backend::emulator::x86_64::flags;
 use crate::common::{cf_set, of_set, sf_set, zf_set};
+use crate::common::{run_until_hlt, setup_vm};
+use rax::backend::emulator::x86_64::flags;
+use rax::cpu::Registers;
 
 // ============================================================================
 // 8-bit ROL tests
@@ -37,7 +37,7 @@ fn test_rol_al_1() {
     // ROL AL, 1 (opcode D0 /0)
     let code = [
         0xd0, 0xc0, // ROL AL, 1
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x42; // 0100_0010
@@ -61,7 +61,11 @@ fn test_rol_al_1_with_msb() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0x03, "AL: 0x81 ROL 1 = 0x03 (MSB rotates to LSB)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x03,
+        "AL: 0x81 ROL 1 = 0x03 (MSB rotates to LSB)"
+    );
     assert!(cf_set(regs.rflags), "CF: receives MSB (was 1)");
 }
 
@@ -110,7 +114,11 @@ fn test_rol_full_rotation_8bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0x42, "AL: full rotation returns to original");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x42,
+        "AL: full rotation returns to original"
+    );
 }
 
 #[test]
@@ -145,9 +153,11 @@ fn test_rol_count_zero_preserves_flags() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x42, "AL: unchanged");
-    assert_eq!(regs.rflags & (flags::bits::CF | flags::bits::ZF | flags::bits::OF),
-               initial_flags & (flags::bits::CF | flags::bits::ZF | flags::bits::OF),
-               "Flags preserved");
+    assert_eq!(
+        regs.rflags & (flags::bits::CF | flags::bits::ZF | flags::bits::OF),
+        initial_flags & (flags::bits::CF | flags::bits::ZF | flags::bits::OF),
+        "Flags preserved"
+    );
 }
 
 #[test]
@@ -245,7 +255,11 @@ fn test_rol_ax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0x3412, "AX: 0x1234 ROL 8 = 0x3412 (byte swap)");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x3412,
+        "AX: 0x1234 ROL 8 = 0x3412 (byte swap)"
+    );
 }
 
 #[test]
@@ -260,7 +274,11 @@ fn test_rol_ax_full_rotation() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0x1234, "AX: full rotation returns to original");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x1234,
+        "AX: full rotation returns to original"
+    );
 }
 
 #[test]
@@ -326,7 +344,11 @@ fn test_rol_eax_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x86430ECA, "EAX: 0x43218765 ROL 1 = 0x86430ECA");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x86430ECA,
+        "EAX: 0x43218765 ROL 1 = 0x86430ECA"
+    );
 }
 
 #[test]
@@ -342,7 +364,11 @@ fn test_rol_eax_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x34567812, "EAX: 0x12345678 ROL 8 = 0x34567812");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x34567812,
+        "EAX: 0x12345678 ROL 8 = 0x34567812"
+    );
 }
 
 #[test]
@@ -357,7 +383,11 @@ fn test_rol_eax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x56781234, "EAX: 0x12345678 ROL 16 = 0x56781234");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x56781234,
+        "EAX: 0x12345678 ROL 16 = 0x56781234"
+    );
 }
 
 #[test]
@@ -372,7 +402,11 @@ fn test_rol_eax_full_rotation() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX: full rotation returns to original");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX: full rotation returns to original"
+    );
 }
 
 #[test]
@@ -387,7 +421,11 @@ fn test_rol_ebx() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x00000001, "EBX: 0x80000000 ROL 1 = 0x00000001");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0x00000001,
+        "EBX: 0x80000000 ROL 1 = 0x00000001"
+    );
     assert!(cf_set(regs.rflags), "CF: MSB was 1");
 }
 
@@ -403,7 +441,11 @@ fn test_rol_ecx() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rcx & 0xFFFFFFFF, 0xBCDEF01A, "ECX: 0xABCDEF01 ROL 4 = 0xBCDEF01A");
+    assert_eq!(
+        regs.rcx & 0xFFFFFFFF,
+        0xBCDEF01A,
+        "ECX: 0xABCDEF01 ROL 4 = 0xBCDEF01A"
+    );
 }
 
 #[test]
@@ -419,7 +461,11 @@ fn test_rol_edx_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0xFF000000, "EDX: 0x000000FF ROL 24 = 0xFF000000");
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0xFF000000,
+        "EDX: 0x000000FF ROL 24 = 0xFF000000"
+    );
 }
 
 #[test]
@@ -434,7 +480,11 @@ fn test_rol_esi() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rsi & 0xFFFFFFFF, 0x80000000, "ESI: 0x40000000 ROL 1 = 0x80000000");
+    assert_eq!(
+        regs.rsi & 0xFFFFFFFF,
+        0x80000000,
+        "ESI: 0x40000000 ROL 1 = 0x80000000"
+    );
 }
 
 #[test]
@@ -449,7 +499,11 @@ fn test_rol_edi() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rdi & 0xFFFFFFFF, 0x45678123, "EDI: 0x12345678 ROL 12 = 0x45678123");
+    assert_eq!(
+        regs.rdi & 0xFFFFFFFF,
+        0x45678123,
+        "EDI: 0x12345678 ROL 12 = 0x45678123"
+    );
 }
 
 // ============================================================================
@@ -484,7 +538,10 @@ fn test_rol_rax_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x3456789ABCDEF012, "RAX: 0x123456789ABCDEF0 ROL 8");
+    assert_eq!(
+        regs.rax, 0x3456789ABCDEF012,
+        "RAX: 0x123456789ABCDEF0 ROL 8"
+    );
 }
 
 #[test]
@@ -499,7 +556,10 @@ fn test_rol_rax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x56789ABCDEF01234, "RAX: 0x123456789ABCDEF0 ROL 16");
+    assert_eq!(
+        regs.rax, 0x56789ABCDEF01234,
+        "RAX: 0x123456789ABCDEF0 ROL 16"
+    );
 }
 
 #[test]
@@ -514,7 +574,10 @@ fn test_rol_rax_32bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x9ABCDEF012345678, "RAX: ROL 32 swaps high/low dwords");
+    assert_eq!(
+        regs.rax, 0x9ABCDEF012345678,
+        "RAX: ROL 32 swaps high/low dwords"
+    );
 }
 
 #[test]
@@ -529,7 +592,10 @@ fn test_rol_rax_full_rotation() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x123456789ABCDEF0, "RAX: full rotation returns to original");
+    assert_eq!(
+        regs.rax, 0x123456789ABCDEF0,
+        "RAX: full rotation returns to original"
+    );
 }
 
 #[test]
@@ -544,7 +610,10 @@ fn test_rol_rbx() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx, 0x0000000000000001, "RBX: 0x8000000000000000 ROL 1 = 0x0000000000000001");
+    assert_eq!(
+        regs.rbx, 0x0000000000000001,
+        "RBX: 0x8000000000000000 ROL 1 = 0x0000000000000001"
+    );
     assert!(cf_set(regs.rflags), "CF: MSB was 1");
 }
 
@@ -677,11 +746,13 @@ fn test_rol_r15() {
 
 #[test]
 fn test_rol_mem8() {
-    use crate::common::{DATA_ADDR, write_mem_u8, read_mem_u8};
+    use crate::common::{DATA_ADDR, read_mem_u8, write_mem_u8};
 
     // ROL byte [DATA_ADDR], 1
     let code = [
-        0xd0, 0x04, 0x25, // ROL byte ptr [disp32], 1
+        0xd0,
+        0x04,
+        0x25, // ROL byte ptr [disp32], 1
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -699,11 +770,14 @@ fn test_rol_mem8() {
 
 #[test]
 fn test_rol_mem16() {
-    use crate::common::{DATA_ADDR, write_mem_u16, read_mem_u16};
+    use crate::common::{DATA_ADDR, read_mem_u16, write_mem_u16};
 
     // ROL word [DATA_ADDR], 4
     let code = [
-        0x66, 0xc1, 0x04, 0x25, // ROL word ptr [disp32], imm8
+        0x66,
+        0xc1,
+        0x04,
+        0x25, // ROL word ptr [disp32], imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -721,11 +795,13 @@ fn test_rol_mem16() {
 
 #[test]
 fn test_rol_mem32() {
-    use crate::common::{DATA_ADDR, write_mem_u32, read_mem_u32};
+    use crate::common::{DATA_ADDR, read_mem_u32, write_mem_u32};
 
     // ROL dword [DATA_ADDR], CL
     let code = [
-        0xd3, 0x04, 0x25, // ROL dword ptr [disp32], CL
+        0xd3,
+        0x04,
+        0x25, // ROL dword ptr [disp32], CL
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -738,16 +814,23 @@ fn test_rol_mem32() {
     write_mem_u32(&mem, 0x12345678);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(read_mem_u32(&mem), 0x34567812, "Memory: 0x12345678 ROL 8 = 0x34567812");
+    assert_eq!(
+        read_mem_u32(&mem),
+        0x34567812,
+        "Memory: 0x12345678 ROL 8 = 0x34567812"
+    );
 }
 
 #[test]
 fn test_rol_mem64() {
-    use crate::common::{DATA_ADDR, write_mem_u64, read_mem_u64};
+    use crate::common::{DATA_ADDR, read_mem_u64, write_mem_u64};
 
     // ROL qword [DATA_ADDR], 16
     let code = [
-        0x48, 0xc1, 0x04, 0x25, // ROL qword ptr [disp32], imm8
+        0x48,
+        0xc1,
+        0x04,
+        0x25, // ROL qword ptr [disp32], imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,

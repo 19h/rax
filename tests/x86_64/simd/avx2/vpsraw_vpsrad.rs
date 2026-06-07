@@ -126,7 +126,8 @@ fn test_vpsraw_ymm6_ymm7_mem() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let shift_count: Vec<u8> = 3u64.to_le_bytes().to_vec();
-    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -269,7 +270,8 @@ fn test_vpsrad_ymm6_ymm7_mem() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let shift_count: Vec<u8> = 5u64.to_le_bytes().to_vec();
-    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -387,7 +389,8 @@ fn test_vpsraw_mem_large_shift_count() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // Shift count > 16 should fill with sign bit
     let shift_count: Vec<u8> = 100u64.to_le_bytes().to_vec();
-    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -404,7 +407,8 @@ fn test_vpsrad_mem_large_shift_count() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // Shift count > 32 should fill with sign bit
     let shift_count: Vec<u8> = 100u64.to_le_bytes().to_vec();
-    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&shift_count, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

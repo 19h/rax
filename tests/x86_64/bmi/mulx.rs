@@ -32,8 +32,16 @@ fn test_mulx_basic_32bit() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 10 * 20 = 200 (0xC8)
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 200, "EBX should contain low 32 bits (200)");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should contain high 32 bits (0)");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        200,
+        "EBX should contain low 32 bits (200)"
+    );
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "EAX should contain high 32 bits (0)"
+    );
 }
 
 #[test]
@@ -50,7 +58,11 @@ fn test_mulx_32bit_overflow_to_high() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0xFFFFFFFF * 2 = 0x1FFFFFFFE
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0xFFFFFFFE, "EBX should contain low 32 bits");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0xFFFFFFFE,
+        "EBX should contain low 32 bits"
+    );
     assert_eq!(regs.rax & 0xFFFFFFFF, 1, "EAX should contain high 32 bits");
 }
 
@@ -68,8 +80,16 @@ fn test_mulx_32bit_max_values() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0xFFFFFFFF * 0xFFFFFFFF = 0xFFFFFFFE00000001
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x00000001, "EBX should contain low 32 bits");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFE, "EAX should contain high 32 bits");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0x00000001,
+        "EBX should contain low 32 bits"
+    );
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFE,
+        "EAX should contain high 32 bits"
+    );
 }
 
 #[test]
@@ -156,7 +176,11 @@ fn test_mulx_32bit_same_dest_regs() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // When both destinations are the same, it contains the high half
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFE, "EAX should contain high 32 bits");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFE,
+        "EAX should contain high 32 bits"
+    );
 }
 
 // ============================================================================
@@ -195,7 +219,10 @@ fn test_mulx_64bit_overflow_to_high() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0xFFFFFFFFFFFFFFFF * 2 = 0x1FFFFFFFFFFFFFFFE
-    assert_eq!(regs.rbx, 0xFFFFFFFFFFFFFFFE, "RBX should contain low 64 bits");
+    assert_eq!(
+        regs.rbx, 0xFFFFFFFFFFFFFFFE,
+        "RBX should contain low 64 bits"
+    );
     assert_eq!(regs.rax, 1, "RAX should contain high 64 bits");
 }
 
@@ -213,8 +240,14 @@ fn test_mulx_64bit_max_values() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0xFFFFFFFFFFFFFFFF * 0xFFFFFFFFFFFFFFFF = 0xFFFFFFFFFFFFFFFE0000000000000001
-    assert_eq!(regs.rbx, 0x0000000000000001, "RBX should contain low 64 bits");
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFE, "RAX should contain high 64 bits");
+    assert_eq!(
+        regs.rbx, 0x0000000000000001,
+        "RBX should contain low 64 bits"
+    );
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFE,
+        "RAX should contain high 64 bits"
+    );
 }
 
 #[test]
@@ -336,8 +369,8 @@ fn test_mulx_32bit_flags_not_modified() {
     // Test that MULX does not modify flags
     let code = [
         0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // mov rax, 1
-        0x48, 0x83, 0xe8, 0x02,                   // sub rax, 2 (sets CF, SF, AF)
-        0xc4, 0xe2, 0x63, 0xf6, 0xc1,             // MULX EAX, EBX, ECX
+        0x48, 0x83, 0xe8, 0x02, // sub rax, 2 (sets CF, SF, AF)
+        0xc4, 0xe2, 0x63, 0xf6, 0xc1, // MULX EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -356,8 +389,8 @@ fn test_mulx_64bit_flags_not_modified() {
     // Test that MULX does not modify flags
     let code = [
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // mov rax, 0
-        0x48, 0xff, 0xc0,                         // inc rax (sets flags)
-        0xc4, 0xe2, 0xe3, 0xf6, 0xc1,             // MULX RAX, RBX, RCX
+        0x48, 0xff, 0xc0, // inc rax (sets flags)
+        0xc4, 0xe2, 0xe3, 0xf6, 0xc1, // MULX RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -375,10 +408,10 @@ fn test_mulx_preserves_all_flags() {
     // Set all flags, then execute MULX, verify flags unchanged
     let code = [
         0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, // mov rax, -1
-        0x48, 0x83, 0xc0, 0x01,                   // add rax, 1 (sets ZF, clears CF)
-        0xf8,                                     // clc
-        0xf9,                                     // stc (set CF)
-        0xc4, 0xe2, 0x63, 0xf6, 0xc1,             // MULX EAX, EBX, ECX
+        0x48, 0x83, 0xc0, 0x01, // add rax, 1 (sets ZF, clears CF)
+        0xf8, // clc
+        0xf9, // stc (set CF)
+        0xc4, 0xe2, 0x63, 0xf6, 0xc1, // MULX EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -409,8 +442,16 @@ fn test_mulx_32bit_with_r8d() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 1000 * 2000 = 2,000,000 (0x1E8480)
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 2000000, "EBX should contain low 32 bits");
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0, "R8D should contain high 32 bits (0)");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        2000000,
+        "EBX should contain low 32 bits"
+    );
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0,
+        "R8D should contain high 32 bits (0)"
+    );
 }
 
 #[test]
@@ -502,7 +543,10 @@ fn test_mulx_64bit_alternating_bits() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0xAAAAAAAAAAAAAAAA * 2 = 0x15555555555555554
-    assert_eq!(regs.rbx, 0x5555555555555554, "RBX should contain low 64 bits");
+    assert_eq!(
+        regs.rbx, 0x5555555555555554,
+        "RBX should contain low 64 bits"
+    );
     assert_eq!(regs.rax, 1, "RAX should contain high 64 bits");
 }
 
@@ -521,7 +565,11 @@ fn test_mulx_32bit_half_max() {
 
     // 2^31 * 2^31 = 2^62 = 0x4000000000000000
     assert_eq!(regs.rbx & 0xFFFFFFFF, 0, "EBX should be 0");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x40000000, "EAX should be 0x40000000");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x40000000,
+        "EAX should be 0x40000000"
+    );
 }
 
 #[test]
@@ -529,8 +577,9 @@ fn test_mulx_64bit_sequential_multiplications() {
     // Multiple MULX operations to verify state is maintained
     let code = [
         0xc4, 0xe2, 0xe3, 0xf6, 0xc1, // MULX RAX, RBX, RCX (first)
-        0x48, 0x89, 0xda,             // mov rdx, rbx (move result to rdx)
-        0xc4, 0x62, 0xb3, 0xf6, 0xc1, // MULX R8, R9, RCX (R~=0 for R8, vvvv=0110=R9, B~=1 for RCX)
+        0x48, 0x89, 0xda, // mov rdx, rbx (move result to rdx)
+        0xc4, 0x62, 0xb3, 0xf6,
+        0xc1, // MULX R8, R9, RCX (R~=0 for R8, vvvv=0110=R9, B~=1 for RCX)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -559,8 +608,16 @@ fn test_mulx_32bit_prime_numbers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 104729 * 104743 = 10969629647
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 10969629647u64 & 0xFFFFFFFF, "EBX should contain low bits");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 10969629647u64 >> 32, "EAX should contain high bits");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        10969629647u64 & 0xFFFFFFFF,
+        "EBX should contain low bits"
+    );
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        10969629647u64 >> 32,
+        "EAX should contain high bits"
+    );
 }
 
 #[test]
@@ -613,6 +670,9 @@ fn test_mulx_64bit_carries_across_boundaries() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0xFFFFFFFF * 0xFFFFFFFF = 0xFFFFFFFE00000001
-    assert_eq!(regs.rbx, 0xFFFFFFFE00000001, "RBX should have correct low bits");
+    assert_eq!(
+        regs.rbx, 0xFFFFFFFE00000001,
+        "RBX should have correct low bits"
+    );
     assert_eq!(regs.rax, 0, "RAX should be 0");
 }

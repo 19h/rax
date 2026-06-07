@@ -34,7 +34,11 @@ fn test_cmpxchg_8bit_equal_success() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFF, 0xAA, "AL should remain 0xAA");
     assert_eq!(regs.rbx & 0xFF, 0xBB, "BL should be set to CL (0xBB)");
-    assert_ne!(regs.rflags & 0x40, 0, "ZF should be set (values were equal)");
+    assert_ne!(
+        regs.rflags & 0x40,
+        0,
+        "ZF should be set (values were equal)"
+    );
 }
 
 #[test]
@@ -50,7 +54,11 @@ fn test_cmpxchg_8bit_not_equal_failure() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFF, 0xCC, "AL should be loaded with BL (0xCC)");
     assert_eq!(regs.rbx & 0xFF, 0xCC, "BL should remain 0xCC");
-    assert_eq!(regs.rflags & 0x40, 0, "ZF should be clear (values were not equal)");
+    assert_eq!(
+        regs.rflags & 0x40,
+        0,
+        "ZF should be clear (values were not equal)"
+    );
 }
 
 #[test]
@@ -145,7 +153,11 @@ fn test_cmpxchg_32bit_equal_success() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x44332211, "EAX should remain 0x44332211");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x44332211,
+        "EAX should remain 0x44332211"
+    );
     assert_eq!(regs.rbx & 0xFFFFFFFF, 0xDDCCBBAA, "EBX should be exchanged");
     assert_ne!(regs.rflags & 0x40, 0, "ZF should be set");
 }
@@ -161,8 +173,16 @@ fn test_cmpxchg_32bit_not_equal_failure() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX should be loaded with EBX");
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0xFFFFFFFF, "EBX should remain unchanged");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EAX should be loaded with EBX"
+    );
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "EBX should remain unchanged"
+    );
     assert_eq!(regs.rflags & 0x40, 0, "ZF should be clear");
 }
 
@@ -276,7 +296,11 @@ fn test_cmpxchg_zf_set_on_success() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rflags & 0x40, 0, "ZF should be set after successful exchange");
+    assert_ne!(
+        regs.rflags & 0x40,
+        0,
+        "ZF should be set after successful exchange"
+    );
 }
 
 #[test]
@@ -290,7 +314,11 @@ fn test_cmpxchg_zf_clear_on_failure() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rflags & 0x40, 0, "ZF should be clear after failed exchange");
+    assert_eq!(
+        regs.rflags & 0x40,
+        0,
+        "ZF should be clear after failed exchange"
+    );
 }
 
 #[test]
@@ -335,7 +363,11 @@ fn test_cmpxchg_parity_flag() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rflags & 0x04, 0, "PF should be set (0 has even parity)");
+    assert_ne!(
+        regs.rflags & 0x04,
+        0,
+        "PF should be set (0 has even parity)"
+    );
 }
 
 // ===== SIGNED VALUE TESTS =====
@@ -386,7 +418,11 @@ fn test_cmpxchg_with_rax_as_source() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFFFFFFFF, 0x11, "EAX should remain 0x11");
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x11, "EBX should be set to EAX (0x11)");
+    assert_eq!(
+        regs.rbx & 0xFFFFFFFF,
+        0x11,
+        "EBX should be set to EAX (0x11)"
+    );
     assert_ne!(regs.rflags & 0x40, 0, "ZF should be set");
 }
 
@@ -456,9 +492,16 @@ fn test_cmpxchg_chained_operations() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 2, "RAX should have loaded RBX's value from failed CMPXCHG");
+    assert_eq!(
+        regs.rax, 2,
+        "RAX should have loaded RBX's value from failed CMPXCHG"
+    );
     assert_eq!(regs.rbx, 2, "RBX should remain 2");
-    assert_eq!(regs.rflags & 0x40, 0, "ZF should be clear from failed CMPXCHG");
+    assert_eq!(
+        regs.rflags & 0x40,
+        0,
+        "ZF should be clear from failed CMPXCHG"
+    );
 }
 
 #[test]
@@ -474,7 +517,11 @@ fn test_cmpxchg_counter_increment_pattern() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rbx, 11, "Counter should be incremented");
-    assert_ne!(regs.rflags & 0x40, 0, "ZF set indicates increment succeeded");
+    assert_ne!(
+        regs.rflags & 0x40,
+        0,
+        "ZF set indicates increment succeeded"
+    );
 }
 
 #[test]

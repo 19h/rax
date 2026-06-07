@@ -559,7 +559,8 @@ fn test_jnz_short_taken() {
 fn test_jo_short_taken() {
     // Must use 64-bit max signed value for 64-bit overflow with REX.W ADD
     let code = [
-        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, // MOV RAX, 0x7FFFFFFFFFFFFFFF
+        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0x7f, // MOV RAX, 0x7FFFFFFFFFFFFFFF
         0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (64-bit overflow, sets OF=1)
         0x70, 0x07, // JO +7 (should jump over the MOV RCX, 0)
         0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0 (should not execute)
@@ -608,7 +609,8 @@ fn test_jno_short_not_taken() {
     // Must use 64-bit max signed value (0x7FFFFFFFFFFFFFFF) for 64-bit overflow
     // 0x7FFFFFFF only causes 32-bit overflow, but with REX.W the ADD is 64-bit
     let code = [
-        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, // MOV RAX, 0x7FFFFFFFFFFFFFFF
+        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0x7f, // MOV RAX, 0x7FFFFFFFFFFFFFFF
         0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (64-bit overflow, sets OF=1)
         0x71, 0x05, // JNO +5 (should not jump because OF=1)
         0x48, 0xc7, 0xc1, 0xee, 0x00, 0x00, 0x00, // MOV RCX, 0xee
@@ -921,7 +923,8 @@ fn test_jne_near_taken() {
 fn test_jo_near_taken() {
     // Must use 64-bit max signed value for 64-bit overflow with REX.W ADD
     let code = [
-        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, // MOV RAX, 0x7FFFFFFFFFFFFFFF
+        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0x7f, // MOV RAX, 0x7FFFFFFFFFFFFFFF
         0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (64-bit overflow, sets OF=1)
         0x0f, 0x80, 0x07, 0x00, 0x00, 0x00, // JO +7 (near, should jump over MOV RCX, 0)
         0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0 (should not execute)
@@ -1089,13 +1092,21 @@ fn run_jcc_short(op: u8, flags: u64) -> (u64, u64) {
 
 fn assert_taken(op: u8, flags: u64, msg: &str) {
     let (rcx, rip) = run_jcc_short(op, flags);
-    assert_eq!(rcx, TAKEN_SENTINEL, "Jcc {:#04x} should be TAKEN: {}", op, msg);
+    assert_eq!(
+        rcx, TAKEN_SENTINEL,
+        "Jcc {:#04x} should be TAKEN: {}",
+        op, msg
+    );
     assert_eq!(rip, 0x1012, "taken RIP for {:#04x}: {}", op, msg);
 }
 
 fn assert_not_taken(op: u8, flags: u64, msg: &str) {
     let (rcx, rip) = run_jcc_short(op, flags);
-    assert_eq!(rcx, FALL_SENTINEL, "Jcc {:#04x} should NOT be taken: {}", op, msg);
+    assert_eq!(
+        rcx, FALL_SENTINEL,
+        "Jcc {:#04x} should NOT be taken: {}",
+        op, msg
+    );
     assert_eq!(rip, 0x100A, "not-taken RIP for {:#04x}: {}", op, msg);
 }
 

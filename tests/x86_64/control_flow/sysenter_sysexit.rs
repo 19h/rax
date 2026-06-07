@@ -1,8 +1,8 @@
 use crate::common::*;
-use rax::backend::emulator::x86_64::flags;
-use rax::cpu::Registers;
 use rax::backend::emulator::x86_64::X86_64Vcpu;
+use rax::backend::emulator::x86_64::flags;
 use rax::backend::emulator::x86_64::flags::bits;
+use rax::cpu::Registers;
 
 // Comprehensive tests for SYSENTER/SYSEXIT instructions
 // SYSENTER (0F 34) - Fast system call (Intel)
@@ -169,12 +169,7 @@ fn test_sysenter_esp_msr() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     let sysenter_rsp = 0x7000u64;
     install_sysenter_hlt(&mem, SYSENTER_HANDLER_ADDR);
-    set_sysenter_msrs(
-        &mut vcpu,
-        SYSENTER_CS,
-        sysenter_rsp,
-        SYSENTER_HANDLER_ADDR,
-    );
+    set_sysenter_msrs(&mut vcpu, SYSENTER_CS, sysenter_rsp, SYSENTER_HANDLER_ADDR);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rsp, sysenter_rsp);
@@ -221,7 +216,8 @@ fn test_sysexit_basic() {
         0x48, 0xc7, 0xc0, 0x99, 0x00, 0x00, 0x00, // MOV RAX, 0x99
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x99);
@@ -245,7 +241,8 @@ fn test_sysexit_loads_rip_from_rdx() {
     );
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3000 + 1);
@@ -272,7 +269,8 @@ fn test_sysexit_loads_rsp_from_rcx() {
         0x48, 0x89, 0xe0, // MOV RAX, RSP (check stack)
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x9000);
@@ -424,7 +422,8 @@ fn test_sysexit_sets_cpl_to_three() {
     );
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
     let sregs = vcpu.get_sregs().unwrap();
@@ -551,12 +550,7 @@ fn test_sysenter_modifies_cs_eip_esp() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     let sysenter_rsp = 0x7200u64;
     install_sysenter_hlt(&mem, SYSENTER_HANDLER_ADDR);
-    set_sysenter_msrs(
-        &mut vcpu,
-        SYSENTER_CS,
-        sysenter_rsp,
-        SYSENTER_HANDLER_ADDR,
-    );
+    set_sysenter_msrs(&mut vcpu, SYSENTER_CS, sysenter_rsp, SYSENTER_HANDLER_ADDR);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     let sregs = vcpu.get_sregs().unwrap();
@@ -583,7 +577,8 @@ fn test_sysexit_preserves_general_registers() {
     );
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x4444);
@@ -686,7 +681,8 @@ fn test_sysexit_preserves_if_flag() {
     vcpu.set_regs(&regs).unwrap();
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_ne!(regs.rflags & flags::bits::IF, 0);
@@ -708,7 +704,8 @@ fn test_sysenter_with_zero_eip_msr() {
 
     // If MSR points to 0
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x0000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x0000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x0000 + 1);
@@ -732,7 +729,8 @@ fn test_sysexit_with_zero_rdx() {
     );
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x0000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x0000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x0000 + 1);
@@ -755,7 +753,8 @@ fn test_sysexit_with_high_addresses() {
     );
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0xF000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0xF000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0xf000 + 1);
@@ -830,7 +829,8 @@ fn test_sysexit_32bit() {
     );
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2000 + 1);
@@ -854,7 +854,8 @@ fn test_sysexit_64bit() {
     );
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3000 + 1);

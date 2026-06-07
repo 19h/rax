@@ -5,7 +5,7 @@
 //! and the SemCtx vector API.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fld, SemCtx};
+use super::{SemCtx, fld};
 
 type Bytes = [u8; 128];
 
@@ -104,10 +104,7 @@ fn rtt_uh(rtt: u64, n: usize) -> i64 {
 /// Read a vector register pair `(low=R, high=R+1)` as two 128-byte buffers.
 #[inline]
 fn vread_pair(ctx: &SemCtx, reg: u8) -> (Bytes, Bytes) {
-    (
-        to_bytes(&ctx.vread(reg)),
-        to_bytes(&ctx.vread(reg + 1)),
-    )
+    (to_bytes(&ctx.vread(reg)), to_bytes(&ctx.vread(reg + 1)))
 }
 
 /// Write a vector register pair (low half -> R, high half -> R+1).
@@ -134,7 +131,8 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             };
             for i in 0..64 {
                 let v0 = (ub(&uu0, 2 * i) * rt_sb(rt, 0)) + (ub(&uu1, 2 * i) * rt_sb(rt, 1));
-                let v1 = (ub(&uu0, 2 * i + 1) * rt_sb(rt, 2)) + (ub(&uu1, 2 * i + 1) * rt_sb(rt, 3));
+                let v1 =
+                    (ub(&uu0, 2 * i + 1) * rt_sb(rt, 2)) + (ub(&uu1, 2 * i + 1) * rt_sb(rt, 3));
                 if pair {
                     let (o0, o1) = (get_h_signed(&lo, i), get_h_signed(&hi, i));
                     set_h(&mut lo, i, (o0 + v0) as u16);
@@ -159,7 +157,8 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             };
             for i in 0..64 {
                 let v0 = (ub(&uu0, 2 * i) * rt_ub(rt, 0)) + (ub(&uu1, 2 * i) * rt_ub(rt, 1));
-                let v1 = (ub(&uu0, 2 * i + 1) * rt_ub(rt, 2)) + (ub(&uu1, 2 * i + 1) * rt_ub(rt, 3));
+                let v1 =
+                    (ub(&uu0, 2 * i + 1) * rt_ub(rt, 2)) + (ub(&uu1, 2 * i + 1) * rt_ub(rt, 3));
                 if pair {
                     // .uh accumulate: wraps in 16 bits.
                     let (o0, o1) = (raw_h(&lo, i) as i64, raw_h(&hi, i) as i64);
@@ -186,7 +185,8 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             for i in 0..32 {
                 // word i; h[0] = halfword 2i, h[1] = halfword 2i+1
                 let v0 = (sh(&uu0, 2 * i) * rt_sb(rt, 0)) + (sh(&uu1, 2 * i) * rt_sb(rt, 1));
-                let v1 = (sh(&uu0, 2 * i + 1) * rt_sb(rt, 2)) + (sh(&uu1, 2 * i + 1) * rt_sb(rt, 3));
+                let v1 =
+                    (sh(&uu0, 2 * i + 1) * rt_sb(rt, 2)) + (sh(&uu1, 2 * i + 1) * rt_sb(rt, 3));
                 if pair {
                     let (o0, o1) = (get_w_signed(&lo, i), get_w_signed(&hi, i));
                     set_w(&mut lo, i, (o0 + v0) as u32);
@@ -211,7 +211,8 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             };
             for i in 0..32 {
                 let v0 = (uh(&uu0, 2 * i) * rt_sb(rt, 0)) + (uh(&uu1, 2 * i) * rt_sb(rt, 1));
-                let v1 = (uh(&uu0, 2 * i + 1) * rt_sb(rt, 2)) + (uh(&uu1, 2 * i + 1) * rt_sb(rt, 3));
+                let v1 =
+                    (uh(&uu0, 2 * i + 1) * rt_sb(rt, 2)) + (uh(&uu1, 2 * i + 1) * rt_sb(rt, 3));
                 if pair {
                     let (o0, o1) = (get_w_signed(&lo, i), get_w_signed(&hi, i));
                     set_w(&mut lo, i, (o0 + v0) as u32);

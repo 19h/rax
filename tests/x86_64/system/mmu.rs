@@ -39,7 +39,7 @@ use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
 use rax::backend::emulator::x86_64::X86_64Vcpu;
-use rax::cpu::{Registers, SystemRegisters, Segment, DescriptorTable, VCpu, VcpuExit};
+use rax::cpu::{DescriptorTable, Registers, Segment, SystemRegisters, VCpu, VcpuExit};
 
 // ============================================================================
 // Constants
@@ -94,11 +94,11 @@ mod pte_flags {
 
 /// Page fault error code bits
 mod pf_error {
-    pub const P: u64 = 1 << 0;      // 0=non-present, 1=protection violation
-    pub const WR: u64 = 1 << 1;     // 0=read, 1=write
-    pub const US: u64 = 1 << 2;     // 0=supervisor, 1=user
-    pub const RSVD: u64 = 1 << 3;   // Reserved bit violation
-    pub const ID: u64 = 1 << 4;     // 0=data, 1=instruction fetch
+    pub const P: u64 = 1 << 0; // 0=non-present, 1=protection violation
+    pub const WR: u64 = 1 << 1; // 0=read, 1=write
+    pub const US: u64 = 1 << 2; // 0=supervisor, 1=user
+    pub const RSVD: u64 = 1 << 3; // Reserved bit violation
+    pub const ID: u64 = 1 << 4; // 0=data, 1=instruction fetch
 }
 
 // ============================================================================
@@ -119,33 +119,39 @@ fn setup_identity_page_tables(mem: &GuestMemoryMmap, flags: u64) {
 
     // PML4 entry 0 -> PDPT
     let pml4e = PDPT_ADDR | base_flags;
-    mem.write_slice(&pml4e.to_le_bytes(), GuestAddress(PML4_ADDR)).unwrap();
+    mem.write_slice(&pml4e.to_le_bytes(), GuestAddress(PML4_ADDR))
+        .unwrap();
 
     // PDPT entry 0 -> PD
     let pdpte = PD_ADDR | base_flags;
-    mem.write_slice(&pdpte.to_le_bytes(), GuestAddress(PDPT_ADDR)).unwrap();
+    mem.write_slice(&pdpte.to_le_bytes(), GuestAddress(PDPT_ADDR))
+        .unwrap();
 
     // PD entry 0 -> PT (4KB pages)
     let pde = PT_ADDR | base_flags;
-    mem.write_slice(&pde.to_le_bytes(), GuestAddress(PD_ADDR)).unwrap();
+    mem.write_slice(&pde.to_le_bytes(), GuestAddress(PD_ADDR))
+        .unwrap();
 
     // PT entries: identity map first 512 pages (2MB)
     for i in 0..512u64 {
         let paddr = i * 0x1000;
         let pte = paddr | base_flags;
-        mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + i * 8)).unwrap();
+        mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + i * 8))
+            .unwrap();
     }
 
     // Additional PD entries for more coverage
     for pd_idx in 1..4u64 {
         let pt_addr = PT_ADDR + pd_idx * 0x1000;
         let pde = pt_addr | base_flags;
-        mem.write_slice(&pde.to_le_bytes(), GuestAddress(PD_ADDR + pd_idx * 8)).unwrap();
+        mem.write_slice(&pde.to_le_bytes(), GuestAddress(PD_ADDR + pd_idx * 8))
+            .unwrap();
 
         for i in 0..512u64 {
             let paddr = (pd_idx * 512 + i) * 0x1000;
             let pte = paddr | base_flags;
-            mem.write_slice(&pte.to_le_bytes(), GuestAddress(pt_addr + i * 8)).unwrap();
+            mem.write_slice(&pte.to_le_bytes(), GuestAddress(pt_addr + i * 8))
+                .unwrap();
         }
     }
 }
@@ -160,8 +166,8 @@ fn setup_idt(mem: &GuestMemoryMmap) {
         entry[1] = ((handler_addr >> 8) & 0xFF) as u8;
         entry[2] = KERNEL_CS as u8;
         entry[3] = (KERNEL_CS >> 8) as u8;
-        entry[4] = 0x00;  // IST
-        entry[5] = 0x8E;  // Type
+        entry[4] = 0x00; // IST
+        entry[5] = 0x8E; // Type
         entry[6] = ((handler_addr >> 16) & 0xFF) as u8;
         entry[7] = ((handler_addr >> 24) & 0xFF) as u8;
         entry[8] = ((handler_addr >> 32) & 0xFF) as u8;
@@ -182,37 +188,75 @@ fn setup_idt(mem: &GuestMemoryMmap) {
 fn setup_handlers(mem: &GuestMemoryMmap) {
     // Page fault handler: store error code, CR2, marker, then HLT
     let pf_handler: Vec<u8> = vec![
-        0x48, 0x8b, 0x04, 0x24,  // mov rax, [rsp]
-        0x48, 0xa3,              // mov [RESULT_ADDR], rax
-        (RESULT_ADDR & 0xFF) as u8, ((RESULT_ADDR >> 8) & 0xFF) as u8,
-        ((RESULT_ADDR >> 16) & 0xFF) as u8, ((RESULT_ADDR >> 24) & 0xFF) as u8,
-        ((RESULT_ADDR >> 32) & 0xFF) as u8, ((RESULT_ADDR >> 40) & 0xFF) as u8,
-        ((RESULT_ADDR >> 48) & 0xFF) as u8, ((RESULT_ADDR >> 56) & 0xFF) as u8,
-        0x0f, 0x20, 0xd0,        // mov rax, cr2
-        0x48, 0xa3,              // mov [RESULT_ADDR+8], rax
-        ((RESULT_ADDR + 8) & 0xFF) as u8, (((RESULT_ADDR + 8) >> 8) & 0xFF) as u8,
-        (((RESULT_ADDR + 8) >> 16) & 0xFF) as u8, (((RESULT_ADDR + 8) >> 24) & 0xFF) as u8,
-        (((RESULT_ADDR + 8) >> 32) & 0xFF) as u8, (((RESULT_ADDR + 8) >> 40) & 0xFF) as u8,
-        (((RESULT_ADDR + 8) >> 48) & 0xFF) as u8, (((RESULT_ADDR + 8) >> 56) & 0xFF) as u8,
-        0x48, 0xc7, 0xc0, 0x14, 0x00, 0x00, 0x00,  // mov rax, 0x14
-        0x48, 0xa3,
-        ((RESULT_ADDR + 16) & 0xFF) as u8, (((RESULT_ADDR + 16) >> 8) & 0xFF) as u8,
-        (((RESULT_ADDR + 16) >> 16) & 0xFF) as u8, (((RESULT_ADDR + 16) >> 24) & 0xFF) as u8,
-        (((RESULT_ADDR + 16) >> 32) & 0xFF) as u8, (((RESULT_ADDR + 16) >> 40) & 0xFF) as u8,
-        (((RESULT_ADDR + 16) >> 48) & 0xFF) as u8, (((RESULT_ADDR + 16) >> 56) & 0xFF) as u8,
+        0x48,
+        0x8b,
+        0x04,
+        0x24, // mov rax, [rsp]
+        0x48,
+        0xa3, // mov [RESULT_ADDR], rax
+        (RESULT_ADDR & 0xFF) as u8,
+        ((RESULT_ADDR >> 8) & 0xFF) as u8,
+        ((RESULT_ADDR >> 16) & 0xFF) as u8,
+        ((RESULT_ADDR >> 24) & 0xFF) as u8,
+        ((RESULT_ADDR >> 32) & 0xFF) as u8,
+        ((RESULT_ADDR >> 40) & 0xFF) as u8,
+        ((RESULT_ADDR >> 48) & 0xFF) as u8,
+        ((RESULT_ADDR >> 56) & 0xFF) as u8,
+        0x0f,
+        0x20,
+        0xd0, // mov rax, cr2
+        0x48,
+        0xa3, // mov [RESULT_ADDR+8], rax
+        ((RESULT_ADDR + 8) & 0xFF) as u8,
+        (((RESULT_ADDR + 8) >> 8) & 0xFF) as u8,
+        (((RESULT_ADDR + 8) >> 16) & 0xFF) as u8,
+        (((RESULT_ADDR + 8) >> 24) & 0xFF) as u8,
+        (((RESULT_ADDR + 8) >> 32) & 0xFF) as u8,
+        (((RESULT_ADDR + 8) >> 40) & 0xFF) as u8,
+        (((RESULT_ADDR + 8) >> 48) & 0xFF) as u8,
+        (((RESULT_ADDR + 8) >> 56) & 0xFF) as u8,
+        0x48,
+        0xc7,
+        0xc0,
+        0x14,
+        0x00,
+        0x00,
+        0x00, // mov rax, 0x14
+        0x48,
+        0xa3,
+        ((RESULT_ADDR + 16) & 0xFF) as u8,
+        (((RESULT_ADDR + 16) >> 8) & 0xFF) as u8,
+        (((RESULT_ADDR + 16) >> 16) & 0xFF) as u8,
+        (((RESULT_ADDR + 16) >> 24) & 0xFF) as u8,
+        (((RESULT_ADDR + 16) >> 32) & 0xFF) as u8,
+        (((RESULT_ADDR + 16) >> 40) & 0xFF) as u8,
+        (((RESULT_ADDR + 16) >> 48) & 0xFF) as u8,
+        (((RESULT_ADDR + 16) >> 56) & 0xFF) as u8,
         0xf4,
     ];
-    mem.write_slice(&pf_handler, GuestAddress(PF_HANDLER_ADDR)).unwrap();
+    mem.write_slice(&pf_handler, GuestAddress(PF_HANDLER_ADDR))
+        .unwrap();
 
     // GP and DF handlers
     for (addr, marker) in [(GP_HANDLER_ADDR, 0x0D), (DF_HANDLER_ADDR, 0x08)] {
         let handler: &[u8] = &[
-            0x48, 0xc7, 0xc0, marker, 0x00, 0x00, 0x00,
-            0x48, 0xa3,
-            ((RESULT_ADDR + 16) & 0xFF) as u8, (((RESULT_ADDR + 16) >> 8) & 0xFF) as u8,
-            (((RESULT_ADDR + 16) >> 16) & 0xFF) as u8, (((RESULT_ADDR + 16) >> 24) & 0xFF) as u8,
-            (((RESULT_ADDR + 16) >> 32) & 0xFF) as u8, (((RESULT_ADDR + 16) >> 40) & 0xFF) as u8,
-            (((RESULT_ADDR + 16) >> 48) & 0xFF) as u8, (((RESULT_ADDR + 16) >> 56) & 0xFF) as u8,
+            0x48,
+            0xc7,
+            0xc0,
+            marker,
+            0x00,
+            0x00,
+            0x00,
+            0x48,
+            0xa3,
+            ((RESULT_ADDR + 16) & 0xFF) as u8,
+            (((RESULT_ADDR + 16) >> 8) & 0xFF) as u8,
+            (((RESULT_ADDR + 16) >> 16) & 0xFF) as u8,
+            (((RESULT_ADDR + 16) >> 24) & 0xFF) as u8,
+            (((RESULT_ADDR + 16) >> 32) & 0xFF) as u8,
+            (((RESULT_ADDR + 16) >> 40) & 0xFF) as u8,
+            (((RESULT_ADDR + 16) >> 48) & 0xFF) as u8,
+            (((RESULT_ADDR + 16) >> 56) & 0xFF) as u8,
             0xf4,
         ];
         mem.write_slice(handler, GuestAddress(addr)).unwrap();
@@ -230,15 +274,33 @@ fn create_paged_vcpu(mem: Arc<GuestMemoryMmap>) -> X86_64Vcpu {
     sregs.efer = 0x500;
 
     sregs.cs = Segment {
-        base: 0, limit: 0xFFFFFFFF, selector: KERNEL_CS,
-        type_: 0x0B, present: true, dpl: 0, db: false, s: true,
-        l: true, g: true, avl: false, unusable: false,
+        base: 0,
+        limit: 0xFFFFFFFF,
+        selector: KERNEL_CS,
+        type_: 0x0B,
+        present: true,
+        dpl: 0,
+        db: false,
+        s: true,
+        l: true,
+        g: true,
+        avl: false,
+        unusable: false,
     };
 
     let data_seg = Segment {
-        base: 0, limit: 0xFFFFFFFF, selector: KERNEL_DS,
-        type_: 0x03, present: true, dpl: 0, db: true, s: true,
-        l: false, g: true, avl: false, unusable: false,
+        base: 0,
+        limit: 0xFFFFFFFF,
+        selector: KERNEL_DS,
+        type_: 0x03,
+        present: true,
+        dpl: 0,
+        db: true,
+        s: true,
+        l: false,
+        g: true,
+        avl: false,
+        unusable: false,
     };
     sregs.ds = data_seg.clone();
     sregs.es = data_seg.clone();
@@ -246,12 +308,27 @@ fn create_paged_vcpu(mem: Arc<GuestMemoryMmap>) -> X86_64Vcpu {
     sregs.gs = data_seg.clone();
     sregs.ss = data_seg;
 
-    sregs.idt = DescriptorTable { base: IDT_ADDR, limit: 256 * 16 - 1 };
-    sregs.gdt = DescriptorTable { base: GDT_ADDR, limit: 0x3F };
+    sregs.idt = DescriptorTable {
+        base: IDT_ADDR,
+        limit: 256 * 16 - 1,
+    };
+    sregs.gdt = DescriptorTable {
+        base: GDT_ADDR,
+        limit: 0x3F,
+    };
     sregs.tr = Segment {
-        base: TSS_ADDR, limit: 0x67, selector: TSS_SEL,
-        type_: 0x09, present: true, dpl: 0, db: false, s: false,
-        l: false, g: false, avl: false, unusable: false,
+        base: TSS_ADDR,
+        limit: 0x67,
+        selector: TSS_SEL,
+        type_: 0x09,
+        present: true,
+        dpl: 0,
+        db: false,
+        s: false,
+        l: false,
+        g: false,
+        avl: false,
+        unusable: false,
     };
 
     vcpu.set_sregs(&sregs).unwrap();
@@ -297,15 +374,18 @@ fn read_result(mem: &GuestMemoryMmap) -> (u64, u64, u64) {
     let mut buf = [0u8; 8];
     mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR)).unwrap();
     let error_code = u64::from_le_bytes(buf);
-    mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR + 8)).unwrap();
+    mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR + 8))
+        .unwrap();
     let cr2 = u64::from_le_bytes(buf);
-    mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR + 16)).unwrap();
+    mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR + 16))
+        .unwrap();
     let marker = u64::from_le_bytes(buf);
     (error_code, cr2, marker)
 }
 
 fn clear_result(mem: &GuestMemoryMmap) {
-    mem.write_slice(&[0u8; 24], GuestAddress(RESULT_ADDR)).unwrap();
+    mem.write_slice(&[0u8; 24], GuestAddress(RESULT_ADDR))
+        .unwrap();
 }
 
 // ============================================================================
@@ -321,16 +401,29 @@ fn test_basic_paging_identity_map() {
     setup_handlers(&mem);
 
     let test_value = 0xDEADBEEFCAFEBABE_u64;
-    mem.write_slice(&test_value.to_le_bytes(), GuestAddress(0x70000)).unwrap();
+    mem.write_slice(&test_value.to_le_bytes(), GuestAddress(0x70000))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
     let code: &[u8] = &[
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x07, 0x00,  // mov rax, [0x70000]
-        0x48, 0xa3,
-        (RESULT_ADDR & 0xFF) as u8, ((RESULT_ADDR >> 8) & 0xFF) as u8,
-        ((RESULT_ADDR >> 16) & 0xFF) as u8, ((RESULT_ADDR >> 24) & 0xFF) as u8,
-        ((RESULT_ADDR >> 32) & 0xFF) as u8, ((RESULT_ADDR >> 40) & 0xFF) as u8,
-        ((RESULT_ADDR >> 48) & 0xFF) as u8, ((RESULT_ADDR >> 56) & 0xFF) as u8,
+        0x48,
+        0x8b,
+        0x04,
+        0x25,
+        0x00,
+        0x00,
+        0x07,
+        0x00, // mov rax, [0x70000]
+        0x48,
+        0xa3,
+        (RESULT_ADDR & 0xFF) as u8,
+        ((RESULT_ADDR >> 8) & 0xFF) as u8,
+        ((RESULT_ADDR >> 16) & 0xFF) as u8,
+        ((RESULT_ADDR >> 24) & 0xFF) as u8,
+        ((RESULT_ADDR >> 32) & 0xFF) as u8,
+        ((RESULT_ADDR >> 40) & 0xFF) as u8,
+        ((RESULT_ADDR >> 48) & 0xFF) as u8,
+        ((RESULT_ADDR >> 56) & 0xFF) as u8,
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -359,16 +452,26 @@ fn test_write_through_paging() {
     let target = 0x70000u64;
 
     let code: Vec<u8> = vec![
-        0x48, 0xb8,  // mov rax, imm64
-        (test_value & 0xFF) as u8, ((test_value >> 8) & 0xFF) as u8,
-        ((test_value >> 16) & 0xFF) as u8, ((test_value >> 24) & 0xFF) as u8,
-        ((test_value >> 32) & 0xFF) as u8, ((test_value >> 40) & 0xFF) as u8,
-        ((test_value >> 48) & 0xFF) as u8, ((test_value >> 56) & 0xFF) as u8,
-        0x48, 0xa3,  // mov [target], rax
-        (target & 0xFF) as u8, ((target >> 8) & 0xFF) as u8,
-        ((target >> 16) & 0xFF) as u8, ((target >> 24) & 0xFF) as u8,
-        ((target >> 32) & 0xFF) as u8, ((target >> 40) & 0xFF) as u8,
-        ((target >> 48) & 0xFF) as u8, ((target >> 56) & 0xFF) as u8,
+        0x48,
+        0xb8, // mov rax, imm64
+        (test_value & 0xFF) as u8,
+        ((test_value >> 8) & 0xFF) as u8,
+        ((test_value >> 16) & 0xFF) as u8,
+        ((test_value >> 24) & 0xFF) as u8,
+        ((test_value >> 32) & 0xFF) as u8,
+        ((test_value >> 40) & 0xFF) as u8,
+        ((test_value >> 48) & 0xFF) as u8,
+        ((test_value >> 56) & 0xFF) as u8,
+        0x48,
+        0xa3, // mov [target], rax
+        (target & 0xFF) as u8,
+        ((target >> 8) & 0xFF) as u8,
+        ((target >> 16) & 0xFF) as u8,
+        ((target >> 24) & 0xFF) as u8,
+        ((target >> 32) & 0xFF) as u8,
+        ((target >> 40) & 0xFF) as u8,
+        ((target >> 48) & 0xFF) as u8,
+        ((target >> 56) & 0xFF) as u8,
         0xf4,
     ];
     mem.write_slice(&code, GuestAddress(CODE_PADDR)).unwrap();
@@ -396,11 +499,13 @@ fn test_write_to_readonly_pte() {
 
     // Make page 112 (0x70000) read-only
     let pte = 0x70000u64 | pte_flags::PRESENT | pte_flags::USER;
-    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + 112 * 8)).unwrap();
+    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + 112 * 8))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
     let code: &[u8] = &[
-        0x48, 0xc7, 0x04, 0x25, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00,  // mov qword [0x70000], 0
+        0x48, 0xc7, 0x04, 0x25, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00,
+        0x00, // mov qword [0x70000], 0
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -422,13 +527,13 @@ fn test_write_permission_denied_pd_level() {
     setup_identity_page_tables(&mem, pte_flags::WRITABLE | pte_flags::USER);
 
     // Make PD entry 0 read-only (affects entire 0-2MB region)
-    let pde = PT_ADDR | pte_flags::PRESENT | pte_flags::USER;  // No WRITABLE
-    mem.write_slice(&pde.to_le_bytes(), GuestAddress(PD_ADDR)).unwrap();
+    let pde = PT_ADDR | pte_flags::PRESENT | pte_flags::USER; // No WRITABLE
+    mem.write_slice(&pde.to_le_bytes(), GuestAddress(PD_ADDR))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
     let code: &[u8] = &[
-        0x48, 0xc7, 0x04, 0x25, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0xf4,
+        0x48, 0xc7, 0x04, 0x25, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
 
@@ -449,11 +554,12 @@ fn test_read_non_present_page() {
     setup_identity_page_tables(&mem, pte_flags::WRITABLE | pte_flags::USER);
 
     // Clear PTE for page at 0x80000
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
     let code: &[u8] = &[
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00,  // mov rax, [0x80000]
+        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00, // mov rax, [0x80000]
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -480,20 +586,35 @@ fn test_2mb_huge_page_read() {
     setup_handlers(&mem);
 
     // Set PD[0] as 2MB huge page
-    let pde = 0u64 | pte_flags::PRESENT | pte_flags::WRITABLE | pte_flags::USER | pte_flags::HUGE_PAGE;
-    mem.write_slice(&pde.to_le_bytes(), GuestAddress(PD_ADDR)).unwrap();
+    let pde =
+        0u64 | pte_flags::PRESENT | pte_flags::WRITABLE | pte_flags::USER | pte_flags::HUGE_PAGE;
+    mem.write_slice(&pde.to_le_bytes(), GuestAddress(PD_ADDR))
+        .unwrap();
 
     let test_value = 0xCAFEBABEDEADBEEF_u64;
-    mem.write_slice(&test_value.to_le_bytes(), GuestAddress(0x100000)).unwrap();
+    mem.write_slice(&test_value.to_le_bytes(), GuestAddress(0x100000))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
     let code: &[u8] = &[
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x10, 0x00,  // mov rax, [0x100000]
-        0x48, 0xa3,
-        (RESULT_ADDR & 0xFF) as u8, ((RESULT_ADDR >> 8) & 0xFF) as u8,
-        ((RESULT_ADDR >> 16) & 0xFF) as u8, ((RESULT_ADDR >> 24) & 0xFF) as u8,
-        ((RESULT_ADDR >> 32) & 0xFF) as u8, ((RESULT_ADDR >> 40) & 0xFF) as u8,
-        ((RESULT_ADDR >> 48) & 0xFF) as u8, ((RESULT_ADDR >> 56) & 0xFF) as u8,
+        0x48,
+        0x8b,
+        0x04,
+        0x25,
+        0x00,
+        0x00,
+        0x10,
+        0x00, // mov rax, [0x100000]
+        0x48,
+        0xa3,
+        (RESULT_ADDR & 0xFF) as u8,
+        ((RESULT_ADDR >> 8) & 0xFF) as u8,
+        ((RESULT_ADDR >> 16) & 0xFF) as u8,
+        ((RESULT_ADDR >> 24) & 0xFF) as u8,
+        ((RESULT_ADDR >> 32) & 0xFF) as u8,
+        ((RESULT_ADDR >> 40) & 0xFF) as u8,
+        ((RESULT_ADDR >> 48) & 0xFF) as u8,
+        ((RESULT_ADDR >> 56) & 0xFF) as u8,
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -515,24 +636,36 @@ fn test_2mb_huge_page_write() {
     let mem = create_memory(8);
     setup_identity_page_tables(&mem, pte_flags::WRITABLE | pte_flags::USER);
 
-    let pde = 0u64 | pte_flags::PRESENT | pte_flags::WRITABLE | pte_flags::USER | pte_flags::HUGE_PAGE;
-    mem.write_slice(&pde.to_le_bytes(), GuestAddress(PD_ADDR)).unwrap();
+    let pde =
+        0u64 | pte_flags::PRESENT | pte_flags::WRITABLE | pte_flags::USER | pte_flags::HUGE_PAGE;
+    mem.write_slice(&pde.to_le_bytes(), GuestAddress(PD_ADDR))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
     let test_value = 0x123456789ABCDEF0_u64;
     let target = 0x150000u64;
 
     let code: Vec<u8> = vec![
-        0x48, 0xb8,
-        (test_value & 0xFF) as u8, ((test_value >> 8) & 0xFF) as u8,
-        ((test_value >> 16) & 0xFF) as u8, ((test_value >> 24) & 0xFF) as u8,
-        ((test_value >> 32) & 0xFF) as u8, ((test_value >> 40) & 0xFF) as u8,
-        ((test_value >> 48) & 0xFF) as u8, ((test_value >> 56) & 0xFF) as u8,
-        0x48, 0xa3,
-        (target & 0xFF) as u8, ((target >> 8) & 0xFF) as u8,
-        ((target >> 16) & 0xFF) as u8, ((target >> 24) & 0xFF) as u8,
-        ((target >> 32) & 0xFF) as u8, ((target >> 40) & 0xFF) as u8,
-        ((target >> 48) & 0xFF) as u8, ((target >> 56) & 0xFF) as u8,
+        0x48,
+        0xb8,
+        (test_value & 0xFF) as u8,
+        ((test_value >> 8) & 0xFF) as u8,
+        ((test_value >> 16) & 0xFF) as u8,
+        ((test_value >> 24) & 0xFF) as u8,
+        ((test_value >> 32) & 0xFF) as u8,
+        ((test_value >> 40) & 0xFF) as u8,
+        ((test_value >> 48) & 0xFF) as u8,
+        ((test_value >> 56) & 0xFF) as u8,
+        0x48,
+        0xa3,
+        (target & 0xFF) as u8,
+        ((target >> 8) & 0xFF) as u8,
+        ((target >> 16) & 0xFF) as u8,
+        ((target >> 24) & 0xFF) as u8,
+        ((target >> 32) & 0xFF) as u8,
+        ((target >> 40) & 0xFF) as u8,
+        ((target >> 48) & 0xFF) as u8,
+        ((target >> 56) & 0xFF) as u8,
         0xf4,
     ];
     mem.write_slice(&code, GuestAddress(CODE_PADDR)).unwrap();
@@ -555,25 +688,41 @@ fn test_1gb_huge_page() {
 
     // PML4[0] -> PDPT with 1GB huge page
     let pml4e = PDPT_ADDR | pte_flags::PRESENT | pte_flags::WRITABLE | pte_flags::USER;
-    mem.write_slice(&pml4e.to_le_bytes(), GuestAddress(PML4_ADDR)).unwrap();
+    mem.write_slice(&pml4e.to_le_bytes(), GuestAddress(PML4_ADDR))
+        .unwrap();
 
-    let pdpte = 0u64 | pte_flags::PRESENT | pte_flags::WRITABLE | pte_flags::USER | pte_flags::HUGE_PAGE;
-    mem.write_slice(&pdpte.to_le_bytes(), GuestAddress(PDPT_ADDR)).unwrap();
+    let pdpte =
+        0u64 | pte_flags::PRESENT | pte_flags::WRITABLE | pte_flags::USER | pte_flags::HUGE_PAGE;
+    mem.write_slice(&pdpte.to_le_bytes(), GuestAddress(PDPT_ADDR))
+        .unwrap();
 
     setup_idt(&mem);
     setup_handlers(&mem);
 
     let test_value = 0xFEDCBA9876543210_u64;
-    mem.write_slice(&test_value.to_le_bytes(), GuestAddress(0x1000000)).unwrap();
+    mem.write_slice(&test_value.to_le_bytes(), GuestAddress(0x1000000))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
     let code: &[u8] = &[
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x00, 0x01,  // mov rax, [0x1000000]
-        0x48, 0xa3,
-        (RESULT_ADDR & 0xFF) as u8, ((RESULT_ADDR >> 8) & 0xFF) as u8,
-        ((RESULT_ADDR >> 16) & 0xFF) as u8, ((RESULT_ADDR >> 24) & 0xFF) as u8,
-        ((RESULT_ADDR >> 32) & 0xFF) as u8, ((RESULT_ADDR >> 40) & 0xFF) as u8,
-        ((RESULT_ADDR >> 48) & 0xFF) as u8, ((RESULT_ADDR >> 56) & 0xFF) as u8,
+        0x48,
+        0x8b,
+        0x04,
+        0x25,
+        0x00,
+        0x00,
+        0x00,
+        0x01, // mov rax, [0x1000000]
+        0x48,
+        0xa3,
+        (RESULT_ADDR & 0xFF) as u8,
+        ((RESULT_ADDR >> 8) & 0xFF) as u8,
+        ((RESULT_ADDR >> 16) & 0xFF) as u8,
+        ((RESULT_ADDR >> 24) & 0xFF) as u8,
+        ((RESULT_ADDR >> 32) & 0xFF) as u8,
+        ((RESULT_ADDR >> 40) & 0xFF) as u8,
+        ((RESULT_ADDR >> 48) & 0xFF) as u8,
+        ((RESULT_ADDR >> 56) & 0xFF) as u8,
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -602,16 +751,29 @@ fn test_page_boundary_crossing_read() {
     setup_handlers(&mem);
 
     let value = 0x0102030405060708_u64;
-    mem.write_slice(&value.to_le_bytes(), GuestAddress(0x50FFC)).unwrap();
+    mem.write_slice(&value.to_le_bytes(), GuestAddress(0x50FFC))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
     let code: &[u8] = &[
-        0x48, 0x8b, 0x04, 0x25, 0xFC, 0x0F, 0x05, 0x00,  // mov rax, [0x50FFC]
-        0x48, 0xa3,
-        (RESULT_ADDR & 0xFF) as u8, ((RESULT_ADDR >> 8) & 0xFF) as u8,
-        ((RESULT_ADDR >> 16) & 0xFF) as u8, ((RESULT_ADDR >> 24) & 0xFF) as u8,
-        ((RESULT_ADDR >> 32) & 0xFF) as u8, ((RESULT_ADDR >> 40) & 0xFF) as u8,
-        ((RESULT_ADDR >> 48) & 0xFF) as u8, ((RESULT_ADDR >> 56) & 0xFF) as u8,
+        0x48,
+        0x8b,
+        0x04,
+        0x25,
+        0xFC,
+        0x0F,
+        0x05,
+        0x00, // mov rax, [0x50FFC]
+        0x48,
+        0xa3,
+        (RESULT_ADDR & 0xFF) as u8,
+        ((RESULT_ADDR >> 8) & 0xFF) as u8,
+        ((RESULT_ADDR >> 16) & 0xFF) as u8,
+        ((RESULT_ADDR >> 24) & 0xFF) as u8,
+        ((RESULT_ADDR >> 32) & 0xFF) as u8,
+        ((RESULT_ADDR >> 40) & 0xFF) as u8,
+        ((RESULT_ADDR >> 48) & 0xFF) as u8,
+        ((RESULT_ADDR >> 56) & 0xFF) as u8,
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -638,16 +800,26 @@ fn test_page_boundary_crossing_write() {
     let addr = 0x50FFC_u64;
 
     let code: Vec<u8> = vec![
-        0x48, 0xb8,
-        (value & 0xFF) as u8, ((value >> 8) & 0xFF) as u8,
-        ((value >> 16) & 0xFF) as u8, ((value >> 24) & 0xFF) as u8,
-        ((value >> 32) & 0xFF) as u8, ((value >> 40) & 0xFF) as u8,
-        ((value >> 48) & 0xFF) as u8, ((value >> 56) & 0xFF) as u8,
-        0x48, 0xa3,
-        (addr & 0xFF) as u8, ((addr >> 8) & 0xFF) as u8,
-        ((addr >> 16) & 0xFF) as u8, ((addr >> 24) & 0xFF) as u8,
-        ((addr >> 32) & 0xFF) as u8, ((addr >> 40) & 0xFF) as u8,
-        ((addr >> 48) & 0xFF) as u8, ((addr >> 56) & 0xFF) as u8,
+        0x48,
+        0xb8,
+        (value & 0xFF) as u8,
+        ((value >> 8) & 0xFF) as u8,
+        ((value >> 16) & 0xFF) as u8,
+        ((value >> 24) & 0xFF) as u8,
+        ((value >> 32) & 0xFF) as u8,
+        ((value >> 40) & 0xFF) as u8,
+        ((value >> 48) & 0xFF) as u8,
+        ((value >> 56) & 0xFF) as u8,
+        0x48,
+        0xa3,
+        (addr & 0xFF) as u8,
+        ((addr >> 8) & 0xFF) as u8,
+        ((addr >> 16) & 0xFF) as u8,
+        ((addr >> 24) & 0xFF) as u8,
+        ((addr >> 32) & 0xFF) as u8,
+        ((addr >> 40) & 0xFF) as u8,
+        ((addr >> 48) & 0xFF) as u8,
+        ((addr >> 56) & 0xFF) as u8,
         0xf4,
     ];
     mem.write_slice(&code, GuestAddress(CODE_PADDR)).unwrap();
@@ -675,27 +847,40 @@ fn test_torture_every_page_boundary() {
     for page in 0..512u64 {
         let addr = page * 0x1000;
         // Skip page table areas (0x1000-0x7FFF used by PML4, PDPT, PD, PTs)
-        if addr >= 0x1000 && addr < 0x8000 { continue; }
+        if addr >= 0x1000 && addr < 0x8000 {
+            continue;
+        }
         // Skip code page
-        if addr >= CODE_PADDR && addr < CODE_PADDR + 0x1000 { continue; }
+        if addr >= CODE_PADDR && addr < CODE_PADDR + 0x1000 {
+            continue;
+        }
         // Skip stack area
-        if addr >= STACK_PADDR && addr < STACK_PADDR + 0x1000 { continue; }
+        if addr >= STACK_PADDR && addr < STACK_PADDR + 0x1000 {
+            continue;
+        }
         // Skip IDT and handler area
-        if addr >= IDT_ADDR && addr < IDT_ADDR + 0x4000 { continue; }
+        if addr >= IDT_ADDR && addr < IDT_ADDR + 0x4000 {
+            continue;
+        }
         // Skip GDT/TSS area
-        if addr >= GDT_ADDR && addr < GDT_ADDR + 0x2000 { continue; }
+        if addr >= GDT_ADDR && addr < GDT_ADDR + 0x2000 {
+            continue;
+        }
         // Skip result area
-        if addr >= RESULT_ADDR && addr < RESULT_ADDR + 0x1000 { continue; }
-        mem.write_slice(&page.to_le_bytes(), GuestAddress(addr)).unwrap();
+        if addr >= RESULT_ADDR && addr < RESULT_ADDR + 0x1000 {
+            continue;
+        }
+        mem.write_slice(&page.to_le_bytes(), GuestAddress(addr))
+            .unwrap();
     }
 
     // Read from multiple pages in sequence
     let mut vcpu = create_paged_vcpu(mem.clone());
     let code: &[u8] = &[
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x03, 0x00,  // mov rax, [0x30000]
-        0x48, 0x8b, 0x1c, 0x25, 0x00, 0x10, 0x03, 0x00,  // mov rbx, [0x31000]
-        0x48, 0x8b, 0x0c, 0x25, 0x00, 0x20, 0x03, 0x00,  // mov rcx, [0x32000]
-        0x48, 0x8b, 0x14, 0x25, 0x00, 0x30, 0x03, 0x00,  // mov rdx, [0x33000]
+        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x03, 0x00, // mov rax, [0x30000]
+        0x48, 0x8b, 0x1c, 0x25, 0x00, 0x10, 0x03, 0x00, // mov rbx, [0x31000]
+        0x48, 0x8b, 0x0c, 0x25, 0x00, 0x20, 0x03, 0x00, // mov rcx, [0x32000]
+        0x48, 0x8b, 0x14, 0x25, 0x00, 0x30, 0x03, 0x00, // mov rdx, [0x33000]
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -723,7 +908,8 @@ fn test_torture_unaligned_offsets() {
 
     // Write pattern at base address
     for i in 0..16u8 {
-        mem.write_slice(&[i], GuestAddress(0x70000 + i as u64)).unwrap();
+        mem.write_slice(&[i], GuestAddress(0x70000 + i as u64))
+            .unwrap();
     }
 
     let mut vcpu = create_paged_vcpu(mem.clone());
@@ -733,14 +919,24 @@ fn test_torture_unaligned_offsets() {
         clear_result(&mem);
         let addr = 0x70000 + offset;
         let code: Vec<u8> = vec![
-            0x48, 0x8b, 0x04, 0x25,
-            (addr & 0xFF) as u8, ((addr >> 8) & 0xFF) as u8,
-            ((addr >> 16) & 0xFF) as u8, ((addr >> 24) & 0xFF) as u8,
-            0x48, 0xa3,
-            (RESULT_ADDR & 0xFF) as u8, ((RESULT_ADDR >> 8) & 0xFF) as u8,
-            ((RESULT_ADDR >> 16) & 0xFF) as u8, ((RESULT_ADDR >> 24) & 0xFF) as u8,
-            ((RESULT_ADDR >> 32) & 0xFF) as u8, ((RESULT_ADDR >> 40) & 0xFF) as u8,
-            ((RESULT_ADDR >> 48) & 0xFF) as u8, ((RESULT_ADDR >> 56) & 0xFF) as u8,
+            0x48,
+            0x8b,
+            0x04,
+            0x25,
+            (addr & 0xFF) as u8,
+            ((addr >> 8) & 0xFF) as u8,
+            ((addr >> 16) & 0xFF) as u8,
+            ((addr >> 24) & 0xFF) as u8,
+            0x48,
+            0xa3,
+            (RESULT_ADDR & 0xFF) as u8,
+            ((RESULT_ADDR >> 8) & 0xFF) as u8,
+            ((RESULT_ADDR >> 16) & 0xFF) as u8,
+            ((RESULT_ADDR >> 24) & 0xFF) as u8,
+            ((RESULT_ADDR >> 32) & 0xFF) as u8,
+            ((RESULT_ADDR >> 40) & 0xFF) as u8,
+            ((RESULT_ADDR >> 48) & 0xFF) as u8,
+            ((RESULT_ADDR >> 56) & 0xFF) as u8,
             0xf4,
         ];
         mem.write_slice(&code, GuestAddress(CODE_PADDR)).unwrap();
@@ -756,8 +952,13 @@ fn test_torture_unaligned_offsets() {
 
         // Verify expected bytes
         for i in 0..8 {
-            assert_eq!(buf[i], (offset + i as u64) as u8,
-                "Offset {} byte {}", offset, i);
+            assert_eq!(
+                buf[i],
+                (offset + i as u64) as u8,
+                "Offset {} byte {}",
+                offset,
+                i
+            );
         }
     }
 }
@@ -776,20 +977,31 @@ fn test_torture_boundary_all_alignments() {
     for start_offset in 1..=8u64 {
         let addr = page_end + 1 - start_offset;
         let expected: u64 = 0x0102030405060708;
-        mem.write_slice(&expected.to_le_bytes(), GuestAddress(addr)).unwrap();
+        mem.write_slice(&expected.to_le_bytes(), GuestAddress(addr))
+            .unwrap();
 
         clear_result(&mem);
 
         let mut vcpu = create_paged_vcpu(mem.clone());
         let code: Vec<u8> = vec![
-            0x48, 0x8b, 0x04, 0x25,
-            (addr & 0xFF) as u8, ((addr >> 8) & 0xFF) as u8,
-            ((addr >> 16) & 0xFF) as u8, ((addr >> 24) & 0xFF) as u8,
-            0x48, 0xa3,
-            (RESULT_ADDR & 0xFF) as u8, ((RESULT_ADDR >> 8) & 0xFF) as u8,
-            ((RESULT_ADDR >> 16) & 0xFF) as u8, ((RESULT_ADDR >> 24) & 0xFF) as u8,
-            ((RESULT_ADDR >> 32) & 0xFF) as u8, ((RESULT_ADDR >> 40) & 0xFF) as u8,
-            ((RESULT_ADDR >> 48) & 0xFF) as u8, ((RESULT_ADDR >> 56) & 0xFF) as u8,
+            0x48,
+            0x8b,
+            0x04,
+            0x25,
+            (addr & 0xFF) as u8,
+            ((addr >> 8) & 0xFF) as u8,
+            ((addr >> 16) & 0xFF) as u8,
+            ((addr >> 24) & 0xFF) as u8,
+            0x48,
+            0xa3,
+            (RESULT_ADDR & 0xFF) as u8,
+            ((RESULT_ADDR >> 8) & 0xFF) as u8,
+            ((RESULT_ADDR >> 16) & 0xFF) as u8,
+            ((RESULT_ADDR >> 24) & 0xFF) as u8,
+            ((RESULT_ADDR >> 32) & 0xFF) as u8,
+            ((RESULT_ADDR >> 40) & 0xFF) as u8,
+            ((RESULT_ADDR >> 48) & 0xFF) as u8,
+            ((RESULT_ADDR >> 56) & 0xFF) as u8,
             0xf4,
         ];
         mem.write_slice(&code, GuestAddress(CODE_PADDR)).unwrap();
@@ -802,8 +1014,12 @@ fn test_torture_boundary_all_alignments() {
 
         let mut buf = [0u8; 8];
         mem.read_slice(&mut buf, GuestAddress(RESULT_ADDR)).unwrap();
-        assert_eq!(u64::from_le_bytes(buf), expected,
-            "Boundary crossing at page_end - {} + 1", start_offset);
+        assert_eq!(
+            u64::from_le_bytes(buf),
+            expected,
+            "Boundary crossing at page_end - {} + 1",
+            start_offset
+        );
     }
 }
 
@@ -819,21 +1035,22 @@ fn test_torture_multi_page_access_pattern() {
     for i in 0..8u64 {
         let page_addr = 0x30000 + i * 0x1000;
         let value = 0x1111111111111111_u64 * (i + 1);
-        mem.write_slice(&value.to_le_bytes(), GuestAddress(page_addr)).unwrap();
+        mem.write_slice(&value.to_le_bytes(), GuestAddress(page_addr))
+            .unwrap();
     }
 
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Code reads from all 8 pages, XORs them together
     let code: &[u8] = &[
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x03, 0x00,  // mov rax, [0x30000]
-        0x48, 0x33, 0x04, 0x25, 0x00, 0x10, 0x03, 0x00,  // xor rax, [0x31000]
-        0x48, 0x33, 0x04, 0x25, 0x00, 0x20, 0x03, 0x00,  // xor rax, [0x32000]
-        0x48, 0x33, 0x04, 0x25, 0x00, 0x30, 0x03, 0x00,  // xor rax, [0x33000]
-        0x48, 0x33, 0x04, 0x25, 0x00, 0x40, 0x03, 0x00,  // xor rax, [0x34000]
-        0x48, 0x33, 0x04, 0x25, 0x00, 0x50, 0x03, 0x00,  // xor rax, [0x35000]
-        0x48, 0x33, 0x04, 0x25, 0x00, 0x60, 0x03, 0x00,  // xor rax, [0x36000]
-        0x48, 0x33, 0x04, 0x25, 0x00, 0x70, 0x03, 0x00,  // xor rax, [0x37000]
+        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x03, 0x00, // mov rax, [0x30000]
+        0x48, 0x33, 0x04, 0x25, 0x00, 0x10, 0x03, 0x00, // xor rax, [0x31000]
+        0x48, 0x33, 0x04, 0x25, 0x00, 0x20, 0x03, 0x00, // xor rax, [0x32000]
+        0x48, 0x33, 0x04, 0x25, 0x00, 0x30, 0x03, 0x00, // xor rax, [0x33000]
+        0x48, 0x33, 0x04, 0x25, 0x00, 0x40, 0x03, 0x00, // xor rax, [0x34000]
+        0x48, 0x33, 0x04, 0x25, 0x00, 0x50, 0x03, 0x00, // xor rax, [0x35000]
+        0x48, 0x33, 0x04, 0x25, 0x00, 0x60, 0x03, 0x00, // xor rax, [0x36000]
+        0x48, 0x33, 0x04, 0x25, 0x00, 0x70, 0x03, 0x00, // xor rax, [0x37000]
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -858,16 +1075,28 @@ fn test_zero_page_access() {
     setup_idt(&mem);
     setup_handlers(&mem);
 
-    mem.write_slice(&0xDEADC0DE_u32.to_le_bytes(), GuestAddress(0x100)).unwrap();
+    mem.write_slice(&0xDEADC0DE_u32.to_le_bytes(), GuestAddress(0x100))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
     let code: &[u8] = &[
-        0x8b, 0x04, 0x25, 0x00, 0x01, 0x00, 0x00,  // mov eax, [0x100]
-        0x48, 0xa3,
-        (RESULT_ADDR & 0xFF) as u8, ((RESULT_ADDR >> 8) & 0xFF) as u8,
-        ((RESULT_ADDR >> 16) & 0xFF) as u8, ((RESULT_ADDR >> 24) & 0xFF) as u8,
-        ((RESULT_ADDR >> 32) & 0xFF) as u8, ((RESULT_ADDR >> 40) & 0xFF) as u8,
-        ((RESULT_ADDR >> 48) & 0xFF) as u8, ((RESULT_ADDR >> 56) & 0xFF) as u8,
+        0x8b,
+        0x04,
+        0x25,
+        0x00,
+        0x01,
+        0x00,
+        0x00, // mov eax, [0x100]
+        0x48,
+        0xa3,
+        (RESULT_ADDR & 0xFF) as u8,
+        ((RESULT_ADDR >> 8) & 0xFF) as u8,
+        ((RESULT_ADDR >> 16) & 0xFF) as u8,
+        ((RESULT_ADDR >> 24) & 0xFF) as u8,
+        ((RESULT_ADDR >> 32) & 0xFF) as u8,
+        ((RESULT_ADDR >> 40) & 0xFF) as u8,
+        ((RESULT_ADDR >> 48) & 0xFF) as u8,
+        ((RESULT_ADDR >> 56) & 0xFF) as u8,
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -891,13 +1120,13 @@ fn test_page_edge_bytes() {
     setup_idt(&mem);
     setup_handlers(&mem);
 
-    mem.write_slice(&[0xAA], GuestAddress(0x50000)).unwrap();  // First byte
-    mem.write_slice(&[0xBB], GuestAddress(0x50FFF)).unwrap();  // Last byte
+    mem.write_slice(&[0xAA], GuestAddress(0x50000)).unwrap(); // First byte
+    mem.write_slice(&[0xBB], GuestAddress(0x50FFF)).unwrap(); // Last byte
 
     let mut vcpu = create_paged_vcpu(mem.clone());
     let code: &[u8] = &[
-        0x8a, 0x04, 0x25, 0x00, 0x00, 0x05, 0x00,  // mov al, [0x50000]
-        0x8a, 0x1c, 0x25, 0xFF, 0x0F, 0x05, 0x00,  // mov bl, [0x50FFF]
+        0x8a, 0x04, 0x25, 0x00, 0x00, 0x05, 0x00, // mov al, [0x50000]
+        0x8a, 0x1c, 0x25, 0xFF, 0x0F, 0x05, 0x00, // mov bl, [0x50FFF]
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -925,21 +1154,18 @@ fn test_tlb_repeated_access() {
     setup_idt(&mem);
     setup_handlers(&mem);
 
-    mem.write_slice(&0xAABBCCDD_u64.to_le_bytes(), GuestAddress(0x70000)).unwrap();
+    mem.write_slice(&0xAABBCCDD_u64.to_le_bytes(), GuestAddress(0x70000))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
     let code: &[u8] = &[
         // 10 reads from same page (TLB should cache after first)
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x07, 0x00,
-        0x48, 0x8b, 0x04, 0x25, 0x08, 0x00, 0x07, 0x00,
-        0x48, 0x8b, 0x04, 0x25, 0x10, 0x00, 0x07, 0x00,
-        0x48, 0x8b, 0x04, 0x25, 0x18, 0x00, 0x07, 0x00,
-        0x48, 0x8b, 0x04, 0x25, 0x20, 0x00, 0x07, 0x00,
-        0x48, 0x8b, 0x04, 0x25, 0x28, 0x00, 0x07, 0x00,
-        0x48, 0x8b, 0x04, 0x25, 0x30, 0x00, 0x07, 0x00,
-        0x48, 0x8b, 0x04, 0x25, 0x38, 0x00, 0x07, 0x00,
-        0x48, 0x8b, 0x04, 0x25, 0x40, 0x00, 0x07, 0x00,
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x07, 0x00,  // Back to start
+        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x07, 0x00, 0x48, 0x8b, 0x04, 0x25, 0x08, 0x00, 0x07,
+        0x00, 0x48, 0x8b, 0x04, 0x25, 0x10, 0x00, 0x07, 0x00, 0x48, 0x8b, 0x04, 0x25, 0x18, 0x00,
+        0x07, 0x00, 0x48, 0x8b, 0x04, 0x25, 0x20, 0x00, 0x07, 0x00, 0x48, 0x8b, 0x04, 0x25, 0x28,
+        0x00, 0x07, 0x00, 0x48, 0x8b, 0x04, 0x25, 0x30, 0x00, 0x07, 0x00, 0x48, 0x8b, 0x04, 0x25,
+        0x38, 0x00, 0x07, 0x00, 0x48, 0x8b, 0x04, 0x25, 0x40, 0x00, 0x07, 0x00, 0x48, 0x8b, 0x04,
+        0x25, 0x00, 0x00, 0x07, 0x00, // Back to start
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -963,19 +1189,48 @@ fn test_invlpg_invalidation() {
     let test_addr = 0x80000_u64;
     let pt_entry_addr = PT_ADDR + 128 * 8;
 
-    mem.write_slice(&0xAABBCCDD_u64.to_le_bytes(), GuestAddress(test_addr)).unwrap();
+    mem.write_slice(&0xAABBCCDD_u64.to_le_bytes(), GuestAddress(test_addr))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Read to populate TLB, clear PTE, INVLPG, read again (should fault)
     let code: Vec<u8> = vec![
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00,  // mov rax, [0x80000]
-        0x48, 0x31, 0xdb,                                // xor rbx, rbx
-        0x48, 0x89, 0x1c, 0x25,                          // mov [pt_entry], rbx
-        (pt_entry_addr & 0xFF) as u8, ((pt_entry_addr >> 8) & 0xFF) as u8,
-        ((pt_entry_addr >> 16) & 0xFF) as u8, ((pt_entry_addr >> 24) & 0xFF) as u8,
-        0x0f, 0x01, 0x3c, 0x25, 0x00, 0x00, 0x08, 0x00,  // invlpg [0x80000]
-        0x48, 0x8b, 0x0c, 0x25, 0x00, 0x00, 0x08, 0x00,  // mov rcx, [0x80000] - faults
+        0x48,
+        0x8b,
+        0x04,
+        0x25,
+        0x00,
+        0x00,
+        0x08,
+        0x00, // mov rax, [0x80000]
+        0x48,
+        0x31,
+        0xdb, // xor rbx, rbx
+        0x48,
+        0x89,
+        0x1c,
+        0x25, // mov [pt_entry], rbx
+        (pt_entry_addr & 0xFF) as u8,
+        ((pt_entry_addr >> 8) & 0xFF) as u8,
+        ((pt_entry_addr >> 16) & 0xFF) as u8,
+        ((pt_entry_addr >> 24) & 0xFF) as u8,
+        0x0f,
+        0x01,
+        0x3c,
+        0x25,
+        0x00,
+        0x00,
+        0x08,
+        0x00, // invlpg [0x80000]
+        0x48,
+        0x8b,
+        0x0c,
+        0x25,
+        0x00,
+        0x00,
+        0x08,
+        0x00, // mov rcx, [0x80000] - faults
         0xf4,
     ];
     mem.write_slice(&code, GuestAddress(CODE_PADDR)).unwrap();
@@ -998,20 +1253,46 @@ fn test_cr3_flush_tlb() {
     let test_addr = 0x80000_u64;
     let pt_entry_addr = PT_ADDR + 128 * 8;
 
-    mem.write_slice(&0xAABBCCDD_u64.to_le_bytes(), GuestAddress(test_addr)).unwrap();
+    mem.write_slice(&0xAABBCCDD_u64.to_le_bytes(), GuestAddress(test_addr))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     // Read, clear PTE, reload CR3 (flush), read again (should fault)
     let code: Vec<u8> = vec![
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x08, 0x00,  // mov rax, [0x80000]
-        0x48, 0x31, 0xdb,                                // xor rbx, rbx
-        0x48, 0x89, 0x1c, 0x25,
-        (pt_entry_addr & 0xFF) as u8, ((pt_entry_addr >> 8) & 0xFF) as u8,
-        ((pt_entry_addr >> 16) & 0xFF) as u8, ((pt_entry_addr >> 24) & 0xFF) as u8,
-        0x0f, 0x20, 0xd8,  // mov rax, cr3
-        0x0f, 0x22, 0xd8,  // mov cr3, rax (flush)
-        0x48, 0x8b, 0x0c, 0x25, 0x00, 0x00, 0x08, 0x00,  // mov rcx, [0x80000]
+        0x48,
+        0x8b,
+        0x04,
+        0x25,
+        0x00,
+        0x00,
+        0x08,
+        0x00, // mov rax, [0x80000]
+        0x48,
+        0x31,
+        0xdb, // xor rbx, rbx
+        0x48,
+        0x89,
+        0x1c,
+        0x25,
+        (pt_entry_addr & 0xFF) as u8,
+        ((pt_entry_addr >> 8) & 0xFF) as u8,
+        ((pt_entry_addr >> 16) & 0xFF) as u8,
+        ((pt_entry_addr >> 24) & 0xFF) as u8,
+        0x0f,
+        0x20,
+        0xd8, // mov rax, cr3
+        0x0f,
+        0x22,
+        0xd8, // mov cr3, rax (flush)
+        0x48,
+        0x8b,
+        0x0c,
+        0x25,
+        0x00,
+        0x00,
+        0x08,
+        0x00, // mov rcx, [0x80000]
         0xf4,
     ];
     mem.write_slice(&code, GuestAddress(CODE_PADDR)).unwrap();
@@ -1040,7 +1321,8 @@ fn test_stress_tlb_thrashing() {
     // Write values to 64 different pages
     for i in 0..64u64 {
         let addr = 0x30000 + i * 0x1000;
-        mem.write_slice(&i.to_le_bytes(), GuestAddress(addr)).unwrap();
+        mem.write_slice(&i.to_le_bytes(), GuestAddress(addr))
+            .unwrap();
     }
 
     let mut vcpu = create_paged_vcpu(mem.clone());
@@ -1050,15 +1332,20 @@ fn test_stress_tlb_thrashing() {
     let mut code = Vec::new();
     for round in 0..2 {
         for i in 0..64u64 {
-            let addr = 0x30000 + ((i + round * 17) % 64) * 0x1000;  // Shuffle order
+            let addr = 0x30000 + ((i + round * 17) % 64) * 0x1000; // Shuffle order
             code.extend_from_slice(&[
-                0x48, 0x8b, 0x04, 0x25,
-                (addr & 0xFF) as u8, ((addr >> 8) & 0xFF) as u8,
-                ((addr >> 16) & 0xFF) as u8, ((addr >> 24) & 0xFF) as u8,
+                0x48,
+                0x8b,
+                0x04,
+                0x25,
+                (addr & 0xFF) as u8,
+                ((addr >> 8) & 0xFF) as u8,
+                ((addr >> 16) & 0xFF) as u8,
+                ((addr >> 24) & 0xFF) as u8,
             ]);
         }
     }
-    code.push(0xf4);  // HLT
+    code.push(0xf4); // HLT
 
     mem.write_slice(&code, GuestAddress(CODE_PADDR)).unwrap();
 
@@ -1083,15 +1370,14 @@ fn test_stress_read_write_alternation() {
     // Alternating reads and writes to different pages
     let code: &[u8] = &[
         // Write pattern
-        0x48, 0xc7, 0x04, 0x25, 0x00, 0x00, 0x03, 0x00, 0x11, 0x11, 0x11, 0x11,
-        0x48, 0xc7, 0x04, 0x25, 0x00, 0x10, 0x03, 0x00, 0x22, 0x22, 0x22, 0x22,
-        0x48, 0xc7, 0x04, 0x25, 0x00, 0x20, 0x03, 0x00, 0x33, 0x33, 0x33, 0x33,
-        0x48, 0xc7, 0x04, 0x25, 0x00, 0x30, 0x03, 0x00, 0x44, 0x44, 0x44, 0x44,
-        // Read and accumulate
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x03, 0x00,  // rax = [0x30000]
-        0x48, 0x03, 0x04, 0x25, 0x00, 0x10, 0x03, 0x00,  // rax += [0x31000]
-        0x48, 0x03, 0x04, 0x25, 0x00, 0x20, 0x03, 0x00,  // rax += [0x32000]
-        0x48, 0x03, 0x04, 0x25, 0x00, 0x30, 0x03, 0x00,  // rax += [0x33000]
+        0x48, 0xc7, 0x04, 0x25, 0x00, 0x00, 0x03, 0x00, 0x11, 0x11, 0x11, 0x11, 0x48, 0xc7, 0x04,
+        0x25, 0x00, 0x10, 0x03, 0x00, 0x22, 0x22, 0x22, 0x22, 0x48, 0xc7, 0x04, 0x25, 0x00, 0x20,
+        0x03, 0x00, 0x33, 0x33, 0x33, 0x33, 0x48, 0xc7, 0x04, 0x25, 0x00, 0x30, 0x03, 0x00, 0x44,
+        0x44, 0x44, 0x44, // Read and accumulate
+        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x03, 0x00, // rax = [0x30000]
+        0x48, 0x03, 0x04, 0x25, 0x00, 0x10, 0x03, 0x00, // rax += [0x31000]
+        0x48, 0x03, 0x04, 0x25, 0x00, 0x20, 0x03, 0x00, // rax += [0x32000]
+        0x48, 0x03, 0x04, 0x25, 0x00, 0x30, 0x03, 0x00, // rax += [0x33000]
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -1103,7 +1389,10 @@ fn test_stress_read_write_alternation() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let regs = vcpu.get_regs().unwrap();
-    assert_eq!(regs.rax as u32, 0x11111111 + 0x22222222 + 0x33333333 + 0x44444444);
+    assert_eq!(
+        regs.rax as u32,
+        0x11111111 + 0x22222222 + 0x33333333 + 0x44444444
+    );
 }
 
 // ============================================================================
@@ -1124,8 +1413,8 @@ fn test_call_chain_multi_page() {
 
     // func3: add 1 to rax and return
     let func3: &[u8] = &[
-        0x48, 0xff, 0xc0,  // inc rax
-        0xc3,              // ret
+        0x48, 0xff, 0xc0, // inc rax
+        0xc3, // ret
     ];
     mem.write_slice(func3, GuestAddress(func3_addr)).unwrap();
 
@@ -1133,9 +1422,14 @@ fn test_call_chain_multi_page() {
     let rel3 = (func3_addr as i32) - (func2_addr as i32 + 5);
     let func2 = [
         0xe8,
-        (rel3 & 0xFF) as u8, ((rel3 >> 8) & 0xFF) as u8,
-        ((rel3 >> 16) & 0xFF) as u8, ((rel3 >> 24) & 0xFF) as u8,
-        0x48, 0x83, 0xc0, 0x0a,  // add rax, 10
+        (rel3 & 0xFF) as u8,
+        ((rel3 >> 8) & 0xFF) as u8,
+        ((rel3 >> 16) & 0xFF) as u8,
+        ((rel3 >> 24) & 0xFF) as u8,
+        0x48,
+        0x83,
+        0xc0,
+        0x0a, // add rax, 10
         0xc3,
     ];
     mem.write_slice(&func2, GuestAddress(func2_addr)).unwrap();
@@ -1144,9 +1438,14 @@ fn test_call_chain_multi_page() {
     let rel2 = (func2_addr as i32) - (func1_addr as i32 + 5);
     let func1 = [
         0xe8,
-        (rel2 & 0xFF) as u8, ((rel2 >> 8) & 0xFF) as u8,
-        ((rel2 >> 16) & 0xFF) as u8, ((rel2 >> 24) & 0xFF) as u8,
-        0x48, 0x83, 0xc0, 0x64,  // add rax, 100
+        (rel2 & 0xFF) as u8,
+        ((rel2 >> 8) & 0xFF) as u8,
+        ((rel2 >> 16) & 0xFF) as u8,
+        ((rel2 >> 24) & 0xFF) as u8,
+        0x48,
+        0x83,
+        0xc0,
+        0x64, // add rax, 100
         0xc3,
     ];
     mem.write_slice(&func1, GuestAddress(func1_addr)).unwrap();
@@ -1154,15 +1453,20 @@ fn test_call_chain_multi_page() {
     // Main: set rax=0, call func1, store result
     let rel1 = (func1_addr as i32) - (CODE_PADDR as i32 + 5 + 3);
     let mut main_code = vec![
-        0x48, 0x31, 0xc0,  // xor rax, rax
+        0x48,
+        0x31,
+        0xc0, // xor rax, rax
         0xe8,
-        (rel1 & 0xFF) as u8, ((rel1 >> 8) & 0xFF) as u8,
-        ((rel1 >> 16) & 0xFF) as u8, ((rel1 >> 24) & 0xFF) as u8,
+        (rel1 & 0xFF) as u8,
+        ((rel1 >> 8) & 0xFF) as u8,
+        ((rel1 >> 16) & 0xFF) as u8,
+        ((rel1 >> 24) & 0xFF) as u8,
     ];
     main_code.extend_from_slice(&[0x48, 0xa3]);
     main_code.extend_from_slice(&RESULT_ADDR.to_le_bytes());
     main_code.push(0xf4);
-    mem.write_slice(&main_code, GuestAddress(CODE_PADDR)).unwrap();
+    mem.write_slice(&main_code, GuestAddress(CODE_PADDR))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
     let mut regs = vcpu.get_regs().unwrap();
@@ -1187,13 +1491,29 @@ fn test_stack_operations_paged() {
     let mut vcpu = create_paged_vcpu(mem.clone());
 
     let code: &[u8] = &[
-        0x48, 0xb8, 0xBE, 0xBA, 0xFE, 0xCA, 0xEF, 0xBE, 0xAD, 0xDE,  // mov rax, 0xDEADBEEFCAFEBABE
-        0x50,        // push rax
-        0x48, 0x31, 0xc0,  // xor rax, rax
-        0x5b,        // pop rbx
-        0x48, 0x89, 0x1c, 0x25,
-        (RESULT_ADDR & 0xFF) as u8, ((RESULT_ADDR >> 8) & 0xFF) as u8,
-        ((RESULT_ADDR >> 16) & 0xFF) as u8, ((RESULT_ADDR >> 24) & 0xFF) as u8,
+        0x48,
+        0xb8,
+        0xBE,
+        0xBA,
+        0xFE,
+        0xCA,
+        0xEF,
+        0xBE,
+        0xAD,
+        0xDE, // mov rax, 0xDEADBEEFCAFEBABE
+        0x50, // push rax
+        0x48,
+        0x31,
+        0xc0, // xor rax, rax
+        0x5b, // pop rbx
+        0x48,
+        0x89,
+        0x1c,
+        0x25,
+        (RESULT_ADDR & 0xFF) as u8,
+        ((RESULT_ADDR >> 8) & 0xFF) as u8,
+        ((RESULT_ADDR >> 16) & 0xFF) as u8,
+        ((RESULT_ADDR >> 24) & 0xFF) as u8,
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -1218,19 +1538,25 @@ fn test_mixed_page_sizes() {
     setup_handlers(&mem);
 
     // PD[0] = 4KB pages, PD[1] = 2MB huge page
-    let pde_2mb = 0x200000_u64 | pte_flags::PRESENT | pte_flags::WRITABLE
-        | pte_flags::USER | pte_flags::HUGE_PAGE;
-    mem.write_slice(&pde_2mb.to_le_bytes(), GuestAddress(PD_ADDR + 8)).unwrap();
+    let pde_2mb = 0x200000_u64
+        | pte_flags::PRESENT
+        | pte_flags::WRITABLE
+        | pte_flags::USER
+        | pte_flags::HUGE_PAGE;
+    mem.write_slice(&pde_2mb.to_le_bytes(), GuestAddress(PD_ADDR + 8))
+        .unwrap();
 
     let value_4kb = 0x4444444444444444_u64;
     let value_2mb = 0x2222222222222222_u64;
-    mem.write_slice(&value_4kb.to_le_bytes(), GuestAddress(0x50000)).unwrap();
-    mem.write_slice(&value_2mb.to_le_bytes(), GuestAddress(0x250000)).unwrap();
+    mem.write_slice(&value_4kb.to_le_bytes(), GuestAddress(0x50000))
+        .unwrap();
+    mem.write_slice(&value_2mb.to_le_bytes(), GuestAddress(0x250000))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
     let code: &[u8] = &[
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x05, 0x00,  // mov rax, [0x50000]
-        0x48, 0x8b, 0x1c, 0x25, 0x00, 0x00, 0x25, 0x00,  // mov rbx, [0x250000]
+        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x05, 0x00, // mov rax, [0x50000]
+        0x48, 0x8b, 0x1c, 0x25, 0x00, 0x00, 0x25, 0x00, // mov rbx, [0x250000]
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -1257,15 +1583,13 @@ fn test_reserved_bit_pte() {
     setup_identity_page_tables(&mem, pte_flags::WRITABLE | pte_flags::USER);
 
     // Set reserved bit (bit 51) in PTE - with 48-bit physical addresses, bits 51:48 are reserved
-    let pte = 0x70000_u64 | pte_flags::PRESENT | pte_flags::WRITABLE
-        | pte_flags::USER | (1u64 << 51);
-    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + 112 * 8)).unwrap();
+    let pte =
+        0x70000_u64 | pte_flags::PRESENT | pte_flags::WRITABLE | pte_flags::USER | (1u64 << 51);
+    mem.write_slice(&pte.to_le_bytes(), GuestAddress(PT_ADDR + 112 * 8))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
-    let code: &[u8] = &[
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x07, 0x00,
-        0xf4,
-    ];
+    let code: &[u8] = &[0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x07, 0x00, 0xf4];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
 
     let mut regs = vcpu.get_regs().unwrap();
@@ -1285,11 +1609,12 @@ fn test_non_present_pd_level() {
     setup_identity_page_tables(&mem, pte_flags::WRITABLE | pte_flags::USER);
 
     // Clear PD[1] - addresses 2-4MB non-present
-    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PD_ADDR + 8)).unwrap();
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PD_ADDR + 8))
+        .unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
     let code: &[u8] = &[
-        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x20, 0x00,  // mov rax, [0x200000]
+        0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x20, 0x00, // mov rax, [0x200000]
         0xf4,
     ];
     mem.write_slice(code, GuestAddress(CODE_PADDR)).unwrap();
@@ -1318,43 +1643,81 @@ fn test_smc_pattern() {
     // Write code, then modify it, then execute modified version
     // Initial: mov rax, 1
     let initial_code: &[u8] = &[
-        0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00,  // mov rax, 1
+        0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // mov rax, 1
         0xf4,
     ];
-    mem.write_slice(initial_code, GuestAddress(target_addr)).unwrap();
+    mem.write_slice(initial_code, GuestAddress(target_addr))
+        .unwrap();
 
     // Main code: modify target then jump to it
     let code: Vec<u8> = vec![
         // Write new instruction at target: mov rax, 42
-        0x48, 0xc7, 0x04, 0x25,
-        (target_addr & 0xFF) as u8, ((target_addr >> 8) & 0xFF) as u8,
-        ((target_addr >> 16) & 0xFF) as u8, ((target_addr >> 24) & 0xFF) as u8,
-        0xc0, 0xc7, 0xc0, 0x48,  // Store bytes of "mov rax," at addr
-        0x48, 0xc7, 0x04, 0x25,
-        ((target_addr + 4) & 0xFF) as u8, (((target_addr + 4) >> 8) & 0xFF) as u8,
-        (((target_addr + 4) >> 16) & 0xFF) as u8, (((target_addr + 4) >> 24) & 0xFF) as u8,
-        0x2a, 0x00, 0x00, 0x00,  // Store ", 42" and part of next
+        0x48,
+        0xc7,
+        0x04,
+        0x25,
+        (target_addr & 0xFF) as u8,
+        ((target_addr >> 8) & 0xFF) as u8,
+        ((target_addr >> 16) & 0xFF) as u8,
+        ((target_addr >> 24) & 0xFF) as u8,
+        0xc0,
+        0xc7,
+        0xc0,
+        0x48, // Store bytes of "mov rax," at addr
+        0x48,
+        0xc7,
+        0x04,
+        0x25,
+        ((target_addr + 4) & 0xFF) as u8,
+        (((target_addr + 4) >> 8) & 0xFF) as u8,
+        (((target_addr + 4) >> 16) & 0xFF) as u8,
+        (((target_addr + 4) >> 24) & 0xFF) as u8,
+        0x2a,
+        0x00,
+        0x00,
+        0x00, // Store ", 42" and part of next
         // Jump to target
-        0xff, 0x25, 0x00, 0x00, 0x00, 0x00,  // jmp [rip+0] (absolute indirect)
-        (target_addr & 0xFF) as u8, ((target_addr >> 8) & 0xFF) as u8,
-        ((target_addr >> 16) & 0xFF) as u8, ((target_addr >> 24) & 0xFF) as u8,
-        ((target_addr >> 32) & 0xFF) as u8, ((target_addr >> 40) & 0xFF) as u8,
-        ((target_addr >> 48) & 0xFF) as u8, ((target_addr >> 56) & 0xFF) as u8,
+        0xff,
+        0x25,
+        0x00,
+        0x00,
+        0x00,
+        0x00, // jmp [rip+0] (absolute indirect)
+        (target_addr & 0xFF) as u8,
+        ((target_addr >> 8) & 0xFF) as u8,
+        ((target_addr >> 16) & 0xFF) as u8,
+        ((target_addr >> 24) & 0xFF) as u8,
+        ((target_addr >> 32) & 0xFF) as u8,
+        ((target_addr >> 40) & 0xFF) as u8,
+        ((target_addr >> 48) & 0xFF) as u8,
+        ((target_addr >> 56) & 0xFF) as u8,
     ];
     mem.write_slice(&code, GuestAddress(CODE_PADDR)).unwrap();
 
     // Simpler test: just verify we can write and read back through page tables
     // The SMC detection is for the decode cache, which is an optimization
     let simple_code: &[u8] = &[
-        0x48, 0xc7, 0xc0, 0x2A, 0x00, 0x00, 0x00,  // mov rax, 42
-        0x48, 0xa3,
-        (RESULT_ADDR & 0xFF) as u8, ((RESULT_ADDR >> 8) & 0xFF) as u8,
-        ((RESULT_ADDR >> 16) & 0xFF) as u8, ((RESULT_ADDR >> 24) & 0xFF) as u8,
-        ((RESULT_ADDR >> 32) & 0xFF) as u8, ((RESULT_ADDR >> 40) & 0xFF) as u8,
-        ((RESULT_ADDR >> 48) & 0xFF) as u8, ((RESULT_ADDR >> 56) & 0xFF) as u8,
+        0x48,
+        0xc7,
+        0xc0,
+        0x2A,
+        0x00,
+        0x00,
+        0x00, // mov rax, 42
+        0x48,
+        0xa3,
+        (RESULT_ADDR & 0xFF) as u8,
+        ((RESULT_ADDR >> 8) & 0xFF) as u8,
+        ((RESULT_ADDR >> 16) & 0xFF) as u8,
+        ((RESULT_ADDR >> 24) & 0xFF) as u8,
+        ((RESULT_ADDR >> 32) & 0xFF) as u8,
+        ((RESULT_ADDR >> 40) & 0xFF) as u8,
+        ((RESULT_ADDR >> 48) & 0xFF) as u8,
+        ((RESULT_ADDR >> 56) & 0xFF) as u8,
         0xf4,
     ];
-    mem.write_slice(simple_code, GuestAddress(CODE_PADDR)).unwrap();
+    mem.write_slice(simple_code, GuestAddress(CODE_PADDR))
+        .unwrap();
 
     let mut regs = vcpu.get_regs().unwrap();
     regs.rip = CODE_PADDR;
@@ -1378,7 +1741,8 @@ fn test_performance_translation_speed() {
     // Fill pages with data
     for i in 0..256u64 {
         let addr = 0x30000 + i * 16;
-        mem.write_slice(&i.to_le_bytes(), GuestAddress(addr)).unwrap();
+        mem.write_slice(&i.to_le_bytes(), GuestAddress(addr))
+            .unwrap();
     }
 
     let mut vcpu = create_paged_vcpu(mem.clone());
@@ -1388,9 +1752,14 @@ fn test_performance_translation_speed() {
     for i in 0..256u64 {
         let addr = 0x30000 + i * 16;
         code.extend_from_slice(&[
-            0x48, 0x8b, 0x04, 0x25,
-            (addr & 0xFF) as u8, ((addr >> 8) & 0xFF) as u8,
-            ((addr >> 16) & 0xFF) as u8, ((addr >> 24) & 0xFF) as u8,
+            0x48,
+            0x8b,
+            0x04,
+            0x25,
+            (addr & 0xFF) as u8,
+            ((addr >> 8) & 0xFF) as u8,
+            ((addr >> 16) & 0xFF) as u8,
+            ((addr >> 24) & 0xFF) as u8,
         ]);
     }
     code.push(0xf4);

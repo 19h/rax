@@ -518,7 +518,8 @@ fn test_repne_scasq_all_different() {
     let code = [
         0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
         0x48, 0xc7, 0xc1, 0x04, 0x00, 0x00, 0x00, // MOV RCX, 4
-        0x48, 0xb8, 0xEF, 0xCD, 0xAB, 0x90, 0x78, 0x56, 0x34, 0x12, // MOV RAX, 0x1234567890ABCDEF
+        0x48, 0xb8, 0xEF, 0xCD, 0xAB, 0x90, 0x78, 0x56, 0x34,
+        0x12, // MOV RAX, 0x1234567890ABCDEF
         0xfc, // CLD
         0xf2, 0x48, 0xaf, // REPNE SCASQ
         0xf4, // HLT
@@ -541,7 +542,8 @@ fn test_repne_scasq_match() {
     let code = [
         0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
         0x48, 0xc7, 0xc1, 0x04, 0x00, 0x00, 0x00, // MOV RCX, 4
-        0x48, 0xb8, 0xEF, 0xCD, 0xAB, 0x90, 0x78, 0x56, 0x34, 0x12, // MOV RAX, 0x1234567890ABCDEF
+        0x48, 0xb8, 0xEF, 0xCD, 0xAB, 0x90, 0x78, 0x56, 0x34,
+        0x12, // MOV RAX, 0x1234567890ABCDEF
         0xfc, // CLD
         0xf2, 0x48, 0xaf, // REPNE SCASQ
         0xf4, // HLT
@@ -580,7 +582,8 @@ fn test_repne_scasq_backward() {
     let code = [
         0x48, 0xc7, 0xc7, 0x18, 0x40, 0x00, 0x00, // MOV RDI, 0x4018
         0x48, 0xc7, 0xc1, 0x04, 0x00, 0x00, 0x00, // MOV RCX, 4
-        0x48, 0xb8, 0xBE, 0xBA, 0xFE, 0xCA, 0xEF, 0xBE, 0xAD, 0xDE, // MOV RAX, 0xDEADBEEFCAFEBABE
+        0x48, 0xb8, 0xBE, 0xBA, 0xFE, 0xCA, 0xEF, 0xBE, 0xAD,
+        0xDE, // MOV RAX, 0xDEADBEEFCAFEBABE
         0xfd, // STD
         0xf2, 0x48, 0xaf, // REPNE SCASQ
         0xf4, // HLT
@@ -676,7 +679,7 @@ fn test_repne_scasb_find_newline() {
         0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
         0x48, 0xc7, 0xc1, 0x20, 0x00, 0x00, 0x00, // MOV RCX, 32
         0xb0, b'\n', // MOV AL, '\n'
-        0xfc, // CLD
+        0xfc,  // CLD
         0xf2, 0xae, // REPNE SCASB
         0xf4, // HLT
     ];
@@ -710,7 +713,11 @@ fn test_repne_scasq_find_null_pointer() {
 
     // Non-null pointers, null at position 8
     for i in 0..16 {
-        write_mem_at_u64(&mem, 0x4000 + i * 8, if i == 8 { 0 } else { 0x1000 + i as u64 });
+        write_mem_at_u64(
+            &mem,
+            0x4000 + i * 8,
+            if i == 8 { 0 } else { 0x1000 + i as u64 },
+        );
     }
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -755,11 +762,11 @@ fn test_repne_scasb_count_100() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..100 {
         write_mem_at_u8(&mem, 0x4000 + i, if i == 50 { 0x42 } else { 0xFF });
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 49, "Should stop at matching byte");
 }
@@ -775,11 +782,11 @@ fn test_repne_scasw_pattern_search() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..10 {
         write_mem_at_u16(&mem, 0x4000 + i * 2, if i == 7 { 0x1234 } else { 0xABCD });
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 2, "Should find pattern at position 7");
 }
@@ -795,13 +802,13 @@ fn test_repne_scasd_boundary_check() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     write_mem_at_u32(&mem, 0x3FFC, 0x22222222);
     write_mem_at_u32(&mem, 0x4000, 0x11111111);
     write_mem_at_u32(&mem, 0x4004, 0x33333333);
     write_mem_at_u32(&mem, 0x4008, 0x44444444);
     write_mem_at_u32(&mem, 0x400C, 0x55555555);
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 3, "Should find match at boundary");
 }
@@ -817,11 +824,11 @@ fn test_repne_scasq_incremental_values() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..10 {
         write_mem_at_u64(&mem, 0x4000 + i * 8, i as u64);
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 4, "Should find value 5 at position 5");
 }
@@ -837,11 +844,11 @@ fn test_repne_scasb_alternating_pattern() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..16 {
         write_mem_at_u8(&mem, 0x4000 + i, if i % 2 == 0 { 0xAA } else { 0x55 });
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 14, "Should find 0x55 at odd position");
 }
@@ -857,9 +864,9 @@ fn test_repne_scasw_single_word() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     write_mem_at_u16(&mem, 0x4000, 0x5678);
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 0, "Should find match on single comparison");
     assert!(zf_set(regs.rflags), "ZF should be set");
@@ -876,12 +883,12 @@ fn test_repne_scasd_powers_of_two() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     let powers = [1u32, 2, 4, 8, 16, 32, 64, 128];
     for i in 0..8u64 {
         write_mem_at_u32(&mem, 0x4000 + i * 4, powers[i as usize]);
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 1, "Should find 64 at position 6");
 }
@@ -897,11 +904,15 @@ fn test_repne_scasq_null_sentinel() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..20 {
-        write_mem_at_u64(&mem, 0x4000 + i * 8, if i == 12 { 0 } else { i as u64 + 1000 });
+        write_mem_at_u64(
+            &mem,
+            0x4000 + i * 8,
+            if i == 12 { 0 } else { i as u64 + 1000 },
+        );
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 7, "Should find null at position 12");
 }
@@ -917,11 +928,11 @@ fn test_repne_scasb_sequential_bytes() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..32 {
         write_mem_at_u8(&mem, 0x4000 + i, i as u8);
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 16, "Should find byte 15 at position 15");
 }
@@ -937,11 +948,11 @@ fn test_repne_scasw_high_bit_pattern() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..12 {
         write_mem_at_u16(&mem, 0x4000 + i * 2, if i == 8 { 0x8000 } else { i as u16 });
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 3, "Should find high-bit word");
 }
@@ -957,11 +968,15 @@ fn test_repne_scasd_backward_scan() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..7 {
-        write_mem_at_u32(&mem, 0x4000 + i * 4, if i == 3 { 0xAAAAAAAA } else { 0xBBBBBBBB });
+        write_mem_at_u32(
+            &mem,
+            0x4000 + i * 4,
+            if i == 3 { 0xAAAAAAAA } else { 0xBBBBBBBB },
+        );
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert!(regs.rcx < 7, "Should find match during backward scan");
 }
@@ -969,7 +984,8 @@ fn test_repne_scasd_backward_scan() {
 #[test]
 fn test_repne_scasq_sparse_values() {
     let code = [
-        0x48, 0xb8, 0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01, // MOV RAX, 0x0123456789ABCDEF
+        0x48, 0xb8, 0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23,
+        0x01, // MOV RAX, 0x0123456789ABCDEF
         0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
         0x48, 0xc7, 0xc1, 0x10, 0x00, 0x00, 0x00, // MOV RCX, 16
         0xfc, // CLD
@@ -977,11 +993,19 @@ fn test_repne_scasq_sparse_values() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..16 {
-        write_mem_at_u64(&mem, 0x4000 + i * 8, if i == 11 { 0x0123456789ABCDEF } else { i as u64 });
+        write_mem_at_u64(
+            &mem,
+            0x4000 + i * 8,
+            if i == 11 {
+                0x0123456789ABCDEF
+            } else {
+                i as u64
+            },
+        );
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 4, "Should find magic value");
 }
@@ -997,12 +1021,12 @@ fn test_repne_scasb_hex_digits() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     let hex = b"0123456789ABCDEF";
     for i in 0..16u64 {
         write_mem_at_u8(&mem, 0x4000 + i, hex[i as usize]);
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 0, "Should find 'F' at end");
 }
@@ -1018,11 +1042,11 @@ fn test_repne_scasw_unicode_bom() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..10 {
         write_mem_at_u16(&mem, 0x4000 + i * 2, if i == 4 { 0xFEFF } else { 0x0041 });
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 5, "Should find BOM marker");
 }
@@ -1038,11 +1062,15 @@ fn test_repne_scasd_signed_negative() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    
+
     for i in 0..10 {
-        write_mem_at_u32(&mem, 0x4000 + i * 4, if i == 6 { 0xFFFFFFFF } else { i as u32 });
+        write_mem_at_u32(
+            &mem,
+            0x4000 + i * 4,
+            if i == 6 { 0xFFFFFFFF } else { i as u32 },
+        );
     }
-    
+
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 3, "Should find -1 value");
 }

@@ -184,7 +184,8 @@ fn test_movd_xmm0_mem32() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: u32 = 0x12345678;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -197,7 +198,8 @@ fn test_movd_xmm5_mem32() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: u32 = 0xABCDEF00;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -234,7 +236,8 @@ fn test_movq_xmm0_mem64() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: u64 = 0x123456789ABCDEF0;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -247,7 +250,8 @@ fn test_movq_xmm3_mem64() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: u64 = 0xFEDCBA9876543210;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -320,7 +324,8 @@ fn test_movd_xmm0_mem32_disp() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: u32 = 0xDEADBEEF;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -333,7 +338,8 @@ fn test_movq_xmm1_mem64_disp() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: u64 = 0xCAFEBABEDEADBEEF;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -347,7 +353,8 @@ fn test_movd_zero() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: u32 = 0;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -360,7 +367,8 @@ fn test_movd_all_ones() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: u32 = 0xFFFFFFFF;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -373,7 +381,8 @@ fn test_movq_zero() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: u64 = 0;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -386,7 +395,8 @@ fn test_movq_all_ones() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let val: u64 = 0xFFFFFFFFFFFFFFFF;
-    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR)).unwrap();
+    mem.write_slice(&val.to_le_bytes(), vm_memory::GuestAddress(DATA_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

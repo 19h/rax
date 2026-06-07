@@ -18,10 +18,7 @@ fn main() {
     println!("==============================================\n");
 
     // Load the microkernel binary
-    let bin_path = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/microkernel/microkernel.bin"
-    );
+    let bin_path = concat!(env!("CARGO_MANIFEST_DIR"), "/microkernel/microkernel.bin");
 
     let code = match std::fs::read(bin_path) {
         Ok(data) => data,
@@ -29,7 +26,9 @@ fn main() {
             eprintln!("Failed to read microkernel binary: {}", e);
             eprintln!("Make sure to build it first:");
             eprintln!("  cd microkernel && cargo +nightly build --release");
-            eprintln!("  llvm-objcopy -O binary target/x86_64-unknown-none/release/microkernel microkernel.bin");
+            eprintln!(
+                "  llvm-objcopy -O binary target/x86_64-unknown-none/release/microkernel microkernel.bin"
+            );
             std::process::exit(1);
         }
     };
@@ -111,7 +110,10 @@ fn main() {
     loop {
         if insn_count < trace_first_n {
             let r = vcpu.get_regs().unwrap();
-            eprintln!("[{:6}] RIP={:#x} RSP={:#x} RAX={:#x}", insn_count, r.rip, r.rsp, r.rax);
+            eprintln!(
+                "[{:6}] RIP={:#x} RSP={:#x} RAX={:#x}",
+                insn_count, r.rip, r.rsp, r.rax
+            );
         }
         match vcpu.step() {
             Ok(Some(VcpuExit::Hlt)) => {

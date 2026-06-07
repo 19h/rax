@@ -606,11 +606,7 @@ fn write_vec_vl(vcpu: &mut X86_64Vcpu, dest: u8, vl_bytes: usize, data: &[u8; 64
 /// Decode the three vector operands of a typical EVEX `op dest{k}, src1, src2/m`
 /// instruction. Returns (dest, src1, src2 reg, is_memory, addr).
 #[inline]
-fn evex_three_op(
-    evex: &super::super::super::cpu::EvexPrefix,
-    reg: u8,
-    rm: u8,
-) -> (u8, u8, u8) {
+fn evex_three_op(evex: &super::super::super::cpu::EvexPrefix, reg: u8, rm: u8) -> (u8, u8, u8) {
     let dest = (reg & 0x07) | if evex.r { 0 } else { 8 } | if evex.r_prime { 0 } else { 16 };
     let src1 = (evex.vvvv ^ 0xF) | if evex.v_prime { 0 } else { 16 };
     let src2 = (rm & 0x07) | if evex.b { 0 } else { 8 } | if evex.x { 0 } else { 16 };
@@ -642,7 +638,12 @@ impl IntOp {
         match self {
             IntOp::AddB | IntOp::SubB => 1,
             IntOp::AddW | IntOp::SubW | IntOp::MullW => 2,
-            IntOp::AddD | IntOp::SubD | IntOp::MullD | IntOp::And | IntOp::Or | IntOp::Xor
+            IntOp::AddD
+            | IntOp::SubD
+            | IntOp::MullD
+            | IntOp::And
+            | IntOp::Or
+            | IntOp::Xor
             | IntOp::Andn => 4,
             IntOp::AddQ | IntOp::SubQ => 8,
         }
@@ -696,7 +697,8 @@ fn int_op_elem(op: IntOp, a: &[u8], b: &[u8], out: &mut [u8]) {
         }
         IntOp::MullD => {
             let r = (i32::from_le_bytes([a[0], a[1], a[2], a[3]]))
-                .wrapping_mul(i32::from_le_bytes([b[0], b[1], b[2], b[3]])) as u32;
+                .wrapping_mul(i32::from_le_bytes([b[0], b[1], b[2], b[3]]))
+                as u32;
             out[0..4].copy_from_slice(&r.to_le_bytes());
         }
         IntOp::And => {
@@ -1152,8 +1154,7 @@ pub fn evex_mov_masked_store(
             } else if evex.z {
                 // zeroing
             } else {
-                result[base..base + elem_size]
-                    .copy_from_slice(&dest_old[base..base + elem_size]);
+                result[base..base + elem_size].copy_from_slice(&dest_old[base..base + elem_size]);
             }
         }
         write_vec_vl(vcpu, dest_reg, vl_bytes, &result);

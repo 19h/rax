@@ -25,7 +25,11 @@ fn test_aarch64_float_convert_int_field_sf_0_min_0_1e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -41,7 +45,11 @@ fn test_aarch64_float_convert_int_field_sf_1_max_0_9e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -57,7 +65,11 @@ fn test_aarch64_float_convert_int_field_type1_0_min_0_1e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -73,7 +85,11 @@ fn test_aarch64_float_convert_int_field_type1_1_poweroftwo_0_1e600000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -89,7 +105,11 @@ fn test_aarch64_float_convert_int_field_type1_3_max_0_1ee00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -105,7 +125,11 @@ fn test_aarch64_float_convert_int_field_rmode_0_min_0_1e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -121,7 +145,11 @@ fn test_aarch64_float_convert_int_field_rmode_1_poweroftwo_0_1e280000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -137,7 +165,11 @@ fn test_aarch64_float_convert_int_field_rmode_3_max_0_1e380000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -153,7 +185,11 @@ fn test_aarch64_float_convert_int_field_opcode_0_min_0_1e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -169,7 +205,11 @@ fn test_aarch64_float_convert_int_field_opcode_1_poweroftwo_0_1e210000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -185,7 +225,11 @@ fn test_aarch64_float_convert_int_field_opcode_7_max_0_1e270000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -201,7 +245,11 @@ fn test_aarch64_float_convert_int_field_rn_0_min_0_1e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -217,7 +265,11 @@ fn test_aarch64_float_convert_int_field_rn_1_poweroftwo_0_1e200020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -233,7 +285,11 @@ fn test_aarch64_float_convert_int_field_rn_30_poweroftwominusone_0_1e2003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -249,7 +305,11 @@ fn test_aarch64_float_convert_int_field_rn_31_max_0_1e2003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -265,7 +325,11 @@ fn test_aarch64_float_convert_int_field_rd_0_min_0_1e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -281,7 +345,11 @@ fn test_aarch64_float_convert_int_field_rd_1_poweroftwo_0_1e200001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -297,7 +365,11 @@ fn test_aarch64_float_convert_int_field_rd_30_poweroftwominusone_0_1e20001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -313,7 +385,11 @@ fn test_aarch64_float_convert_int_field_rd_31_max_0_1e20001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -329,7 +405,11 @@ fn test_aarch64_float_convert_int_combo_0_0_1e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -345,7 +425,11 @@ fn test_aarch64_float_convert_int_combo_1_0_9e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -361,7 +445,11 @@ fn test_aarch64_float_convert_int_combo_2_0_1e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -377,7 +465,11 @@ fn test_aarch64_float_convert_int_combo_3_0_1e600000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -393,7 +485,11 @@ fn test_aarch64_float_convert_int_combo_4_0_1ee00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -409,7 +505,11 @@ fn test_aarch64_float_convert_int_combo_5_0_1e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -425,7 +525,11 @@ fn test_aarch64_float_convert_int_combo_6_0_1e280000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -441,7 +545,11 @@ fn test_aarch64_float_convert_int_combo_7_0_1e380000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -457,7 +565,11 @@ fn test_aarch64_float_convert_int_combo_8_0_1e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -473,7 +585,11 @@ fn test_aarch64_float_convert_int_combo_9_0_1e210000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -489,7 +605,11 @@ fn test_aarch64_float_convert_int_combo_10_0_1e270000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -505,7 +625,11 @@ fn test_aarch64_float_convert_int_combo_11_0_1e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -521,7 +645,11 @@ fn test_aarch64_float_convert_int_combo_12_0_1e200020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -537,7 +665,11 @@ fn test_aarch64_float_convert_int_combo_13_0_1e2003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -553,7 +685,11 @@ fn test_aarch64_float_convert_int_combo_14_0_1e2003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -569,7 +705,11 @@ fn test_aarch64_float_convert_int_combo_15_0_1e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -585,7 +725,11 @@ fn test_aarch64_float_convert_int_combo_16_0_1e200001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -601,7 +745,11 @@ fn test_aarch64_float_convert_int_combo_17_0_1e20001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -617,7 +765,11 @@ fn test_aarch64_float_convert_int_combo_18_0_1e20001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -633,7 +785,11 @@ fn test_aarch64_float_convert_int_combo_19_0_1e200021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -649,7 +805,11 @@ fn test_aarch64_float_convert_int_combo_20_0_1e2003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -665,7 +825,11 @@ fn test_aarch64_float_convert_int_special_sf_0_size_variant_0_0_1e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -681,7 +845,11 @@ fn test_aarch64_float_convert_int_special_sf_1_size_variant_1_0_9e200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -689,7 +857,8 @@ fn test_aarch64_float_convert_int_special_sf_1_size_variant_1_0_9e200000() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_float_convert_int_special_rn_31_stack_pointer_sp_may_require_alignment_0_1e2003e0() {
+fn test_aarch64_float_convert_int_special_rn_31_stack_pointer_sp_may_require_alignment_0_1e2003e0()
+{
     // Encoding: 0x1E2003E0
     // Test aarch64_float_convert_int special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: rmode=0, type1=0, sf=0, opcode=0, Rn=31, Rd=0
@@ -697,7 +866,11 @@ fn test_aarch64_float_convert_int_special_rn_31_stack_pointer_sp_may_require_ali
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -705,7 +878,8 @@ fn test_aarch64_float_convert_int_special_rn_31_stack_pointer_sp_may_require_ali
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_float_convert_int_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1e20001f() {
+fn test_aarch64_float_convert_int_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1e20001f()
+ {
     // Encoding: 0x1E20001F
     // Test aarch64_float_convert_int special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: type1=0, Rd=31, sf=0, rmode=0, opcode=0, Rn=0
@@ -713,7 +887,11 @@ fn test_aarch64_float_convert_int_special_rd_31_zero_register_xzr_wzr_reads_as_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -733,7 +911,11 @@ fn test_aarch64_float_convert_fix_field_sf_0_min_0_1e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -749,7 +931,11 @@ fn test_aarch64_float_convert_fix_field_sf_1_max_0_9e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -765,7 +951,11 @@ fn test_aarch64_float_convert_fix_field_type1_0_min_0_1e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -781,7 +971,11 @@ fn test_aarch64_float_convert_fix_field_type1_1_poweroftwo_0_1e400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -797,7 +991,11 @@ fn test_aarch64_float_convert_fix_field_type1_3_max_0_1ec00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -813,7 +1011,11 @@ fn test_aarch64_float_convert_fix_field_rmode_0_min_0_1e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -829,7 +1031,11 @@ fn test_aarch64_float_convert_fix_field_rmode_1_poweroftwo_0_1e080000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -845,7 +1051,11 @@ fn test_aarch64_float_convert_fix_field_rmode_3_max_0_1e180000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -861,7 +1071,11 @@ fn test_aarch64_float_convert_fix_field_opcode_0_min_0_1e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -877,7 +1091,11 @@ fn test_aarch64_float_convert_fix_field_opcode_1_poweroftwo_0_1e010000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -893,7 +1111,11 @@ fn test_aarch64_float_convert_fix_field_opcode_7_max_0_1e070000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -909,7 +1131,11 @@ fn test_aarch64_float_convert_fix_field_scale_0_min_0_1e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -925,7 +1151,11 @@ fn test_aarch64_float_convert_fix_field_scale_1_poweroftwo_0_1e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -941,7 +1171,11 @@ fn test_aarch64_float_convert_fix_field_scale_31_poweroftwominusone_0_1e007c00()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -957,7 +1191,11 @@ fn test_aarch64_float_convert_fix_field_scale_63_max_0_1e00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -973,7 +1211,11 @@ fn test_aarch64_float_convert_fix_field_rn_0_min_0_1e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -989,7 +1231,11 @@ fn test_aarch64_float_convert_fix_field_rn_1_poweroftwo_0_1e000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1005,7 +1251,11 @@ fn test_aarch64_float_convert_fix_field_rn_30_poweroftwominusone_0_1e0003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1021,7 +1271,11 @@ fn test_aarch64_float_convert_fix_field_rn_31_max_0_1e0003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1037,7 +1291,11 @@ fn test_aarch64_float_convert_fix_field_rd_0_min_0_1e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1053,7 +1311,11 @@ fn test_aarch64_float_convert_fix_field_rd_1_poweroftwo_0_1e000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1069,7 +1331,11 @@ fn test_aarch64_float_convert_fix_field_rd_30_poweroftwominusone_0_1e00001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1085,7 +1351,11 @@ fn test_aarch64_float_convert_fix_field_rd_31_max_0_1e00001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1101,7 +1371,11 @@ fn test_aarch64_float_convert_fix_combo_0_0_1e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1117,7 +1391,11 @@ fn test_aarch64_float_convert_fix_combo_1_0_9e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1133,7 +1411,11 @@ fn test_aarch64_float_convert_fix_combo_2_0_1e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1149,7 +1431,11 @@ fn test_aarch64_float_convert_fix_combo_3_0_1e400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1165,7 +1451,11 @@ fn test_aarch64_float_convert_fix_combo_4_0_1ec00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1181,7 +1471,11 @@ fn test_aarch64_float_convert_fix_combo_5_0_1e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1197,7 +1491,11 @@ fn test_aarch64_float_convert_fix_combo_6_0_1e080000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1213,7 +1511,11 @@ fn test_aarch64_float_convert_fix_combo_7_0_1e180000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1229,7 +1531,11 @@ fn test_aarch64_float_convert_fix_combo_8_0_1e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1245,7 +1551,11 @@ fn test_aarch64_float_convert_fix_combo_9_0_1e010000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1261,7 +1571,11 @@ fn test_aarch64_float_convert_fix_combo_10_0_1e070000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1277,7 +1591,11 @@ fn test_aarch64_float_convert_fix_combo_11_0_1e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1293,7 +1611,11 @@ fn test_aarch64_float_convert_fix_combo_12_0_1e000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1309,7 +1631,11 @@ fn test_aarch64_float_convert_fix_combo_13_0_1e007c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1325,7 +1651,11 @@ fn test_aarch64_float_convert_fix_combo_14_0_1e00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1341,7 +1671,11 @@ fn test_aarch64_float_convert_fix_combo_15_0_1e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1357,7 +1691,11 @@ fn test_aarch64_float_convert_fix_combo_16_0_1e000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1373,7 +1711,11 @@ fn test_aarch64_float_convert_fix_combo_17_0_1e0003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1389,7 +1731,11 @@ fn test_aarch64_float_convert_fix_combo_18_0_1e0003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1405,7 +1751,11 @@ fn test_aarch64_float_convert_fix_combo_19_0_1e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1421,7 +1771,11 @@ fn test_aarch64_float_convert_fix_combo_20_0_1e000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1437,7 +1791,11 @@ fn test_aarch64_float_convert_fix_combo_21_0_1e00001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1453,7 +1811,11 @@ fn test_aarch64_float_convert_fix_combo_22_0_1e00001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1469,7 +1831,11 @@ fn test_aarch64_float_convert_fix_combo_23_0_1e000021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1485,7 +1851,11 @@ fn test_aarch64_float_convert_fix_combo_24_0_1e0003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1501,7 +1871,11 @@ fn test_aarch64_float_convert_fix_special_sf_0_size_variant_0_0_1e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1517,7 +1891,11 @@ fn test_aarch64_float_convert_fix_special_sf_1_size_variant_1_0_9e000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1525,7 +1903,8 @@ fn test_aarch64_float_convert_fix_special_sf_1_size_variant_1_0_9e000000() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_float_convert_fix_special_rn_31_stack_pointer_sp_may_require_alignment_0_1e0003e0() {
+fn test_aarch64_float_convert_fix_special_rn_31_stack_pointer_sp_may_require_alignment_0_1e0003e0()
+{
     // Encoding: 0x1E0003E0
     // Test aarch64_float_convert_fix special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: rmode=0, type1=0, opcode=0, sf=0, Rn=31, Rd=0, scale=0
@@ -1533,7 +1912,11 @@ fn test_aarch64_float_convert_fix_special_rn_31_stack_pointer_sp_may_require_ali
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1541,7 +1924,8 @@ fn test_aarch64_float_convert_fix_special_rn_31_stack_pointer_sp_may_require_ali
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_float_convert_fix_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1e00001f() {
+fn test_aarch64_float_convert_fix_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1e00001f()
+ {
     // Encoding: 0x1E00001F
     // Test aarch64_float_convert_fix special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: rmode=0, type1=0, scale=0, sf=0, opcode=0, Rn=0, Rd=31
@@ -1549,7 +1933,11 @@ fn test_aarch64_float_convert_fix_special_rd_31_zero_register_xzr_wzr_reads_as_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -1569,7 +1957,11 @@ fn test_aarch64_float_convert_fp_field_type1_0_min_4000_1e224000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1585,7 +1977,11 @@ fn test_aarch64_float_convert_fp_field_type1_1_poweroftwo_4000_1e624000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1601,7 +1997,11 @@ fn test_aarch64_float_convert_fp_field_type1_3_max_4000_1ee24000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1617,7 +2017,11 @@ fn test_aarch64_float_convert_fp_field_opc_0_min_4000_1e224000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1633,7 +2037,11 @@ fn test_aarch64_float_convert_fp_field_opc_1_poweroftwo_4000_1e22c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1649,7 +2057,11 @@ fn test_aarch64_float_convert_fp_field_opc_2_poweroftwo_4000_1e234000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1665,7 +2077,11 @@ fn test_aarch64_float_convert_fp_field_opc_3_max_4000_1e23c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1681,7 +2097,11 @@ fn test_aarch64_float_convert_fp_field_rn_0_min_4000_1e224000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1697,7 +2117,11 @@ fn test_aarch64_float_convert_fp_field_rn_1_poweroftwo_4000_1e224020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1713,7 +2137,11 @@ fn test_aarch64_float_convert_fp_field_rn_30_poweroftwominusone_4000_1e2243c0() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1729,7 +2157,11 @@ fn test_aarch64_float_convert_fp_field_rn_31_max_4000_1e2243e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1745,7 +2177,11 @@ fn test_aarch64_float_convert_fp_field_rd_0_min_4000_1e224000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1761,7 +2197,11 @@ fn test_aarch64_float_convert_fp_field_rd_1_poweroftwo_4000_1e224001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1777,7 +2217,11 @@ fn test_aarch64_float_convert_fp_field_rd_30_poweroftwominusone_4000_1e22401e() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1793,7 +2237,11 @@ fn test_aarch64_float_convert_fp_field_rd_31_max_4000_1e22401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1809,7 +2257,11 @@ fn test_aarch64_float_convert_fp_combo_0_4000_1e224000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1825,7 +2277,11 @@ fn test_aarch64_float_convert_fp_combo_1_4000_1e624000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1841,7 +2297,11 @@ fn test_aarch64_float_convert_fp_combo_2_4000_1ee24000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1857,7 +2317,11 @@ fn test_aarch64_float_convert_fp_combo_3_4000_1e224000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1873,7 +2337,11 @@ fn test_aarch64_float_convert_fp_combo_4_4000_1e22c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1889,7 +2357,11 @@ fn test_aarch64_float_convert_fp_combo_5_4000_1e234000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1905,7 +2377,11 @@ fn test_aarch64_float_convert_fp_combo_6_4000_1e23c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1921,7 +2397,11 @@ fn test_aarch64_float_convert_fp_combo_7_4000_1e224000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1937,7 +2417,11 @@ fn test_aarch64_float_convert_fp_combo_8_4000_1e224020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1953,7 +2437,11 @@ fn test_aarch64_float_convert_fp_combo_9_4000_1e2243c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1969,7 +2457,11 @@ fn test_aarch64_float_convert_fp_combo_10_4000_1e2243e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1985,7 +2477,11 @@ fn test_aarch64_float_convert_fp_combo_11_4000_1e224000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -2001,7 +2497,11 @@ fn test_aarch64_float_convert_fp_combo_12_4000_1e224001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -2017,7 +2517,11 @@ fn test_aarch64_float_convert_fp_combo_13_4000_1e22401e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -2033,7 +2537,11 @@ fn test_aarch64_float_convert_fp_combo_14_4000_1e22401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -2049,7 +2557,11 @@ fn test_aarch64_float_convert_fp_combo_15_4000_1e224021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -2065,7 +2577,11 @@ fn test_aarch64_float_convert_fp_combo_16_4000_1e2243ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -2081,7 +2597,11 @@ fn test_aarch64_float_convert_fp_special_opc_0_size_variant_0_16384_1e224000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -2097,7 +2617,11 @@ fn test_aarch64_float_convert_fp_special_opc_1_size_variant_1_16384_1e22c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -2113,7 +2637,11 @@ fn test_aarch64_float_convert_fp_special_opc_2_size_variant_2_16384_1e234000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -2129,7 +2657,11 @@ fn test_aarch64_float_convert_fp_special_opc_3_size_variant_3_16384_1e23c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -2137,7 +2669,8 @@ fn test_aarch64_float_convert_fp_special_opc_3_size_variant_3_16384_1e23c000() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_float_convert_fp_special_rn_31_stack_pointer_sp_may_require_alignment_16384_1e2243e0() {
+fn test_aarch64_float_convert_fp_special_rn_31_stack_pointer_sp_may_require_alignment_16384_1e2243e0()
+ {
     // Encoding: 0x1E2243E0
     // Test aarch64_float_convert_fp special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, type1=0, Rn=31, opc=0
@@ -2145,7 +2678,11 @@ fn test_aarch64_float_convert_fp_special_rn_31_stack_pointer_sp_may_require_alig
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -2153,7 +2690,8 @@ fn test_aarch64_float_convert_fp_special_rn_31_stack_pointer_sp_may_require_alig
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_float_convert_fp_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_16384_1e22401f() {
+fn test_aarch64_float_convert_fp_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_16384_1e22401f()
+ {
     // Encoding: 0x1E22401F
     // Test aarch64_float_convert_fp special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: type1=0, Rn=0, opc=0, Rd=31
@@ -2161,6 +2699,9 @@ fn test_aarch64_float_convert_fp_special_rd_31_zero_register_xzr_wzr_reads_as_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), "expected unallocated encoding for 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for 0x{:08X}",
+        encoding
+    );
 }
-

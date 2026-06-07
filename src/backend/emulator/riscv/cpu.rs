@@ -158,7 +158,7 @@ impl VCpu for RiscVVcpu {
             _ => {
                 return Err(Error::Emulator(
                     "expected riscv state for riscv vCPU".to_string(),
-                ))
+                ));
             }
         };
         for i in 0..32u8 {

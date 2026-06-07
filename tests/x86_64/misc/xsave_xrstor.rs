@@ -33,10 +33,10 @@ fn test_xsave_requires_aligned_memory() {
     // XSAVE requires 64-byte aligned memory address
     // Attempting unaligned should cause #GP
     let code = [
-        0x31, 0xc0,                    // XOR EAX, EAX (save x87 state only)
-        0x31, 0xd2,                    // XOR EDX, EDX
-        0x0f, 0xae, 0x24, 0x00,        // XSAVE [RSP] (likely unaligned, may fault)
-        0xf4,                          // HLT
+        0x31, 0xc0, // XOR EAX, EAX (save x87 state only)
+        0x31, 0xd2, // XOR EDX, EDX
+        0x0f, 0xae, 0x24, 0x00, // XSAVE [RSP] (likely unaligned, may fault)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -52,10 +52,10 @@ fn test_xsave_basic_x87_state() {
     // Use aligned memory address for XSAVE area
     let code = [
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01 (save x87 state)
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         // Use memory address 0x3000 (assumed 64-byte aligned for testing)
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu).unwrap();
@@ -72,9 +72,9 @@ fn test_xsave_edx_eax_specifies_bitmap() {
     // Bit 0 = x87, Bit 1 = SSE, Bit 2 = AVX, etc.
     let code = [
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 0x03 (save x87 and SSE)
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -87,10 +87,10 @@ fn test_xsave_edx_eax_specifies_bitmap() {
 fn test_xsave_zero_bitmap_minimal_save() {
     // XSAVE with EAX=0 should save minimal state (usually x87 header only)
     let code = [
-        0x31, 0xc0,                    // XOR EAX, EAX (minimal save)
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xc0, // XOR EAX, EAX (minimal save)
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -104,9 +104,9 @@ fn test_xsave_header_contains_xstate_bv() {
     // XSAVE header at offset 512 should contain XSTATE_BV bitmap
     let code = [
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01 (save x87)
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu).unwrap();
@@ -125,9 +125,9 @@ fn test_xsave_multiple_state_components() {
     // XSAVE with multiple state components specified
     let code = [
         0xb8, 0x07, 0x00, 0x00, 0x00, // MOV EAX, 0x07 (x87, SSE, AVX)
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -146,7 +146,7 @@ fn test_xsave_does_not_modify_registers() {
         0xba, 0x44, 0x44, 0x44, 0x44, // MOV EDX, 0x44444444
         // Now use EDX:EAX for XSAVE bitmap - they'll be used but not modified
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -162,10 +162,12 @@ fn test_xsave_does_not_modify_registers() {
 fn test_xsave_with_64bit_register_high_bits_ignored() {
     // In 64-bit mode, high 32 bits of RDX:RAX are ignored for XSAVE
     let code = [
-        0x48, 0xb8, 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, 0xFFFFFFFF00000001
-        0x48, 0xba, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RDX, 0xFFFFFFFF00000000
+        0x48, 0xb8, 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
+        0xFF, // MOV RAX, 0xFFFFFFFF00000001
+        0x48, 0xba, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
+        0xFF, // MOV RDX, 0xFFFFFFFF00000000
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -181,10 +183,10 @@ fn test_xrstor_requires_aligned_memory() {
     // XRSTOR requires 64-byte aligned memory address
     // Use an unaligned address 0x3001 (instead of 0x3000)
     let code = [
-        0x31, 0xc0,                    // XOR EAX, EAX
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xc0, // XOR EAX, EAX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x0c, 0x25, 0x01, 0x30, 0x00, 0x00, // FXRSTOR [0x3001] (unaligned)
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -200,14 +202,13 @@ fn test_xrstor_basic_restore() {
     let code = [
         // First save state
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-
         // Now restore state
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x24, 0x25, 0x00, 0x30, 0x00, 0x00, // XRSTOR [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -222,14 +223,13 @@ fn test_xrstor_bitmap_specifies_components() {
     let code = [
         // Save
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 0x03 (x87 + SSE)
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-
         // Restore with different bitmap
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01 (x87 only)
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x24, 0x25, 0x00, 0x30, 0x00, 0x00, // XRSTOR [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -245,15 +245,13 @@ fn test_xrstor_does_not_modify_registers() {
         0xb8, 0x11, 0x11, 0x11, 0x11, // MOV EAX, 0x11111111
         0xbb, 0x22, 0x22, 0x22, 0x22, // MOV EBX, 0x22222222
         0xb9, 0x33, 0x33, 0x33, 0x33, // MOV ECX, 0x33333333
-
         // Save first
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-
         // Restore
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x24, 0x25, 0x00, 0x30, 0x00, 0x00, // XRSTOR [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -269,14 +267,13 @@ fn test_xrstor_zero_bitmap_minimal_restore() {
     let code = [
         // Save
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-
         // Restore with zero bitmap
-        0x31, 0xc0,                    // XOR EAX, EAX
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xc0, // XOR EAX, EAX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x24, 0x25, 0x00, 0x30, 0x00, 0x00, // XRSTOR [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -291,19 +288,16 @@ fn test_xsave_xrstor_roundtrip() {
     let code = [
         // Initialize some state (move to x87/SSE registers)
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
-
         // Save state
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-
         // Modify state (simulated)
         0xb8, 0x02, 0x00, 0x00, 0x00, // MOV EAX, 0x02
-
         // Restore state
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x24, 0x25, 0x00, 0x30, 0x00, 0x00, // XRSTOR [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -318,14 +312,13 @@ fn test_xsave_multiple_areas() {
     let code = [
         // Save to first area
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-
         // Save to second area
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 0x03
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x34, 0x00, 0x00, // XSAVE [0x3400]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -340,24 +333,21 @@ fn test_xrstor_multiple_areas() {
     let code = [
         // Save area 1
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-
         // Save area 2
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 0x03
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x34, 0x00, 0x00, // XSAVE [0x3400]
-
         // Restore area 1
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x24, 0x25, 0x00, 0x30, 0x00, 0x00, // XRSTOR [0x3000]
-
         // Restore area 2
         0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 0x03
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x24, 0x25, 0x00, 0x34, 0x00, 0x00, // XRSTOR [0x3400]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -375,13 +365,12 @@ fn test_xsave_xrstor_with_varying_bitmaps() {
 
         let code = [
             0xb8, eax_byte, 0x00, 0x00, 0x00, // MOV EAX, bitmap
-            0x31, 0xd2,                        // XOR EDX, EDX
+            0x31, 0xd2, // XOR EDX, EDX
             0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-
             0xb8, eax_byte, 0x00, 0x00, 0x00, // MOV EAX, bitmap
-            0x31, 0xd2,                        // XOR EDX, EDX
+            0x31, 0xd2, // XOR EDX, EDX
             0x0f, 0xae, 0x24, 0x25, 0x00, 0x30, 0x00, 0x00, // XRSTOR [0x3000]
-            0xf4,                              // HLT
+            0xf4, // HLT
         ];
 
         let (mut vcpu, _) = setup_vm(&code, None);
@@ -399,7 +388,7 @@ fn test_xsave_with_high_bits_in_edx() {
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
         0xba, 0x10, 0x00, 0x00, 0x00, // MOV EDX, 0x10 (extended components)
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -416,12 +405,11 @@ fn test_xrstor_with_high_bits_in_edx() {
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
         0xba, 0x10, 0x00, 0x00, 0x00, // MOV EDX, 0x10
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
-
         // Restore with same components
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
         0xba, 0x10, 0x00, 0x00, 0x00, // MOV EDX, 0x10
         0x0f, 0xae, 0x24, 0x25, 0x00, 0x30, 0x00, 0x00, // XRSTOR [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
@@ -435,10 +423,10 @@ fn test_xsave_does_not_modify_flags() {
     // XSAVE should not modify flags
     let code = [
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
-        0x31, 0xd2,                    // XOR EDX, EDX
-        0xf9,                          // STC (set carry) - after XOR so it's not cleared
+        0x31, 0xd2, // XOR EDX, EDX
+        0xf9, // STC (set carry) - after XOR so it's not cleared
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // FXSAVE [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -453,21 +441,18 @@ fn test_xrstor_does_not_modify_flags() {
     let code = [
         // Save
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
-        0x31, 0xd2,                    // XOR EDX, EDX
+        0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // FXSAVE [0x3000]
-
         // Prepare for restore (XOR first, then set flag)
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
-        0x31, 0xd2,                    // XOR EDX, EDX
-        0xf9,                          // STC (after XOR so it's not cleared)
-
+        0x31, 0xd2, // XOR EDX, EDX
+        0xf9, // STC (after XOR so it's not cleared)
         // Restore
         0x0f, 0xae, 0x0c, 0x25, 0x00, 0x30, 0x00, 0x00, // FXRSTOR [0x3000]
-        0xf4,                          // HLT
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(cf_set(regs.rflags), true, "CF unchanged");
 }
-

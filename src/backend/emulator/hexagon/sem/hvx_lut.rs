@@ -10,7 +10,7 @@
 //! `oddhalf` bit is `(sel >> 1) & 1`.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fimm_u, fld, SemCtx};
+use super::{SemCtx, fimm_u, fld};
 
 type Bytes = [u8; 128];
 
@@ -164,7 +164,13 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
 ///   match  : Vd.b[i] = ((idx & 0xE0) == (matchval<<5)) ? Vv.h[idx%64].b[oddhalf] : 0
 ///   nomatch: idx = (idx & 0x1F) | (matchval<<5); Vd.b[i] = Vv.h[idx%64].b[oddhalf]
 /// `acc` (when Some) is OR-accumulated into.
-fn vlut32(ctx: &SemCtx, d: &DecodedOp, sel: u32, nomatch: bool, acc: Option<[u32; 32]>) -> [u32; 32] {
+fn vlut32(
+    ctx: &SemCtx,
+    d: &DecodedOp,
+    sel: u32,
+    nomatch: bool,
+    acc: Option<[u32; 32]>,
+) -> [u32; 32] {
     let vu = to_bytes(&ctx.vread(fld(d, b'u')));
     let vv = to_bytes(&ctx.vread(fld(d, b'v')));
     let matchval = (sel & 0x7) as u8;
@@ -233,8 +239,16 @@ fn vlut16(
             let l1 = (idx1 & 0x0f) | (matchval << 4);
             (lookup(l0), lookup(l1))
         } else {
-            let m0 = if (idx0 & 0xf0) == (matchval << 4) { lookup(idx0) } else { 0 };
-            let m1 = if (idx1 & 0xf0) == (matchval << 4) { lookup(idx1) } else { 0 };
+            let m0 = if (idx0 & 0xf0) == (matchval << 4) {
+                lookup(idx0)
+            } else {
+                0
+            };
+            let m1 = if (idx1 & 0xf0) == (matchval << 4) {
+                lookup(idx1)
+            } else {
+                0
+            };
             (m0, m1)
         };
         if acc.is_some() {

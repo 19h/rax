@@ -10,8 +10,8 @@ mod tests {
     use crate::smir::ir::{SmirBlock, SmirFunction, Terminator};
     use crate::smir::lift::x86_64::X86_64Lifter;
     use crate::smir::lift::{ControlFlow, LiftContext, SmirLifter};
-    use crate::smir::lower::x86_64::X86_64Lowerer;
     use crate::smir::lower::SmirLowerer;
+    use crate::smir::lower::x86_64::X86_64Lowerer;
     use crate::smir::memory::SmirMemory;
     use crate::smir::types::{BlockId, FunctionId, SourceArch};
 

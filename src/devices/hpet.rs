@@ -265,9 +265,7 @@ impl Hpet {
                 }
                 let timer = &self.timers[idx];
                 match sub {
-                    0x00 => {
-                        timer.config | (TN_INT_ROUTE_CAP << TN_INT_ROUTE_CAP_SHIFT)
-                    }
+                    0x00 => timer.config | (TN_INT_ROUTE_CAP << TN_INT_ROUTE_CAP_SHIFT),
                     0x08 => timer.comparator,
                     0x10 => timer.fsb_route,
                     _ => 0,
@@ -575,7 +573,10 @@ mod tests {
             prev = now;
         }
         // Over ~10ms at 10MHz we expect well over 10k ticks of progress.
-        assert!(prev > 1000, "counter should advance meaningfully, got {prev}");
+        assert!(
+            prev > 1000,
+            "counter should advance meaningfully, got {prev}"
+        );
     }
 
     #[test]

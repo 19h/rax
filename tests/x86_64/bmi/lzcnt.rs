@@ -25,7 +25,10 @@ fn test_lzcnt_bit_31() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0, "0 leading zeros");
-    assert!(!cf_set(regs.rflags), "CF should be clear (source is non-zero)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (source is non-zero)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set (result is zero)");
 }
 
@@ -73,9 +76,16 @@ fn test_lzcnt_zero_source_32bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 32, "32 leading zeros for zero source");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        32,
+        "32 leading zeros for zero source"
+    );
     assert!(cf_set(regs.rflags), "CF should be set (source is zero)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (result is non-zero)"
+    );
 }
 
 #[test]
@@ -124,7 +134,10 @@ fn test_lzcnt_zero_source_64bit() {
 
     assert_eq!(regs.rax, 64, "64 leading zeros for zero source");
     assert!(cf_set(regs.rflags), "CF should be set");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (result is non-zero)"
+    );
 }
 
 #[test]
@@ -173,8 +186,17 @@ fn test_lzcnt_single_bit_positions_32bit() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = 31 - bit_pos;
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "LZCNT for bit {}", bit_pos);
-        assert!(!cf_set(regs.rflags), "CF should be clear for bit {}", bit_pos);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected as u64,
+            "LZCNT for bit {}",
+            bit_pos
+        );
+        assert!(
+            !cf_set(regs.rflags),
+            "CF should be clear for bit {}",
+            bit_pos
+        );
     }
 }
 
@@ -193,7 +215,11 @@ fn test_lzcnt_single_bit_positions_64bit() {
 
         let expected = 63 - bit_pos;
         assert_eq!(regs.rax, expected as u64, "LZCNT for bit {}", bit_pos);
-        assert!(!cf_set(regs.rflags), "CF should be clear for bit {}", bit_pos);
+        assert!(
+            !cf_set(regs.rflags),
+            "CF should be clear for bit {}",
+            bit_pos
+        );
     }
 }
 
@@ -314,7 +340,13 @@ fn test_lzcnt_power_of_two() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = 31 - i;
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "LZCNT(2^{}) = {}", i, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected as u64,
+            "LZCNT(2^{}) = {}",
+            i,
+            expected
+        );
     }
 }
 
@@ -367,7 +399,13 @@ fn test_lzcnt_byte_boundaries() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, *expected as u64, "LZCNT({:08x}) = {}", input, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            *expected as u64,
+            "LZCNT({:08x}) = {}",
+            input,
+            expected
+        );
     }
 }
 
@@ -415,7 +453,11 @@ fn test_lzcnt_multiple_set_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 20, "20 leading zeros (highest bit is 11)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        20,
+        "20 leading zeros (highest bit is 11)"
+    );
 }
 
 #[test]
@@ -497,7 +539,10 @@ fn test_lzcnt_16bit_zero() {
 
     assert_eq!(regs.rax & 0xFFFF, 16, "16 leading zeros for zero (16-bit)");
     assert!(cf_set(regs.rflags), "CF should be set");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (result is non-zero)"
+    );
 }
 
 #[test]
@@ -646,7 +691,11 @@ fn test_lzcnt_log2_floor() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let log2_floor = 31 - (regs.rax & 0xFFFFFFFF);
-        assert_eq!(log2_floor, *expected_log2 as u64, "floor(log2({})) = {}", value, expected_log2);
+        assert_eq!(
+            log2_floor, *expected_log2 as u64,
+            "floor(log2({})) = {}",
+            value, expected_log2
+        );
     }
 }
 
@@ -759,7 +808,11 @@ fn test_lzcnt_integer_log2_ceiling() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let log2_ceil = 32 - (regs.rax & 0xFFFFFFFF);
-        assert_eq!(log2_ceil, *expected_log2_ceil as u64, "ceil(log2({})) = {}", value, expected_log2_ceil);
+        assert_eq!(
+            log2_ceil, *expected_log2_ceil as u64,
+            "ceil(log2({})) = {}",
+            value, expected_log2_ceil
+        );
     }
 }
 

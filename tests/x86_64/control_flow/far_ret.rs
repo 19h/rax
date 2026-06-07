@@ -49,7 +49,8 @@ fn test_far_ret_basic() {
 
     // Write HLT at return address
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2001);
@@ -70,7 +71,8 @@ fn test_far_ret_pops_cs_and_ip() {
         0x48, 0x89, 0xe0, // MOV RAX, RSP (check stack was popped)
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Stack should have been restored
@@ -96,7 +98,8 @@ fn test_far_ret_with_immediate_16() {
         0x48, 0x89, 0xe0, // MOV RAX, RSP (check stack)
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2004);
@@ -114,7 +117,8 @@ fn test_far_ret_with_immediate_32() {
     write_far_frame(&mem, 0x8000, 4, 0x3000, 0x08);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3001);
@@ -132,7 +136,8 @@ fn test_far_ret_immediate_zero() {
     write_far_frame(&mem, 0x8000, 4, 0x2000, 0x08);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2001);
@@ -154,7 +159,8 @@ fn test_far_ret_16bit_operand_size() {
     write_far_frame(&mem, 0x8000, 2, 0x2000, 0x08);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2001);
@@ -172,7 +178,8 @@ fn test_far_ret_32bit_operand_size() {
     write_far_frame(&mem, 0x8000, 4, 0x3000, 0x08);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3001);
@@ -190,7 +197,8 @@ fn test_far_ret_64bit_operand_size() {
     write_far_frame(&mem, 0x8000, 8, 0x4000, 0x08);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x4000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x4000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x4001);
@@ -215,7 +223,8 @@ fn test_far_ret_same_privilege() {
         0x48, 0xc7, 0xc0, 0xaa, 0x00, 0x00, 0x00, // MOV RAX, 0xAA
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0xaa);
@@ -237,7 +246,8 @@ fn test_far_ret_to_outer_privilege() {
         0x48, 0xc7, 0xc1, 0xbb, 0x00, 0x00, 0x00, // MOV RCX, 0xBB
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 0xbb);
@@ -258,7 +268,8 @@ fn test_far_ret_restores_outer_stack() {
         0x48, 0x89, 0xe2, // MOV RDX, RSP (check restored stack)
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // RSP should be restored to outer value
@@ -283,7 +294,8 @@ fn test_far_ret_stack_alignment() {
         0x48, 0x89, 0xe3, // MOV RBX, RSP
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Stack should be properly aligned after return
@@ -360,7 +372,8 @@ fn test_far_ret_to_data_segment() {
         0x48, 0xc7, 0xc0, 0x04, 0x00, 0x00, 0x00, // MOV RAX, 4
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 4);
@@ -385,14 +398,16 @@ fn test_far_ret_nested_calls() {
         0xcb, // RETF to level 2
         0xf4,
     ];
-    mem.write_slice(&level1, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&level1, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     // Level 2 code
     let level2 = [
         0x48, 0xc7, 0xc0, 0x77, 0x00, 0x00, 0x00, // MOV RAX, 0x77
         0xf4,
     ];
-    mem.write_slice(&level2, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&level2, vm_memory::GuestAddress(0x3000))
+        .unwrap();
     write_far_frame(&mem, 0x8000, 4, 0x2000, 0x08);
     write_far_frame(&mem, 0x8008, 4, 0x3000, 0x08);
 
@@ -417,7 +432,8 @@ fn test_far_ret_preserves_general_registers() {
     write_far_frame(&mem, 0x8000, 4, 0x2000, 0x08);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x1111);
@@ -438,7 +454,8 @@ fn test_far_ret_modifies_cs_rip_rsp() {
         0x48, 0x89, 0xe5, // MOV RBP, RSP (save final RSP)
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2004);
@@ -460,7 +477,8 @@ fn test_far_ret_to_zero_offset() {
     write_far_frame(&mem, 0x8000, 4, 0x0000, 0x08);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x0000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x0000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x0001);
@@ -477,7 +495,8 @@ fn test_far_ret_to_max_offset() {
     write_far_frame(&mem, 0x8000, 4, 0xFFFF, 0x08);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0xFFFF)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0xFFFF))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x10000);
@@ -494,7 +513,8 @@ fn test_far_ret_aligned_address() {
     write_far_frame(&mem, 0x8000, 4, 0x3000, 0x08);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3001);
@@ -511,7 +531,8 @@ fn test_far_ret_unaligned_address() {
     write_far_frame(&mem, 0x8000, 4, 0x3003, 0x08);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3003)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3003))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3004);
@@ -533,7 +554,8 @@ fn test_far_ret_immediate_max_value() {
     write_far_frame(&mem, 0x8000, 4, 0x2000, 0x08);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2001);
@@ -551,7 +573,8 @@ fn test_far_ret_immediate_odd_value() {
     write_far_frame(&mem, 0x8000, 4, 0x2000, 0x08);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2001);
@@ -575,7 +598,8 @@ fn test_far_ret_different_code_segment() {
         0x48, 0xc7, 0xc6, 0xcc, 0x00, 0x00, 0x00, // MOV RSI, 0xCC
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rsi, 0xcc);
@@ -593,7 +617,8 @@ fn test_far_ret_ldt_to_gdt() {
     write_far_frame(&mem, 0x8000, 4, 0x2000, 0x08);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x2001);
@@ -631,7 +656,8 @@ fn test_far_ret_preserves_flags() {
         0x9c, // PUSHF (check flags preserved)
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Flags should be preserved across RETF
@@ -654,12 +680,14 @@ fn test_far_call_and_ret_roundtrip() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let far_ptr = [0x00, 0x30, 0x00, 0x00, 0x08, 0x00]; // 32-bit offset + selector
-    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000))
+        .unwrap();
     let target_code = [
         0x48, 0xff, 0xc0, // INC RAX
         0xcb, // RETF
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x12); // Incremented

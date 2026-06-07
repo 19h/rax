@@ -22,7 +22,7 @@
 
 use std::sync::Arc;
 
-use rax::backend::emulator::x86_64::{flags, X86_64Vcpu};
+use rax::backend::emulator::x86_64::{X86_64Vcpu, flags};
 use rax::cpu::{Registers, SystemRegisters, VCpu, VcpuExit};
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
@@ -77,8 +77,12 @@ struct FinalState {
 }
 
 /// Observable, architecturally-defined RFLAGS status bits.
-const FLAG_MASK: u64 =
-    flags::bits::CF | flags::bits::PF | flags::bits::AF | flags::bits::ZF | flags::bits::SF | flags::bits::OF;
+const FLAG_MASK: u64 = flags::bits::CF
+    | flags::bits::PF
+    | flags::bits::AF
+    | flags::bits::ZF
+    | flags::bits::SF
+    | flags::bits::OF;
 
 // ---------------------------------------------------------------------------
 // Build the shared identity-mapped long-mode initial state.
@@ -137,17 +141,24 @@ fn install_tables_mmap(write: &mut dyn FnMut(u64, &[u8])) {
 // Interpreter backend
 // ---------------------------------------------------------------------------
 
-fn run_interpreter(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Result<FinalState, String> {
+fn run_interpreter(
+    code: &[u8],
+    init: &Registers,
+    scratch_init: &[u8; 64],
+) -> Result<FinalState, String> {
     let regions = vec![(GuestAddress(0), MEM_SIZE)];
-    let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&regions).map_err(|e| format!("mem: {e:?}"))?);
+    let mem =
+        Arc::new(GuestMemoryMmap::<()>::from_ranges(&regions).map_err(|e| format!("mem: {e:?}"))?);
 
     // Page tables.
     install_tables_mmap(&mut |addr, bytes| {
         mem.write_slice(bytes, GuestAddress(addr)).unwrap();
     });
     // Code + scratch.
-    mem.write_slice(code, GuestAddress(CODE_ADDR)).map_err(|e| format!("code: {e:?}"))?;
-    mem.write_slice(scratch_init, GuestAddress(DATA_ADDR)).map_err(|e| format!("scratch: {e:?}"))?;
+    mem.write_slice(code, GuestAddress(CODE_ADDR))
+        .map_err(|e| format!("code: {e:?}"))?;
+    mem.write_slice(scratch_init, GuestAddress(DATA_ADDR))
+        .map_err(|e| format!("scratch: {e:?}"))?;
 
     let mut vcpu = X86_64Vcpu::new(0, mem.clone());
 
@@ -157,8 +168,10 @@ fn run_interpreter(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Re
         regs.rsp = STACK_ADDR;
     }
     regs.rflags |= 0x2; // reserved bit 1 always set
-    vcpu.set_regs(&regs).map_err(|e| format!("set_regs: {e:?}"))?;
-    vcpu.set_sregs(&base_sregs()).map_err(|e| format!("set_sregs: {e:?}"))?;
+    vcpu.set_regs(&regs)
+        .map_err(|e| format!("set_regs: {e:?}"))?;
+    vcpu.set_sregs(&base_sregs())
+        .map_err(|e| format!("set_sregs: {e:?}"))?;
 
     // Run to HLT, counting individual instructions via step().
     let mut iters = 0u64;
@@ -173,7 +186,9 @@ fn run_interpreter(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Re
                 let data = vec![0u8; size as usize];
                 vcpu.complete_io_in(&data);
             }
-            Some(VcpuExit::Shutdown) | Some(VcpuExit::FailEntry { .. }) | Some(VcpuExit::InternalError) => {
+            Some(VcpuExit::Shutdown)
+            | Some(VcpuExit::FailEntry { .. })
+            | Some(VcpuExit::InternalError) => {
                 return Err("interpreter abnormal exit".to_string());
             }
             _ => {}
@@ -182,7 +197,8 @@ fn run_interpreter(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Re
 
     let final_regs = vcpu.get_regs().map_err(|e| format!("get_regs: {e:?}"))?;
     let mut scratch = [0u8; 64];
-    mem.read_slice(&mut scratch, GuestAddress(DATA_ADDR)).map_err(|e| format!("read scratch: {e:?}"))?;
+    mem.read_slice(&mut scratch, GuestAddress(DATA_ADDR))
+        .map_err(|e| format!("read scratch: {e:?}"))?;
 
     Ok(FinalState {
         xmm: final_regs.xmm,
@@ -216,7 +232,10 @@ impl KvmMem {
         if ptr == libc::MAP_FAILED {
             return None;
         }
-        Some(KvmMem { ptr: ptr as *mut u8, size })
+        Some(KvmMem {
+            ptr: ptr as *mut u8,
+            size,
+        })
     }
 
     fn write(&self, addr: u64, bytes: &[u8]) {
@@ -244,7 +263,11 @@ impl Drop for KvmMem {
 
 /// Returns Ok(None) if KVM is unavailable (so callers can skip gracefully),
 /// Ok(Some(state)) on success, Err on a genuine run failure.
-fn run_kvm(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Result<Option<FinalState>, String> {
+fn run_kvm(
+    code: &[u8],
+    init: &Registers,
+    scratch_init: &[u8; 64],
+) -> Result<Option<FinalState>, String> {
     use kvm_bindings::{kvm_segment, kvm_userspace_memory_region};
     use kvm_ioctls::Kvm;
 
@@ -285,7 +308,9 @@ fn run_kvm(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Result<Opt
 
     // --- sregs: long mode w/ paging, flat segments ---
     let our_sregs = base_sregs();
-    let mut sregs = vcpu.get_sregs().map_err(|e| format!("kvm get_sregs: {e:?}"))?;
+    let mut sregs = vcpu
+        .get_sregs()
+        .map_err(|e| format!("kvm get_sregs: {e:?}"))?;
 
     let to_kvm_seg = |s: &rax::cpu::Segment| kvm_segment {
         base: s.base,
@@ -313,10 +338,13 @@ fn run_kvm(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Result<Opt
     sregs.fs = to_kvm_seg(&our_sregs.fs);
     sregs.gs = to_kvm_seg(&our_sregs.gs);
     sregs.ss = to_kvm_seg(&our_sregs.ss);
-    vcpu.set_sregs(&sregs).map_err(|e| format!("kvm set_sregs: {e:?}"))?;
+    vcpu.set_sregs(&sregs)
+        .map_err(|e| format!("kvm set_sregs: {e:?}"))?;
 
     // --- gprs ---
-    let mut kregs = vcpu.get_regs().map_err(|e| format!("kvm get_regs: {e:?}"))?;
+    let mut kregs = vcpu
+        .get_regs()
+        .map_err(|e| format!("kvm get_regs: {e:?}"))?;
     kregs.rax = init.rax;
     kregs.rbx = init.rbx;
     kregs.rcx = init.rcx;
@@ -335,7 +363,8 @@ fn run_kvm(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Result<Opt
     kregs.r15 = init.r15;
     kregs.rip = CODE_ADDR;
     kregs.rflags = init.rflags | 0x2;
-    vcpu.set_regs(&kregs).map_err(|e| format!("kvm set_regs: {e:?}"))?;
+    vcpu.set_regs(&kregs)
+        .map_err(|e| format!("kvm set_regs: {e:?}"))?;
 
     // --- xmm (via FPU state) ---
     if init.xmm.iter().any(|x| x != &[0, 0]) {
@@ -346,7 +375,8 @@ fn run_kvm(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Result<Opt
             fpu.xmm[i][..8].copy_from_slice(&lo);
             fpu.xmm[i][8..].copy_from_slice(&hi);
         }
-        vcpu.set_fpu(&fpu).map_err(|e| format!("kvm set_fpu: {e:?}"))?;
+        vcpu.set_fpu(&fpu)
+            .map_err(|e| format!("kvm set_fpu: {e:?}"))?;
     }
 
     // --- run to HLT, bounded ---
@@ -376,8 +406,12 @@ fn run_kvm(code: &[u8], init: &Registers, scratch_init: &[u8; 64]) -> Result<Opt
         }
     }
 
-    let final_kregs = vcpu.get_regs().map_err(|e| format!("kvm get_regs(final): {e:?}"))?;
-    let final_fpu = vcpu.get_fpu().map_err(|e| format!("kvm get_fpu(final): {e:?}"))?;
+    let final_kregs = vcpu
+        .get_regs()
+        .map_err(|e| format!("kvm get_regs(final): {e:?}"))?;
+    let final_fpu = vcpu
+        .get_fpu()
+        .map_err(|e| format!("kvm get_fpu(final): {e:?}"))?;
 
     let mut regs = Registers::default();
     regs.rax = final_kregs.rax;
@@ -543,7 +577,11 @@ fn describe_flags(bits: u64) -> String {
 
 /// Run `code` on both backends from `init`, returning `(interp, kvm)`.
 /// Returns `None` if KVM is unavailable (the test should then `return`).
-fn run_both(code: &[u8], init: Registers, scratch_init: [u8; 64]) -> Option<(FinalState, FinalState)> {
+fn run_both(
+    code: &[u8],
+    init: Registers,
+    scratch_init: [u8; 64],
+) -> Option<(FinalState, FinalState)> {
     // KVM first: if unavailable we skip without even bothering the interpreter.
     let kvm = match run_kvm(code, &init, &scratch_init) {
         Ok(Some(s)) => s,
@@ -561,7 +599,13 @@ fn run_both(code: &[u8], init: Registers, scratch_init: [u8; 64]) -> Option<(Fin
 }
 
 /// Assert that the two backends agree, with a precise diff on mismatch.
-fn assert_match(label: &str, code: &[u8], interp: &FinalState, kvm: &FinalState, opts: CompareOpts) {
+fn assert_match(
+    label: &str,
+    code: &[u8],
+    interp: &FinalState,
+    kvm: &FinalState,
+    opts: CompareOpts,
+) {
     let diffs = compare(interp, kvm, opts);
     if !diffs.is_empty() {
         panic!(
@@ -904,7 +948,12 @@ fn imul_two_operand() {
     r.rax = 0x1_0000;
     r.rbx = 0x1_0000; // 2^16 * 2^16 = 2^32 (no overflow of 64-bit)
     // 48 0F AF C3  imul rax, rbx
-    check_flags_masked("imul2", &with_hlt(vec![0x48, 0x0F, 0xAF, 0xC3]), r, MULDIV_DEFINED);
+    check_flags_masked(
+        "imul2",
+        &with_hlt(vec![0x48, 0x0F, 0xAF, 0xC3]),
+        r,
+        MULDIV_DEFINED,
+    );
 }
 
 #[test]
@@ -926,7 +975,12 @@ fn mul_rdx_rax() {
     r.rax = 0xFFFF_FFFF_FFFF_FFFF;
     r.rbx = 0x2; // RDX:RAX = product
     // 48 F7 E3  mul rbx
-    check_flags_masked("mul64", &with_hlt(vec![0x48, 0xF7, 0xE3]), r, MULDIV_DEFINED);
+    check_flags_masked(
+        "mul64",
+        &with_hlt(vec![0x48, 0xF7, 0xE3]),
+        r,
+        MULDIV_DEFINED,
+    );
 }
 
 #[test]
@@ -978,7 +1032,11 @@ fn setcc_below() {
     r.rbx = 0x2; // 1 < 2 -> CF set
     // 48 39 D8       cmp rax, rbx
     // 0F 92 C0       setb al
-    check("setb", &with_hlt(vec![0x48, 0x39, 0xD8, 0x0F, 0x92, 0xC0]), r);
+    check(
+        "setb",
+        &with_hlt(vec![0x48, 0x39, 0xD8, 0x0F, 0x92, 0xC0]),
+        r,
+    );
 }
 
 #[test]
@@ -1075,10 +1133,18 @@ fn sse_scratch(a: [u8; 16], b: [u8; 16]) -> [u8; 64] {
 #[test]
 fn sse_paddb() {
     // per-byte add with wraps in several lanes
-    let a = [1, 2, 3, 4, 5, 6, 7, 8, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17];
-    let b = [8, 8, 8, 8, 8, 8, 8, 8, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0];
+    let a = [
+        1, 2, 3, 4, 5, 6, 7, 8, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+    ];
+    let b = [
+        8, 8, 8, 8, 8, 8, 8, 8, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0,
+    ];
     // 66 0F FC C1  paddb xmm0, xmm1
-    check_sse("paddb", &sse_program(&[0x66, 0x0F, 0xFC, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "paddb",
+        &sse_program(&[0x66, 0x0F, 0xFC, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -1097,8 +1163,16 @@ fn sse_paddw() {
 
 #[test]
 fn sse_paddd() {
-    let a = [0x0000_0001_FFFF_FFFFu64.to_le_bytes(), 0x8000_0000_7FFF_FFFFu64.to_le_bytes()].concat();
-    let b = [0x0000_0001_0000_0001u64.to_le_bytes(), 0x0000_0001_0000_0001u64.to_le_bytes()].concat();
+    let a = [
+        0x0000_0001_FFFF_FFFFu64.to_le_bytes(),
+        0x8000_0000_7FFF_FFFFu64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x0000_0001_0000_0001u64.to_le_bytes(),
+        0x0000_0001_0000_0001u64.to_le_bytes(),
+    ]
+    .concat();
     // 66 0F FE C1  paddd xmm0, xmm1
     check_sse(
         "paddd",
@@ -1110,15 +1184,29 @@ fn sse_paddd() {
 #[test]
 fn sse_psubb() {
     let a = [0, 1, 2, 3, 0x80, 0x7F, 0xFF, 0x10, 1, 2, 3, 4, 5, 6, 7, 8];
-    let b = [1, 1, 1, 1, 1, 1, 1, 1, 0xFF, 0xFE, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60];
+    let b = [
+        1, 1, 1, 1, 1, 1, 1, 1, 0xFF, 0xFE, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60,
+    ];
     // 66 0F F8 C1  psubb xmm0, xmm1
-    check_sse("psubb", &sse_program(&[0x66, 0x0F, 0xF8, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "psubb",
+        &sse_program(&[0x66, 0x0F, 0xF8, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse_pxor() {
-    let a = [0xDEAD_BEEF_CAFE_BABEu64.to_le_bytes(), 0x0123_4567_89AB_CDEFu64.to_le_bytes()].concat();
-    let b = [0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes(), 0x0F0F_0F0F_0F0F_0F0Fu64.to_le_bytes()].concat();
+    let a = [
+        0xDEAD_BEEF_CAFE_BABEu64.to_le_bytes(),
+        0x0123_4567_89AB_CDEFu64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes(),
+        0x0F0F_0F0F_0F0F_0F0Fu64.to_le_bytes(),
+    ]
+    .concat();
     // 66 0F EF C1  pxor xmm0, xmm1
     check_sse(
         "pxor",
@@ -1129,8 +1217,16 @@ fn sse_pxor() {
 
 #[test]
 fn sse_pand() {
-    let a = [0xFF00_FF00_FF00_FF00u64.to_le_bytes(), 0xAAAA_5555_AAAA_5555u64.to_le_bytes()].concat();
-    let b = [0x0FF0_0FF0_0FF0_0FF0u64.to_le_bytes(), 0xFFFF_0000_FFFF_0000u64.to_le_bytes()].concat();
+    let a = [
+        0xFF00_FF00_FF00_FF00u64.to_le_bytes(),
+        0xAAAA_5555_AAAA_5555u64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x0FF0_0FF0_0FF0_0FF0u64.to_le_bytes(),
+        0xFFFF_0000_FFFF_0000u64.to_le_bytes(),
+    ]
+    .concat();
     // 66 0F DB C1  pand xmm0, xmm1
     check_sse(
         "pand",
@@ -1171,7 +1267,12 @@ fn bt_reg_set() {
     r.rax = 0x0000_0000_0001_0000; // bit 16 set
     r.rdx = 16;
     // 48 0F A3 D0  bt rax, rdx  (CF <- bit 16 = 1)
-    check_flags_masked("bt_reg_set", &with_hlt(vec![0x48, 0x0F, 0xA3, 0xD0]), r, BT_DEFINED);
+    check_flags_masked(
+        "bt_reg_set",
+        &with_hlt(vec![0x48, 0x0F, 0xA3, 0xD0]),
+        r,
+        BT_DEFINED,
+    );
 }
 
 #[test]
@@ -1179,7 +1280,12 @@ fn bt_reg_clear() {
     let mut r = regs();
     r.rax = 0x0000_0000_0001_0000;
     r.rdx = 17; // bit 17 = 0
-    check_flags_masked("bt_reg_clear", &with_hlt(vec![0x48, 0x0F, 0xA3, 0xD0]), r, BT_DEFINED);
+    check_flags_masked(
+        "bt_reg_clear",
+        &with_hlt(vec![0x48, 0x0F, 0xA3, 0xD0]),
+        r,
+        BT_DEFINED,
+    );
 }
 
 #[test]
@@ -1188,7 +1294,12 @@ fn bt_reg_index_wraps_modulo_64() {
     let mut r = regs();
     r.rax = 0x0000_0000_0000_0002; // bit 1 set
     r.rdx = 65; // 65 mod 64 = 1 -> CF should be 1
-    check_flags_masked("bt_reg_mod64", &with_hlt(vec![0x48, 0x0F, 0xA3, 0xD0]), r, BT_DEFINED);
+    check_flags_masked(
+        "bt_reg_mod64",
+        &with_hlt(vec![0x48, 0x0F, 0xA3, 0xD0]),
+        r,
+        BT_DEFINED,
+    );
 }
 
 #[test]
@@ -1196,7 +1307,12 @@ fn bt_imm() {
     let mut r = regs();
     r.rax = 0x0000_0000_8000_0000; // bit 31 set
     // 48 0F BA E0 1F  bt rax, 31
-    check_flags_masked("bt_imm31", &with_hlt(vec![0x48, 0x0F, 0xBA, 0xE0, 0x1F]), r, BT_DEFINED);
+    check_flags_masked(
+        "bt_imm31",
+        &with_hlt(vec![0x48, 0x0F, 0xBA, 0xE0, 0x1F]),
+        r,
+        BT_DEFINED,
+    );
 }
 
 #[test]
@@ -1204,7 +1320,12 @@ fn bts_imm_sets_bit() {
     let mut r = regs();
     r.rax = 0x0; // CF <- old bit (0), bit 5 then set in dest
     // 48 0F BA E8 05  bts rax, 5
-    check_flags_masked("bts_imm5", &with_hlt(vec![0x48, 0x0F, 0xBA, 0xE8, 0x05]), r, BT_DEFINED);
+    check_flags_masked(
+        "bts_imm5",
+        &with_hlt(vec![0x48, 0x0F, 0xBA, 0xE8, 0x05]),
+        r,
+        BT_DEFINED,
+    );
 }
 
 #[test]
@@ -1213,7 +1334,12 @@ fn bts_reg_already_set() {
     r.rax = 0x0000_0000_0000_0008; // bit 3 set
     r.rcx = 3;
     // 48 0F AB C8  bts rax, rcx  (CF<-1, bit stays set)
-    check_flags_masked("bts_reg_set", &with_hlt(vec![0x48, 0x0F, 0xAB, 0xC8]), r, BT_DEFINED);
+    check_flags_masked(
+        "bts_reg_set",
+        &with_hlt(vec![0x48, 0x0F, 0xAB, 0xC8]),
+        r,
+        BT_DEFINED,
+    );
 }
 
 #[test]
@@ -1221,7 +1347,12 @@ fn btr_imm_clears_bit() {
     let mut r = regs();
     r.rax = 0xFFFF_FFFF_FFFF_FFFF;
     // 48 0F BA F0 07  btr rax, 7  (CF<-1, bit 7 cleared)
-    check_flags_masked("btr_imm7", &with_hlt(vec![0x48, 0x0F, 0xBA, 0xF0, 0x07]), r, BT_DEFINED);
+    check_flags_masked(
+        "btr_imm7",
+        &with_hlt(vec![0x48, 0x0F, 0xBA, 0xF0, 0x07]),
+        r,
+        BT_DEFINED,
+    );
 }
 
 #[test]
@@ -1230,7 +1361,12 @@ fn btr_reg_clears_bit() {
     r.rax = 0x0000_0000_0010_0000; // bit 20 set
     r.rsi = 20;
     // 48 0F B3 F0  btr rax, rsi
-    check_flags_masked("btr_reg20", &with_hlt(vec![0x48, 0x0F, 0xB3, 0xF0]), r, BT_DEFINED);
+    check_flags_masked(
+        "btr_reg20",
+        &with_hlt(vec![0x48, 0x0F, 0xB3, 0xF0]),
+        r,
+        BT_DEFINED,
+    );
 }
 
 #[test]
@@ -1238,7 +1374,12 @@ fn btc_imm_toggles_bit() {
     let mut r = regs();
     r.rax = 0x0000_0000_0000_0001; // bit 0 set
     // 48 0F BA F8 00  btc rax, 0  (CF<-1, bit 0 toggled to 0)
-    check_flags_masked("btc_imm0", &with_hlt(vec![0x48, 0x0F, 0xBA, 0xF8, 0x00]), r, BT_DEFINED);
+    check_flags_masked(
+        "btc_imm0",
+        &with_hlt(vec![0x48, 0x0F, 0xBA, 0xF8, 0x00]),
+        r,
+        BT_DEFINED,
+    );
 }
 
 #[test]
@@ -1247,7 +1388,12 @@ fn btc_reg_toggles_bit() {
     r.rax = 0x0; // bit 40 = 0 -> CF<-0, bit set
     r.rdi = 40;
     // 48 0F BB F8  btc rax, rdi
-    check_flags_masked("btc_reg40", &with_hlt(vec![0x48, 0x0F, 0xBB, 0xF8]), r, BT_DEFINED);
+    check_flags_masked(
+        "btc_reg40",
+        &with_hlt(vec![0x48, 0x0F, 0xBB, 0xF8]),
+        r,
+        BT_DEFINED,
+    );
 }
 
 // ---- BSF / BSR (incl. zero-source, where ZF=1 and dest is undefined) ----
@@ -1256,7 +1402,12 @@ fn btc_reg_toggles_bit() {
 fn bsf_low_bit() {
     let mut r = regs();
     r.rbx = 0x0000_0000_0000_0028; // bits 3 and 5 -> lowest is 3
-    check_flags_masked("bsf_low3", &with_hlt(vec![0x48, 0x0F, 0xBC, 0xC3]), r, BSF_DEFINED);
+    check_flags_masked(
+        "bsf_low3",
+        &with_hlt(vec![0x48, 0x0F, 0xBC, 0xC3]),
+        r,
+        BSF_DEFINED,
+    );
 }
 
 #[test]
@@ -1269,7 +1420,8 @@ fn bsf_zero_source() {
     r.rax = 0xDEAD_DEAD_DEAD_DEAD;
     // Compare ZF only; mask out GPR by... we still compare GPRs in check_flags_masked.
     // To avoid an undefined-dest false diff, see bsf_zero_source_flags below.
-    let Some((interp, kvm)) = run_both(&with_hlt(vec![0x48, 0x0F, 0xBC, 0xC3]), r, zero_scratch()) else {
+    let Some((interp, kvm)) = run_both(&with_hlt(vec![0x48, 0x0F, 0xBC, 0xC3]), r, zero_scratch())
+    else {
         return;
     };
     // Only the ZF flag is defined; RAX is undefined on a zero source.
@@ -1291,14 +1443,24 @@ fn bsf_zero_source() {
 fn bsr_high_bit() {
     let mut r = regs();
     r.rbx = 0x0000_0000_0000_0028; // highest set bit is 5
-    check_flags_masked("bsr_high5", &with_hlt(vec![0x48, 0x0F, 0xBD, 0xC3]), r, BSF_DEFINED);
+    check_flags_masked(
+        "bsr_high5",
+        &with_hlt(vec![0x48, 0x0F, 0xBD, 0xC3]),
+        r,
+        BSF_DEFINED,
+    );
 }
 
 #[test]
 fn bsr_top_bit() {
     let mut r = regs();
     r.rbx = 0x8000_0000_0000_0000; // bit 63
-    check_flags_masked("bsr_top63", &with_hlt(vec![0x48, 0x0F, 0xBD, 0xC3]), r, BSF_DEFINED);
+    check_flags_masked(
+        "bsr_top63",
+        &with_hlt(vec![0x48, 0x0F, 0xBD, 0xC3]),
+        r,
+        BSF_DEFINED,
+    );
 }
 
 // ---- BSWAP ----
@@ -1333,7 +1495,11 @@ fn popcnt_r64() {
 fn popcnt_zero_sets_zf() {
     let mut r = regs();
     r.rbx = 0; // result 0 -> ZF set, all others cleared
-    check("popcnt_zero", &with_hlt(vec![0xF3, 0x48, 0x0F, 0xB8, 0xC3]), r);
+    check(
+        "popcnt_zero",
+        &with_hlt(vec![0xF3, 0x48, 0x0F, 0xB8, 0xC3]),
+        r,
+    );
 }
 
 #[test]
@@ -1341,14 +1507,24 @@ fn lzcnt_r64() {
     let mut r = regs();
     r.rbx = 0x0000_0000_0001_0000; // 47 leading zeros
     // F3 48 0F BD C3  lzcnt rax, rbx
-    check_flags_masked("lzcnt64", &with_hlt(vec![0xF3, 0x48, 0x0F, 0xBD, 0xC3]), r, CNT_DEFINED);
+    check_flags_masked(
+        "lzcnt64",
+        &with_hlt(vec![0xF3, 0x48, 0x0F, 0xBD, 0xC3]),
+        r,
+        CNT_DEFINED,
+    );
 }
 
 #[test]
 fn lzcnt_zero_source() {
     let mut r = regs();
     r.rbx = 0; // result = operand size (64), CF set, ZF clear
-    check_flags_masked("lzcnt_zero", &with_hlt(vec![0xF3, 0x48, 0x0F, 0xBD, 0xC3]), r, CNT_DEFINED);
+    check_flags_masked(
+        "lzcnt_zero",
+        &with_hlt(vec![0xF3, 0x48, 0x0F, 0xBD, 0xC3]),
+        r,
+        CNT_DEFINED,
+    );
 }
 
 #[test]
@@ -1356,14 +1532,24 @@ fn tzcnt_r64() {
     let mut r = regs();
     r.rbx = 0x0000_0000_0001_0000; // 16 trailing zeros
     // F3 48 0F BC C3  tzcnt rax, rbx
-    check_flags_masked("tzcnt64", &with_hlt(vec![0xF3, 0x48, 0x0F, 0xBC, 0xC3]), r, CNT_DEFINED);
+    check_flags_masked(
+        "tzcnt64",
+        &with_hlt(vec![0xF3, 0x48, 0x0F, 0xBC, 0xC3]),
+        r,
+        CNT_DEFINED,
+    );
 }
 
 #[test]
 fn tzcnt_zero_source() {
     let mut r = regs();
     r.rbx = 0; // result = 64, CF set
-    check_flags_masked("tzcnt_zero", &with_hlt(vec![0xF3, 0x48, 0x0F, 0xBC, 0xC3]), r, CNT_DEFINED);
+    check_flags_masked(
+        "tzcnt_zero",
+        &with_hlt(vec![0xF3, 0x48, 0x0F, 0xBC, 0xC3]),
+        r,
+        CNT_DEFINED,
+    );
 }
 
 // ---- XCHG / XADD / CMPXCHG (register operands) ----
@@ -1432,7 +1618,12 @@ fn shl_imm_multi() {
     let mut r = regs();
     r.rax = 0x1;
     // 48 C1 E0 05  shl rax, 5  (count>1 -> OF undefined)
-    check_flags_masked("shl_imm5", &with_hlt(vec![0x48, 0xC1, 0xE0, 0x05]), r, SHIFT_NO_OF);
+    check_flags_masked(
+        "shl_imm5",
+        &with_hlt(vec![0x48, 0xC1, 0xE0, 0x05]),
+        r,
+        SHIFT_NO_OF,
+    );
 }
 
 #[test]
@@ -1440,7 +1631,12 @@ fn shr_imm_multi() {
     let mut r = regs();
     r.rax = 0xFF00;
     // 48 C1 E8 04  shr rax, 4
-    check_flags_masked("shr_imm4", &with_hlt(vec![0x48, 0xC1, 0xE8, 0x04]), r, SHIFT_NO_OF);
+    check_flags_masked(
+        "shr_imm4",
+        &with_hlt(vec![0x48, 0xC1, 0xE8, 0x04]),
+        r,
+        SHIFT_NO_OF,
+    );
 }
 
 #[test]
@@ -1448,7 +1644,12 @@ fn sar_imm_multi() {
     let mut r = regs();
     r.rax = 0xFFFF_FFFF_8000_0000;
     // 48 C1 F8 08  sar rax, 8
-    check_flags_masked("sar_imm8", &with_hlt(vec![0x48, 0xC1, 0xF8, 0x08]), r, SHIFT_NO_OF);
+    check_flags_masked(
+        "sar_imm8",
+        &with_hlt(vec![0x48, 0xC1, 0xF8, 0x08]),
+        r,
+        SHIFT_NO_OF,
+    );
 }
 
 #[test]
@@ -1457,7 +1658,12 @@ fn shr_cl_multi() {
     r.rax = 0xDEAD_BEEF_0000_0000;
     r.rcx = 12;
     // 48 D3 E8  shr rax, cl
-    check_flags_masked("shr_cl12", &with_hlt(vec![0x48, 0xD3, 0xE8]), r, SHIFT_NO_OF);
+    check_flags_masked(
+        "shr_cl12",
+        &with_hlt(vec![0x48, 0xD3, 0xE8]),
+        r,
+        SHIFT_NO_OF,
+    );
 }
 
 #[test]
@@ -1476,7 +1682,12 @@ fn rol_cl_multi() {
     r.rax = 0x1234_5678_9ABC_DEF0;
     r.rcx = 12;
     // 48 D3 C0  rol rax, cl  (count>1 -> OF undefined)
-    check_flags_masked("rol_cl12", &with_hlt(vec![0x48, 0xD3, 0xC0]), r, ROT_MULTI_DEFINED);
+    check_flags_masked(
+        "rol_cl12",
+        &with_hlt(vec![0x48, 0xD3, 0xC0]),
+        r,
+        ROT_MULTI_DEFINED,
+    );
 }
 
 #[test]
@@ -1485,7 +1696,12 @@ fn ror_cl_multi() {
     r.rax = 0x1234_5678_9ABC_DEF0;
     r.rcx = 20;
     // 48 D3 C8  ror rax, cl
-    check_flags_masked("ror_cl20", &with_hlt(vec![0x48, 0xD3, 0xC8]), r, ROT_MULTI_DEFINED);
+    check_flags_masked(
+        "ror_cl20",
+        &with_hlt(vec![0x48, 0xD3, 0xC8]),
+        r,
+        ROT_MULTI_DEFINED,
+    );
 }
 
 #[test]
@@ -1495,7 +1711,12 @@ fn shld_imm() {
     r.rax = 0x1122_3344_5566_7788;
     r.rbx = 0xAABB_CCDD_EEFF_0011;
     // 48 0F A4 D8 08  shld rax, rbx, 8  (count>1 -> OF undefined)
-    check_flags_masked("shld_imm8", &with_hlt(vec![0x48, 0x0F, 0xA4, 0xD8, 0x08]), r, SHIFT_NO_OF);
+    check_flags_masked(
+        "shld_imm8",
+        &with_hlt(vec![0x48, 0x0F, 0xA4, 0xD8, 0x08]),
+        r,
+        SHIFT_NO_OF,
+    );
 }
 
 #[test]
@@ -1505,7 +1726,12 @@ fn shrd_imm() {
     r.rax = 0x1122_3344_5566_7788;
     r.rbx = 0xAABB_CCDD_EEFF_0011;
     // 48 0F AC D8 08  shrd rax, rbx, 8
-    check_flags_masked("shrd_imm8", &with_hlt(vec![0x48, 0x0F, 0xAC, 0xD8, 0x08]), r, SHIFT_NO_OF);
+    check_flags_masked(
+        "shrd_imm8",
+        &with_hlt(vec![0x48, 0x0F, 0xAC, 0xD8, 0x08]),
+        r,
+        SHIFT_NO_OF,
+    );
 }
 
 #[test]
@@ -1515,7 +1741,12 @@ fn shld_cl() {
     r.rbx = 0x0F0F_0F0F_0F0F_0F0F;
     r.rcx = 16;
     // 48 0F A5 D8  shld rax, rbx, cl
-    check_flags_masked("shld_cl16", &with_hlt(vec![0x48, 0x0F, 0xA5, 0xD8]), r, SHIFT_NO_OF);
+    check_flags_masked(
+        "shld_cl16",
+        &with_hlt(vec![0x48, 0x0F, 0xA5, 0xD8]),
+        r,
+        SHIFT_NO_OF,
+    );
 }
 
 #[test]
@@ -1525,7 +1756,12 @@ fn shrd_cl() {
     r.rbx = 0x0F0F_0F0F_0F0F_0F0F;
     r.rcx = 24;
     // 48 0F AD D8  shrd rax, rbx, cl
-    check_flags_masked("shrd_cl24", &with_hlt(vec![0x48, 0x0F, 0xAD, 0xD8]), r, SHIFT_NO_OF);
+    check_flags_masked(
+        "shrd_cl24",
+        &with_hlt(vec![0x48, 0x0F, 0xAD, 0xD8]),
+        r,
+        SHIFT_NO_OF,
+    );
 }
 
 #[test]
@@ -1535,7 +1771,11 @@ fn shld_imm1_defines_of() {
     r.rax = 0x4000_0000_0000_0000;
     r.rbx = 0x8000_0000_0000_0000;
     // 48 0F A4 D8 01  shld rax, rbx, 1
-    check("shld_imm1", &with_hlt(vec![0x48, 0x0F, 0xA4, 0xD8, 0x01]), r);
+    check(
+        "shld_imm1",
+        &with_hlt(vec![0x48, 0x0F, 0xA4, 0xD8, 0x01]),
+        r,
+    );
 }
 
 // ---- Sign/zero extension: MOVSX/MOVZX word sources, CBW family, CWD family ----
@@ -1659,21 +1899,21 @@ fn cmovcc_all_conditions() {
     // (opcode, rax, rbx) chosen so the condition is TRUE for these inputs.
     let true_cases: &[(u8, u64, u64, &str)] = &[
         (0x40, 0x8000_0000_0000_0000, 1, "cmovo"), // INT_MIN - 1 -> OF
-        (0x41, 5, 3, "cmovno"),                     // no overflow
-        (0x42, 1, 2, "cmovb"),                      // 1 < 2 unsigned -> CF
-        (0x43, 5, 3, "cmovae"),                     // CF clear
-        (0x44, 7, 7, "cmove"),                      // equal -> ZF
-        (0x45, 7, 8, "cmovne"),                     // not equal
-        (0x46, 2, 2, "cmovbe"),                     // CF|ZF (equal)
-        (0x47, 5, 3, "cmova"),                      // above
-        (0x48, 0, 1, "cmovs"),                      // 0-1 -> SF
-        (0x49, 5, 3, "cmovns"),                     // SF clear
-        (0x4A, 3, 0, "cmovp"),                      // result 3 -> even parity
-        (0x4B, 1, 0, "cmovnp"),                     // result 1 -> odd parity
-        (0x4C, 1, 2, "cmovl"),                      // signed less
-        (0x4D, 5, 3, "cmovge"),                     // signed >=
-        (0x4E, 2, 2, "cmovle"),                     // signed <= (equal)
-        (0x4F, 5, 3, "cmovg"),                      // signed >
+        (0x41, 5, 3, "cmovno"),                    // no overflow
+        (0x42, 1, 2, "cmovb"),                     // 1 < 2 unsigned -> CF
+        (0x43, 5, 3, "cmovae"),                    // CF clear
+        (0x44, 7, 7, "cmove"),                     // equal -> ZF
+        (0x45, 7, 8, "cmovne"),                    // not equal
+        (0x46, 2, 2, "cmovbe"),                    // CF|ZF (equal)
+        (0x47, 5, 3, "cmova"),                     // above
+        (0x48, 0, 1, "cmovs"),                     // 0-1 -> SF
+        (0x49, 5, 3, "cmovns"),                    // SF clear
+        (0x4A, 3, 0, "cmovp"),                     // result 3 -> even parity
+        (0x4B, 1, 0, "cmovnp"),                    // result 1 -> odd parity
+        (0x4C, 1, 2, "cmovl"),                     // signed less
+        (0x4D, 5, 3, "cmovge"),                    // signed >=
+        (0x4E, 2, 2, "cmovle"),                    // signed <= (equal)
+        (0x4F, 5, 3, "cmovg"),                     // signed >
     ];
     for &(opc, rax, rbx, name) in true_cases {
         check_cmov(name, opc, rax, rbx);
@@ -1709,24 +1949,24 @@ fn check_setcc(label: &str, opc: u8, rax: u64, rbx: u64) {
 fn setcc_all_conditions() {
     let cases: &[(u8, u64, u64, &str)] = &[
         (0x90, 0x8000_0000_0000_0000, 1, "seto"), // overflow -> 1
-        (0x91, 5, 3, "setno"),                     // no overflow -> 1
-        (0x92, 1, 2, "setb"),                      // below -> 1
-        (0x93, 5, 3, "setae"),                     // not below -> 1
-        (0x94, 7, 7, "sete"),                      // equal -> 1
-        (0x95, 7, 8, "setne"),                     // not equal -> 1
-        (0x96, 2, 2, "setbe"),                     // be (equal) -> 1
-        (0x97, 5, 3, "seta"),                      // above -> 1
-        (0x98, 0, 1, "sets"),                      // sign -> 1
-        (0x99, 5, 3, "setns"),                     // no sign -> 1
-        (0x9A, 3, 0, "setp"),                      // even parity -> 1
-        (0x9B, 1, 0, "setnp"),                     // odd parity -> 1
-        (0x9C, 1, 2, "setl"),                      // less -> 1
-        (0x9D, 5, 3, "setge"),                     // ge -> 1
-        (0x9E, 2, 2, "setle"),                     // le (equal) -> 1
-        (0x9F, 5, 3, "setg"),                      // greater -> 1
+        (0x91, 5, 3, "setno"),                    // no overflow -> 1
+        (0x92, 1, 2, "setb"),                     // below -> 1
+        (0x93, 5, 3, "setae"),                    // not below -> 1
+        (0x94, 7, 7, "sete"),                     // equal -> 1
+        (0x95, 7, 8, "setne"),                    // not equal -> 1
+        (0x96, 2, 2, "setbe"),                    // be (equal) -> 1
+        (0x97, 5, 3, "seta"),                     // above -> 1
+        (0x98, 0, 1, "sets"),                     // sign -> 1
+        (0x99, 5, 3, "setns"),                    // no sign -> 1
+        (0x9A, 3, 0, "setp"),                     // even parity -> 1
+        (0x9B, 1, 0, "setnp"),                    // odd parity -> 1
+        (0x9C, 1, 2, "setl"),                     // less -> 1
+        (0x9D, 5, 3, "setge"),                    // ge -> 1
+        (0x9E, 2, 2, "setle"),                    // le (equal) -> 1
+        (0x9F, 5, 3, "setg"),                     // greater -> 1
         // false-result spot checks
-        (0x94, 7, 8, "sete_false"),                // not equal -> 0
-        (0x9F, 1, 2, "setg_false"),                // not greater -> 0
+        (0x94, 7, 8, "sete_false"), // not equal -> 0
+        (0x9F, 1, 2, "setg_false"), // not greater -> 0
     ];
     for &(opc, rax, rbx, name) in cases {
         check_setcc(name, opc, rax, rbx);
@@ -1741,7 +1981,11 @@ fn lea_base_index_scale_disp8() {
     r.rbx = 0x1_0000; // base
     r.rcx = 0x10; // index
     // 48 8D 44 8B 20  lea rax, [rbx + rcx*4 + 0x20]
-    check("lea_sib_disp8", &with_hlt(vec![0x48, 0x8D, 0x44, 0x8B, 0x20]), r);
+    check(
+        "lea_sib_disp8",
+        &with_hlt(vec![0x48, 0x8D, 0x44, 0x8B, 0x20]),
+        r,
+    );
 }
 
 #[test]
@@ -1777,7 +2021,11 @@ fn lea_32bit_addrsize_truncates() {
     r.rbx = 0xFFFF_FFFF_FFFF_F000; // ebx = 0xFFFFF000
     r.rcx = 0x0000_0000_0000_2000; // ecx = 0x2000
     // 67 48 8D 04 0B  lea rax, [ebx + ecx]  -> (0xFFFFF000+0x2000) mod 2^32
-    check("lea_addr32", &with_hlt(vec![0x67, 0x48, 0x8D, 0x04, 0x0B]), r);
+    check(
+        "lea_addr32",
+        &with_hlt(vec![0x67, 0x48, 0x8D, 0x04, 0x0B]),
+        r,
+    );
 }
 
 // ---- 8/16/32-bit operand-size ALU variants for flag exactness ----
@@ -1976,10 +2224,18 @@ fn sse_pmaddwd() {
 #[test]
 fn sse_psadbw() {
     // sum of absolute differences of bytes -> two 16-bit sums (low halves).
-    let a = [10, 20, 30, 40, 50, 60, 70, 80, 100, 110, 120, 130, 140, 150, 160, 170];
-    let b = [5, 25, 35, 35, 60, 55, 80, 75, 90, 120, 110, 140, 130, 160, 150, 180];
+    let a = [
+        10, 20, 30, 40, 50, 60, 70, 80, 100, 110, 120, 130, 140, 150, 160, 170,
+    ];
+    let b = [
+        5, 25, 35, 35, 60, 55, 80, 75, 90, 120, 110, 140, 130, 160, 150, 180,
+    ];
     // 66 0F F6 C1  psadbw xmm0, xmm1
-    check_sse("psadbw", &sse_program(&[0x66, 0x0F, 0xF6, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "psadbw",
+        &sse_program(&[0x66, 0x0F, 0xF6, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -2052,24 +2308,50 @@ fn sse_packuswb() {
 fn sse_punpcklbw() {
     // interleave low bytes of xmm0 and xmm1.
     let a = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-    let b = [0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F];
+    let b = [
+        0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E,
+        0x8F,
+    ];
     // 66 0F 60 C1  punpcklbw xmm0, xmm1
-    check_sse("punpcklbw", &sse_program(&[0x66, 0x0F, 0x60, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "punpcklbw",
+        &sse_program(&[0x66, 0x0F, 0x60, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse_punpckhbw() {
     let a = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-    let b = [0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F];
+    let b = [
+        0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E,
+        0x8F,
+    ];
     // 66 0F 68 C1  punpckhbw xmm0, xmm1
-    check_sse("punpckhbw", &sse_program(&[0x66, 0x0F, 0x68, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "punpckhbw",
+        &sse_program(&[0x66, 0x0F, 0x68, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse_punpckldq() {
     // interleave low dwords.
-    let a = [0x1111_1111u32.to_le_bytes(), 0x2222_2222u32.to_le_bytes(), 0x3333_3333u32.to_le_bytes(), 0x4444_4444u32.to_le_bytes()].concat();
-    let b = [0xAAAA_AAAAu32.to_le_bytes(), 0xBBBB_BBBBu32.to_le_bytes(), 0xCCCC_CCCCu32.to_le_bytes(), 0xDDDD_DDDDu32.to_le_bytes()].concat();
+    let a = [
+        0x1111_1111u32.to_le_bytes(),
+        0x2222_2222u32.to_le_bytes(),
+        0x3333_3333u32.to_le_bytes(),
+        0x4444_4444u32.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0xAAAA_AAAAu32.to_le_bytes(),
+        0xBBBB_BBBBu32.to_le_bytes(),
+        0xCCCC_CCCCu32.to_le_bytes(),
+        0xDDDD_DDDDu32.to_le_bytes(),
+    ]
+    .concat();
     // 66 0F 62 C1  punpckldq xmm0, xmm1
     check_sse(
         "punpckldq",
@@ -2081,8 +2363,16 @@ fn sse_punpckldq() {
 #[test]
 fn sse_punpcklqdq() {
     // interleave low qwords -> [a.lo, b.lo].
-    let a = [0x0123_4567_89AB_CDEFu64.to_le_bytes(), 0xDEAD_BEEF_CAFE_BABEu64.to_le_bytes()].concat();
-    let b = [0x1122_3344_5566_7788u64.to_le_bytes(), 0x99AA_BBCC_DDEE_FF00u64.to_le_bytes()].concat();
+    let a = [
+        0x0123_4567_89AB_CDEFu64.to_le_bytes(),
+        0xDEAD_BEEF_CAFE_BABEu64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x1122_3344_5566_7788u64.to_le_bytes(),
+        0x99AA_BBCC_DDEE_FF00u64.to_le_bytes(),
+    ]
+    .concat();
     // 66 0F 6C C1  punpcklqdq xmm0, xmm1
     check_sse(
         "punpcklqdq",
@@ -2201,7 +2491,13 @@ fn x87_fld_fstp_roundtrip() {
     c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10]
     c.push(HLT);
     // 12345.5 is exactly representable.
-    check_mem("x87_fld_fstp", &with_hlt(c), regs(), scratch_f64(&[12345.5]), 0);
+    check_mem(
+        "x87_fld_fstp",
+        &with_hlt(c),
+        regs(),
+        scratch_f64(&[12345.5]),
+        0,
+    );
 }
 
 #[test]
@@ -2407,7 +2703,13 @@ fn x87_fucomi_equal() {
     c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
     c.extend_from_slice(&[0xDB, 0xE9]); // fucomi st0, st1
     c.push(HLT);
-    check_mem("x87_fucomi_eq", &c, regs(), scratch_f64(&[7.5, 7.5]), FCOMI_FLAGS);
+    check_mem(
+        "x87_fucomi_eq",
+        &c,
+        regs(),
+        scratch_f64(&[7.5, 7.5]),
+        FCOMI_FLAGS,
+    );
 }
 
 // ---- String ops: MOVS / STOS / LODS / SCAS / CMPS (with and without REP, DF) ----
@@ -2529,7 +2831,13 @@ fn str_rep_stosb() {
     // REP STOSB: fill RCX bytes at dst with AL. F3 AA. AL=0x5A, count=6.
     let mut r = string_regs(6);
     r.rax = 0x5A;
-    check_mem("rep_stosb", &with_hlt(vec![0xF3, 0xAA]), r, string_scratch(&[]), 0);
+    check_mem(
+        "rep_stosb",
+        &with_hlt(vec![0xF3, 0xAA]),
+        r,
+        string_scratch(&[]),
+        0,
+    );
 }
 
 #[test]
@@ -2537,7 +2845,13 @@ fn str_rep_stosd() {
     // REP STOSD: fill RCX dwords with EAX. F3 AB. EAX=0xCAFEBABE, count=3.
     let mut r = string_regs(3);
     r.rax = 0xCAFE_BABE;
-    check_mem("rep_stosd", &with_hlt(vec![0xF3, 0xAB]), r, string_scratch(&[]), 0);
+    check_mem(
+        "rep_stosd",
+        &with_hlt(vec![0xF3, 0xAB]),
+        r,
+        string_scratch(&[]),
+        0,
+    );
 }
 
 #[test]
@@ -2592,7 +2906,13 @@ fn str_repe_cmpsb_equal_run() {
     r.rsi = DATA_ADDR + SRC_OFF;
     r.rdi = DATA_ADDR + DST_OFF;
     r.rcx = 5;
-    check_mem("repe_cmpsb_eq", &with_hlt(vec![0xF3, 0xA6]), r, s, FLAG_MASK);
+    check_mem(
+        "repe_cmpsb_eq",
+        &with_hlt(vec![0xF3, 0xA6]),
+        r,
+        s,
+        FLAG_MASK,
+    );
 }
 
 #[test]
@@ -2605,7 +2925,13 @@ fn str_repe_cmpsb_mismatch() {
     r.rsi = DATA_ADDR + SRC_OFF;
     r.rdi = DATA_ADDR + DST_OFF;
     r.rcx = 5;
-    check_mem("repe_cmpsb_ne", &with_hlt(vec![0xF3, 0xA6]), r, s, FLAG_MASK);
+    check_mem(
+        "repe_cmpsb_ne",
+        &with_hlt(vec![0xF3, 0xA6]),
+        r,
+        s,
+        FLAG_MASK,
+    );
 }
 
 #[test]
@@ -2638,7 +2964,11 @@ fn sse3_haddps() {
         a[i * 4..i * 4 + 4].copy_from_slice(&af[i].to_le_bytes());
         b[i * 4..i * 4 + 4].copy_from_slice(&bf[i].to_le_bytes());
     }
-    check_sse("haddps", &sse_program(&[0xF2, 0x0F, 0x7C, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "haddps",
+        &sse_program(&[0xF2, 0x0F, 0x7C, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -2652,7 +2982,11 @@ fn sse3_hsubps() {
         a[i * 4..i * 4 + 4].copy_from_slice(&af[i].to_le_bytes());
         b[i * 4..i * 4 + 4].copy_from_slice(&bf[i].to_le_bytes());
     }
-    check_sse("hsubps", &sse_program(&[0xF2, 0x0F, 0x7D, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "hsubps",
+        &sse_program(&[0xF2, 0x0F, 0x7D, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -2666,7 +3000,11 @@ fn sse3_addsubps() {
         a[i * 4..i * 4 + 4].copy_from_slice(&af[i].to_le_bytes());
         b[i * 4..i * 4 + 4].copy_from_slice(&bf[i].to_le_bytes());
     }
-    check_sse("addsubps", &sse_program(&[0xF2, 0x0F, 0xD0, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "addsubps",
+        &sse_program(&[0xF2, 0x0F, 0xD0, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -2692,7 +3030,11 @@ fn sse2_shufpd() {
     prog.extend_from_slice(&[0x66, 0x0F, 0xC6, 0xC1, 0x02]); // shufpd xmm0, xmm1, 2
     prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm0
     prog.push(HLT);
-    check_sse("shufpd", &prog, sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+    check_sse(
+        "shufpd",
+        &prog,
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
 }
 
 #[test]
@@ -2705,7 +3047,11 @@ fn sse2_cvtdq2ps() {
     for i in 0..4 {
         b[i * 4..i * 4 + 4].copy_from_slice(&ints[i].to_le_bytes());
     }
-    check_sse("cvtdq2ps", &sse_program(&[0x0F, 0x5B, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "cvtdq2ps",
+        &sse_program(&[0x0F, 0x5B, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -2718,7 +3064,11 @@ fn sse2_cvtps2dq() {
     for i in 0..4 {
         b[i * 4..i * 4 + 4].copy_from_slice(&fs[i].to_le_bytes());
     }
-    check_sse("cvtps2dq", &sse_program(&[0x66, 0x0F, 0x5B, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "cvtps2dq",
+        &sse_program(&[0x66, 0x0F, 0x5B, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -2731,7 +3081,11 @@ fn sse2_cvttps2dq_truncates() {
     for i in 0..4 {
         b[i * 4..i * 4 + 4].copy_from_slice(&fs[i].to_le_bytes());
     }
-    check_sse("cvttps2dq", &sse_program(&[0xF3, 0x0F, 0x5B, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "cvttps2dq",
+        &sse_program(&[0xF3, 0x0F, 0x5B, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---- Misc: SAHF / LAHF ----
@@ -2764,7 +3118,11 @@ fn lahf_sahf_roundtrip() {
     r.rax = 0x5;
     r.rbx = 0x5; // equal -> ZF, PF
     // cmp; lahf; xor ah with nothing; sahf
-    check("lahf_sahf", &with_hlt(vec![0x48, 0x39, 0xD8, 0x9F, 0x9E]), r);
+    check(
+        "lahf_sahf",
+        &with_hlt(vec![0x48, 0x39, 0xD8, 0x9F, 0x9E]),
+        r,
+    );
 }
 
 // ---- MOVBE (move with byte swap) ----
@@ -2777,7 +3135,13 @@ fn movbe_load_r64() {
     let mut r = regs();
     r.rdi = DATA_ADDR;
     // 48 0F 38 F0 07  movbe rax, [rdi]
-    check_mem("movbe_load64", &with_hlt(vec![0x48, 0x0F, 0x38, 0xF0, 0x07]), r, s, 0);
+    check_mem(
+        "movbe_load64",
+        &with_hlt(vec![0x48, 0x0F, 0x38, 0xF0, 0x07]),
+        r,
+        s,
+        0,
+    );
 }
 
 #[test]
@@ -2787,7 +3151,13 @@ fn movbe_store_r32() {
     r.rax = 0x1122_3344;
     r.rdi = DATA_ADDR;
     // 0F 38 F1 07  movbe [rdi], eax
-    check_mem("movbe_store32", &with_hlt(vec![0x0F, 0x38, 0xF1, 0x07]), r, zero_scratch(), 0);
+    check_mem(
+        "movbe_store32",
+        &with_hlt(vec![0x0F, 0x38, 0xF1, 0x07]),
+        r,
+        zero_scratch(),
+        0,
+    );
 }
 
 // ---- BMI1: ANDN / BLSI / BLSR / BLSMSK (VEX-encoded) ----
@@ -2806,7 +3176,12 @@ fn bmi_andn() {
     let mut r = regs();
     r.rbx = 0x0000_00FF; // src1 (inverted)
     r.rcx = 0x0000_AAAA; // src2
-    check_flags_masked("andn", &with_hlt(vec![0xC4, 0xE2, 0x60, 0xF2, 0xC1]), r, BMI_DEFINED);
+    check_flags_masked(
+        "andn",
+        &with_hlt(vec![0xC4, 0xE2, 0x60, 0xF2, 0xC1]),
+        r,
+        BMI_DEFINED,
+    );
 }
 
 #[test]
@@ -2817,7 +3192,12 @@ fn bmi_blsi() {
     //   reg field = 011 (/3 = BLSI), rm = 001 (ecx), vvvv=1111-? -> dest eax.
     let mut r = regs();
     r.rcx = 0x0000_00B0; // lowest set bit is bit 4 (0x10)
-    check_flags_masked("blsi", &with_hlt(vec![0xC4, 0xE2, 0x78, 0xF3, 0xD9]), r, BMI_DEFINED);
+    check_flags_masked(
+        "blsi",
+        &with_hlt(vec![0xC4, 0xE2, 0x78, 0xF3, 0xD9]),
+        r,
+        BMI_DEFINED,
+    );
 }
 
 #[test]
@@ -2826,7 +3206,12 @@ fn bmi_blsr() {
     // reg field = 001 (/1 = BLSR), rm=001(ecx), vvvv -> eax. C4 E2 78 F3 C9.
     let mut r = regs();
     r.rcx = 0x0000_00B0;
-    check_flags_masked("blsr", &with_hlt(vec![0xC4, 0xE2, 0x78, 0xF3, 0xC9]), r, BMI_DEFINED);
+    check_flags_masked(
+        "blsr",
+        &with_hlt(vec![0xC4, 0xE2, 0x78, 0xF3, 0xC9]),
+        r,
+        BMI_DEFINED,
+    );
 }
 
 #[test]
@@ -2835,7 +3220,12 @@ fn bmi_blsmsk() {
     // reg field = 010 (/2 = BLSMSK), rm=001(ecx), vvvv -> eax. C4 E2 78 F3 D1.
     let mut r = regs();
     r.rcx = 0x0000_00B0;
-    check_flags_masked("blsmsk", &with_hlt(vec![0xC4, 0xE2, 0x78, 0xF3, 0xD1]), r, BMI_DEFINED);
+    check_flags_masked(
+        "blsmsk",
+        &with_hlt(vec![0xC4, 0xE2, 0x78, 0xF3, 0xD1]),
+        r,
+        BMI_DEFINED,
+    );
 }
 
 // ---- BMI2: PEXT / PDEP / MULX / RORX / SARX / SHRX / SHLX ----
@@ -2884,7 +3274,12 @@ fn bmi2_rorx() {
     //   C4 E3 7B F0 C1 08 : reg=eax(000), rm=ecx(001) -> C1, imm=8.
     let mut r = regs();
     r.rcx = 0x1234_5678;
-    check_flags_masked("rorx", &with_hlt(vec![0xC4, 0xE3, 0x7B, 0xF0, 0xC1, 0x08]), r, 0);
+    check_flags_masked(
+        "rorx",
+        &with_hlt(vec![0xC4, 0xE3, 0x7B, 0xF0, 0xC1, 0x08]),
+        r,
+        0,
+    );
 }
 
 #[test]
@@ -2924,7 +3319,12 @@ fn bmi2_rorx_r64() {
     //   rorx rax, rcx, 20 : C4 E3 FB F0 C1 14.
     let mut r = regs();
     r.rcx = 0x0123_4567_89AB_CDEF;
-    check_flags_masked("rorx64", &with_hlt(vec![0xC4, 0xE3, 0xFB, 0xF0, 0xC1, 0x14]), r, 0);
+    check_flags_masked(
+        "rorx64",
+        &with_hlt(vec![0xC4, 0xE3, 0xFB, 0xF0, 0xC1, 0x14]),
+        r,
+        0,
+    );
 }
 
 // ===========================================================================
@@ -3125,7 +3525,11 @@ fn adc_chain_two_words() {
     r.rdx = 0x0000_0000_0000_0000;
     // 48 01 C8  add rax, rcx
     // 48 11 D3  adc rbx, rdx
-    check("adc_chain", &with_hlt(vec![0x48, 0x01, 0xC8, 0x48, 0x11, 0xD3]), r);
+    check(
+        "adc_chain",
+        &with_hlt(vec![0x48, 0x01, 0xC8, 0x48, 0x11, 0xD3]),
+        r,
+    );
 }
 
 #[test]
@@ -3141,7 +3545,11 @@ fn sbb_chain_two_words() {
     r.rdx = 0x0000_0000_0000_0000;
     // 48 29 C8  sub rax, rcx
     // 48 19 D3  sbb rbx, rdx
-    check("sbb_chain", &with_hlt(vec![0x48, 0x29, 0xC8, 0x48, 0x19, 0xD3]), r);
+    check(
+        "sbb_chain",
+        &with_hlt(vec![0x48, 0x29, 0xC8, 0x48, 0x19, 0xD3]),
+        r,
+    );
 }
 
 #[test]
@@ -3252,7 +3660,12 @@ fn imul_one_operand_64() {
     r.rax = 0xFFFF_FFFF_FFFF_FFFE; // -2
     r.rbx = 0x0000_0000_0000_0003; // 3
     // 48 F7 EB  imul rbx
-    check_flags_masked("imul1_64", &with_hlt(vec![0x48, 0xF7, 0xEB]), r, MULDIV_DEFINED);
+    check_flags_masked(
+        "imul1_64",
+        &with_hlt(vec![0x48, 0xF7, 0xEB]),
+        r,
+        MULDIV_DEFINED,
+    );
 }
 
 #[test]
@@ -3261,7 +3674,12 @@ fn imul_one_operand_overflow() {
     let mut r = regs();
     r.rax = 0x0000_0001_0000_0000; // 2^32
     r.rbx = 0x0000_0001_0000_0000; // 2^32 -> product 2^64 in RDX:RAX
-    check_flags_masked("imul1_of", &with_hlt(vec![0x48, 0xF7, 0xEB]), r, MULDIV_DEFINED);
+    check_flags_masked(
+        "imul1_of",
+        &with_hlt(vec![0x48, 0xF7, 0xEB]),
+        r,
+        MULDIV_DEFINED,
+    );
 }
 
 #[test]
@@ -3282,7 +3700,12 @@ fn imul_two_operand_negative() {
     r.rax = 0xFFFF_FFFF_FFFF_FFFC; // -4
     r.rbx = 0x0000_0000_0000_0005;
     // 48 0F AF C3  imul rax, rbx
-    check_flags_masked("imul2_neg", &with_hlt(vec![0x48, 0x0F, 0xAF, 0xC3]), r, MULDIV_DEFINED);
+    check_flags_masked(
+        "imul2_neg",
+        &with_hlt(vec![0x48, 0x0F, 0xAF, 0xC3]),
+        r,
+        MULDIV_DEFINED,
+    );
 }
 
 #[test]
@@ -3292,7 +3715,12 @@ fn imul_three_operand_imm8() {
     let mut r = regs();
     r.rbx = 0x0000_0000_0000_0100;
     // 48 6B C3 FD  imul rax, rbx, -3
-    check_flags_masked("imul3_imm8", &with_hlt(vec![0x48, 0x6B, 0xC3, 0xFD]), r, MULDIV_DEFINED);
+    check_flags_masked(
+        "imul3_imm8",
+        &with_hlt(vec![0x48, 0x6B, 0xC3, 0xFD]),
+        r,
+        MULDIV_DEFINED,
+    );
 }
 
 #[test]
@@ -3332,7 +3760,12 @@ fn imul_two_operand_32() {
     r.rax = 0x0001_0000;
     r.rbx = 0x0001_0000;
     // 0F AF C3  imul eax, ebx
-    check_flags_masked("imul2_32", &with_hlt(vec![0x0F, 0xAF, 0xC3]), r, MULDIV_DEFINED);
+    check_flags_masked(
+        "imul2_32",
+        &with_hlt(vec![0x0F, 0xAF, 0xC3]),
+        r,
+        MULDIV_DEFINED,
+    );
 }
 
 #[test]
@@ -3362,7 +3795,12 @@ fn mul_no_overflow_clears_cf_of() {
     r.rax = 0x0000_0000_0000_0003;
     r.rbx = 0x0000_0000_0000_0005;
     // 48 F7 E3  mul rbx -> RDX=0, RAX=15, CF=OF=0
-    check_flags_masked("mul_nooverflow", &with_hlt(vec![0x48, 0xF7, 0xE3]), r, MULDIV_DEFINED);
+    check_flags_masked(
+        "mul_nooverflow",
+        &with_hlt(vec![0x48, 0xF7, 0xE3]),
+        r,
+        MULDIV_DEFINED,
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -3512,7 +3950,12 @@ fn rcl_by_cl_multi() {
     r.rcx = 5;
     r.rflags = flags::bits::CF;
     // 48 D3 D0  rcl rax, cl
-    check_flags_masked("rcl_cl5", &with_hlt(vec![0x48, 0xD3, 0xD0]), r, RCL_RCR_MULTI);
+    check_flags_masked(
+        "rcl_cl5",
+        &with_hlt(vec![0x48, 0xD3, 0xD0]),
+        r,
+        RCL_RCR_MULTI,
+    );
 }
 
 #[test]
@@ -3522,7 +3965,12 @@ fn rcr_by_cl_multi() {
     r.rcx = 9;
     r.rflags = 0;
     // 48 D3 D8  rcr rax, cl
-    check_flags_masked("rcr_cl9", &with_hlt(vec![0x48, 0xD3, 0xD8]), r, RCL_RCR_MULTI);
+    check_flags_masked(
+        "rcr_cl9",
+        &with_hlt(vec![0x48, 0xD3, 0xD8]),
+        r,
+        RCL_RCR_MULTI,
+    );
 }
 
 #[test]
@@ -3560,7 +4008,11 @@ fn shrd_imm1_defines_of() {
     r.rax = 0x0000_0000_0000_0001;
     r.rbx = 0x8000_0000_0000_0000;
     // 48 0F AC D8 01  shrd rax, rbx, 1
-    check("shrd_imm1", &with_hlt(vec![0x48, 0x0F, 0xAC, 0xD8, 0x01]), r);
+    check(
+        "shrd_imm1",
+        &with_hlt(vec![0x48, 0x0F, 0xAC, 0xD8, 0x01]),
+        r,
+    );
 }
 
 #[test]
@@ -3570,7 +4022,12 @@ fn shld_count_63() {
     r.rax = 0x1;
     r.rbx = 0xFFFF_FFFF_FFFF_FFFF;
     // 48 0F A4 D8 3F  shld rax, rbx, 63
-    check_flags_masked("shld_63", &with_hlt(vec![0x48, 0x0F, 0xA4, 0xD8, 0x3F]), r, SHIFT_NO_OF);
+    check_flags_masked(
+        "shld_63",
+        &with_hlt(vec![0x48, 0x0F, 0xA4, 0xD8, 0x3F]),
+        r,
+        SHIFT_NO_OF,
+    );
 }
 
 #[test]
@@ -3579,7 +4036,12 @@ fn shrd_count_63() {
     r.rax = 0x8000_0000_0000_0000;
     r.rbx = 0xFFFF_FFFF_FFFF_FFFF;
     // 48 0F AC D8 3F  shrd rax, rbx, 63
-    check_flags_masked("shrd_63", &with_hlt(vec![0x48, 0x0F, 0xAC, 0xD8, 0x3F]), r, SHIFT_NO_OF);
+    check_flags_masked(
+        "shrd_63",
+        &with_hlt(vec![0x48, 0x0F, 0xAC, 0xD8, 0x3F]),
+        r,
+        SHIFT_NO_OF,
+    );
 }
 
 #[test]
@@ -3590,7 +4052,12 @@ fn shld16_cl() {
     r.rbx = 0x0000_0000_0000_ABCD;
     r.rcx = 4;
     // 66 0F A5 D8  shld ax, bx, cl
-    check_flags_masked("shld16_cl4", &with_hlt(vec![0x66, 0x0F, 0xA5, 0xD8]), r, SHIFT_NO_OF);
+    check_flags_masked(
+        "shld16_cl4",
+        &with_hlt(vec![0x66, 0x0F, 0xA5, 0xD8]),
+        r,
+        SHIFT_NO_OF,
+    );
 }
 
 #[test]
@@ -3599,7 +4066,12 @@ fn shrd16_imm() {
     r.rax = 0x0000_0000_0000_F000;
     r.rbx = 0x0000_0000_0000_000F;
     // 66 0F AC D8 04  shrd ax, bx, 4
-    check_flags_masked("shrd16_imm4", &with_hlt(vec![0x66, 0x0F, 0xAC, 0xD8, 0x04]), r, SHIFT_NO_OF);
+    check_flags_masked(
+        "shrd16_imm4",
+        &with_hlt(vec![0x66, 0x0F, 0xAC, 0xD8, 0x04]),
+        r,
+        SHIFT_NO_OF,
+    );
 }
 
 #[test]
@@ -3610,7 +4082,12 @@ fn shld32_cl16() {
     r.rbx = 0x0000_0000_ABCD_EF01;
     r.rcx = 16;
     // 0F A5 D8  shld eax, ebx, cl
-    check_flags_masked("shld32_cl16", &with_hlt(vec![0x0F, 0xA5, 0xD8]), r, SHIFT_NO_OF);
+    check_flags_masked(
+        "shld32_cl16",
+        &with_hlt(vec![0x0F, 0xA5, 0xD8]),
+        r,
+        SHIFT_NO_OF,
+    );
 }
 
 #[test]
@@ -3621,7 +4098,12 @@ fn shrd_cl_31() {
     r.rbx = 0x5555_5555_5555_5555;
     r.rcx = 31;
     // 48 0F AD D8  shrd rax, rbx, cl
-    check_flags_masked("shrd_cl31", &with_hlt(vec![0x48, 0x0F, 0xAD, 0xD8]), r, SHIFT_NO_OF);
+    check_flags_masked(
+        "shrd_cl31",
+        &with_hlt(vec![0x48, 0x0F, 0xAD, 0xD8]),
+        r,
+        SHIFT_NO_OF,
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -3752,7 +4234,11 @@ fn lea_rip_relative() {
     // We just need both backends to agree on the computed absolute address.
     let r = regs();
     // 48 8D 05 00 01 00 00  lea rax, [rip + 0x100]
-    check("lea_rip", &with_hlt(vec![0x48, 0x8D, 0x05, 0x00, 0x01, 0x00, 0x00]), r);
+    check(
+        "lea_rip",
+        &with_hlt(vec![0x48, 0x8D, 0x05, 0x00, 0x01, 0x00, 0x00]),
+        r,
+    );
 }
 
 #[test]
@@ -3760,7 +4246,11 @@ fn lea_rip_relative_negative_disp() {
     // Negative RIP-relative displacement.
     // 48 8D 05 F0 FF FF FF  lea rax, [rip - 16]
     let r = regs();
-    check("lea_rip_neg", &with_hlt(vec![0x48, 0x8D, 0x05, 0xF0, 0xFF, 0xFF, 0xFF]), r);
+    check(
+        "lea_rip_neg",
+        &with_hlt(vec![0x48, 0x8D, 0x05, 0xF0, 0xFF, 0xFF, 0xFF]),
+        r,
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -3791,7 +4281,11 @@ fn sse_addps() {
     // ADDPS xmm0, xmm1 = 0F 58 C1. Packed single add.
     let a = f32x4([1.0, 2.5, -3.0, 100.0]);
     let b = f32x4([0.5, 0.5, 3.0, -100.0]);
-    check_sse("addps", &sse_program(&[0x0F, 0x58, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "addps",
+        &sse_program(&[0x0F, 0x58, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3799,7 +4293,11 @@ fn sse_subps() {
     // SUBPS xmm0, xmm1 = 0F 5C C1.
     let a = f32x4([10.0, 0.0, -5.0, 256.0]);
     let b = f32x4([2.5, 1.0, -5.0, 256.0]);
-    check_sse("subps", &sse_program(&[0x0F, 0x5C, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "subps",
+        &sse_program(&[0x0F, 0x5C, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3807,7 +4305,11 @@ fn sse_mulps() {
     // MULPS xmm0, xmm1 = 0F 59 C1.
     let a = f32x4([2.0, 3.0, -4.0, 0.5]);
     let b = f32x4([8.0, 0.25, -2.0, 16.0]);
-    check_sse("mulps", &sse_program(&[0x0F, 0x59, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "mulps",
+        &sse_program(&[0x0F, 0x59, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3815,7 +4317,11 @@ fn sse_divps() {
     // DIVPS xmm0, xmm1 = 0F 5E C1. Use exact dyadic quotients.
     let a = f32x4([1.0, 9.0, -8.0, 256.0]);
     let b = f32x4([2.0, 8.0, 2.0, 4.0]); // -> 0.5, 1.125, -4.0, 64.0
-    check_sse("divps", &sse_program(&[0x0F, 0x5E, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "divps",
+        &sse_program(&[0x0F, 0x5E, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3823,7 +4329,11 @@ fn sse_minps() {
     // MINPS xmm0, xmm1 = 0F 5D C1. Per-lane min.
     let a = f32x4([1.0, 5.0, -3.0, 7.0]);
     let b = f32x4([2.0, 4.0, -1.0, 7.0]);
-    check_sse("minps", &sse_program(&[0x0F, 0x5D, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "minps",
+        &sse_program(&[0x0F, 0x5D, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3831,7 +4341,11 @@ fn sse_maxps() {
     // MAXPS xmm0, xmm1 = 0F 5F C1. Per-lane max.
     let a = f32x4([1.0, 5.0, -3.0, 7.0]);
     let b = f32x4([2.0, 4.0, -1.0, 7.0]);
-    check_sse("maxps", &sse_program(&[0x0F, 0x5F, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "maxps",
+        &sse_program(&[0x0F, 0x5F, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3855,7 +4369,11 @@ fn sse_minps_nan_handling() {
     a[0..4].copy_from_slice(&f32::NAN.to_le_bytes());
     let mut b = f32x4([5.0, 0.0, 3.0, 4.0]);
     b[4..8].copy_from_slice(&f32::NAN.to_le_bytes());
-    check_sse("minps_nan", &sse_program(&[0x0F, 0x5D, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "minps_nan",
+        &sse_program(&[0x0F, 0x5D, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3869,7 +4387,11 @@ fn sse_maxps_nan_handling() {
     a[0..4].copy_from_slice(&f32::NAN.to_le_bytes());
     let mut b = f32x4([5.0, 0.0, 3.0, 4.0]);
     b[4..8].copy_from_slice(&f32::NAN.to_le_bytes());
-    check_sse("maxps_nan", &sse_program(&[0x0F, 0x5F, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "maxps_nan",
+        &sse_program(&[0x0F, 0x5F, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3880,7 +4402,11 @@ fn sse_maxpd_nan_handling() {
     a[0..8].copy_from_slice(&f64::NAN.to_le_bytes());
     let mut b = f64x2([3.0, 0.0]);
     b[8..16].copy_from_slice(&f64::NAN.to_le_bytes());
-    check_sse("maxpd_nan", &sse_program(&[0x66, 0x0F, 0x5F, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "maxpd_nan",
+        &sse_program(&[0x66, 0x0F, 0x5F, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3890,7 +4416,11 @@ fn sse_minpd_nan_handling() {
     a[0..8].copy_from_slice(&f64::NAN.to_le_bytes());
     let mut b = f64x2([3.0, 0.0]);
     b[8..16].copy_from_slice(&f64::NAN.to_le_bytes());
-    check_sse("minpd_nan", &sse_program(&[0x66, 0x0F, 0x5D, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "minpd_nan",
+        &sse_program(&[0x66, 0x0F, 0x5D, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3900,7 +4430,11 @@ fn sse_minss_nan_returns_src() {
     let a = f32x4([9.0, 11.0, 12.0, 13.0]);
     let mut b = f32x4([0.0, 0.0, 0.0, 0.0]);
     b[0..4].copy_from_slice(&f32::NAN.to_le_bytes());
-    check_sse("minss_nan", &sse_program(&[0xF3, 0x0F, 0x5D, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "minss_nan",
+        &sse_program(&[0xF3, 0x0F, 0x5D, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3909,7 +4443,11 @@ fn sse_maxsd_nan_returns_src() {
     let mut a = f64x2([0.0, 7.0]);
     a[0..8].copy_from_slice(&f64::NAN.to_le_bytes());
     let b = f64x2([2.0, 99.0]);
-    check_sse("maxsd_nan", &sse_program(&[0xF2, 0x0F, 0x5F, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "maxsd_nan",
+        &sse_program(&[0xF2, 0x0F, 0x5F, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3918,7 +4456,11 @@ fn sse_maxps_signed_zero() {
     // equal-but-signed-different, so MAXPS returns b. Probe both lanes.
     let a = f32x4([-0.0, 0.0, -0.0, 0.0]);
     let b = f32x4([0.0, -0.0, -0.0, 0.0]);
-    check_sse("maxps_signzero", &sse_program(&[0x0F, 0x5F, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "maxps_signzero",
+        &sse_program(&[0x0F, 0x5F, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3926,7 +4468,11 @@ fn sse_minps_signed_zero() {
     // MIN(-0.0,+0.0) also returns the second operand on the equality tie.
     let a = f32x4([-0.0, 0.0, 1.0, -1.0]);
     let b = f32x4([0.0, -0.0, 1.0, -1.0]);
-    check_sse("minps_signzero", &sse_program(&[0x0F, 0x5D, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "minps_signzero",
+        &sse_program(&[0x0F, 0x5D, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3934,7 +4480,11 @@ fn sse_sqrtps() {
     // SQRTPS xmm0, xmm1 = 0F 51 C1. Source xmm1 -> dest xmm0. Perfect squares.
     let a = f32x4([0.0, 0.0, 0.0, 0.0]); // dest, overwritten
     let b = f32x4([4.0, 9.0, 16.0, 0.25]); // -> 2,3,4,0.5
-    check_sse("sqrtps", &sse_program(&[0x0F, 0x51, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "sqrtps",
+        &sse_program(&[0x0F, 0x51, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3942,7 +4492,11 @@ fn sse_sqrtss() {
     // SQRTSS xmm0, xmm1 = F3 0F 51 C1. Only lane 0 changes; lanes 1..3 keep xmm0.
     let a = f32x4([1.0, 11.0, 12.0, 13.0]); // upper lanes preserved
     let b = f32x4([25.0, 0.0, 0.0, 0.0]); // lane0 -> 5.0
-    check_sse("sqrtss", &sse_program(&[0xF3, 0x0F, 0x51, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "sqrtss",
+        &sse_program(&[0xF3, 0x0F, 0x51, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3950,7 +4504,11 @@ fn sse_addss() {
     // ADDSS xmm0, xmm1 = F3 0F 58 C1. Scalar add; upper 3 lanes of xmm0 preserved.
     let a = f32x4([10.0, 1.0, 2.0, 3.0]);
     let b = f32x4([5.5, 99.0, 99.0, 99.0]); // only lane0 of b is used
-    check_sse("addss", &sse_program(&[0xF3, 0x0F, 0x58, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "addss",
+        &sse_program(&[0xF3, 0x0F, 0x58, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -3958,14 +4516,22 @@ fn sse_minss_scalar() {
     // MINSS xmm0, xmm1 = F3 0F 5D C1. Scalar min in lane 0.
     let a = f32x4([7.0, 1.0, 2.0, 3.0]);
     let b = f32x4([4.0, 0.0, 0.0, 0.0]); // min(7,4)=4
-    check_sse("minss", &sse_program(&[0xF3, 0x0F, 0x5D, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "minss",
+        &sse_program(&[0xF3, 0x0F, 0x5D, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---- CMPPS: all 8 immediate predicates (0..7). Produces an all-1s/all-0s mask. ----
 
 /// Run CMPPS xmm0, xmm1, imm8 (0F C2 C1 ib) and compare the 128-bit mask result.
 fn cmpps_case(label: &str, imm: u8, a: [u8; 16], b: [u8; 16]) {
-    check_sse(label, &sse_program(&[0x0F, 0xC2, 0xC1, imm]), sse_scratch(a, b));
+    check_sse(
+        label,
+        &sse_program(&[0x0F, 0xC2, 0xC1, imm]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4024,7 +4590,11 @@ fn sse_unpcklps() {
     // result = [a0, b0, a1, b1].
     let a = f32x4([1.0, 2.0, 3.0, 4.0]);
     let b = f32x4([10.0, 20.0, 30.0, 40.0]);
-    check_sse("unpcklps", &sse_program(&[0x0F, 0x14, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "unpcklps",
+        &sse_program(&[0x0F, 0x14, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4033,7 +4603,11 @@ fn sse_unpckhps() {
     // result = [a2, b2, a3, b3].
     let a = f32x4([1.0, 2.0, 3.0, 4.0]);
     let b = f32x4([10.0, 20.0, 30.0, 40.0]);
-    check_sse("unpckhps", &sse_program(&[0x0F, 0x15, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "unpckhps",
+        &sse_program(&[0x0F, 0x15, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4041,7 +4615,11 @@ fn sse_unpcklpd() {
     // UNPCKLPD xmm0, xmm1 = 66 0F 14 C1 : result = [a.lo, b.lo].
     let a = f64x2([1.5, 2.5]);
     let b = f64x2([3.5, 4.5]);
-    check_sse("unpcklpd", &sse_program(&[0x66, 0x0F, 0x14, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "unpcklpd",
+        &sse_program(&[0x66, 0x0F, 0x14, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4049,7 +4627,11 @@ fn sse_unpckhpd() {
     // UNPCKHPD xmm0, xmm1 = 66 0F 15 C1 : result = [a.hi, b.hi].
     let a = f64x2([1.5, 2.5]);
     let b = f64x2([3.5, 4.5]);
-    check_sse("unpckhpd", &sse_program(&[0x66, 0x0F, 0x15, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "unpckhpd",
+        &sse_program(&[0x66, 0x0F, 0x15, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---- Double-precision arithmetic + min/max/sqrt + scalar ----
@@ -4059,7 +4641,11 @@ fn sse_addpd() {
     // ADDPD xmm0, xmm1 = 66 0F 58 C1.
     let a = f64x2([1.25, -100.0]);
     let b = f64x2([0.75, 100.0]);
-    check_sse("addpd", &sse_program(&[0x66, 0x0F, 0x58, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "addpd",
+        &sse_program(&[0x66, 0x0F, 0x58, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4067,7 +4653,11 @@ fn sse_mulpd() {
     // MULPD xmm0, xmm1 = 66 0F 59 C1.
     let a = f64x2([3.0, -0.5]);
     let b = f64x2([0.25, 8.0]);
-    check_sse("mulpd", &sse_program(&[0x66, 0x0F, 0x59, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "mulpd",
+        &sse_program(&[0x66, 0x0F, 0x59, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4075,7 +4665,11 @@ fn sse_sqrtpd() {
     // SQRTPD xmm0, xmm1 = 66 0F 51 C1.
     let a = f64x2([0.0, 0.0]);
     let b = f64x2([81.0, 0.0625]); // -> 9.0, 0.25
-    check_sse("sqrtpd", &sse_program(&[0x66, 0x0F, 0x51, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "sqrtpd",
+        &sse_program(&[0x66, 0x0F, 0x51, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4083,8 +4677,16 @@ fn sse_minpd_maxpd() {
     // MINPD then independent MAXPD test, both per-lane.
     let a = f64x2([3.0, 8.0]);
     let b = f64x2([5.0, 2.0]);
-    check_sse("minpd", &sse_program(&[0x66, 0x0F, 0x5D, 0xC1]), sse_scratch(a, b));
-    check_sse("maxpd", &sse_program(&[0x66, 0x0F, 0x5F, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "minpd",
+        &sse_program(&[0x66, 0x0F, 0x5D, 0xC1]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "maxpd",
+        &sse_program(&[0x66, 0x0F, 0x5F, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4092,7 +4694,11 @@ fn sse_divsd_scalar() {
     // DIVSD xmm0, xmm1 = F2 0F 5E C1. Scalar; lane1 of xmm0 preserved.
     let a = f64x2([9.0, 123.0]);
     let b = f64x2([4.0, 0.0]); // lane0 -> 2.25
-    check_sse("divsd", &sse_program(&[0xF2, 0x0F, 0x5E, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "divsd",
+        &sse_program(&[0xF2, 0x0F, 0x5E, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---- CMPPD predicate + CVT edge cases ----
@@ -4102,8 +4708,16 @@ fn sse_cmppd_predicates() {
     // CMPPD xmm0, xmm1, imm8 = 66 0F C2 C1 ib. Test EQ(0) and LT(1).
     let a = f64x2([1.0, 3.0]);
     let b = f64x2([1.0, 2.0]);
-    check_sse("cmppd_eq", &sse_program(&[0x66, 0x0F, 0xC2, 0xC1, 0x00]), sse_scratch(a, b));
-    check_sse("cmppd_lt", &sse_program(&[0x66, 0x0F, 0xC2, 0xC1, 0x01]), sse_scratch(a, b));
+    check_sse(
+        "cmppd_eq",
+        &sse_program(&[0x66, 0x0F, 0xC2, 0xC1, 0x00]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "cmppd_lt",
+        &sse_program(&[0x66, 0x0F, 0xC2, 0xC1, 0x01]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4111,7 +4725,11 @@ fn sse_cvtps2pd() {
     // CVTPS2PD xmm0, xmm1 = 0F 5A C1. Low two f32 -> two f64.
     let a = [0u8; 16];
     let b = f32x4([2.5, -4.0, 99.0, 99.0]); // only low two lanes used
-    check_sse("cvtps2pd", &sse_program(&[0x0F, 0x5A, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "cvtps2pd",
+        &sse_program(&[0x0F, 0x5A, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4119,7 +4737,11 @@ fn sse_cvtpd2ps() {
     // CVTPD2PS xmm0, xmm1 = 66 0F 5A C1. Two f64 -> low two f32, high two = 0.
     let a = [0u8; 16];
     let b = f64x2([3.5, -7.25]);
-    check_sse("cvtpd2ps", &sse_program(&[0x66, 0x0F, 0x5A, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "cvtpd2ps",
+        &sse_program(&[0x66, 0x0F, 0x5A, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4128,7 +4750,11 @@ fn sse_cvttps2dq_negative_trunc() {
     // -1.9 -> -1, -2.5 -> -2, 2.9 -> 2, 0.9 -> 0.
     let a = [0u8; 16];
     let b = f32x4([-1.9, -2.5, 2.9, 0.9]);
-    check_sse("cvttps2dq_neg", &sse_program(&[0xF3, 0x0F, 0x5B, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "cvttps2dq_neg",
+        &sse_program(&[0xF3, 0x0F, 0x5B, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4181,7 +4807,11 @@ fn sse_shufps() {
     // imm = 0b11_01_10_00 = 0xD8 : dst = [a0, a2, b1, b3].
     let a = f32x4([1.0, 2.0, 3.0, 4.0]);
     let b = f32x4([10.0, 20.0, 30.0, 40.0]);
-    check_sse("shufps", &sse_program(&[0x0F, 0xC6, 0xC1, 0xD8]), sse_scratch(a, b));
+    check_sse(
+        "shufps",
+        &sse_program(&[0x0F, 0xC6, 0xC1, 0xD8]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -4202,7 +4832,12 @@ fn bmi2_bzhi() {
     let mut r = regs();
     r.rcx = 0xFFFF_FFFF; // source: all ones
     r.rbx = 12; // keep low 12 bits -> 0x00000FFF
-    check_flags_masked("bzhi", &with_hlt(vec![0xC4, 0xE2, 0x60, 0xF5, 0xC1]), r, BZHI_DEFINED);
+    check_flags_masked(
+        "bzhi",
+        &with_hlt(vec![0xC4, 0xE2, 0x60, 0xF5, 0xC1]),
+        r,
+        BZHI_DEFINED,
+    );
 }
 
 #[test]
@@ -4211,7 +4846,12 @@ fn bmi2_bzhi_count_ge_width() {
     let mut r = regs();
     r.rcx = 0xDEAD_BEEF;
     r.rbx = 40; // >= 32 -> no bits cleared, CF=1
-    check_flags_masked("bzhi_wide", &with_hlt(vec![0xC4, 0xE2, 0x60, 0xF5, 0xC1]), r, BZHI_DEFINED);
+    check_flags_masked(
+        "bzhi_wide",
+        &with_hlt(vec![0xC4, 0xE2, 0x60, 0xF5, 0xC1]),
+        r,
+        BZHI_DEFINED,
+    );
 }
 
 #[test]
@@ -4221,7 +4861,12 @@ fn bmi2_bzhi_64() {
     let mut r = regs();
     r.rcx = 0xFFFF_FFFF_FFFF_FFFF;
     r.rbx = 33; // keep low 33 bits
-    check_flags_masked("bzhi64", &with_hlt(vec![0xC4, 0xE2, 0xE0, 0xF5, 0xC1]), r, BZHI_DEFINED);
+    check_flags_masked(
+        "bzhi64",
+        &with_hlt(vec![0xC4, 0xE2, 0xE0, 0xF5, 0xC1]),
+        r,
+        BZHI_DEFINED,
+    );
 }
 
 #[test]
@@ -4231,7 +4876,12 @@ fn bmi2_pext_sparse_mask() {
     r.rbx = 0xFEDC_BA98; // source
     r.rcx = 0x8421_1248; // sparse mask (scattered single bits)
     // C4 E2 62 F5 C1  pext eax, ebx, ecx
-    check_flags_masked("pext_sparse", &with_hlt(vec![0xC4, 0xE2, 0x62, 0xF5, 0xC1]), r, 0);
+    check_flags_masked(
+        "pext_sparse",
+        &with_hlt(vec![0xC4, 0xE2, 0x62, 0xF5, 0xC1]),
+        r,
+        0,
+    );
 }
 
 #[test]
@@ -4241,7 +4891,12 @@ fn bmi2_pext_64() {
     r.rbx = 0x0123_4567_89AB_CDEF;
     r.rcx = 0xF0F0_F0F0_F0F0_F0F0; // take the high nibble of each byte
     // C4 E2 E2 F5 C1  pext rax, rbx, rcx
-    check_flags_masked("pext64", &with_hlt(vec![0xC4, 0xE2, 0xE2, 0xF5, 0xC1]), r, 0);
+    check_flags_masked(
+        "pext64",
+        &with_hlt(vec![0xC4, 0xE2, 0xE2, 0xF5, 0xC1]),
+        r,
+        0,
+    );
 }
 
 #[test]
@@ -4251,7 +4906,12 @@ fn bmi2_pdep_sparse_mask() {
     r.rbx = 0x0000_00FF; // 8 source bits
     r.rcx = 0x8421_1248; // sparse target positions
     // C4 E2 63 F5 C1  pdep eax, ebx, ecx
-    check_flags_masked("pdep_sparse", &with_hlt(vec![0xC4, 0xE2, 0x63, 0xF5, 0xC1]), r, 0);
+    check_flags_masked(
+        "pdep_sparse",
+        &with_hlt(vec![0xC4, 0xE2, 0x63, 0xF5, 0xC1]),
+        r,
+        0,
+    );
 }
 
 #[test]
@@ -4261,7 +4921,12 @@ fn bmi2_pdep_64() {
     r.rbx = 0x0000_0000_0000_FFFF;
     r.rcx = 0xF0F0_F0F0_F0F0_F0F0;
     // C4 E2 E3 F5 C1  pdep rax, rbx, rcx
-    check_flags_masked("pdep64", &with_hlt(vec![0xC4, 0xE2, 0xE3, 0xF5, 0xC1]), r, 0);
+    check_flags_masked(
+        "pdep64",
+        &with_hlt(vec![0xC4, 0xE2, 0xE3, 0xF5, 0xC1]),
+        r,
+        0,
+    );
 }
 
 #[test]
@@ -4272,7 +4937,12 @@ fn bmi2_mulx_64() {
     let mut r = regs();
     r.rdx = 0xFFFF_FFFF_FFFF_FFFF; // multiplicand
     r.rcx = 0x0000_0000_0000_0002; // src2 -> product 0x1_FFFF...E
-    check_flags_masked("mulx64", &with_hlt(vec![0xC4, 0xE2, 0xE3, 0xF6, 0xC1]), r, 0);
+    check_flags_masked(
+        "mulx64",
+        &with_hlt(vec![0xC4, 0xE2, 0xE3, 0xF6, 0xC1]),
+        r,
+        0,
+    );
 }
 
 #[test]
@@ -4285,7 +4955,12 @@ fn bmi2_mulx_same_dest() {
     let mut r = regs();
     r.rdx = 0x0000_0000_0001_0000;
     r.rcx = 0x0000_0000_0001_0000; // product 0x1_0000_0000 : high=1, low=0 -> eax gets high(1)
-    check_flags_masked("mulx_samedest", &with_hlt(vec![0xC4, 0xE2, 0x7B, 0xF6, 0xC1]), r, 0);
+    check_flags_masked(
+        "mulx_samedest",
+        &with_hlt(vec![0xC4, 0xE2, 0x7B, 0xF6, 0xC1]),
+        r,
+        0,
+    );
 }
 
 #[test]
@@ -4294,7 +4969,12 @@ fn bmi2_rorx_count_zero() {
     let mut r = regs();
     r.rcx = 0xDEAD_BEEF;
     // C4 E3 7B F0 C1 00  rorx eax, ecx, 0
-    check_flags_masked("rorx_0", &with_hlt(vec![0xC4, 0xE3, 0x7B, 0xF0, 0xC1, 0x00]), r, 0);
+    check_flags_masked(
+        "rorx_0",
+        &with_hlt(vec![0xC4, 0xE3, 0x7B, 0xF0, 0xC1, 0x00]),
+        r,
+        0,
+    );
 }
 
 #[test]
@@ -4303,7 +4983,12 @@ fn bmi2_rorx_count_31() {
     let mut r = regs();
     r.rcx = 0x8000_0001;
     // C4 E3 7B F0 C1 1F  rorx eax, ecx, 31
-    check_flags_masked("rorx_31", &with_hlt(vec![0xC4, 0xE3, 0x7B, 0xF0, 0xC1, 0x1F]), r, 0);
+    check_flags_masked(
+        "rorx_31",
+        &with_hlt(vec![0xC4, 0xE3, 0x7B, 0xF0, 0xC1, 0x1F]),
+        r,
+        0,
+    );
 }
 
 #[test]
@@ -4312,7 +4997,12 @@ fn bmi2_rorx64_count_63() {
     let mut r = regs();
     r.rcx = 0x8000_0000_0000_0001;
     // C4 E3 FB F0 C1 3F  rorx rax, rcx, 63
-    check_flags_masked("rorx64_63", &with_hlt(vec![0xC4, 0xE3, 0xFB, 0xF0, 0xC1, 0x3F]), r, 0);
+    check_flags_masked(
+        "rorx64_63",
+        &with_hlt(vec![0xC4, 0xE3, 0xFB, 0xF0, 0xC1, 0x3F]),
+        r,
+        0,
+    );
 }
 
 // ===========================================================================
@@ -4356,65 +5046,137 @@ fn u32x4(v: [u32; 4]) -> [u8; 16] {
 #[test]
 fn sse_paddusb() {
     // PADDUSB xmm0, xmm1 = 66 0F DC C1 : unsigned byte add with saturation to 0xFF.
-    let a = [0x00, 0x01, 0x7F, 0x80, 0xFE, 0xFF, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xA0];
-    let b = [0x00, 0xFF, 0x01, 0x80, 0x01, 0x01, 0xF0, 0xF0, 0xD0, 0xC0, 0xB0, 0xA0, 0x90, 0x80, 0x70, 0x60];
-    check_sse("paddusb", &sse_program(&[0x66, 0x0F, 0xDC, 0xC1]), sse_scratch(a, b));
+    let a = [
+        0x00, 0x01, 0x7F, 0x80, 0xFE, 0xFF, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90,
+        0xA0,
+    ];
+    let b = [
+        0x00, 0xFF, 0x01, 0x80, 0x01, 0x01, 0xF0, 0xF0, 0xD0, 0xC0, 0xB0, 0xA0, 0x90, 0x80, 0x70,
+        0x60,
+    ];
+    check_sse(
+        "paddusb",
+        &sse_program(&[0x66, 0x0F, 0xDC, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse_paddusw() {
     // PADDUSW xmm0, xmm1 = 66 0F DD C1 : unsigned word add with saturation to 0xFFFF.
-    let a = u16x8([0x0000, 0x0001, 0x7FFF, 0x8000, 0xFFFE, 0xFFFF, 0x1234, 0xABCD]);
-    let b = u16x8([0x0000, 0xFFFF, 0x0001, 0x8000, 0x0001, 0x0001, 0xF000, 0x6000]);
-    check_sse("paddusw", &sse_program(&[0x66, 0x0F, 0xDD, 0xC1]), sse_scratch(a, b));
+    let a = u16x8([
+        0x0000, 0x0001, 0x7FFF, 0x8000, 0xFFFE, 0xFFFF, 0x1234, 0xABCD,
+    ]);
+    let b = u16x8([
+        0x0000, 0xFFFF, 0x0001, 0x8000, 0x0001, 0x0001, 0xF000, 0x6000,
+    ]);
+    check_sse(
+        "paddusw",
+        &sse_program(&[0x66, 0x0F, 0xDD, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse_paddsb() {
     // PADDSB xmm0, xmm1 = 66 0F EC C1 : signed byte add with saturation [-128,127].
-    let a = [0x7F, 0x7F, 0x80, 0x80, 0x01, 0xFF, 0x40, 0x40, 0xC0, 0xC0, 0x00, 0x7E, 0x81, 0x10, 0x20, 0x30];
-    let b = [0x01, 0x7F, 0xFF, 0x80, 0xFF, 0x01, 0x40, 0x50, 0xC0, 0xB0, 0x00, 0x02, 0xFF, 0x20, 0x30, 0x40];
-    check_sse("paddsb", &sse_program(&[0x66, 0x0F, 0xEC, 0xC1]), sse_scratch(a, b));
+    let a = [
+        0x7F, 0x7F, 0x80, 0x80, 0x01, 0xFF, 0x40, 0x40, 0xC0, 0xC0, 0x00, 0x7E, 0x81, 0x10, 0x20,
+        0x30,
+    ];
+    let b = [
+        0x01, 0x7F, 0xFF, 0x80, 0xFF, 0x01, 0x40, 0x50, 0xC0, 0xB0, 0x00, 0x02, 0xFF, 0x20, 0x30,
+        0x40,
+    ];
+    check_sse(
+        "paddsb",
+        &sse_program(&[0x66, 0x0F, 0xEC, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse_paddsw() {
     // PADDSW xmm0, xmm1 = 66 0F ED C1 : signed word add with saturation [-32768,32767].
-    let a = u16x8([0x7FFF, 0x8000, 0x0001, 0xFFFF, 0x4000, 0xC000, 0x7FFE, 0x8001]);
-    let b = u16x8([0x0001, 0xFFFF, 0xFFFF, 0x0001, 0x4000, 0xC000, 0x0003, 0xFFFE]);
-    check_sse("paddsw", &sse_program(&[0x66, 0x0F, 0xED, 0xC1]), sse_scratch(a, b));
+    let a = u16x8([
+        0x7FFF, 0x8000, 0x0001, 0xFFFF, 0x4000, 0xC000, 0x7FFE, 0x8001,
+    ]);
+    let b = u16x8([
+        0x0001, 0xFFFF, 0xFFFF, 0x0001, 0x4000, 0xC000, 0x0003, 0xFFFE,
+    ]);
+    check_sse(
+        "paddsw",
+        &sse_program(&[0x66, 0x0F, 0xED, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse_psubusb() {
     // PSUBUSB xmm0, xmm1 = 66 0F D8 C1 : unsigned byte sub with saturation to 0.
-    let a = [0x00, 0x10, 0x80, 0xFF, 0x01, 0x7F, 0x05, 0x90, 0xA0, 0xB0, 0xC0, 0x00, 0x01, 0x02, 0x03, 0x04];
-    let b = [0x01, 0x20, 0x01, 0x80, 0x02, 0x40, 0x05, 0x91, 0x10, 0xC0, 0xFF, 0x00, 0x05, 0x00, 0x10, 0x04];
-    check_sse("psubusb", &sse_program(&[0x66, 0x0F, 0xD8, 0xC1]), sse_scratch(a, b));
+    let a = [
+        0x00, 0x10, 0x80, 0xFF, 0x01, 0x7F, 0x05, 0x90, 0xA0, 0xB0, 0xC0, 0x00, 0x01, 0x02, 0x03,
+        0x04,
+    ];
+    let b = [
+        0x01, 0x20, 0x01, 0x80, 0x02, 0x40, 0x05, 0x91, 0x10, 0xC0, 0xFF, 0x00, 0x05, 0x00, 0x10,
+        0x04,
+    ];
+    check_sse(
+        "psubusb",
+        &sse_program(&[0x66, 0x0F, 0xD8, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse_psubusw() {
     // PSUBUSW xmm0, xmm1 = 66 0F D9 C1 : unsigned word sub with saturation to 0.
-    let a = u16x8([0x0000, 0x1000, 0x8000, 0xFFFF, 0x0001, 0x7FFF, 0x00FF, 0xABCD]);
-    let b = u16x8([0x0001, 0x2000, 0x0001, 0x8000, 0x0002, 0x4000, 0x0100, 0xABCE]);
-    check_sse("psubusw", &sse_program(&[0x66, 0x0F, 0xD9, 0xC1]), sse_scratch(a, b));
+    let a = u16x8([
+        0x0000, 0x1000, 0x8000, 0xFFFF, 0x0001, 0x7FFF, 0x00FF, 0xABCD,
+    ]);
+    let b = u16x8([
+        0x0001, 0x2000, 0x0001, 0x8000, 0x0002, 0x4000, 0x0100, 0xABCE,
+    ]);
+    check_sse(
+        "psubusw",
+        &sse_program(&[0x66, 0x0F, 0xD9, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse_psubsb() {
     // PSUBSB xmm0, xmm1 = 66 0F E8 C1 : signed byte sub with saturation [-128,127].
-    let a = [0x7F, 0x80, 0x00, 0x7F, 0x80, 0x01, 0x40, 0xC0, 0x10, 0x20, 0x30, 0x7F, 0x80, 0xFF, 0x00, 0x01];
-    let b = [0xFF, 0x01, 0x00, 0x80, 0x7F, 0x02, 0xC0, 0x40, 0x05, 0x10, 0x40, 0xFF, 0x01, 0xFF, 0x01, 0x02];
-    check_sse("psubsb", &sse_program(&[0x66, 0x0F, 0xE8, 0xC1]), sse_scratch(a, b));
+    let a = [
+        0x7F, 0x80, 0x00, 0x7F, 0x80, 0x01, 0x40, 0xC0, 0x10, 0x20, 0x30, 0x7F, 0x80, 0xFF, 0x00,
+        0x01,
+    ];
+    let b = [
+        0xFF, 0x01, 0x00, 0x80, 0x7F, 0x02, 0xC0, 0x40, 0x05, 0x10, 0x40, 0xFF, 0x01, 0xFF, 0x01,
+        0x02,
+    ];
+    check_sse(
+        "psubsb",
+        &sse_program(&[0x66, 0x0F, 0xE8, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse_psubsw() {
     // PSUBSW xmm0, xmm1 = 66 0F E9 C1 : signed word sub with saturation.
-    let a = u16x8([0x7FFF, 0x8000, 0x0000, 0x7FFF, 0x8000, 0x0001, 0x4000, 0xC000]);
-    let b = u16x8([0xFFFF, 0x0001, 0x0000, 0x8000, 0x7FFF, 0x0002, 0xC000, 0x4000]);
-    check_sse("psubsw", &sse_program(&[0x66, 0x0F, 0xE9, 0xC1]), sse_scratch(a, b));
+    let a = u16x8([
+        0x7FFF, 0x8000, 0x0000, 0x7FFF, 0x8000, 0x0001, 0x4000, 0xC000,
+    ]);
+    let b = u16x8([
+        0xFFFF, 0x0001, 0x0000, 0x8000, 0x7FFF, 0x0002, 0xC000, 0x4000,
+    ]);
+    check_sse(
+        "psubsw",
+        &sse_program(&[0x66, 0x0F, 0xE9, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -4424,17 +5186,33 @@ fn sse_psubsw() {
 #[test]
 fn sse_pcmpeqb() {
     // PCMPEQB xmm0, xmm1 = 66 0F 74 C1 : per-byte equality mask.
-    let a = [0, 1, 2, 3, 4, 5, 6, 7, 0xFF, 0x80, 0x00, 0x7F, 0xAA, 0x55, 0x10, 0x20];
-    let b = [0, 9, 2, 9, 4, 9, 6, 9, 0xFF, 0x00, 0x00, 0x7F, 0xAA, 0x54, 0x10, 0x21];
-    check_sse("pcmpeqb", &sse_program(&[0x66, 0x0F, 0x74, 0xC1]), sse_scratch(a, b));
+    let a = [
+        0, 1, 2, 3, 4, 5, 6, 7, 0xFF, 0x80, 0x00, 0x7F, 0xAA, 0x55, 0x10, 0x20,
+    ];
+    let b = [
+        0, 9, 2, 9, 4, 9, 6, 9, 0xFF, 0x00, 0x00, 0x7F, 0xAA, 0x54, 0x10, 0x21,
+    ];
+    check_sse(
+        "pcmpeqb",
+        &sse_program(&[0x66, 0x0F, 0x74, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse_pcmpeqw() {
     // PCMPEQW xmm0, xmm1 = 66 0F 75 C1 : per-word equality mask.
-    let a = u16x8([0x1234, 0xABCD, 0x0000, 0xFFFF, 0x8000, 0x7FFF, 0x0001, 0xDEAD]);
-    let b = u16x8([0x1234, 0x0000, 0x0000, 0xFFFE, 0x8000, 0x7FFE, 0x0001, 0xBEEF]);
-    check_sse("pcmpeqw", &sse_program(&[0x66, 0x0F, 0x75, 0xC1]), sse_scratch(a, b));
+    let a = u16x8([
+        0x1234, 0xABCD, 0x0000, 0xFFFF, 0x8000, 0x7FFF, 0x0001, 0xDEAD,
+    ]);
+    let b = u16x8([
+        0x1234, 0x0000, 0x0000, 0xFFFE, 0x8000, 0x7FFE, 0x0001, 0xBEEF,
+    ]);
+    check_sse(
+        "pcmpeqw",
+        &sse_program(&[0x66, 0x0F, 0x75, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4442,23 +5220,45 @@ fn sse_pcmpeqd() {
     // PCMPEQD xmm0, xmm1 = 66 0F 76 C1 : per-dword equality mask.
     let a = u32x4([0x1234_5678, 0xFFFF_FFFF, 0x0000_0000, 0x8000_0000]);
     let b = u32x4([0x1234_5678, 0xFFFF_FFFE, 0x0000_0000, 0x7FFF_FFFF]);
-    check_sse("pcmpeqd", &sse_program(&[0x66, 0x0F, 0x76, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "pcmpeqd",
+        &sse_program(&[0x66, 0x0F, 0x76, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse_pcmpgtb() {
     // PCMPGTB xmm0, xmm1 = 66 0F 64 C1 : per-byte SIGNED greater-than mask.
-    let a = [0x7F, 0x80, 0x00, 0xFF, 0x01, 0x10, 0xC0, 0x40, 0x05, 0x06, 0x80, 0x7F, 0x00, 0x01, 0xFE, 0x02];
-    let b = [0x7E, 0x7F, 0x00, 0x00, 0xFF, 0x10, 0x40, 0xC0, 0x06, 0x05, 0x7F, 0x80, 0x01, 0x00, 0xFF, 0x03];
-    check_sse("pcmpgtb", &sse_program(&[0x66, 0x0F, 0x64, 0xC1]), sse_scratch(a, b));
+    let a = [
+        0x7F, 0x80, 0x00, 0xFF, 0x01, 0x10, 0xC0, 0x40, 0x05, 0x06, 0x80, 0x7F, 0x00, 0x01, 0xFE,
+        0x02,
+    ];
+    let b = [
+        0x7E, 0x7F, 0x00, 0x00, 0xFF, 0x10, 0x40, 0xC0, 0x06, 0x05, 0x7F, 0x80, 0x01, 0x00, 0xFF,
+        0x03,
+    ];
+    check_sse(
+        "pcmpgtb",
+        &sse_program(&[0x66, 0x0F, 0x64, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse_pcmpgtw() {
     // PCMPGTW xmm0, xmm1 = 66 0F 65 C1 : per-word SIGNED greater-than mask.
-    let a = u16x8([0x7FFF, 0x8000, 0x0001, 0xFFFF, 0x4000, 0xC000, 0x0000, 0x1234]);
-    let b = u16x8([0x7FFE, 0x7FFF, 0xFFFF, 0x0000, 0xC000, 0x4000, 0x0000, 0x1234]);
-    check_sse("pcmpgtw", &sse_program(&[0x66, 0x0F, 0x65, 0xC1]), sse_scratch(a, b));
+    let a = u16x8([
+        0x7FFF, 0x8000, 0x0001, 0xFFFF, 0x4000, 0xC000, 0x0000, 0x1234,
+    ]);
+    let b = u16x8([
+        0x7FFE, 0x7FFF, 0xFFFF, 0x0000, 0xC000, 0x4000, 0x0000, 0x1234,
+    ]);
+    check_sse(
+        "pcmpgtw",
+        &sse_program(&[0x66, 0x0F, 0x65, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4466,7 +5266,11 @@ fn sse_pcmpgtd() {
     // PCMPGTD xmm0, xmm1 = 66 0F 66 C1 : per-dword SIGNED greater-than mask.
     let a = u32x4([0x7FFF_FFFF, 0x8000_0000, 0x0000_0001, 0xFFFF_FFFF]);
     let b = u32x4([0x7FFF_FFFE, 0x7FFF_FFFF, 0xFFFF_FFFF, 0x0000_0000]);
-    check_sse("pcmpgtd", &sse_program(&[0x66, 0x0F, 0x66, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "pcmpgtd",
+        &sse_program(&[0x66, 0x0F, 0x66, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -4476,9 +5280,17 @@ fn sse_pcmpgtd() {
 #[test]
 fn sse_pmulhuw() {
     // PMULHUW xmm0, xmm1 = 66 0F E4 C1 : packed 16-bit UNSIGNED multiply, high 16 bits.
-    let a = u16x8([0xFFFF, 0x8000, 0x4000, 0x0100, 0x00FF, 0x1234, 0xABCD, 0x0001]);
-    let b = u16x8([0xFFFF, 0x0002, 0x0004, 0x0100, 0x00FF, 0x1000, 0x0010, 0xFFFF]);
-    check_sse("pmulhuw", &sse_program(&[0x66, 0x0F, 0xE4, 0xC1]), sse_scratch(a, b));
+    let a = u16x8([
+        0xFFFF, 0x8000, 0x4000, 0x0100, 0x00FF, 0x1234, 0xABCD, 0x0001,
+    ]);
+    let b = u16x8([
+        0xFFFF, 0x0002, 0x0004, 0x0100, 0x00FF, 0x1000, 0x0010, 0xFFFF,
+    ]);
+    check_sse(
+        "pmulhuw",
+        &sse_program(&[0x66, 0x0F, 0xE4, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4487,7 +5299,11 @@ fn sse_pmuludq() {
     // (the even dwords) producing two 64-bit results.
     let a = u32x4([0xFFFF_FFFF, 0xDEAD_BEEF, 0x0001_0000, 0xCAFE_BABE]);
     let b = u32x4([0xFFFF_FFFF, 0x1111_1111, 0x0001_0000, 0x2222_2222]);
-    check_sse("pmuludq", &sse_program(&[0x66, 0x0F, 0xF4, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "pmuludq",
+        &sse_program(&[0x66, 0x0F, 0xF4, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -4501,7 +5317,11 @@ fn sse_pshufd() {
     // PSHUFD xmm0, xmm1, imm8 = 66 0F 70 C1 ib. imm=0b00_01_10_11=0x1B -> reverse dwords.
     let a = [0u8; 16];
     let b = u32x4([0x1111_1111, 0x2222_2222, 0x3333_3333, 0x4444_4444]);
-    check_sse("pshufd", &sse_program(&[0x66, 0x0F, 0x70, 0xC1, 0x1B]), sse_scratch(a, b));
+    check_sse(
+        "pshufd",
+        &sse_program(&[0x66, 0x0F, 0x70, 0xC1, 0x1B]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4509,8 +5329,14 @@ fn sse_pshuflw() {
     // PSHUFLW xmm0, xmm1, imm8 = F2 0F 70 C1 ib. Shuffle the LOW 4 words; high 64 copied.
     // imm=0b00_01_10_11=0x1B -> reverse the low four words.
     let a = [0u8; 16];
-    let b = u16x8([0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD, 0x1111, 0x2222, 0x3333, 0x4444]);
-    check_sse("pshuflw", &sse_program(&[0xF2, 0x0F, 0x70, 0xC1, 0x1B]), sse_scratch(a, b));
+    let b = u16x8([
+        0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD, 0x1111, 0x2222, 0x3333, 0x4444,
+    ]);
+    check_sse(
+        "pshuflw",
+        &sse_program(&[0xF2, 0x0F, 0x70, 0xC1, 0x1B]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4518,8 +5344,14 @@ fn sse_pshufhw() {
     // PSHUFHW xmm0, xmm1, imm8 = F3 0F 70 C1 ib. Shuffle the HIGH 4 words; low 64 copied.
     // imm=0b00_01_10_11=0x1B -> reverse the high four words.
     let a = [0u8; 16];
-    let b = u16x8([0x1111, 0x2222, 0x3333, 0x4444, 0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD]);
-    check_sse("pshufhw", &sse_program(&[0xF3, 0x0F, 0x70, 0xC1, 0x1B]), sse_scratch(a, b));
+    let b = u16x8([
+        0x1111, 0x2222, 0x3333, 0x4444, 0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD,
+    ]);
+    check_sse(
+        "pshufhw",
+        &sse_program(&[0xF3, 0x0F, 0x70, 0xC1, 0x1B]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -4541,22 +5373,40 @@ fn sse_unary_xmm0(op: &[u8]) -> Vec<u8> {
 #[test]
 fn sse_pslldq() {
     // PSLLDQ xmm0, imm8 = 66 0F 73 /7 ib (modrm F8 selects /7 on xmm0). Shift left 3 bytes.
-    let a = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10];
-    check_sse("pslldq", &sse_unary_xmm0(&[0x66, 0x0F, 0x73, 0xF8, 0x03]), sse_scratch(a, [0u8; 16]));
+    let a = [
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+        0x10,
+    ];
+    check_sse(
+        "pslldq",
+        &sse_unary_xmm0(&[0x66, 0x0F, 0x73, 0xF8, 0x03]),
+        sse_scratch(a, [0u8; 16]),
+    );
 }
 
 #[test]
 fn sse_psrldq() {
     // PSRLDQ xmm0, imm8 = 66 0F 73 /3 ib (modrm D8 selects /3 on xmm0). Shift right 5 bytes.
-    let a = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10];
-    check_sse("psrldq", &sse_unary_xmm0(&[0x66, 0x0F, 0x73, 0xD8, 0x05]), sse_scratch(a, [0u8; 16]));
+    let a = [
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+        0x10,
+    ];
+    check_sse(
+        "psrldq",
+        &sse_unary_xmm0(&[0x66, 0x0F, 0x73, 0xD8, 0x05]),
+        sse_scratch(a, [0u8; 16]),
+    );
 }
 
 #[test]
 fn sse_pslldq_full() {
     // Shifting by >= 16 yields all zeros.
     let a = [0xFFu8; 16];
-    check_sse("pslldq16", &sse_unary_xmm0(&[0x66, 0x0F, 0x73, 0xF8, 0x10]), sse_scratch(a, [0u8; 16]));
+    check_sse(
+        "pslldq16",
+        &sse_unary_xmm0(&[0x66, 0x0F, 0x73, 0xF8, 0x10]),
+        sse_scratch(a, [0u8; 16]),
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -4566,17 +5416,33 @@ fn sse_pslldq_full() {
 #[test]
 fn sse_punpcklwd() {
     // PUNPCKLWD xmm0, xmm1 = 66 0F 61 C1 : interleave low 4 words.
-    let a = u16x8([0x0000, 0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777]);
-    let b = u16x8([0x8888, 0x9999, 0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD, 0xEEEE, 0xFFFF]);
-    check_sse("punpcklwd", &sse_program(&[0x66, 0x0F, 0x61, 0xC1]), sse_scratch(a, b));
+    let a = u16x8([
+        0x0000, 0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777,
+    ]);
+    let b = u16x8([
+        0x8888, 0x9999, 0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD, 0xEEEE, 0xFFFF,
+    ]);
+    check_sse(
+        "punpcklwd",
+        &sse_program(&[0x66, 0x0F, 0x61, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse_punpckhwd() {
     // PUNPCKHWD xmm0, xmm1 = 66 0F 69 C1 : interleave high 4 words.
-    let a = u16x8([0x0000, 0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777]);
-    let b = u16x8([0x8888, 0x9999, 0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD, 0xEEEE, 0xFFFF]);
-    check_sse("punpckhwd", &sse_program(&[0x66, 0x0F, 0x69, 0xC1]), sse_scratch(a, b));
+    let a = u16x8([
+        0x0000, 0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777,
+    ]);
+    let b = u16x8([
+        0x8888, 0x9999, 0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD, 0xEEEE, 0xFFFF,
+    ]);
+    check_sse(
+        "punpckhwd",
+        &sse_program(&[0x66, 0x0F, 0x69, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4584,14 +5450,26 @@ fn sse_punpckhdq() {
     // PUNPCKHDQ xmm0, xmm1 = 66 0F 6A C1 : interleave high 2 dwords.
     let a = u32x4([0x1111_1111, 0x2222_2222, 0x3333_3333, 0x4444_4444]);
     let b = u32x4([0xAAAA_AAAA, 0xBBBB_BBBB, 0xCCCC_CCCC, 0xDDDD_DDDD]);
-    check_sse("punpckhdq", &sse_program(&[0x66, 0x0F, 0x6A, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "punpckhdq",
+        &sse_program(&[0x66, 0x0F, 0x6A, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse_punpckhqdq() {
     // PUNPCKHQDQ xmm0, xmm1 = 66 0F 6D C1 : result = [a.hi, b.hi].
-    let a = [0x0123_4567_89AB_CDEFu64.to_le_bytes(), 0xDEAD_BEEF_CAFE_BABEu64.to_le_bytes()].concat();
-    let b = [0x1122_3344_5566_7788u64.to_le_bytes(), 0x99AA_BBCC_DDEE_FF00u64.to_le_bytes()].concat();
+    let a = [
+        0x0123_4567_89AB_CDEFu64.to_le_bytes(),
+        0xDEAD_BEEF_CAFE_BABEu64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x1122_3344_5566_7788u64.to_le_bytes(),
+        0x99AA_BBCC_DDEE_FF00u64.to_le_bytes(),
+    ]
+    .concat();
     check_sse(
         "punpckhqdq",
         &sse_program(&[0x66, 0x0F, 0x6D, 0xC1]),
@@ -4608,7 +5486,11 @@ fn sse_packssdw() {
     // PACKSSDW xmm0, xmm1 = 66 0F 6B C1 : signed saturate pack dwords->words.
     let a = u32x4([0x0000_7FFF, 0x0000_8000, 0x7FFF_FFFF, 0x8000_0000]); // 32767, 32768->32767, large->32767, large neg->-32768
     let b = u32x4([0xFFFF_8000, 0x0000_0001, 0xFFFF_FFFF, 0x0001_0000]); // -32768, 1, -1, 65536->32767
-    check_sse("packssdw", &sse_program(&[0x66, 0x0F, 0x6B, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "packssdw",
+        &sse_program(&[0x66, 0x0F, 0x6B, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -4620,7 +5502,10 @@ fn sse_pmovmskb() {
     // PMOVMSKB eax, xmm1 = 66 0F D7 C1 : gather the top bit of each of 16 bytes.
     // Bytes with the high bit set: indices 0,2,4,...,14 (even) here -> mask 0x5555.
     let a = [0u8; 16];
-    let b = [0x80, 0x00, 0x81, 0x7F, 0xFF, 0x10, 0x90, 0x20, 0xC0, 0x40, 0xA0, 0x50, 0xE0, 0x60, 0xF0, 0x70];
+    let b = [
+        0x80, 0x00, 0x81, 0x7F, 0xFF, 0x10, 0x90, 0x20, 0xC0, 0x40, 0xA0, 0x50, 0xE0, 0x60, 0xF0,
+        0x70,
+    ];
     let mut prog = load_rdi_data();
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
     prog.extend_from_slice(&[0x66, 0x0F, 0xD7, 0xC1]); // pmovmskb eax, xmm1
@@ -4638,10 +5523,20 @@ fn sse_pmovmskb() {
 fn ssse3_pshufb() {
     // PSHUFB xmm0, xmm1 = 66 0F 38 00 C1 : permute bytes of xmm0 by indices in xmm1.
     // If a control byte has its top bit set, the result byte is zeroed.
-    let a = [0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F];
+    let a = [
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E,
+        0x1F,
+    ];
     // control: reverse low 8, zero a few, select some high bytes.
-    let b = [0x07, 0x06, 0x05, 0x04, 0x80, 0x02, 0x01, 0x00, 0x0F, 0x0E, 0x88, 0x0C, 0x0B, 0x0A, 0x09, 0x08];
-    check_sse("pshufb", &sse_program(&[0x66, 0x0F, 0x38, 0x00, 0xC1]), sse_scratch(a, b));
+    let b = [
+        0x07, 0x06, 0x05, 0x04, 0x80, 0x02, 0x01, 0x00, 0x0F, 0x0E, 0x88, 0x0C, 0x0B, 0x0A, 0x09,
+        0x08,
+    ];
+    check_sse(
+        "pshufb",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x00, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4649,7 +5544,11 @@ fn ssse3_phaddw() {
     // PHADDW xmm0, xmm1 = 66 0F 38 01 C1 : horizontal add of adjacent word pairs.
     let a = u16x8([1, 2, 3, 4, 5, 6, 7, 8]);
     let b = u16x8([10, 20, 30, 40, 50, 60, 70, 80]);
-    check_sse("phaddw", &sse_program(&[0x66, 0x0F, 0x38, 0x01, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "phaddw",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x01, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4657,24 +5556,46 @@ fn ssse3_phaddd() {
     // PHADDD xmm0, xmm1 = 66 0F 38 02 C1 : horizontal add of adjacent dword pairs.
     let a = u32x4([0x0000_0001, 0x0000_0002, 0x0000_0003, 0x0000_0004]);
     let b = u32x4([0x1000_0000, 0x2000_0000, 0x3000_0000, 0x4000_0000]);
-    check_sse("phaddd", &sse_program(&[0x66, 0x0F, 0x38, 0x02, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "phaddd",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x02, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn ssse3_phaddsw() {
     // PHADDSW xmm0, xmm1 = 66 0F 38 03 C1 : horizontal add of word pairs WITH signed saturation.
-    let a = u16x8([0x7FFF, 0x7FFF, 0x8000, 0x8000, 0x0001, 0xFFFF, 0x4000, 0x4000]);
-    let b = u16x8([0x7FFF, 0x0001, 0x8000, 0xFFFF, 0x0000, 0x0000, 0xC000, 0xC000]);
-    check_sse("phaddsw", &sse_program(&[0x66, 0x0F, 0x38, 0x03, 0xC1]), sse_scratch(a, b));
+    let a = u16x8([
+        0x7FFF, 0x7FFF, 0x8000, 0x8000, 0x0001, 0xFFFF, 0x4000, 0x4000,
+    ]);
+    let b = u16x8([
+        0x7FFF, 0x0001, 0x8000, 0xFFFF, 0x0000, 0x0000, 0xC000, 0xC000,
+    ]);
+    check_sse(
+        "phaddsw",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x03, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn ssse3_pmaddubsw() {
     // PMADDUBSW xmm0, xmm1 = 66 0F 38 04 C1 : multiply UNSIGNED bytes of xmm0 by
     // SIGNED bytes of xmm1, add adjacent pairs, saturate to signed word.
-    let a = [0xFF, 0xFF, 0x80, 0x80, 0x01, 0x02, 0x10, 0x20, 0x7F, 0x7F, 0x00, 0xFF, 0x55, 0xAA, 0x40, 0x40];
-    let b = [0x7F, 0x7F, 0x80, 0x80, 0xFF, 0x01, 0x02, 0x03, 0x7F, 0x7F, 0x12, 0x34, 0x01, 0xFF, 0x80, 0x80];
-    check_sse("pmaddubsw", &sse_program(&[0x66, 0x0F, 0x38, 0x04, 0xC1]), sse_scratch(a, b));
+    let a = [
+        0xFF, 0xFF, 0x80, 0x80, 0x01, 0x02, 0x10, 0x20, 0x7F, 0x7F, 0x00, 0xFF, 0x55, 0xAA, 0x40,
+        0x40,
+    ];
+    let b = [
+        0x7F, 0x7F, 0x80, 0x80, 0xFF, 0x01, 0x02, 0x03, 0x7F, 0x7F, 0x12, 0x34, 0x01, 0xFF, 0x80,
+        0x80,
+    ];
+    check_sse(
+        "pmaddubsw",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x04, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4682,16 +5603,29 @@ fn ssse3_pabsb() {
     // PABSB xmm0, xmm1 = 66 0F 38 1C C1 : per-byte absolute value (src xmm1 -> xmm0).
     // abs(-128) saturates to 0x80 (stays -128 pattern) per the ISA.
     let a = [0u8; 16];
-    let b = [0x00, 0xFF, 0x80, 0x7F, 0x01, 0xFE, 0x40, 0xC0, 0x10, 0xF0, 0x55, 0xAB, 0x81, 0x7E, 0x02, 0xFD];
-    check_sse("pabsb", &sse_program(&[0x66, 0x0F, 0x38, 0x1C, 0xC1]), sse_scratch(a, b));
+    let b = [
+        0x00, 0xFF, 0x80, 0x7F, 0x01, 0xFE, 0x40, 0xC0, 0x10, 0xF0, 0x55, 0xAB, 0x81, 0x7E, 0x02,
+        0xFD,
+    ];
+    check_sse(
+        "pabsb",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x1C, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn ssse3_pabsw() {
     // PABSW xmm0, xmm1 = 66 0F 38 1D C1 : per-word absolute value.
     let a = [0u8; 16];
-    let b = u16x8([0x0000, 0xFFFF, 0x8000, 0x7FFF, 0x0001, 0xFFFE, 0x4000, 0xC000]);
-    check_sse("pabsw", &sse_program(&[0x66, 0x0F, 0x38, 0x1D, 0xC1]), sse_scratch(a, b));
+    let b = u16x8([
+        0x0000, 0xFFFF, 0x8000, 0x7FFF, 0x0001, 0xFFFE, 0x4000, 0xC000,
+    ]);
+    check_sse(
+        "pabsw",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x1D, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4699,41 +5633,80 @@ fn ssse3_pabsd() {
     // PABSD xmm0, xmm1 = 66 0F 38 1E C1 : per-dword absolute value.
     let a = [0u8; 16];
     let b = u32x4([0x0000_0000, 0xFFFF_FFFF, 0x8000_0000, 0x7FFF_FFFF]);
-    check_sse("pabsd", &sse_program(&[0x66, 0x0F, 0x38, 0x1E, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "pabsd",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x1E, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn ssse3_palignr() {
     // PALIGNR xmm0, xmm1, imm8 = 66 0F 3A 0F C1 ib : concatenate xmm0:xmm1 (32 bytes),
     // shift right by imm bytes, take the low 16. imm=5.
-    let a = [0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F];
-    let b = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F];
-    check_sse("palignr", &sse_program(&[0x66, 0x0F, 0x3A, 0x0F, 0xC1, 0x05]), sse_scratch(a, b));
+    let a = [
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E,
+        0x1F,
+    ];
+    let b = [
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E,
+        0x0F,
+    ];
+    check_sse(
+        "palignr",
+        &sse_program(&[0x66, 0x0F, 0x3A, 0x0F, 0xC1, 0x05]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn ssse3_palignr_ge16() {
     // PALIGNR with imm >= 16 shifts in zeros from the high end. imm=18 -> shift the
     // upper operand (xmm0) right by 2 and zero-fill the top.
-    let a = [0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F];
+    let a = [
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E,
+        0x1F,
+    ];
     let b = [0u8; 16];
-    check_sse("palignr18", &sse_program(&[0x66, 0x0F, 0x3A, 0x0F, 0xC1, 0x12]), sse_scratch(a, b));
+    check_sse(
+        "palignr18",
+        &sse_program(&[0x66, 0x0F, 0x3A, 0x0F, 0xC1, 0x12]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn ssse3_psignb() {
     // PSIGNB xmm0, xmm1 = 66 0F 38 08 C1 : negate/zero bytes of xmm0 by the sign of xmm1.
-    let a = [0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x7F, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08];
-    let b = [0x01, 0xFF, 0x00, 0x7F, 0x80, 0x00, 0x05, 0xFE, 0xFF, 0x01, 0x00, 0xFF, 0x01, 0x00, 0xFF, 0x01];
-    check_sse("psignb", &sse_program(&[0x66, 0x0F, 0x38, 0x08, 0xC1]), sse_scratch(a, b));
+    let a = [
+        0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x7F, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08,
+    ];
+    let b = [
+        0x01, 0xFF, 0x00, 0x7F, 0x80, 0x00, 0x05, 0xFE, 0xFF, 0x01, 0x00, 0xFF, 0x01, 0x00, 0xFF,
+        0x01,
+    ];
+    check_sse(
+        "psignb",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x08, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn ssse3_psignw() {
     // PSIGNW xmm0, xmm1 = 66 0F 38 09 C1 : per-word sign apply.
-    let a = u16x8([0x0010, 0x0020, 0x0030, 0x7FFF, 0x0001, 0x0002, 0x0003, 0x0004]);
-    let b = u16x8([0x0001, 0xFFFF, 0x0000, 0x8000, 0xFFFF, 0x0000, 0x0001, 0xFFFE]);
-    check_sse("psignw", &sse_program(&[0x66, 0x0F, 0x38, 0x09, 0xC1]), sse_scratch(a, b));
+    let a = u16x8([
+        0x0010, 0x0020, 0x0030, 0x7FFF, 0x0001, 0x0002, 0x0003, 0x0004,
+    ]);
+    let b = u16x8([
+        0x0001, 0xFFFF, 0x0000, 0x8000, 0xFFFF, 0x0000, 0x0001, 0xFFFE,
+    ]);
+    check_sse(
+        "psignw",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x09, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4741,7 +5714,11 @@ fn ssse3_psignd() {
     // PSIGND xmm0, xmm1 = 66 0F 38 0A C1 : per-dword sign apply.
     let a = u32x4([0x0000_0010, 0x0000_0020, 0x7FFF_FFFF, 0x0000_0001]);
     let b = u32x4([0x0000_0001, 0xFFFF_FFFF, 0x0000_0000, 0x8000_0000]);
-    check_sse("psignd", &sse_program(&[0x66, 0x0F, 0x38, 0x0A, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "psignd",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x0A, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -4751,7 +5728,10 @@ fn ssse3_psignd() {
 #[test]
 fn sse3_lddqu() {
     // LDDQU xmm0, m128 = F2 0F F0 /r. Load from [rdi] then store to [rdi+0x20].
-    let a = [0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10];
+    let a = [
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32,
+        0x10,
+    ];
     let mut prog = load_rdi_data();
     prog.extend_from_slice(&[0xF2, 0x0F, 0xF0, 0x07]); // lddqu xmm0, [rdi]
     prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm0
@@ -4764,7 +5744,11 @@ fn sse3_haddpd() {
     // HADDPD xmm0, xmm1 = 66 0F 7C C1 : result = [a0+a1, b0+b1].
     let a = f64x2([1.5, 2.25]);
     let b = f64x2([10.0, 20.5]);
-    check_sse("haddpd", &sse_program(&[0x66, 0x0F, 0x7C, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "haddpd",
+        &sse_program(&[0x66, 0x0F, 0x7C, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4772,7 +5756,11 @@ fn sse3_hsubpd() {
     // HSUBPD xmm0, xmm1 = 66 0F 7D C1 : result = [a0-a1, b0-b1].
     let a = f64x2([5.0, 1.25]);
     let b = f64x2([100.0, 40.5]);
-    check_sse("hsubpd", &sse_program(&[0x66, 0x0F, 0x7D, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "hsubpd",
+        &sse_program(&[0x66, 0x0F, 0x7D, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -4805,7 +5793,11 @@ fn cvt_cvtsi2ss_negative() {
     let Some((interp, kvm)) = run_both(&prog, r, zero_scratch()) else {
         return;
     };
-    let opts = CompareOpts { flag_mask: 0, scratch: true, ..CompareOpts::default() };
+    let opts = CompareOpts {
+        flag_mask: 0,
+        scratch: true,
+        ..CompareOpts::default()
+    };
     assert_match("cvtsi2ss_neg", &prog, &interp, &kvm, opts);
 }
 
@@ -4822,7 +5814,11 @@ fn cvt_cvtsi2ss_large() {
     let Some((interp, kvm)) = run_both(&prog, r, zero_scratch()) else {
         return;
     };
-    let opts = CompareOpts { flag_mask: 0, scratch: true, ..CompareOpts::default() };
+    let opts = CompareOpts {
+        flag_mask: 0,
+        scratch: true,
+        ..CompareOpts::default()
+    };
     assert_match("cvtsi2ss_large", &prog, &interp, &kvm, opts);
 }
 
@@ -4839,7 +5835,11 @@ fn cvt_cvtsi2sd_large() {
     let Some((interp, kvm)) = run_both(&prog, r, zero_scratch()) else {
         return;
     };
-    let opts = CompareOpts { flag_mask: 0, scratch: true, ..CompareOpts::default() };
+    let opts = CompareOpts {
+        flag_mask: 0,
+        scratch: true,
+        ..CompareOpts::default()
+    };
     assert_match("cvtsi2sd_large", &prog, &interp, &kvm, opts);
 }
 
@@ -4857,7 +5857,10 @@ fn cvt_cvttss2si_overflow_indefinite() {
     let Some((interp, kvm)) = run_both(&prog, regs(), scratch) else {
         return;
     };
-    let opts = CompareOpts { flag_mask: 0, ..CompareOpts::default() };
+    let opts = CompareOpts {
+        flag_mask: 0,
+        ..CompareOpts::default()
+    };
     assert_match("cvttss2si_of", &prog, &interp, &kvm, opts);
 }
 
@@ -4875,7 +5878,10 @@ fn cvt_cvttsd2si_overflow_indefinite() {
     let Some((interp, kvm)) = run_both(&prog, regs(), scratch) else {
         return;
     };
-    let opts = CompareOpts { flag_mask: 0, ..CompareOpts::default() };
+    let opts = CompareOpts {
+        flag_mask: 0,
+        ..CompareOpts::default()
+    };
     assert_match("cvttsd2si_of", &prog, &interp, &kvm, opts);
 }
 
@@ -4885,7 +5891,11 @@ fn cvt_cvtsd2ss_rounding() {
     // 1.0 + 2^-30 in f64 is not representable in f32 and must round to 1.0f.
     let v = 1.0_f64 + 2.0_f64.powi(-30);
     let b = f64x2([v, 0.0]);
-    check_sse("cvtsd2ss", &sse_program(&[0xF2, 0x0F, 0x5A, 0xC1]), sse_scratch([0u8; 16], b));
+    check_sse(
+        "cvtsd2ss",
+        &sse_program(&[0xF2, 0x0F, 0x5A, 0xC1]),
+        sse_scratch([0u8; 16], b),
+    );
 }
 
 #[test]
@@ -4893,7 +5903,11 @@ fn cvt_cvtss2sd_exact() {
     // CVTSS2SD xmm0, xmm1 = F3 0F 5A C1 : f32 -> f64 (always exact for finite).
     let mut b = [0u8; 16];
     b[0..4].copy_from_slice(&(-3.5f32).to_le_bytes());
-    check_sse("cvtss2sd", &sse_program(&[0xF3, 0x0F, 0x5A, 0xC1]), sse_scratch([0u8; 16], b));
+    check_sse(
+        "cvtss2sd",
+        &sse_program(&[0xF3, 0x0F, 0x5A, 0xC1]),
+        sse_scratch([0u8; 16], b),
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -4904,41 +5918,88 @@ fn cvt_cvtss2sd_exact() {
 #[test]
 fn aes_aesenc() {
     // AESENC xmm0, xmm1 = 66 0F 38 DC C1 : one AES encryption round (state^round key).
-    let state = [0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d, 0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34];
-    let rkey = [0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c];
-    check_sse("aesenc", &sse_program(&[0x66, 0x0F, 0x38, 0xDC, 0xC1]), sse_scratch(state, rkey));
+    let state = [
+        0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d, 0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07,
+        0x34,
+    ];
+    let rkey = [
+        0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f,
+        0x3c,
+    ];
+    check_sse(
+        "aesenc",
+        &sse_program(&[0x66, 0x0F, 0x38, 0xDC, 0xC1]),
+        sse_scratch(state, rkey),
+    );
 }
 
 #[test]
 fn aes_aesenclast() {
     // AESENCLAST xmm0, xmm1 = 66 0F 38 DD C1 : final AES round (no MixColumns).
-    let state = [0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF];
-    let rkey = [0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00];
-    check_sse("aesenclast", &sse_program(&[0x66, 0x0F, 0x38, 0xDD, 0xC1]), sse_scratch(state, rkey));
+    let state = [
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE,
+        0xFF,
+    ];
+    let rkey = [
+        0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
+        0x00,
+    ];
+    check_sse(
+        "aesenclast",
+        &sse_program(&[0x66, 0x0F, 0x38, 0xDD, 0xC1]),
+        sse_scratch(state, rkey),
+    );
 }
 
 #[test]
 fn aes_aesdec() {
     // AESDEC xmm0, xmm1 = 66 0F 38 DE C1 : one AES decryption round.
-    let state = [0x7a, 0xd5, 0xfd, 0xa7, 0x89, 0xef, 0x4e, 0x27, 0x2b, 0xca, 0x10, 0x0b, 0x3d, 0x9f, 0xf5, 0x9f];
-    let rkey = [0x54, 0x68, 0x61, 0x74, 0x73, 0x20, 0x6D, 0x79, 0x20, 0x4B, 0x75, 0x6E, 0x67, 0x20, 0x46, 0x75];
-    check_sse("aesdec", &sse_program(&[0x66, 0x0F, 0x38, 0xDE, 0xC1]), sse_scratch(state, rkey));
+    let state = [
+        0x7a, 0xd5, 0xfd, 0xa7, 0x89, 0xef, 0x4e, 0x27, 0x2b, 0xca, 0x10, 0x0b, 0x3d, 0x9f, 0xf5,
+        0x9f,
+    ];
+    let rkey = [
+        0x54, 0x68, 0x61, 0x74, 0x73, 0x20, 0x6D, 0x79, 0x20, 0x4B, 0x75, 0x6E, 0x67, 0x20, 0x46,
+        0x75,
+    ];
+    check_sse(
+        "aesdec",
+        &sse_program(&[0x66, 0x0F, 0x38, 0xDE, 0xC1]),
+        sse_scratch(state, rkey),
+    );
 }
 
 #[test]
 fn aes_aesdeclast() {
     // AESDECLAST xmm0, xmm1 = 66 0F 38 DF C1 : final AES decryption round.
-    let state = [0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0, 0x0F, 0xED, 0xCB, 0xA9, 0x87, 0x65, 0x43, 0x21];
-    let rkey = [0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99];
-    check_sse("aesdeclast", &sse_program(&[0x66, 0x0F, 0x38, 0xDF, 0xC1]), sse_scratch(state, rkey));
+    let state = [
+        0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0, 0x0F, 0xED, 0xCB, 0xA9, 0x87, 0x65, 0x43,
+        0x21,
+    ];
+    let rkey = [
+        0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
+        0x99,
+    ];
+    check_sse(
+        "aesdeclast",
+        &sse_program(&[0x66, 0x0F, 0x38, 0xDF, 0xC1]),
+        sse_scratch(state, rkey),
+    );
 }
 
 #[test]
 fn aes_aesimc() {
     // AESIMC xmm0, xmm1 = 66 0F 38 DB C1 : inverse MixColumns of xmm1 -> xmm0.
     let a = [0u8; 16];
-    let b = [0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c];
-    check_sse("aesimc", &sse_program(&[0x66, 0x0F, 0x38, 0xDB, 0xC1]), sse_scratch(a, b));
+    let b = [
+        0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f,
+        0x3c,
+    ];
+    check_sse(
+        "aesimc",
+        &sse_program(&[0x66, 0x0F, 0x38, 0xDB, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -4946,8 +6007,15 @@ fn aes_aeskeygenassist() {
     // AESKEYGENASSIST xmm0, xmm1, imm8 = 66 0F 3A DF C1 ib : key expansion helper.
     // imm8 is the round constant (RCON). Use RCON=1.
     let a = [0u8; 16];
-    let b = [0x09, 0xcf, 0x4f, 0x3c, 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88];
-    check_sse("aeskeygen", &sse_program(&[0x66, 0x0F, 0x3A, 0xDF, 0xC1, 0x01]), sse_scratch(a, b));
+    let b = [
+        0x09, 0xcf, 0x4f, 0x3c, 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15,
+        0x88,
+    ];
+    check_sse(
+        "aeskeygen",
+        &sse_program(&[0x66, 0x0F, 0x3A, 0xDF, 0xC1, 0x01]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -4970,7 +6038,11 @@ fn crc32_r64_r64() {
     let mut r = regs();
     r.rax = 0x0000_0000_FFFF_FFFF;
     r.rbx = 0x0123_4567_89AB_CDEF;
-    check_gpr_only("crc32_64", &with_hlt(vec![0xF2, 0x48, 0x0F, 0x38, 0xF1, 0xC3]), r);
+    check_gpr_only(
+        "crc32_64",
+        &with_hlt(vec![0xF2, 0x48, 0x0F, 0x38, 0xF1, 0xC3]),
+        r,
+    );
 }
 
 #[test]
@@ -4982,7 +6054,13 @@ fn crc32_r32_mem8() {
     r.rax = 0xFFFF_FFFF;
     r.rdi = DATA_ADDR;
     // F2 0F 38 F0 07  crc32 eax, byte [rdi]
-    check_mem("crc32_mem8", &with_hlt(vec![0xF2, 0x0F, 0x38, 0xF0, 0x07]), r, s, 0);
+    check_mem(
+        "crc32_mem8",
+        &with_hlt(vec![0xF2, 0x0F, 0x38, 0xF0, 0x07]),
+        r,
+        s,
+        0,
+    );
 }
 
 #[test]
@@ -5001,7 +6079,13 @@ fn popcnt_r64_mem() {
     let mut r = regs();
     r.rdi = DATA_ADDR;
     // F3 48 0F B8 07  popcnt rax, qword [rdi]
-    check_mem("popcnt_mem64", &with_hlt(vec![0xF3, 0x48, 0x0F, 0xB8, 0x07]), r, s, FLAG_MASK);
+    check_mem(
+        "popcnt_mem64",
+        &with_hlt(vec![0xF3, 0x48, 0x0F, 0xB8, 0x07]),
+        r,
+        s,
+        FLAG_MASK,
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -5021,7 +6105,13 @@ fn bt_mem_index_small() {
     r.rdi = DATA_ADDR;
     r.rdx = 5;
     // 48 0F A3 17  bt qword [rdi], rdx
-    check_mem("bt_mem5", &with_hlt(vec![0x48, 0x0F, 0xA3, 0x17]), r, s, BT_DEFINED);
+    check_mem(
+        "bt_mem5",
+        &with_hlt(vec![0x48, 0x0F, 0xA3, 0x17]),
+        r,
+        s,
+        BT_DEFINED,
+    );
 }
 
 #[test]
@@ -5034,7 +6124,13 @@ fn bt_mem_index_large() {
     r.rdi = DATA_ADDR;
     r.rdx = 100;
     // 48 0F A3 17  bt qword [rdi], rdx
-    check_mem("bt_mem100", &with_hlt(vec![0x48, 0x0F, 0xA3, 0x17]), r, s, BT_DEFINED);
+    check_mem(
+        "bt_mem100",
+        &with_hlt(vec![0x48, 0x0F, 0xA3, 0x17]),
+        r,
+        s,
+        BT_DEFINED,
+    );
 }
 
 #[test]
@@ -5045,7 +6141,13 @@ fn bts_mem_large_sets_bit() {
     r.rdi = DATA_ADDR;
     r.rdx = 70;
     // 48 0F AB 17  bts qword [rdi], rdx
-    check_mem("bts_mem70", &with_hlt(vec![0x48, 0x0F, 0xAB, 0x17]), r, s, BT_DEFINED);
+    check_mem(
+        "bts_mem70",
+        &with_hlt(vec![0x48, 0x0F, 0xAB, 0x17]),
+        r,
+        s,
+        BT_DEFINED,
+    );
 }
 
 #[test]
@@ -5057,7 +6159,13 @@ fn btr_mem_large_clears_bit() {
     r.rdi = DATA_ADDR;
     r.rdx = 130;
     // 48 0F B3 17  btr qword [rdi], rdx
-    check_mem("btr_mem130", &with_hlt(vec![0x48, 0x0F, 0xB3, 0x17]), r, s, BT_DEFINED);
+    check_mem(
+        "btr_mem130",
+        &with_hlt(vec![0x48, 0x0F, 0xB3, 0x17]),
+        r,
+        s,
+        BT_DEFINED,
+    );
 }
 
 #[test]
@@ -5068,7 +6176,13 @@ fn btc_mem_large_toggles_bit() {
     r.rdi = DATA_ADDR;
     r.rdx = 200;
     // 48 0F BB 17  btc qword [rdi], rdx
-    check_mem("btc_mem200", &with_hlt(vec![0x48, 0x0F, 0xBB, 0x17]), r, s, BT_DEFINED);
+    check_mem(
+        "btc_mem200",
+        &with_hlt(vec![0x48, 0x0F, 0xBB, 0x17]),
+        r,
+        s,
+        BT_DEFINED,
+    );
 }
 
 #[test]
@@ -5080,7 +6194,13 @@ fn bts_mem_negative_index() {
     r.rdi = DATA_ADDR;
     r.rdx = (-64i64) as u64;
     // 48 0F AB 57 08  bts qword [rdi+8], rdx
-    check_mem("bts_mem_neg", &with_hlt(vec![0x48, 0x0F, 0xAB, 0x57, 0x08]), r, s, BT_DEFINED);
+    check_mem(
+        "bts_mem_neg",
+        &with_hlt(vec![0x48, 0x0F, 0xAB, 0x57, 0x08]),
+        r,
+        s,
+        BT_DEFINED,
+    );
 }
 
 #[test]
@@ -5092,7 +6212,13 @@ fn bt_mem_imm_index() {
     let mut r = regs();
     r.rdi = DATA_ADDR;
     // 48 0F BA 27 3F  bt qword [rdi], 63
-    check_mem("bt_mem_imm63", &with_hlt(vec![0x48, 0x0F, 0xBA, 0x27, 0x3F]), r, s, BT_DEFINED);
+    check_mem(
+        "bt_mem_imm63",
+        &with_hlt(vec![0x48, 0x0F, 0xBA, 0x27, 0x3F]),
+        r,
+        s,
+        BT_DEFINED,
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -5110,7 +6236,11 @@ fn adcx_propagates_only_cf() {
     r.rax = 0xFFFF_FFFF_FFFF_FFFF;
     r.rbx = 0x0000_0000_0000_0001;
     r.rflags = flags::bits::CF | flags::bits::OF | flags::bits::SF | flags::bits::ZF;
-    check("adcx", &with_hlt(vec![0x66, 0x48, 0x0F, 0x38, 0xF6, 0xC3]), r);
+    check(
+        "adcx",
+        &with_hlt(vec![0x66, 0x48, 0x0F, 0x38, 0xF6, 0xC3]),
+        r,
+    );
 }
 
 #[test]
@@ -5121,7 +6251,11 @@ fn adox_propagates_only_of() {
     r.rax = 0xFFFF_FFFF_FFFF_FFFF;
     r.rbx = 0x0000_0000_0000_0001;
     r.rflags = flags::bits::CF | flags::bits::OF | flags::bits::PF;
-    check("adox", &with_hlt(vec![0xF3, 0x48, 0x0F, 0x38, 0xF6, 0xC3]), r);
+    check(
+        "adox",
+        &with_hlt(vec![0xF3, 0x48, 0x0F, 0x38, 0xF6, 0xC3]),
+        r,
+    );
 }
 
 #[test]
@@ -5155,7 +6289,11 @@ fn adcx_no_carry_clears_cf() {
     r.rax = 0x0000_0000_0000_0010;
     r.rbx = 0x0000_0000_0000_0020;
     r.rflags = flags::bits::OF | flags::bits::CF; // CF=1 in (consumed), OF stays
-    check("adcx_noc", &with_hlt(vec![0x66, 0x48, 0x0F, 0x38, 0xF6, 0xC3]), r);
+    check(
+        "adcx_noc",
+        &with_hlt(vec![0x66, 0x48, 0x0F, 0x38, 0xF6, 0xC3]),
+        r,
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -5293,7 +6431,13 @@ fn xadd_mem() {
     r.rdi = DATA_ADDR;
     r.rbx = 0x0000_0000_0000_00FF;
     // 48 0F C1 1F  xadd [rdi], rbx
-    check_mem("xadd_mem", &with_hlt(vec![0x48, 0x0F, 0xC1, 0x1F]), r, s, FLAG_MASK);
+    check_mem(
+        "xadd_mem",
+        &with_hlt(vec![0x48, 0x0F, 0xC1, 0x1F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
 }
 
 #[test]
@@ -5304,7 +6448,13 @@ fn xadd_mem_carry() {
     let mut r = regs();
     r.rdi = DATA_ADDR;
     r.rbx = 0x0000_0000_0000_0001;
-    check_mem("xadd_mem_carry", &with_hlt(vec![0x48, 0x0F, 0xC1, 0x1F]), r, s, FLAG_MASK);
+    check_mem(
+        "xadd_mem_carry",
+        &with_hlt(vec![0x48, 0x0F, 0xC1, 0x1F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
 }
 
 #[test]
@@ -5318,7 +6468,13 @@ fn cmpxchg_mem_success() {
     r.rax = 0x1122_3344_5566_7788; // matches memory -> success
     r.rcx = 0xCAFE_BABE_DEAD_BEEF; // written to memory on success
     // 48 0F B1 0F  cmpxchg [rdi], rcx
-    check_mem("cmpxchg_mem_ok", &with_hlt(vec![0x48, 0x0F, 0xB1, 0x0F]), r, s, FLAG_MASK);
+    check_mem(
+        "cmpxchg_mem_ok",
+        &with_hlt(vec![0x48, 0x0F, 0xB1, 0x0F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
 }
 
 #[test]
@@ -5330,7 +6486,13 @@ fn cmpxchg_mem_fail() {
     r.rdi = DATA_ADDR;
     r.rax = 0x0000_0000_0000_0001; // mismatch -> failure
     r.rcx = 0xCAFE_BABE_DEAD_BEEF; // NOT written on failure
-    check_mem("cmpxchg_mem_fail", &with_hlt(vec![0x48, 0x0F, 0xB1, 0x0F]), r, s, FLAG_MASK);
+    check_mem(
+        "cmpxchg_mem_fail",
+        &with_hlt(vec![0x48, 0x0F, 0xB1, 0x0F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
 }
 
 #[test]
@@ -5343,7 +6505,13 @@ fn lock_xadd_mem() {
     r.rdi = DATA_ADDR;
     r.rbx = 0x0000_0000_0000_0008;
     // F0 48 0F C1 1F  lock xadd [rdi], rbx
-    check_mem("lock_xadd_mem", &with_hlt(vec![0xF0, 0x48, 0x0F, 0xC1, 0x1F]), r, s, FLAG_MASK);
+    check_mem(
+        "lock_xadd_mem",
+        &with_hlt(vec![0xF0, 0x48, 0x0F, 0xC1, 0x1F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
 }
 
 #[test]
@@ -5359,7 +6527,13 @@ fn cmpxchg8_mem_success() {
     r.rbx = 0xDEAD_BEEF; // new low half
     r.rcx = 0xCAFE_F00D; // new high half
     // 0F C7 0F  cmpxchg8b [rdi]
-    check_mem("cmpxchg8b_ok", &with_hlt(vec![0x0F, 0xC7, 0x0F]), r, s, FLAG_MASK);
+    check_mem(
+        "cmpxchg8b_ok",
+        &with_hlt(vec![0x0F, 0xC7, 0x0F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
 }
 
 #[test]
@@ -5376,7 +6550,13 @@ fn cmpxchg16_mem_success() {
     r.rbx = 0x0123_4567_89AB_CDEF; // new low
     r.rcx = 0xFEDC_BA98_7654_3210; // new high
     // 48 0F C7 0F  cmpxchg16b [rdi]
-    check_mem("cmpxchg16b_ok", &with_hlt(vec![0x48, 0x0F, 0xC7, 0x0F]), r, s, FLAG_MASK);
+    check_mem(
+        "cmpxchg16b_ok",
+        &with_hlt(vec![0x48, 0x0F, 0xC7, 0x0F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
 }
 
 // ===========================================================================
@@ -5499,7 +6679,11 @@ fn sse3_addsubpd() {
     // ADDSUBPD xmm0, xmm1 = 66 0F D0 C1. lane0 = a0-b0, lane1 = a1+b1.
     let a = f64x2([10.0, 10.0]);
     let b = f64x2([3.0, 4.0]);
-    check_sse("addsubpd", &sse_program(&[0x66, 0x0F, 0xD0, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "addsubpd",
+        &sse_program(&[0x66, 0x0F, 0xD0, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---- SSSE3 horizontal subtract / mulhrs (phaddw/d/sw, pmaddubsw, pshufb,
@@ -5509,38 +6693,64 @@ fn sse3_addsubpd() {
 fn ssse3_phsubw() {
     // PHSUBW xmm0, xmm1 = 66 0F 38 05 C1. Pairwise subtract (lane0 - lane1).
     let a = [
-        0x000Au16.to_le_bytes(), 0x0003u16.to_le_bytes(),
-        0x0000u16.to_le_bytes(), 0x0001u16.to_le_bytes(),
-        0x0005u16.to_le_bytes(), 0x0008u16.to_le_bytes(),
-        0x7FFFu16.to_le_bytes(), 0x0001u16.to_le_bytes(),
-    ].concat();
+        0x000Au16.to_le_bytes(),
+        0x0003u16.to_le_bytes(),
+        0x0000u16.to_le_bytes(),
+        0x0001u16.to_le_bytes(),
+        0x0005u16.to_le_bytes(),
+        0x0008u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+        0x0001u16.to_le_bytes(),
+    ]
+    .concat();
     let b = [
-        0x0020u16.to_le_bytes(), 0x0010u16.to_le_bytes(),
-        0x0001u16.to_le_bytes(), 0x0002u16.to_le_bytes(),
-        0x0100u16.to_le_bytes(), 0x0050u16.to_le_bytes(),
-        0x0000u16.to_le_bytes(), 0x0000u16.to_le_bytes(),
-    ].concat();
-    check_sse("phsubw", &sse_program(&[0x66, 0x0F, 0x38, 0x05, 0xC1]),
-        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+        0x0020u16.to_le_bytes(),
+        0x0010u16.to_le_bytes(),
+        0x0001u16.to_le_bytes(),
+        0x0002u16.to_le_bytes(),
+        0x0100u16.to_le_bytes(),
+        0x0050u16.to_le_bytes(),
+        0x0000u16.to_le_bytes(),
+        0x0000u16.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "phsubw",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x05, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
 }
 
 #[test]
 fn ssse3_pmulhrsw() {
     // PMULHRSW xmm0, xmm1 = 66 0F 38 0B C1. Signed 16-bit mul, round, take bits [16:30].
     let a = [
-        0x4000u16.to_le_bytes(), 0x8000u16.to_le_bytes(),
-        0x7FFFu16.to_le_bytes(), 0xFFFFu16.to_le_bytes(),
-        0x0001u16.to_le_bytes(), 0x1234u16.to_le_bytes(),
-        0x00FFu16.to_le_bytes(), 0x8000u16.to_le_bytes(),
-    ].concat();
+        0x4000u16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+        0xFFFFu16.to_le_bytes(),
+        0x0001u16.to_le_bytes(),
+        0x1234u16.to_le_bytes(),
+        0x00FFu16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+    ]
+    .concat();
     let b = [
-        0x4000u16.to_le_bytes(), 0x8000u16.to_le_bytes(),
-        0x7FFFu16.to_le_bytes(), 0xFFFFu16.to_le_bytes(),
-        0x0002u16.to_le_bytes(), 0x1000u16.to_le_bytes(),
-        0x00FFu16.to_le_bytes(), 0x7FFFu16.to_le_bytes(),
-    ].concat();
-    check_sse("pmulhrsw", &sse_program(&[0x66, 0x0F, 0x38, 0x0B, 0xC1]),
-        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+        0x4000u16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+        0xFFFFu16.to_le_bytes(),
+        0x0002u16.to_le_bytes(),
+        0x1000u16.to_le_bytes(),
+        0x00FFu16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "pmulhrsw",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x0B, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
 }
 
 // ---- SSSE3 PALIGNR with imm >= 16 (the imm < 16 case is covered earlier) ----
@@ -5548,8 +6758,14 @@ fn ssse3_pmulhrsw() {
 #[test]
 fn ssse3_palignr_imm17() {
     // imm >= 16: result shifts dst alone right by (imm-16), zero-filling top.
-    let a = [0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F];
-    let b = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F];
+    let a = [
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E,
+        0x1F,
+    ];
+    let b = [
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E,
+        0x0F,
+    ];
     let mut prog = load_rdi_data();
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
@@ -5565,16 +6781,28 @@ fn ssse3_palignr_imm17() {
 fn sse4_pmovsxbw() {
     // PMOVSXBW xmm0, xmm1 = 66 0F 38 20 C1. Sign-extend low 8 bytes -> 8 words.
     let a = [0u8; 16];
-    let b = [0x01, 0xFF, 0x7F, 0x80, 0x00, 0x40, 0xC0, 0x10, 9, 9, 9, 9, 9, 9, 9, 9];
-    check_sse("pmovsxbw", &sse_program(&[0x66, 0x0F, 0x38, 0x20, 0xC1]), sse_scratch(a, b));
+    let b = [
+        0x01, 0xFF, 0x7F, 0x80, 0x00, 0x40, 0xC0, 0x10, 9, 9, 9, 9, 9, 9, 9, 9,
+    ];
+    check_sse(
+        "pmovsxbw",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x20, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse4_pmovzxbw() {
     // PMOVZXBW xmm0, xmm1 = 66 0F 38 30 C1. Zero-extend low 8 bytes -> 8 words.
     let a = [0u8; 16];
-    let b = [0x01, 0xFF, 0x7F, 0x80, 0x00, 0x40, 0xC0, 0x10, 9, 9, 9, 9, 9, 9, 9, 9];
-    check_sse("pmovzxbw", &sse_program(&[0x66, 0x0F, 0x38, 0x30, 0xC1]), sse_scratch(a, b));
+    let b = [
+        0x01, 0xFF, 0x7F, 0x80, 0x00, 0x40, 0xC0, 0x10, 9, 9, 9, 9, 9, 9, 9, 9,
+    ];
+    check_sse(
+        "pmovzxbw",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x30, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -5582,7 +6810,11 @@ fn sse4_pmovsxbd() {
     // PMOVSXBD xmm0, xmm1 = 66 0F 38 21 C1. Sign-extend low 4 bytes -> 4 dwords.
     let a = [0u8; 16];
     let b = [0x01, 0xFF, 0x7F, 0x80, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9];
-    check_sse("pmovsxbd", &sse_program(&[0x66, 0x0F, 0x38, 0x21, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "pmovsxbd",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x21, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -5590,23 +6822,39 @@ fn sse4_pmovsxwd() {
     // PMOVSXWD xmm0, xmm1 = 66 0F 38 23 C1. Sign-extend low 4 words -> 4 dwords.
     let a = [0u8; 16];
     let b = [
-        0xFFFFu16.to_le_bytes(), 0x8000u16.to_le_bytes(),
-        0x7FFFu16.to_le_bytes(), 0x0001u16.to_le_bytes(),
-        0x1234u16.to_le_bytes(), 0x5678u16.to_le_bytes(),
-        0x9ABCu16.to_le_bytes(), 0xDEF0u16.to_le_bytes(),
-    ].concat();
-    check_sse("pmovsxwd", &sse_program(&[0x66, 0x0F, 0x38, 0x23, 0xC1]),
-        sse_scratch(a, b.try_into().unwrap()));
+        0xFFFFu16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+        0x0001u16.to_le_bytes(),
+        0x1234u16.to_le_bytes(),
+        0x5678u16.to_le_bytes(),
+        0x9ABCu16.to_le_bytes(),
+        0xDEF0u16.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "pmovsxwd",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x23, 0xC1]),
+        sse_scratch(a, b.try_into().unwrap()),
+    );
 }
 
 #[test]
 fn sse4_pmovzxdq() {
     // PMOVZXDQ xmm0, xmm1 = 66 0F 38 35 C1. Zero-extend low 2 dwords -> 2 qwords.
     let a = [0u8; 16];
-    let b = [0x8000_0001u32.to_le_bytes(), 0x0000_0002u32.to_le_bytes(),
-             0x1111_1111u32.to_le_bytes(), 0x2222_2222u32.to_le_bytes()].concat();
-    check_sse("pmovzxdq", &sse_program(&[0x66, 0x0F, 0x38, 0x35, 0xC1]),
-        sse_scratch(a, b.try_into().unwrap()));
+    let b = [
+        0x8000_0001u32.to_le_bytes(),
+        0x0000_0002u32.to_le_bytes(),
+        0x1111_1111u32.to_le_bytes(),
+        0x2222_2222u32.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "pmovzxdq",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x35, 0xC1]),
+        sse_scratch(a, b.try_into().unwrap()),
+    );
 }
 
 // ---- SSE4.1 packed integer min/max (signed/unsigned dwords & bytes) ----
@@ -5614,65 +6862,141 @@ fn sse4_pmovzxdq() {
 #[test]
 fn sse4_pminsd() {
     // PMINSD xmm0, xmm1 = 66 0F 38 39 C1. Per-dword signed min.
-    let a = [0x0000_0005u32.to_le_bytes(), 0xFFFF_FFFFu32.to_le_bytes(),
-             0x7FFF_FFFFu32.to_le_bytes(), 0x8000_0000u32.to_le_bytes()].concat();
-    let b = [0x0000_0003u32.to_le_bytes(), 0x0000_0001u32.to_le_bytes(),
-             0x0000_0000u32.to_le_bytes(), 0xFFFF_FFFFu32.to_le_bytes()].concat();
-    check_sse("pminsd", &sse_program(&[0x66, 0x0F, 0x38, 0x39, 0xC1]),
-        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+    let a = [
+        0x0000_0005u32.to_le_bytes(),
+        0xFFFF_FFFFu32.to_le_bytes(),
+        0x7FFF_FFFFu32.to_le_bytes(),
+        0x8000_0000u32.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x0000_0003u32.to_le_bytes(),
+        0x0000_0001u32.to_le_bytes(),
+        0x0000_0000u32.to_le_bytes(),
+        0xFFFF_FFFFu32.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "pminsd",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x39, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
 }
 
 #[test]
 fn sse4_pmaxud() {
     // PMAXUD xmm0, xmm1 = 66 0F 38 3F C1. Per-dword unsigned max.
-    let a = [0x0000_0005u32.to_le_bytes(), 0xFFFF_FFFFu32.to_le_bytes(),
-             0x7FFF_FFFFu32.to_le_bytes(), 0x8000_0000u32.to_le_bytes()].concat();
-    let b = [0x0000_0003u32.to_le_bytes(), 0x0000_0001u32.to_le_bytes(),
-             0xFFFF_FFFFu32.to_le_bytes(), 0x0000_0001u32.to_le_bytes()].concat();
-    check_sse("pmaxud", &sse_program(&[0x66, 0x0F, 0x38, 0x3F, 0xC1]),
-        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+    let a = [
+        0x0000_0005u32.to_le_bytes(),
+        0xFFFF_FFFFu32.to_le_bytes(),
+        0x7FFF_FFFFu32.to_le_bytes(),
+        0x8000_0000u32.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x0000_0003u32.to_le_bytes(),
+        0x0000_0001u32.to_le_bytes(),
+        0xFFFF_FFFFu32.to_le_bytes(),
+        0x0000_0001u32.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "pmaxud",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x3F, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
 }
 
 #[test]
 fn sse4_pmulld() {
     // PMULLD xmm0, xmm1 = 66 0F 38 40 C1. Per-dword 32-bit multiply, low 32 kept.
-    let a = [0x0000_0002u32.to_le_bytes(), 0xFFFF_FFFFu32.to_le_bytes(),
-             0x0001_0000u32.to_le_bytes(), 0x1234_5678u32.to_le_bytes()].concat();
-    let b = [0x0000_0003u32.to_le_bytes(), 0x0000_0002u32.to_le_bytes(),
-             0x0001_0000u32.to_le_bytes(), 0x0000_0010u32.to_le_bytes()].concat();
-    check_sse("pmulld", &sse_program(&[0x66, 0x0F, 0x38, 0x40, 0xC1]),
-        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+    let a = [
+        0x0000_0002u32.to_le_bytes(),
+        0xFFFF_FFFFu32.to_le_bytes(),
+        0x0001_0000u32.to_le_bytes(),
+        0x1234_5678u32.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x0000_0003u32.to_le_bytes(),
+        0x0000_0002u32.to_le_bytes(),
+        0x0001_0000u32.to_le_bytes(),
+        0x0000_0010u32.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "pmulld",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x40, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
 }
 
 #[test]
 fn sse4_pmuldq() {
     // PMULDQ xmm0, xmm1 = 66 0F 38 28 C1. Signed 32x32->64 of lanes 0 and 2.
-    let a = [0xFFFF_FFFFu32.to_le_bytes(), 0xDEAD_BEEFu32.to_le_bytes(),
-             0x0000_0002u32.to_le_bytes(), 0xCAFE_BABEu32.to_le_bytes()].concat();
-    let b = [0x0000_0003u32.to_le_bytes(), 0x1111_1111u32.to_le_bytes(),
-             0x7FFF_FFFFu32.to_le_bytes(), 0x2222_2222u32.to_le_bytes()].concat();
-    check_sse("pmuldq", &sse_program(&[0x66, 0x0F, 0x38, 0x28, 0xC1]),
-        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+    let a = [
+        0xFFFF_FFFFu32.to_le_bytes(),
+        0xDEAD_BEEFu32.to_le_bytes(),
+        0x0000_0002u32.to_le_bytes(),
+        0xCAFE_BABEu32.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x0000_0003u32.to_le_bytes(),
+        0x1111_1111u32.to_le_bytes(),
+        0x7FFF_FFFFu32.to_le_bytes(),
+        0x2222_2222u32.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "pmuldq",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x28, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
 }
 
 #[test]
 fn sse4_pcmpeqq() {
     // PCMPEQQ xmm0, xmm1 = 66 0F 38 29 C1. Per-qword equality -> all-1s/all-0s.
-    let a = [0x1122_3344_5566_7788u64.to_le_bytes(), 0xDEAD_BEEF_CAFE_BABEu64.to_le_bytes()].concat();
-    let b = [0x1122_3344_5566_7788u64.to_le_bytes(), 0x0000_0000_0000_0000u64.to_le_bytes()].concat();
-    check_sse("pcmpeqq", &sse_program(&[0x66, 0x0F, 0x38, 0x29, 0xC1]),
-        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+    let a = [
+        0x1122_3344_5566_7788u64.to_le_bytes(),
+        0xDEAD_BEEF_CAFE_BABEu64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x1122_3344_5566_7788u64.to_le_bytes(),
+        0x0000_0000_0000_0000u64.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "pcmpeqq",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x29, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
 }
 
 #[test]
 fn sse4_packusdw() {
     // PACKUSDW xmm0, xmm1 = 66 0F 38 2B C1. Pack signed dwords to unsigned words (sat).
-    let a = [0x0000_0001u32.to_le_bytes(), 0x0001_0000u32.to_le_bytes(),
-             0xFFFF_FFFFu32.to_le_bytes(), 0x0000_FFFFu32.to_le_bytes()].concat();
-    let b = [0x0000_8000u32.to_le_bytes(), 0x8000_0000u32.to_le_bytes(),
-             0x0000_7FFFu32.to_le_bytes(), 0x0001_2345u32.to_le_bytes()].concat();
-    check_sse("packusdw", &sse_program(&[0x66, 0x0F, 0x38, 0x2B, 0xC1]),
-        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+    let a = [
+        0x0000_0001u32.to_le_bytes(),
+        0x0001_0000u32.to_le_bytes(),
+        0xFFFF_FFFFu32.to_le_bytes(),
+        0x0000_FFFFu32.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x0000_8000u32.to_le_bytes(),
+        0x8000_0000u32.to_le_bytes(),
+        0x0000_7FFFu32.to_le_bytes(),
+        0x0001_2345u32.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "packusdw",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x2B, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
 }
 
 // ---- SSE4.1 DPPS / DPPD (dot product) — exactly-representable inputs ----
@@ -5714,20 +7038,38 @@ fn sse4_dppd() {
 fn sse4_pblendw() {
     // PBLENDW xmm0, xmm1, imm8 = 66 0F 3A 0E C1 ib. imm bit i selects src word i.
     let a = [
-        0x0000u16.to_le_bytes(), 0x0001u16.to_le_bytes(), 0x0002u16.to_le_bytes(), 0x0003u16.to_le_bytes(),
-        0x0004u16.to_le_bytes(), 0x0005u16.to_le_bytes(), 0x0006u16.to_le_bytes(), 0x0007u16.to_le_bytes(),
-    ].concat();
+        0x0000u16.to_le_bytes(),
+        0x0001u16.to_le_bytes(),
+        0x0002u16.to_le_bytes(),
+        0x0003u16.to_le_bytes(),
+        0x0004u16.to_le_bytes(),
+        0x0005u16.to_le_bytes(),
+        0x0006u16.to_le_bytes(),
+        0x0007u16.to_le_bytes(),
+    ]
+    .concat();
     let b = [
-        0xA0A0u16.to_le_bytes(), 0xA1A1u16.to_le_bytes(), 0xA2A2u16.to_le_bytes(), 0xA3A3u16.to_le_bytes(),
-        0xA4A4u16.to_le_bytes(), 0xA5A5u16.to_le_bytes(), 0xA6A6u16.to_le_bytes(), 0xA7A7u16.to_le_bytes(),
-    ].concat();
+        0xA0A0u16.to_le_bytes(),
+        0xA1A1u16.to_le_bytes(),
+        0xA2A2u16.to_le_bytes(),
+        0xA3A3u16.to_le_bytes(),
+        0xA4A4u16.to_le_bytes(),
+        0xA5A5u16.to_le_bytes(),
+        0xA6A6u16.to_le_bytes(),
+        0xA7A7u16.to_le_bytes(),
+    ]
+    .concat();
     let mut prog = load_rdi_data();
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
     prog.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x0E, 0xC1, 0b1010_0101]); // imm
     prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
     prog.push(HLT);
-    check_sse("pblendw", &prog, sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+    check_sse(
+        "pblendw",
+        &prog,
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
 }
 
 #[test]
@@ -5750,7 +7092,10 @@ fn sse4_blendps() {
 fn sse4_pextrb_to_mem() {
     // PEXTRB [rdi+0x20], xmm1, idx = 66 0F 3A 14 /r ib. Extract byte idx from xmm1.
     let a = [0u8; 16];
-    let b = [0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF];
+    let b = [
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE,
+        0xFF,
+    ];
     let mut prog = load_rdi_data();
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
     // pextrb [rdi+0x20], xmm1, 0x0A  -> modrm 0x4F reg=xmm1(001), rm=[rdi+disp8]
@@ -5763,8 +7108,13 @@ fn sse4_pextrb_to_mem() {
 fn sse4_pextrd_to_reg() {
     // PEXTRD eax, xmm1, idx = 66 0F 3A 16 C1 ib (W0). idx=2. Then store eax to scratch.
     let a = [0u8; 16];
-    let b = [0x11111111u32.to_le_bytes(), 0x22222222u32.to_le_bytes(),
-             0xDEADBEEFu32.to_le_bytes(), 0x44444444u32.to_le_bytes()].concat();
+    let b = [
+        0x11111111u32.to_le_bytes(),
+        0x22222222u32.to_le_bytes(),
+        0xDEADBEEFu32.to_le_bytes(),
+        0x44444444u32.to_le_bytes(),
+    ]
+    .concat();
     let mut prog = load_rdi_data();
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
     prog.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x16, 0xC8, 0x02]); // pextrd eax, xmm1, 2
@@ -5776,8 +7126,13 @@ fn sse4_pextrd_to_reg() {
 #[test]
 fn sse4_pinsrd_from_reg() {
     // PINSRD xmm0, eax, idx = 66 0F 3A 22 C0 ib. Insert EAX into dword lane idx=1.
-    let a = [0xAAAAAAAAu32.to_le_bytes(), 0xBBBBBBBBu32.to_le_bytes(),
-             0xCCCCCCCCu32.to_le_bytes(), 0xDDDDDDDDu32.to_le_bytes()].concat();
+    let a = [
+        0xAAAAAAAAu32.to_le_bytes(),
+        0xBBBBBBBBu32.to_le_bytes(),
+        0xCCCCCCCCu32.to_le_bytes(),
+        0xDDDDDDDDu32.to_le_bytes(),
+    ]
+    .concat();
     let b = [0u8; 16];
     let mut prog = load_rdi_data();
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
@@ -5791,8 +7146,17 @@ fn sse4_pinsrd_from_reg() {
 #[test]
 fn sse2_pinsrw_pextrw() {
     // PINSRW xmm0, eax, 3 (66 0F C4 C0 03) then PEXTRW eax, xmm0, 3 (66 0F C5 C0 03).
-    let a = [0xFFFFu16.to_le_bytes(), 0x1111u16.to_le_bytes(), 0x2222u16.to_le_bytes(), 0x3333u16.to_le_bytes(),
-             0x4444u16.to_le_bytes(), 0x5555u16.to_le_bytes(), 0x6666u16.to_le_bytes(), 0x7777u16.to_le_bytes()].concat();
+    let a = [
+        0xFFFFu16.to_le_bytes(),
+        0x1111u16.to_le_bytes(),
+        0x2222u16.to_le_bytes(),
+        0x3333u16.to_le_bytes(),
+        0x4444u16.to_le_bytes(),
+        0x5555u16.to_le_bytes(),
+        0x6666u16.to_le_bytes(),
+        0x7777u16.to_le_bytes(),
+    ]
+    .concat();
     let b = [0u8; 16];
     let mut prog = load_rdi_data();
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
@@ -5802,7 +7166,11 @@ fn sse2_pinsrw_pextrw() {
     prog.extend_from_slice(&[0x89, 0x47, 0x30]); // mov [rdi+0x30], eax
     prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]); // store xmm0
     prog.push(HLT);
-    check_sse("pinsrw_pextrw", &prog, sse_scratch(a.try_into().unwrap(), b));
+    check_sse(
+        "pinsrw_pextrw",
+        &prog,
+        sse_scratch(a.try_into().unwrap(), b),
+    );
 }
 
 // ---- MOVD / MOVQ between GPR and XMM ----
@@ -5839,10 +7207,21 @@ fn sse_movq_gpr_to_xmm() {
 #[test]
 fn sse_movq_xmm_to_xmm_zeroes_high() {
     // MOVQ xmm0, xmm1 (F3 0F 7E C1): copies low 64, ZEROES the high 64 of dst.
-    let a = [0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes(), 0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes()].concat();
-    let b = [0x1122_3344_5566_7788u64.to_le_bytes(), 0xDEAD_BEEF_CAFE_BABEu64.to_le_bytes()].concat();
-    check_sse("movq_xmm_xmm", &sse_program(&[0xF3, 0x0F, 0x7E, 0xC1]),
-        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+    let a = [
+        0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes(),
+        0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x1122_3344_5566_7788u64.to_le_bytes(),
+        0xDEAD_BEEF_CAFE_BABEu64.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "movq_xmm_xmm",
+        &sse_program(&[0xF3, 0x0F, 0x7E, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
 }
 
 // ---- MMX integer ops (operate on 64-bit MM registers) ----
@@ -5868,8 +7247,20 @@ fn mmx_paddb() {
 #[test]
 fn mmx_pmullw() {
     let mut s = [0u8; 64];
-    let a = [0x0002u16.to_le_bytes(), 0x00FFu16.to_le_bytes(), 0x8000u16.to_le_bytes(), 0xFFFFu16.to_le_bytes()].concat();
-    let b = [0x0003u16.to_le_bytes(), 0x0100u16.to_le_bytes(), 0x0002u16.to_le_bytes(), 0xFFFFu16.to_le_bytes()].concat();
+    let a = [
+        0x0002u16.to_le_bytes(),
+        0x00FFu16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+        0xFFFFu16.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x0003u16.to_le_bytes(),
+        0x0100u16.to_le_bytes(),
+        0x0002u16.to_le_bytes(),
+        0xFFFFu16.to_le_bytes(),
+    ]
+    .concat();
     s[0..8].copy_from_slice(&a);
     s[8..16].copy_from_slice(&b);
     let mut prog = load_rdi_data();
@@ -5919,45 +7310,106 @@ fn mmx_psubusb_saturate() {
 #[test]
 fn sse2_paddsb() {
     // PADDSB xmm0, xmm1 = 66 0F EC C1. Signed byte add with saturation.
-    let a = [0x7F, 0x7F, 0x80, 0x80, 0x40, 0xC0, 0x01, 0xFF, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x7F];
-    let b = [0x01, 0x7F, 0xFF, 0x80, 0x40, 0xC0, 0x02, 0x01, 0xF0, 0xE0, 0xD0, 0xC0, 0x10, 0x20, 0x30, 0x01];
-    check_sse("paddsb", &sse_program(&[0x66, 0x0F, 0xEC, 0xC1]), sse_scratch(a, b));
+    let a = [
+        0x7F, 0x7F, 0x80, 0x80, 0x40, 0xC0, 0x01, 0xFF, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70,
+        0x7F,
+    ];
+    let b = [
+        0x01, 0x7F, 0xFF, 0x80, 0x40, 0xC0, 0x02, 0x01, 0xF0, 0xE0, 0xD0, 0xC0, 0x10, 0x20, 0x30,
+        0x01,
+    ];
+    check_sse(
+        "paddsb",
+        &sse_program(&[0x66, 0x0F, 0xEC, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse2_paddusw() {
     // PADDUSW xmm0, xmm1 = 66 0F DD C1. Unsigned word add with saturation.
-    let a = [0xFFFFu16.to_le_bytes(), 0x8000u16.to_le_bytes(), 0x0001u16.to_le_bytes(), 0x1234u16.to_le_bytes(),
-             0xF000u16.to_le_bytes(), 0x0FFFu16.to_le_bytes(), 0x7FFFu16.to_le_bytes(), 0x0000u16.to_le_bytes()].concat();
-    let b = [0x0001u16.to_le_bytes(), 0x8001u16.to_le_bytes(), 0x0002u16.to_le_bytes(), 0x1000u16.to_le_bytes(),
-             0x2000u16.to_le_bytes(), 0xF001u16.to_le_bytes(), 0x8001u16.to_le_bytes(), 0xFFFFu16.to_le_bytes()].concat();
-    check_sse("paddusw", &sse_program(&[0x66, 0x0F, 0xDD, 0xC1]),
-        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+    let a = [
+        0xFFFFu16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+        0x0001u16.to_le_bytes(),
+        0x1234u16.to_le_bytes(),
+        0xF000u16.to_le_bytes(),
+        0x0FFFu16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+        0x0000u16.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x0001u16.to_le_bytes(),
+        0x8001u16.to_le_bytes(),
+        0x0002u16.to_le_bytes(),
+        0x1000u16.to_le_bytes(),
+        0x2000u16.to_le_bytes(),
+        0xF001u16.to_le_bytes(),
+        0x8001u16.to_le_bytes(),
+        0xFFFFu16.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "paddusw",
+        &sse_program(&[0x66, 0x0F, 0xDD, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
 }
 
 #[test]
 fn sse2_pavgb() {
     // PAVGB xmm0, xmm1 = 66 0F E0 C1. Unsigned byte average, rounded up.
-    let a = [0x00, 0xFF, 0x10, 0x01, 0x80, 0x7F, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C];
-    let b = [0x01, 0xFF, 0x20, 0x02, 0x81, 0x80, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D];
-    check_sse("pavgb", &sse_program(&[0x66, 0x0F, 0xE0, 0xC1]), sse_scratch(a, b));
+    let a = [
+        0x00, 0xFF, 0x10, 0x01, 0x80, 0x7F, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B,
+        0x0C,
+    ];
+    let b = [
+        0x01, 0xFF, 0x20, 0x02, 0x81, 0x80, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C,
+        0x0D,
+    ];
+    check_sse(
+        "pavgb",
+        &sse_program(&[0x66, 0x0F, 0xE0, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse2_pmaxub_pminub() {
     // PMAXUB then PMINUB on the SAME register isn't useful; just probe PMAXUB.
     // PMAXUB xmm0, xmm1 = 66 0F DE C1.
-    let a = [0x00, 0xFF, 0x10, 0x80, 0x7F, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B];
-    let b = [0x01, 0x00, 0x20, 0x7F, 0x80, 0x02, 0x01, 0xFF, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A];
-    check_sse("pmaxub", &sse_program(&[0x66, 0x0F, 0xDE, 0xC1]), sse_scratch(a, b));
+    let a = [
+        0x00, 0xFF, 0x10, 0x80, 0x7F, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A,
+        0x0B,
+    ];
+    let b = [
+        0x01, 0x00, 0x20, 0x7F, 0x80, 0x02, 0x01, 0xFF, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
+        0x0A,
+    ];
+    check_sse(
+        "pmaxub",
+        &sse_program(&[0x66, 0x0F, 0xDE, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse2_pcmpgtb() {
     // PCMPGTB xmm0, xmm1 = 66 0F 64 C1. Signed byte greater-than -> all-1s/all-0s.
-    let a = [0x05, 0x80, 0x7F, 0xFF, 0x00, 0x01, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x7F, 0x81, 0xC0];
-    let b = [0x03, 0x7F, 0x80, 0x01, 0x00, 0xFF, 0x10, 0x21, 0x2F, 0x40, 0x4F, 0x61, 0x6F, 0x7E, 0x80, 0xBF];
-    check_sse("pcmpgtb", &sse_program(&[0x66, 0x0F, 0x64, 0xC1]), sse_scratch(a, b));
+    let a = [
+        0x05, 0x80, 0x7F, 0xFF, 0x00, 0x01, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x7F, 0x81,
+        0xC0,
+    ];
+    let b = [
+        0x03, 0x7F, 0x80, 0x01, 0x00, 0xFF, 0x10, 0x21, 0x2F, 0x40, 0x4F, 0x61, 0x6F, 0x7E, 0x80,
+        0xBF,
+    ];
+    check_sse(
+        "pcmpgtb",
+        &sse_program(&[0x66, 0x0F, 0x64, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---- SSE2 shifts: PSLLW/PSRLD/PSRAW (imm and xmm count) ----
@@ -5965,8 +7417,17 @@ fn sse2_pcmpgtb() {
 #[test]
 fn sse2_psllw_imm() {
     // PSLLW xmm0, imm8 = 66 0F 71 /6 ib. Shift each word left by 4.
-    let a = [0x0001u16.to_le_bytes(), 0x00FFu16.to_le_bytes(), 0x8000u16.to_le_bytes(), 0x1234u16.to_le_bytes(),
-             0xFFFFu16.to_le_bytes(), 0x0FF0u16.to_le_bytes(), 0x0001u16.to_le_bytes(), 0x4000u16.to_le_bytes()].concat();
+    let a = [
+        0x0001u16.to_le_bytes(),
+        0x00FFu16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+        0x1234u16.to_le_bytes(),
+        0xFFFFu16.to_le_bytes(),
+        0x0FF0u16.to_le_bytes(),
+        0x0001u16.to_le_bytes(),
+        0x4000u16.to_le_bytes(),
+    ]
+    .concat();
     let b = [0u8; 16];
     let mut prog = load_rdi_data();
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
@@ -5979,8 +7440,17 @@ fn sse2_psllw_imm() {
 #[test]
 fn sse2_psraw_imm() {
     // PSRAW xmm0, imm8 = 66 0F 71 /4 ib. Arithmetic shift right words by 2.
-    let a = [0x8000u16.to_le_bytes(), 0x7FFFu16.to_le_bytes(), 0xFFFFu16.to_le_bytes(), 0x0004u16.to_le_bytes(),
-             0x4000u16.to_le_bytes(), 0xC000u16.to_le_bytes(), 0x0001u16.to_le_bytes(), 0x00FFu16.to_le_bytes()].concat();
+    let a = [
+        0x8000u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+        0xFFFFu16.to_le_bytes(),
+        0x0004u16.to_le_bytes(),
+        0x4000u16.to_le_bytes(),
+        0xC000u16.to_le_bytes(),
+        0x0001u16.to_le_bytes(),
+        0x00FFu16.to_le_bytes(),
+    ]
+    .concat();
     let b = [0u8; 16];
     let mut prog = load_rdi_data();
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
@@ -5993,8 +7463,13 @@ fn sse2_psraw_imm() {
 #[test]
 fn sse2_psrld_imm() {
     // PSRLD xmm0, imm8 = 66 0F 72 /2 ib. Logical shift right dwords by 8.
-    let a = [0x8000_00FFu32.to_le_bytes(), 0xFFFF_FFFFu32.to_le_bytes(),
-             0x0000_0100u32.to_le_bytes(), 0x1234_5678u32.to_le_bytes()].concat();
+    let a = [
+        0x8000_00FFu32.to_le_bytes(),
+        0xFFFF_FFFFu32.to_le_bytes(),
+        0x0000_0100u32.to_le_bytes(),
+        0x1234_5678u32.to_le_bytes(),
+    ]
+    .concat();
     let b = [0u8; 16];
     let mut prog = load_rdi_data();
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
@@ -6007,7 +7482,10 @@ fn sse2_psrld_imm() {
 #[test]
 fn sse2_pslldq_imm() {
     // PSLLDQ xmm0, imm8 = 66 0F 73 /7 ib. Byte shift left of the whole 128 by 3.
-    let a = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F];
+    let a = [
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E,
+        0x0F,
+    ];
     let b = [0u8; 16];
     let mut prog = load_rdi_data();
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
@@ -6023,8 +7501,13 @@ fn sse2_pslldq_imm() {
 fn sse2_pshufd() {
     // PSHUFD xmm0, xmm1, imm8 = 66 0F 70 C1 ib. imm=0b00_01_10_11 reverses lanes.
     let a = [0u8; 16];
-    let b = [0x11111111u32.to_le_bytes(), 0x22222222u32.to_le_bytes(),
-             0x33333333u32.to_le_bytes(), 0x44444444u32.to_le_bytes()].concat();
+    let b = [
+        0x11111111u32.to_le_bytes(),
+        0x22222222u32.to_le_bytes(),
+        0x33333333u32.to_le_bytes(),
+        0x44444444u32.to_le_bytes(),
+    ]
+    .concat();
     let mut prog = load_rdi_data();
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
     prog.extend_from_slice(&[0x66, 0x0F, 0x70, 0xC1, 0b00_01_10_11]);
@@ -6037,8 +7520,17 @@ fn sse2_pshufd() {
 fn sse2_pshuflw() {
     // PSHUFLW xmm0, xmm1, imm8 = F2 0F 70 C1 ib. Shuffle low 4 words, high qword copied.
     let a = [0u8; 16];
-    let b = [0x0000u16.to_le_bytes(), 0x1111u16.to_le_bytes(), 0x2222u16.to_le_bytes(), 0x3333u16.to_le_bytes(),
-             0xAAAAu16.to_le_bytes(), 0xBBBBu16.to_le_bytes(), 0xCCCCu16.to_le_bytes(), 0xDDDDu16.to_le_bytes()].concat();
+    let b = [
+        0x0000u16.to_le_bytes(),
+        0x1111u16.to_le_bytes(),
+        0x2222u16.to_le_bytes(),
+        0x3333u16.to_le_bytes(),
+        0xAAAAu16.to_le_bytes(),
+        0xBBBBu16.to_le_bytes(),
+        0xCCCCu16.to_le_bytes(),
+        0xDDDDu16.to_le_bytes(),
+    ]
+    .concat();
     let mut prog = load_rdi_data();
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
     prog.extend_from_slice(&[0xF2, 0x0F, 0x70, 0xC1, 0b00_01_10_11]);
@@ -6051,8 +7543,17 @@ fn sse2_pshuflw() {
 fn sse2_pshufhw() {
     // PSHUFHW xmm0, xmm1, imm8 = F3 0F 70 C1 ib. Shuffle high 4 words, low qword copied.
     let a = [0u8; 16];
-    let b = [0x0000u16.to_le_bytes(), 0x1111u16.to_le_bytes(), 0x2222u16.to_le_bytes(), 0x3333u16.to_le_bytes(),
-             0xAAAAu16.to_le_bytes(), 0xBBBBu16.to_le_bytes(), 0xCCCCu16.to_le_bytes(), 0xDDDDu16.to_le_bytes()].concat();
+    let b = [
+        0x0000u16.to_le_bytes(),
+        0x1111u16.to_le_bytes(),
+        0x2222u16.to_le_bytes(),
+        0x3333u16.to_le_bytes(),
+        0xAAAAu16.to_le_bytes(),
+        0xBBBBu16.to_le_bytes(),
+        0xCCCCu16.to_le_bytes(),
+        0xDDDDu16.to_le_bytes(),
+    ]
+    .concat();
     let mut prog = load_rdi_data();
     prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
     prog.extend_from_slice(&[0xF3, 0x0F, 0x70, 0xC1, 0b00_01_10_11]);
@@ -6068,7 +7569,11 @@ fn sse3_movshdup() {
     // MOVSHDUP xmm0, xmm1 = F3 0F 16 C1. Duplicate odd singles: [a1,a1,a3,a3].
     let a = [0u8; 16];
     let b = f32x4([1.0, 2.0, 3.0, 4.0]);
-    check_sse("movshdup", &sse_program(&[0xF3, 0x0F, 0x16, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "movshdup",
+        &sse_program(&[0xF3, 0x0F, 0x16, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
@@ -6076,7 +7581,11 @@ fn sse3_movsldup() {
     // MOVSLDUP xmm0, xmm1 = F3 0F 12 C1. Duplicate even singles: [a0,a0,a2,a2].
     let a = [0u8; 16];
     let b = f32x4([1.0, 2.0, 3.0, 4.0]);
-    check_sse("movsldup", &sse_program(&[0xF3, 0x0F, 0x12, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "movsldup",
+        &sse_program(&[0xF3, 0x0F, 0x12, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 // ---- Scalar conversions: CVTSI2SD / CVTTSD2SI / CVTSS2SD ----
@@ -6126,16 +7635,27 @@ fn sse2_cvtss2sd_scalar() {
     // CVTSS2SD xmm0, xmm1 = F3 0F 5A C1. Convert lane0 f32 -> f64; lane1 of xmm0 kept.
     let a = f64x2([99.0, 7.0]); // high qword preserved
     let b = f32x4([1.5, 0.0, 0.0, 0.0]);
-    check_sse("cvtss2sd", &sse_program(&[0xF3, 0x0F, 0x5A, 0xC1]), sse_scratch(a, b));
+    check_sse(
+        "cvtss2sd",
+        &sse_program(&[0xF3, 0x0F, 0x5A, 0xC1]),
+        sse_scratch(a, b),
+    );
 }
 
 #[test]
 fn sse2_cvtpd2ps_scalar() {
     // CVTPD2PS xmm0, xmm1 = 66 0F 5A C1. 2 doubles -> 2 floats in low 64, high zeroed.
-    let a = [0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes(), 0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes()].concat();
+    let a = [
+        0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes(),
+        0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes(),
+    ]
+    .concat();
     let b = f64x2([1.25, -8.5]);
-    check_sse("cvtpd2ps", &sse_program(&[0x66, 0x0F, 0x5A, 0xC1]),
-        sse_scratch(a.try_into().unwrap(), b));
+    check_sse(
+        "cvtpd2ps",
+        &sse_program(&[0x66, 0x0F, 0x5A, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b),
+    );
 }
 
 // ---- x87: FXCH / FABS / FCHS / FRNDINT / FSCALE / FPREM / FSQRT-after-FXCH ----
@@ -6173,7 +7693,13 @@ fn x87_fxch() {
     c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp [rdi+16] = b
     c.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp [rdi+24] = a
     c.push(HLT);
-    check_mem("x87_fxch", &with_hlt(c), regs(), scratch_f64(&[3.5, 7.25]), 0);
+    check_mem(
+        "x87_fxch",
+        &with_hlt(c),
+        regs(),
+        scratch_f64(&[3.5, 7.25]),
+        0,
+    );
 }
 
 #[test]
@@ -6196,7 +7722,13 @@ fn x87_fscale() {
     c.extend_from_slice(&[0xD9, 0xFD]); // fscale -> ST0 = 1.5 * 2^3 = 12.0
     c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp [rdi+16]
     c.push(HLT);
-    check_mem("x87_fscale", &with_hlt(c), regs(), scratch_f64(&[1.5, 3.0]), 0);
+    check_mem(
+        "x87_fscale",
+        &with_hlt(c),
+        regs(),
+        scratch_f64(&[1.5, 3.0]),
+        0,
+    );
 }
 
 #[test]
@@ -6208,7 +7740,13 @@ fn x87_fprem() {
     c.extend_from_slice(&[0xD9, 0xF8]); // fprem -> 2.0
     c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp [rdi+16]
     c.push(HLT);
-    check_mem("x87_fprem", &with_hlt(c), regs(), scratch_f64(&[17.0, 5.0]), 0);
+    check_mem(
+        "x87_fprem",
+        &with_hlt(c),
+        regs(),
+        scratch_f64(&[17.0, 5.0]),
+        0,
+    );
 }
 
 #[test]
@@ -6220,7 +7758,13 @@ fn x87_fmul_st_then_fxch() {
     c.extend_from_slice(&[0xDE, 0xC9]); // fmulp st1, st0 -> ST0 = a*b, pop
     c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp [rdi+16]
     c.push(HLT);
-    check_mem("x87_fmulp", &with_hlt(c), regs(), scratch_f64(&[4.0, 0.5]), 0);
+    check_mem(
+        "x87_fmulp",
+        &with_hlt(c),
+        regs(),
+        scratch_f64(&[4.0, 0.5]),
+        0,
+    );
 }
 
 #[test]
@@ -6232,7 +7776,13 @@ fn x87_fld1_fldz_fadd() {
     c.extend_from_slice(&[0xDE, 0xC1]); // faddp st1, st0 -> ST0=1.0
     c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp [rdi+16]
     c.push(HLT);
-    check_mem("x87_fld1_fldz", &with_hlt(c), regs(), scratch_f64(&[0.0]), 0);
+    check_mem(
+        "x87_fld1_fldz",
+        &with_hlt(c),
+        regs(),
+        scratch_f64(&[0.0]),
+        0,
+    );
 }
 
 #[test]
@@ -6248,7 +7798,13 @@ fn x87_fcom_fstsw_flags() {
     c.extend_from_slice(&[0x9E]); // sahf  (CF<-C0, PF<-C2, ZF<-C3)
     c.push(HLT);
     // a=3.0 < b=5.0 -> C3=0,C2=0,C0=1 -> ZF=0, PF=0, CF=1. Compare ZF|PF|CF.
-    check_mem("x87_fcom_sahf", &c, regs(), scratch_f64(&[3.0, 5.0]), FCOMI_FLAGS);
+    check_mem(
+        "x87_fcom_sahf",
+        &c,
+        regs(),
+        scratch_f64(&[3.0, 5.0]),
+        FCOMI_FLAGS,
+    );
 }
 
 // ---- ALU corner cases not yet hit ----
@@ -6276,7 +7832,11 @@ fn test_imm32_high_bit() {
     let mut r = regs();
     r.rax = 0xFFFF_FFFF_8000_0001;
     // A9 00 00 00 80  test eax, 0x80000000
-    check("test_imm32", &with_hlt(vec![0xA9, 0x00, 0x00, 0x00, 0x80]), r);
+    check(
+        "test_imm32",
+        &with_hlt(vec![0xA9, 0x00, 0x00, 0x00, 0x80]),
+        r,
+    );
 }
 
 #[test]
@@ -6317,7 +7877,13 @@ fn bt_mem_reg_bit_index() {
     let mut r = regs();
     r.rdi = DATA_ADDR;
     r.rdx = 70;
-    check_mem("bt_mem", &with_hlt(vec![0x48, 0x0F, 0xA3, 0x17]), r, s, BT_DEFINED);
+    check_mem(
+        "bt_mem",
+        &with_hlt(vec![0x48, 0x0F, 0xA3, 0x17]),
+        r,
+        s,
+        BT_DEFINED,
+    );
 }
 
 #[test]

@@ -30,7 +30,7 @@ use rax::cpu::{Registers, VCpu};
 fn test_mul_al_basic() {
     let code = [
         0xf6, 0xe3, // MUL BL (F6 /4, ModRM=11_100_011)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x05; // AL = 5
@@ -39,8 +39,14 @@ fn test_mul_al_basic() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0x000F, "5 * 3 = 15 (0x000F in AX)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (high byte AH is 0)");
-    assert!(!of_set(regs.rflags), "OF should be clear (high byte AH is 0)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (high byte AH is 0)"
+    );
+    assert!(
+        !of_set(regs.rflags),
+        "OF should be clear (high byte AH is 0)"
+    );
 }
 
 #[test]
@@ -49,7 +55,7 @@ fn test_mul_al_overflow_to_ah() {
     let code = [0xf6, 0xe3, 0xf4]; // MUL BL
     let mut regs = Registers::default();
     regs.rax = 200; // AL = 200
-    regs.rbx = 3;   // BL = 3
+    regs.rbx = 3; // BL = 3
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -114,7 +120,10 @@ fn test_mul_al_by_one() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0x0042, "66 * 1 = 66");
-    assert!(!cf_set(regs.rflags), "CF should be clear (no overflow to AH)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (no overflow to AH)"
+    );
 }
 
 #[test]
@@ -123,7 +132,7 @@ fn test_mul_al_by_two() {
     let code = [0xf6, 0xe3, 0xf4]; // MUL BL
     let mut regs = Registers::default();
     regs.rax = 128; // AL = 128
-    regs.rbx = 2;   // BL = 2
+    regs.rbx = 2; // BL = 2
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -142,7 +151,11 @@ fn test_mul_preserves_upper_rax_bytes() {
 
     // AL=0xBE * BL=0x02 = 0x017C
     assert_eq!(regs.rax & 0xFFFF, 0x017C, "AX contains result");
-    assert_eq!(regs.rax & !0xFFFF, 0xDEADBEEF_CAFE0000, "Upper bytes preserved");
+    assert_eq!(
+        regs.rax & !0xFFFF,
+        0xDEADBEEF_CAFE0000,
+        "Upper bytes preserved"
+    );
 }
 
 // ============================================================================
@@ -174,7 +187,7 @@ fn test_mul_ax_overflow_to_dx() {
     let code = [0x66, 0xf7, 0xe3, 0xf4]; // MUL BX
     let mut regs = Registers::default();
     regs.rax = 1000; // AX = 1000
-    regs.rbx = 100;  // BX = 100
+    regs.rbx = 100; // BX = 100
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -524,7 +537,7 @@ fn test_mul_r8b_extended_register() {
     ];
     let mut regs = Registers::default();
     regs.rax = 20; // AL = 20
-    regs.r8 = 10;  // R8B = 10
+    regs.r8 = 10; // R8B = 10
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 

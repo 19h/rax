@@ -462,7 +462,8 @@ fn test_vmovaps_mem_to_zmm0_aligned() {
 
     // Write test data to aligned address (64 bytes)
     let test_data = [0x01u8; 64];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -481,7 +482,8 @@ fn test_vmovaps_mem_to_zmm1_aligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFFu8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFFu8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -499,7 +501,8 @@ fn test_vmovaps_mem_to_zmm7_aligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xAAu8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xAAu8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -517,7 +520,8 @@ fn test_vmovaps_mem_to_zmm15_aligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x33u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x33u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -535,7 +539,8 @@ fn test_vmovaps_mem_to_zmm31_aligned() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x77u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x77u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -561,7 +566,8 @@ fn test_vmovaps_zmm0_to_mem_aligned() {
 
     // Verify data was written
     let mut result = [0u8; 64];
-    mem.read_slice(&mut result, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.read_slice(&mut result, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 }
 
 #[test]
@@ -633,7 +639,8 @@ fn test_vmovaps_all_zeros() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -651,7 +658,8 @@ fn test_vmovaps_all_ones() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFFu8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFFu8; 64], GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

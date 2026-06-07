@@ -214,7 +214,7 @@ impl VCpu for KvmVcpu {
             _ => {
                 return Err(Error::InvalidConfig(
                     "KVM backend only supports x86_64 state".to_string(),
-                ))
+                ));
             }
         };
         let kvm_regs = convert::regs_to_kvm(&state.regs);

@@ -548,7 +548,8 @@ fn test_mixed_fst_fstp() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword ptr [0x2000] ; 1.0
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00, // FLD qword ptr [0x2008] ; 2.0
-        0xD9, 0x14, 0x25, 0x00, 0x30, 0x00, 0x00, // FST dword ptr [0x3000]  ; Store 2.0, no pop
+        0xD9, 0x14, 0x25, 0x00, 0x30, 0x00,
+        0x00, // FST dword ptr [0x3000]  ; Store 2.0, no pop
         0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00, // FSTP qword ptr [0x3008] ; Store 2.0, pop
         0xDD, 0x1C, 0x25, 0x10, 0x30, 0x00, 0x00, // FSTP qword ptr [0x3010] ; Store 1.0, pop
         0xf4,
@@ -686,9 +687,14 @@ fn test_fld_m32_fstp_m32_roundtrip_exact() {
     ];
     for v in [1.0_f32, -2.5, 0.5, 256.0, 0.25] {
         let (mut vcpu, mem) = setup_vm(&code, None);
-        mem.write_slice(&v.to_le_bytes(), GuestAddress(DATA_ADDR)).unwrap();
+        mem.write_slice(&v.to_le_bytes(), GuestAddress(DATA_ADDR))
+            .unwrap();
         run_until_hlt(&mut vcpu).unwrap();
-        assert_eq!(read_f32(&mem, 0x3000).to_bits(), v.to_bits(), "FLD/FSTP m32 exact for {v}");
+        assert_eq!(
+            read_f32(&mem, 0x3000).to_bits(),
+            v.to_bits(),
+            "FLD/FSTP m32 exact for {v}"
+        );
     }
 }
 

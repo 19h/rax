@@ -38,7 +38,10 @@ fn test_movsxd_rax_ebx_negative_one() {
     regs.rbx = 0xFFFFFFFF; // -1 in 32-bit signed
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "RAX should be -1 sign-extended to 64-bit");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "RAX should be -1 sign-extended to 64-bit"
+    );
 }
 
 #[test]
@@ -48,7 +51,10 @@ fn test_movsxd_rax_ebx_max_positive() {
     regs.rbx = 0x7FFFFFFF; // 2147483647 (max 32-bit signed)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x000000007FFFFFFF, "RAX should be max positive 32-bit signed");
+    assert_eq!(
+        regs.rax, 0x000000007FFFFFFF,
+        "RAX should be max positive 32-bit signed"
+    );
 }
 
 #[test]
@@ -58,7 +64,10 @@ fn test_movsxd_rax_ebx_min_negative() {
     regs.rbx = 0x80000000; // -2147483648 (min 32-bit signed)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFF80000000, "RAX should be min negative 32-bit signed");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFF80000000,
+        "RAX should be min negative 32-bit signed"
+    );
 }
 
 #[test]
@@ -68,7 +77,10 @@ fn test_movsxd_rcx_edx_positive() {
     regs.rdx = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0x0000000012345678, "RCX should be sign-extended from EDX");
+    assert_eq!(
+        regs.rcx, 0x0000000012345678,
+        "RCX should be sign-extended from EDX"
+    );
 }
 
 #[test]
@@ -78,7 +90,10 @@ fn test_movsxd_rcx_edx_negative() {
     regs.rdx = 0x87654321; // Negative
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0xFFFFFFFF87654321, "RCX should be sign-extended from EDX");
+    assert_eq!(
+        regs.rcx, 0xFFFFFFFF87654321,
+        "RCX should be sign-extended from EDX"
+    );
 }
 
 #[test]
@@ -88,7 +103,10 @@ fn test_movsxd_rdi_esi() {
     regs.rsi = 0xDEADBEEF; // Negative
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdi, 0xFFFFFFFFDEADBEEF, "RDI should be sign-extended from ESI");
+    assert_eq!(
+        regs.rdi, 0xFFFFFFFFDEADBEEF,
+        "RDI should be sign-extended from ESI"
+    );
 }
 
 #[test]
@@ -98,7 +116,10 @@ fn test_movsxd_rbx_eax() {
     regs.rax = 0x11223344;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbx, 0x0000000011223344, "RBX should be sign-extended from EAX");
+    assert_eq!(
+        regs.rbx, 0x0000000011223344,
+        "RBX should be sign-extended from EAX"
+    );
 }
 
 // ============================================================================
@@ -113,7 +134,10 @@ fn test_movsxd_r8_ebx() {
     regs.rbx = 0x7FFFFFFF; // Positive
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r8, 0x000000007FFFFFFF, "R8 should be sign-extended from EBX");
+    assert_eq!(
+        regs.r8, 0x000000007FFFFFFF,
+        "R8 should be sign-extended from EBX"
+    );
 }
 
 #[test]
@@ -124,7 +148,10 @@ fn test_movsxd_r9_ecx() {
     regs.rcx = 0x80000000; // Negative
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r9, 0xFFFFFFFF80000000, "R9 should be sign-extended from ECX");
+    assert_eq!(
+        regs.r9, 0xFFFFFFFF80000000,
+        "R9 should be sign-extended from ECX"
+    );
 }
 
 #[test]
@@ -147,7 +174,10 @@ fn test_movsxd_r11_esi() {
     regs.rsi = 0x42424242;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r11, 0x0000000042424242, "R11 should be sign-extended from ESI");
+    assert_eq!(
+        regs.r11, 0x0000000042424242,
+        "R11 should be sign-extended from ESI"
+    );
 }
 
 #[test]
@@ -158,7 +188,10 @@ fn test_movsxd_r12_edi() {
     regs.rdi = 0xF0F0F0F0; // Negative
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r12, 0xFFFFFFFFF0F0F0F0, "R12 should be sign-extended from EDI");
+    assert_eq!(
+        regs.r12, 0xFFFFFFFFF0F0F0F0,
+        "R12 should be sign-extended from EDI"
+    );
 }
 
 #[test]
@@ -191,7 +224,10 @@ fn test_movsxd_r15_ecx() {
     regs.rcx = 0x7FFFFFFF; // Max positive
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r15, 0x000000007FFFFFFF, "R15 should be max positive 32-bit signed");
+    assert_eq!(
+        regs.r15, 0x000000007FFFFFFF,
+        "R15 should be max positive 32-bit signed"
+    );
 }
 
 // ============================================================================
@@ -205,7 +241,10 @@ fn test_movsxd_rax_r8d() {
     regs.r8 = 0x80000000; // Negative
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFF80000000, "RAX should be sign-extended from R8D");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFF80000000,
+        "RAX should be sign-extended from R8D"
+    );
 }
 
 #[test]
@@ -215,7 +254,10 @@ fn test_movsxd_rcx_r9d() {
     regs.r9 = 0x7FFFFFFF; // Positive
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0x000000007FFFFFFF, "RCX should be sign-extended from R9D");
+    assert_eq!(
+        regs.rcx, 0x000000007FFFFFFF,
+        "RCX should be sign-extended from R9D"
+    );
 }
 
 #[test]
@@ -235,7 +277,10 @@ fn test_movsxd_rsi_r11d() {
     regs.r11 = 0x11223344; // Positive
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rsi, 0x0000000011223344, "RSI should be sign-extended from R11D");
+    assert_eq!(
+        regs.rsi, 0x0000000011223344,
+        "RSI should be sign-extended from R11D"
+    );
 }
 
 #[test]
@@ -245,7 +290,10 @@ fn test_movsxd_rdi_r12d() {
     regs.r12 = 0xDEADBEEF; // Negative
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdi, 0xFFFFFFFFDEADBEEF, "RDI should be sign-extended from R12D");
+    assert_eq!(
+        regs.rdi, 0xFFFFFFFFDEADBEEF,
+        "RDI should be sign-extended from R12D"
+    );
 }
 
 // ============================================================================
@@ -259,7 +307,10 @@ fn test_movsxd_r8_r9d() {
     regs.r9 = 0x80000000; // Negative
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r8, 0xFFFFFFFF80000000, "R8 should be sign-extended from R9D");
+    assert_eq!(
+        regs.r8, 0xFFFFFFFF80000000,
+        "R8 should be sign-extended from R9D"
+    );
 }
 
 #[test]
@@ -269,7 +320,10 @@ fn test_movsxd_r10_r11d() {
     regs.r11 = 0x7FFFFFFF; // Positive
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r10, 0x000000007FFFFFFF, "R10 should be sign-extended from R11D");
+    assert_eq!(
+        regs.r10, 0x000000007FFFFFFF,
+        "R10 should be sign-extended from R11D"
+    );
 }
 
 #[test]
@@ -349,7 +403,11 @@ fn test_movsxd_sign_extension_pattern_0x00000001() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Upper 32 bits should be all 0s
     assert_eq!(regs.rax >> 32, 0x00000000, "Upper 32 bits should be 0");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000001, "Lower 32 bits should be 1");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000001,
+        "Lower 32 bits should be 1"
+    );
 }
 
 #[test]
@@ -361,7 +419,11 @@ fn test_movsxd_sign_extension_pattern_0xFFFFFFFF() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Upper 32 bits should be all 1s
     assert_eq!(regs.rax >> 32, 0xFFFFFFFF, "Upper 32 bits should be F");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "Lower 32 bits should be F");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "Lower 32 bits should be F"
+    );
 }
 
 #[test]
@@ -373,7 +435,11 @@ fn test_movsxd_sign_extension_pattern_0x80000000() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Upper 32 bits should be all 1s
     assert_eq!(regs.rax >> 32, 0xFFFFFFFF, "Upper 32 bits should be F");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "Lower 32 bits should be 80000000");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "Lower 32 bits should be 80000000"
+    );
 }
 
 // ============================================================================
@@ -404,7 +470,10 @@ fn test_movsxd_multiple_consecutive() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x000000007FFFFFFF, "RAX should have EBX value");
-    assert_eq!(regs.rcx, 0xFFFFFFFFFFFFFFFF, "RCX should have EDX value (-1)");
+    assert_eq!(
+        regs.rcx, 0xFFFFFFFFFFFFFFFF,
+        "RCX should have EDX value (-1)"
+    );
 }
 
 // ============================================================================
@@ -448,7 +517,10 @@ fn test_movsxd_signed_offset_conversion() {
     regs.rax = 0xFFFFFFC8; // -56 as 32-bit signed
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0xFFFFFFFFFFFFFFC8, "RCX should be -56 as 64-bit signed");
+    assert_eq!(
+        regs.rcx, 0xFFFFFFFFFFFFFFC8,
+        "RCX should be -56 as 64-bit signed"
+    );
 }
 
 #[test]
@@ -460,7 +532,10 @@ fn test_movsxd_upper_bits_preserved_in_source() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Should sign-extend from 0xDEADBEEF
-    assert_eq!(regs.rax, 0xFFFFFFFFDEADBEEF, "Should use lower 32 bits only");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFDEADBEEF,
+        "Should use lower 32 bits only"
+    );
 }
 
 #[test]

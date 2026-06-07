@@ -73,9 +73,12 @@ fn test_rdtscp_preserves_flags() {
 #[test]
 fn test_rdtscp_preserves_other_registers() {
     let code = [
-        0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242 (sign-extended, positive)
-        0x48, 0xc7, 0xc6, 0xaa, 0xaa, 0xaa, 0xaa, // MOV RSI, 0xaaaaaaaa (sign-extended to 0xFFFFFFFFaaaaaaaa)
-        0x48, 0xc7, 0xc7, 0xbb, 0xbb, 0xbb, 0xbb, // MOV RDI, 0xbbbbbbbb (sign-extended to 0xFFFFFFFFbbbbbbbb)
+        0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42,
+        0x42, // MOV RBX, 0x42424242 (sign-extended, positive)
+        0x48, 0xc7, 0xc6, 0xaa, 0xaa, 0xaa,
+        0xaa, // MOV RSI, 0xaaaaaaaa (sign-extended to 0xFFFFFFFFaaaaaaaa)
+        0x48, 0xc7, 0xc7, 0xbb, 0xbb, 0xbb,
+        0xbb, // MOV RDI, 0xbbbbbbbb (sign-extended to 0xFFFFFFFFbbbbbbbb)
         0x0f, 0x01, 0xf9, // RDTSCP
         0xf4, // HLT
     ];
@@ -84,8 +87,14 @@ fn test_rdtscp_preserves_other_registers() {
 
     // RBX, RSI, RDI should be unchanged (MOV r64, imm32 sign-extends the immediate)
     assert_eq!(regs.rbx, 0x42424242, "RBX should not be affected");
-    assert_eq!(regs.rsi, 0xFFFFFFFF_AAAAAAAAu64, "RSI should not be affected");
-    assert_eq!(regs.rdi, 0xFFFFFFFF_BBBBBBBBu64, "RDI should not be affected");
+    assert_eq!(
+        regs.rsi, 0xFFFFFFFF_AAAAAAAAu64,
+        "RSI should not be affected"
+    );
+    assert_eq!(
+        regs.rdi, 0xFFFFFFFF_BBBBBBBBu64,
+        "RDI should not be affected"
+    );
 }
 
 // Test multiple sequential RDTSCP calls
@@ -475,7 +484,8 @@ fn test_rdtscp_high_values() {
 #[test]
 fn test_rdtscp_rbx_preservation() {
     let code = [
-        0x48, 0xc7, 0xc3, 0xef, 0xbe, 0xad, 0xde, // MOV RBX, 0xdeadbeef (sign-extended to 0xFFFFFFFFdeadbeef)
+        0x48, 0xc7, 0xc3, 0xef, 0xbe, 0xad,
+        0xde, // MOV RBX, 0xdeadbeef (sign-extended to 0xFFFFFFFFdeadbeef)
         0x0f, 0x01, 0xf9, // RDTSCP #1
         0x0f, 0x01, 0xf9, // RDTSCP #2
         0x0f, 0x01, 0xf9, // RDTSCP #3

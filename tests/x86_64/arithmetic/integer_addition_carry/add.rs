@@ -42,7 +42,11 @@ fn test_add_al_imm8_zero_result() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFF, 0, "ADD AL, 0xAB: 0x55 + 0xAB = 0x100 (wraps to 0)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0,
+        "ADD AL, 0xAB: 0x55 + 0xAB = 0x100 (wraps to 0)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set (result = 0)");
     assert!(cf_set(regs.rflags), "CF should be set (carry out)");
 }
@@ -56,7 +60,11 @@ fn test_add_al_imm8_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFF, 0, "ADD AL, 1: 0xFF + 1 = 0x00 (with carry)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0,
+        "ADD AL, 1: 0xFF + 1 = 0x00 (with carry)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set");
     assert!(cf_set(regs.rflags), "CF should be set (carry out)");
 }
@@ -73,7 +81,10 @@ fn test_add_al_imm8_signed_overflow() {
     assert_eq!(regs.rax & 0xFF, 0x80, "ADD AL, 1: 0x7F + 1 = 0x80");
     assert!(of_set(regs.rflags), "OF should be set (signed overflow)");
     assert!(sf_set(regs.rflags), "SF should be set (result negative)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (no unsigned carry)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (no unsigned carry)"
+    );
 }
 
 #[test]
@@ -86,7 +97,10 @@ fn test_add_al_imm8_negative_overflow() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFF, 0, "ADD AL, 0x80: 0x80 + 0x80 = 0x00");
-    assert!(of_set(regs.rflags), "OF should be set (signed overflow: -128 + -128)");
+    assert!(
+        of_set(regs.rflags),
+        "OF should be set (signed overflow: -128 + -128)"
+    );
     assert!(cf_set(regs.rflags), "CF should be set (unsigned carry)");
     assert!(zf_set(regs.rflags), "ZF should be set (result = 0)");
 }
@@ -128,7 +142,11 @@ fn test_add_al_imm8_preserves_high_bytes() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFF, 0x78 + 0x05);
-    assert_eq!(regs.rax & !0xFF, 0xDEADBEEF_12345600, "High bytes should be preserved");
+    assert_eq!(
+        regs.rax & !0xFF,
+        0xDEADBEEF_12345600,
+        "High bytes should be preserved"
+    );
 }
 
 // ============================================================================
@@ -145,7 +163,11 @@ fn test_add_ax_imm16() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x2234, "ADD AX, 0x1234: 0x1000 + 0x1234 = 0x2234");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x2234,
+        "ADD AX, 0x1234: 0x1000 + 0x1234 = 0x2234"
+    );
 }
 
 #[test]
@@ -186,7 +208,10 @@ fn test_add_rax_imm32_large() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x80000000, "ADD RAX, 0x7FFFFFFF: 1 + 0x7FFFFFFF = 0x80000000");
+    assert_eq!(
+        regs.rax, 0x80000000,
+        "ADD RAX, 0x7FFFFFFF: 1 + 0x7FFFFFFF = 0x80000000"
+    );
 }
 
 // ============================================================================
@@ -235,7 +260,10 @@ fn test_add_rm32_imm32_register() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0x12345679, "ADD ECX, 0x12345678: 1 + 0x12345678 = 0x12345679");
+    assert_eq!(
+        regs.rcx, 0x12345679,
+        "ADD ECX, 0x12345678: 1 + 0x12345678 = 0x12345679"
+    );
 }
 
 #[test]
@@ -248,7 +276,10 @@ fn test_add_rm64_imm32_register() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0xFFFFFFFF, "ADD RCX, -1: 0x100000000 + (-1) = 0xFFFFFFFF");
+    assert_eq!(
+        regs.rcx, 0xFFFFFFFF,
+        "ADD RCX, -1: 0x100000000 + (-1) = 0xFFFFFFFF"
+    );
 }
 
 #[test]
@@ -306,7 +337,10 @@ fn test_add_rm64_imm8_sign_extended() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0xFFFFFFFF, "ADD RCX, -1: 0x100000000 - 1 = 0xFFFFFFFF");
+    assert_eq!(
+        regs.rcx, 0xFFFFFFFF,
+        "ADD RCX, -1: 0x100000000 - 1 = 0xFFFFFFFF"
+    );
 }
 
 #[test]
@@ -577,9 +611,18 @@ fn test_add_flags_32bit_overflow() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x80000000);
-    assert!(of_set(regs.rflags), "OF should be set (32-bit signed overflow)");
-    assert!(sf_set(regs.rflags), "SF should be set (result negative in 32-bit)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (no unsigned overflow)");
+    assert!(
+        of_set(regs.rflags),
+        "OF should be set (32-bit signed overflow)"
+    );
+    assert!(
+        sf_set(regs.rflags),
+        "SF should be set (result negative in 32-bit)"
+    );
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (no unsigned overflow)"
+    );
 }
 
 #[test]
@@ -592,7 +635,10 @@ fn test_add_flags_64bit_overflow() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x8000000000000000);
-    assert!(of_set(regs.rflags), "OF should be set (64-bit signed overflow)");
+    assert!(
+        of_set(regs.rflags),
+        "OF should be set (64-bit signed overflow)"
+    );
     assert!(sf_set(regs.rflags), "SF should be set (result negative)");
 }
 
@@ -634,7 +680,10 @@ fn test_add_no_auxiliary_carry() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFF, 0x0F);
-    assert!(!af_set(regs.rflags), "AF should be clear (no carry from bit 3)");
+    assert!(
+        !af_set(regs.rflags),
+        "AF should be clear (no carry from bit 3)"
+    );
 }
 
 // ============================================================================
@@ -692,8 +741,16 @@ fn test_add_rm16_r16() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Only low 16 bits affected, high bits of RAX preserved
-    assert_eq!(regs.rax & 0xFFFF, 0x1234, "ADD AX, CX: 0x1000 + 0x0234 = 0x1234");
-    assert_eq!(regs.rax & 0xFFFF0000, 0xDEAD0000, "High word of EAX should be preserved");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x1234,
+        "ADD AX, CX: 0x1000 + 0x0234 = 0x1234"
+    );
+    assert_eq!(
+        regs.rax & 0xFFFF0000,
+        0xDEAD0000,
+        "High word of EAX should be preserved"
+    );
 }
 
 #[test]
@@ -724,7 +781,7 @@ fn test_add_chain_multi_register() {
         0x01, 0xd8, // ADD EAX, EBX
         0x01, 0xc8, // ADD EAX, ECX
         0x01, 0xd0, // ADD EAX, EDX
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 10;
@@ -744,7 +801,7 @@ fn test_add_self_increment() {
         0x48, 0x01, 0xc0, // ADD RAX, RAX (x2)
         0x48, 0x01, 0xc0, // ADD RAX, RAX (x4)
         0x48, 0x01, 0xc0, // ADD RAX, RAX (x8)
-        0xf4,             // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 5;

@@ -23,26 +23,26 @@ impl X86_64Vcpu {
                 0xC1 => {
                     // VMCALL (0x0F 0x01 0xC1) - VMX hypercall
                     ctx.consume_u8()?; // consume modrm
-                                       // In a real hypervisor, this would cause a VM exit.
-                                       // When running without VMX, this should generate #UD.
-                                       // For our emulator, treat as NOP - kernel uses this for
-                                       // paravirtualized hints in delay loops.
+                    // In a real hypervisor, this would cause a VM exit.
+                    // When running without VMX, this should generate #UD.
+                    // For our emulator, treat as NOP - kernel uses this for
+                    // paravirtualized hints in delay loops.
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xC8 => {
                     // MONITOR (0x0F 0x01 0xC8) - Set up address range monitoring
                     ctx.consume_u8()?; // consume modrm
-                                       // MONITOR sets up an address range for monitoring using RAX/EAX
-                                       // For emulation, treat as NOP - no actual hardware monitoring
+                    // MONITOR sets up an address range for monitoring using RAX/EAX
+                    // For emulation, treat as NOP - no actual hardware monitoring
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xC9 => {
                     // MWAIT (0x0F 0x01 0xC9) - Monitor wait
                     ctx.consume_u8()?; // consume modrm
-                                       // MWAIT hints processor to enter optimized state while waiting
-                                       // For emulation, treat as NOP - no power management
+                    // MWAIT hints processor to enter optimized state while waiting
+                    // For emulation, treat as NOP - no power management
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
@@ -86,29 +86,29 @@ impl X86_64Vcpu {
                 0xD4 => {
                     // VMFUNC (0x0F 0x01 0xD4) - VMX function
                     ctx.consume_u8()?; // consume modrm
-                                       // Treat as NOP in emulator
+                    // Treat as NOP in emulator
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xD5 => {
                     // XEND (0x0F 0x01 0xD5) - End transaction
                     ctx.consume_u8()?; // consume modrm
-                                       // TSX not supported, treat as NOP
+                    // TSX not supported, treat as NOP
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xD9 => {
                     // VMMCALL (0x0F 0x01 0xD9) - AMD SVM hypercall
                     ctx.consume_u8()?; // consume modrm
-                                       // Treat as NOP like VMCALL
+                    // Treat as NOP like VMCALL
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xD6 => {
                     // XTEST (0x0F 0x01 0xD6) - Test if in transactional execution
                     ctx.consume_u8()?; // consume modrm
-                                       // TSX not supported, ZF=1 (not in transaction)
-                                       // Clear lazy flags before setting ZF directly
+                    // TSX not supported, ZF=1 (not in transaction)
+                    // Clear lazy flags before setting ZF directly
                     self.clear_lazy_flags();
                     self.regs.rflags |= flags::bits::ZF;
                     self.regs.rip += ctx.cursor as u64;
@@ -117,7 +117,7 @@ impl X86_64Vcpu {
                 0xCA => {
                     // CLAC (0x0F 0x01 0xCA) - Clear AC flag
                     ctx.consume_u8()?; // consume modrm
-                                       // Note: AC is not a lazy flag, but clear for consistency
+                    // Note: AC is not a lazy flag, but clear for consistency
                     // Materialize (don't discard) pending lazy flags - CLAC must
                     // only clear AC, leaving ZF/SF/CF/etc. from prior ops intact.
                     self.materialize_flags();
@@ -128,7 +128,7 @@ impl X86_64Vcpu {
                 0xCB => {
                     // STAC (0x0F 0x01 0xCB) - Set AC flag
                     ctx.consume_u8()?; // consume modrm
-                                       // Note: AC is not a lazy flag, but clear for consistency
+                    // Note: AC is not a lazy flag, but clear for consistency
                     // Materialize (don't discard) pending lazy flags - STAC must
                     // only set AC, leaving ZF/SF/CF/etc. from prior ops intact.
                     self.materialize_flags();
@@ -139,14 +139,14 @@ impl X86_64Vcpu {
                 0xE8 => {
                     // SERIALIZE (0x0F 0x01 0xE8) - Serialize instruction execution
                     ctx.consume_u8()?; // consume modrm
-                                       // Serializing instruction - no architectural state changes in emulation.
+                    // Serializing instruction - no architectural state changes in emulation.
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xEA if ctx.rep_prefix == Some(0xF3) => {
                     // SAVEPREVSSP (F3 0F 01 EA) - Save previous shadow stack pointer
                     ctx.consume_u8()?; // consume modrm
-                                       // CET shadow stack instruction - treat as NOP in emulation
+                    // CET shadow stack instruction - treat as NOP in emulation
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
@@ -369,8 +369,7 @@ impl X86_64Vcpu {
                 }
                 4 => {
                     // XSAVE - save x87/SSE/AVX state selected by (EDX:EAX) & XCR0.
-                    let rfbm = ((self.regs.rax & 0xFFFF_FFFF) | (self.regs.rdx << 32))
-                        & self.xcr0;
+                    let rfbm = ((self.regs.rax & 0xFFFF_FFFF) | (self.regs.rdx << 32)) & self.xcr0;
                     let mut xstate_bv = 0u64;
                     // Component 0 (x87): legacy region header + ST0-7.
                     if rfbm & 0x1 != 0 {
@@ -398,22 +397,34 @@ impl X86_64Vcpu {
                         self.write_mem32(addr + 28, 0xFFFF)?;
                         for i in 0..16 {
                             self.write_mem64(addr + 160 + (i as u64) * 16, self.regs.xmm[i][0])?;
-                            self.write_mem64(addr + 160 + (i as u64) * 16 + 8, self.regs.xmm[i][1])?;
+                            self.write_mem64(
+                                addr + 160 + (i as u64) * 16 + 8,
+                                self.regs.xmm[i][1],
+                            )?;
                         }
                         xstate_bv |= 0x2;
                     }
                     // Component 2 (AVX): upper 128 bits of YMM0-15 at offset 576.
                     if rfbm & 0x4 != 0 {
                         for i in 0..16 {
-                            self.write_mem64(addr + 576 + (i as u64) * 16, self.regs.ymm_high[i][0])?;
-                            self.write_mem64(addr + 576 + (i as u64) * 16 + 8, self.regs.ymm_high[i][1])?;
+                            self.write_mem64(
+                                addr + 576 + (i as u64) * 16,
+                                self.regs.ymm_high[i][0],
+                            )?;
+                            self.write_mem64(
+                                addr + 576 + (i as u64) * 16 + 8,
+                                self.regs.ymm_high[i][1],
+                            )?;
                         }
                         xstate_bv |= 0x4;
                     }
                     // Component 19 (APX_F): R16-R31 at offset 960.
                     if rfbm & (1 << 19) != 0 {
                         for i in 0..16 {
-                            self.write_mem64(addr + 960 + (i as u64) * 8, self.get_reg(16 + i as u8, 8))?;
+                            self.write_mem64(
+                                addr + 960 + (i as u64) * 8,
+                                self.get_reg(16 + i as u8, 8),
+                            )?;
                         }
                         xstate_bv |= 1 << 19;
                     }
@@ -425,8 +436,7 @@ impl X86_64Vcpu {
                 }
                 5 => {
                     // XRSTOR - restore x87/SSE/AVX state selected by (EDX:EAX) & XCR0.
-                    let rfbm = ((self.regs.rax & 0xFFFF_FFFF) | (self.regs.rdx << 32))
-                        & self.xcr0;
+                    let rfbm = ((self.regs.rax & 0xFFFF_FFFF) | (self.regs.rdx << 32)) & self.xcr0;
                     let xstate_bv = self.read_mem64(addr + 512)?;
                     if rfbm & 0x1 != 0 {
                         if xstate_bv & 0x1 != 0 {
@@ -454,7 +464,8 @@ impl X86_64Vcpu {
                     if rfbm & 0x2 != 0 {
                         if xstate_bv & 0x2 != 0 {
                             for i in 0..16 {
-                                self.regs.xmm[i][0] = self.read_mem64(addr + 160 + (i as u64) * 16)?;
+                                self.regs.xmm[i][0] =
+                                    self.read_mem64(addr + 160 + (i as u64) * 16)?;
                                 self.regs.xmm[i][1] =
                                     self.read_mem64(addr + 160 + (i as u64) * 16 + 8)?;
                             }
@@ -467,7 +478,8 @@ impl X86_64Vcpu {
                     if rfbm & 0x4 != 0 {
                         if xstate_bv & 0x4 != 0 {
                             for i in 0..16 {
-                                self.regs.ymm_high[i][0] = self.read_mem64(addr + 576 + (i as u64) * 16)?;
+                                self.regs.ymm_high[i][0] =
+                                    self.read_mem64(addr + 576 + (i as u64) * 16)?;
                                 self.regs.ymm_high[i][1] =
                                     self.read_mem64(addr + 576 + (i as u64) * 16 + 8)?;
                             }

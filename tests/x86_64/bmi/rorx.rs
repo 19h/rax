@@ -55,7 +55,11 @@ fn test_rorx_32bit_rotate_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x091A2B3C, "EAX should be rotated right by 1");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x091A2B3C,
+        "EAX should be rotated right by 1"
+    );
 }
 
 #[test]
@@ -70,7 +74,11 @@ fn test_rorx_32bit_rotate_4() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x81234567, "EAX should be rotated right by 4");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x81234567,
+        "EAX should be rotated right by 4"
+    );
 }
 
 #[test]
@@ -85,7 +93,11 @@ fn test_rorx_32bit_rotate_8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x78123456, "EAX should be rotated right by 8");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x78123456,
+        "EAX should be rotated right by 8"
+    );
 }
 
 #[test]
@@ -100,7 +112,11 @@ fn test_rorx_32bit_rotate_16() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x56781234, "EAX should be rotated right by 16");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x56781234,
+        "EAX should be rotated right by 16"
+    );
 }
 
 #[test]
@@ -115,7 +131,11 @@ fn test_rorx_32bit_rotate_24() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x34567812, "EAX should be rotated right by 24");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x34567812,
+        "EAX should be rotated right by 24"
+    );
 }
 
 #[test]
@@ -130,7 +150,11 @@ fn test_rorx_32bit_rotate_31() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x2468ACF0, "EAX should be rotated right by 31");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x2468ACF0,
+        "EAX should be rotated right by 31"
+    );
 }
 
 #[test]
@@ -146,7 +170,11 @@ fn test_rorx_32bit_rotate_32() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 32 & 0x1F = 0, so no rotation
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX should be unchanged (count masked to 0)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX should be unchanged (count masked to 0)"
+    );
 }
 
 #[test]
@@ -162,7 +190,11 @@ fn test_rorx_32bit_count_masked() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 40 & 0x1F = 8
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x78123456, "EAX should be rotated by 8 (40 masked to 8)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x78123456,
+        "EAX should be rotated by 8 (40 masked to 8)"
+    );
 }
 
 // ============================================================================
@@ -196,7 +228,10 @@ fn test_rorx_64bit_rotate_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x091A2B3C4D5E6F78, "RAX should be rotated right by 1");
+    assert_eq!(
+        regs.rax, 0x091A2B3C4D5E6F78,
+        "RAX should be rotated right by 1"
+    );
 }
 
 #[test]
@@ -211,7 +246,10 @@ fn test_rorx_64bit_rotate_4() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0123456789ABCDEF, "RAX should be rotated right by 4");
+    assert_eq!(
+        regs.rax, 0x0123456789ABCDEF,
+        "RAX should be rotated right by 4"
+    );
 }
 
 #[test]
@@ -226,7 +264,10 @@ fn test_rorx_64bit_rotate_8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xF0123456789ABCDE, "RAX should be rotated right by 8");
+    assert_eq!(
+        regs.rax, 0xF0123456789ABCDE,
+        "RAX should be rotated right by 8"
+    );
 }
 
 #[test]
@@ -241,7 +282,10 @@ fn test_rorx_64bit_rotate_16() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xDEF0123456789ABC, "RAX should be rotated right by 16");
+    assert_eq!(
+        regs.rax, 0xDEF0123456789ABC,
+        "RAX should be rotated right by 16"
+    );
 }
 
 #[test]
@@ -256,7 +300,10 @@ fn test_rorx_64bit_rotate_32() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x9ABCDEF012345678, "RAX should be rotated right by 32");
+    assert_eq!(
+        regs.rax, 0x9ABCDEF012345678,
+        "RAX should be rotated right by 32"
+    );
 }
 
 #[test]
@@ -271,7 +318,10 @@ fn test_rorx_64bit_rotate_48() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x56789ABCDEF01234, "RAX should be rotated right by 48");
+    assert_eq!(
+        regs.rax, 0x56789ABCDEF01234,
+        "RAX should be rotated right by 48"
+    );
 }
 
 #[test]
@@ -286,7 +336,10 @@ fn test_rorx_64bit_rotate_63() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x2468ACF13579BDE0, "RAX should be rotated right by 63");
+    assert_eq!(
+        regs.rax, 0x2468ACF13579BDE0,
+        "RAX should be rotated right by 63"
+    );
 }
 
 #[test]
@@ -302,7 +355,10 @@ fn test_rorx_64bit_rotate_64() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 64 & 0x3F = 0, so no rotation
-    assert_eq!(regs.rax, 0x123456789ABCDEF0, "RAX should be unchanged (count masked to 0)");
+    assert_eq!(
+        regs.rax, 0x123456789ABCDEF0,
+        "RAX should be unchanged (count masked to 0)"
+    );
 }
 
 #[test]
@@ -318,7 +374,10 @@ fn test_rorx_64bit_count_masked() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 80 & 0x3F = 16
-    assert_eq!(regs.rax, 0xDEF0123456789ABC, "RAX should be rotated by 16 (80 masked to 16)");
+    assert_eq!(
+        regs.rax, 0xDEF0123456789ABC,
+        "RAX should be rotated by 16 (80 masked to 16)"
+    );
 }
 
 // ============================================================================
@@ -329,7 +388,7 @@ fn test_rorx_64bit_count_masked() {
 fn test_rorx_32bit_flags_not_modified_cf_set() {
     // RORX should not modify CF even when set
     let code = [
-        0xf9,                               // STC (set CF)
+        0xf9, // STC (set CF)
         0xc4, 0xe3, 0x7b, 0xf0, 0xc3, 0x08, // RORX EAX, EBX, 8
         0xf4,
     ];
@@ -349,7 +408,7 @@ fn test_rorx_32bit_flags_not_modified_cf_set() {
 fn test_rorx_32bit_flags_not_modified_cf_clear() {
     // RORX should not modify CF even when clear
     let code = [
-        0xf8,                               // CLC (clear CF)
+        0xf8, // CLC (clear CF)
         0xc4, 0xe3, 0x7b, 0xf0, 0xc3, 0x08, // RORX EAX, EBX, 8
         0xf4,
     ];
@@ -370,8 +429,8 @@ fn test_rorx_64bit_preserves_all_flags() {
     // Test that RORX preserves all arithmetic flags
     let code = [
         0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
-        0x48, 0x83, 0xe8, 0x02,                   // SUB RAX, 2 (sets CF, SF, AF)
-        0xc4, 0xe3, 0xfb, 0xf0, 0xc3, 0x10,       // RORX RAX, RBX, 16
+        0x48, 0x83, 0xe8, 0x02, // SUB RAX, 2 (sets CF, SF, AF)
+        0xc4, 0xe3, 0xfb, 0xf0, 0xc3, 0x10, // RORX RAX, RBX, 16
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -400,7 +459,11 @@ fn test_rorx_32bit_all_zeros() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000000, "All zeros remain all zeros");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000000,
+        "All zeros remain all zeros"
+    );
 }
 
 #[test]
@@ -415,7 +478,11 @@ fn test_rorx_32bit_all_ones() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "All ones remain all ones");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFF,
+        "All ones remain all ones"
+    );
 }
 
 #[test]
@@ -449,7 +516,10 @@ fn test_rorx_64bit_alternating_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x5555555555555555, "Alternating pattern rotates correctly");
+    assert_eq!(
+        regs.rax, 0x5555555555555555,
+        "Alternating pattern rotates correctly"
+    );
 }
 
 #[test]
@@ -466,7 +536,11 @@ fn test_rorx_32bit_single_bit() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0x100 >> 8 = 0x1 (bit 8 rotates to bit 0)
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000001, "Single bit rotates correctly");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000001,
+        "Single bit rotates correctly"
+    );
 }
 
 #[test]
@@ -492,7 +566,8 @@ fn test_rorx_64bit_single_bit() {
 fn test_rorx_32bit_memory_operand() {
     // RORX EAX, [0x2000], 8
     let code = [
-        0xc4, 0xe3, 0x7b, 0xf0, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x08, // RORX EAX, [0x2000], 8
+        0xc4, 0xe3, 0x7b, 0xf0, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
+        0x08, // RORX EAX, [0x2000], 8
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -500,14 +575,19 @@ fn test_rorx_32bit_memory_operand() {
     write_mem_u32(&mem, 0x12345678);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x78123456, "EAX should be rotated from memory");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x78123456,
+        "EAX should be rotated from memory"
+    );
 }
 
 #[test]
 fn test_rorx_64bit_memory_operand() {
     // RORX RAX, [0x2000], 16
     let code = [
-        0xc4, 0xe3, 0xfb, 0xf0, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x10, // RORX RAX, [0x2000], 16
+        0xc4, 0xe3, 0xfb, 0xf0, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
+        0x10, // RORX RAX, [0x2000], 16
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -515,7 +595,10 @@ fn test_rorx_64bit_memory_operand() {
     write_mem_u64(&mem, 0x123456789ABCDEF0);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xDEF0123456789ABC, "RAX should be rotated from memory");
+    assert_eq!(
+        regs.rax, 0xDEF0123456789ABC,
+        "RAX should be rotated from memory"
+    );
 }
 
 // ============================================================================
@@ -534,7 +617,11 @@ fn test_rorx_32bit_r8d_r9d() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0x78123456, "R8D should be rotated from R9D");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0x78123456,
+        "R8D should be rotated from R9D"
+    );
 }
 
 #[test]
@@ -549,7 +636,10 @@ fn test_rorx_64bit_r14_r15() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r14, 0xDEF0123456789ABC, "R14 should be rotated from R15");
+    assert_eq!(
+        regs.r14, 0xDEF0123456789ABC,
+        "R14 should be rotated from R15"
+    );
 }
 
 #[test]
@@ -564,7 +654,11 @@ fn test_rorx_32bit_eax_r11d() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x81234567, "EAX should be rotated from R11D");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x81234567,
+        "EAX should be rotated from R11D"
+    );
 }
 
 // ============================================================================

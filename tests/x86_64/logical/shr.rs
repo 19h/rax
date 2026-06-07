@@ -1,5 +1,5 @@
-use crate::common::{run_until_hlt, setup_vm};
 use crate::common::*;
+use crate::common::{run_until_hlt, setup_vm};
 use rax::backend::emulator::x86_64::flags;
 use rax::cpu::Registers;
 
@@ -123,7 +123,10 @@ fn test_shr_count_zero_preserves_flags() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x42, "AL unchanged");
-    assert_eq!(regs.rflags, initial_flags, "Flags unchanged when count is 0");
+    assert_eq!(
+        regs.rflags, initial_flags,
+        "Flags unchanged when count is 0"
+    );
 }
 
 #[test]
@@ -271,7 +274,7 @@ fn test_shr_edi_to_zero() {
     // Note: SHR EDI, 32 would mask to 0 (no shift), so we use 31 + 1
     let code = [
         0xc1, 0xef, 0x1f, // SHR EDI, 31
-        0xd1, 0xef,       // SHR EDI, 1
+        0xd1, 0xef, // SHR EDI, 1
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -339,7 +342,7 @@ fn test_shr_rdi_to_zero() {
     // Note: SHR RDI, 64 would mask to 0 (no shift), so we use 63 + 1
     let code = [
         0x48, 0xc1, 0xef, 0x3f, // SHR RDI, 63
-        0x48, 0xd1, 0xef,       // SHR RDI, 1
+        0x48, 0xd1, 0xef, // SHR RDI, 1
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -360,7 +363,10 @@ fn test_shr_count_masked_64bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0000000000000001, "RAX: 0x08 >> 3 = 0x01 (count masked)");
+    assert_eq!(
+        regs.rax, 0x0000000000000001,
+        "RAX: 0x08 >> 3 = 0x01 (count masked)"
+    );
 }
 
 // ============================================================================
@@ -497,7 +503,11 @@ fn test_shr_no_sign_extension() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Logical shift: zeros fill from left
-    assert_eq!(regs.rax & 0xFF, 0x0F, "AL: 0xFF >> 4 = 0x0F (no sign extension)");
+    assert_eq!(
+        regs.rax & 0xFF,
+        0x0F,
+        "AL: 0xFF >> 4 = 0x0F (no sign extension)"
+    );
 }
 
 #[test]
@@ -556,8 +566,14 @@ fn test_strict_shr_r32_zero_fill_and_cf() {
     regs.rax = 0xFFFF_FFFF_8000_001F;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000_0000_0800_0001, "SHR EAX,4 zero-fills, clears upper RAX");
-    assert!(cf_set(regs.rflags), "CF = last bit shifted out (bit 3 of orig = 1)");
+    assert_eq!(
+        regs.rax, 0x0000_0000_0800_0001,
+        "SHR EAX,4 zero-fills, clears upper RAX"
+    );
+    assert!(
+        cf_set(regs.rflags),
+        "CF = last bit shifted out (bit 3 of orig = 1)"
+    );
 }
 
 #[test]
@@ -584,7 +600,10 @@ fn test_strict_shrd_r32() {
     regs.rdx = 0xAABB_CCDD;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xDD12_3456, "SHRD EAX,EDX,8 brings in EDX low byte at top");
+    assert_eq!(
+        regs.rax, 0xDD12_3456,
+        "SHRD EAX,EDX,8 brings in EDX low byte at top"
+    );
 }
 
 #[test]

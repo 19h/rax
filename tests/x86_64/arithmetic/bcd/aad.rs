@@ -37,7 +37,7 @@ fn test_aad_zero() {
     // AX = 0x0000, result: AL = 0, AH = 0
     let code = [
         0xd5, 0x0a, // AAD
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0000;
@@ -210,10 +210,10 @@ fn test_aad_before_div_58_by_4() {
     // Simulate: 58 / 4 = 14 remainder 2
     let code = [
         0xb8, 0x08, 0x05, // MOV AX, 0x0508 (BCD 58)
-        0xd5, 0x0a,       // AAD (convert to binary 58)
-        0xb3, 0x04,       // MOV BL, 4
-        0xf6, 0xf3,       // DIV BL (AL = quotient, AH = remainder)
-        0xf4,             // HLT
+        0xd5, 0x0a, // AAD (convert to binary 58)
+        0xb3, 0x04, // MOV BL, 4
+        0xf6, 0xf3, // DIV BL (AL = quotient, AH = remainder)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -227,10 +227,10 @@ fn test_aad_before_div_72_by_8() {
     // Simulate: 72 / 8 = 9 remainder 0
     let code = [
         0xb8, 0x02, 0x07, // MOV AX, 0x0702 (BCD 72)
-        0xd5, 0x0a,       // AAD (convert to binary 72)
-        0xb3, 0x08,       // MOV BL, 8
-        0xf6, 0xf3,       // DIV BL
-        0xf4,             // HLT
+        0xd5, 0x0a, // AAD (convert to binary 72)
+        0xb3, 0x08, // MOV BL, 8
+        0xf6, 0xf3, // DIV BL
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -244,10 +244,10 @@ fn test_aad_before_div_37_by_5() {
     // Simulate: 37 / 5 = 7 remainder 2
     let code = [
         0xb8, 0x07, 0x03, // MOV AX, 0x0307 (BCD 37)
-        0xd5, 0x0a,       // AAD (convert to binary 37)
-        0xb3, 0x05,       // MOV BL, 5
-        0xf6, 0xf3,       // DIV BL
-        0xf4,             // HLT
+        0xd5, 0x0a, // AAD (convert to binary 37)
+        0xb3, 0x05, // MOV BL, 5
+        0xf6, 0xf3, // DIV BL
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -261,10 +261,10 @@ fn test_aad_before_div_99_by_9() {
     // Simulate: 99 / 9 = 11 remainder 0
     let code = [
         0xb8, 0x09, 0x09, // MOV AX, 0x0909 (BCD 99)
-        0xd5, 0x0a,       // AAD (convert to binary 99)
-        0xb3, 0x09,       // MOV BL, 9
-        0xf6, 0xf3,       // DIV BL
-        0xf4,             // HLT
+        0xd5, 0x0a, // AAD (convert to binary 99)
+        0xb3, 0x09, // MOV BL, 9
+        0xf6, 0xf3, // DIV BL
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -282,7 +282,7 @@ fn test_aad_base_2() {
     // AX = 0x0301 (3*2 + 1 = 7 in base 2), result: AL = 7
     let code = [
         0xd5, 0x02, // AAD 2
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0301;
@@ -298,7 +298,7 @@ fn test_aad_base_8_octal() {
     // AX = 0x0305 (3*8 + 5 = 29 in base 8), result: AL = 29
     let code = [
         0xd5, 0x08, // AAD 8 (octal)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0305;
@@ -314,7 +314,7 @@ fn test_aad_base_12() {
     // AX = 0x0407 (4*12 + 7 = 55 in base 12), result: AL = 55
     let code = [
         0xd5, 0x0c, // AAD 12
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0407;
@@ -330,7 +330,7 @@ fn test_aad_base_16_hex() {
     // AX = 0x0A0B (10*16 + 11 = 171 in base 16), result: AL = 171
     let code = [
         0xd5, 0x10, // AAD 16 (hex)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0A0B;
@@ -346,7 +346,7 @@ fn test_aad_base_7() {
     // AX = 0x0506 (5*7 + 6 = 41 in base 7), result: AL = 41
     let code = [
         0xd5, 0x07, // AAD 7
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0506;
@@ -470,7 +470,11 @@ fn test_aad_preserves_high_rax() {
     let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax >> 16, 0x1234_5678_DEAD, "High bits of RAX should be preserved");
+    assert_eq!(
+        regs.rax >> 16,
+        0x1234_5678_DEAD,
+        "High bits of RAX should be preserved"
+    );
     assert_eq!(regs.rax & 0xFF, 25, "AL should be 25");
     assert_eq!((regs.rax >> 8) & 0xFF, 0x00, "AH should be 0");
 }
@@ -489,8 +493,21 @@ fn test_aad_all_two_digit_bcd() {
             let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
             let regs = run_until_hlt(&mut vcpu).unwrap();
 
-            assert_eq!(regs.rax & 0xFF, expected, "AL should be {} for BCD {}{}", expected, tens, ones);
-            assert_eq!((regs.rax >> 8) & 0xFF, 0x00, "AH should be 0 for BCD {}{}", tens, ones);
+            assert_eq!(
+                regs.rax & 0xFF,
+                expected,
+                "AL should be {} for BCD {}{}",
+                expected,
+                tens,
+                ones
+            );
+            assert_eq!(
+                (regs.rax >> 8) & 0xFF,
+                0x00,
+                "AH should be 0 for BCD {}{}",
+                tens,
+                ones
+            );
         }
     }
 }
@@ -529,11 +546,11 @@ fn test_aad_ah_only() {
 fn test_aad_with_different_bases() {
     // Test various bases with AX = 0x0304
     let test_cases = [
-        (2, 3 * 2 + 4),     // base 2: 3*2 + 4 = 10
-        (5, 3 * 5 + 4),     // base 5: 3*5 + 4 = 19
-        (10, 3 * 10 + 4),   // base 10: 3*10 + 4 = 34
-        (12, 3 * 12 + 4),   // base 12: 3*12 + 4 = 40
-        (16, 3 * 16 + 4),   // base 16: 3*16 + 4 = 52
+        (2, 3 * 2 + 4),   // base 2: 3*2 + 4 = 10
+        (5, 3 * 5 + 4),   // base 5: 3*5 + 4 = 19
+        (10, 3 * 10 + 4), // base 10: 3*10 + 4 = 34
+        (12, 3 * 12 + 4), // base 12: 3*12 + 4 = 40
+        (16, 3 * 16 + 4), // base 16: 3*16 + 4 = 52
     ];
 
     for (base, expected) in test_cases.iter() {
@@ -543,8 +560,18 @@ fn test_aad_with_different_bases() {
         let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFF, *expected as u64, "AL incorrect for base {}", base);
-        assert_eq!((regs.rax >> 8) & 0xFF, 0x00, "AH should be 0 for base {}", base);
+        assert_eq!(
+            regs.rax & 0xFF,
+            *expected as u64,
+            "AL incorrect for base {}",
+            base
+        );
+        assert_eq!(
+            (regs.rax >> 8) & 0xFF,
+            0x00,
+            "AH should be 0 for base {}",
+            base
+        );
     }
 }
 

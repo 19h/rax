@@ -630,51 +630,27 @@ impl X86_64Vcpu {
         let c1 = ((counts >> 32) as u32).min(32);
 
         let r0 = if left {
-            if c0 >= 32 {
-                0
-            } else {
-                d0 << c0
-            }
+            if c0 >= 32 { 0 } else { d0 << c0 }
         } else if arith {
             if c0 >= 32 {
-                if (d0 as i32) < 0 {
-                    0xFFFFFFFF
-                } else {
-                    0
-                }
+                if (d0 as i32) < 0 { 0xFFFFFFFF } else { 0 }
             } else {
                 ((d0 as i32) >> c0) as u32
             }
         } else {
-            if c0 >= 32 {
-                0
-            } else {
-                d0 >> c0
-            }
+            if c0 >= 32 { 0 } else { d0 >> c0 }
         };
 
         let r1 = if left {
-            if c1 >= 32 {
-                0
-            } else {
-                d1 << c1
-            }
+            if c1 >= 32 { 0 } else { d1 << c1 }
         } else if arith {
             if c1 >= 32 {
-                if (d1 as i32) < 0 {
-                    0xFFFFFFFF
-                } else {
-                    0
-                }
+                if (d1 as i32) < 0 { 0xFFFFFFFF } else { 0 }
             } else {
                 ((d1 as i32) >> c1) as u32
             }
         } else {
-            if c1 >= 32 {
-                0
-            } else {
-                d1 >> c1
-            }
+            if c1 >= 32 { 0 } else { d1 >> c1 }
         };
 
         (r0 as u64) | ((r1 as u64) << 32)
@@ -684,17 +660,9 @@ impl X86_64Vcpu {
     fn variable_shift_qword(&self, val: u64, count: u64, left: bool) -> u64 {
         let c = count.min(64) as u32;
         if left {
-            if c >= 64 {
-                0
-            } else {
-                val << c
-            }
+            if c >= 64 { 0 } else { val << c }
         } else {
-            if c >= 64 {
-                0
-            } else {
-                val >> c
-            }
+            if c >= 64 { 0 } else { val >> c }
         }
     }
 }

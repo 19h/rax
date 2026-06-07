@@ -14,7 +14,11 @@ pub fn lodsb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     // 32-bit addressing (ESI/ECX) in 64-bit mode.
     let src_base = vcpu.get_segment_base(ctx.segment_override);
     let addr32 = ctx.address_size_override && vcpu.sregs.cs.l;
-    let count = if is_rep { rep_count(vcpu.regs.rcx, addr32) } else { 1 };
+    let count = if is_rep {
+        rep_count(vcpu.regs.rcx, addr32)
+    } else {
+        1
+    };
     for _ in 0..count {
         if is_rep && rep_count(vcpu.regs.rcx, addr32) == 0 {
             break;
@@ -39,7 +43,11 @@ pub fn lods(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
     let is_rep = ctx.rep_prefix.is_some();
     let src_base = vcpu.get_segment_base(ctx.segment_override);
     let addr32 = ctx.address_size_override && vcpu.sregs.cs.l;
-    let count = if is_rep { rep_count(vcpu.regs.rcx, addr32) } else { 1 };
+    let count = if is_rep {
+        rep_count(vcpu.regs.rcx, addr32)
+    } else {
+        1
+    };
     for _ in 0..count {
         if is_rep && rep_count(vcpu.regs.rcx, addr32) == 0 {
             break;

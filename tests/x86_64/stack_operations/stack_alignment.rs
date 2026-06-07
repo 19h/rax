@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm, read_mem_at_u64};
+use crate::common::{read_mem_at_u64, run_until_hlt, setup_vm};
 use rax::cpu::Registers;
 
 // Comprehensive tests for stack alignment requirements
@@ -64,7 +64,11 @@ fn test_two_pushes_restore_alignment() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rsp & 0x0F, 0, "RSP is 16-byte aligned after two pushes");
+    assert_eq!(
+        regs.rsp & 0x0F,
+        0,
+        "RSP is 16-byte aligned after two pushes"
+    );
 }
 
 #[test]
@@ -110,7 +114,11 @@ fn test_enter_maintains_alignment() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rsp & 0x0F, 8, "ENTER pushes RBP (8 bytes), misaligning");
+    assert_eq!(
+        regs.rsp & 0x0F,
+        8,
+        "ENTER pushes RBP (8 bytes), misaligning"
+    );
 }
 
 #[test]
@@ -155,7 +163,11 @@ fn test_enter_leave_alignment_roundtrip() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rsp & 0x0F, 0, "ENTER/LEAVE roundtrip preserves alignment");
+    assert_eq!(
+        regs.rsp & 0x0F,
+        0,
+        "ENTER/LEAVE roundtrip preserves alignment"
+    );
 }
 
 // ============================================================================
@@ -179,9 +191,8 @@ fn test_push_imm_alignment() {
 #[test]
 fn test_multiple_push_imm_pattern() {
     let code = [
-        0x6a, 0x01, 0x6a, 0x02, 0x6a, 0x03, 0x6a, 0x04,
-        0x6a, 0x05, 0x6a, 0x06, 0x6a, 0x07, 0x6a, 0x08,
-        0xf4, // HLT
+        0x6a, 0x01, 0x6a, 0x02, 0x6a, 0x03, 0x6a, 0x04, 0x6a, 0x05, 0x6a, 0x06, 0x6a, 0x07, 0x6a,
+        0x08, 0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x1000;
@@ -317,7 +328,11 @@ fn test_function_prologue_alignment() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // PUSH RBP (8) + SUB 16 = 24 bytes, misaligned
-    assert_eq!(regs.rsp & 0x0F, 8, "Standard prologue results in misalignment");
+    assert_eq!(
+        regs.rsp & 0x0F,
+        8,
+        "Standard prologue results in misalignment"
+    );
 }
 
 #[test]
@@ -421,9 +436,7 @@ fn test_nested_function_alignment() {
 fn test_alignment_with_parameter_passing() {
     let code = [
         // Push 6 parameters (odd number)
-        0x6a, 0x01, 0x6a, 0x02, 0x6a, 0x03,
-        0x6a, 0x04, 0x6a, 0x05, 0x6a, 0x06,
-        0xf4, // HLT
+        0x6a, 0x01, 0x6a, 0x02, 0x6a, 0x03, 0x6a, 0x04, 0x6a, 0x05, 0x6a, 0x06, 0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x1000;
@@ -438,8 +451,7 @@ fn test_alignment_with_parameter_passing() {
 fn test_alignment_with_odd_parameters() {
     let code = [
         // Push 3 parameters (odd number)
-        0x6a, 0x01, 0x6a, 0x02, 0x6a, 0x03,
-        0xf4, // HLT
+        0x6a, 0x01, 0x6a, 0x02, 0x6a, 0x03, 0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x1000;
@@ -482,7 +494,12 @@ fn test_alignment_at_various_addresses() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rsp & 0x0F, 0, "Address 0x{:x} is 16-byte aligned", addr);
+        assert_eq!(
+            regs.rsp & 0x0F,
+            0,
+            "Address 0x{:x} is 16-byte aligned",
+            addr
+        );
     }
 }
 

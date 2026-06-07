@@ -24,14 +24,15 @@
 
 use crate::arm::decoder::{Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
 use crate::arm::execution::{
-    add_with_carry, compute_n_flag, compute_z_flag, condition_passed, expand_imm_c, shift_c,
-    sign_extend, ArmMemory, Armv7Cpu, MemoryError, ProcessorMode, Psr,
+    ArmMemory, Armv7Cpu, MemoryError, ProcessorMode, Psr, add_with_carry, compute_n_flag,
+    compute_z_flag, condition_passed, expand_imm_c, shift_c, sign_extend,
 };
 use crate::arm::vfp::{
-    vabs_f16_bits, vabs_f32, vabs_f64, vadd_f16_bits, vadd_f32, vadd_f64, vadd_i, vand, vbic,
-    vcls_i, vclz_i, vcmp_f16_bits_with_exception, vcmp_f32_with_exception, vcmp_f64_with_exception,
-    vcnt_i8, vcvt_f16_bits_f32, vcvt_f32_f16_bits, vcvt_f32_f64, vcvt_f32_s32, vcvt_f32_s32_fixed,
-    vcvt_f32_u32, vcvt_f32_u32_fixed, vcvt_f64_f32, vcvt_f64_s32, vcvt_f64_s32_fixed, vcvt_f64_u32,
+    Fpscr, NeonSize, RoundingMode, vabs_f16_bits, vabs_f32, vabs_f64, vadd_f16_bits, vadd_f32,
+    vadd_f64, vadd_i, vand, vbic, vcls_i, vclz_i, vcmp_f16_bits_with_exception,
+    vcmp_f32_with_exception, vcmp_f64_with_exception, vcnt_i8, vcvt_f16_bits_f32,
+    vcvt_f32_f16_bits, vcvt_f32_f64, vcvt_f32_s32, vcvt_f32_s32_fixed, vcvt_f32_u32,
+    vcvt_f32_u32_fixed, vcvt_f64_f32, vcvt_f64_s32, vcvt_f64_s32_fixed, vcvt_f64_u32,
     vcvt_f64_u32_fixed, vcvt_s32_f32, vcvt_s32_f32_fixed, vcvt_s32_f32_round, vcvt_s32_f64,
     vcvt_s32_f64_fixed, vcvt_s32_f64_round, vcvt_u32_f32, vcvt_u32_f32_fixed, vcvt_u32_f32_round,
     vcvt_u32_f64, vcvt_u32_f64_fixed, vcvt_u32_f64_round, vcvtr_s32_f32, vcvtr_s32_f64,
@@ -43,7 +44,7 @@ use crate::arm::vfp::{
     vmul_f16_bits, vmul_f32, vmul_f64, vmvn, vneg_f16_bits, vneg_f32, vneg_f64, vnmla_f16_bits,
     vnmla_f32, vnmla_f64, vnmls_f16_bits, vnmls_f32, vnmls_f64, vnmul_f16_bits, vnmul_f32,
     vnmul_f64, vorn, vorr, vrev, vrint_f16_bits, vrint_f32, vrint_f64, vsqrt_f16_bits, vsqrt_f32,
-    vsqrt_f64, vsub_f16_bits, vsub_f32, vsub_f64, vsub_i, Fpscr, NeonSize, RoundingMode,
+    vsqrt_f64, vsub_f16_bits, vsub_f32, vsub_f64, vsub_i,
 };
 
 /// Result of instruction execution.
@@ -397,18 +398,14 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             Mnemonic::VDUP => self.exec_neon_vdup(insn),
             Mnemonic::VSHL => self.exec_vshl(insn),
             Mnemonic::VQSHL => self.exec_vqshl(insn),
-            Mnemonic::VRSHL | Mnemonic::VQRSHL => {
-                self.exec_neon_shift_register(insn)
-            }
+            Mnemonic::VRSHL | Mnemonic::VQRSHL => self.exec_neon_shift_register(insn),
             Mnemonic::VQSHLU => self.exec_neon_saturating_shift_left_immediate(insn),
             Mnemonic::VSHR
             | Mnemonic::VRSHR
             | Mnemonic::VSRA
             | Mnemonic::VRSRA
             | Mnemonic::VSLI
-            | Mnemonic::VSRI => {
-                self.exec_neon_shift_immediate(insn)
-            }
+            | Mnemonic::VSRI => self.exec_neon_shift_immediate(insn),
             Mnemonic::VSHRN
             | Mnemonic::VRSHRN
             | Mnemonic::VQSHRN
@@ -489,7 +486,9 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             | Mnemonic::VRINTX_F16
             | Mnemonic::VRINTX_F32
             | Mnemonic::VRINTZ_F16
-            | Mnemonic::VRINTZ_F32 if Self::is_neon_vrint_shape(insn.raw) => {
+            | Mnemonic::VRINTZ_F32
+                if Self::is_neon_vrint_shape(insn.raw) =>
+            {
                 self.exec_neon_vrint(insn)
             }
             Mnemonic::VRINTA_F32
@@ -529,7 +528,9 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             | Mnemonic::VCVTP_S32_F16
             | Mnemonic::VCVTP_U32_F16
             | Mnemonic::VCVTP_S32_F32
-            | Mnemonic::VCVTP_U32_F32 if Self::is_neon_directed_convert_shape(insn.raw) => {
+            | Mnemonic::VCVTP_U32_F32
+                if Self::is_neon_directed_convert_shape(insn.raw) =>
+            {
                 self.exec_neon_directed_convert(insn)
             }
             Mnemonic::VCVT_F32_S32
@@ -1613,11 +1614,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         let count = reglist.count_ones();
         let base = self.reg(n);
         let low = if u {
-            if p {
-                base.wrapping_add(4)
-            } else {
-                base
-            }
+            if p { base.wrapping_add(4) } else { base }
         } else if p {
             base.wrapping_sub(count * 4)
         } else {
@@ -2786,7 +2783,10 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         (raw >> 25) == 0b1111001
             && ((raw >> 24) & 1) == 1
             && ((raw >> 23) & 1) == 0
-            && matches!(((raw >> 8) & 0xF, (raw >> 21) & 1), (0b1101, 0) | (0b1111, 0 | 1))
+            && matches!(
+                ((raw >> 8) & 0xF, (raw >> 21) & 1),
+                (0b1101, 0) | (0b1111, 0 | 1)
+            )
             && ((raw >> 4) & 1) == 0
     }
 
@@ -2794,8 +2794,10 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
         }
-        if !matches!(insn.mnemonic, Mnemonic::VPADD | Mnemonic::VPMAX | Mnemonic::VPMIN)
-            || !Self::is_neon_fp_pairwise_shape(insn.raw)
+        if !matches!(
+            insn.mnemonic,
+            Mnemonic::VPADD | Mnemonic::VPMAX | Mnemonic::VPMIN
+        ) || !Self::is_neon_fp_pairwise_shape(insn.raw)
         {
             return ExecResult::Undefined;
         }
@@ -3662,7 +3664,10 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             && ((raw >> 20) & 1) == 1
             && ((raw >> 16) & 0x3) == 0b10
             && ((raw >> 10) & 0x3) == 0b01
-            && matches!((raw >> 7) & 0x7, 0b000 | 0b001 | 0b010 | 0b011 | 0b101 | 0b111)
+            && matches!(
+                (raw >> 7) & 0x7,
+                0b000 | 0b001 | 0b010 | 0b011 | 0b101 | 0b111
+            )
             && ((raw >> 4) & 1) == 0
     }
 
@@ -4369,9 +4374,17 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             return ExecResult::Undefined;
         }
 
-        let n = if q { (n_bit << 4) | vn } else { (vn << 1) | n_bit };
+        let n = if q {
+            (n_bit << 4) | vn
+        } else {
+            (vn << 1) | n_bit
+        };
         let m = if vector {
-            if q { (m_bit << 4) | vm } else { (vm << 1) | m_bit }
+            if q {
+                (m_bit << 4) | vm
+            } else {
+                (vm << 1) | m_bit
+            }
         } else if q {
             vm & 0x7
         } else {
@@ -4459,10 +4472,9 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             let m_elements = self.neon_read_vector_elements_u64(m + reg, 1, 1);
             let mut out = Vec::with_capacity(n_elements.len());
             for (n_elem, m_elem) in n_elements.into_iter().zip(m_elements.into_iter()) {
-                out.push(u64::from(Self::neon_polynomial_mul_u8(
-                    n_elem as u8,
-                    m_elem as u8,
-                ) as u8));
+                out.push(u64::from(
+                    Self::neon_polynomial_mul_u8(n_elem as u8, m_elem as u8) as u8,
+                ));
             }
             self.neon_write_vector_elements_u64(d + reg, 1, 1, &out);
         }
@@ -4659,11 +4671,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             if scalar_reg >= 32 || scalar_index as usize >= narrow_size.elements_per_d() {
                 return ExecResult::Undefined;
             }
-            Some(self.neon_read_d_elem_u64(
-                scalar_reg,
-                scalar_index,
-                narrow_ebytes,
-            ))
+            Some(self.neon_read_d_elem_u64(scalar_reg, scalar_index, narrow_ebytes))
         } else {
             None
         };
@@ -5678,18 +5686,14 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                     } else {
                         (-lhs).mul_add(rhs, 2.0)
                     }
-                } else if (lhs.is_infinite() && rhs == 0.0)
-                    || (rhs.is_infinite() && lhs == 0.0)
-                {
+                } else if (lhs.is_infinite() && rhs == 0.0) || (rhs.is_infinite() && lhs == 0.0) {
                     1.5
                 } else {
                     (-lhs).mul_add(rhs, 3.0) * 0.5
                 };
                 let result = match size {
                     NeonSize::S32 => u64::from(result.to_bits()),
-                    NeonSize::H16 => {
-                        u64::from(vcvt_f16_bits_f32(result, &mut self.cpu.vfp.fpscr))
-                    }
+                    NeonSize::H16 => u64::from(vcvt_f16_bits_f32(result, &mut self.cpu.vfp.fpscr)),
                     _ => return ExecResult::Undefined,
                 };
                 out.push(result);
@@ -6570,8 +6574,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
 
     fn neon_expand_modified_immediate(raw: u32) -> Option<u64> {
         let cmode = (raw >> 8) & 0xF;
-        let imm8 =
-            ((((raw >> 24) & 1) << 7) | (((raw >> 16) & 0x7) << 4) | (raw & 0xF)) as u64;
+        let imm8 = ((((raw >> 24) & 1) << 7) | (((raw >> 16) & 0x7) << 4) | (raw & 0xF)) as u64;
 
         let imm32 = match cmode {
             0b0000 | 0b0001 => imm8 as u32,
@@ -7299,9 +7302,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             let mut out = Vec::with_capacity(elements.len());
             for elem in elements {
                 let result = match insn.mnemonic {
-                    Mnemonic::VCVT_F32_S32 => {
-                        u64::from(vcvt_f32_s32(elem as u32 as i32).to_bits())
-                    }
+                    Mnemonic::VCVT_F32_S32 => u64::from(vcvt_f32_s32(elem as u32 as i32).to_bits()),
                     Mnemonic::VCVT_F32_U32 => u64::from(vcvt_f32_u32(elem as u32).to_bits()),
                     Mnemonic::VCVT_S32_F32 => {
                         let value =
@@ -7393,9 +7394,9 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             let mut out = Vec::with_capacity(elements.len());
             for elem in elements {
                 let result = match insn.mnemonic {
-                    Mnemonic::VCVT_F32_S32_FIXED => u64::from(
-                        vcvt_f32_s32_fixed(elem as u32 as i32, fbits).to_bits(),
-                    ),
+                    Mnemonic::VCVT_F32_S32_FIXED => {
+                        u64::from(vcvt_f32_s32_fixed(elem as u32 as i32, fbits).to_bits())
+                    }
                     Mnemonic::VCVT_F32_U32_FIXED => {
                         u64::from(vcvt_f32_u32_fixed(elem as u32, fbits).to_bits())
                     }
@@ -8838,11 +8839,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         let result = match size {
             0b10 => {
                 let ext = extb(rotated, unsigned);
-                if add {
-                    n.wrapping_add(ext)
-                } else {
-                    ext
-                }
+                if add { n.wrapping_add(ext) } else { ext }
             }
             0b11 => {
                 let h = rotated & 0xFFFF;
@@ -8851,11 +8848,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                 } else {
                     h as u16 as i16 as i32 as u32
                 };
-                if add {
-                    n.wrapping_add(ext)
-                } else {
-                    ext
-                }
+                if add { n.wrapping_add(ext) } else { ext }
             }
             _ => {
                 let lo = extb(rotated, unsigned) & 0xFFFF;
@@ -9251,11 +9244,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             self.reg(s) & 0xFF
         } else {
             let imm5 = ((insn.raw >> 7) & 0x1F) as u32;
-            if imm5 == 0 {
-                32
-            } else {
-                imm5
-            }
+            if imm5 == 0 { 32 } else { imm5 }
         };
 
         (d, m, shift_amount)
@@ -9559,8 +9548,8 @@ pub fn run_emulator<M: ArmMemory>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::arm::execution::FlatMemory;
     use crate::arm::ExecutionState;
+    use crate::arm::execution::FlatMemory;
 
     fn make_cpu() -> Armv7Cpu {
         Armv7Cpu::new()

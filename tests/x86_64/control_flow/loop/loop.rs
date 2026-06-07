@@ -1,4 +1,4 @@
-use crate::common::{setup_vm_legacy as setup_vm, run_until_hlt_legacy as run_until_hlt, VM};
+use crate::common::{VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm};
 
 // LOOP - Loop According to RCX Counter
 // Decrements RCX and jumps if RCX != 0

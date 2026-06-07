@@ -69,7 +69,7 @@ fn test_vcvtneps2bf16_xmm_memory() {
     // VCVTNEPS2BF16 XMM0, [RAX] (128-bit memory source)
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x7E, 0x08, 0x72, 0x00,       // VCVTNEPS2BF16 xmm0, [rax]
+        0x62, 0xF2, 0x7E, 0x08, 0x72, 0x00, // VCVTNEPS2BF16 xmm0, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -81,7 +81,7 @@ fn test_vcvtneps2bf16_ymm_memory() {
     // VCVTNEPS2BF16 XMM0, [RAX] (256-bit memory source)
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x7E, 0x28, 0x72, 0x00,       // VCVTNEPS2BF16 xmm0, [rax]
+        0x62, 0xF2, 0x7E, 0x28, 0x72, 0x00, // VCVTNEPS2BF16 xmm0, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -93,7 +93,7 @@ fn test_vcvtneps2bf16_zmm_memory() {
     // VCVTNEPS2BF16 YMM0, [RAX] (512-bit memory source)
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x7E, 0x48, 0x72, 0x00,       // VCVTNEPS2BF16 ymm0, [rax]
+        0x62, 0xF2, 0x7E, 0x48, 0x72, 0x00, // VCVTNEPS2BF16 ymm0, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -198,7 +198,7 @@ fn test_vcvtne2ps2bf16_xmm_memory() {
     // VCVTNE2PS2BF16 XMM0, XMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x77, 0x08, 0x72, 0x00,       // VCVTNE2PS2BF16 xmm0, xmm1, [rax]
+        0x62, 0xF2, 0x77, 0x08, 0x72, 0x00, // VCVTNE2PS2BF16 xmm0, xmm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -210,7 +210,7 @@ fn test_vcvtne2ps2bf16_zmm_memory() {
     // VCVTNE2PS2BF16 ZMM0, ZMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x77, 0x48, 0x72, 0x00,       // VCVTNE2PS2BF16 zmm0, zmm1, [rax]
+        0x62, 0xF2, 0x77, 0x48, 0x72, 0x00, // VCVTNE2PS2BF16 zmm0, zmm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -244,7 +244,7 @@ fn test_vcvtne2ps2bf16_zmm_broadcast() {
     // VCVTNE2PS2BF16 ZMM0, ZMM1, dword ptr [RAX]{1to16}
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x77, 0x58, 0x72, 0x00,       // VCVTNE2PS2BF16 zmm0, zmm1, [rax]{1to16}
+        0x62, 0xF2, 0x77, 0x58, 0x72, 0x00, // VCVTNE2PS2BF16 zmm0, zmm1, [rax]{1to16}
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -327,7 +327,7 @@ fn test_vdpbf16ps_xmm_memory() {
     // VDPBF16PS XMM0, XMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x76, 0x08, 0x52, 0x00,       // VDPBF16PS xmm0, xmm1, [rax]
+        0x62, 0xF2, 0x76, 0x08, 0x52, 0x00, // VDPBF16PS xmm0, xmm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -339,7 +339,7 @@ fn test_vdpbf16ps_zmm_memory() {
     // VDPBF16PS ZMM0, ZMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x76, 0x48, 0x52, 0x00,       // VDPBF16PS zmm0, zmm1, [rax]
+        0x62, 0xF2, 0x76, 0x48, 0x52, 0x00, // VDPBF16PS zmm0, zmm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -373,7 +373,7 @@ fn test_vdpbf16ps_zmm_broadcast() {
     // VDPBF16PS ZMM0, ZMM1, dword ptr [RAX]{1to16}
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x76, 0x58, 0x52, 0x00,       // VDPBF16PS zmm0, zmm1, [rax]{1to16}
+        0x62, 0xF2, 0x76, 0x58, 0x52, 0x00, // VDPBF16PS zmm0, zmm1, [rax]{1to16}
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

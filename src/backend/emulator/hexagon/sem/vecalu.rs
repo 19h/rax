@@ -8,7 +8,7 @@
 //! spec (`semantics_generated.pyinc`); lane macros from `imported/macros.def`.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{fld, SemCtx};
+use super::{SemCtx, fld};
 
 // ---- lane extraction helpers (mirror fGET*/fSET* macros) ------------------
 
@@ -65,11 +65,7 @@ fn setw(dst: &mut u64, i: u32, val: i64) {
 /// Convergent rounding (`fCRND`): if low two bits are 0b11, add 1.
 #[inline]
 fn crnd(a: i64) -> i64 {
-    if (a & 0x3) == 0x3 {
-        a + 1
-    } else {
-        a
-    }
+    if (a & 0x3) == 0x3 { a + 1 } else { a }
 }
 
 /// Execute a vecalu-class opcode. Returns `false` if `op` is not in this class.

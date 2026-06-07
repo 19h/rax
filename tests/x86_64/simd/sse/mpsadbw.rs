@@ -19,7 +19,8 @@ const ALIGNED_ADDR: u64 = 0x3000;
 #[test]
 fn test_mpsadbw_xmm0_xmm1_offset_0x00() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x42, 0xc1, 0x00, // MPSADBW XMM0, XMM1, 0x00 (src offset 0, dest offset 0)
+        0x66, 0x0f, 0x3a, 0x42, 0xc1,
+        0x00, // MPSADBW XMM0, XMM1, 0x00 (src offset 0, dest offset 0)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -60,7 +61,8 @@ fn test_mpsadbw_xmm0_xmm1_offset_0x03() {
 #[test]
 fn test_mpsadbw_xmm0_xmm1_offset_0x04() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x42, 0xc1, 0x04, // MPSADBW XMM0, XMM1, 0x04 (src offset 0, dest offset 32)
+        0x66, 0x0f, 0x3a, 0x42, 0xc1,
+        0x04, // MPSADBW XMM0, XMM1, 0x04 (src offset 0, dest offset 32)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -70,7 +72,8 @@ fn test_mpsadbw_xmm0_xmm1_offset_0x04() {
 #[test]
 fn test_mpsadbw_xmm0_xmm1_offset_0x05() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x42, 0xc1, 0x05, // MPSADBW XMM0, XMM1, 0x05 (src offset 32, dest offset 32)
+        0x66, 0x0f, 0x3a, 0x42, 0xc1,
+        0x05, // MPSADBW XMM0, XMM1, 0x05 (src offset 32, dest offset 32)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -80,7 +83,8 @@ fn test_mpsadbw_xmm0_xmm1_offset_0x05() {
 #[test]
 fn test_mpsadbw_xmm0_xmm1_offset_0x06() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x42, 0xc1, 0x06, // MPSADBW XMM0, XMM1, 0x06 (src offset 64, dest offset 32)
+        0x66, 0x0f, 0x3a, 0x42, 0xc1,
+        0x06, // MPSADBW XMM0, XMM1, 0x06 (src offset 64, dest offset 32)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -90,7 +94,8 @@ fn test_mpsadbw_xmm0_xmm1_offset_0x06() {
 #[test]
 fn test_mpsadbw_xmm0_xmm1_offset_0x07() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x42, 0xc1, 0x07, // MPSADBW XMM0, XMM1, 0x07 (src offset 96, dest offset 32)
+        0x66, 0x0f, 0x3a, 0x42, 0xc1,
+        0x07, // MPSADBW XMM0, XMM1, 0x07 (src offset 96, dest offset 32)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -194,10 +199,11 @@ fn test_mpsadbw_xmm0_mem_offset_0x00() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data: [u8; 16] = [
-        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-        0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10,
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0x10,
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -214,8 +220,12 @@ fn test_mpsadbw_xmm1_mem_offset_0x01() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: [u8; 16] = [0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    let data: [u8; 16] = [
+        0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+        0xaa,
+    ];
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -232,8 +242,12 @@ fn test_mpsadbw_xmm2_mem_offset_0x02() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: [u8; 16] = [0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    let data: [u8; 16] = [
+        0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55,
+        0x55,
+    ];
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -250,8 +264,12 @@ fn test_mpsadbw_xmm3_mem_offset_0x03() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: [u8; 16] = [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    let data: [u8; 16] = [
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff,
+    ];
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -269,10 +287,11 @@ fn test_mpsadbw_xmm4_mem_offset_0x04() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data: [u8; 16] = [
-        0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
-        0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00,
+        0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+        0x00,
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -325,10 +344,11 @@ fn test_mpsadbw_mem_displacement() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data: [u8; 16] = [
-        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-        0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10,
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0x10,
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -429,8 +449,12 @@ fn test_mpsadbw_xmm5_mem_offset_0x05() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: [u8; 16] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    let data: [u8; 16] = [
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00,
+    ];
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -448,10 +472,11 @@ fn test_mpsadbw_xmm6_mem_offset_0x06() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data: [u8; 16] = [
-        0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80,
-        0x90, 0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0, 0x00,
+        0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0,
+        0x00,
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -469,10 +494,11 @@ fn test_mpsadbw_xmm7_mem_offset_0x07() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data: [u8; 16] = [
-        0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08,
-        0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00,
+        0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
+        0x00,
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -516,7 +542,6 @@ fn test_mpsadbw_xmm4_xmm6_offset_0x02() {
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
-
 
 // ============================================================================
 // Known-answer value tests (register-to-register via set_xmm/get_xmm)

@@ -495,7 +495,7 @@ unsafe extern "C" {
 
     /// Read vCPU floating point state.
     pub fn hv_vcpu_read_fpstate(vcpu: hv_vcpuid_t, buffer: *mut c_void, size: usize)
-        -> hv_return_t;
+    -> hv_return_t;
 
     /// Write vCPU floating point state.
     pub fn hv_vcpu_write_fpstate(

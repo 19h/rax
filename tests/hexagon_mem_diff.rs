@@ -92,7 +92,9 @@ fn oracle_mem() -> Option<(PathBuf, u32)> {
         }
     }
     // Read g_arena's address from the ELF symbol table.
-    let nm = which("llvm-nm").map(|_| "llvm-nm").or(which("nm").map(|_| "nm"))?;
+    let nm = which("llvm-nm")
+        .map(|_| "llvm-nm")
+        .or(which("nm").map(|_| "nm"))?;
     let out = Command::new(nm).arg(&bin).output().ok()?;
     let text = String::from_utf8_lossy(&out.stdout);
     let addr = text.lines().find_map(|l| {
@@ -207,7 +209,10 @@ fn assemble(packets: &[String]) -> Option<Vec<Vec<u32>>> {
     for b in words {
         acc.push(b);
         if acc.len() == 4 {
-            let w = acc[0] as u32 | (acc[1] as u32) << 8 | (acc[2] as u32) << 16 | (acc[3] as u32) << 24;
+            let w = acc[0] as u32
+                | (acc[1] as u32) << 8
+                | (acc[2] as u32) << 16
+                | (acc[3] as u32) << 24;
             acc.clear();
             cur.push(w);
             let pb = (w >> 14) & 3;
@@ -236,11 +241,14 @@ fn run_rax(words: &[u32], c: &Case, arena_addr: u32) -> Option<Out> {
     let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&regions).ok()?);
     let mut off = CODE_ADDR;
     for &w in words {
-        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64)).ok()?;
+        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64))
+            .ok()?;
         off += 4;
     }
-    mem.write_slice(&trap0_word().to_le_bytes(), GuestAddress(off as u64)).ok()?;
-    mem.write_slice(&c.arena, GuestAddress(arena_addr as u64)).ok()?;
+    mem.write_slice(&trap0_word().to_le_bytes(), GuestAddress(off as u64))
+        .ok()?;
+    mem.write_slice(&c.arena, GuestAddress(arena_addr as u64))
+        .ok()?;
 
     let mut regs = HexagonRegisters::default();
     for i in 0..NREG {
@@ -286,7 +294,8 @@ fn run_rax(words: &[u32], c: &Case, arena_addr: u32) -> Option<Out> {
     st[I_PRED] = pred;
     st[I_USR] = regs.c[8];
     let mut arena = [0u8; ARENA];
-    mem.read_slice(&mut arena, GuestAddress(arena_addr as u64)).ok()?;
+    mem.read_slice(&mut arena, GuestAddress(arena_addr as u64))
+        .ok()?;
     Some(Out { st, arena })
 }
 
@@ -354,7 +363,11 @@ fn run_family(name: &str, cases: &[(&str, &str)], base_reg: usize, n: usize, see
                 *b = rng.next() as u8;
             }
             labels.push(*label);
-            batch.push(Case { words: words.clone(), st, arena });
+            batch.push(Case {
+                words: words.clone(),
+                st,
+                arena,
+            });
         }
     }
     let outs = match run_oracle(&bin, &batch) {
@@ -380,14 +393,25 @@ fn run_family(name: &str, cases: &[(&str, &str)], base_reg: usize, n: usize, see
             }
         }
         if rax.st[I_USR] != outs[i].st[I_USR] {
-            diffs.push(format!("USR:rax={:#x},hw={:#x}", rax.st[I_USR], outs[i].st[I_USR]));
+            diffs.push(format!(
+                "USR:rax={:#x},hw={:#x}",
+                rax.st[I_USR], outs[i].st[I_USR]
+            ));
         }
         if rax.st[I_PRED] != outs[i].st[I_PRED] {
-            diffs.push(format!("P:rax={:#x},hw={:#x}", rax.st[I_PRED], outs[i].st[I_PRED]));
+            diffs.push(format!(
+                "P:rax={:#x},hw={:#x}",
+                rax.st[I_PRED], outs[i].st[I_PRED]
+            ));
         }
         if rax.arena != outs[i].arena {
-            let j = (0..ARENA).find(|&j| rax.arena[j] != outs[i].arena[j]).unwrap();
-            diffs.push(format!("arena[{j}]:rax={:#x},hw={:#x}", rax.arena[j], outs[i].arena[j]));
+            let j = (0..ARENA)
+                .find(|&j| rax.arena[j] != outs[i].arena[j])
+                .unwrap();
+            diffs.push(format!(
+                "arena[{j}]:rax={:#x},hw={:#x}",
+                rax.arena[j], outs[i].arena[j]
+            ));
         }
         if !diffs.is_empty() {
             mismatches.push(format!("[{}] {}", labels[i], diffs.join(" ")));
@@ -505,7 +529,11 @@ fn diff_mem_absolute() {
                 *b = rng.next() as u8;
             }
             lbl.push(labels[i]);
-            batch.push(Case { words: words.clone(), st, arena });
+            batch.push(Case {
+                words: words.clone(),
+                st,
+                arena,
+            });
         }
     }
     let outs = match run_oracle(&bin, &batch) {
@@ -531,8 +559,13 @@ fn diff_mem_absolute() {
             }
         }
         if rax.arena != outs[i].arena {
-            let j = (0..ARENA).find(|&j| rax.arena[j] != outs[i].arena[j]).unwrap();
-            diffs.push(format!("arena[{j}]:rax={:#x},hw={:#x}", rax.arena[j], outs[i].arena[j]));
+            let j = (0..ARENA)
+                .find(|&j| rax.arena[j] != outs[i].arena[j])
+                .unwrap();
+            diffs.push(format!(
+                "arena[{j}]:rax={:#x},hw={:#x}",
+                rax.arena[j], outs[i].arena[j]
+            ));
         }
         if !diffs.is_empty() {
             mismatches.push(format!("[{}] {}", lbl[i], diffs.join(" ")));
@@ -578,9 +611,15 @@ fn diff_mem_newvalue() {
             ("storerbnew", "{ r5 = add(r2,r3); memb(r4+#0) = r5.new }"),
             ("storerhnew", "{ r5 = add(r2,r3); memh(r4+#2) = r5.new }"),
             ("storerinew", "{ r5 = add(r2,r3); memw(r4+#4) = r5.new }"),
-            ("storerinew_xor", "{ r5 = xor(r2,r3); memw(r4+#0) = r5.new }"),
+            (
+                "storerinew_xor",
+                "{ r5 = xor(r2,r3); memw(r4+#0) = r5.new }",
+            ),
             // Two producers before the store; Nt8 selects the right one (r5).
-            ("storerinew_2prod", "{ r6 = and(r2,r3); r5 = or(r2,r3); memw(r4+#0) = r5.new }"),
+            (
+                "storerinew_2prod",
+                "{ r6 = and(r2,r3); r5 = or(r2,r3); memw(r4+#0) = r5.new }",
+            ),
         ],
         4,
         16,
@@ -705,7 +744,11 @@ where
             }
             build(&mut rng, arena_addr, &mut st, &mut arena);
             labels.push(*label);
-            batch.push(Case { words: words.clone(), st, arena });
+            batch.push(Case {
+                words: words.clone(),
+                st,
+                arena,
+            });
         }
     }
     let outs = match run_oracle(&bin, &batch) {
@@ -731,14 +774,25 @@ where
             }
         }
         if rax.st[I_USR] != outs[i].st[I_USR] {
-            diffs.push(format!("USR:rax={:#x},hw={:#x}", rax.st[I_USR], outs[i].st[I_USR]));
+            diffs.push(format!(
+                "USR:rax={:#x},hw={:#x}",
+                rax.st[I_USR], outs[i].st[I_USR]
+            ));
         }
         if rax.st[I_PRED] != outs[i].st[I_PRED] {
-            diffs.push(format!("P:rax={:#x},hw={:#x}", rax.st[I_PRED], outs[i].st[I_PRED]));
+            diffs.push(format!(
+                "P:rax={:#x},hw={:#x}",
+                rax.st[I_PRED], outs[i].st[I_PRED]
+            ));
         }
         if rax.arena != outs[i].arena {
-            let j = (0..ARENA).find(|&j| rax.arena[j] != outs[i].arena[j]).unwrap();
-            diffs.push(format!("arena[{j}]:rax={:#x},hw={:#x}", rax.arena[j], outs[i].arena[j]));
+            let j = (0..ARENA)
+                .find(|&j| rax.arena[j] != outs[i].arena[j])
+                .unwrap();
+            diffs.push(format!(
+                "arena[{j}]:rax={:#x},hw={:#x}",
+                rax.arena[j], outs[i].arena[j]
+            ));
         }
         if !diffs.is_empty() {
             mismatches.push(format!("[{}] {}", labels[i], diffs.join(" ")));
@@ -794,12 +848,18 @@ fn diff_mem_store_pr() {
 fn diff_mem_dczeroa() {
     // dczeroa(Rs) zeroes the 32-byte cache line at Rs & ~31. Point Rs inside the
     // (non-zero-seeded) arena and confirm the same 32 bytes are zeroed on both.
-    run_custom("dczeroa", &[("dczeroa", "{ dczeroa(r4) }")], 8, 0x7d20, |rng, arena, st, ab| {
-        st[4] = arena + BASE_OFF; // 32-aligned base well inside the arena
-        for b in ab.iter_mut() {
-            *b = (rng.next() | 1) as u8; // non-zero so the zeroed line is observable
-        }
-    });
+    run_custom(
+        "dczeroa",
+        &[("dczeroa", "{ dczeroa(r4) }")],
+        8,
+        0x7d20,
+        |rng, arena, st, ab| {
+            st[4] = arena + BASE_OFF; // 32-aligned base well inside the arena
+            for b in ab.iter_mut() {
+                *b = (rng.next() | 1) as u8; // non-zero so the zeroed line is observable
+            }
+        },
+    );
 }
 
 /// Bit-reverse the low 16 bits of `v` (matches `fbrev`/`fEA_BREVR`).
@@ -975,9 +1035,18 @@ fn diff_mem_newvalue_pi() {
     // post-increment. A producer writes r5 in the same packet; the store
     // commits the new value while the base register also advances.
     let bodies = &[
-        ("storerinew_pi", "{ r5 = add(r2,r3); memw(r4++#4) = r5.new }"),
-        ("storerbnew_pi", "{ r5 = add(r2,r3); memb(r4++#1) = r5.new }"),
-        ("storerhnew_pi", "{ r5 = add(r2,r3); memh(r4++#2) = r5.new }"),
+        (
+            "storerinew_pi",
+            "{ r5 = add(r2,r3); memw(r4++#4) = r5.new }",
+        ),
+        (
+            "storerbnew_pi",
+            "{ r5 = add(r2,r3); memb(r4++#1) = r5.new }",
+        ),
+        (
+            "storerhnew_pi",
+            "{ r5 = add(r2,r3); memh(r4++#2) = r5.new }",
+        ),
     ];
     run_custom("newvalue_pi", bodies, 12, 0x700a, |_, arena, st, _| {
         st[4] = arena + BASE_OFF;
@@ -987,9 +1056,15 @@ fn diff_mem_newvalue_pi() {
 #[test]
 fn diff_mem_newvalue_pr() {
     let bodies = &[
-        ("storerinew_pr", "{ r5 = add(r2,r3); memw(r4++m0) = r5.new }"),
+        (
+            "storerinew_pr",
+            "{ r5 = add(r2,r3); memw(r4++m0) = r5.new }",
+        ),
         ("storerbnew_pr", "{ r5 = or(r2,r3); memb(r4++m1) = r5.new }"),
-        ("storerhnew_pr", "{ r5 = xor(r2,r3); memh(r4++m0) = r5.new }"),
+        (
+            "storerhnew_pr",
+            "{ r5 = xor(r2,r3); memh(r4++m0) = r5.new }",
+        ),
     ];
     run_custom("newvalue_pr", bodies, 12, 0x700b, |rng, arena, st, _| {
         st[4] = arena + BASE_OFF;
@@ -1001,9 +1076,18 @@ fn diff_mem_newvalue_pr() {
 #[test]
 fn diff_mem_newvalue_pci() {
     let bodies = &[
-        ("storerinew_pci", "{ r5 = add(r2,r3); memw(r4++#4:circ(m0)) = r5.new }"),
-        ("storerbnew_pci", "{ r5 = or(r2,r3); memb(r4++#1:circ(m1)) = r5.new }"),
-        ("storerhnew_pci", "{ r5 = xor(r2,r3); memh(r4++#2:circ(m0)) = r5.new }"),
+        (
+            "storerinew_pci",
+            "{ r5 = add(r2,r3); memw(r4++#4:circ(m0)) = r5.new }",
+        ),
+        (
+            "storerbnew_pci",
+            "{ r5 = or(r2,r3); memb(r4++#1:circ(m1)) = r5.new }",
+        ),
+        (
+            "storerhnew_pci",
+            "{ r5 = xor(r2,r3); memh(r4++#2:circ(m0)) = r5.new }",
+        ),
     ];
     run_custom("newvalue_pci", bodies, 12, 0x700c, |rng, arena, st, _| {
         let length = 16 + ((rng.next() % 15) * 8) as u32;
@@ -1022,12 +1106,30 @@ fn diff_mem_pred_newvalue() {
     run_family(
         "pred_newvalue",
         &[
-            ("pstorerinewt", "{ r5 = add(r2,r3); if (p0) memw(r4+#0) = r5.new }"),
-            ("pstorerinewf", "{ r5 = add(r2,r3); if (!p0) memw(r4+#4) = r5.new }"),
-            ("pstorerbnewt", "{ r5 = add(r2,r3); if (p0) memb(r4+#1) = r5.new }"),
-            ("pstorerbnewf", "{ r5 = or(r2,r3); if (!p0) memb(r4+#1) = r5.new }"),
-            ("pstorerhnewt", "{ r5 = xor(r2,r3); if (p0) memh(r4+#2) = r5.new }"),
-            ("pstorerhnewf", "{ r5 = and(r2,r3); if (!p0) memh(r4+#2) = r5.new }"),
+            (
+                "pstorerinewt",
+                "{ r5 = add(r2,r3); if (p0) memw(r4+#0) = r5.new }",
+            ),
+            (
+                "pstorerinewf",
+                "{ r5 = add(r2,r3); if (!p0) memw(r4+#4) = r5.new }",
+            ),
+            (
+                "pstorerbnewt",
+                "{ r5 = add(r2,r3); if (p0) memb(r4+#1) = r5.new }",
+            ),
+            (
+                "pstorerbnewf",
+                "{ r5 = or(r2,r3); if (!p0) memb(r4+#1) = r5.new }",
+            ),
+            (
+                "pstorerhnewt",
+                "{ r5 = xor(r2,r3); if (p0) memh(r4+#2) = r5.new }",
+            ),
+            (
+                "pstorerhnewf",
+                "{ r5 = and(r2,r3); if (!p0) memh(r4+#2) = r5.new }",
+            ),
         ],
         4,
         16,
@@ -1059,11 +1161,26 @@ fn diff_storeir() {
             ("storeirit", "{ if (p0) memw(r4+#4) = #9 }"),
             ("storeirif", "{ if (!p0) memw(r4+#8) = #-9 }"),
             // Predicated with Pv.new (the producer sets p0 in-packet).
-            ("storeirbtnew", "{ p0 = cmp.eq(r2,r2); if (p0.new) memb(r4+#0) = #3 }"),
-            ("storeirbfnew", "{ p0 = cmp.eq(r2,r3); if (!p0.new) memb(r4+#1) = #-3 }"),
-            ("storeirhtnew", "{ p0 = cmp.gt(r2,r3); if (p0.new) memh(r4+#2) = #13 }"),
-            ("storeiritnew", "{ p0 = cmp.eq(r2,r3); if (p0.new) memw(r4+#4) = #25 }"),
-            ("storeirifnew", "{ p0 = cmp.eq(r2,r2); if (!p0.new) memw(r4+#8) = #-25 }"),
+            (
+                "storeirbtnew",
+                "{ p0 = cmp.eq(r2,r2); if (p0.new) memb(r4+#0) = #3 }",
+            ),
+            (
+                "storeirbfnew",
+                "{ p0 = cmp.eq(r2,r3); if (!p0.new) memb(r4+#1) = #-3 }",
+            ),
+            (
+                "storeirhtnew",
+                "{ p0 = cmp.gt(r2,r3); if (p0.new) memh(r4+#2) = #13 }",
+            ),
+            (
+                "storeiritnew",
+                "{ p0 = cmp.eq(r2,r3); if (p0.new) memw(r4+#4) = #25 }",
+            ),
+            (
+                "storeirifnew",
+                "{ p0 = cmp.eq(r2,r2); if (!p0.new) memw(r4+#8) = #-25 }",
+            ),
         ],
         4,
         16,
@@ -1091,16 +1208,43 @@ fn diff_pred_store_pi() {
         ("pstorerft_pi", "{ if (p0) memh(r4++#2) = r5.h }"),
         ("pstorerff_pi", "{ if (!p0) memh(r4++#2) = r5.h }"),
         // .new predicate (the producer sets p1 in-packet).
-        ("pstorerbtnew_pi", "{ p1 = cmp.eq(r2,r2); if (p1.new) memb(r4++#1) = r5 }"),
-        ("pstorerbfnew_pi", "{ p1 = cmp.eq(r2,r3); if (!p1.new) memb(r4++#1) = r5 }"),
-        ("pstoreritnew_pi", "{ p1 = cmp.eq(r2,r2); if (p1.new) memw(r4++#4) = r5 }"),
-        ("pstorerftnew_pi", "{ p1 = cmp.gt(r2,r3); if (p1.new) memh(r4++#2) = r5.h }"),
+        (
+            "pstorerbtnew_pi",
+            "{ p1 = cmp.eq(r2,r2); if (p1.new) memb(r4++#1) = r5 }",
+        ),
+        (
+            "pstorerbfnew_pi",
+            "{ p1 = cmp.eq(r2,r3); if (!p1.new) memb(r4++#1) = r5 }",
+        ),
+        (
+            "pstoreritnew_pi",
+            "{ p1 = cmp.eq(r2,r2); if (p1.new) memw(r4++#4) = r5 }",
+        ),
+        (
+            "pstorerftnew_pi",
+            "{ p1 = cmp.gt(r2,r3); if (p1.new) memh(r4++#2) = r5.h }",
+        ),
         // New-value post-increment, plain + dot-new predicate.
-        ("pstorerbnewt_pi", "{ r5 = add(r2,r3); if (p0) memb(r4++#1) = r5.new }"),
-        ("pstorerbnewf_pi", "{ r5 = or(r2,r3); if (!p0) memb(r4++#1) = r5.new }"),
-        ("pstorerinewt_pi", "{ r5 = add(r2,r3); if (p0) memw(r4++#4) = r5.new }"),
-        ("pstorerhnewtnew_pi", "{ p1 = cmp.eq(r2,r2); r5 = add(r2,r3); if (p1.new) memh(r4++#2) = r5.new }"),
-        ("pstorerhnewfnew_pi", "{ p1 = cmp.eq(r2,r3); r5 = add(r2,r3); if (!p1.new) memh(r4++#2) = r5.new }"),
+        (
+            "pstorerbnewt_pi",
+            "{ r5 = add(r2,r3); if (p0) memb(r4++#1) = r5.new }",
+        ),
+        (
+            "pstorerbnewf_pi",
+            "{ r5 = or(r2,r3); if (!p0) memb(r4++#1) = r5.new }",
+        ),
+        (
+            "pstorerinewt_pi",
+            "{ r5 = add(r2,r3); if (p0) memw(r4++#4) = r5.new }",
+        ),
+        (
+            "pstorerhnewtnew_pi",
+            "{ p1 = cmp.eq(r2,r2); r5 = add(r2,r3); if (p1.new) memh(r4++#2) = r5.new }",
+        ),
+        (
+            "pstorerhnewfnew_pi",
+            "{ p1 = cmp.eq(r2,r3); r5 = add(r2,r3); if (!p1.new) memh(r4++#2) = r5.new }",
+        ),
     ];
     run_custom("pred_store_pi", bodies, 16, 0x710b, |_, arena, st, _| {
         st[4] = arena + BASE_OFF;
@@ -1124,11 +1268,26 @@ fn diff_pred_store_rr() {
         ("pstorerdf_rr", "{ if (!p0) memd(r4+r6<<#3) = r5:4 }"),
         ("pstorerft_rr", "{ if (p0) memh(r4+r6<<#1) = r5.h }"),
         ("pstorerff_rr", "{ if (!p0) memh(r4+r6<<#1) = r5.h }"),
-        ("pstorerbtnew_rr", "{ p1 = cmp.eq(r2,r2); if (p1.new) memb(r4+r6<<#0) = r5 }"),
-        ("pstorerifnew_rr", "{ p1 = cmp.eq(r2,r3); if (!p1.new) memw(r4+r6<<#2) = r5 }"),
-        ("pstorerbnewt_rr", "{ r5 = add(r2,r3); if (p0) memb(r4+r6<<#0) = r5.new }"),
-        ("pstorerinewt_rr", "{ r5 = add(r2,r3); if (p0) memw(r4+r6<<#2) = r5.new }"),
-        ("pstorerhnewfnew_rr", "{ p1 = cmp.eq(r2,r3); r5 = add(r2,r3); if (!p1.new) memh(r4+r6<<#1) = r5.new }"),
+        (
+            "pstorerbtnew_rr",
+            "{ p1 = cmp.eq(r2,r2); if (p1.new) memb(r4+r6<<#0) = r5 }",
+        ),
+        (
+            "pstorerifnew_rr",
+            "{ p1 = cmp.eq(r2,r3); if (!p1.new) memw(r4+r6<<#2) = r5 }",
+        ),
+        (
+            "pstorerbnewt_rr",
+            "{ r5 = add(r2,r3); if (p0) memb(r4+r6<<#0) = r5.new }",
+        ),
+        (
+            "pstorerinewt_rr",
+            "{ r5 = add(r2,r3); if (p0) memw(r4+r6<<#2) = r5.new }",
+        ),
+        (
+            "pstorerhnewfnew_rr",
+            "{ p1 = cmp.eq(r2,r3); r5 = add(r2,r3); if (!p1.new) memh(r4+r6<<#1) = r5.new }",
+        ),
     ];
     run_custom("pred_store_rr", bodies, 16, 0x710c, |rng, arena, st, _| {
         st[4] = arena; // base at arena start
@@ -1169,13 +1328,26 @@ fn diff_pred_store_abs() {
         format!("{{ p1 = cmp.eq(r2,r3); if (!p1.new) memw(##0x{a_w:x}) = r5 }}"),
         format!("{{ r5 = add(r2,r3); if (p0) memb(##0x{a_b:x}) = r5.new }}"),
         format!("{{ r5 = add(r2,r3); if (p0) memw(##0x{a_w:x}) = r5.new }}"),
-        format!("{{ p1 = cmp.eq(r2,r3); r5 = add(r2,r3); if (!p1.new) memh(##0x{a_h:x}) = r5.new }}"),
+        format!(
+            "{{ p1 = cmp.eq(r2,r3); r5 = add(r2,r3); if (!p1.new) memh(##0x{a_h:x}) = r5.new }}"
+        ),
     ];
     let labels = [
-        "pstorerbt_abs", "pstorerbf_abs", "pstorerht_abs", "pstorerhf_abs",
-        "pstorerit_abs", "pstorerif_abs", "pstorerdt_abs", "pstorerdf_abs",
-        "pstorerft_abs", "pstorerff_abs", "pstorerbtnew_abs", "pstorerifnew_abs",
-        "pstorerbnewt_abs", "pstorerinewt_abs", "pstorerhnewfnew_abs",
+        "pstorerbt_abs",
+        "pstorerbf_abs",
+        "pstorerht_abs",
+        "pstorerhf_abs",
+        "pstorerit_abs",
+        "pstorerif_abs",
+        "pstorerdt_abs",
+        "pstorerdf_abs",
+        "pstorerft_abs",
+        "pstorerff_abs",
+        "pstorerbtnew_abs",
+        "pstorerifnew_abs",
+        "pstorerbnewt_abs",
+        "pstorerinewt_abs",
+        "pstorerhnewfnew_abs",
     ];
     let words_per = match assemble(&asms) {
         Some(w) => w,
@@ -1206,7 +1378,11 @@ fn diff_pred_store_abs() {
                 *b = rng.next() as u8;
             }
             lbl.push(labels[i]);
-            batch.push(Case { words: words.clone(), st, arena });
+            batch.push(Case {
+                words: words.clone(),
+                st,
+                arena,
+            });
         }
     }
     let outs = match run_oracle(&bin, &batch) {
@@ -1232,15 +1408,23 @@ fn diff_pred_store_abs() {
             }
         }
         if rax.arena != outs[i].arena {
-            let j = (0..ARENA).find(|&j| rax.arena[j] != outs[i].arena[j]).unwrap();
-            diffs.push(format!("arena[{j}]:rax={:#x},hw={:#x}", rax.arena[j], outs[i].arena[j]));
+            let j = (0..ARENA)
+                .find(|&j| rax.arena[j] != outs[i].arena[j])
+                .unwrap();
+            diffs.push(format!(
+                "arena[{j}]:rax={:#x},hw={:#x}",
+                rax.arena[j], outs[i].arena[j]
+            ));
         }
         if !diffs.is_empty() {
             mismatches.push(format!("[{}] {}", lbl[i], diffs.join(" ")));
         }
     }
     if !mismatches.is_empty() {
-        eprintln!("\n==== pred_store_abs: {} mismatches ====", mismatches.len());
+        eprintln!(
+            "\n==== pred_store_abs: {} mismatches ====",
+            mismatches.len()
+        );
         for m in mismatches.iter().take(25) {
             eprintln!("  {m}");
         }
@@ -1259,17 +1443,47 @@ fn diff_pred_store_io_dotnew() {
             ("pstorerft_io", "{ if (p0) memh(r4+#2) = r5.h }"),
             ("pstorerff_io", "{ if (!p0) memh(r4+#2) = r5.h }"),
             // S4 _io with Pv.new predicate, register source.
-            ("pstorerbtnew_io", "{ p0 = cmp.eq(r2,r2); if (p0.new) memb(r4+#1) = r5 }"),
-            ("pstorerbfnew_io", "{ p0 = cmp.eq(r2,r3); if (!p0.new) memb(r4+#1) = r5 }"),
-            ("pstorerhtnew_io", "{ p0 = cmp.gt(r2,r3); if (p0.new) memh(r4+#2) = r5 }"),
-            ("pstoreritnew_io", "{ p0 = cmp.eq(r2,r2); if (p0.new) memw(r4+#4) = r5 }"),
-            ("pstorerdtnew_io", "{ p0 = cmp.eq(r2,r2); if (p0.new) memd(r4+#8) = r5:4 }"),
-            ("pstorerftnew_io", "{ p0 = cmp.gt(r2,r3); if (p0.new) memh(r4+#2) = r5.h }"),
-            ("pstorerffnew_io", "{ p0 = cmp.eq(r2,r3); if (!p0.new) memh(r4+#2) = r5.h }"),
+            (
+                "pstorerbtnew_io",
+                "{ p0 = cmp.eq(r2,r2); if (p0.new) memb(r4+#1) = r5 }",
+            ),
+            (
+                "pstorerbfnew_io",
+                "{ p0 = cmp.eq(r2,r3); if (!p0.new) memb(r4+#1) = r5 }",
+            ),
+            (
+                "pstorerhtnew_io",
+                "{ p0 = cmp.gt(r2,r3); if (p0.new) memh(r4+#2) = r5 }",
+            ),
+            (
+                "pstoreritnew_io",
+                "{ p0 = cmp.eq(r2,r2); if (p0.new) memw(r4+#4) = r5 }",
+            ),
+            (
+                "pstorerdtnew_io",
+                "{ p0 = cmp.eq(r2,r2); if (p0.new) memd(r4+#8) = r5:4 }",
+            ),
+            (
+                "pstorerftnew_io",
+                "{ p0 = cmp.gt(r2,r3); if (p0.new) memh(r4+#2) = r5.h }",
+            ),
+            (
+                "pstorerffnew_io",
+                "{ p0 = cmp.eq(r2,r3); if (!p0.new) memh(r4+#2) = r5.h }",
+            ),
             // S4 _io new-value with Pv.new predicate.
-            ("pstorerbnewtnew_io", "{ p0 = cmp.eq(r2,r2); r5 = add(r2,r3); if (p0.new) memb(r4+#1) = r5.new }"),
-            ("pstorerinewtnew_io", "{ p0 = cmp.eq(r2,r2); r5 = add(r2,r3); if (p0.new) memw(r4+#4) = r5.new }"),
-            ("pstorerhnewfnew_io", "{ p0 = cmp.eq(r2,r3); r5 = add(r2,r3); if (!p0.new) memh(r4+#2) = r5.new }"),
+            (
+                "pstorerbnewtnew_io",
+                "{ p0 = cmp.eq(r2,r2); r5 = add(r2,r3); if (p0.new) memb(r4+#1) = r5.new }",
+            ),
+            (
+                "pstorerinewtnew_io",
+                "{ p0 = cmp.eq(r2,r2); r5 = add(r2,r3); if (p0.new) memw(r4+#4) = r5.new }",
+            ),
+            (
+                "pstorerhnewfnew_io",
+                "{ p0 = cmp.eq(r2,r3); r5 = add(r2,r3); if (!p0.new) memh(r4+#2) = r5.new }",
+            ),
         ],
         4,
         16,
@@ -1325,10 +1539,22 @@ fn diff_pred_load() {
         ("ploadrif_pi", "{ if (!p0) r0 = memw(r4++#4) }"),
         ("ploadrdt_pi", "{ if (p0) r1:0 = memd(r4++#8) }"),
         ("ploadrdf_pi", "{ if (!p0) r1:0 = memd(r4++#8) }"),
-        ("ploadrbtnew_pi", "{ p1 = cmp.eq(r2,r2); if (p1.new) r0 = memb(r4++#1) }"),
-        ("ploadrbfnew_pi", "{ p1 = cmp.eq(r2,r3); if (!p1.new) r0 = memb(r4++#1) }"),
-        ("ploadritnew_pi", "{ p1 = cmp.eq(r2,r2); if (p1.new) r0 = memw(r4++#4) }"),
-        ("ploadrdfnew_pi", "{ p1 = cmp.eq(r2,r3); if (!p1.new) r1:0 = memd(r4++#8) }"),
+        (
+            "ploadrbtnew_pi",
+            "{ p1 = cmp.eq(r2,r2); if (p1.new) r0 = memb(r4++#1) }",
+        ),
+        (
+            "ploadrbfnew_pi",
+            "{ p1 = cmp.eq(r2,r3); if (!p1.new) r0 = memb(r4++#1) }",
+        ),
+        (
+            "ploadritnew_pi",
+            "{ p1 = cmp.eq(r2,r2); if (p1.new) r0 = memw(r4++#4) }",
+        ),
+        (
+            "ploadrdfnew_pi",
+            "{ p1 = cmp.eq(r2,r3); if (!p1.new) r1:0 = memd(r4++#8) }",
+        ),
         // Register-offset (`_rr`): no post-inc, but Rd cancel still matters.
         ("ploadrbt_rr", "{ if (p0) r0 = memb(r4+r6<<#0) }"),
         ("ploadrubf_rr", "{ if (!p0) r0 = memub(r4+r6<<#0) }"),
@@ -1336,8 +1562,14 @@ fn diff_pred_load() {
         ("ploadruhf_rr", "{ if (!p0) r0 = memuh(r4+r6<<#1) }"),
         ("ploadrit_rr", "{ if (p0) r0 = memw(r4+r6<<#2) }"),
         ("ploadrdf_rr", "{ if (!p0) r1:0 = memd(r4+r6<<#3) }"),
-        ("ploadritnew_rr", "{ p1 = cmp.eq(r2,r2); if (p1.new) r0 = memw(r4+r6<<#2) }"),
-        ("ploadrhfnew_rr", "{ p1 = cmp.eq(r2,r3); if (!p1.new) r0 = memh(r4+r6<<#1) }"),
+        (
+            "ploadritnew_rr",
+            "{ p1 = cmp.eq(r2,r2); if (p1.new) r0 = memw(r4+r6<<#2) }",
+        ),
+        (
+            "ploadrhfnew_rr",
+            "{ p1 = cmp.eq(r2,r3); if (!p1.new) r0 = memh(r4+r6<<#1) }",
+        ),
     ];
     run_custom("pred_load", bodies, 16, 0x7201, |rng, arena, st, _| {
         st[4] = arena + BASE_OFF;
@@ -1375,9 +1607,16 @@ fn diff_pred_load_abs() {
         format!("{{ p1 = cmp.eq(r2,r3); if (!p1.new) r0 = memw(##0x{a_w:x}) }}"),
     ];
     let labels = [
-        "ploadrbt_abs", "ploadrubf_abs", "ploadrht_abs", "ploadruhf_abs",
-        "ploadrit_abs", "ploadrif_abs", "ploadrdt_abs", "ploadrdf_abs",
-        "ploadrbtnew_abs", "ploadrifnew_abs",
+        "ploadrbt_abs",
+        "ploadrubf_abs",
+        "ploadrht_abs",
+        "ploadruhf_abs",
+        "ploadrit_abs",
+        "ploadrif_abs",
+        "ploadrdt_abs",
+        "ploadrdf_abs",
+        "ploadrbtnew_abs",
+        "ploadrifnew_abs",
     ];
     run_abs_batch(&bin, arena_addr, &asms, &labels, 0x7202);
 }
@@ -1417,7 +1656,11 @@ fn run_abs_batch(bin: &PathBuf, arena_addr: u32, asms: &[String], labels: &[&str
                 *b = rng.next() as u8;
             }
             lbl.push(labels[i]);
-            batch.push(Case { words: words.clone(), st, arena });
+            batch.push(Case {
+                words: words.clone(),
+                st,
+                arena,
+            });
         }
     }
     let outs = match run_oracle(bin, &batch) {
@@ -1443,8 +1686,13 @@ fn run_abs_batch(bin: &PathBuf, arena_addr: u32, asms: &[String], labels: &[&str
             }
         }
         if rax.arena != outs[i].arena {
-            let j = (0..ARENA).find(|&j| rax.arena[j] != outs[i].arena[j]).unwrap();
-            diffs.push(format!("arena[{j}]:rax={:#x},hw={:#x}", rax.arena[j], outs[i].arena[j]));
+            let j = (0..ARENA)
+                .find(|&j| rax.arena[j] != outs[i].arena[j])
+                .unwrap();
+            diffs.push(format!(
+                "arena[{j}]:rax={:#x},hw={:#x}",
+                rax.arena[j], outs[i].arena[j]
+            ));
         }
         if !diffs.is_empty() {
             mismatches.push(format!("[{}] {}", lbl[i], diffs.join(" ")));
@@ -1658,11 +1906,27 @@ fn diff_load_l4modes() {
         format!("{{ r1:0 = memubh(r6<<#2+##0x{u:x}) }}"),
     ];
     let labels = [
-        "loadrb_ap", "loadrub_ap", "loadrh_ap", "loadri_ap", "loadrd_ap",
-        "loadrb_ur", "loadrh_ur", "loadri_ur", "loadrd_ur",
-        "alignb_ap", "alignh_ap", "alignb_ur", "alignh_ur",
-        "bsw2_ap", "bzw2_ap", "bsw4_ap", "bzw4_ap",
-        "bsw2_ur", "bzw2_ur", "bsw4_ur", "bzw4_ur",
+        "loadrb_ap",
+        "loadrub_ap",
+        "loadrh_ap",
+        "loadri_ap",
+        "loadrd_ap",
+        "loadrb_ur",
+        "loadrh_ur",
+        "loadri_ur",
+        "loadrd_ur",
+        "alignb_ap",
+        "alignh_ap",
+        "alignb_ur",
+        "alignh_ur",
+        "bsw2_ap",
+        "bzw2_ap",
+        "bsw4_ap",
+        "bzw4_ap",
+        "bsw2_ur",
+        "bzw2_ur",
+        "bsw4_ur",
+        "bzw4_ur",
     ];
     run_abs_batch(&bin, arena_addr, &asms, &labels, 0x720b);
 }
@@ -1739,7 +2003,11 @@ fn run_baked(
             }
             fixup(&mut rng, arena_addr, &mut st);
             labels.push(label.clone());
-            batch.push(Case { words: words.clone(), st, arena });
+            batch.push(Case {
+                words: words.clone(),
+                st,
+                arena,
+            });
         }
     }
     let outs = match run_oracle(&bin, &batch) {
@@ -1765,14 +2033,25 @@ fn run_baked(
             }
         }
         if rax.st[I_USR] != outs[i].st[I_USR] {
-            diffs.push(format!("USR:rax={:#x},hw={:#x}", rax.st[I_USR], outs[i].st[I_USR]));
+            diffs.push(format!(
+                "USR:rax={:#x},hw={:#x}",
+                rax.st[I_USR], outs[i].st[I_USR]
+            ));
         }
         if rax.st[I_PRED] != outs[i].st[I_PRED] {
-            diffs.push(format!("P:rax={:#x},hw={:#x}", rax.st[I_PRED], outs[i].st[I_PRED]));
+            diffs.push(format!(
+                "P:rax={:#x},hw={:#x}",
+                rax.st[I_PRED], outs[i].st[I_PRED]
+            ));
         }
         if rax.arena != outs[i].arena {
-            let j = (0..ARENA).find(|&j| rax.arena[j] != outs[i].arena[j]).unwrap();
-            diffs.push(format!("arena[{j}]:rax={:#x},hw={:#x}", rax.arena[j], outs[i].arena[j]));
+            let j = (0..ARENA)
+                .find(|&j| rax.arena[j] != outs[i].arena[j])
+                .unwrap();
+            diffs.push(format!(
+                "arena[{j}]:rax={:#x},hw={:#x}",
+                rax.arena[j], outs[i].arena[j]
+            ));
         }
         if !diffs.is_empty() {
             mismatches.push(format!("[{}] {}", labels[i], diffs.join(" ")));
@@ -1805,9 +2084,18 @@ fn diff_store_l4modes() {
             ("storeri_rr", "{ memw(r4+r6<<#2) = r5 }"),
             ("storerd_rr", "{ memd(r4+r6<<#3) = r5:4 }"),
             ("storerf_rr", "{ memh(r4+r6<<#1) = r5.h }"),
-            ("storerbnew_rr", "{ r5 = add(r2,r3); memb(r4+r6<<#0) = r5.new }"),
-            ("storerhnew_rr", "{ r5 = or(r2,r3); memh(r4+r6<<#1) = r5.new }"),
-            ("storerinew_rr", "{ r5 = xor(r2,r3); memw(r4+r6<<#2) = r5.new }"),
+            (
+                "storerbnew_rr",
+                "{ r5 = add(r2,r3); memb(r4+r6<<#0) = r5.new }",
+            ),
+            (
+                "storerhnew_rr",
+                "{ r5 = or(r2,r3); memh(r4+r6<<#1) = r5.new }",
+            ),
+            (
+                "storerinew_rr",
+                "{ r5 = xor(r2,r3); memw(r4+r6<<#2) = r5.new }",
+            ),
         ],
         16,
         0x7301,
@@ -1818,35 +2106,89 @@ fn diff_store_l4modes() {
     );
 
     // `_ap` / `_ur`: bake live arena addresses (word/dword aligned per width).
-    run_baked("store_l4_apur", 16, 0x7302, |arena_addr| {
-        let a_b = arena_addr + 8;
-        let a_w = arena_addr + 16;
-        let a_d = arena_addr + 24;
-        let u = arena_addr; // _ur base; r6<<#shift stays in-arena (r6 small).
-        vec![
-            // _ap base stores (write r6 = abs address).
-            ("storerb_ap".into(), format!("{{ memb(r6=##0x{a_b:x}) = r5 }}")),
-            ("storerh_ap".into(), format!("{{ memh(r6=##0x{a_w:x}) = r5 }}")),
-            ("storeri_ap".into(), format!("{{ memw(r6=##0x{a_w:x}) = r5 }}")),
-            ("storerd_ap".into(), format!("{{ memd(r6=##0x{a_d:x}) = r5:4 }}")),
-            ("storerf_ap".into(), format!("{{ memh(r6=##0x{a_w:x}) = r5.h }}")),
-            ("storerbnew_ap".into(), format!("{{ r5 = add(r2,r3); memb(r6=##0x{a_b:x}) = r5.new }}")),
-            ("storerhnew_ap".into(), format!("{{ r5 = or(r2,r3); memh(r6=##0x{a_w:x}) = r5.new }}")),
-            ("storerinew_ap".into(), format!("{{ r5 = xor(r2,r3); memw(r6=##0x{a_w:x}) = r5.new }}")),
-            // _ur scaled-index-abs stores (r7 small index, shift = access size).
-            ("storerb_ur".into(), format!("{{ memb(r7<<#0+##0x{u:x}) = r5 }}")),
-            ("storerh_ur".into(), format!("{{ memh(r7<<#1+##0x{u:x}) = r5 }}")),
-            ("storeri_ur".into(), format!("{{ memw(r7<<#2+##0x{u:x}) = r5 }}")),
-            ("storerd_ur".into(), format!("{{ memd(r7<<#3+##0x{u:x}) = r5:4 }}")),
-            ("storerf_ur".into(), format!("{{ memh(r7<<#1+##0x{u:x}) = r5.h }}")),
-            ("storerbnew_ur".into(), format!("{{ r5 = add(r2,r3); memb(r7<<#0+##0x{u:x}) = r5.new }}")),
-            ("storerhnew_ur".into(), format!("{{ r5 = or(r2,r3); memh(r7<<#1+##0x{u:x}) = r5.new }}")),
-            ("storerinew_ur".into(), format!("{{ r5 = xor(r2,r3); memw(r7<<#2+##0x{u:x}) = r5.new }}")),
-        ]
-    }, |rng, _arena, st| {
-        // `_ur` index r7 in [0,7] elements keeps `##abs + r7<<#shift` in-arena.
-        st[7] = (rng.next() % 8) as u32;
-    });
+    run_baked(
+        "store_l4_apur",
+        16,
+        0x7302,
+        |arena_addr| {
+            let a_b = arena_addr + 8;
+            let a_w = arena_addr + 16;
+            let a_d = arena_addr + 24;
+            let u = arena_addr; // _ur base; r6<<#shift stays in-arena (r6 small).
+            vec![
+                // _ap base stores (write r6 = abs address).
+                (
+                    "storerb_ap".into(),
+                    format!("{{ memb(r6=##0x{a_b:x}) = r5 }}"),
+                ),
+                (
+                    "storerh_ap".into(),
+                    format!("{{ memh(r6=##0x{a_w:x}) = r5 }}"),
+                ),
+                (
+                    "storeri_ap".into(),
+                    format!("{{ memw(r6=##0x{a_w:x}) = r5 }}"),
+                ),
+                (
+                    "storerd_ap".into(),
+                    format!("{{ memd(r6=##0x{a_d:x}) = r5:4 }}"),
+                ),
+                (
+                    "storerf_ap".into(),
+                    format!("{{ memh(r6=##0x{a_w:x}) = r5.h }}"),
+                ),
+                (
+                    "storerbnew_ap".into(),
+                    format!("{{ r5 = add(r2,r3); memb(r6=##0x{a_b:x}) = r5.new }}"),
+                ),
+                (
+                    "storerhnew_ap".into(),
+                    format!("{{ r5 = or(r2,r3); memh(r6=##0x{a_w:x}) = r5.new }}"),
+                ),
+                (
+                    "storerinew_ap".into(),
+                    format!("{{ r5 = xor(r2,r3); memw(r6=##0x{a_w:x}) = r5.new }}"),
+                ),
+                // _ur scaled-index-abs stores (r7 small index, shift = access size).
+                (
+                    "storerb_ur".into(),
+                    format!("{{ memb(r7<<#0+##0x{u:x}) = r5 }}"),
+                ),
+                (
+                    "storerh_ur".into(),
+                    format!("{{ memh(r7<<#1+##0x{u:x}) = r5 }}"),
+                ),
+                (
+                    "storeri_ur".into(),
+                    format!("{{ memw(r7<<#2+##0x{u:x}) = r5 }}"),
+                ),
+                (
+                    "storerd_ur".into(),
+                    format!("{{ memd(r7<<#3+##0x{u:x}) = r5:4 }}"),
+                ),
+                (
+                    "storerf_ur".into(),
+                    format!("{{ memh(r7<<#1+##0x{u:x}) = r5.h }}"),
+                ),
+                (
+                    "storerbnew_ur".into(),
+                    format!("{{ r5 = add(r2,r3); memb(r7<<#0+##0x{u:x}) = r5.new }}"),
+                ),
+                (
+                    "storerhnew_ur".into(),
+                    format!("{{ r5 = or(r2,r3); memh(r7<<#1+##0x{u:x}) = r5.new }}"),
+                ),
+                (
+                    "storerinew_ur".into(),
+                    format!("{{ r5 = xor(r2,r3); memw(r7<<#2+##0x{u:x}) = r5.new }}"),
+                ),
+            ]
+        },
+        |rng, _arena, st| {
+            // `_ur` index r7 in [0,7] elements keeps `##abs + r7<<#shift` in-arena.
+            st[7] = (rng.next() % 8) as u32;
+        },
+    );
 }
 
 #[test]
@@ -1933,17 +2275,35 @@ fn diff_store_gp() {
     // opcodes (storerfgp / storer*newgp) with a constant extender that supplies
     // the full byte address (GP unused). Bake the live arena address. Covers the
     // high-half (storerfgp) and new-value gp stores in their extended form.
-    run_baked("store_gp_ext", 16, 0x7402, |arena_addr| {
-        let a_b = arena_addr + 5;
-        let a_h = arena_addr + 10;
-        let a_w = arena_addr + 16;
-        vec![
-            ("storerfgp_ext".into(), format!("{{ memh(##0x{a_h:x}) = r5.h }}")),
-            ("storerbnewgp_ext".into(), format!("{{ r5 = add(r2,r3); memb(##0x{a_b:x}) = r5.new }}")),
-            ("storerhnewgp_ext".into(), format!("{{ r5 = or(r2,r3); memh(##0x{a_h:x}) = r5.new }}")),
-            ("storerinewgp_ext".into(), format!("{{ r5 = xor(r2,r3); memw(##0x{a_w:x}) = r5.new }}")),
-        ]
-    }, |_, _, _| {});
+    run_baked(
+        "store_gp_ext",
+        16,
+        0x7402,
+        |arena_addr| {
+            let a_b = arena_addr + 5;
+            let a_h = arena_addr + 10;
+            let a_w = arena_addr + 16;
+            vec![
+                (
+                    "storerfgp_ext".into(),
+                    format!("{{ memh(##0x{a_h:x}) = r5.h }}"),
+                ),
+                (
+                    "storerbnewgp_ext".into(),
+                    format!("{{ r5 = add(r2,r3); memb(##0x{a_b:x}) = r5.new }}"),
+                ),
+                (
+                    "storerhnewgp_ext".into(),
+                    format!("{{ r5 = or(r2,r3); memh(##0x{a_h:x}) = r5.new }}"),
+                ),
+                (
+                    "storerinewgp_ext".into(),
+                    format!("{{ r5 = xor(r2,r3); memw(##0x{a_w:x}) = r5.new }}"),
+                ),
+            ]
+        },
+        |_, _, _| {},
+    );
 }
 
 #[test]
@@ -1967,10 +2327,26 @@ fn diff_store_cond() {
     // Each entry: (label, optional LL setup packet, the test packet). The setup
     // packet (if any) runs first; its words are prepended to the sequence.
     let cases: &[(&str, &str, &str)] = &[
-        ("storew_locked", "{ r9 = memw_locked(r4) }", "{ memw_locked(r4,p0) = r5 }"),
-        ("stored_locked", "{ r9:8 = memd_locked(r4) }", "{ memd_locked(r4,p1) = r5:4 }"),
-        ("storew_locked_p2", "{ r9 = memw_locked(r4) }", "{ memw_locked(r4,p2) = r5 }"),
-        ("stored_locked_p3", "{ r9:8 = memd_locked(r4) }", "{ memd_locked(r4,p3) = r5:4 }"),
+        (
+            "storew_locked",
+            "{ r9 = memw_locked(r4) }",
+            "{ memw_locked(r4,p0) = r5 }",
+        ),
+        (
+            "stored_locked",
+            "{ r9:8 = memd_locked(r4) }",
+            "{ memd_locked(r4,p1) = r5:4 }",
+        ),
+        (
+            "storew_locked_p2",
+            "{ r9 = memw_locked(r4) }",
+            "{ memw_locked(r4,p2) = r5 }",
+        ),
+        (
+            "stored_locked_p3",
+            "{ r9:8 = memd_locked(r4) }",
+            "{ memd_locked(r4,p3) = r5:4 }",
+        ),
         // Bare SC (no LL): fails on the oracle, Pd cleared, no store. rax must
         // model the reservation so it agrees (no store, Pd=0).
         ("storew_locked_bare", "", "{ memw_locked(r4,p0) = r5 }"),
@@ -2032,7 +2408,11 @@ fn diff_store_cond() {
                 *b = rng.next() as u8;
             }
             labels.push(*label);
-            batch.push(Case { words: seq.clone(), st, arena });
+            batch.push(Case {
+                words: seq.clone(),
+                st,
+                arena,
+            });
         }
     }
     let outs = match run_oracle(&bin, &batch) {
@@ -2058,11 +2438,19 @@ fn diff_store_cond() {
             }
         }
         if rax.st[I_PRED] != outs[i].st[I_PRED] {
-            diffs.push(format!("P:rax={:#x},hw={:#x}", rax.st[I_PRED], outs[i].st[I_PRED]));
+            diffs.push(format!(
+                "P:rax={:#x},hw={:#x}",
+                rax.st[I_PRED], outs[i].st[I_PRED]
+            ));
         }
         if rax.arena != outs[i].arena {
-            let j = (0..ARENA).find(|&j| rax.arena[j] != outs[i].arena[j]).unwrap();
-            diffs.push(format!("arena[{j}]:rax={:#x},hw={:#x}", rax.arena[j], outs[i].arena[j]));
+            let j = (0..ARENA)
+                .find(|&j| rax.arena[j] != outs[i].arena[j])
+                .unwrap();
+            diffs.push(format!(
+                "arena[{j}]:rax={:#x},hw={:#x}",
+                rax.arena[j], outs[i].arena[j]
+            ));
         }
         if !diffs.is_empty() {
             mismatches.push(format!("[{}] {}", labels[i], diffs.join(" ")));
@@ -2073,7 +2461,10 @@ fn diff_store_cond() {
         for m in mismatches.iter().take(25) {
             eprintln!("  {m}");
         }
-        panic!("store_cond: {} memory divergences vs oracle", mismatches.len());
+        panic!(
+            "store_cond: {} memory divergences vs oracle",
+            mismatches.len()
+        );
     }
 }
 

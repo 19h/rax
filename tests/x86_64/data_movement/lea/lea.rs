@@ -13,7 +13,11 @@ fn test_lea_eax_rbx() {
     regs.rbx = 0x1000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x1000, "EAX should contain address from RBX");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x1000,
+        "EAX should contain address from RBX"
+    );
 }
 
 // LEA with displacement
@@ -24,7 +28,11 @@ fn test_lea_eax_rbx_disp8() {
     regs.rbx = 0x1000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x1010, "EAX should contain RBX + 0x10");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x1010,
+        "EAX should contain RBX + 0x10"
+    );
 }
 
 #[test]
@@ -34,7 +42,11 @@ fn test_lea_eax_rbx_disp32() {
     regs.rbx = 0x2000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x3000, "EAX should contain RBX + 0x1000");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x3000,
+        "EAX should contain RBX + 0x1000"
+    );
 }
 
 // LEA with base + index
@@ -46,7 +58,11 @@ fn test_lea_eax_rbx_rcx() {
     regs.rcx = 0x0100;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x1100, "EAX should contain RBX + RCX");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x1100,
+        "EAX should contain RBX + RCX"
+    );
 }
 
 // LEA with scale factor (SIB byte)
@@ -58,7 +74,11 @@ fn test_lea_eax_rbx_rcx_scale2() {
     regs.rcx = 0x0100;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x1200, "EAX should contain RBX + RCX*2");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x1200,
+        "EAX should contain RBX + RCX*2"
+    );
 }
 
 #[test]
@@ -69,7 +89,11 @@ fn test_lea_eax_rbx_rcx_scale4() {
     regs.rcx = 0x0100;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x1400, "EAX should contain RBX + RCX*4");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x1400,
+        "EAX should contain RBX + RCX*4"
+    );
 }
 
 #[test]
@@ -80,7 +104,11 @@ fn test_lea_eax_rbx_rcx_scale8() {
     regs.rcx = 0x0100;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x1800, "EAX should contain RBX + RCX*8");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x1800,
+        "EAX should contain RBX + RCX*8"
+    );
 }
 
 // LEA with base + index*scale + displacement
@@ -92,7 +120,11 @@ fn test_lea_eax_complex() {
     regs.rcx = 0x0010;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x1060, "EAX should contain RBX + RCX*4 + 0x20");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x1060,
+        "EAX should contain RBX + RCX*4 + 0x20"
+    );
 }
 
 // 64-bit LEA
@@ -103,7 +135,10 @@ fn test_lea_rax_rbx() {
     regs.rbx = 0x123456789ABCDEF0;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x123456789ABCDEF0, "RAX should contain full 64-bit address");
+    assert_eq!(
+        regs.rax, 0x123456789ABCDEF0,
+        "RAX should contain full 64-bit address"
+    );
 }
 
 #[test]
@@ -113,7 +148,10 @@ fn test_lea_rax_rbx_disp() {
     regs.rbx = 0x0000000100000000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000110000000, "RAX should contain RBX + displacement");
+    assert_eq!(
+        regs.rax, 0x0000000110000000,
+        "RAX should contain RBX + displacement"
+    );
 }
 
 // 16-bit LEA
@@ -146,10 +184,14 @@ fn test_lea_array_indexing() {
     let code = [0x67, 0x8d, 0x04, 0x8b, 0xf4]; // LEA EAX, [RBX + RCX*4]
     let mut regs = Registers::default();
     regs.rbx = 0x00400000; // array base
-    regs.rcx = 5;          // index
+    regs.rcx = 5; // index
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00400014, "Should calculate array[5] address");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00400014,
+        "Should calculate array[5] address"
+    );
 }
 
 // LEA practical use: structure member access
@@ -161,7 +203,11 @@ fn test_lea_struct_member() {
     regs.rbx = 0x00500000; // struct base
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00500018, "Should calculate struct member address");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00500018,
+        "Should calculate struct member address"
+    );
 }
 
 // LEA practical use: arithmetic (multiply by 3)
@@ -237,7 +283,10 @@ fn test_lea_32bit_zeros_upper() {
     regs.rbx = 100;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x000000000000012C, "Upper 32 bits should be zeroed");
+    assert_eq!(
+        regs.rax, 0x000000000000012C,
+        "Upper 32 bits should be zeroed"
+    );
 }
 
 // Test with extended registers
@@ -304,7 +353,10 @@ fn test_lea_large_address() {
     regs.rcx = 0x0000000010000000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000180001000, "Should handle large addresses");
+    assert_eq!(
+        regs.rax, 0x0000000180001000,
+        "Should handle large addresses"
+    );
 }
 
 // Test all different register combinations
@@ -398,7 +450,10 @@ fn test_strict_lea_32bit_truncates_result() {
     regs.rcx = 0x1;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000_0000, "32-bit LEA truncates and zero-extends result");
+    assert_eq!(
+        regs.rax, 0x0000_0000,
+        "32-bit LEA truncates and zero-extends result"
+    );
 }
 
 #[test]
@@ -412,5 +467,9 @@ fn test_strict_lea_does_not_touch_flags() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0x2010);
-    assert_eq!(regs.rflags & 0x8D5, before & 0x8D5, "LEA must not alter status flags");
+    assert_eq!(
+        regs.rflags & 0x8D5,
+        before & 0x8D5,
+        "LEA must not alter status flags"
+    );
 }

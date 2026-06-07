@@ -263,12 +263,12 @@ fn decode_q1_alu(h: u16, rv64: bool, isa: &Isa) -> Insn {
                 // Zcb: c.mul (10) and the zext/sext/not unary ops (11).
                 (1, 0b10) if isa.zcb => mk(Op::Mul, rd_, rd_, rs2_, 0, h),
                 (1, 0b11) if isa.zcb => match bits(h, 4, 2) {
-                    0b000 => mk(Op::Andi, rd_, rd_, 0, 0xff, h),     // c.zext.b
-                    0b001 => mk(Op::SextB, rd_, rd_, 0, 0, h),       // c.sext.b
-                    0b010 => mk(Op::ZextH, rd_, rd_, 0, 0, h),       // c.zext.h
-                    0b011 => mk(Op::SextH, rd_, rd_, 0, 0, h),       // c.sext.h
-                    0b100 => mk(Op::AddUw, rd_, rd_, 0, 0, h),       // c.zext.w (add.uw rd',rd',x0)
-                    0b101 => mk(Op::Xori, rd_, rd_, 0, -1, h),       // c.not
+                    0b000 => mk(Op::Andi, rd_, rd_, 0, 0xff, h), // c.zext.b
+                    0b001 => mk(Op::SextB, rd_, rd_, 0, 0, h),   // c.sext.b
+                    0b010 => mk(Op::ZextH, rd_, rd_, 0, 0, h),   // c.zext.h
+                    0b011 => mk(Op::SextH, rd_, rd_, 0, 0, h),   // c.sext.h
+                    0b100 => mk(Op::AddUw, rd_, rd_, 0, 0, h),   // c.zext.w (add.uw rd',rd',x0)
+                    0b101 => mk(Op::Xori, rd_, rd_, 0, -1, h),   // c.not
                     _ => ill(h),
                 },
                 _ => ill(h),

@@ -82,7 +82,9 @@ fn test_vaddsubps_xmm0_xmm1_mem128() {
     let code = [0xc5, 0xf3, 0xd0, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, 0xf4];
     let (mut vcpu, vm_memory) = setup_vm(&code, None);
     let test_data = [0u8; 16];
-    vm_memory.write(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    vm_memory
+        .write(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -137,7 +139,9 @@ fn test_vaddsubps_ymm0_ymm1_mem256() {
     let code = [0xc5, 0xf7, 0xd0, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, 0xf4];
     let (mut vcpu, vm_memory) = setup_vm(&code, None);
     let test_data = [0u8; 32];
-    vm_memory.write(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    vm_memory
+        .write(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -206,7 +210,9 @@ fn test_vaddsubpd_xmm0_xmm1_mem128() {
     let code = [0xc5, 0xf1, 0xd0, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, 0xf4];
     let (mut vcpu, vm_memory) = setup_vm(&code, None);
     let test_data = [0u8; 16];
-    vm_memory.write(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    vm_memory
+        .write(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -261,6 +267,8 @@ fn test_vaddsubpd_ymm0_ymm1_mem256() {
     let code = [0xc5, 0xf5, 0xd0, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, 0xf4];
     let (mut vcpu, vm_memory) = setup_vm(&code, None);
     let test_data = [0u8; 32];
-    vm_memory.write(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    vm_memory
+        .write(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

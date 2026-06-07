@@ -37,8 +37,8 @@ pub mod memory;
 pub mod rvc;
 
 pub use cpu::{RiscVConfig, RiscVCpu, RiscVExit, Trap};
-pub use csr::{csr_name, Csr};
-pub use decode::{decode, decode_at, DecodeError, Insn, Op};
+pub use csr::{Csr, csr_name};
+pub use decode::{DecodeError, Insn, Op, decode, decode_at};
 pub use float::RoundingMode;
 pub use memory::{FlatMemory, MemError, MemResult, Memory};
 

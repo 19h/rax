@@ -29,7 +29,7 @@ fn test_vpdpbusd_xmm_basic() {
     // EVEX.128.66.0F38.W0 50 /r
     let code = [
         0x62, 0xF2, 0x75, 0x08, 0x50, 0xC2, // VPDPBUSD xmm0, xmm1, xmm2
-        0xF4,                                // HLT
+        0xF4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
@@ -97,7 +97,7 @@ fn test_vpdpbusd_xmm_memory() {
     // VPDPBUSD XMM0, XMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x75, 0x08, 0x50, 0x00,       // VPDPBUSD xmm0, xmm1, [rax]
+        0x62, 0xF2, 0x75, 0x08, 0x50, 0x00, // VPDPBUSD xmm0, xmm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -109,7 +109,7 @@ fn test_vpdpbusd_ymm_memory() {
     // VPDPBUSD YMM0, YMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x75, 0x28, 0x50, 0x00,       // VPDPBUSD ymm0, ymm1, [rax]
+        0x62, 0xF2, 0x75, 0x28, 0x50, 0x00, // VPDPBUSD ymm0, ymm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -121,7 +121,7 @@ fn test_vpdpbusd_zmm_memory() {
     // VPDPBUSD ZMM0, ZMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x75, 0x48, 0x50, 0x00,       // VPDPBUSD zmm0, zmm1, [rax]
+        0x62, 0xF2, 0x75, 0x48, 0x50, 0x00, // VPDPBUSD zmm0, zmm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -155,7 +155,7 @@ fn test_vpdpbusd_zmm_broadcast() {
     // VPDPBUSD ZMM0, ZMM1, dword ptr [RAX]{1to16}
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x75, 0x58, 0x50, 0x00,       // VPDPBUSD zmm0, zmm1, [rax]{1to16}
+        0x62, 0xF2, 0x75, 0x58, 0x50, 0x00, // VPDPBUSD zmm0, zmm1, [rax]{1to16}
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -205,7 +205,7 @@ fn test_vpdpbusds_xmm_memory() {
     // VPDPBUSDS XMM0, XMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x75, 0x08, 0x51, 0x00,       // VPDPBUSDS xmm0, xmm1, [rax]
+        0x62, 0xF2, 0x75, 0x08, 0x51, 0x00, // VPDPBUSDS xmm0, xmm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -277,7 +277,7 @@ fn test_vpdpwssd_xmm_memory() {
     // VPDPWSSD XMM0, XMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x75, 0x08, 0x52, 0x00,       // VPDPWSSD xmm0, xmm1, [rax]
+        0x62, 0xF2, 0x75, 0x08, 0x52, 0x00, // VPDPWSSD xmm0, xmm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -311,7 +311,7 @@ fn test_vpdpwssd_zmm_broadcast() {
     // VPDPWSSD ZMM0, ZMM1, dword ptr [RAX]{1to16}
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x75, 0x58, 0x52, 0x00,       // VPDPWSSD zmm0, zmm1, [rax]{1to16}
+        0x62, 0xF2, 0x75, 0x58, 0x52, 0x00, // VPDPWSSD zmm0, zmm1, [rax]{1to16}
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -361,7 +361,7 @@ fn test_vpdpwssds_xmm_memory() {
     // VPDPWSSDS XMM0, XMM1, [RAX]
     let code = [
         0x48, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, 0x3000
-        0x62, 0xF2, 0x75, 0x08, 0x53, 0x00,       // VPDPWSSDS xmm0, xmm1, [rax]
+        0x62, 0xF2, 0x75, 0x08, 0x53, 0x00, // VPDPWSSDS xmm0, xmm1, [rax]
         0xF4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

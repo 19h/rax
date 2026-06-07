@@ -735,17 +735,20 @@ mod tests {
         );
 
         // Access within region should succeed
-        assert!(mpu
-            .check_access(0x2000_0000, 4, AccessType::Read, true)
-            .is_ok());
-        assert!(mpu
-            .check_access(0x2000_0000, 4, AccessType::Write, false)
-            .is_ok());
+        assert!(
+            mpu.check_access(0x2000_0000, 4, AccessType::Read, true)
+                .is_ok()
+        );
+        assert!(
+            mpu.check_access(0x2000_0000, 4, AccessType::Write, false)
+                .is_ok()
+        );
 
         // Access outside region should fail
-        assert!(mpu
-            .check_access(0x3000_0000, 4, AccessType::Read, true)
-            .is_err());
+        assert!(
+            mpu.check_access(0x3000_0000, 4, AccessType::Read, true)
+                .is_err()
+        );
     }
 
     #[test]
@@ -764,20 +767,24 @@ mod tests {
         );
 
         // Privileged access should succeed
-        assert!(mpu
-            .check_access(0x2000_0000, 4, AccessType::Read, true)
-            .is_ok());
-        assert!(mpu
-            .check_access(0x2000_0000, 4, AccessType::Write, true)
-            .is_ok());
+        assert!(
+            mpu.check_access(0x2000_0000, 4, AccessType::Read, true)
+                .is_ok()
+        );
+        assert!(
+            mpu.check_access(0x2000_0000, 4, AccessType::Write, true)
+                .is_ok()
+        );
 
         // Unprivileged access should fail
-        assert!(mpu
-            .check_access(0x2000_0000, 4, AccessType::Read, false)
-            .is_err());
-        assert!(mpu
-            .check_access(0x2000_0000, 4, AccessType::Write, false)
-            .is_err());
+        assert!(
+            mpu.check_access(0x2000_0000, 4, AccessType::Read, false)
+                .is_err()
+        );
+        assert!(
+            mpu.check_access(0x2000_0000, 4, AccessType::Write, false)
+                .is_err()
+        );
     }
 
     #[test]
@@ -796,14 +803,16 @@ mod tests {
         );
 
         // Data access should succeed
-        assert!(mpu
-            .check_access(0x2000_0000, 4, AccessType::Read, true)
-            .is_ok());
+        assert!(
+            mpu.check_access(0x2000_0000, 4, AccessType::Read, true)
+                .is_ok()
+        );
 
         // Instruction fetch should fail
-        assert!(mpu
-            .check_access(0x2000_0000, 4, AccessType::InstructionFetch, true)
-            .is_err());
+        assert!(
+            mpu.check_access(0x2000_0000, 4, AccessType::InstructionFetch, true)
+                .is_err()
+        );
     }
 
     #[test]
@@ -814,14 +823,16 @@ mod tests {
 
         // No regions configured, but background region enabled
         // Privileged access should succeed
-        assert!(mpu
-            .check_access(0x2000_0000, 4, AccessType::Read, true)
-            .is_ok());
+        assert!(
+            mpu.check_access(0x2000_0000, 4, AccessType::Read, true)
+                .is_ok()
+        );
 
         // Unprivileged access should still fail
-        assert!(mpu
-            .check_access(0x2000_0000, 4, AccessType::Read, false)
-            .is_err());
+        assert!(
+            mpu.check_access(0x2000_0000, 4, AccessType::Read, false)
+                .is_err()
+        );
     }
 
     #[test]
@@ -843,17 +854,20 @@ mod tests {
         );
 
         // Access to first 8KB should use region 1 (RW)
-        assert!(mpu
-            .check_access(0x2000_0000, 4, AccessType::Write, true)
-            .is_ok());
+        assert!(
+            mpu.check_access(0x2000_0000, 4, AccessType::Write, true)
+                .is_ok()
+        );
 
         // Access beyond first 8KB should use region 0 (RO)
-        assert!(mpu
-            .check_access(0x2000_2000, 4, AccessType::Write, true)
-            .is_err());
-        assert!(mpu
-            .check_access(0x2000_2000, 4, AccessType::Read, true)
-            .is_ok());
+        assert!(
+            mpu.check_access(0x2000_2000, 4, AccessType::Write, true)
+                .is_err()
+        );
+        assert!(
+            mpu.check_access(0x2000_2000, 4, AccessType::Read, true)
+                .is_ok()
+        );
     }
 
     #[test]

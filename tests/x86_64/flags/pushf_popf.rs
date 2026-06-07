@@ -23,7 +23,7 @@ fn test_pushf_basic() {
     ];
     let mut regs = Registers::default();
     regs.rflags = 0x2 | 1; // CF set
-    regs.rsp = 0x8010;     // Set stack pointer
+    regs.rsp = 0x8010; // Set stack pointer
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -55,8 +55,8 @@ fn test_popf_basic() {
 fn test_pushf_popf_roundtrip() {
     // PUSHF followed by POPF should preserve RFLAGS
     let code = [
-        0x9c,           // PUSHF - push RFLAGS
-        0x9d,           // POPF - pop RFLAGS
+        0x9c, // PUSHF - push RFLAGS
+        0x9d, // POPF - pop RFLAGS
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -67,9 +67,21 @@ fn test_pushf_popf_roundtrip() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Flags should be restored exactly
-    assert_eq!(cf_set(regs.rflags), cf_set(initial_flags), "CF should roundtrip");
-    assert_eq!(zf_set(regs.rflags), zf_set(initial_flags), "ZF should roundtrip");
-    assert_eq!(sf_set(regs.rflags), sf_set(initial_flags), "SF should roundtrip");
+    assert_eq!(
+        cf_set(regs.rflags),
+        cf_set(initial_flags),
+        "CF should roundtrip"
+    );
+    assert_eq!(
+        zf_set(regs.rflags),
+        zf_set(initial_flags),
+        "ZF should roundtrip"
+    );
+    assert_eq!(
+        sf_set(regs.rflags),
+        sf_set(initial_flags),
+        "SF should roundtrip"
+    );
 }
 
 // NOTE: RSP handling depends on specific VM setup - disabled due to varying implementation behavior
@@ -94,7 +106,7 @@ fn test_popf_increments_rsp() {
     // POPF increments RSP by 8
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x81, 0x00, 0x00, // MOV RSP, 0x8100
-        0x9d,                                      // POPF
+        0x9d, // POPF
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -113,8 +125,8 @@ fn test_popf_increments_rsp() {
 fn test_pushf_with_no_flags_set() {
     // PUSHF with only reserved bit set
     let code = [
-        0x9c,           // PUSHF
-        0x9d,           // POPF
+        0x9c, // PUSHF
+        0x9d, // POPF
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -130,8 +142,8 @@ fn test_pushf_with_no_flags_set() {
 fn test_pushf_with_all_status_flags() {
     // PUSHF with all status flags set
     let code = [
-        0x9c,           // PUSHF
-        0x9d,           // POPF
+        0x9c, // PUSHF
+        0x9d, // POPF
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -174,7 +186,7 @@ fn test_popf_does_not_modify_other_registers() {
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x81, 0x00, 0x00, // MOV RSP, 0x8100
         0x48, 0xc7, 0xc0, 0x42, 0x00, 0x00, 0x00, // MOV RAX, 0x42
-        0x9d,                                      // POPF
+        0x9d, // POPF
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -214,9 +226,9 @@ fn test_multiple_popf() {
     // Test that demonstrates the pattern
     let code = [
         0x48, 0xc7, 0xc4, 0x18, 0x81, 0x00, 0x00, // MOV RSP, 0x8118
-        0x9d,                                      // POPF
-        0x9d,                                      // POPF
-        0x9d,                                      // POPF
+        0x9d, // POPF
+        0x9d, // POPF
+        0x9d, // POPF
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -230,17 +242,21 @@ fn test_multiple_popf() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // RSP should be incremented 3 times
-    assert_eq!(regs.rsp, 0x8118 + 24, "RSP should be incremented by 24 (3 * 8)");
+    assert_eq!(
+        regs.rsp,
+        0x8118 + 24,
+        "RSP should be incremented by 24 (3 * 8)"
+    );
 }
 
 #[test]
 fn test_pushf_popf_with_flag_changes() {
     // PUSHF saves current flags, then POPF restores them after changes
     let code = [
-        0x9c,                          // PUSHF - save initial flags
+        0x9c, // PUSHF - save initial flags
         0xb8, 0x05, 0x00, 0x00, 0x00, // MOV EAX, 5
-        0x83, 0xe8, 0x01,              // SUB EAX, 1 (modifies flags)
-        0x9d,                          // POPF - restore original flags
+        0x83, 0xe8, 0x01, // SUB EAX, 1 (modifies flags)
+        0x9d, // POPF - restore original flags
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -279,8 +295,8 @@ fn test_pushf_popf_with_flag_changes() {
 fn test_pushf_with_df_set() {
     // PUSHF/POPF preserve DF flag
     let code = [
-        0x9c,           // PUSHF
-        0x9d,           // POPF
+        0x9c, // PUSHF
+        0x9d, // POPF
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -296,8 +312,8 @@ fn test_pushf_with_df_set() {
 fn test_pushf_with_if_set() {
     // PUSHF/POPF preserve IF flag
     let code = [
-        0x9c,           // PUSHF
-        0x9d,           // POPF
+        0x9c, // PUSHF
+        0x9d, // POPF
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -314,7 +330,7 @@ fn test_popf_clears_carried_flags() {
     // POPF replaces all flags with stack value
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x81, 0x00, 0x00, // MOV RSP, 0x8100
-        0x9d,                                      // POPF
+        0x9d, // POPF
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -335,8 +351,8 @@ fn test_popf_clears_carried_flags() {
 fn test_pushf_preserves_reserved_bits() {
     // PUSHF includes reserved bits in the saved value
     let code = [
-        0x9c,           // PUSHF
-        0x9d,           // POPF
+        0x9c, // PUSHF
+        0x9d, // POPF
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -363,7 +379,7 @@ fn test_pushf_popf_flag_filter() {
         | (1 << 2)          // PF
         | (1 << 6)          // ZF
         | (1 << 7)          // SF
-        | (1 << 11);        // OF
+        | (1 << 11); // OF
     regs.rsp = 0x8010; // Set valid stack pointer
 
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -380,10 +396,10 @@ fn test_pushf_popf_flag_filter() {
 fn test_pushf_before_exception_recovery() {
     // PUSHF used to save flags before operation
     let code = [
-        0x9c,                          // PUSHF - save flags
+        0x9c, // PUSHF - save flags
         0xb8, 0x00, 0x00, 0x00, 0x00, // MOV EAX, 0
-        0x83, 0xc0, 0x01,              // ADD EAX, 1 (modifies flags)
-        0x9d,                          // POPF - restore flags
+        0x83, 0xc0, 0x01, // ADD EAX, 1 (modifies flags)
+        0x9d, // POPF - restore flags
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -402,8 +418,8 @@ fn test_pushf_with_stack_operations() {
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x80, 0x00, 0x00, // MOV RSP, 0x8000
         0x48, 0xc7, 0xc0, 0x11, 0x00, 0x00, 0x00, // MOV RAX, 0x11
-        0x50,                                      // PUSH RAX
-        0x9c,                                      // PUSHF
+        0x50, // PUSH RAX
+        0x9c, // PUSHF
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -420,14 +436,14 @@ fn test_popf_with_different_flag_values() {
     // POPF with various flag combinations
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x81, 0x00, 0x00, // MOV RSP, 0x8100
-        0x9d,                                      // POPF
+        0x9d, // POPF
         0xf4,
     ];
     let test_cases = vec![
-        (0x2, 0x2),                           // Only reserved
-        (0x2 | 1, 0x2 | 1),                   // CF
-        (0x2 | (1 << 6), 0x2 | (1 << 6)),     // ZF
-        (0x2 | 0xFFF, 0x2 | 0xFFF),           // All flags
+        (0x2, 0x2),                       // Only reserved
+        (0x2 | 1, 0x2 | 1),               // CF
+        (0x2 | (1 << 6), 0x2 | (1 << 6)), // ZF
+        (0x2 | 0xFFF, 0x2 | 0xFFF),       // All flags
     ];
 
     for (stack_value, expected) in test_cases {
@@ -444,12 +460,12 @@ fn test_popf_with_different_flag_values() {
 fn test_pushf_popf_chain() {
     // Chain of PUSHF/POPF operations
     let code = [
-        0x9c,           // PUSHF - save 1
+        0x9c, // PUSHF - save 1
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1
         0x83, 0xc0, 0x01, // ADD EAX, 1
-        0x9c,           // PUSHF - save 2
-        0x9d,           // POPF - restore 2
-        0x9d,           // POPF - restore 1
+        0x9c, // PUSHF - save 2
+        0x9d, // POPF - restore 2
+        0x9d, // POPF - restore 1
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -459,7 +475,11 @@ fn test_pushf_popf_chain() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Should end up back at initial state
-    assert_eq!(cf_set(regs.rflags), false, "Should return to initial CF state");
+    assert_eq!(
+        cf_set(regs.rflags),
+        false,
+        "Should return to initial CF state"
+    );
 }
 
 // NOTE: RSP handling depends on specific VM setup - disabled due to varying implementation behavior
@@ -486,7 +506,7 @@ fn test_popf_64bit_size() {
     // POPF in 64-bit mode pops 64-bit value
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x81, 0x00, 0x00, // MOV RSP, 0x8100
-        0x9d,                                      // POPF
+        0x9d, // POPF
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -527,10 +547,10 @@ fn test_pushf_popf_stress_sequence() {
 fn test_pushf_popf_with_arithmetic() {
     // PUSHF/POPF interaction with arithmetic
     let code = [
-        0x9c,                          // PUSHF
+        0x9c, // PUSHF
         0xb8, 0x80, 0x00, 0x00, 0x00, // MOV EAX, 0x80
-        0x83, 0xc0, 0x80,              // ADD EAX, 0x80 (causes overflow)
-        0x9d,                          // POPF
+        0x83, 0xc0, 0x80, // ADD EAX, 0x80 (causes overflow)
+        0x9d, // POPF
         0xf4,
     ];
     let mut regs = Registers::default();

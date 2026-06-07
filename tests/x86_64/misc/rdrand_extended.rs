@@ -1,5 +1,5 @@
 // Module path for tests run via x86_64.rs
-use crate::common::{run_until_hlt, setup_vm, cf_set};
+use crate::common::{cf_set, run_until_hlt, setup_vm};
 use rax::cpu::Registers;
 
 // RDRAND - Read Random Number
@@ -188,8 +188,8 @@ fn test_rdrand_64bit_preserves_other_registers() {
 fn test_rdrand_retry_pattern() {
     // Simulate retry pattern on failure (though likely always succeeds in emulation)
     let code = [
-        0x0f, 0xc7, 0xf0,       // RDRAND EAX
-        0x73, 0xfb,             // JNC retry (if CF=0)
+        0x0f, 0xc7, 0xf0, // RDRAND EAX
+        0x73, 0xfb, // JNC retry (if CF=0)
         0xf4,
     ];
     let (mut vcpu, _mem) = setup_vm(&code, None);
@@ -218,11 +218,11 @@ fn test_rdrand_with_r8_r15() {
 fn test_rdrand_multiple_in_loop() {
     // Multiple RDRAND calls to fill array pattern
     let code = [
-        0x0f, 0xc7, 0xf0,       // RDRAND EAX
-        0x89, 0x03,             // MOV [RBX], EAX
+        0x0f, 0xc7, 0xf0, // RDRAND EAX
+        0x89, 0x03, // MOV [RBX], EAX
         0x48, 0x83, 0xc3, 0x04, // ADD RBX, 4
-        0x0f, 0xc7, 0xf0,       // RDRAND EAX
-        0x89, 0x03,             // MOV [RBX], EAX
+        0x0f, 0xc7, 0xf0, // RDRAND EAX
+        0x89, 0x03, // MOV [RBX], EAX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -263,9 +263,9 @@ fn test_rdrand_32bit_with_extended_regs() {
 fn test_rdrand_clears_other_flags() {
     // RDRAND should clear OF, SF, ZF, AF, PF (CF is set on success)
     let code = [
-        0xf9,                   // STC (set all arithmetic flags)
-        0xfd,                   // STD
-        0x0f, 0xc7, 0xf0,       // RDRAND EAX
+        0xf9, // STC (set all arithmetic flags)
+        0xfd, // STD
+        0x0f, 0xc7, 0xf0, // RDRAND EAX
         0xf4,
     ];
     let (mut vcpu, _mem) = setup_vm(&code, None);
@@ -297,9 +297,9 @@ fn test_rdrand_determinism_check() {
 fn test_rdrand_interleaved_with_operations() {
     // RDRAND interleaved with other operations
     let code = [
-        0x0f, 0xc7, 0xf0,                   // RDRAND EAX
+        0x0f, 0xc7, 0xf0, // RDRAND EAX
         0x48, 0xc7, 0xc3, 0x42, 0x00, 0x00, 0x00, // MOV RBX, 0x42
-        0x0f, 0xc7, 0xf1,                   // RDRAND ECX
+        0x0f, 0xc7, 0xf1, // RDRAND ECX
         0x48, 0xc7, 0xc2, 0x84, 0x00, 0x00, 0x00, // MOV RDX, 0x84
         0xf4,
     ];
@@ -315,7 +315,7 @@ fn test_rdrand_interleaved_with_operations() {
 fn test_rdrand_save_to_memory_pattern() {
     // Pattern: RDRAND and save to memory
     let code = [
-        0x48, 0x0f, 0xc7, 0xf0,             // RDRAND RAX
+        0x48, 0x0f, 0xc7, 0xf0, // RDRAND RAX
         0x48, 0x89, 0x05, 0x00, 0x20, 0x00, 0x00, // MOV [0x2000], RAX
         0xf4,
     ];
@@ -378,7 +378,7 @@ fn test_rdrand_fill_buffer_simulation() {
     // Simulate filling a buffer with random data
     let code = [
         // Loop to get 4 random values
-        0x0f, 0xc7, 0xf0,       // RDRAND EAX
+        0x0f, 0xc7, 0xf0, // RDRAND EAX
         0x48, 0x0f, 0xc7, 0xf1, // RDRAND RCX
         0x48, 0x0f, 0xc7, 0xf2, // RDRAND RDX
         0x48, 0x0f, 0xc7, 0xf3, // RDRAND RBX
@@ -410,7 +410,7 @@ fn test_rdrand_32bit_upper_bits_zeroed() {
     // RDRAND 32-bit should zero upper 32 bits in 64-bit mode
     let code = [
         0x48, 0xb8, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
-        0x0f, 0xc7, 0xf0,       // RDRAND EAX
+        0x0f, 0xc7, 0xf0, // RDRAND EAX
         0xf4,
     ];
     let (mut vcpu, _mem) = setup_vm(&code, None);
@@ -424,11 +424,11 @@ fn test_rdrand_32bit_upper_bits_zeroed() {
 fn test_rdrand_conditional_branch_pattern() {
     // Pattern using RDRAND with conditional branch
     let code = [
-        0x0f, 0xc7, 0xf0,       // RDRAND EAX
-        0x72, 0x04,             // JC success (if CF=1)
+        0x0f, 0xc7, 0xf0, // RDRAND EAX
+        0x72, 0x04, // JC success (if CF=1)
         // failure path:
-        0x31, 0xc0,             // XOR EAX, EAX
-        0xeb, 0x00,             // JMP end
+        0x31, 0xc0, // XOR EAX, EAX
+        0xeb, 0x00, // JMP end
         // success path:
         // end:
         0xf4,
@@ -445,9 +445,9 @@ fn test_rdrand_entropy_source_pattern() {
     // Simulate gathering entropy from multiple RDRAND calls
     let code = [
         0x48, 0x0f, 0xc7, 0xf0, // RDRAND RAX
-        0x48, 0x33, 0xc3,       // XOR RAX, RBX (mix with RBX)
+        0x48, 0x33, 0xc3, // XOR RAX, RBX (mix with RBX)
         0x48, 0x0f, 0xc7, 0xf3, // RDRAND RBX
-        0x48, 0x33, 0xd8,       // XOR RBX, RAX (mix with RAX)
+        0x48, 0x33, 0xd8, // XOR RBX, RAX (mix with RAX)
         0xf4,
     ];
     let (mut vcpu, _mem) = setup_vm(&code, None);
@@ -481,11 +481,11 @@ fn test_rdrand_benchmark_pattern() {
 fn test_rdrand_seeding_pattern() {
     // Use RDRAND to seed a PRNG
     let code = [
-        0x48, 0x0f, 0xc7, 0xf0,             // RDRAND RAX (seed high)
-        0x48, 0xc1, 0xe0, 0x20,             // SHL RAX, 32
-        0x48, 0x89, 0xc3,                   // MOV RBX, RAX
-        0x0f, 0xc7, 0xf0,                   // RDRAND EAX (seed low)
-        0x48, 0x09, 0xc3,                   // OR RBX, RAX (combine)
+        0x48, 0x0f, 0xc7, 0xf0, // RDRAND RAX (seed high)
+        0x48, 0xc1, 0xe0, 0x20, // SHL RAX, 32
+        0x48, 0x89, 0xc3, // MOV RBX, RAX
+        0x0f, 0xc7, 0xf0, // RDRAND EAX (seed low)
+        0x48, 0x09, 0xc3, // OR RBX, RAX (combine)
         0xf4,
     ];
     let (mut vcpu, _mem) = setup_vm(&code, None);
@@ -513,7 +513,7 @@ fn test_rdrand_key_generation_pattern() {
 fn test_rdrand_nonce_generation() {
     // Generate a nonce using RDRAND
     let code = [
-        0x48, 0x0f, 0xc7, 0xf0,             // RDRAND RAX
+        0x48, 0x0f, 0xc7, 0xf0, // RDRAND RAX
         0x48, 0x89, 0x05, 0x00, 0x20, 0x00, 0x00, // MOV [0x2000], RAX (store nonce)
         0xf4,
     ];
@@ -527,8 +527,8 @@ fn test_rdrand_nonce_generation() {
 fn test_rdrand_monte_carlo_setup() {
     // Setup for Monte Carlo simulation
     let code = [
-        0x0f, 0xc7, 0xf0,       // RDRAND EAX (x coordinate)
-        0x0f, 0xc7, 0xf1,       // RDRAND ECX (y coordinate)
+        0x0f, 0xc7, 0xf0, // RDRAND EAX (x coordinate)
+        0x0f, 0xc7, 0xf1, // RDRAND ECX (y coordinate)
         0xf4,
     ];
     let (mut vcpu, _mem) = setup_vm(&code, None);

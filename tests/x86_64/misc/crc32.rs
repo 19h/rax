@@ -25,7 +25,11 @@ fn test_crc32_8bit_zero_initial() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // CRC32 of single byte 0x00 with initial 0 = 0x00000000
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000000, "CRC32 of 0x00 should be 0x00000000");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00000000,
+        "CRC32 of 0x00 should be 0x00000000"
+    );
 }
 
 #[test]
@@ -72,7 +76,11 @@ fn test_crc32_8bit_accumulation() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Final CRC should be different from intermediate
-    assert_ne!(regs.rax & 0xFFFFFFFF, regs.rcx & 0xFFFFFFFF, "Accumulated CRC should differ");
+    assert_ne!(
+        regs.rax & 0xFFFFFFFF,
+        regs.rcx & 0xFFFFFFFF,
+        "Accumulated CRC should differ"
+    );
 }
 
 #[test]
@@ -95,7 +103,11 @@ fn test_crc32_8bit_sequential() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // CRC32 of "Hello" - just verify it completes and gives a result
-    assert_ne!(regs.rax & 0xFFFFFFFF, 0, "CRC32 of 'Hello' should be non-zero");
+    assert_ne!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "CRC32 of 'Hello' should be non-zero"
+    );
 }
 
 #[test]
@@ -137,7 +149,11 @@ fn test_crc32_16bit_value() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rax & 0xFFFFFFFF, 0, "CRC32 of 0x1234 should be non-zero");
+    assert_ne!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "CRC32 of 0x1234 should be non-zero"
+    );
 }
 
 #[test]
@@ -150,7 +166,11 @@ fn test_crc32_16bit_max_value() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rax & 0xFFFFFFFF, 0, "CRC32 of 0xFFFF should be non-zero");
+    assert_ne!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "CRC32 of 0xFFFF should be non-zero"
+    );
 }
 
 #[test]
@@ -165,7 +185,11 @@ fn test_crc32_16bit_accumulation() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rax & 0xFFFFFFFF, 0, "Accumulated CRC should be non-zero");
+    assert_ne!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "Accumulated CRC should be non-zero"
+    );
 }
 
 // ===== CRC32 32-BIT TESTS =====
@@ -193,7 +217,11 @@ fn test_crc32_32bit_value() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rax & 0xFFFFFFFF, 0, "CRC32 of 0x12345678 should be non-zero");
+    assert_ne!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "CRC32 of 0x12345678 should be non-zero"
+    );
 }
 
 #[test]
@@ -206,7 +234,11 @@ fn test_crc32_32bit_max_value() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rax & 0xFFFFFFFF, 0, "CRC32 of 0xFFFFFFFF should be non-zero");
+    assert_ne!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "CRC32 of 0xFFFFFFFF should be non-zero"
+    );
 }
 
 #[test]
@@ -221,7 +253,11 @@ fn test_crc32_32bit_accumulation() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rax & 0xFFFFFFFF, 0, "Accumulated CRC should be non-zero");
+    assert_ne!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "Accumulated CRC should be non-zero"
+    );
 }
 
 #[test]
@@ -257,7 +293,8 @@ fn test_crc32_64bit_zero() {
 fn test_crc32_64bit_value() {
     let code = [
         0x31, 0xc0, // XOR EAX, EAX
-        0x48, 0xbb, 0xef, 0xcd, 0xab, 0x90, 0x78, 0x56, 0x34, 0x12, // MOV RBX, 0x1234567890ABCDEF
+        0x48, 0xbb, 0xef, 0xcd, 0xab, 0x90, 0x78, 0x56, 0x34,
+        0x12, // MOV RBX, 0x1234567890ABCDEF
         0xf2, 0x48, 0x0f, 0x38, 0xf1, 0xc3, // CRC32 RAX, RBX
         0xf4, // HLT
     ];
@@ -271,7 +308,8 @@ fn test_crc32_64bit_value() {
 fn test_crc32_64bit_max_value() {
     let code = [
         0x31, 0xc0, // XOR EAX, EAX
-        0x48, 0xbb, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // MOV RBX, 0xFFFFFFFFFFFFFFFF
+        0x48, 0xbb, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, // MOV RBX, 0xFFFFFFFFFFFFFFFF
         0xf2, 0x48, 0x0f, 0x38, 0xf1, 0xc3, // CRC32 RAX, RBX
         0xf4, // HLT
     ];
@@ -284,22 +322,29 @@ fn test_crc32_64bit_max_value() {
 fn test_crc32_64bit_accumulation() {
     let code = [
         0x31, 0xc0, // XOR EAX, EAX
-        0x48, 0xbb, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, // MOV RBX, 0x1111111111111111
+        0x48, 0xbb, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+        0x11, // MOV RBX, 0x1111111111111111
         0xf2, 0x48, 0x0f, 0x38, 0xf1, 0xc3, // CRC32 RAX, RBX
-        0x48, 0xbb, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, // MOV RBX, 0x2222222222222222
+        0x48, 0xbb, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
+        0x22, // MOV RBX, 0x2222222222222222
         0xf2, 0x48, 0x0f, 0x38, 0xf1, 0xc3, // CRC32 RAX, RBX
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rax & 0xFFFFFFFF, 0, "Accumulated CRC should be non-zero");
+    assert_ne!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "Accumulated CRC should be non-zero"
+    );
 }
 
 #[test]
 fn test_crc32_64bit_zeros_upper() {
     let code = [
         // Set RAX to all 1s
-        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // MOV RAX, 0xFFFFFFFFFFFFFFFF
+        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, // MOV RAX, 0xFFFFFFFFFFFFFFFF
         0x48, 0xbb, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV RBX, 1
         0xf2, 0x48, 0x0f, 0x38, 0xf1, 0xc3, // CRC32 RAX, RBX
         0xf4, // HLT
@@ -317,7 +362,8 @@ fn test_crc32_8bit_from_memory() {
         // Set up memory with value 0x42 at 0x2000
         0xc6, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x42, // MOV BYTE PTR [0x2000], 0x42
         0x31, 0xc0, // XOR EAX, EAX
-        0xf2, 0x0f, 0x38, 0xf0, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // CRC32 EAX, BYTE PTR [0x2000]
+        0xf2, 0x0f, 0x38, 0xf0, 0x04, 0x25, 0x00, 0x20, 0x00,
+        0x00, // CRC32 EAX, BYTE PTR [0x2000]
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -329,9 +375,11 @@ fn test_crc32_8bit_from_memory() {
 fn test_crc32_16bit_from_memory() {
     let code = [
         // Set up memory
-        0x66, 0xc7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x34, 0x12, // MOV WORD PTR [0x2000], 0x1234
+        0x66, 0xc7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x34,
+        0x12, // MOV WORD PTR [0x2000], 0x1234
         0x31, 0xc0, // XOR EAX, EAX
-        0xf2, 0x0f, 0x38, 0xf1, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // CRC32 EAX, WORD PTR [0x2000]
+        0xf2, 0x0f, 0x38, 0xf1, 0x04, 0x25, 0x00, 0x20, 0x00,
+        0x00, // CRC32 EAX, WORD PTR [0x2000]
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -343,9 +391,11 @@ fn test_crc32_16bit_from_memory() {
 fn test_crc32_32bit_from_memory() {
     let code = [
         // Set up memory
-        0xc7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x78, 0x56, 0x34, 0x12, // MOV DWORD PTR [0x2000], 0x12345678
+        0xc7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x78, 0x56, 0x34,
+        0x12, // MOV DWORD PTR [0x2000], 0x12345678
         0x31, 0xc0, // XOR EAX, EAX
-        0xf2, 0x0f, 0x38, 0xf1, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // CRC32 EAX, DWORD PTR [0x2000]
+        0xf2, 0x0f, 0x38, 0xf1, 0x04, 0x25, 0x00, 0x20, 0x00,
+        0x00, // CRC32 EAX, DWORD PTR [0x2000]
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -357,10 +407,12 @@ fn test_crc32_32bit_from_memory() {
 fn test_crc32_64bit_from_memory() {
     let code = [
         // Set up memory
-        0x48, 0xb8, 0xef, 0xcd, 0xab, 0x90, 0x78, 0x56, 0x34, 0x12, // MOV RAX, 0x1234567890ABCDEF
+        0x48, 0xb8, 0xef, 0xcd, 0xab, 0x90, 0x78, 0x56, 0x34,
+        0x12, // MOV RAX, 0x1234567890ABCDEF
         0x48, 0xa3, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV [0x2000], RAX
         0x31, 0xc0, // XOR EAX, EAX
-        0xf2, 0x48, 0x0f, 0x38, 0xf1, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // CRC32 RAX, QWORD PTR [0x2000]
+        0xf2, 0x48, 0x0f, 0x38, 0xf1, 0x04, 0x25, 0x00, 0x20, 0x00,
+        0x00, // CRC32 RAX, QWORD PTR [0x2000]
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -388,7 +440,11 @@ fn test_crc32_mixed_sizes() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rax & 0xFFFFFFFF, 0, "Mixed size CRC should be non-zero");
+    assert_ne!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "Mixed size CRC should be non-zero"
+    );
 }
 
 #[test]
@@ -433,7 +489,11 @@ fn test_crc32_incremental_update() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rax & 0xFFFFFFFF, regs.rcx & 0xFFFFFFFF, "Final CRC differs from intermediate");
+    assert_ne!(
+        regs.rax & 0xFFFFFFFF,
+        regs.rcx & 0xFFFFFFFF,
+        "Final CRC differs from intermediate"
+    );
 }
 
 #[test]
@@ -445,7 +505,6 @@ fn test_crc32_consistency() {
         0xbb, 0xab, 0xcd, 0xef, 0x12, // MOV EBX, 0x12EFCDAB
         0xf2, 0x0f, 0x38, 0xf1, 0xc3, // CRC32 EAX, EBX
         0x89, 0xc1, // MOV ECX, EAX (save result)
-
         // Second calculation with same input
         0x31, 0xc0, // XOR EAX, EAX
         0xbb, 0xab, 0xcd, 0xef, 0x12, // MOV EBX, 0x12EFCDAB
@@ -454,7 +513,11 @@ fn test_crc32_consistency() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, regs.rcx & 0xFFFFFFFF, "Same input should produce same CRC");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        regs.rcx & 0xFFFFFFFF,
+        "Same input should produce same CRC"
+    );
 }
 
 #[test]
@@ -465,7 +528,6 @@ fn test_crc32_different_inputs_different_outputs() {
         0xbb, 0x01, 0x00, 0x00, 0x00, // MOV EBX, 1
         0xf2, 0x0f, 0x38, 0xf1, 0xc3, // CRC32 EAX, EBX
         0x89, 0xc1, // MOV ECX, EAX
-
         // Second value
         0x31, 0xc0, // XOR EAX, EAX
         0xbb, 0x02, 0x00, 0x00, 0x00, // MOV EBX, 2
@@ -474,7 +536,11 @@ fn test_crc32_different_inputs_different_outputs() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rax & 0xFFFFFFFF, regs.rcx & 0xFFFFFFFF, "Different inputs should produce different CRCs");
+    assert_ne!(
+        regs.rax & 0xFFFFFFFF,
+        regs.rcx & 0xFFFFFFFF,
+        "Different inputs should produce different CRCs"
+    );
 }
 
 #[test]
@@ -487,7 +553,6 @@ fn test_crc32_order_matters() {
         0xbb, 0x14, 0x00, 0x00, 0x00, // MOV EBX, 20
         0xf2, 0x0f, 0x38, 0xf1, 0xc3, // CRC32 EAX, EBX
         0x89, 0xc1, // MOV ECX, EAX
-
         // Order 2: B then A
         0x31, 0xc0, // XOR EAX, EAX
         0xbb, 0x14, 0x00, 0x00, 0x00, // MOV EBX, 20
@@ -498,7 +563,11 @@ fn test_crc32_order_matters() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rax & 0xFFFFFFFF, regs.rcx & 0xFFFFFFFF, "Order should affect CRC result");
+    assert_ne!(
+        regs.rax & 0xFFFFFFFF,
+        regs.rcx & 0xFFFFFFFF,
+        "Order should affect CRC result"
+    );
 }
 
 #[test]
@@ -544,7 +613,8 @@ fn test_crc32_32bit_pattern_aa55() {
 fn test_crc32_64bit_pattern_01234567() {
     let code = [
         0x31, 0xc0, // XOR EAX, EAX
-        0x48, 0xbb, 0x67, 0x45, 0x23, 0x01, 0x67, 0x45, 0x23, 0x01, // MOV RBX, 0x0123456701234567
+        0x48, 0xbb, 0x67, 0x45, 0x23, 0x01, 0x67, 0x45, 0x23,
+        0x01, // MOV RBX, 0x0123456701234567
         0xf2, 0x48, 0x0f, 0x38, 0xf1, 0xc3, // CRC32 RAX, RBX
         0xf4, // HLT
     ];
@@ -567,5 +637,9 @@ fn test_crc32_accumulation_three_bytes() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rax & 0xFFFFFFFF, 0, "CRC32 of 'ABC' should be non-zero");
+    assert_ne!(
+        regs.rax & 0xFFFFFFFF,
+        0,
+        "CRC32 of 'ABC' should be non-zero"
+    );
 }

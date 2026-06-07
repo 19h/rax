@@ -160,7 +160,8 @@ fn test_vextractf128_ymm12_xmm13_lane1() {
 fn test_vextractf128_ymm0_mem_lane0() {
     // VEXTRACTF128 [mem128], YMM0, 0
     let code = [
-        0xc4, 0xe3, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00, 0x00, 0x00, // VEXTRACTF128 [rip + 0x4000], YMM0, 0
+        0xc4, 0xe3, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00, 0x00,
+        0x00, // VEXTRACTF128 [rip + 0x4000], YMM0, 0
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -171,7 +172,8 @@ fn test_vextractf128_ymm0_mem_lane0() {
 fn test_vextractf128_ymm1_mem_lane1() {
     // VEXTRACTF128 [mem128], YMM1, 1
     let code = [
-        0xc4, 0xe3, 0x7d, 0x19, 0x0d, 0x00, 0x40, 0x00, 0x00, 0x01, // VEXTRACTF128 [rip + 0x4000], YMM1, 1
+        0xc4, 0xe3, 0x7d, 0x19, 0x0d, 0x00, 0x40, 0x00, 0x00,
+        0x01, // VEXTRACTF128 [rip + 0x4000], YMM1, 1
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -182,7 +184,8 @@ fn test_vextractf128_ymm1_mem_lane1() {
 fn test_vextractf128_ymm8_mem_lane0() {
     // VEXTRACTF128 [mem128], YMM8, 0
     let code = [
-        0xc4, 0xc3, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00, 0x00, 0x00, // VEXTRACTF128 [rip + 0x4000], YMM8, 0
+        0xc4, 0xc3, 0x7d, 0x19, 0x05, 0x00, 0x40, 0x00, 0x00,
+        0x00, // VEXTRACTF128 [rip + 0x4000], YMM8, 0
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -193,7 +196,8 @@ fn test_vextractf128_ymm8_mem_lane0() {
 fn test_vextractf128_ymm15_mem_lane1() {
     // VEXTRACTF128 [mem128], YMM15, 1
     let code = [
-        0xc4, 0xc3, 0x7d, 0x19, 0x3d, 0x00, 0x40, 0x00, 0x00, 0x01, // VEXTRACTF128 [rip + 0x4000], YMM15, 1
+        0xc4, 0xc3, 0x7d, 0x19, 0x3d, 0x00, 0x40, 0x00, 0x00,
+        0x01, // VEXTRACTF128 [rip + 0x4000], YMM15, 1
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -333,19 +337,19 @@ fn test_vinsertf128_ymm12_ymm13_xmm14_lane1() {
 fn test_vinsertf128_ymm0_ymm1_mem_lane0() {
     // VINSERTF128 YMM0, YMM1, [mem128], 0
     let code = [
-        0xc4, 0xe3, 0x75, 0x18, 0x05, 0x00, 0x40, 0x00, 0x00, 0x00, // VINSERTF128 YMM0, YMM1, [rip + 0x4000], 0
+        0xc4, 0xe3, 0x75, 0x18, 0x05, 0x00, 0x40, 0x00, 0x00,
+        0x00, // VINSERTF128 YMM0, YMM1, [rip + 0x4000], 0
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     // Initialize memory with test data
     let test_data: [u8; 16] = [
-        0x00, 0x00, 0x80, 0x3f,
-        0x00, 0x00, 0x00, 0x40,
-        0x00, 0x00, 0x40, 0x40,
-        0x00, 0x00, 0x80, 0x40,
+        0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x80,
+        0x40,
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -354,18 +358,18 @@ fn test_vinsertf128_ymm0_ymm1_mem_lane0() {
 fn test_vinsertf128_ymm2_ymm3_mem_lane1() {
     // VINSERTF128 YMM2, YMM3, [mem128], 1
     let code = [
-        0xc4, 0xe3, 0x65, 0x18, 0x15, 0x00, 0x40, 0x00, 0x00, 0x01, // VINSERTF128 YMM2, YMM3, [rip + 0x4000], 1
+        0xc4, 0xe3, 0x65, 0x18, 0x15, 0x00, 0x40, 0x00, 0x00,
+        0x01, // VINSERTF128 YMM2, YMM3, [rip + 0x4000], 1
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let test_data: [u8; 16] = [
-        0x00, 0x00, 0xa0, 0x40,
-        0x00, 0x00, 0xc0, 0x40,
-        0x00, 0x00, 0xe0, 0x40,
-        0x00, 0x00, 0x00, 0x41,
+        0x00, 0x00, 0xa0, 0x40, 0x00, 0x00, 0xc0, 0x40, 0x00, 0x00, 0xe0, 0x40, 0x00, 0x00, 0x00,
+        0x41,
     ];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -374,13 +378,18 @@ fn test_vinsertf128_ymm2_ymm3_mem_lane1() {
 fn test_vinsertf128_ymm8_ymm9_mem_lane0() {
     // VINSERTF128 YMM8, YMM9, [mem128], 0
     let code = [
-        0xc4, 0xc3, 0x35, 0x18, 0x05, 0x00, 0x40, 0x00, 0x00, 0x00, // VINSERTF128 YMM8, YMM9, [rip + 0x4000], 0
+        0xc4, 0xc3, 0x35, 0x18, 0x05, 0x00, 0x40, 0x00, 0x00,
+        0x00, // VINSERTF128 YMM8, YMM9, [rip + 0x4000], 0
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 16] = [0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let test_data: [u8; 16] = [
+        0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+        0xaa,
+    ];
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -389,13 +398,18 @@ fn test_vinsertf128_ymm8_ymm9_mem_lane0() {
 fn test_vinsertf128_ymm14_ymm15_mem_lane1() {
     // VINSERTF128 YMM14, YMM15, [mem128], 1
     let code = [
-        0xc4, 0xc3, 0x05, 0x18, 0x35, 0x00, 0x40, 0x00, 0x00, 0x01, // VINSERTF128 YMM14, YMM15, [rip + 0x4000], 1
+        0xc4, 0xc3, 0x05, 0x18, 0x35, 0x00, 0x40, 0x00, 0x00,
+        0x01, // VINSERTF128 YMM14, YMM15, [rip + 0x4000], 1
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 16] = [0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb];
-    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
+    let test_data: [u8; 16] = [
+        0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb,
+        0xbb,
+    ];
+    mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -475,7 +489,11 @@ fn test_vextractf128_low_value() {
     kei_set(&mut vcpu, 1, 0xDEAD_BEEF, 0xCAFE_BABE); // pre-existing garbage
     run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(kei_lo(&vcpu, 1), EI_LO);
-    assert_eq!(kei_hi(&vcpu, 1), 0, "128-bit write must zero upper 128 bits");
+    assert_eq!(
+        kei_hi(&vcpu, 1),
+        0,
+        "128-bit write must zero upper 128 bits"
+    );
 }
 
 #[test]
@@ -487,7 +505,11 @@ fn test_vextractf128_high_value() {
     kei_set(&mut vcpu, 1, 0xDEAD_BEEF, 0xCAFE_BABE);
     run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(kei_lo(&vcpu, 1), EI_HI);
-    assert_eq!(kei_hi(&vcpu, 1), 0, "128-bit write must zero upper 128 bits");
+    assert_eq!(
+        kei_hi(&vcpu, 1),
+        0,
+        "128-bit write must zero upper 128 bits"
+    );
 }
 
 #[test]
@@ -526,7 +548,12 @@ fn test_vextract_then_vinsert_roundtrip() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     kei_set(&mut vcpu, 0, EI_LO, EI_HI);
-    kei_set(&mut vcpu, 3, 0x1111_1111_1111_1111_2222_2222_2222_2222, 0x3333_3333_3333_3333_4444_4444_4444_4444);
+    kei_set(
+        &mut vcpu,
+        3,
+        0x1111_1111_1111_1111_2222_2222_2222_2222,
+        0x3333_3333_3333_3333_4444_4444_4444_4444,
+    );
     run_until_hlt(&mut vcpu).unwrap();
     // XMM1 == high lane of YMM0
     assert_eq!(kei_lo(&vcpu, 1), EI_HI);

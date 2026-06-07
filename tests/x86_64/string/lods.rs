@@ -1,4 +1,6 @@
-use crate::common::{setup_vm_legacy as setup_vm, run_until_hlt_legacy as run_until_hlt, VM, Bytes};
+use crate::common::{
+    Bytes, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+};
 
 // LODS/LODSB/LODSW/LODSD/LODSQ - Load String
 // Loads from [RSI] into AL/AX/EAX/RAX, increments/decrements RSI based on DF
@@ -72,7 +74,8 @@ fn test_lodsd_basic() {
 fn test_lodsq_basic() {
     let code = [
         0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
-        0x48, 0xb8, 0xef, 0xcd, 0xab, 0x90, 0x78, 0x56, 0x34, 0x12, // MOV RAX, 0x1234567890ABCDEF
+        0x48, 0xb8, 0xef, 0xcd, 0xab, 0x90, 0x78, 0x56, 0x34,
+        0x12, // MOV RAX, 0x1234567890ABCDEF
         0x48, 0x89, 0x06, // MOV [RSI], RAX
         0xfc, // CLD
         0x48, 0xad, // LODSQ

@@ -655,9 +655,9 @@ fn test_prefetch_interleaved_with_operations() {
     // Prefetch instructions interleaved with actual operations
     let code = [
         0x48, 0xc7, 0xc0, 0x42, 0x00, 0x00, 0x00, // MOV rax, 0x42
-        0x0f, 0x0d, 0x0b,                         // PREFETCHW [rbx]
+        0x0f, 0x0d, 0x0b, // PREFETCHW [rbx]
         0x48, 0xc7, 0xc1, 0x84, 0x00, 0x00, 0x00, // MOV rcx, 0x84
-        0x0f, 0x0d, 0x12,                         // PREFETCHWT1 [rdx]
+        0x0f, 0x0d, 0x12, // PREFETCHWT1 [rdx]
         0xf4,
     ];
     let mut regs = Registers::default();

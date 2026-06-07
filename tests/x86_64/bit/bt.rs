@@ -230,7 +230,10 @@ fn test_bt_eax_ebx_alternating_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(cf_set(regs.rflags), "CF should be set (bit 1 is 1 in 0xAAAAAAAA)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (bit 1 is 1 in 0xAAAAAAAA)"
+    );
 }
 
 #[test]
@@ -246,7 +249,10 @@ fn test_bt_eax_ebx_alternating_bits_clear() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(!cf_set(regs.rflags), "CF should be clear (bit 0 is 0 in 0xAAAAAAAA)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (bit 0 is 0 in 0xAAAAAAAA)"
+    );
 }
 
 #[test]
@@ -262,7 +268,11 @@ fn test_bt_does_not_modify_operand() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX: BT should not modify operand");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX: BT should not modify operand"
+    );
 }
 
 #[test]
@@ -279,7 +289,11 @@ fn test_bt_with_extended_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert!(cf_set(regs.rflags), "CF should be set (bit 0 is 1)");
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0b0000_0001, "R8D: BT should not modify operand");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0b0000_0001,
+        "R8D: BT should not modify operand"
+    );
 }
 
 #[test]
@@ -310,7 +324,10 @@ fn test_bt_mem16_reg() {
     write_mem_u16(&mem, 0x0100); // bit 8 set
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(cf_set(regs.rflags), "CF should be set (bit 8 is 1 in memory)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (bit 8 is 1 in memory)"
+    );
 }
 
 #[test]
@@ -326,7 +343,10 @@ fn test_bt_mem32_reg() {
     write_mem_u32(&mem, 0x00010000); // bit 16 set
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(cf_set(regs.rflags), "CF should be set (bit 16 is 1 in memory)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (bit 16 is 1 in memory)"
+    );
 }
 
 #[test]
@@ -342,7 +362,10 @@ fn test_bt_mem64_reg() {
     write_mem_u64(&mem, 0x100_0000_0000); // bit 40 set
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(cf_set(regs.rflags), "CF should be set (bit 40 is 1 in memory)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (bit 40 is 1 in memory)"
+    );
 }
 
 #[test]
@@ -356,7 +379,10 @@ fn test_bt_mem32_imm8() {
     write_mem_u32(&mem, 0x1000); // bit 12 set
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(cf_set(regs.rflags), "CF should be set (bit 12 is 1 in memory)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (bit 12 is 1 in memory)"
+    );
 }
 
 #[test]
@@ -404,7 +430,10 @@ fn test_bt_bit_position_modulo_16() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(cf_set(regs.rflags), "CF should be set (bit position 16 wraps to 0)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (bit position 16 wraps to 0)"
+    );
 }
 
 #[test]
@@ -420,7 +449,10 @@ fn test_bt_bit_position_modulo_32() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(cf_set(regs.rflags), "CF should be set (bit position 32 wraps to 0)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (bit position 32 wraps to 0)"
+    );
 }
 
 #[test]
@@ -436,7 +468,10 @@ fn test_bt_bit_position_modulo_64() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(cf_set(regs.rflags), "CF should be set (bit position 64 wraps to 0)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (bit position 64 wraps to 0)"
+    );
 }
 
 #[test]
@@ -575,7 +610,8 @@ fn test_bt_max_value() {
 fn test_bt_imm8_upper_bits_ignored() {
     // Immediate is only 8 bits, upper bits are ignored
     let code = [
-        0x0f, 0xba, 0xe0, 0xff, // BT EAX, 0xFF (only lower 5 bits matter for 32-bit: 0x1F = 31)
+        0x0f, 0xba, 0xe0,
+        0xff, // BT EAX, 0xFF (only lower 5 bits matter for 32-bit: 0x1F = 31)
         0xf4,
     ];
     let mut regs = Registers::default();

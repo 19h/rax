@@ -87,17 +87,17 @@ pub use lift::x86_64::X86_64Lifter;
 pub use lift::{ControlFlow, LiftContext, LiftError, LiftResult, SmirLifter};
 pub use lower::avx10::{Avx10Lowerer, EvexEncoder};
 pub use lower::regalloc::{PhysReg, RegAlloc, RegLocation};
-pub use lower::x86_64::{X86Cond, X86Emitter, X86_64Lowerer};
+pub use lower::x86_64::{X86_64Lowerer, X86Cond, X86Emitter};
 pub use lower::{
     CodeBuffer, LowerError, LowerResult, RelocKind, RelocTarget, Relocation, RuntimeHelper,
     SmirLowerer,
 };
 pub use memory::{
-    bytes_to_u64, check_alignment, u64_to_bytes, ExclusiveMonitor, FlatMemory, MemoryError,
-    MemoryReader, SmirMemory,
+    ExclusiveMonitor, FlatMemory, MemoryError, MemoryReader, SmirMemory, bytes_to_u64,
+    check_alignment, u64_to_bytes,
 };
 pub use ops::{OpKind, SmirOp};
-pub use opt::{optimize_function, OptLevel, OptStats};
+pub use opt::{OptLevel, OptStats, optimize_function};
 pub use types::{
     Address, ArchReg, ArmReg, AtomicOp, Avx10DotProductKind, Avx10Encoding, Avx10FP16Op, BlockId,
     BlockIdAllocator, Condition, Endian, ExtendOp, FenceKind, FpPrecision, FpRoundMode, FunctionId,

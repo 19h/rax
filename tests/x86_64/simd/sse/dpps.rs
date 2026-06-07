@@ -19,7 +19,8 @@ const ALIGNED_ADDR: u64 = 0x3000;
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0xf0() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0xf0, // DPPS XMM0, XMM1, 0xF0 (multiply all, write none)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0xf0, // DPPS XMM0, XMM1, 0xF0 (multiply all, write none)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -41,7 +42,8 @@ fn test_dpps_xmm0_xmm1_mask_0xff() {
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0xf1() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0xf1, // DPPS XMM0, XMM1, 0xF1 (multiply all, write element 0)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0xf1, // DPPS XMM0, XMM1, 0xF1 (multiply all, write element 0)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -52,7 +54,8 @@ fn test_dpps_xmm0_xmm1_mask_0xf1() {
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0xf2() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0xf2, // DPPS XMM0, XMM1, 0xF2 (multiply all, write element 1)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0xf2, // DPPS XMM0, XMM1, 0xF2 (multiply all, write element 1)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -63,7 +66,8 @@ fn test_dpps_xmm0_xmm1_mask_0xf2() {
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0xf4() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0xf4, // DPPS XMM0, XMM1, 0xF4 (multiply all, write element 2)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0xf4, // DPPS XMM0, XMM1, 0xF4 (multiply all, write element 2)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -74,7 +78,8 @@ fn test_dpps_xmm0_xmm1_mask_0xf4() {
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0xf8() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0xf8, // DPPS XMM0, XMM1, 0xF8 (multiply all, write element 3)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0xf8, // DPPS XMM0, XMM1, 0xF8 (multiply all, write element 3)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -85,7 +90,8 @@ fn test_dpps_xmm0_xmm1_mask_0xf8() {
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0xf3() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0xf3, // DPPS XMM0, XMM1, 0xF3 (multiply all, write elements 0-1)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0xf3, // DPPS XMM0, XMM1, 0xF3 (multiply all, write elements 0-1)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -96,7 +102,8 @@ fn test_dpps_xmm0_xmm1_mask_0xf3() {
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0xfc() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0xfc, // DPPS XMM0, XMM1, 0xFC (multiply all, write elements 2-3)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0xfc, // DPPS XMM0, XMM1, 0xFC (multiply all, write elements 2-3)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -107,7 +114,8 @@ fn test_dpps_xmm0_xmm1_mask_0xfc() {
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0x1f() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0x1f, // DPPS XMM0, XMM1, 0x1F (multiply element 0, write all)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0x1f, // DPPS XMM0, XMM1, 0x1F (multiply element 0, write all)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -118,7 +126,8 @@ fn test_dpps_xmm0_xmm1_mask_0x1f() {
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0x2f() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0x2f, // DPPS XMM0, XMM1, 0x2F (multiply element 1, write all)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0x2f, // DPPS XMM0, XMM1, 0x2F (multiply element 1, write all)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -129,7 +138,8 @@ fn test_dpps_xmm0_xmm1_mask_0x2f() {
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0x4f() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0x4f, // DPPS XMM0, XMM1, 0x4F (multiply element 2, write all)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0x4f, // DPPS XMM0, XMM1, 0x4F (multiply element 2, write all)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -140,7 +150,8 @@ fn test_dpps_xmm0_xmm1_mask_0x4f() {
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0x8f() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0x8f, // DPPS XMM0, XMM1, 0x8F (multiply element 3, write all)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0x8f, // DPPS XMM0, XMM1, 0x8F (multiply element 3, write all)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -151,7 +162,8 @@ fn test_dpps_xmm0_xmm1_mask_0x8f() {
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0x3f() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0x3f, // DPPS XMM0, XMM1, 0x3F (multiply elements 0-1, write all)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0x3f, // DPPS XMM0, XMM1, 0x3F (multiply elements 0-1, write all)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -162,7 +174,8 @@ fn test_dpps_xmm0_xmm1_mask_0x3f() {
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0xcf() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0xcf, // DPPS XMM0, XMM1, 0xCF (multiply elements 2-3, write all)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0xcf, // DPPS XMM0, XMM1, 0xCF (multiply elements 2-3, write all)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -173,7 +186,8 @@ fn test_dpps_xmm0_xmm1_mask_0xcf() {
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0x5f() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0x5f, // DPPS XMM0, XMM1, 0x5F (multiply elements 0,2, write all)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0x5f, // DPPS XMM0, XMM1, 0x5F (multiply elements 0,2, write all)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -184,7 +198,8 @@ fn test_dpps_xmm0_xmm1_mask_0x5f() {
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0xaf() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0xaf, // DPPS XMM0, XMM1, 0xAF (multiply elements 1,3, write all)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0xaf, // DPPS XMM0, XMM1, 0xAF (multiply elements 1,3, write all)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -195,7 +210,8 @@ fn test_dpps_xmm0_xmm1_mask_0xaf() {
 #[test]
 fn test_dpps_xmm0_xmm1_mask_0x00() {
     let code = [
-        0x66, 0x0f, 0x3a, 0x40, 0xc1, 0x00, // DPPS XMM0, XMM1, 0x00 (multiply none, write none)
+        0x66, 0x0f, 0x3a, 0x40, 0xc1,
+        0x00, // DPPS XMM0, XMM1, 0x00 (multiply none, write none)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -295,7 +311,8 @@ fn test_dpps_xmm0_mem_mask_0xff() {
         0x00, 0x00, 0x40, 0x40, // 3.0
         0x00, 0x00, 0x80, 0x40, // 4.0
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -312,8 +329,12 @@ fn test_dpps_xmm1_mem_mask_0xf1() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: [u8; 16] = [0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f]; // All 1.0
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    let data: [u8; 16] = [
+        0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80,
+        0x3f,
+    ]; // All 1.0
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -336,7 +357,8 @@ fn test_dpps_xmm2_mem_mask_0x71() {
         0x00, 0x00, 0x00, 0x40, // 2.0
         0x00, 0x00, 0x40, 0x40, // 3.0
     ];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -450,8 +472,12 @@ fn test_dpps_mem_displacement() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: [u8; 16] = [0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f];
-    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    let data: [u8; 16] = [
+        0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80,
+        0x3f,
+    ];
+    mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR))
+        .unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -558,7 +584,6 @@ fn test_dpps_xmm1_xmm3_mask_0x6a() {
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
-
 
 // ============================================================================
 // Known-answer value tests (register-to-register via set_xmm/get_xmm)

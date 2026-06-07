@@ -1,4 +1,6 @@
-use crate::common::{setup_vm_legacy as setup_vm, run_until_hlt_legacy as run_until_hlt, VM, CODE_ADDR};
+use crate::common::{
+    CODE_ADDR, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+};
 
 // CALL - Call Procedure
 // Pushes return address (RIP) onto stack and jumps to target

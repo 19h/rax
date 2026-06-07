@@ -236,7 +236,10 @@ fn test_pop_max_value() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // MOV r64, imm32 sign-extends: 0xFFFFFFFF becomes 0xFFFFFFFFFFFFFFFF
-    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "RAX should be sign-extended max");
+    assert_eq!(
+        regs.rax, 0xFFFFFFFFFFFFFFFF,
+        "RAX should be sign-extended max"
+    );
 }
 
 // Practical use case: function epilogue
@@ -403,11 +406,9 @@ fn test_pop_with_mov() {
 #[test]
 fn test_deep_stack() {
     let code = [
-        0x6a, 0x01, 0x6a, 0x02, 0x6a, 0x03, 0x6a, 0x04, 0x6a, 0x05,
-        0x6a, 0x06, 0x6a, 0x07, 0x6a, 0x08, 0x6a, 0x09, 0x6a, 0x0a,
-        // Pop all back
-        0x58, 0x58, 0x58, 0x58, 0x58, 0x58, 0x58, 0x58, 0x58, 0x58,
-        0xf4, // HLT
+        0x6a, 0x01, 0x6a, 0x02, 0x6a, 0x03, 0x6a, 0x04, 0x6a, 0x05, 0x6a, 0x06, 0x6a, 0x07, 0x6a,
+        0x08, 0x6a, 0x09, 0x6a, 0x0a, // Pop all back
+        0x58, 0x58, 0x58, 0x58, 0x58, 0x58, 0x58, 0x58, 0x58, 0x58, 0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rsp = 0x1000;
@@ -478,7 +479,11 @@ fn test_strict_pop_into_memory() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     crate::common::write_mem_at_u64(&mem, 0x4000, 0xCAFE_BABE_FACE_F00D);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(crate::common::read_mem_at_u64(&mem, crate::common::DATA_ADDR), 0xCAFE_BABE_FACE_F00D, "popped into memory");
+    assert_eq!(
+        crate::common::read_mem_at_u64(&mem, crate::common::DATA_ADDR),
+        0xCAFE_BABE_FACE_F00D,
+        "popped into memory"
+    );
     assert_eq!(regs.rsp, 0x4008, "RSP advanced by 8");
 }
 

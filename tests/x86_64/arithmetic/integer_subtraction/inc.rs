@@ -406,7 +406,7 @@ fn test_inc_as_loop_counter() {
         0xff, 0xc0, // INC EAX
         0xff, 0xc0, // INC EAX
         0xff, 0xc0, // INC EAX
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0;
@@ -426,5 +426,9 @@ fn test_inc_preserves_high_bytes() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFF, 0x79);
-    assert_eq!(regs.rax & !0xFF, 0xDEADBEEF_12345600, "High bytes should be preserved");
+    assert_eq!(
+        regs.rax & !0xFF,
+        0xDEADBEEF_12345600,
+        "High bytes should be preserved"
+    );
 }

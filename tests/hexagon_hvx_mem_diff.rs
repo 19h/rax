@@ -61,7 +61,9 @@ struct Out {
 
 fn which(prog: &str) -> Option<PathBuf> {
     let path = std::env::var_os("PATH")?;
-    std::env::split_paths(&path).map(|d| d.join(prog)).find(|c| c.is_file())
+    std::env::split_paths(&path)
+        .map(|d| d.join(prog))
+        .find(|c| c.is_file())
 }
 
 /// Build oracle_hvx_mem; return (path, g_varena address).
@@ -91,7 +93,9 @@ fn oracle() -> Option<(PathBuf, u32)> {
             return None;
         }
     }
-    let nm = which("llvm-nm").map(|_| "llvm-nm").or(which("nm").map(|_| "nm"))?;
+    let nm = which("llvm-nm")
+        .map(|_| "llvm-nm")
+        .or(which("nm").map(|_| "nm"))?;
     let out = Command::new(nm).arg(&bin).output().ok()?;
     let addr = String::from_utf8_lossy(&out.stdout).lines().find_map(|l| {
         let mut it = l.split_whitespace();
@@ -185,13 +189,23 @@ fn assemble(packets: &[String]) -> Option<Vec<Vec<u32>>> {
         return Some(v.clone());
     }
     let mut child = Command::new("llvm-mc")
-        .args(["-triple=hexagon", "-mcpu=hexagonv68", "-mhvx", "-show-encoding"])
+        .args([
+            "-triple=hexagon",
+            "-mcpu=hexagonv68",
+            "-mhvx",
+            "-show-encoding",
+        ])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .spawn()
         .ok()?;
-    child.stdin.take().unwrap().write_all(packets.join("\n").as_bytes()).ok()?;
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(packets.join("\n").as_bytes())
+        .ok()?;
     let mut out = String::new();
     child.stdout.take().unwrap().read_to_string(&mut out).ok()?;
     if !child.wait().ok()?.success() {
@@ -216,7 +230,10 @@ fn assemble(packets: &[String]) -> Option<Vec<Vec<u32>>> {
     for b in bytes {
         acc.push(b);
         if acc.len() == 4 {
-            let w = acc[0] as u32 | (acc[1] as u32) << 8 | (acc[2] as u32) << 16 | (acc[3] as u32) << 24;
+            let w = acc[0] as u32
+                | (acc[1] as u32) << 8
+                | (acc[2] as u32) << 16
+                | (acc[3] as u32) << 24;
             acc.clear();
             cur.push(w);
             let pb = (w >> 14) & 3;
@@ -245,11 +262,14 @@ fn run_rax(words: &[u32], c: &Case, varena: u32) -> Option<Out> {
     let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&regions).ok()?);
     let mut off = CODE_ADDR;
     for &w in words {
-        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64)).ok()?;
+        mem.write_slice(&w.to_le_bytes(), GuestAddress(off as u64))
+            .ok()?;
         off += 4;
     }
-    mem.write_slice(&trap0_word().to_le_bytes(), GuestAddress(off as u64)).ok()?;
-    mem.write_slice(&c.arena, GuestAddress(varena as u64)).ok()?;
+    mem.write_slice(&trap0_word().to_le_bytes(), GuestAddress(off as u64))
+        .ok()?;
+    mem.write_slice(&c.arena, GuestAddress(varena as u64))
+        .ok()?;
 
     let mut regs = HexagonRegisters::default();
     for i in 0..NREG {
@@ -299,8 +319,13 @@ fn run_rax(words: &[u32], c: &Case, varena: u32) -> Option<Out> {
         st[i] = regs.r[i];
     }
     let mut arena = [0u8; ARENA];
-    mem.read_slice(&mut arena, GuestAddress(varena as u64)).ok()?;
-    Some(Out { st, v: regs.v, arena })
+    mem.read_slice(&mut arena, GuestAddress(varena as u64))
+        .ok()?;
+    Some(Out {
+        st,
+        v: regs.v,
+        arena,
+    })
 }
 
 struct Rng(u64);
@@ -458,7 +483,13 @@ fn run_family_sg(name: &str, cases: &[(&str, &str, SgKind)], n: usize, seed: u64
                 }
             }
             labels.push(*label);
-            batch.push(Case { words: words.clone(), st, v, arena, qsrc });
+            batch.push(Case {
+                words: words.clone(),
+                st,
+                v,
+                arena,
+                qsrc,
+            });
         }
     }
     let outs = match run_oracle(&bin, &batch) {
@@ -479,8 +510,13 @@ fn run_family_sg(name: &str, cases: &[(&str, &str, SgKind)], n: usize, seed: u64
         };
         let mut diffs = Vec::new();
         if rax.arena != outs[i].arena {
-            let j = (0..ARENA).find(|&j| rax.arena[j] != outs[i].arena[j]).unwrap();
-            diffs.push(format!("arena[{j}]:rax={:#x},hw={:#x}", rax.arena[j], outs[i].arena[j]));
+            let j = (0..ARENA)
+                .find(|&j| rax.arena[j] != outs[i].arena[j])
+                .unwrap();
+            diffs.push(format!(
+                "arena[{j}]:rax={:#x},hw={:#x}",
+                rax.arena[j], outs[i].arena[j]
+            ));
         }
         for r in 0..NREG {
             if rax.st[r] != outs[i].st[r] {
@@ -557,7 +593,13 @@ fn run_family_q(name: &str, cases: &[(&str, &str)], n: usize, seed: u64, qsrc_ra
                 }
             }
             labels.push(*label);
-            batch.push(Case { words: words.clone(), st, v, arena, qsrc });
+            batch.push(Case {
+                words: words.clone(),
+                st,
+                v,
+                arena,
+                qsrc,
+            });
         }
     }
     let outs = match run_oracle(&bin, &batch) {
@@ -579,14 +621,24 @@ fn run_family_q(name: &str, cases: &[(&str, &str)], n: usize, seed: u64, qsrc_ra
         let mut diffs = Vec::new();
         for vr in 0..VREGS {
             if rax.v[vr] != outs[i].v[vr] {
-                let w = (0..VWORDS).find(|&w| rax.v[vr][w] != outs[i].v[vr][w]).unwrap();
-                diffs.push(format!("v{vr}.w[{w}]:rax={:#x},hw={:#x}", rax.v[vr][w], outs[i].v[vr][w]));
+                let w = (0..VWORDS)
+                    .find(|&w| rax.v[vr][w] != outs[i].v[vr][w])
+                    .unwrap();
+                diffs.push(format!(
+                    "v{vr}.w[{w}]:rax={:#x},hw={:#x}",
+                    rax.v[vr][w], outs[i].v[vr][w]
+                ));
                 break;
             }
         }
         if rax.arena != outs[i].arena {
-            let j = (0..ARENA).find(|&j| rax.arena[j] != outs[i].arena[j]).unwrap();
-            diffs.push(format!("arena[{j}]:rax={:#x},hw={:#x}", rax.arena[j], outs[i].arena[j]));
+            let j = (0..ARENA)
+                .find(|&j| rax.arena[j] != outs[i].arena[j])
+                .unwrap();
+            diffs.push(format!(
+                "arena[{j}]:rax={:#x},hw={:#x}",
+                rax.arena[j], outs[i].arena[j]
+            ));
         }
         for r in 0..NREG {
             if rax.st[r] != outs[i].st[r] {
@@ -674,7 +726,13 @@ fn run_family_ext(name: &str, cases: &[(&str, &str)], n: usize, seed: u64, qsrc_
                 }
             }
             labels.push(*label);
-            batch.push(Case { words: words.clone(), st, v, arena, qsrc });
+            batch.push(Case {
+                words: words.clone(),
+                st,
+                v,
+                arena,
+                qsrc,
+            });
         }
     }
     let outs = match run_oracle(&bin, &batch) {
@@ -696,14 +754,24 @@ fn run_family_ext(name: &str, cases: &[(&str, &str)], n: usize, seed: u64, qsrc_
         let mut diffs = Vec::new();
         for vr in 0..VREGS {
             if rax.v[vr] != outs[i].v[vr] {
-                let w = (0..VWORDS).find(|&w| rax.v[vr][w] != outs[i].v[vr][w]).unwrap();
-                diffs.push(format!("v{vr}.w[{w}]:rax={:#x},hw={:#x}", rax.v[vr][w], outs[i].v[vr][w]));
+                let w = (0..VWORDS)
+                    .find(|&w| rax.v[vr][w] != outs[i].v[vr][w])
+                    .unwrap();
+                diffs.push(format!(
+                    "v{vr}.w[{w}]:rax={:#x},hw={:#x}",
+                    rax.v[vr][w], outs[i].v[vr][w]
+                ));
                 break;
             }
         }
         if rax.arena != outs[i].arena {
-            let j = (0..ARENA).find(|&j| rax.arena[j] != outs[i].arena[j]).unwrap();
-            diffs.push(format!("arena[{j}]:rax={:#x},hw={:#x}", rax.arena[j], outs[i].arena[j]));
+            let j = (0..ARENA)
+                .find(|&j| rax.arena[j] != outs[i].arena[j])
+                .unwrap();
+            diffs.push(format!(
+                "arena[{j}]:rax={:#x},hw={:#x}",
+                rax.arena[j], outs[i].arena[j]
+            ));
         }
         for r in 0..NREG {
             if rax.st[r] != outs[i].st[r] {
@@ -828,7 +896,10 @@ fn diff_hvx_hist() {
             ("vwhist256", "{ v0.tmp = vmem(r4+#0); vwhist256 }"),
             ("vwhist256_sat", "{ v0.tmp = vmem(r4+#0); vwhist256:sat }"),
             ("vwhist256q", "{ v0.tmp = vmem(r4+#0); vwhist256(q0) }"),
-            ("vwhist256q_sat", "{ v0.tmp = vmem(r4+#0); vwhist256(q0):sat }"),
+            (
+                "vwhist256q_sat",
+                "{ v0.tmp = vmem(r4+#0); vwhist256(q0):sat }",
+            ),
         ],
         8,
         0x4157,
@@ -849,12 +920,36 @@ fn diff_hvx_scatter() {
             ("vscattermw", "{ vscatter(r4,m0,v1.w).w=v2 }", SgKind::Word),
             ("vscattermh", "{ vscatter(r4,m0,v1.h).h=v2 }", SgKind::Half),
             ("vscattermhw", "{ vscatter(r4,m0,v1:0.w).h=v2 }", SgKind::Hw),
-            ("vscattermw_add", "{ vscatter(r4,m0,v1.w).w+=v2 }", SgKind::Word),
-            ("vscattermh_add", "{ vscatter(r4,m0,v1.h).h+=v2 }", SgKind::Half),
-            ("vscattermhw_add", "{ vscatter(r4,m0,v1:0.w).h+=v2 }", SgKind::Hw),
-            ("vscattermwq", "{ if (q0) vscatter(r4,m0,v1.w).w=v2 }", SgKind::Word),
-            ("vscattermhq", "{ if (q0) vscatter(r4,m0,v1.h).h=v2 }", SgKind::Half),
-            ("vscattermhwq", "{ if (q0) vscatter(r4,m0,v1:0.w).h=v2 }", SgKind::Hw),
+            (
+                "vscattermw_add",
+                "{ vscatter(r4,m0,v1.w).w+=v2 }",
+                SgKind::Word,
+            ),
+            (
+                "vscattermh_add",
+                "{ vscatter(r4,m0,v1.h).h+=v2 }",
+                SgKind::Half,
+            ),
+            (
+                "vscattermhw_add",
+                "{ vscatter(r4,m0,v1:0.w).h+=v2 }",
+                SgKind::Hw,
+            ),
+            (
+                "vscattermwq",
+                "{ if (q0) vscatter(r4,m0,v1.w).w=v2 }",
+                SgKind::Word,
+            ),
+            (
+                "vscattermhq",
+                "{ if (q0) vscatter(r4,m0,v1.h).h=v2 }",
+                SgKind::Half,
+            ),
+            (
+                "vscattermhwq",
+                "{ if (q0) vscatter(r4,m0,v1:0.w).h=v2 }",
+                SgKind::Hw,
+            ),
         ],
         24,
         0x5ca7,
@@ -874,9 +969,21 @@ fn diff_hvx_gather() {
     run_family_sg(
         "hvx_gather",
         &[
-            ("vgathermw", "{ vmem(r6+#0)=vtmp.new; vtmp.w=vgather(r4,m0,v1.w).w }", SgKind::Word),
-            ("vgathermh", "{ vmem(r6+#0)=vtmp.new; vtmp.h=vgather(r4,m0,v1.h).h }", SgKind::Half),
-            ("vgathermhw", "{ vmem(r6+#0)=vtmp.new; vtmp.h=vgather(r4,m0,v1:0.w).h }", SgKind::Hw),
+            (
+                "vgathermw",
+                "{ vmem(r6+#0)=vtmp.new; vtmp.w=vgather(r4,m0,v1.w).w }",
+                SgKind::Word,
+            ),
+            (
+                "vgathermh",
+                "{ vmem(r6+#0)=vtmp.new; vtmp.h=vgather(r4,m0,v1.h).h }",
+                SgKind::Half,
+            ),
+            (
+                "vgathermhw",
+                "{ vmem(r6+#0)=vtmp.new; vtmp.h=vgather(r4,m0,v1:0.w).h }",
+                SgKind::Hw,
+            ),
             (
                 "vgathermwq",
                 "{ vmem(r6+#0)=vtmp.new; if (q0) vtmp.w=vgather(r4,m0,v1.w).w }",
@@ -979,18 +1086,54 @@ fn diff_hvx_load_pred() {
             ("vL32b_nt_npred_ai", "{ if (!p1) v0 = vmem(r4+#0):nt }"),
             ("vL32b_nt_npred_pi", "{ if (!p2) v0 = vmem(r4++#1):nt }"),
             ("vL32b_nt_npred_ppu", "{ if (!p3) v0 = vmem(r4++m0):nt }"),
-            ("vL32b_nt_cur_npred_ppu", "{ if (!p3) v0.cur = vmem(r4++m0):nt }"),
-            ("vL32b_nt_cur_pred_ai", "{ if (p0) v0.cur = vmem(r4+#0):nt }"),
-            ("vL32b_nt_cur_pred_pi", "{ if (p1) v0.cur = vmem(r4++#1):nt }"),
-            ("vL32b_nt_cur_pred_ppu", "{ if (p2) v0.cur = vmem(r4++m0):nt }"),
-            ("vL32b_nt_cur_npred_ai", "{ if (!p3) v0.cur = vmem(r4+#0):nt }"),
-            ("vL32b_nt_cur_npred_pi", "{ if (!p0) v0.cur = vmem(r4++#1):nt }"),
-            ("vL32b_nt_tmp_pred_ai", "{ if (p1) v0.tmp = vmem(r4+#0):nt }"),
-            ("vL32b_nt_tmp_pred_pi", "{ if (p2) v0.tmp = vmem(r4++#1):nt }"),
-            ("vL32b_nt_tmp_pred_ppu", "{ if (p3) v0.tmp = vmem(r4++m0):nt }"),
-            ("vL32b_nt_tmp_npred_ai", "{ if (!p0) v0.tmp = vmem(r4+#0):nt }"),
-            ("vL32b_nt_tmp_npred_pi", "{ if (!p1) v0.tmp = vmem(r4++#1):nt }"),
-            ("vL32b_nt_tmp_npred_ppu", "{ if (!p2) v0.tmp = vmem(r4++m0):nt }"),
+            (
+                "vL32b_nt_cur_npred_ppu",
+                "{ if (!p3) v0.cur = vmem(r4++m0):nt }",
+            ),
+            (
+                "vL32b_nt_cur_pred_ai",
+                "{ if (p0) v0.cur = vmem(r4+#0):nt }",
+            ),
+            (
+                "vL32b_nt_cur_pred_pi",
+                "{ if (p1) v0.cur = vmem(r4++#1):nt }",
+            ),
+            (
+                "vL32b_nt_cur_pred_ppu",
+                "{ if (p2) v0.cur = vmem(r4++m0):nt }",
+            ),
+            (
+                "vL32b_nt_cur_npred_ai",
+                "{ if (!p3) v0.cur = vmem(r4+#0):nt }",
+            ),
+            (
+                "vL32b_nt_cur_npred_pi",
+                "{ if (!p0) v0.cur = vmem(r4++#1):nt }",
+            ),
+            (
+                "vL32b_nt_tmp_pred_ai",
+                "{ if (p1) v0.tmp = vmem(r4+#0):nt }",
+            ),
+            (
+                "vL32b_nt_tmp_pred_pi",
+                "{ if (p2) v0.tmp = vmem(r4++#1):nt }",
+            ),
+            (
+                "vL32b_nt_tmp_pred_ppu",
+                "{ if (p3) v0.tmp = vmem(r4++m0):nt }",
+            ),
+            (
+                "vL32b_nt_tmp_npred_ai",
+                "{ if (!p0) v0.tmp = vmem(r4+#0):nt }",
+            ),
+            (
+                "vL32b_nt_tmp_npred_pi",
+                "{ if (!p1) v0.tmp = vmem(r4++#1):nt }",
+            ),
+            (
+                "vL32b_nt_tmp_npred_ppu",
+                "{ if (!p2) v0.tmp = vmem(r4++m0):nt }",
+            ),
         ],
         12,
         0xb30,
@@ -1061,23 +1204,74 @@ fn diff_hvx_store_new() {
         "hvx_store_new",
         &[
             ("vS32b_new_ai", "{ v3 = vmem(r5+#0); vmem(r4+#0) = v3.new }"),
-            ("vS32b_new_pi", "{ v3 = vmem(r5+#0); vmem(r4++#1) = v3.new }"),
-            ("vS32b_new_ppu", "{ v3 = vmem(r5+#0); vmem(r4++m0) = v3.new }"),
-            ("vS32b_nt_new_ai", "{ v3 = vmem(r5+#0); vmem(r4+#0):nt = v3.new }"),
-            ("vS32b_nt_new_pi", "{ v3 = vmem(r5+#0); vmem(r4++#1):nt = v3.new }"),
-            ("vS32b_nt_new_ppu", "{ v3 = vmem(r5+#0); vmem(r4++m0):nt = v3.new }"),
-            ("vS32b_new_pred_ai", "{ v3 = vmem(r5+#0); if (p0) vmem(r4+#0) = v3.new }"),
-            ("vS32b_new_npred_ai", "{ v3 = vmem(r5+#0); if (!p1) vmem(r4+#0) = v3.new }"),
-            ("vS32b_new_pred_pi", "{ v3 = vmem(r5+#0); if (p2) vmem(r4++#1) = v3.new }"),
-            ("vS32b_new_npred_pi", "{ v3 = vmem(r5+#0); if (!p3) vmem(r4++#1) = v3.new }"),
-            ("vS32b_new_pred_ppu", "{ v3 = vmem(r5+#0); if (p0) vmem(r4++m0) = v3.new }"),
-            ("vS32b_new_npred_ppu", "{ v3 = vmem(r5+#0); if (!p1) vmem(r4++m0) = v3.new }"),
-            ("vS32b_nt_new_pred_ai", "{ v3 = vmem(r5+#0); if (p2) vmem(r4+#0):nt = v3.new }"),
-            ("vS32b_nt_new_npred_ppu", "{ v3 = vmem(r5+#0); if (!p3) vmem(r4++m0):nt = v3.new }"),
-            ("vS32b_nt_new_pred_pi", "{ v3 = vmem(r5+#0); if (p0) vmem(r4++#1):nt = v3.new }"),
-            ("vS32b_nt_new_pred_ppu", "{ v3 = vmem(r5+#0); if (p1) vmem(r4++m0):nt = v3.new }"),
-            ("vS32b_nt_new_npred_ai", "{ v3 = vmem(r5+#0); if (!p2) vmem(r4+#0):nt = v3.new }"),
-            ("vS32b_nt_new_npred_pi", "{ v3 = vmem(r5+#0); if (!p3) vmem(r4++#1):nt = v3.new }"),
+            (
+                "vS32b_new_pi",
+                "{ v3 = vmem(r5+#0); vmem(r4++#1) = v3.new }",
+            ),
+            (
+                "vS32b_new_ppu",
+                "{ v3 = vmem(r5+#0); vmem(r4++m0) = v3.new }",
+            ),
+            (
+                "vS32b_nt_new_ai",
+                "{ v3 = vmem(r5+#0); vmem(r4+#0):nt = v3.new }",
+            ),
+            (
+                "vS32b_nt_new_pi",
+                "{ v3 = vmem(r5+#0); vmem(r4++#1):nt = v3.new }",
+            ),
+            (
+                "vS32b_nt_new_ppu",
+                "{ v3 = vmem(r5+#0); vmem(r4++m0):nt = v3.new }",
+            ),
+            (
+                "vS32b_new_pred_ai",
+                "{ v3 = vmem(r5+#0); if (p0) vmem(r4+#0) = v3.new }",
+            ),
+            (
+                "vS32b_new_npred_ai",
+                "{ v3 = vmem(r5+#0); if (!p1) vmem(r4+#0) = v3.new }",
+            ),
+            (
+                "vS32b_new_pred_pi",
+                "{ v3 = vmem(r5+#0); if (p2) vmem(r4++#1) = v3.new }",
+            ),
+            (
+                "vS32b_new_npred_pi",
+                "{ v3 = vmem(r5+#0); if (!p3) vmem(r4++#1) = v3.new }",
+            ),
+            (
+                "vS32b_new_pred_ppu",
+                "{ v3 = vmem(r5+#0); if (p0) vmem(r4++m0) = v3.new }",
+            ),
+            (
+                "vS32b_new_npred_ppu",
+                "{ v3 = vmem(r5+#0); if (!p1) vmem(r4++m0) = v3.new }",
+            ),
+            (
+                "vS32b_nt_new_pred_ai",
+                "{ v3 = vmem(r5+#0); if (p2) vmem(r4+#0):nt = v3.new }",
+            ),
+            (
+                "vS32b_nt_new_npred_ppu",
+                "{ v3 = vmem(r5+#0); if (!p3) vmem(r4++m0):nt = v3.new }",
+            ),
+            (
+                "vS32b_nt_new_pred_pi",
+                "{ v3 = vmem(r5+#0); if (p0) vmem(r4++#1):nt = v3.new }",
+            ),
+            (
+                "vS32b_nt_new_pred_ppu",
+                "{ v3 = vmem(r5+#0); if (p1) vmem(r4++m0):nt = v3.new }",
+            ),
+            (
+                "vS32b_nt_new_npred_ai",
+                "{ v3 = vmem(r5+#0); if (!p2) vmem(r4+#0):nt = v3.new }",
+            ),
+            (
+                "vS32b_nt_new_npred_pi",
+                "{ v3 = vmem(r5+#0); if (!p3) vmem(r4++#1):nt = v3.new }",
+            ),
         ],
         14,
         0xb60,

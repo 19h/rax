@@ -120,7 +120,11 @@ fn test_cvtss2si_round_half_to_even_2_5() {
     // 2.5 rounds to nearest-even -> 2.
     let code = [0xf3, 0x0f, 0x2d, 0xc0, 0xf4]; // CVTSS2SI EAX, XMM0
     let regs = run_cvt(&code, F32_2_5);
-    assert_eq!(regs.rax & 0xFFFF_FFFF, 2, "CVTSS2SI 2.5f round-to-even -> 2");
+    assert_eq!(
+        regs.rax & 0xFFFF_FFFF,
+        2,
+        "CVTSS2SI 2.5f round-to-even -> 2"
+    );
 }
 
 #[test]
@@ -265,7 +269,11 @@ fn test_cvtss2si_source_unchanged() {
     let seed: u128 = (0xDEAD_BEEF_CAFE_BABEu128 << 64) | F32_42;
     let regs = run_cvt(&code, seed);
     assert_eq!(regs.rax & 0xFFFF_FFFF, 42, "CVTSS2SI 42.0f -> 42");
-    assert_eq!(get_xmm(&regs, 0), seed, "CVTSS2SI must not modify XMM source");
+    assert_eq!(
+        get_xmm(&regs, 0),
+        seed,
+        "CVTSS2SI must not modify XMM source"
+    );
 }
 
 #[test]
@@ -274,5 +282,9 @@ fn test_cvtsd2si_source_unchanged() {
     let seed: u128 = (0x1122_3344_5566_7788u128 << 64) | F64_42;
     let regs = run_cvt(&code, seed);
     assert_eq!(regs.rax & 0xFFFF_FFFF, 42, "CVTSD2SI 42.0 -> 42");
-    assert_eq!(get_xmm(&regs, 0), seed, "CVTSD2SI must not modify XMM source");
+    assert_eq!(
+        get_xmm(&regs, 0),
+        seed,
+        "CVTSD2SI must not modify XMM source"
+    );
 }

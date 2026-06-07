@@ -1,6 +1,6 @@
 use rax::cpu::Registers;
 
-use crate::common::{run_until_hlt, setup_vm, write_mem_at_u16, read_mem_at_u16, DATA_ADDR};
+use crate::common::{DATA_ADDR, read_mem_at_u16, run_until_hlt, setup_vm, write_mem_at_u16};
 
 // STR - Store Task Register
 // Opcode: 0F 00 /1
@@ -244,7 +244,11 @@ fn test_str_rax() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Upper 48 bits should be zero
-    assert_eq!(regs.rax & 0xFFFFFFFFFFFF0000, 0, "Upper 48 bits should be zero");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFFFFFF0000,
+        0,
+        "Upper 48 bits should be zero"
+    );
 }
 
 // STR r64 - Store TR to RBX
@@ -468,8 +472,10 @@ fn test_str_negative_displacement() {
 #[test]
 fn test_str_preserves_registers() {
     let code = [
-        0x48, 0xbb, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, // MOV RBX, 0x1111111111111111
-        0x48, 0xb9, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, // MOV RCX, 0x2222222222222222
+        0x48, 0xbb, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+        0x11, // MOV RBX, 0x1111111111111111
+        0x48, 0xb9, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
+        0x22, // MOV RCX, 0x2222222222222222
         0x0f, 0x00, 0xc8, // STR AX
         0xf4, // HLT
     ];
@@ -494,7 +500,11 @@ fn test_ltr_str_roundtrip() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // BX should contain the TR value we loaded (0x0028)
-    assert_eq!(regs.rbx & 0xFFFF, 0x0028, "STR should return value loaded by LTR");
+    assert_eq!(
+        regs.rbx & 0xFFFF,
+        0x0028,
+        "STR should return value loaded by LTR"
+    );
 }
 
 // STR m16 via RBP with displacement
@@ -620,5 +630,9 @@ fn test_str_r64_upper_bits_zero() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Only lower 16 bits should be set
-    assert_eq!(regs.rax & 0xFFFFFFFFFFFF0000, 0, "Upper 48 bits should be zero");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFFFFFF0000,
+        0,
+        "Upper 48 bits should be zero"
+    );
 }

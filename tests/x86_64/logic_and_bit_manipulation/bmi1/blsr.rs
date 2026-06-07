@@ -23,9 +23,16 @@ fn test_blsr_eax_ebx_bit_0() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_0000, "EAX should be zero (bit 0 reset)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0000_0000,
+        "EAX should be zero (bit 0 reset)"
+    );
     assert!(zf_set(regs.rflags), "ZF should be set (result is zero)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (source was non-zero)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (source was non-zero)"
+    );
 }
 
 #[test]
@@ -56,8 +63,15 @@ fn test_blsr_eax_ebx_multiple_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b1010_0000, "EAX should have bit 3 reset (bits 5,7 remain)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b1010_0000,
+        "EAX should have bit 3 reset (bits 5,7 remain)"
+    );
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (result is non-zero)"
+    );
 }
 
 #[test]
@@ -137,7 +151,11 @@ fn test_blsr_all_bits_set() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFE, "EAX should have bit 0 reset");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFFFFE,
+        "EAX should have bit 0 reset"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -153,7 +171,11 @@ fn test_blsr_alternating_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xAAAAAAA8, "EAX should have bit 1 reset");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xAAAAAAA8,
+        "EAX should have bit 1 reset"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -169,7 +191,11 @@ fn test_blsr_alternating_pattern_inverted() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x55555554, "EAX should have bit 0 reset");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x55555554,
+        "EAX should have bit 0 reset"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -186,7 +212,12 @@ fn test_blsr_single_bit_positions() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should be zero for single bit {}", bit_pos);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            0,
+            "EAX should be zero for single bit {}",
+            bit_pos
+        );
         assert!(zf_set(regs.rflags), "ZF should be set for bit {}", bit_pos);
     }
 }
@@ -203,7 +234,11 @@ fn test_blsr_with_extended_registers() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0b0001_0000, "R8D should have bit 3 reset (bit 4 remains)");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0b0001_0000,
+        "R8D should have bit 3 reset (bit 4 remains)"
+    );
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
 
@@ -219,7 +254,10 @@ fn test_blsr_r15() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r15, 0x1_0000_0000, "R15 should have bit 0 reset (bit 32 remains)");
+    assert_eq!(
+        regs.r15, 0x1_0000_0000,
+        "R15 should have bit 0 reset (bit 32 remains)"
+    );
 }
 
 #[test]
@@ -233,7 +271,11 @@ fn test_blsr_mem32() {
     write_mem_u32(&mem, 0xFFFFF000); // bits 12-31 set
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFE000, "EAX should have bit 12 reset");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFE000,
+        "EAX should have bit 12 reset"
+    );
 }
 
 #[test]
@@ -247,7 +289,10 @@ fn test_blsr_mem64() {
     write_mem_u64(&mem, 0x100_0000_0001); // bits 0 and 40 set
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x100_0000_0000, "RAX should have bit 0 reset (bit 40 remains)");
+    assert_eq!(
+        regs.rax, 0x100_0000_0000,
+        "RAX should have bit 0 reset (bit 40 remains)"
+    );
 }
 
 #[test]
@@ -262,7 +307,11 @@ fn test_blsr_trailing_zeros() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFE000, "EAX should have bit 12 reset");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xFFFFE000,
+        "EAX should have bit 12 reset"
+    );
 }
 
 #[test]
@@ -277,7 +326,11 @@ fn test_blsr_sparse_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX should have bit 12 reset (bit 31 remains)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x80000000,
+        "EAX should have bit 12 reset (bit 31 remains)"
+    );
 }
 
 #[test]
@@ -309,7 +362,11 @@ fn test_blsr_vs_and_sub1() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let expected = value & (value.wrapping_sub(1));
-    assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "BLSR should equal src & (src-1)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        expected as u64,
+        "BLSR should equal src & (src-1)"
+    );
 }
 
 #[test]
@@ -342,7 +399,11 @@ fn test_blsr_consecutive_bits() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00FE0000, "EAX should have bit 16 reset (bits 17-23 remain)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x00FE0000,
+        "EAX should have bit 16 reset (bits 17-23 remain)"
+    );
 }
 
 #[test]
@@ -378,7 +439,11 @@ fn test_blsr_iterative_clearing() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "Should progressively clear bits");
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "Should progressively clear bits"
+        );
         value = regs.rax;
     }
 }
@@ -411,7 +476,10 @@ fn test_blsr_mixed_high_low() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x8000_0000_0000_0000, "RAX should have bit 8 reset (bit 63 remains)");
+    assert_eq!(
+        regs.rax, 0x8000_0000_0000_0000,
+        "RAX should have bit 8 reset (bit 63 remains)"
+    );
 }
 
 #[test]
@@ -434,7 +502,11 @@ fn test_blsr_count_set_bits() {
         value = regs.rax & 0xFFFFFFFF;
     }
 
-    assert_eq!(count, 0x12345678u32.count_ones(), "Should count all set bits");
+    assert_eq!(
+        count,
+        0x12345678u32.count_ones(),
+        "Should count all set bits"
+    );
 }
 
 #[test]
@@ -482,7 +554,10 @@ fn test_blsr_complement_of_blsi() {
 
     // BLSR | BLSI should equal original value
     let combined = (regs_blsr.rax | regs_blsi.rax) & 0xFFFFFFFF;
-    assert_eq!(combined, value, "BLSR | BLSI should reconstruct original value");
+    assert_eq!(
+        combined, value,
+        "BLSR | BLSI should reconstruct original value"
+    );
 }
 
 #[test]
@@ -497,6 +572,13 @@ fn test_blsr_two_bits_set() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_0100, "EAX should have bit 0 reset (bit 2 remains)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0b0000_0100,
+        "EAX should have bit 0 reset (bit 2 remains)"
+    );
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear (result is non-zero)"
+    );
 }

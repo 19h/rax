@@ -715,7 +715,7 @@ fn test_inc_as_loop_counter() {
         0xff, 0xc0, // INC EAX
         0xff, 0xc0, // INC EAX
         0xff, 0xc0, // INC EAX
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0;
@@ -732,7 +732,7 @@ fn test_dec_as_loop_counter() {
         0xff, 0xc8, // DEC EAX
         0xff, 0xc8, // DEC EAX
         0xff, 0xc8, // DEC EAX
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 5;
@@ -752,7 +752,11 @@ fn test_inc_preserves_high_bytes() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x79);
-    assert_eq!(regs.rax & !0xFF, 0xDEADBEEF_12345600, "High bytes should be preserved");
+    assert_eq!(
+        regs.rax & !0xFF,
+        0xDEADBEEF_12345600,
+        "High bytes should be preserved"
+    );
 }
 
 #[test]
@@ -765,7 +769,11 @@ fn test_dec_preserves_high_bytes() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x77);
-    assert_eq!(regs.rax & !0xFF, 0xDEADBEEF_12345600, "High bytes should be preserved");
+    assert_eq!(
+        regs.rax & !0xFF,
+        0xDEADBEEF_12345600,
+        "High bytes should be preserved"
+    );
 }
 
 // ============================================================================
@@ -886,5 +894,8 @@ fn test_stc_inc_preserves_cf() {
     assert!(cf_set(regs.rflags), "CF set by STC must survive INC");
     // 0x7F -> 0x80 is only a *signed* overflow at the 8-bit boundary; for a
     // 32-bit INC it is not, so OF must be clear.
-    assert!(!of_set(regs.rflags), "OF should be clear for 32-bit INC of 0x7F");
+    assert!(
+        !of_set(regs.rflags),
+        "OF should be clear for 32-bit INC of 0x7F"
+    );
 }

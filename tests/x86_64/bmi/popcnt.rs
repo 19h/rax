@@ -395,8 +395,8 @@ fn test_popcnt_flags_cleared_on_nonzero() {
     // Test that OF, SF, AF, CF, PF are cleared
     let code = [
         0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, // mov rax, -1
-        0x48, 0x83, 0xc0, 0x01,                   // add rax, 1 (sets flags)
-        0xf3, 0x0f, 0xb8, 0xc1,                   // POPCNT EAX, ECX
+        0x48, 0x83, 0xc0, 0x01, // add rax, 1 (sets flags)
+        0xf3, 0x0f, 0xb8, 0xc1, // POPCNT EAX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -436,7 +436,10 @@ fn test_popcnt_zf_clear_on_nonzero() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(!zf_set(regs.rflags), "ZF should be clear when source is non-zero");
+    assert!(
+        !zf_set(regs.rflags),
+        "ZF should be clear when source is non-zero"
+    );
 }
 
 // ============================================================================
@@ -487,7 +490,11 @@ fn test_popcnt_32bit_from_r15d() {
 
     // Count bits in 0x12345678
     let expected = 0x12345678u32.count_ones();
-    assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "EAX should match bit count");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        expected as u64,
+        "EAX should match bit count"
+    );
 }
 
 // ============================================================================
@@ -578,7 +585,8 @@ fn test_popcnt_64bit_fibonacci_bits() {
     ];
     let mut regs = Registers::default();
     // Bits at positions: 1, 2, 3, 5, 8, 13, 21, 34 (Fibonacci sequence)
-    regs.rcx = (1u64 << 1) | (1 << 2) | (1 << 3) | (1 << 5) | (1 << 8) | (1 << 13) | (1 << 21) | (1 << 34);
+    regs.rcx =
+        (1u64 << 1) | (1 << 2) | (1 << 3) | (1 << 5) | (1 << 8) | (1 << 13) | (1 << 21) | (1 << 34);
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -626,7 +634,13 @@ fn test_popcnt_32bit_progressive_bits() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = pattern.count_ones() as u64;
-        assert_eq!(regs.rax & 0xFFFFFFFF, expected, "Pattern {} should have {} bits", idx, expected);
+        assert_eq!(
+            regs.rax & 0xFFFFFFFF,
+            expected,
+            "Pattern {} should have {} bits",
+            idx,
+            expected
+        );
     }
 }
 

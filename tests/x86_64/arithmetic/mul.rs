@@ -27,11 +27,11 @@ use rax::cpu::{Registers, VCpu};
 fn test_mul_al_small() {
     let code = [
         0xf6, 0xe3, // MUL BL (F6 /4, ModRM=11_100_011)
-        0xf4,       // HLT
+        0xf4, // HLT
     ];
     let mut regs = Registers::default();
-    regs.rax = 5;  // AL = 5
-    regs.rbx = 3;  // BL = 3
+    regs.rax = 5; // AL = 5
+    regs.rbx = 3; // BL = 3
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -66,7 +66,10 @@ fn test_mul_al_fits_in_byte() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 150, "10 * 15 = 150");
-    assert!(!cf_set(regs.rflags), "CF should be clear (result fits in AL)");
+    assert!(
+        !cf_set(regs.rflags),
+        "CF should be clear (result fits in AL)"
+    );
 }
 
 #[test]

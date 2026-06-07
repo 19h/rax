@@ -89,8 +89,16 @@ fn test_cmpps_eq_none_equal() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(5.0, 6.0, 7.0, 8.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(5.0, 6.0, 7.0, 8.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -116,8 +124,16 @@ fn test_cmpps_eq_partial_equal() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     // Elements 0 and 2 equal, 1 and 3 different
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 5.0, 3.0, 6.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 5.0, 3.0, 6.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -142,8 +158,16 @@ fn test_cmpps_eq_with_zeros() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(0.0, 0.0, 0.0, 0.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(0.0, 0.0, 0.0, 0.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(0.0, 0.0, 0.0, 0.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(0.0, 0.0, 0.0, 0.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -168,8 +192,16 @@ fn test_cmpps_eq_with_negatives() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(-1.0, -2.0, -3.0, -4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(-1.0, -2.0, -3.0, -4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(-1.0, -2.0, -3.0, -4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(-1.0, -2.0, -3.0, -4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -198,8 +230,16 @@ fn test_cmpps_lt_all_less() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(5.0, 6.0, 7.0, 8.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(5.0, 6.0, 7.0, 8.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -224,8 +264,16 @@ fn test_cmpps_lt_none_less() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(5.0, 6.0, 7.0, 8.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(5.0, 6.0, 7.0, 8.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -251,8 +299,16 @@ fn test_cmpps_lt_partial_less() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     // 1.0 < 5.0, 6.0 > 2.0, 3.0 < 7.0, 8.0 > 4.0
-    mem.write_slice(&make_4floats(1.0, 6.0, 3.0, 8.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(5.0, 2.0, 7.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 6.0, 3.0, 8.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(5.0, 2.0, 7.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -277,8 +333,16 @@ fn test_cmpps_lt_with_negatives() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(-5.0, -4.0, -3.0, -2.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(-1.0, -0.5, 0.0, 1.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(-5.0, -4.0, -3.0, -2.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(-1.0, -0.5, 0.0, 1.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -304,8 +368,16 @@ fn test_cmpps_lt_equal_not_less() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     // Equal values should not be "less than"
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -334,8 +406,16 @@ fn test_cmpps_le_all_less_or_equal() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -361,8 +441,16 @@ fn test_cmpps_le_mixed() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     // Mix of <, =, and >
-    mem.write_slice(&make_4floats(1.0, 5.0, 3.0, 10.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(5.0, 5.0, 7.0, 2.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 5.0, 3.0, 10.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(5.0, 5.0, 7.0, 2.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -387,8 +475,16 @@ fn test_cmpps_le_none() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(10.0, 20.0, 30.0, 40.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(10.0, 20.0, 30.0, 40.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -417,8 +513,16 @@ fn test_cmpps_unord_with_nan_first() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(f32::NAN, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(f32::NAN, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -443,8 +547,16 @@ fn test_cmpps_unord_with_nan_second() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(f32::NAN, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(f32::NAN, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -469,8 +581,16 @@ fn test_cmpps_unord_with_nan_both() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(f32::NAN, f32::NAN, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(f32::NAN, 2.0, f32::NAN, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(f32::NAN, f32::NAN, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(f32::NAN, 2.0, f32::NAN, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -495,8 +615,16 @@ fn test_cmpps_unord_no_nan() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(5.0, 6.0, 7.0, 8.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(5.0, 6.0, 7.0, 8.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -525,8 +653,16 @@ fn test_cmpps_neq_all_different() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(5.0, 6.0, 7.0, 8.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(5.0, 6.0, 7.0, 8.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -551,8 +687,16 @@ fn test_cmpps_neq_all_same() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -578,8 +722,16 @@ fn test_cmpps_neq_with_nan() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     // NEQ is "unordered" so NaN comparisons should be true
-    mem.write_slice(&make_4floats(f32::NAN, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(f32::NAN, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -608,8 +760,16 @@ fn test_cmpps_nlt_all_greater_or_equal() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(10.0, 20.0, 30.0, 40.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(10.0, 20.0, 30.0, 40.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -634,8 +794,16 @@ fn test_cmpps_nlt_all_less() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(10.0, 20.0, 30.0, 40.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(10.0, 20.0, 30.0, 40.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -660,8 +828,16 @@ fn test_cmpps_nlt_with_nan() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(f32::NAN, 20.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(10.0, 2.0, 30.0, 40.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(f32::NAN, 20.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(10.0, 2.0, 30.0, 40.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -690,8 +866,16 @@ fn test_cmpps_nle_all_greater() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(10.0, 20.0, 30.0, 40.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(10.0, 20.0, 30.0, 40.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -717,8 +901,16 @@ fn test_cmpps_nle_all_equal() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     // Equal values should fail NLE (they are <=, not >)
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -743,8 +935,16 @@ fn test_cmpps_nle_with_nan() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(f32::NAN, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(f32::NAN, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -773,8 +973,16 @@ fn test_cmpps_ord_all_ordered() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(5.0, 6.0, 7.0, 8.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(5.0, 6.0, 7.0, 8.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -799,8 +1007,16 @@ fn test_cmpps_ord_with_nan_first() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(f32::NAN, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(f32::NAN, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -825,8 +1041,16 @@ fn test_cmpps_ord_with_nan_second() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, f32::NAN, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, f32::NAN, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -851,8 +1075,16 @@ fn test_cmpps_ord_with_nan_both() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(f32::NAN, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(f32::NAN, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(f32::NAN, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(f32::NAN, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -881,8 +1113,16 @@ fn test_cmpps_with_infinity() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1.0, f32::NEG_INFINITY, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(f32::INFINITY, 0.0, 7.0, 8.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, f32::NEG_INFINITY, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(f32::INFINITY, 0.0, 7.0, 8.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -907,8 +1147,16 @@ fn test_cmpps_positive_negative_zero() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(0.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(-0.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(0.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(-0.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -935,8 +1183,16 @@ fn test_cmpps_denormal_values() {
 
     // Very small denormal values
     let denorm = f32::from_bits(0x00000001); // Smallest positive denormal
-    mem.write_slice(&make_4floats(denorm, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(denorm, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -990,8 +1246,16 @@ fn test_cmpps_xmm_mem_lt() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(5.0, 6.0, 7.0, 8.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(5.0, 6.0, 7.0, 8.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -1047,8 +1311,16 @@ fn test_cmpps_xmm7_xmm6() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(5.0, 6.0, 7.0, 8.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(5.0, 6.0, 7.0, 8.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -1073,8 +1345,16 @@ fn test_cmpps_xmm15_xmm8() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -1104,8 +1384,16 @@ fn test_cmpps_alternating_pattern() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     // Alternating equal/not-equal
-    mem.write_slice(&make_4floats(1.0, 5.0, 3.0, 7.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 5.0, 3.0, 7.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -1130,8 +1418,16 @@ fn test_cmpps_large_values() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1e30, 2e30, 3e30, 4e30), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(5e30, 6e30, 7e30, 8e30), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1e30, 2e30, 3e30, 4e30),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(5e30, 6e30, 7e30, 8e30),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -1156,8 +1452,16 @@ fn test_cmpps_small_values() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1e-30, 2e-30, 3e-30, 4e-30), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(5e-30, 6e-30, 7e-30, 8e-30), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1e-30, 2e-30, 3e-30, 4e-30),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(5e-30, 6e-30, 7e-30, 8e-30),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -1182,8 +1486,16 @@ fn test_cmpps_mixed_signs() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(-1.0, 2.0, -3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, -2.0, 3.0, -4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(-1.0, 2.0, -3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, -2.0, 3.0, -4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -1214,8 +1526,16 @@ fn test_cmpps_multiple_comparisons() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR),
+    )
+    .unwrap();
+    mem.write_slice(
+        &make_4floats(1.0, 2.0, 3.0, 4.0),
+        GuestAddress(ALIGNED_ADDR2),
+    )
+    .unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }

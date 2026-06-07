@@ -172,7 +172,10 @@ fn test_daa_bcd_addition_with_carry() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x14, "Result should be 0x14");
-    assert!(cf_set(regs.rflags), "CF should be set (carry to next digit)");
+    assert!(
+        cf_set(regs.rflags),
+        "CF should be set (carry to next digit)"
+    );
 }
 
 #[test]
@@ -196,7 +199,11 @@ fn test_daa_preserves_high_bits() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Only AL should be modified
-    assert_eq!(regs.rax >> 8, 0xDEADBEEF_123456, "High bits should be preserved");
+    assert_eq!(
+        regs.rax >> 8,
+        0xDEADBEEF_123456,
+        "High bits should be preserved"
+    );
 }
 
 #[test]
@@ -212,8 +219,12 @@ fn test_daa_all_valid_bcd_pairs() {
             let regs = run_until_hlt(&mut vcpu).unwrap();
 
             // Valid BCD values should not be adjusted
-            assert_eq!(regs.rax & 0xFF, val,
-                "Valid BCD 0x{:02X} should not be adjusted", val);
+            assert_eq!(
+                regs.rax & 0xFF,
+                val,
+                "Valid BCD 0x{:02X} should not be adjusted",
+                val
+            );
         }
     }
 }
@@ -234,11 +245,18 @@ fn test_daa_boundary_values() {
         let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFF, expected,
-            "Wrong result for input 0x{:02X}", input);
+        assert_eq!(
+            regs.rax & 0xFF,
+            expected,
+            "Wrong result for input 0x{:02X}",
+            input
+        );
         if expect_cf_or_af {
-            assert!(cf_set(regs.rflags) || af_set(regs.rflags),
-                "CF or AF should be set for input 0x{:02X}", input);
+            assert!(
+                cf_set(regs.rflags) || af_set(regs.rflags),
+                "CF or AF should be set for input 0x{:02X}",
+                input
+            );
         }
     }
 }
@@ -385,7 +403,11 @@ fn test_das_preserves_high_bits() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Only AL should be modified
-    assert_eq!(regs.rax >> 8, 0xDEADBEEF_123456, "High bits should be preserved");
+    assert_eq!(
+        regs.rax >> 8,
+        0xDEADBEEF_123456,
+        "High bits should be preserved"
+    );
 }
 
 #[test]
@@ -401,8 +423,12 @@ fn test_das_all_valid_bcd_pairs() {
             let regs = run_until_hlt(&mut vcpu).unwrap();
 
             // Valid BCD values should not be adjusted
-            assert_eq!(regs.rax & 0xFF, val,
-                "Valid BCD 0x{:02X} should not be adjusted", val);
+            assert_eq!(
+                regs.rax & 0xFF,
+                val,
+                "Valid BCD 0x{:02X} should not be adjusted",
+                val
+            );
         }
     }
 }
@@ -517,7 +543,10 @@ fn test_das_sign_flag() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Result should have bit 7 set
-    assert!(sf_set(regs.rflags), "SF should be set when result has bit 7 set");
+    assert!(
+        sf_set(regs.rflags),
+        "SF should be set when result has bit 7 set"
+    );
 }
 
 #[test]
@@ -607,8 +636,13 @@ fn test_daa_sequential_additions() {
         let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFF, expected,
-            "DAA(0x{:02X}) should be 0x{:02X}", input, expected);
+        assert_eq!(
+            regs.rax & 0xFF,
+            expected,
+            "DAA(0x{:02X}) should be 0x{:02X}",
+            input,
+            expected
+        );
     }
 }
 
@@ -629,7 +663,12 @@ fn test_das_sequential_subtractions() {
         let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax & 0xFF, expected,
-            "DAS(0x{:02X}) should be 0x{:02X}", input, expected);
+        assert_eq!(
+            regs.rax & 0xFF,
+            expected,
+            "DAS(0x{:02X}) should be 0x{:02X}",
+            input,
+            expected
+        );
     }
 }

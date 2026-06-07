@@ -68,7 +68,11 @@ fn test_mov_eax_ebx() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX should contain 0x12345678");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX should contain 0x12345678"
+    );
 }
 
 #[test]
@@ -83,7 +87,10 @@ fn test_mov_rax_rbx() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x123456789ABCDEF0, "RAX should contain full 64-bit value");
+    assert_eq!(
+        regs.rax, 0x123456789ABCDEF0,
+        "RAX should contain full 64-bit value"
+    );
 }
 
 #[test]
@@ -122,20 +129,28 @@ fn test_mov_eax_imm32() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX should contain 0x12345678");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0x12345678,
+        "EAX should contain 0x12345678"
+    );
 }
 
 #[test]
 fn test_mov_rax_imm64() {
     // MOV RAX, imm64
     let code = [
-        0x48, 0xb8, 0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12, // MOV RAX, 0x123456789ABCDEF0
+        0x48, 0xb8, 0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34,
+        0x12, // MOV RAX, 0x123456789ABCDEF0
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x123456789ABCDEF0, "RAX should contain full 64-bit immediate");
+    assert_eq!(
+        regs.rax, 0x123456789ABCDEF0,
+        "RAX should contain full 64-bit immediate"
+    );
 }
 
 #[test]
@@ -199,7 +214,10 @@ fn test_mov_mem64_reg() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_u64(&mem);
-    assert_eq!(result, 0x123456789ABCDEF0, "Memory should contain full 64-bit value");
+    assert_eq!(
+        result, 0x123456789ABCDEF0,
+        "Memory should contain full 64-bit value"
+    );
 }
 
 #[test]
@@ -227,7 +245,11 @@ fn test_mov_reg_mem16() {
     write_mem_u16(&mem, 0xABCD);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0xABCD, "AX should contain value from memory");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0xABCD,
+        "AX should contain value from memory"
+    );
 }
 
 #[test]
@@ -241,7 +263,11 @@ fn test_mov_reg_mem32() {
     write_mem_u32(&mem, 0xDEADBEEF);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xDEADBEEF, "EAX should contain value from memory");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xDEADBEEF,
+        "EAX should contain value from memory"
+    );
 }
 
 #[test]
@@ -255,7 +281,10 @@ fn test_mov_reg_mem64() {
     write_mem_u64(&mem, 0xFEDCBA9876543210);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFEDCBA9876543210, "RAX should contain value from memory");
+    assert_eq!(
+        regs.rax, 0xFEDCBA9876543210,
+        "RAX should contain value from memory"
+    );
 }
 
 #[test]
@@ -270,14 +299,19 @@ fn test_mov_with_extended_registers() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0x11223344, "R8D should contain value from R9D");
+    assert_eq!(
+        regs.r8 & 0xFFFFFFFF,
+        0x11223344,
+        "R8D should contain value from R9D"
+    );
 }
 
 #[test]
 fn test_mov_r15_imm64() {
     // MOV R15, imm64
     let code = [
-        0x49, 0xbf, 0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88, // MOV R15, 0x8899AABBCCDDEEFF
+        0x49, 0xbf, 0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99,
+        0x88, // MOV R15, 0x8899AABBCCDDEEFF
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -396,9 +430,21 @@ fn test_mov_chain() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xAABBCCDD, "EAX should have value from EBX");
-    assert_eq!(regs.rcx & 0xFFFFFFFF, 0xAABBCCDD, "ECX should have value from EAX");
-    assert_eq!(regs.rdx & 0xFFFFFFFF, 0xAABBCCDD, "EDX should have value from ECX");
+    assert_eq!(
+        regs.rax & 0xFFFFFFFF,
+        0xAABBCCDD,
+        "EAX should have value from EBX"
+    );
+    assert_eq!(
+        regs.rcx & 0xFFFFFFFF,
+        0xAABBCCDD,
+        "ECX should have value from EAX"
+    );
+    assert_eq!(
+        regs.rdx & 0xFFFFFFFF,
+        0xAABBCCDD,
+        "EDX should have value from ECX"
+    );
 }
 
 #[test]
@@ -447,7 +493,8 @@ fn test_mov_mem_imm8() {
 fn test_mov_mem_imm32() {
     // MOV [mem], imm32
     let code = [
-        0xc7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x78, 0x56, 0x34, 0x12, // MOV dword [DATA_ADDR], 0x12345678
+        0xc7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, 0x78, 0x56, 0x34,
+        0x12, // MOV dword [DATA_ADDR], 0x12345678
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -491,7 +538,10 @@ fn test_strict_mov_r32_zero_extends_upper32() {
     regs.rbx = 0x0000_0000_DEAD_BEEF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000_0000_DEAD_BEEF, "32-bit MOV must zero-extend RAX");
+    assert_eq!(
+        regs.rax, 0x0000_0000_DEAD_BEEF,
+        "32-bit MOV must zero-extend RAX"
+    );
 }
 
 #[test]
@@ -503,7 +553,10 @@ fn test_strict_mov_r16_preserves_upper48() {
     regs.rbx = 0x0000_0000_0000_BEEF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x1122_3344_5566_BEEF, "16-bit MOV must preserve upper 48 bits");
+    assert_eq!(
+        regs.rax, 0x1122_3344_5566_BEEF,
+        "16-bit MOV must preserve upper 48 bits"
+    );
 }
 
 #[test]
@@ -515,7 +568,10 @@ fn test_strict_mov_r8l_preserves_upper56() {
     regs.rbx = 0x00000000_000000AA;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x1122_3344_5566_77AA, "8-bit MOV must preserve upper 56 bits");
+    assert_eq!(
+        regs.rax, 0x1122_3344_5566_77AA,
+        "8-bit MOV must preserve upper 56 bits"
+    );
 }
 
 #[test]
@@ -524,7 +580,10 @@ fn test_strict_mov_r64_imm32_sign_extends() {
     let code = [0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, 0xf4]; // MOV RAX, -1
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFF_FFFF_FFFF_FFFF, "imm32 must sign-extend to RAX");
+    assert_eq!(
+        regs.rax, 0xFFFF_FFFF_FFFF_FFFF,
+        "imm32 must sign-extend to RAX"
+    );
 }
 
 #[test]
@@ -537,7 +596,11 @@ fn test_strict_mov_does_not_touch_flags() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 42);
-    assert_eq!(regs.rflags & 0x8D5, before & 0x8D5, "MOV must not alter status flags");
+    assert_eq!(
+        regs.rflags & 0x8D5,
+        before & 0x8D5,
+        "MOV must not alter status flags"
+    );
 }
 
 #[test]
@@ -549,7 +612,10 @@ fn test_strict_mov_mem64_exact_bytes() {
     regs.rbx = crate::common::DATA_ADDR;
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(crate::common::read_mem_at_u64(&mem, crate::common::DATA_ADDR), 0x0123_4567_89AB_CDEF);
+    assert_eq!(
+        crate::common::read_mem_at_u64(&mem, crate::common::DATA_ADDR),
+        0x0123_4567_89AB_CDEF
+    );
 }
 
 #[test]
@@ -563,9 +629,17 @@ fn test_strict_mov_mem_via_sib_scale4_disp() {
     regs.rcx = 0x4;
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(crate::common::read_mem_at_u32(&mem, 0x2030), 0xCAFEF00D, "store lands at computed EA");
+    assert_eq!(
+        crate::common::read_mem_at_u32(&mem, 0x2030),
+        0xCAFEF00D,
+        "store lands at computed EA"
+    );
     // Verify nothing was written at the base address.
-    assert_eq!(crate::common::read_mem_at_u32(&mem, crate::common::DATA_ADDR), 0, "base must be untouched");
+    assert_eq!(
+        crate::common::read_mem_at_u32(&mem, crate::common::DATA_ADDR),
+        0,
+        "base must be untouched"
+    );
 }
 
 #[test]
@@ -602,7 +676,10 @@ fn test_strict_movsxd_positive() {
     regs.rcx = 0x0000_0000_7FFF_FFFF; // ECX = max positive i32
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000_0000_7FFF_FFFF, "MOVSXD of positive zero-fills high");
+    assert_eq!(
+        regs.rax, 0x0000_0000_7FFF_FFFF,
+        "MOVSXD of positive zero-fills high"
+    );
 }
 
 #[test]
@@ -614,7 +691,10 @@ fn test_strict_movnti_store_r64() {
     regs.rbx = crate::common::DATA_ADDR;
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(crate::common::read_mem_at_u64(&mem, crate::common::DATA_ADDR), 0xDEAD_BEEF_FEED_FACE);
+    assert_eq!(
+        crate::common::read_mem_at_u64(&mem, crate::common::DATA_ADDR),
+        0xDEAD_BEEF_FEED_FACE
+    );
 }
 
 #[test]
@@ -626,9 +706,15 @@ fn test_strict_movnti_store_r32() {
     regs.rbx = crate::common::DATA_ADDR;
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(crate::common::read_mem_at_u32(&mem, crate::common::DATA_ADDR), 0xAABB_CCDD);
+    assert_eq!(
+        crate::common::read_mem_at_u32(&mem, crate::common::DATA_ADDR),
+        0xAABB_CCDD
+    );
     // Bytes 4..8 must be untouched (start zero).
-    assert_eq!(crate::common::read_mem_at_u32(&mem, crate::common::DATA_ADDR + 4), 0);
+    assert_eq!(
+        crate::common::read_mem_at_u32(&mem, crate::common::DATA_ADDR + 4),
+        0
+    );
 }
 
 #[test]
@@ -639,5 +725,9 @@ fn test_strict_mov_reg_from_segment_cs() {
     regs.rax = 0xFFFF_FFFF_FFFF_FFFF;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x0008, "CS selector should be readable as 0x08");
+    assert_eq!(
+        regs.rax & 0xFFFF,
+        0x0008,
+        "CS selector should be readable as 0x08"
+    );
 }

@@ -503,7 +503,11 @@ impl Aarch64X86_64Lowerer {
             let mut e = X86Emitter::new(&mut self.code);
             e.emit_mov_rm(B3, STATE, A64_LOAD_FN_OFFSET, OpWidth::W64);
             e.emit_mov_ri(HI, size, OpWidth::W64);
-            e.emit_mov_ri(RHS, i64::from(matches!(sign, SignExtend::Sign)), OpWidth::W64);
+            e.emit_mov_ri(
+                RHS,
+                i64::from(matches!(sign, SignExtend::Sign)),
+                OpWidth::W64,
+            );
         }
         self.emit_mem_helper_call(B3);
         self.store_reg_to(dst, ACC, OpWidth::W64)
@@ -1236,7 +1240,11 @@ impl Aarch64X86_64Lowerer {
                 e.emit_shl_ri(ACC, shift, op_width);
                 e.emit_sar_ri(ACC, shift, op_width);
             } else {
-                self.emit_mov_imm(B1, Self::low_bit_mask(width_bits, op_width) as i64, op_width);
+                self.emit_mov_imm(
+                    B1,
+                    Self::low_bit_mask(width_bits, op_width) as i64,
+                    op_width,
+                );
                 let mut e = X86Emitter::new(&mut self.code);
                 e.emit_and_rr(ACC, B1, op_width);
             }
