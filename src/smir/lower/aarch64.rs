@@ -1918,7 +1918,7 @@ impl Aarch64Lowerer {
             Address::Absolute(addr) => self.emit_mov_imm_best(dst, *addr as i64, OpWidth::W64),
             Address::PcRel { offset, base, .. } => {
                 let addr = base.unwrap_or(0).wrapping_add(*offset as u64);
-                self.emit_mov_imm(dst, addr as i64, OpWidth::W64)
+                self.emit_mov_imm_best(dst, addr as i64, OpWidth::W64)
             }
             Address::GpRel { .. } | Address::SegmentRel { .. } => Err(LowerError::UnsupportedOp {
                 op: format!("AArch64 native LEA address {addr:?}"),
@@ -12010,6 +12010,33 @@ mod tests {
             OpKind::Lea {
                 dst: x(0),
                 addr: Address::Absolute(0xffff_ffff_ffff_fff1),
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(1, 0b00, 0, 0xe, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_lea_pcrel_negative_as_movn() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Lea {
+                dst: x(0),
+                addr: Address::PcRel {
+                    offset: -15,
+                    disp_size: DispSize::Auto,
+                    base: Some(0),
+                },
             },
         );
         builder.set_terminator(Terminator::Return { values: vec![] });
