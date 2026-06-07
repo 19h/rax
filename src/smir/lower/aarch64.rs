@@ -3381,6 +3381,9 @@ impl Aarch64Lowerer {
                 (1_u64 << u32::from(width_bits)) - 1
             };
             let inserted = (value as u64) & low_mask;
+            if u32::from(width_bits) == op_bits && lsb == 0 {
+                return self.emit_mov_imm(dst, inserted as i64, op_width);
+            }
             if inserted == low_mask && u32::from(width_bits) < op_bits {
                 if dst != dst_in {
                     self.emit_mov_reg(dst, dst_in, op_width)?;
@@ -16467,6 +16470,33 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_logical_imm(1, 0b01, 1, 56, 7, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_bfi_w_full_width_imm_src_as_movz() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Bfi {
+                dst: x(0),
+                dst_in: x(1),
+                src: VReg::Imm(0x1234),
+                lsb: 0,
+                width_bits: 32,
+                op_width: OpWidth::W32,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 0x1234, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
