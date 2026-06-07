@@ -4924,6 +4924,44 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
 
     let mut st = native_state();
     st.x[0] = 0x3333_4444_5555_6666;
+    st.x[1] = 0x0000_0000_0000_00f0;
+    st.pstate = 0xa000_0000;
+    push_case(
+        "cls_w_lifted_imm_src_as_movz_preserves_flags",
+        enc_dp1(0, 0b000101),
+        vec![
+            OpKind::Sar {
+                dst: VReg::virt(306),
+                src: VReg::Imm(0xf0),
+                amount: SrcOperand::Imm(31),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Xor {
+                dst: VReg::virt(307),
+                src1: VReg::Imm(0xf0),
+                src2: SrcOperand::Reg(VReg::virt(306)),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Clz {
+                dst: VReg::virt(308),
+                src: VReg::virt(307),
+                width: OpWidth::W32,
+            },
+            OpKind::Sub {
+                dst: arm_x(0),
+                src1: VReg::virt(308),
+                src2: SrcOperand::Imm(1),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        ],
+        st,
+    );
+
+    let mut st = native_state();
+    st.x[0] = 0x3333_4444_5555_6666;
     st.x[1] = 0xffff_ffff_8000_0001;
     st.pstate = 0xa000_0000;
     push_case(

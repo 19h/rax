@@ -3166,7 +3166,37 @@ impl Aarch64Lowerer {
     }
 
     fn lower_cls(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
+        if let VReg::Imm(value) = src {
+            let result = Self::cls_imm(value as u64, width)?;
+            return self.emit_mov_imm(Self::dst_gpr(dst)?, result as i64, width);
+        }
+
         self.emit_dp1(Self::dst_gpr(dst)?, Self::gpr(src)?, 0b000101, width)
+    }
+
+    fn cls_imm(value: u64, width: OpWidth) -> Result<u64, LowerError> {
+        match width {
+            OpWidth::W32 => {
+                let value = value as u32;
+                let normalized = if (value & 0x8000_0000) != 0 {
+                    !value
+                } else {
+                    value
+                };
+                Ok(u64::from(normalized.leading_zeros() - 1))
+            }
+            OpWidth::W64 => {
+                let normalized = if (value & 0x8000_0000_0000_0000) != 0 {
+                    !value
+                } else {
+                    value
+                };
+                Ok(u64::from(normalized.leading_zeros() - 1))
+            }
+            other => Err(LowerError::UnsupportedOp {
+                op: format!("AArch64 native Cls width {other:?}"),
+            }),
+        }
     }
 
     fn lower_rbit(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
@@ -12459,6 +12489,64 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 8, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn fuses_lifted_cls_x_imm_src_as_movz() {
+        let sign_mask = VReg::virt(0);
+        let normalized = VReg::virt(1);
+        let leading = VReg::virt(2);
+        let src = VReg::Imm(-16);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Sar {
+                dst: sign_mask,
+                src,
+                amount: SrcOperand::Imm(63),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Xor {
+                dst: normalized,
+                src1: src,
+                src2: SrcOperand::Reg(sign_mask),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Clz {
+                dst: leading,
+                src: normalized,
+                width: OpWidth::W64,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Sub {
+                dst: x(0),
+                src1: leading,
+                src2: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(1, 0b10, 0, 59, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
