@@ -5157,13 +5157,27 @@ impl Aarch64Lowerer {
                     };
                     let quot = Self::dst_gpr(quot)?;
                     let rn = Self::gpr(src1)?;
-                    if quot == rn {
-                        return Err(LowerError::UnsupportedOp {
-                            op: "AArch64 native signed power-of-two divide with aliased quotient"
-                                .into(),
-                        });
-                    }
                     let shift = divisor.trailing_zeros();
+                    if quot == rn {
+                        self.emit_addsub_shifted(
+                            quot,
+                            rn,
+                            rn,
+                            false,
+                            false,
+                            1,
+                            bits - shift,
+                            emit_width,
+                        )?;
+                        return self.emit_bitfield(
+                            quot,
+                            quot,
+                            0b00,
+                            shift,
+                            bits - 1,
+                            emit_width,
+                        );
+                    }
                     self.emit_bitfield(quot, rn, 0b00, bits - 1, bits - 1, emit_width)?;
                     self.emit_addsub_shifted(
                         quot,
@@ -13791,7 +13805,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_divs_imm_power_of_two_when_quotient_aliases_dividend() {
+    fn lowers_divs_x_imm_power_of_two_in_place_as_bias_asr() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(
             0,
@@ -13808,8 +13822,42 @@ mod tests {
         let func = builder.finish();
 
         let mut lowerer = Aarch64Lowerer::new();
-        let err = lowerer.lower_function(&func).unwrap_err();
-        assert!(matches!(err, LowerError::UnsupportedOp { .. }));
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_addsub_shift_regs(1, 0, 0, 1, 61, 1, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(1, 0b00, 3, 63, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_divs_w_imm_power_of_two_in_place_as_bias_asr() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::DivS {
+                quot: x(1),
+                rem: None,
+                src1: x(1),
+                src2: SrcOperand::Imm64(0x1_0000_0010),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_addsub_shift_regs(0, 0, 0, 1, 28, 1, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b00, 4, 31, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
     }
 
     #[test]
