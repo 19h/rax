@@ -3392,6 +3392,37 @@ impl Aarch64Lowerer {
                 let (n, immr, imms) = Self::logical_bitmask_imm(field_mask as i64, op_width)?;
                 return self.emit_logic_imm(dst, dst, 0b01, n, immr, imms, op_width);
             }
+            if inserted != 0 && u32::from(width_bits) < op_bits {
+                let field_mask = low_mask << lsb;
+                let inserted_mask = inserted << lsb;
+                let clear_mask = (!field_mask) & op_width.mask();
+                if let (
+                    Ok((clear_n, clear_immr, clear_imms)),
+                    Ok((insert_n, insert_immr, insert_imms)),
+                ) = (
+                    Self::logical_bitmask_imm(clear_mask as i64, op_width),
+                    Self::logical_bitmask_imm(inserted_mask as i64, op_width),
+                ) {
+                    self.emit_logic_imm(
+                        dst,
+                        dst_in,
+                        0b00,
+                        clear_n,
+                        clear_immr,
+                        clear_imms,
+                        op_width,
+                    )?;
+                    return self.emit_logic_imm(
+                        dst,
+                        dst,
+                        0b01,
+                        insert_n,
+                        insert_immr,
+                        insert_imms,
+                        op_width,
+                    );
+                }
+            }
         }
         let src = Self::gpr(src)?;
 
@@ -16497,6 +16528,34 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 0x1234, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_bfi_x_encodable_imm_src_as_and_orr() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Bfi {
+                dst: x(0),
+                dst_in: x(1),
+                src: VReg::Imm(0x3c),
+                lsb: 8,
+                width_bits: 8,
+                op_width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_logical_imm(1, 0b00, 1, 48, 55, 0, 1).to_le_bytes());
+        expected.extend_from_slice(&enc_logical_imm(1, 0b01, 1, 54, 3, 0, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
