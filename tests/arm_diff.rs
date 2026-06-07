@@ -5309,6 +5309,74 @@ fn push_bit_scan_flag_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_bzhi_zero_imm_source_reg_index_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let bzhi_cases = [
+        (
+            "bzhi_x_zero_imm_source_reg_index_as_movz_preserves_flags",
+            OpKind::Bzhi {
+                dst: arm_x(0),
+                src: VReg::Imm(0),
+                index: arm_x(2),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            enc_mov_wide(1, 0b10, 0, 0),
+            0xaaaa_bbbb_cccc_dddd,
+            17,
+            0x9000_0000,
+        ),
+        (
+            "bzhi_w_masked_zero_imm_source_self_index_as_movz_preserves_flags",
+            OpKind::Bzhi {
+                dst: arm_x(0),
+                src: VReg::Imm(0x1_0000_0000),
+                index: arm_x(0),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+            enc_mov_wide(0, 0b10, 0, 0),
+            0xbbbb_cccc_dddd_eeee,
+            0,
+            0x4000_0000,
+        ),
+        (
+            "bzhi_w8_masked_zero_imm_source_reg_index_as_movz_preserves_flags",
+            OpKind::Bzhi {
+                dst: arm_x(0),
+                src: VReg::Imm(0x100),
+                index: arm_x(2),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+            enc_mov_wide(0, 0b10, 0, 0),
+            0xcccc_dddd_eeee_ffff,
+            0x87,
+            0x2000_0000,
+        ),
+    ];
+
+    for (name, op, source, x0, x2, pstate) in bzhi_cases {
+        let mut st = ArmState::zeroed();
+        st.pc = PCREL_MAGIC;
+        st.x[30] = pcrel_marker(control_target);
+        st.x[0] = x0;
+        st.x[2] = x2;
+        st.pstate = pstate;
+        let lowered = lower_aarch64_native_ops(vec![op])
+            .unwrap_or_else(|e| panic!("{name}: native lowering failed: {e}"));
+        assert_eq!(
+            lowered,
+            [source, 0xd65f_03c0, NOP],
+            "{name}: unexpected lowering"
+        );
+        cases.push((name.into(), [source, NOP, NOP], lowered, st));
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_bzhi_subword_flag_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -12865,6 +12933,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_bit_permute_contiguous_mask_native_cases(&mut cases, control_target);
     push_bit_permute_imm_source_arbitrary_mask_native_cases(&mut cases, control_target);
     push_bit_scan_flag_native_cases(&mut cases, control_target);
+    push_bzhi_zero_imm_source_reg_index_native_cases(&mut cases, control_target);
     push_bzhi_subword_flag_native_cases(&mut cases, control_target);
     push_cmove_imm_movn_native_cases(&mut cases, control_target);
     push_cmove_imm_csel_native_cases(&mut cases, control_target);

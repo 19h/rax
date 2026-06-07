@@ -3260,6 +3260,19 @@ impl Aarch64Lowerer {
             }
         };
 
+        if !set_flags {
+            if let VReg::Imm(value) = src {
+                if (value as u64 & width.mask()) == 0 {
+                    let emit_width = if width == OpWidth::W64 {
+                        OpWidth::W64
+                    } else {
+                        OpWidth::W32
+                    };
+                    return self.emit_mov_imm(Self::dst_gpr(dst)?, 0, emit_width);
+                }
+            }
+        }
+
         if let VReg::Imm(value) = index {
             let index = ((value as u64) & 0xff) as u32;
             let dst_reg = Self::dst_gpr(dst)?;
@@ -16541,6 +16554,68 @@ mod tests {
         expected.extend_from_slice(&enc_flagm(0b000).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_bzhi_zero_imm_source_reg_index_as_zero() {
+        let cases = [
+            (
+                OpKind::Bzhi {
+                    dst: x(0),
+                    src: VReg::Imm(0),
+                    index: x(2),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                enc_mov_wide(1, 0b10, 0, 0, 0),
+            ),
+            (
+                OpKind::Bzhi {
+                    dst: x(0),
+                    src: VReg::Imm(0x1_0000_0000),
+                    index: x(0),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+                enc_mov_wide(0, 0b10, 0, 0, 0),
+            ),
+            (
+                OpKind::Bzhi {
+                    dst: x(1),
+                    src: VReg::Imm(0x100),
+                    index: x(2),
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::None,
+                },
+                enc_mov_wide(0, 0b10, 0, 0, 1),
+            ),
+            (
+                OpKind::Bzhi {
+                    dst: x(2),
+                    src: VReg::Imm(0x1_0000),
+                    index: x(3),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::None,
+                },
+                enc_mov_wide(0, 0b10, 0, 0, 2),
+            ),
+        ];
+
+        for (kind, expected_word) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            expected.extend_from_slice(&expected_word.to_le_bytes());
+            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+            assert_eq!(code, expected);
+        }
     }
 
     #[test]
