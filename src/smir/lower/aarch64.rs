@@ -2149,6 +2149,9 @@ impl Aarch64Lowerer {
         let top_bit = width.bits() - 1;
         if let SrcOperand::Reg(reg) = src2 {
             if *reg == VReg::Imm(0) {
+                if src1 == VReg::Imm(0) {
+                    return self.emit_mov_imm(dst, 0, OpWidth::W32);
+                }
                 return self.emit_bitfield(dst, Self::gpr(src1)?, 0b10, 0, top_bit, OpWidth::W32);
             }
             if !subtract && src1 == VReg::Imm(0) {
@@ -2165,6 +2168,40 @@ impl Aarch64Lowerer {
                     value
                 };
                 return self.emit_mov_imm(dst, result as i64, OpWidth::W32);
+            }
+        }
+
+        if src1 == VReg::Imm(0) {
+            match src2 {
+                SrcOperand::Reg(_) | SrcOperand::Shifted { .. } => {
+                    let (rm, shift, amount) = Self::addsub_src2(src2, OpWidth::W32)?;
+                    self.emit_addsub_shifted(
+                        dst,
+                        31,
+                        rm,
+                        subtract,
+                        false,
+                        shift,
+                        amount,
+                        OpWidth::W32,
+                    )?;
+                    return self.emit_bitfield(dst, dst, 0b10, 0, top_bit, OpWidth::W32);
+                }
+                SrcOperand::Extended { .. } => {
+                    let (rm, option, amount) = Self::addsub_ext_src2(src2)?;
+                    self.emit_addsub_extended(
+                        dst,
+                        31,
+                        rm,
+                        subtract,
+                        false,
+                        option,
+                        amount,
+                        OpWidth::W32,
+                    )?;
+                    return self.emit_bitfield(dst, dst, 0b10, 0, top_bit, OpWidth::W32);
+                }
+                _ => {}
             }
         }
 
@@ -9652,6 +9689,70 @@ mod tests {
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 15, 1, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_subword_zero_base_addsub_register_sources() {
+        let cases = [
+            (
+                OpKind::Sub {
+                    dst: x(0),
+                    src1: VReg::Imm(0),
+                    src2: SrcOperand::Reg(x(1)),
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::None,
+                },
+                enc_addsub_shift_regs(0, 1, 0, 0, 0, 0, 31, 1),
+                enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
+            ),
+            (
+                OpKind::Add {
+                    dst: x(0),
+                    src1: VReg::Imm(0),
+                    src2: SrcOperand::Shifted {
+                        reg: x(1),
+                        shift: ShiftOp::Lsl,
+                        amount: 3,
+                    },
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::None,
+                },
+                enc_addsub_shift_regs(0, 0, 0, 0, 3, 0, 31, 1),
+                enc_bitfield_regs(0, 0b10, 0, 15, 0, 0),
+            ),
+            (
+                OpKind::Sub {
+                    dst: x(0),
+                    src1: VReg::Imm(0),
+                    src2: SrcOperand::Extended {
+                        reg: x(1),
+                        extend: ExtendOp::Uxtb,
+                        shift: 1,
+                    },
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::None,
+                },
+                enc_addsub_ext_regs(0, 1, 0, 0b000, 1, 0, 31, 1),
+                enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
+            ),
+        ];
+
+        for (kind, first, trunc) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            expected.extend_from_slice(&first.to_le_bytes());
+            expected.extend_from_slice(&trunc.to_le_bytes());
+            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+            assert_eq!(code, expected);
+        }
     }
 
     #[test]
