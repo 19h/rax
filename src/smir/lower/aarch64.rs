@@ -2955,6 +2955,7 @@ impl Aarch64Lowerer {
         if matches!(width, OpWidth::W32 | OpWidth::W64) {
             if let VReg::Imm(value) = src1 {
                 if (value as u64 & width.mask()) == width.mask() {
+                    // 0 + transformed src sets N/Z from the transformed src and clears C/V.
                     match src2 {
                         SrcOperand::Reg(src) => {
                             let src = Self::gpr(*src)?;
@@ -2962,9 +2963,14 @@ impl Aarch64Lowerer {
                         }
                         SrcOperand::Shifted { .. } => {
                             let (src, shift, amount) = Self::addsub_src2(src2, width)?;
-                            // 0 + shifted_src sets N/Z from shifted_src and clears C/V.
                             return self.emit_addsub_shifted(
                                 31, 31, src, false, true, shift, amount, width,
+                            );
+                        }
+                        SrcOperand::Extended { .. } => {
+                            let (src, option, amount) = Self::addsub_ext_src2(src2)?;
+                            return self.emit_addsub_extended(
+                                31, 31, src, false, true, option, amount, width,
                             );
                         }
                         _ => {}
@@ -8274,6 +8280,28 @@ mod tests {
             | (shift << 22)
             | (rm << 16)
             | (imm6 << 10)
+            | (rn << 5)
+            | rd
+    }
+
+    fn enc_addsub_ext_regs(
+        sf: u32,
+        op: u32,
+        s: u32,
+        option: u32,
+        imm3: u32,
+        rd: u32,
+        rn: u32,
+        rm: u32,
+    ) -> u32 {
+        (sf << 31)
+            | (op << 30)
+            | (s << 29)
+            | (0b01011 << 24)
+            | (1 << 21)
+            | (rm << 16)
+            | (option << 13)
+            | (imm3 << 10)
             | (rn << 5)
             | rd
     }
@@ -18544,6 +18572,64 @@ mod tests {
                     width: OpWidth::W32,
                 },
                 enc_addsub_shift_regs(0, 0, 1, 2, 31, 31, 31, 2),
+            ),
+        ];
+
+        for (kind, expected_word) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            expected.extend_from_slice(&expected_word.to_le_bytes());
+            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+            assert_eq!(code, expected);
+        }
+    }
+
+    #[test]
+    fn lowers_test_all_ones_left_imm_extended_as_adds_zero_base() {
+        let cases = [
+            (
+                OpKind::Test {
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Uxtw,
+                        shift: 0,
+                    },
+                    width: OpWidth::W64,
+                },
+                enc_addsub_ext_regs(1, 0, 1, 0b010, 0, 31, 31, 2),
+            ),
+            (
+                OpKind::Test {
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Sxtw,
+                        shift: 2,
+                    },
+                    width: OpWidth::W64,
+                },
+                enc_addsub_ext_regs(1, 0, 1, 0b110, 2, 31, 31, 2),
+            ),
+            (
+                OpKind::Test {
+                    src1: VReg::Imm(0x1_ffff_ffff),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Uxtb,
+                        shift: 1,
+                    },
+                    width: OpWidth::W32,
+                },
+                enc_addsub_ext_regs(0, 0, 1, 0b000, 1, 31, 31, 2),
             ),
         ];
 
