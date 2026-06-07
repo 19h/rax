@@ -3357,6 +3357,42 @@ fn push_test_zero_imm_operand_native_cases(
             0,
             0x1000_0000,
         ),
+        (
+            "test_w8_two_imms_zero_result_opkind_sets_z",
+            OpKind::Test {
+                src1: VReg::Imm(0x10),
+                src2: SrcOperand::Imm(0x20),
+                width: OpWidth::W8,
+            },
+            [enc_logical_shift_regs(0, 0b11, 0, 0, 0, 31, 31, 31), NOP, NOP],
+            0x1111_2222_3333_4444,
+            0x5555_6666_7777_8888,
+            0xa000_0000,
+        ),
+        (
+            "test_x_two_imms_positive_result_opkind_clears_flags",
+            OpKind::Test {
+                src1: VReg::Imm(0x03),
+                src2: SrcOperand::Imm(0x05),
+                width: OpWidth::W64,
+            },
+            [enc_msr_sysreg(31, 3, 4, 2, 0), NOP, NOP],
+            0x9999_aaaa_bbbb_cccc,
+            0xdddd_eeee_ffff_0000,
+            0xf000_0000,
+        ),
+        (
+            "test_w16_two_imms_negative_result_opkind_sets_n",
+            OpKind::Test {
+                src1: VReg::Imm(0x8001),
+                src2: SrcOperand::Imm(0x8000),
+                width: OpWidth::W16,
+            },
+            [enc_addsub_imm_regs(0, 1, 1, 0, 1, 31, 31), NOP, NOP],
+            0x1111_2222_3333_4444,
+            0x5555_6666_7777_8888,
+            0x7000_0000,
+        ),
     ];
 
     for (name, op, source, x1, x2, pstate) in test_cases {

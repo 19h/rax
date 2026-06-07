@@ -3158,6 +3158,14 @@ impl Aarch64Lowerer {
             };
             return self.emit_logic_reg_n(31, 31, 31, 0b11, false, emit_width);
         }
+        if let VReg::Imm(left) = src1 {
+            if let SrcOperand::Imm(right) | SrcOperand::Imm64(right) = src2 {
+                if matches!(width, OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64) {
+                    let result = (left as u64 & width.mask()) & (*right as u64 & width.mask());
+                    return self.lower_constant_test_result(result, width);
+                }
+            }
+        }
         if matches!(width, OpWidth::W32 | OpWidth::W64) {
             if let VReg::Imm(value) = src1 {
                 if (value as u64 & width.mask()) == width.mask() {
@@ -3212,6 +3220,25 @@ impl Aarch64Lowerer {
                 )
             }
         }
+    }
+
+    fn lower_constant_test_result(
+        &mut self,
+        result: u64,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
+        let emit_width = if width == OpWidth::W64 {
+            OpWidth::W64
+        } else {
+            OpWidth::W32
+        };
+        if result == 0 {
+            return self.emit_logic_reg_n(31, 31, 31, 0b11, false, emit_width);
+        }
+        if (result & width.sign_bit()) != 0 {
+            return self.emit_addsub_imm(31, 31, 1, true, true, emit_width);
+        }
+        self.emit_sysreg(31, ArmReg::Nzcv, false)
     }
 
     fn logical_src2(
@@ -19784,6 +19811,52 @@ mod tests {
                     width: OpWidth::W16,
                 },
                 enc_logical_reg_n(0, 0b11, 0, 31, 31, 31),
+            ),
+        ];
+
+        for (kind, expected_word) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            expected.extend_from_slice(&expected_word.to_le_bytes());
+            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+            assert_eq!(code, expected);
+        }
+    }
+
+    #[test]
+    fn lowers_test_two_imms_as_constant_flags() {
+        let cases = [
+            (
+                OpKind::Test {
+                    src1: VReg::Imm(0x10),
+                    src2: SrcOperand::Imm(0x20),
+                    width: OpWidth::W8,
+                },
+                enc_logical_reg_n(0, 0b11, 0, 31, 31, 31),
+            ),
+            (
+                OpKind::Test {
+                    src1: VReg::Imm(0x03),
+                    src2: SrcOperand::Imm(0x05),
+                    width: OpWidth::W64,
+                },
+                enc_msr_sysreg(31, 3, 4, 2, 0),
+            ),
+            (
+                OpKind::Test {
+                    src1: VReg::Imm(0x8001),
+                    src2: SrcOperand::Imm(0x8000),
+                    width: OpWidth::W16,
+                },
+                enc_addsub_imm_regs(0, 1, 1, 0, 1, 31, 31),
             ),
         ];
 
