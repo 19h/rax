@@ -3664,7 +3664,11 @@ impl Aarch64Lowerer {
                 OpWidth::W32
             };
             let result = (value as u64) & to_width.mask();
-            return self.emit_mov_imm(Self::dst_gpr(dst)?, result as i64, emit_width);
+            let dst = Self::dst_gpr(dst)?;
+            if self.try_emit_movn_single(dst, result, emit_width)? {
+                return Ok(());
+            }
+            return self.emit_mov_imm(dst, result as i64, emit_width);
         }
 
         match to_width {
@@ -15226,6 +15230,31 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_mov_wide(1, 0b10, 0, 0x2468, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_truncate_imm_to_x_as_movn() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Truncate {
+                dst: x(0),
+                src: VReg::Imm(-1),
+                from_width: OpWidth::W64,
+                to_width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(1, 0b00, 0, 0, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
