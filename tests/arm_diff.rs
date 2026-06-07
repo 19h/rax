@@ -2420,6 +2420,74 @@ fn push_logical_identity_same_reg_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_addsub_zero_same_reg_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let addsub_cases = [
+        (
+            "add_x_zero_reg_same_reg_as_noop_preserves_flags",
+            OpKind::Add {
+                dst: arm_x(0),
+                src1: arm_x(0),
+                src2: SrcOperand::Reg(VReg::Imm(0)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            0x1111_2222_3333_4444,
+            0x2000_0000,
+        ),
+        (
+            "add_x_zero_imm_same_reg_as_noop_preserves_flags",
+            OpKind::Add {
+                dst: arm_x(0),
+                src1: arm_x(0),
+                src2: SrcOperand::Imm(0),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            0x5555_6666_7777_8888,
+            0xa000_0000,
+        ),
+        (
+            "sub_x_zero_reg_same_reg_as_noop_preserves_flags",
+            OpKind::Sub {
+                dst: arm_x(0),
+                src1: arm_x(0),
+                src2: SrcOperand::Reg(VReg::Imm(0)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            0x9999_aaaa_bbbb_cccc,
+            0x5000_0000,
+        ),
+        (
+            "sub_x_zero_imm_same_reg_as_noop_preserves_flags",
+            OpKind::Sub {
+                dst: arm_x(0),
+                src1: arm_x(0),
+                src2: SrcOperand::Imm64(0),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            0xdddd_eeee_ffff_0001,
+            0xc000_0000,
+        ),
+    ];
+
+    for (name, op, x0, pstate) in addsub_cases {
+        let mut st = ArmState::zeroed();
+        st.pc = PCREL_MAGIC;
+        st.x[30] = pcrel_marker(control_target);
+        st.x[0] = x0;
+        st.pstate = pstate;
+        let lowered = lower_aarch64_native_ops(vec![op])
+            .unwrap_or_else(|e| panic!("{name}: native lowering failed: {e}"));
+        cases.push((name.into(), [0xd65f_03c0, NOP, NOP], lowered, st));
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_lea_absolute_movn_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -9590,6 +9658,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_mov_same_reg_native_cases(&mut cases, control_target);
     push_xchg_same_reg_native_cases(&mut cases, control_target);
     push_logical_identity_same_reg_native_cases(&mut cases, control_target);
+    push_addsub_zero_same_reg_native_cases(&mut cases, control_target);
     push_lea_absolute_movn_native_cases(&mut cases, control_target);
     push_lea_pcrel_movn_native_cases(&mut cases, control_target);
     push_bfi_full_width_movn_native_cases(&mut cases, control_target);
