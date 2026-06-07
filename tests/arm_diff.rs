@@ -5510,6 +5510,22 @@ fn push_cmp_zero_base_reg_native_cases(
             0xf000_0000,
         ),
         (
+            "cmp_w8_zero_base_zero_source_reg_as_subs_zero_regs_sets_flags",
+            OpKind::Cmp {
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Reg(VReg::Imm(0)),
+                width: OpWidth::W8,
+            },
+            [
+                enc_addsub_shift_regs(0, 1, 1, 0, 0, 31, 31, 31),
+                NOP,
+                NOP,
+            ],
+            0x4444_5555_6666_7777,
+            0x89ab_cdef_0123_4567,
+            0x9000_0000,
+        ),
+        (
             "cmp_w_zero_base_lsl3_as_subs_zero_shifted_sets_flags",
             OpKind::Cmp {
                 src1: VReg::Imm(0),

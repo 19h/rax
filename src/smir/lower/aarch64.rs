@@ -1233,6 +1233,21 @@ impl Aarch64Lowerer {
         }
     }
 
+    fn src_operand_is_zero(src: &SrcOperand) -> bool {
+        match src {
+            SrcOperand::Reg(VReg::Imm(0)) => true,
+            SrcOperand::Shifted { reg, shift, .. } => {
+                *reg == VReg::Imm(0)
+                    && matches!(
+                        shift,
+                        ShiftOp::Lsl | ShiftOp::Lsr | ShiftOp::Asr | ShiftOp::Ror
+                    )
+            }
+            SrcOperand::Extended { reg, .. } => *reg == VReg::Imm(0),
+            _ => false,
+        }
+    }
+
     fn writeback_add_parts(kind: &OpKind) -> Option<(VReg, i64)> {
         match kind {
             OpKind::Add {
@@ -3233,6 +3248,10 @@ impl Aarch64Lowerer {
         }
 
         if src1 == VReg::Imm(0) {
+            if Self::src_operand_is_zero(src2) {
+                let nzcv = Self::constant_sub_nzcv(0, 0, width)?;
+                return self.lower_constant_cmp_nzcv(nzcv, width);
+            }
             match src2 {
                 SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) => {
                     let is_zero = match width {
@@ -10575,6 +10594,62 @@ mod tests {
         let mut expected = Vec::new();
         expected.extend_from_slice(
             &enc_addsub_ext_regs(1, 1, 1, 0b010, 2, 31, 31, 1).to_le_bytes(),
+        );
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_cmp_w8_zero_base_zero_source_reg_as_constant_flags() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Cmp {
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Reg(VReg::Imm(0)),
+                width: OpWidth::W8,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(
+            &enc_addsub_shift_regs(0, 1, 1, 0, 0, 31, 31, 31).to_le_bytes(),
+        );
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_cmp_w16_zero_base_zero_shifted_source_as_constant_flags() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Cmp {
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Shifted {
+                    reg: VReg::Imm(0),
+                    shift: ShiftOp::Ror,
+                    amount: 7,
+                },
+                width: OpWidth::W16,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(
+            &enc_addsub_shift_regs(0, 1, 1, 0, 0, 31, 31, 31).to_le_bytes(),
         );
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
