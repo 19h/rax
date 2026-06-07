@@ -4727,6 +4727,28 @@ impl Aarch64Lowerer {
             }
         }
 
+        if shift == ShiftOp::Lsr {
+            if let (VReg::Imm(value), Some(amount)) = (src, Self::src_imm(amount)) {
+                let emit_width = match width {
+                    OpWidth::W8 | OpWidth::W16 | OpWidth::W32 => OpWidth::W32,
+                    OpWidth::W64 => OpWidth::W64,
+                    other => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("AArch64 native immediate-source Shr width {other:?}"),
+                        });
+                    }
+                };
+                let value = (value as u64) & width.mask();
+                let amount = (amount as u64 & 0x3f) as u32;
+                let result = if amount >= width.bits() {
+                    0
+                } else {
+                    (value >> amount) & width.mask()
+                };
+                return self.emit_mov_imm(Self::dst_gpr(dst)?, result as i64, emit_width);
+            }
+        }
+
         let dst = Self::dst_gpr(dst)?;
         let src = Self::gpr(src)?;
         match amount {
@@ -10334,6 +10356,58 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 0xf0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_shr_x_imm_src_as_movz() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Shr {
+                dst: x(0),
+                src: VReg::Imm(0x1230),
+                amount: SrcOperand::Imm(4),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(1, 0b10, 0, 0x123, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_shr_w8_imm_src_as_movz_masked() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Shr {
+                dst: x(0),
+                src: VReg::Imm(0x1f0),
+                amount: SrcOperand::Imm(4),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 0xf, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
