@@ -5215,6 +5215,38 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
         st,
     );
 
+    let mut st = native_state();
+    st.x[0] = 0xeeee_ffff_0000_1111;
+    st.pstate = 0x2000_0000;
+    push_case(
+        "bextr_w_two_imms_all_ones_as_movn_preserves_flags",
+        enc_mov_wide(0, 0b00, 0, 0),
+        vec![OpKind::Bextr {
+            dst: arm_x(0),
+            src: VReg::Imm(-1),
+            control: VReg::Imm(32 << 8),
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
+    st.x[0] = 0x1111_2222_3333_4444;
+    st.pstate = 0x6000_0000;
+    push_case(
+        "bextr_x_two_imms_all_ones_as_movn_preserves_flags",
+        enc_mov_wide(1, 0b00, 0, 0),
+        vec![OpKind::Bextr {
+            dst: arm_x(0),
+            src: VReg::Imm(-1),
+            control: VReg::Imm(64 << 8),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        }],
+        st,
+    );
+
     drop(push_case);
     let mut st = native_state();
     st.x[0] = 0x2222_3333_4444_5555;
@@ -5285,6 +5317,30 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
             enc_mov_wide(1, 0b10, 0, 0x9abc),
             enc_mov_wide(1, 0b11, 1, 0x5678),
             enc_logical_reg_n(1, 0b11, 0, 31, RD, RD),
+        ],
+        lowered,
+        st,
+    ));
+
+    let mut st = native_state();
+    st.x[0] = 0x1111_2222_3333_4444;
+    st.pstate = 0x6000_0000;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Bextr {
+        dst: arm_x(0),
+        src: VReg::Imm(-1),
+        control: VReg::Imm(64 << 8),
+        width: OpWidth::W64,
+        flags: bextr_flags(),
+    }])
+    .unwrap_or_else(|e| {
+        panic!("bextr_x_two_imms_all_ones_with_flags_sets_nzcv: native lowering failed: {e}")
+    });
+    cases.push((
+        "bextr_x_two_imms_all_ones_with_flags_sets_nzcv".into(),
+        [
+            enc_mov_wide(1, 0b00, 0, 0),
+            enc_logical_reg_n(1, 0b11, 0, 31, RD, RD),
+            NOP,
         ],
         lowered,
         st,
