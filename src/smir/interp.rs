@@ -2674,7 +2674,10 @@ impl SmirInterpreter {
                         5 => {
                             let v = (av & mask) << (64 - elem_bits);
                             let nv = (!av & mask) << (64 - elem_bits);
-                            let n = v.leading_zeros().max(nv.leading_zeros());
+                            let n = v
+                                .leading_zeros()
+                                .min(elem_bits)
+                                .max(nv.leading_zeros().min(elem_bits));
                             (n - 1) as u64
                         }
                         // Neg (two's complement)
@@ -5145,6 +5148,35 @@ impl SmirInterpreter {
                 ctx.request_exit(ExitReason::Breakpoint { addr: ctx.pc });
             }
 
+            OpKind::VShuffleBitQM {
+                dst,
+                src,
+                indices,
+                width,
+            } => {
+                let src_val = Self::read_vec(ctx, *src);
+                let idx_val = Self::read_vec(ctx, *indices);
+                let mut result = 0u64;
+                let bytes = width.bytes();
+
+                for qword_idx in 0..(bytes / 8) {
+                    let lane_base = (qword_idx * 8) as u8;
+                    let qword = Self::get_lane(&src_val, qword_idx as u8, 64);
+                    for byte_idx in 0..8 {
+                        let idx = Self::get_lane(&idx_val, lane_base + byte_idx as u8, 8) & 0x3f;
+                        let bit = (qword >> idx) & 1;
+                        result |= bit << (qword_idx * 8 + byte_idx);
+                    }
+                }
+
+                let mask = if bytes >= 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << bytes) - 1
+                };
+                ctx.write_vreg(*dst, result & mask);
+            }
+
             // ==================================================================
             // AVX10 OPERATIONS (Stubs - not yet implemented in interpreter)
             // ==================================================================
@@ -5154,7 +5186,6 @@ impl SmirInterpreter {
             | OpKind::VMultiplyAdd52 { .. }
             | OpKind::VPopcnt { .. }
             | OpKind::VPermute { .. }
-            | OpKind::VShuffleBitQM { .. }
             | OpKind::VDotProductBF16 { .. }
             | OpKind::VCvtFP32ToBF16 { .. }
             | OpKind::VCvtBF16ToFP32 { .. }
@@ -7219,6 +7250,56 @@ mod tests {
         (ctx.read_vreg(rax), ctx.flags.materialized.to_rflags())
     }
 
+    fn vec_from_bytes(bytes: &[u8]) -> VecValue {
+        let mut value = [0u64; 16];
+        for (idx, chunk) in bytes.chunks(8).enumerate() {
+            let mut lane = [0u8; 8];
+            lane[..chunk.len()].copy_from_slice(chunk);
+            value[idx] = u64::from_le_bytes(lane);
+        }
+        value
+    }
+
+    #[test]
+    fn interprets_vshufflebitqm_writes_k_mask() {
+        let src = VReg::Arch(ArchReg::X86(X86Reg::Zmm(2)));
+        let indices = VReg::Arch(ArchReg::X86(X86Reg::Zmm(3)));
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = vec_from_bytes(&[
+                0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0xff, 0x00, 0x00, 0x00,
+                0x00, 0xff, 0x00,
+            ]);
+            x86.xmm[3] = vec_from_bytes(&[
+                0, 63, 1, 62, 2, 61, 3, 60, 8, 15, 16, 47, 48, 55, 56, 63,
+            ]);
+        }
+
+        let interp = SmirInterpreter::new();
+        let mut memory = FlatMemory::new(0x1000);
+        interp
+            .execute_op(
+                &mut ctx,
+                &mut memory,
+                &SmirOp::new(
+                    OpId(0),
+                    0x1000,
+                    OpKind::VShuffleBitQM {
+                        dst,
+                        src,
+                        indices,
+                        width: VecWidth::V128,
+                    },
+                ),
+            )
+            .unwrap();
+
+        assert_eq!(ctx.read_vreg(dst), 0x3303);
+        assert_eq!(ctx.read_vreg(src), 0x8000_0000_0000_0001);
+        assert_eq!(ctx.read_vreg(indices), 0x3c033d023e013f00);
+    }
+
     #[test]
     fn atomic_cmpxadd_updates_memory_dst_and_flags() {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
@@ -8492,6 +8573,11 @@ mod tests {
         assert_eq!(
             run([0x0001_0001_0001_0001u64; 16], VecElementType::I16, 64, 5),
             [0x000E_000E_000E_000Eu64; 16]
+        );
+        // NormAmt of -1 halfword: all redundant sign bits -> 15 (op 5)
+        assert_eq!(
+            run([0xFFFF_FFFF_FFFF_FFFFu64; 16], VecElementType::I16, 64, 5),
+            [0x000F_000F_000F_000Fu64; 16]
         );
     }
 

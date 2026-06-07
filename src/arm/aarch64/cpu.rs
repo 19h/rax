@@ -1144,8 +1144,12 @@ impl AArch64Cpu {
                     return self.exec_csel(insn);
                 }
                 0b0110 => {
-                    // Data processing (2 source)
-                    return self.exec_dp_2src(insn);
+                    if ((insn >> 30) & 1) == 0 {
+                        // Data processing (2 source)
+                        return self.exec_dp_2src(insn);
+                    }
+                    // Data processing (1 source)
+                    return self.exec_dp_1src(insn);
                 }
                 _ if (op2 & 0b1000) != 0 => {
                     // Data processing (3 source)
@@ -13031,11 +13035,12 @@ impl AArch64Cpu {
             }
             0b01 => {
                 // BFM
-                (dst & !tmask) | (bot & wmask & tmask)
+                let mask = wmask & tmask;
+                (dst & !mask) | (bot & mask)
             }
             0b10 => {
                 // UBFM
-                bot & wmask
+                bot & wmask & tmask
             }
             _ => return Err(ArmError::UndefinedInstruction(insn)),
         };
@@ -14620,6 +14625,62 @@ impl AArch64Cpu {
                 }
             };
 
+            self.set_w(rd, result);
+        }
+
+        Ok(CpuExit::Continue)
+    }
+
+    fn exec_dp_1src(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let sf = (insn >> 31) & 1;
+        let s = (insn >> 29) & 1;
+        let opcode = (insn >> 10) & 0x3F;
+        let rn = ((insn >> 5) & 0x1F) as u8;
+        let rd = (insn & 0x1F) as u8;
+
+        if s != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+
+        if sf != 0 {
+            let operand = self.get_x(rn);
+            let result = match opcode {
+                0b000000 => operand.reverse_bits(), // RBIT
+                0b000001 => {
+                    // REV16
+                    ((operand & 0x00ff_00ff_00ff_00ff) << 8)
+                        | ((operand & 0xff00_ff00_ff00_ff00) >> 8)
+                }
+                0b000010 => {
+                    // REV32
+                    ((operand & 0x0000_00ff) << 24)
+                        | ((operand & 0x0000_ff00) << 8)
+                        | ((operand & 0x00ff_0000) >> 8)
+                        | ((operand & 0xff00_0000) >> 24)
+                        | ((operand & 0x0000_00ff_0000_0000) << 24)
+                        | ((operand & 0x0000_ff00_0000_0000) << 8)
+                        | ((operand & 0x00ff_0000_0000_0000) >> 8)
+                        | ((operand & 0xff00_0000_0000_0000) >> 24)
+                }
+                0b000011 => operand.swap_bytes(), // REV
+                0b000100 => u64::from(operand.leading_zeros()), // CLZ
+                0b000101 => count_leading_sign(operand, 64), // CLS
+                _ => return Err(ArmError::UndefinedInstruction(insn)),
+            };
+            self.set_x(rd, result);
+        } else {
+            let operand = self.get_w(rn);
+            let result = match opcode {
+                0b000000 => operand.reverse_bits(), // RBIT
+                0b000001 => {
+                    // REV16
+                    ((operand & 0x00ff_00ff) << 8) | ((operand & 0xff00_ff00) >> 8)
+                }
+                0b000010 => operand.swap_bytes(), // REV
+                0b000100 => operand.leading_zeros(), // CLZ
+                0b000101 => count_leading_sign(u64::from(operand), 32) as u32, // CLS
+                _ => return Err(ArmError::UndefinedInstruction(insn)),
+            };
             self.set_w(rd, result);
         }
 
@@ -19277,6 +19338,26 @@ mod tests {
     }
 
     #[test]
+    fn test_ubfm_lsr_zero_fills_rotated_high_bits() {
+        // UBFM X0, X1, #5, #63 is the LSR #5 alias.
+        let insn = 0xD345FC20;
+        let mut cpu = create_cpu_with_insn(insn);
+        cpu.set_x(1, 0x1234_5678_9ABC_DEF0);
+        cpu.step().unwrap();
+        assert_eq!(cpu.get_x(0), 0x0091_A2B3_C4D5_E6F7);
+    }
+
+    #[test]
+    fn test_ubfm_lsl_discards_rotated_out_high_bit() {
+        // UBFM X0, X1, #63, #62 is the LSL #1 alias.
+        let insn = 0xD37EFC20;
+        let mut cpu = create_cpu_with_insn(insn);
+        cpu.set_x(1, 0x8000_0000_0000_0001);
+        cpu.step().unwrap();
+        assert_eq!(cpu.get_x(0), 0x2);
+    }
+
+    #[test]
     fn test_ubfm_uxtb() {
         // UXTB W0, W1 = UBFM W0, W1, #0, #7
         let insn = 0x53001C20; // UBFM W0, W1, #0, #7
@@ -19310,15 +19391,36 @@ mod tests {
     #[test]
     fn test_bfm() {
         // BFM X0, X1, #4, #7 - insert bits
-        let insn = 0xB3041C20; // BFM X0, X1, #4, #7
+        let insn = 0xB344_1C20; // BFM X0, X1, #4, #7
         let mut cpu = create_cpu_with_insn(insn);
         cpu.set_x(0, 0xFFFF_FFFF_FFFF_0000);
         cpu.set_x(1, 0x00AB);
         cpu.step().unwrap();
-        // Bits 7:4 of X1 (0xA) inserted at appropriate position
-        let result = cpu.get_x(0);
-        // BFM behavior depends on the exact encoding
-        assert_ne!(result, 0xFFFF_FFFF_FFFF_0000); // Changed
+        assert_eq!(cpu.get_x(0), 0xFFFF_FFFF_FFFF_000A);
+    }
+
+    #[test]
+    fn test_bfm_bfi_inserts_without_clearing_lower_bits() {
+        // BFI W0, W1, #8, #8 inserts the low byte of W1 into bits 15:8.
+        let insn = 0x3318_1C20;
+        let mut cpu = create_cpu_with_insn(insn);
+        cpu.set_w(0, 0xA5A5_1234);
+        cpu.set_w(1, 0x0000_00CC);
+        cpu.step().unwrap();
+        assert_eq!(cpu.get_w(0), 0xA5A5_CC34);
+    }
+
+    #[test]
+    fn test_bfm_self_bfi_replicates_byte() {
+        let mut cpu = create_test_cpu();
+        write_insn(&mut cpu, 0, 0x3318_1C00); // BFI W0, W0, #8, #8
+        write_insn(&mut cpu, 4, 0x3310_1C00); // BFI W0, W0, #16, #8
+        write_insn(&mut cpu, 8, 0x3308_1C00); // BFI W0, W0, #24, #8
+        cpu.set_w(0, 0x81);
+        cpu.step().unwrap();
+        cpu.step().unwrap();
+        cpu.step().unwrap();
+        assert_eq!(cpu.get_w(0), 0x8181_8181);
     }
 
     // -------------------------------------------------------------------------

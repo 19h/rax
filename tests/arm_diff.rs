@@ -2681,7 +2681,9 @@ fn push_mov_imm_movn_native_cases(
         src: SrcOperand::Imm(-15),
         width: OpWidth::W64,
     }])
-    .unwrap_or_else(|e| panic!("mov_x_negative_imm_as_movn_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("mov_x_negative_imm_as_movn_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "mov_x_negative_imm_as_movn_preserves_flags".into(),
         [enc_mov_wide(1, 0b00, 0, 0xe), NOP, NOP],
@@ -2884,9 +2886,7 @@ fn push_xchg_same_reg_native_cases(
         reg2: arm_x(0),
         width: OpWidth::W64,
     }])
-    .unwrap_or_else(|e| {
-        panic!("xchg_same_x_as_noop_preserves_flags: native lowering failed: {e}")
-    });
+    .unwrap_or_else(|e| panic!("xchg_same_x_as_noop_preserves_flags: native lowering failed: {e}"));
     cases.push((
         "xchg_same_x_as_noop_preserves_flags".into(),
         [0xd65f_03c0, NOP, NOP],
@@ -3300,7 +3300,11 @@ fn push_logical_zero_base_extended_native_cases(
                 width: OpWidth::W64,
                 flags: FlagUpdate::All,
             },
-            [enc_logical_shift_regs(1, 0b11, 0, 0, 0, RD, 31, 31), NOP, NOP],
+            [
+                enc_logical_shift_regs(1, 0b11, 0, 0, 0, RD, 31, 31),
+                NOP,
+                NOP,
+            ],
             [
                 enc_logical_shift_regs(1, 0b11, 0, 0, 0, RD, 31, 31),
                 0xd65f_03c0,
@@ -3431,7 +3435,11 @@ fn push_test_zero_imm_operand_native_cases(
                 src2: SrcOperand::Reg(arm_x(2)),
                 width: OpWidth::W64,
             },
-            [enc_logical_shift_regs(1, 0b11, 0, 0, 0, 31, 31, 31), NOP, NOP],
+            [
+                enc_logical_shift_regs(1, 0b11, 0, 0, 0, 31, 31, 31),
+                NOP,
+                NOP,
+            ],
             0xffff_ffff_ffff_ffff,
             0x8000_0000_0000_0000,
             0xf000_0000,
@@ -3443,7 +3451,11 @@ fn push_test_zero_imm_operand_native_cases(
                 src2: SrcOperand::Reg(arm_x(2)),
                 width: OpWidth::W32,
             },
-            [enc_logical_shift_regs(0, 0b11, 0, 0, 0, 31, 31, 31), NOP, NOP],
+            [
+                enc_logical_shift_regs(0, 0b11, 0, 0, 0, 31, 31, 31),
+                NOP,
+                NOP,
+            ],
             0xffff_ffff_ffff_ffff,
             0xffff_ffff,
             0x8000_0000,
@@ -3455,7 +3467,11 @@ fn push_test_zero_imm_operand_native_cases(
                 src2: SrcOperand::Imm(0x100),
                 width: OpWidth::W8,
             },
-            [enc_logical_shift_regs(0, 0b11, 0, 0, 0, 31, 31, 31), NOP, NOP],
+            [
+                enc_logical_shift_regs(0, 0b11, 0, 0, 0, 31, 31, 31),
+                NOP,
+                NOP,
+            ],
             0xff,
             0,
             0x1000_0000,
@@ -3467,7 +3483,11 @@ fn push_test_zero_imm_operand_native_cases(
                 src2: SrcOperand::Imm(0x20),
                 width: OpWidth::W8,
             },
-            [enc_logical_shift_regs(0, 0b11, 0, 0, 0, 31, 31, 31), NOP, NOP],
+            [
+                enc_logical_shift_regs(0, 0b11, 0, 0, 0, 31, 31, 31),
+                NOP,
+                NOP,
+            ],
             0x1111_2222_3333_4444,
             0x5555_6666_7777_8888,
             0xa000_0000,
@@ -3667,7 +3687,6 @@ fn push_materialized_logical_imm_native_cases(
         assert_eq!(lowered, expected_lowered, "{name}: unexpected lowering");
         cases.push((name.into(), source, lowered, st));
     }
-
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -3840,7 +3859,11 @@ fn push_test_all_ones_left_imm_native_cases(
                 src2: SrcOperand::Reg(arm_x(2)),
                 width: OpWidth::W64,
             },
-            [enc_logical_shift_regs(1, 0b11, 0, 0, 0, 31, RM, RM), NOP, NOP],
+            [
+                enc_logical_shift_regs(1, 0b11, 0, 0, 0, 31, RM, RM),
+                NOP,
+                NOP,
+            ],
             0x8000_0000_0000_1234,
             0x4000_0000,
         ),
@@ -3851,7 +3874,11 @@ fn push_test_all_ones_left_imm_native_cases(
                 src2: SrcOperand::Reg(arm_x(2)),
                 width: OpWidth::W32,
             },
-            [enc_logical_shift_regs(0, 0b11, 0, 0, 0, 31, RM, RM), NOP, NOP],
+            [
+                enc_logical_shift_regs(0, 0b11, 0, 0, 0, 31, RM, RM),
+                NOP,
+                NOP,
+            ],
             0xffff_ffff_8000_1234,
             0,
         ),
@@ -3889,7 +3916,11 @@ fn push_and_all_ones_left_imm_reg_native_cases(
                 width: OpWidth::W64,
                 flags: FlagUpdate::None,
             },
-            [enc_logical_shift_regs(1, 0b01, 0, 0, 0, RD, 31, RM), NOP, NOP],
+            [
+                enc_logical_shift_regs(1, 0b01, 0, 0, 0, RD, 31, RM),
+                NOP,
+                NOP,
+            ],
             0x2121_3131_4141_5151,
             0xfedc_ba98_7654_3210,
             0x7000_0000,
@@ -3903,7 +3934,11 @@ fn push_and_all_ones_left_imm_reg_native_cases(
                 width: OpWidth::W32,
                 flags: FlagUpdate::None,
             },
-            [enc_logical_shift_regs(0, 0b01, 0, 0, 0, RD, 31, RM), NOP, NOP],
+            [
+                enc_logical_shift_regs(0, 0b01, 0, 0, 0, RD, 31, RM),
+                NOP,
+                NOP,
+            ],
             0x2222_3232_4242_5252,
             0xffff_ffff_8000_1234,
             0x3000_0000,
@@ -3917,7 +3952,11 @@ fn push_and_all_ones_left_imm_reg_native_cases(
                 width: OpWidth::W64,
                 flags: FlagUpdate::All,
             },
-            [enc_logical_shift_regs(1, 0b11, 0, 0, 0, RD, RM, RM), NOP, NOP],
+            [
+                enc_logical_shift_regs(1, 0b11, 0, 0, 0, RD, RM, RM),
+                NOP,
+                NOP,
+            ],
             0x4141_5151_6161_7171,
             0x8000_0000_0000_5678,
             0xf000_0000,
@@ -3931,7 +3970,11 @@ fn push_and_all_ones_left_imm_reg_native_cases(
                 width: OpWidth::W32,
                 flags: FlagUpdate::All,
             },
-            [enc_logical_shift_regs(0, 0b11, 0, 0, 0, RD, RM, RM), NOP, NOP],
+            [
+                enc_logical_shift_regs(0, 0b11, 0, 0, 0, RD, RM, RM),
+                NOP,
+                NOP,
+            ],
             0x4242_5252_6262_7272,
             0x0000_0000_8000_1234,
             0x7000_0000,
@@ -3971,8 +4014,16 @@ fn push_andnot_all_ones_left_imm_reg_native_cases(
                 width: OpWidth::W64,
                 flags: FlagUpdate::None,
             },
-            [enc_logical_shift_regs(1, 0b01, 0, 1, 0, RD, 31, RM), NOP, NOP],
-            [enc_logical_shift_regs(1, 0b01, 0, 1, 0, RD, 31, RM), 0xd65f_03c0, NOP],
+            [
+                enc_logical_shift_regs(1, 0b01, 0, 1, 0, RD, 31, RM),
+                NOP,
+                NOP,
+            ],
+            [
+                enc_logical_shift_regs(1, 0b01, 0, 1, 0, RD, 31, RM),
+                0xd65f_03c0,
+                NOP,
+            ],
             0x2727_3737_4747_5757,
             0xffff_ffff_0000_0100,
             0xb000_0000,
@@ -3986,8 +4037,16 @@ fn push_andnot_all_ones_left_imm_reg_native_cases(
                 width: OpWidth::W32,
                 flags: FlagUpdate::None,
             },
-            [enc_logical_shift_regs(0, 0b01, 0, 1, 0, RD, 31, RM), NOP, NOP],
-            [enc_logical_shift_regs(0, 0b01, 0, 1, 0, RD, 31, RM), 0xd65f_03c0, NOP],
+            [
+                enc_logical_shift_regs(0, 0b01, 0, 1, 0, RD, 31, RM),
+                NOP,
+                NOP,
+            ],
+            [
+                enc_logical_shift_regs(0, 0b01, 0, 1, 0, RD, 31, RM),
+                0xd65f_03c0,
+                NOP,
+            ],
             0xffff_ffff_2828_3838,
             0xffff_ffff_8000_1234,
             0x5000_0000,
@@ -4073,8 +4132,16 @@ fn push_andnot_all_ones_left_shifted_native_cases(
                 width: OpWidth::W64,
                 flags: FlagUpdate::None,
             },
-            [enc_logical_shift_regs(1, 0b01, 0, 1, 4, RD, 31, RM), NOP, NOP],
-            [enc_logical_shift_regs(1, 0b01, 0, 1, 4, RD, 31, RM), 0xd65f_03c0, NOP],
+            [
+                enc_logical_shift_regs(1, 0b01, 0, 1, 4, RD, 31, RM),
+                NOP,
+                NOP,
+            ],
+            [
+                enc_logical_shift_regs(1, 0b01, 0, 1, 4, RD, 31, RM),
+                0xd65f_03c0,
+                NOP,
+            ],
             0x2929_3939_4949_5959,
             0x0000_0000_0000_1001,
             0xd000_0000,
@@ -4092,7 +4159,11 @@ fn push_andnot_all_ones_left_shifted_native_cases(
                 width: OpWidth::W32,
                 flags: FlagUpdate::None,
             },
-            [enc_logical_shift_regs(0, 0b01, 3, 1, 13, RD, 31, RM), NOP, NOP],
+            [
+                enc_logical_shift_regs(0, 0b01, 3, 1, 13, RD, 31, RM),
+                NOP,
+                NOP,
+            ],
             [
                 enc_logical_shift_regs(0, 0b01, 3, 1, 13, RD, 31, RM),
                 0xd65f_03c0,
@@ -4967,7 +5038,11 @@ fn push_and_all_ones_left_shifted_native_cases(
                 width: OpWidth::W64,
                 flags: FlagUpdate::None,
             },
-            [enc_logical_shift_regs(1, 0b01, 0, 0, 4, RD, 31, RM), NOP, NOP],
+            [
+                enc_logical_shift_regs(1, 0b01, 0, 0, 4, RD, 31, RM),
+                NOP,
+                NOP,
+            ],
             0x2323_3333_4343_5353,
             0x0000_0000_0000_1001,
             0xb000_0000,
@@ -4985,7 +5060,11 @@ fn push_and_all_ones_left_shifted_native_cases(
                 width: OpWidth::W32,
                 flags: FlagUpdate::None,
             },
-            [enc_logical_shift_regs(0, 0b01, 3, 0, 13, RD, 31, RM), NOP, NOP],
+            [
+                enc_logical_shift_regs(0, 0b01, 3, 0, 13, RD, 31, RM),
+                NOP,
+                NOP,
+            ],
             0x2424_3434_4444_5454,
             0xffff_ffff_8000_1234,
             0x5000_0000,
@@ -5668,7 +5747,9 @@ fn push_cmp_zero_base_neg_imm_native_cases(
         width: OpWidth::W64,
     }])
     .unwrap_or_else(|e| {
-        panic!("cmp_x_zero_base_neg_one_imm_as_msr_nzcv_xzr_clears_flags: native lowering failed: {e}")
+        panic!(
+            "cmp_x_zero_base_neg_one_imm_as_msr_nzcv_xzr_clears_flags: native lowering failed: {e}"
+        )
     });
     cases.push((
         "cmp_x_zero_base_neg_one_imm_as_msr_nzcv_xzr_clears_flags".into(),
@@ -5777,11 +5858,7 @@ fn push_cmp_zero_base_reg_native_cases(
                 src2: SrcOperand::Reg(VReg::Imm(0)),
                 width: OpWidth::W8,
             },
-            [
-                enc_addsub_shift_regs(0, 1, 1, 0, 0, 31, 31, 31),
-                NOP,
-                NOP,
-            ],
+            [enc_addsub_shift_regs(0, 1, 1, 0, 0, 31, 31, 31), NOP, NOP],
             0x4444_5555_6666_7777,
             0x89ab_cdef_0123_4567,
             0x9000_0000,
@@ -5879,7 +5956,9 @@ fn push_addsub_carry_nonzero_imm_native_cases(
         flags: FlagUpdate::All,
     }])
     .unwrap_or_else(|e| {
-        panic!("sbcs_w_nonzero_imm_with_destination_scratch_sets_flags: native lowering failed: {e}")
+        panic!(
+            "sbcs_w_nonzero_imm_with_destination_scratch_sets_flags: native lowering failed: {e}"
+        )
     });
     cases.push((
         "sbcs_w_nonzero_imm_with_destination_scratch_sets_flags".into(),
@@ -5906,7 +5985,9 @@ fn push_addsub_carry_nonzero_imm_native_cases(
         flags: FlagUpdate::None,
     }])
     .unwrap_or_else(|e| {
-        panic!("sbb_x_neg_one_imm_alias_as_adc_zero_reg_preserves_flags: native lowering failed: {e}")
+        panic!(
+            "sbb_x_neg_one_imm_alias_as_adc_zero_reg_preserves_flags: native lowering failed: {e}"
+        )
     });
     cases.push((
         "sbb_x_neg_one_imm_alias_as_adc_zero_reg_preserves_flags".into(),
@@ -5932,8 +6013,7 @@ fn push_addsub_carry_nonzero_imm_native_cases(
         panic!("sbcs_w_masked_neg_one_imm_without_destination_scratch_as_adcs_zero_reg_sets_flags: native lowering failed: {e}")
     });
     cases.push((
-        "sbcs_w_masked_neg_one_imm_without_destination_scratch_as_adcs_zero_reg_sets_flags"
-            .into(),
+        "sbcs_w_masked_neg_one_imm_without_destination_scratch_as_adcs_zero_reg_sets_flags".into(),
         [enc_addsub_carry_regs(0, 0, 1, 31, RN, 31), NOP, NOP],
         lowered,
         st,
@@ -5953,7 +6033,9 @@ fn push_addsub_carry_nonzero_imm_native_cases(
         flags: FlagUpdate::None,
     }])
     .unwrap_or_else(|e| {
-        panic!("adc_x_neg_one_imm_alias_as_sbc_zero_reg_preserves_flags: native lowering failed: {e}")
+        panic!(
+            "adc_x_neg_one_imm_alias_as_sbc_zero_reg_preserves_flags: native lowering failed: {e}"
+        )
     });
     cases.push((
         "adc_x_neg_one_imm_alias_as_sbc_zero_reg_preserves_flags".into(),
@@ -5979,8 +6061,7 @@ fn push_addsub_carry_nonzero_imm_native_cases(
         panic!("adcs_w_masked_neg_one_imm_without_destination_scratch_as_sbcs_zero_reg_sets_flags: native lowering failed: {e}")
     });
     cases.push((
-        "adcs_w_masked_neg_one_imm_without_destination_scratch_as_sbcs_zero_reg_sets_flags"
-            .into(),
+        "adcs_w_masked_neg_one_imm_without_destination_scratch_as_sbcs_zero_reg_sets_flags".into(),
         [enc_addsub_carry_regs(0, 1, 1, 31, RN, 31), NOP, NOP],
         lowered,
         st,
@@ -6060,7 +6141,9 @@ fn push_addsub_carry_zero_base_native_cases(
         flags: FlagUpdate::None,
     }])
     .unwrap_or_else(|e| {
-        panic!("adc_x_zero_base_reg_as_adc_zero_reg_base_preserves_flags: native lowering failed: {e}")
+        panic!(
+            "adc_x_zero_base_reg_as_adc_zero_reg_base_preserves_flags: native lowering failed: {e}"
+        )
     });
     cases.push((
         "adc_x_zero_base_reg_as_adc_zero_reg_base_preserves_flags".into(),
@@ -6136,7 +6219,9 @@ fn push_add_zero_base_reg_native_cases(
         width: OpWidth::W64,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("add_x_zero_base_reg_as_mov_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("add_x_zero_base_reg_as_mov_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "add_x_zero_base_reg_as_mov_preserves_flags".into(),
         [enc_mov_reg(1, RD, RN), NOP, NOP],
@@ -6582,8 +6667,9 @@ fn push_addsub_effective_zero_ror_native_cases(
         width: OpWidth::W64,
         flags: FlagUpdate::None,
     };
-    let lowered = lower_aarch64_native_ops(vec![op])
-        .unwrap_or_else(|e| panic!("add_x_ror64_same_dst_base_as_add_preserves_flags: native lowering failed: {e}"));
+    let lowered = lower_aarch64_native_ops(vec![op]).unwrap_or_else(|e| {
+        panic!("add_x_ror64_same_dst_base_as_add_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "add_x_ror64_same_dst_base_as_add_preserves_flags".into(),
         [enc_addsub_shift_regs(1, 0, 0, 0, 0, RN, RN, RM), NOP, NOP],
@@ -6637,7 +6723,9 @@ fn push_addsub_effective_zero_ror_native_cases(
         flags: FlagUpdate::None,
     };
     let lowered = lower_aarch64_native_ops(vec![op]).unwrap_or_else(|e| {
-        panic!("add_w8_ror64_same_dst_base_as_add_uxtb_preserves_flags: native lowering failed: {e}")
+        panic!(
+            "add_w8_ror64_same_dst_base_as_add_uxtb_preserves_flags: native lowering failed: {e}"
+        )
     });
     cases.push((
         "add_w8_ror64_same_dst_base_as_add_uxtb_preserves_flags".into(),
@@ -7508,7 +7596,9 @@ fn push_lea_pcrel_movn_native_cases(
             base: Some(0),
         },
     }])
-    .unwrap_or_else(|e| panic!("lea_pcrel_negative_as_movn_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("lea_pcrel_negative_as_movn_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "lea_pcrel_negative_as_movn_preserves_flags".into(),
         [enc_mov_wide(1, 0b00, 0, 0xe), NOP, NOP],
@@ -7537,7 +7627,9 @@ fn push_bfi_full_width_movn_native_cases(
         op_width: OpWidth::W32,
     }])
     .unwrap_or_else(|e| {
-        panic!("bfi_w_full_width_negative_imm_src_as_movn_preserves_flags: native lowering failed: {e}")
+        panic!(
+            "bfi_w_full_width_negative_imm_src_as_movn_preserves_flags: native lowering failed: {e}"
+        )
     });
     cases.push((
         "bfi_w_full_width_negative_imm_src_as_movn_preserves_flags".into(),
@@ -7561,7 +7653,9 @@ fn push_bfi_full_width_movn_native_cases(
         op_width: OpWidth::W64,
     }])
     .unwrap_or_else(|e| {
-        panic!("bfi_x_full_width_negative_imm_src_as_movn_preserves_flags: native lowering failed: {e}")
+        panic!(
+            "bfi_x_full_width_negative_imm_src_as_movn_preserves_flags: native lowering failed: {e}"
+        )
     });
     cases.push((
         "bfi_x_full_width_negative_imm_src_as_movn_preserves_flags".into(),
@@ -8503,7 +8597,9 @@ fn push_cmove_imm_movn_native_cases(
         width: OpWidth::W32,
     }])
     .unwrap_or_else(|e| {
-        panic!("cmove_w_eq_false_negative_imm_zero_ext_preserves_flags: native lowering failed: {e}")
+        panic!(
+            "cmove_w_eq_false_negative_imm_zero_ext_preserves_flags: native lowering failed: {e}"
+        )
     });
     cases.push((
         "cmove_w_eq_false_negative_imm_zero_ext_preserves_flags".into(),
@@ -9032,7 +9128,9 @@ fn push_cond_select_true_transform_native_cases(
         },
     ])
     .unwrap_or_else(|e| {
-        panic!("csinv_w_eq_opkind_true_transform_zero_ext_preserves_flags: native lowering failed: {e}")
+        panic!(
+            "csinv_w_eq_opkind_true_transform_zero_ext_preserves_flags: native lowering failed: {e}"
+        )
     });
     cases.push((
         "csinv_w_eq_opkind_true_transform_zero_ext_preserves_flags".into(),
@@ -9101,7 +9199,9 @@ fn push_cond_select_true_transform_native_cases(
         },
     ])
     .unwrap_or_else(|e| {
-        panic!("csetm_w_eq_opkind_true_transform_zero_ext_preserves_flags: native lowering failed: {e}")
+        panic!(
+            "csetm_w_eq_opkind_true_transform_zero_ext_preserves_flags: native lowering failed: {e}"
+        )
     });
     cases.push((
         "csetm_w_eq_opkind_true_transform_zero_ext_preserves_flags".into(),
@@ -9128,9 +9228,7 @@ fn push_flagm_masked_imm_native_cases(
         width: OpWidth::W32,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| {
-        panic!("cfinv_masked_carry_opkind_clears_c: native lowering failed: {e}")
-    });
+    .unwrap_or_else(|e| panic!("cfinv_masked_carry_opkind_clears_c: native lowering failed: {e}"));
     cases.push((
         "cfinv_masked_carry_opkind_clears_c".into(),
         [enc_cfinv(), NOP, NOP],
@@ -13350,6 +13448,70 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         st,
     );
 
+    let mut st = native_state();
+    st.x[0] = 0x1111_2222_3333_4444;
+    st.x[1] = 0xfedc_ba98_7654_3210;
+    st.pstate = 0xe000_0000;
+    push_case(
+        "pdep_x_contiguous_imm_mask_as_ubfiz_preserves_flags",
+        enc_bitfield(1, 0b10, 60, 4),
+        vec![OpKind::Pdep {
+            dst: arm_x(0),
+            src: arm_x(1),
+            mask: VReg::Imm(0x1f0),
+            width: OpWidth::W64,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
+    st.x[0] = 0x5555_6666_7777_8888;
+    st.x[1] = 0x0123_4567_89ab_cdef;
+    st.pstate = 0x7000_0000;
+    push_case(
+        "pext_x_contiguous_imm_mask_as_ubfx_preserves_flags",
+        enc_bitfield(1, 0b10, 8, 15),
+        vec![OpKind::Pext {
+            dst: arm_x(0),
+            src: arm_x(1),
+            mask: VReg::Imm(0xff00),
+            width: OpWidth::W64,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
+    st.x[0] = 0xaaaa_bbbb_cccc_dddd;
+    st.x[1] = 0xffff_ffff_0000_000b;
+    st.pstate = 0xb000_0000;
+    push_case(
+        "pdep_w16_contiguous_imm_mask_as_ubfiz_preserves_flags",
+        enc_bitfield(0, 0b10, 24, 3),
+        vec![OpKind::Pdep {
+            dst: arm_x(0),
+            src: arm_x(1),
+            mask: VReg::Imm(0x0f00),
+            width: OpWidth::W16,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
+    st.x[0] = 0xbbbb_cccc_dddd_eeee;
+    st.x[1] = 0xffff_ffff_0000_00b4;
+    st.pstate = 0x5000_0000;
+    push_case(
+        "pext_w8_contiguous_imm_mask_as_ubfx_preserves_flags",
+        enc_bitfield(0, 0b10, 2, 4),
+        vec![OpKind::Pext {
+            dst: arm_x(0),
+            src: arm_x(1),
+            mask: VReg::Imm(0x1c),
+            width: OpWidth::W8,
+        }],
+        st,
+    );
+
     drop(push_case);
     let mut st = native_state();
     st.x[0] = 0x2222_3333_4444_5555;
@@ -16099,7 +16261,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         src: VReg::Imm(0),
         width: OpWidth::W16,
     }])
-    .unwrap_or_else(|e| panic!("not_w16_zero_as_movz_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("not_w16_zero_as_movz_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "not_w16_zero_as_movz_preserves_flags".into(),
         [
@@ -16287,7 +16451,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W8,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("inc_w8_zero_as_movz_one_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("inc_w8_zero_as_movz_one_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "inc_w8_zero_as_movz_one_preserves_flags".into(),
         [
@@ -16308,7 +16474,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W8,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("inc_w8_imm_wrap_as_movz_zero_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("inc_w8_imm_wrap_as_movz_zero_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "inc_w8_imm_wrap_as_movz_zero_preserves_flags".into(),
         [enc_mov_wide(0, 0b10, 0, 0), NOP, NOP],
@@ -16325,7 +16493,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W16,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("dec_w16_zero_as_movz_all_ones_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("dec_w16_zero_as_movz_all_ones_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "dec_w16_zero_as_movz_all_ones_preserves_flags".into(),
         [
@@ -16400,7 +16570,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W8,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("add_w8_reg_as_add_uxtb_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("add_w8_reg_as_add_uxtb_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "add_w8_reg_as_add_uxtb_preserves_flags".into(),
         [
@@ -16423,7 +16595,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W8,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("add_w8_zero_base_reg_as_uxtb_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("add_w8_zero_base_reg_as_uxtb_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "add_w8_zero_base_reg_as_uxtb_preserves_flags".into(),
         [
@@ -16446,7 +16620,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W16,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("add_w16_zero_source_reg_as_uxth_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("add_w16_zero_source_reg_as_uxth_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "add_w16_zero_source_reg_as_uxth_preserves_flags".into(),
         [
@@ -16468,7 +16644,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W16,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("add_w16_zero_base_imm_as_movz_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("add_w16_zero_base_imm_as_movz_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "add_w16_zero_base_imm_as_movz_preserves_flags".into(),
         [
@@ -16490,7 +16668,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W8,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("sub_w8_zero_base_imm_as_movz_negated_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("sub_w8_zero_base_imm_as_movz_negated_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "sub_w8_zero_base_imm_as_movz_negated_preserves_flags".into(),
         [
@@ -16513,7 +16693,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W8,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("sub_w8_zero_source_reg_as_uxtb_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("sub_w8_zero_source_reg_as_uxtb_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "sub_w8_zero_source_reg_as_uxtb_preserves_flags".into(),
         [
@@ -16536,7 +16718,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W16,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("sub_w16_large_imm_as_split_sub_uxth_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("sub_w16_large_imm_as_split_sub_uxth_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "sub_w16_large_imm_as_split_sub_uxth_preserves_flags".into(),
         [
@@ -16560,7 +16744,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W8,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("adc_w8_carry_set_as_adc_uxtb_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("adc_w8_carry_set_as_adc_uxtb_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "adc_w8_carry_set_as_adc_uxtb_preserves_flags".into(),
         [
@@ -16583,7 +16769,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W8,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("adc_w8_masked_zero_imm_as_adc_uxtb_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("adc_w8_masked_zero_imm_as_adc_uxtb_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "adc_w8_masked_zero_imm_as_adc_uxtb_preserves_flags".into(),
         [
@@ -16607,7 +16795,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W16,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("sbb_w16_carry_clear_as_sbc_uxth_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("sbb_w16_carry_clear_as_sbc_uxth_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "sbb_w16_carry_clear_as_sbc_uxth_preserves_flags".into(),
         [
@@ -16630,7 +16820,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W16,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("sbb_w16_masked_zero_imm_as_sbc_uxth_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("sbb_w16_masked_zero_imm_as_sbc_uxth_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "sbb_w16_masked_zero_imm_as_sbc_uxth_preserves_flags".into(),
         [
@@ -16680,7 +16872,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W16,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("muls_w16_as_mul_uxth_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("muls_w16_as_mul_uxth_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "muls_w16_as_mul_uxth_preserves_flags".into(),
         [
@@ -16704,7 +16898,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W8,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("muls_w8_imm_one_as_mov_uxtb_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("muls_w8_imm_one_as_mov_uxtb_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "muls_w8_imm_one_as_mov_uxtb_preserves_flags".into(),
         [
@@ -16728,7 +16924,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W8,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("mulu_w8_imm_masked_one_as_mov_uxtb_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("mulu_w8_imm_masked_one_as_mov_uxtb_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "mulu_w8_imm_masked_one_as_mov_uxtb_preserves_flags".into(),
         [
@@ -16752,7 +16950,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W16,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("muls_w16_imm_neg_one_as_neg_uxth_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("muls_w16_imm_neg_one_as_neg_uxth_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "muls_w16_imm_neg_one_as_neg_uxth_preserves_flags".into(),
         [
@@ -16776,7 +16976,11 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W16,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("mulu_w16_imm_masked_neg_one_as_neg_uxth_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!(
+            "mulu_w16_imm_masked_neg_one_as_neg_uxth_preserves_flags: native lowering failed: {e}"
+        )
+    });
     cases.push((
         "mulu_w16_imm_masked_neg_one_as_neg_uxth_preserves_flags".into(),
         [
@@ -16801,7 +17005,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         src2: arm_x(2),
         width: OpWidth::W8,
     }])
-    .unwrap_or_else(|e| panic!("muladd_w8_as_madd_uxtb_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("muladd_w8_as_madd_uxtb_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "muladd_w8_as_madd_uxtb_preserves_flags".into(),
         [
@@ -16826,7 +17032,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         src2: arm_x(2),
         width: OpWidth::W16,
     }])
-    .unwrap_or_else(|e| panic!("mulsub_w16_as_msub_uxth_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("mulsub_w16_as_msub_uxth_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "mulsub_w16_as_msub_uxth_preserves_flags".into(),
         [
@@ -16850,7 +17058,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         src2: VReg::Imm(1),
         width: OpWidth::W16,
     }])
-    .unwrap_or_else(|e| panic!("mulsub_w16_imm_one_as_sub_uxth_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("mulsub_w16_imm_one_as_sub_uxth_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "mulsub_w16_imm_one_as_sub_uxth_preserves_flags".into(),
         [
@@ -16874,7 +17084,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         src2: VReg::Imm(-1),
         width: OpWidth::W8,
     }])
-    .unwrap_or_else(|e| panic!("mulsub_w8_imm_neg_one_as_add_uxtb_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("mulsub_w8_imm_neg_one_as_add_uxtb_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "mulsub_w8_imm_neg_one_as_add_uxtb_preserves_flags".into(),
         [
@@ -16898,7 +17110,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W8,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("and_w8_reg_as_and_uxtb_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("and_w8_reg_as_and_uxtb_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "and_w8_reg_as_and_uxtb_preserves_flags".into(),
         [
@@ -16921,7 +17135,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W16,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("and_w16_imm_masked_all_ones_as_uxth_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("and_w16_imm_masked_all_ones_as_uxth_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "and_w16_imm_masked_all_ones_as_uxth_preserves_flags".into(),
         [enc_bitfield_regs(0, 0b10, 0, 15, RN, RD), NOP, NOP],
@@ -16940,7 +17156,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W8,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("and_w8_zero_imm_as_movz_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("and_w8_zero_imm_as_movz_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "and_w8_zero_imm_as_movz_preserves_flags".into(),
         [enc_mov_wide(0, 0b10, 0, 0), NOP, NOP],
@@ -16959,7 +17177,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W8,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("xor_w8_zero_imm_as_uxtb_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("xor_w8_zero_imm_as_uxtb_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "xor_w8_zero_imm_as_uxtb_preserves_flags".into(),
         [enc_bitfield_regs(0, 0b10, 0, 7, RN, RD), NOP, NOP],
@@ -16978,7 +17198,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W16,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("xor_w16_imm_as_eor_uxth_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("xor_w16_imm_as_eor_uxth_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "xor_w16_imm_as_eor_uxth_preserves_flags".into(),
         [
@@ -17001,7 +17223,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W8,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("andnot_w8_imm_as_and_inverse_uxtb_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("andnot_w8_imm_as_and_inverse_uxtb_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "andnot_w8_imm_as_and_inverse_uxtb_preserves_flags".into(),
         [
@@ -17024,7 +17248,9 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
         width: OpWidth::W8,
         flags: FlagUpdate::None,
     }])
-    .unwrap_or_else(|e| panic!("bzhi_w8_imm_index_as_and_mask_preserves_flags: native lowering failed: {e}"));
+    .unwrap_or_else(|e| {
+        panic!("bzhi_w8_imm_index_as_and_mask_preserves_flags: native lowering failed: {e}")
+    });
     cases.push((
         "bzhi_w8_imm_index_as_and_mask_preserves_flags".into(),
         [
