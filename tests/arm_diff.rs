@@ -5144,6 +5144,22 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
         st,
     );
 
+    let mut st = native_state();
+    st.x[0] = 0x8888_9999_aaaa_bbbb;
+    st.pstate = 0x1000_0000;
+    push_case(
+        "bzhi_x_two_imms_as_movz_preserves_flags",
+        enc_mov_wide(1, 0b10, 0, 0x34),
+        vec![OpKind::Bzhi {
+            dst: arm_x(0),
+            src: VReg::Imm(0x1234),
+            index: VReg::Imm(8),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        }],
+        st,
+    );
+
     drop(push_case);
     let mut st = native_state();
     st.x[0] = 0x8888_9999_aaaa_bbbb;
@@ -5188,6 +5204,30 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
         "bzhi_x_imm_index_with_flags_sets_carry".into(),
         [
             enc_mov_reg(1, RD, RN),
+            enc_logical_reg_n(1, 0b11, 0, 31, RD, RD),
+            enc_cfinv(),
+        ],
+        lowered,
+        st,
+    ));
+
+    let mut st = native_state();
+    st.x[0] = 0x3333_4444_5555_6666;
+    st.pstate = 0x6000_0000;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Bzhi {
+        dst: arm_x(0),
+        src: VReg::Imm(1),
+        index: VReg::Imm(64),
+        width: OpWidth::W64,
+        flags: bzhi_flags(),
+    }])
+    .unwrap_or_else(|e| {
+        panic!("bzhi_x_two_imms_with_flags_sets_carry: native lowering failed: {e}")
+    });
+    cases.push((
+        "bzhi_x_two_imms_with_flags_sets_carry".into(),
+        [
+            enc_mov_wide(1, 0b10, 0, 1),
             enc_logical_reg_n(1, 0b11, 0, 31, RD, RD),
             enc_cfinv(),
         ],
