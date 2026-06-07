@@ -2066,6 +2066,63 @@ fn push_rev16_imm_movn_native_cases(
     let mut st = ArmState::zeroed();
     st.pc = PCREL_MAGIC;
     st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xcccc_dddd_eeee_ffff;
+    st.x[1] = 0x0123_4567_89ab_cdef;
+    st.pstate = 0x2000_0000;
+    let lo = VReg::virt(0);
+    let hi = VReg::virt(1);
+    let lo_shifted = VReg::virt(2);
+    let hi_shifted = VReg::virt(3);
+    let lowered = lower_aarch64_native_ops_same_pc(vec![
+        OpKind::And {
+            dst: lo,
+            src1: arm_x(1),
+            src2: SrcOperand::Imm64(0x1_00ff_00ff),
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        },
+        OpKind::And {
+            dst: hi,
+            src1: arm_x(1),
+            src2: SrcOperand::Imm64(0x1_ff00_ff00),
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        },
+        OpKind::Shl {
+            dst: lo_shifted,
+            src: lo,
+            amount: SrcOperand::Imm(72),
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        },
+        OpKind::Shr {
+            dst: hi_shifted,
+            src: hi,
+            amount: SrcOperand::Imm64(72),
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        },
+        OpKind::Or {
+            dst: arm_x(0),
+            src1: lo_shifted,
+            src2: SrcOperand::Reg(hi_shifted),
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        },
+    ])
+    .unwrap_or_else(|e| {
+        panic!("rev16_w_lifted_masked_immediates_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "rev16_w_lifted_masked_immediates_preserves_flags".into(),
+        [enc_dp1(0, 0b000001), NOP, NOP],
+        lowered,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
     st.x[0] = 0xdddd_eeee_ffff_0000;
     st.x[1] = 0xffff_ffff_ffff_ffff;
     st.pstate = 0xb000_0000;

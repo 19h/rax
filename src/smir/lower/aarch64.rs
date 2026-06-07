@@ -6146,12 +6146,12 @@ impl Aarch64Lowerer {
             || hi_shift_flags.updates_any()
             || or_flags.updates_any()
             || hi_src != src1
-            || !Self::src_imm_eq(lo_mask, expected_lo_mask)
-            || !Self::src_imm_eq(hi_mask, expected_hi_mask)
+            || !Self::src_masked_imm_eq(lo_mask, expected_lo_mask, *width)
+            || !Self::src_masked_imm_eq(hi_mask, expected_hi_mask, *width)
             || lo_shift_src != lo
             || hi_shift_src != hi
-            || !Self::src_imm_eq(lo_amount, 8)
-            || !Self::src_imm_eq(hi_amount, 8)
+            || !Self::src_shift_count_eq(lo_amount, 8)
+            || !Self::src_shift_count_eq(hi_amount, 8)
             || or_src1 != lo_shifted
             || or_src2 != hi_shifted
         {
@@ -19812,6 +19812,76 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_mov_wide(0, 0b00, 0, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn fuses_lifted_rev16_w_with_masked_immediates() {
+        let lo = VReg::virt(0);
+        let hi = VReg::virt(1);
+        let lo_shifted = VReg::virt(2);
+        let hi_shifted = VReg::virt(3);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::And {
+                dst: lo,
+                src1: x(1),
+                src2: SrcOperand::Imm64(0x1_00ff_00ff),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::And {
+                dst: hi,
+                src1: x(1),
+                src2: SrcOperand::Imm64(0x1_ff00_ff00),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Shl {
+                dst: lo_shifted,
+                src: lo,
+                amount: SrcOperand::Imm(72),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Shr {
+                dst: hi_shifted,
+                src: hi,
+                amount: SrcOperand::Imm64(72),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Or {
+                dst: x(0),
+                src1: lo_shifted,
+                src2: SrcOperand::Reg(hi_shifted),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_dp1(0, 0b000001).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
