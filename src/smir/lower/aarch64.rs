@@ -3384,6 +3384,15 @@ impl Aarch64Lowerer {
             if u32::from(width_bits) == op_bits && lsb == 0 {
                 return self.emit_mov_imm(dst, inserted as i64, op_width);
             }
+            if inserted == 0 && u32::from(width_bits) < op_bits {
+                let field_mask = low_mask << lsb;
+                let clear_mask = (!field_mask) & op_width.mask();
+                if let Ok((n, immr, imms)) =
+                    Self::logical_bitmask_imm(clear_mask as i64, op_width)
+                {
+                    return self.emit_logic_imm(dst, dst_in, 0b00, n, immr, imms, op_width);
+                }
+            }
             if inserted == low_mask && u32::from(width_bits) < op_bits {
                 if dst != dst_in {
                     self.emit_mov_reg(dst, dst_in, op_width)?;
@@ -16501,6 +16510,33 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_logical_imm(1, 0b01, 1, 56, 7, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_bfi_x_zero_imm_src_as_and() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Bfi {
+                dst: x(0),
+                dst_in: x(1),
+                src: VReg::Imm(0),
+                lsb: 8,
+                width_bits: 8,
+                op_width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_logical_imm(1, 0b00, 1, 48, 55, 0, 1).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
