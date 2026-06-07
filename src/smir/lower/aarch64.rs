@@ -2341,6 +2341,23 @@ impl Aarch64Lowerer {
             }
         }
 
+        if n && (opc == 0b00 || (set_flags && opc == 0b11)) {
+            if let VReg::Imm(imm) = src1 {
+                let (_, value, all_ones) = Self::logical_imm_value(imm, width)?;
+                if value == all_ones {
+                    if let SrcOperand::Reg(reg) = src2 {
+                        let dst = Self::dst_gpr(dst)?;
+                        let src = Self::gpr(*reg)?;
+                        self.emit_logic_reg_n(dst, 31, src, 0b01, true, width)?;
+                        if set_flags {
+                            return self.lower_bmi_result_flags(dst, width, false);
+                        }
+                        return Ok(());
+                    }
+                }
+            }
+        }
+
         if let VReg::Imm(imm) = src1 {
             let (_, value, _) = Self::logical_imm_value(imm, width)?;
             if value == 0 {
@@ -17768,6 +17785,77 @@ mod tests {
             let mut expected = Vec::new();
             expected.extend_from_slice(&expected_insn.to_le_bytes());
             expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+            assert_eq!(code, expected);
+        }
+    }
+
+    #[test]
+    fn lowers_andnot_all_ones_left_imm_reg_as_mvn_or_flags() {
+        let cases = [
+            (
+                OpKind::AndNot {
+                    dst: x(0),
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Reg(x(2)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                vec![enc_logical_reg_n(1, 0b01, 1, 0, 31, 2), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::AndNot {
+                    dst: x(0),
+                    src1: VReg::Imm(0x1_ffff_ffff),
+                    src2: SrcOperand::Reg(x(2)),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+                vec![enc_logical_reg_n(0, 0b01, 1, 0, 31, 2), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::AndNot {
+                    dst: x(0),
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Reg(x(2)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                vec![
+                    enc_logical_reg_n(1, 0b01, 1, 0, 31, 2),
+                    enc_logical_reg_n(1, 0b11, 0, 31, 0, 0),
+                    0xd65f_03c0u32,
+                ],
+            ),
+            (
+                OpKind::AndNot {
+                    dst: x(0),
+                    src1: VReg::Imm(0x1_ffff_ffff),
+                    src2: SrcOperand::Reg(x(2)),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::All,
+                },
+                vec![
+                    enc_logical_reg_n(0, 0b01, 1, 0, 31, 2),
+                    enc_logical_reg_n(0, 0b11, 0, 31, 0, 0),
+                    0xd65f_03c0u32,
+                ],
+            ),
+        ];
+
+        for (op, expected_words) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            for word in expected_words {
+                expected.extend_from_slice(&word.to_le_bytes());
+            }
             assert_eq!(code, expected);
         }
     }
