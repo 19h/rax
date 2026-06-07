@@ -2578,6 +2578,63 @@ fn push_cmove_imm_csel_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_cmove_always_reg_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let cmove_x = lower_aarch64_native_ops(vec![OpKind::CMove {
+        dst: arm_x(0),
+        src: arm_x(1),
+        cond: Condition::Always,
+        width: OpWidth::W64,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("cmove_x_always_reg_as_mov_preserves_flags: native lowering failed: {e}")
+    });
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xaaaa_bbbb_cccc_dddd;
+    st.x[1] = 0x1111_2222_3333_4444;
+    st.pstate = 0;
+    cases.push((
+        "cmove_x_always_reg_as_mov_preserves_flags".into(),
+        [enc_mov_reg(1, RD, RN), NOP, NOP],
+        cmove_x,
+        st,
+    ));
+
+    let cmove_w8 = lower_aarch64_native_ops(vec![OpKind::CMove {
+        dst: arm_x(0),
+        src: arm_x(1),
+        cond: Condition::Always,
+        width: OpWidth::W8,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("cmove_w8_always_reg_as_mov_uxtb_preserves_flags: native lowering failed: {e}")
+    });
+    let cmove_w8_source = [
+        enc_mov_reg(0, RD, RN),
+        enc_bitfield_regs(0, 0b10, 0, 7, RD, RD),
+        NOP,
+    ];
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xbbbb_cccc_dddd_eeee;
+    st.x[1] = 0x2222_3333_4444_55f0;
+    st.pstate = 0x9000_0000;
+    cases.push((
+        "cmove_w8_always_reg_as_mov_uxtb_preserves_flags".into(),
+        cmove_w8_source,
+        cmove_w8,
+        st,
+    ));
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_select_identical_arm_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -9242,6 +9299,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_bfi_full_width_movn_native_cases(&mut cases, control_target);
     push_cmove_imm_movn_native_cases(&mut cases, control_target);
     push_cmove_imm_csel_native_cases(&mut cases, control_target);
+    push_cmove_always_reg_native_cases(&mut cases, control_target);
 
     let mut st = native_state();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
