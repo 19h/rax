@@ -5004,6 +5004,23 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     );
 
     let mut st = native_state();
+    st.x[0] = 0x1111_2222_3333_4444;
+    st.pstate = 0x5000_0000;
+    push_case(
+        "ubfx_x_imm_as_movz_preserves_flags",
+        enc_mov_wide(1, 0b10, 0, 0x9abc),
+        vec![OpKind::Bfx {
+            dst: arm_x(0),
+            src: VReg::Imm(0x1234_5678_9abc_def0),
+            lsb: 16,
+            width_bits: 16,
+            sign_extend: false,
+            op_width: OpWidth::W64,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
     st.x[0] = 0x7777_8888_9999_aaaa;
     st.x[1] = 0xfedc_ba98_7654_3210;
     st.pstate = 0xa000_0000;
@@ -5021,6 +5038,31 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     );
 
     drop(push_case);
+    let mut st = native_state();
+    st.x[0] = 0x2222_3333_4444_5555;
+    st.pstate = 0x6000_0000;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Bfx {
+        dst: arm_x(0),
+        src: VReg::Imm(0xf0),
+        lsb: 4,
+        width_bits: 4,
+        sign_extend: true,
+        op_width: OpWidth::W32,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("sbfx_w_imm_sign_extend_as_mov_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "sbfx_w_imm_sign_extend_as_mov_preserves_flags".into(),
+        [
+            enc_mov_wide(0, 0b10, 0, 0xffff),
+            enc_mov_wide(0, 0b11, 1, 0xffff),
+            NOP,
+        ],
+        lowered,
+        st,
+    ));
+
     let mut st = native_state();
     st.x[0] = 0x7777_8888_9999_aaaa;
     st.x[1] = 0xfedc_ba98_7654_3210;
