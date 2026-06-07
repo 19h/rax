@@ -284,6 +284,18 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
+    fn emit_mov_imm_best(&mut self, dst: u8, imm: i64, width: OpWidth) -> Result<(), LowerError> {
+        let bits = match width {
+            OpWidth::W32 => imm as u32 as u64,
+            OpWidth::W64 => imm as u64,
+            _ => return self.emit_mov_imm(dst, imm, width),
+        };
+        if self.try_emit_movn_single(dst, bits, width)? {
+            return Ok(());
+        }
+        self.emit_mov_imm(dst, imm, width)
+    }
+
     fn emit_movn_imm16(&mut self, dst: u8, imm16: u32, width: OpWidth) -> Result<(), LowerError> {
         let sf = Self::sf(width)?;
         self.emit(
@@ -1824,7 +1836,9 @@ impl Aarch64Lowerer {
         let dst = Self::dst_gpr(dst)?;
         match src {
             SrcOperand::Reg(reg) => self.emit_mov_reg(dst, Self::gpr(*reg)?, width),
-            SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) => self.emit_mov_imm(dst, *imm, width),
+            SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) => {
+                self.emit_mov_imm_best(dst, *imm, width)
+            }
             other => Err(LowerError::UnsupportedOp {
                 op: format!("AArch64 native Mov source {other:?}"),
             }),
@@ -7564,6 +7578,30 @@ mod tests {
 
     fn enc_mov_wide(sf: u32, opc: u32, hw: u32, imm16: u32, rd: u32) -> u32 {
         (sf << 31) | (opc << 29) | (0b100101 << 23) | (hw << 21) | (imm16 << 5) | rd
+    }
+
+    #[test]
+    fn lowers_mov_x_negative_imm_as_movn() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Mov {
+                dst: x(0),
+                src: SrcOperand::Imm(-15),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(1, 0b00, 0, 0xe, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
     }
 
     fn enc_flagm(op2: u32) -> u32 {
