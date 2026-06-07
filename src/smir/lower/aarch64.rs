@@ -2403,7 +2403,10 @@ impl Aarch64Lowerer {
         }
 
         let dst = Self::dst_or_zero_for_flags(dst, set_flags)?;
-        let rn = Self::gpr(src1)?;
+        let rn = match src1 {
+            VReg::Imm(0) => 31,
+            _ => Self::gpr(src1)?,
+        };
         match src2 {
             SrcOperand::Reg(reg) => {
                 self.emit_addsub_carry(dst, rn, Self::gpr(*reg)?, subtract, set_flags, width)
@@ -2446,7 +2449,10 @@ impl Aarch64Lowerer {
         width: OpWidth,
     ) -> Result<(), LowerError> {
         let dst = Self::dst_gpr(dst)?;
-        let rn = Self::gpr(src1)?;
+        let rn = match src1 {
+            VReg::Imm(0) => 31,
+            _ => Self::gpr(src1)?,
+        };
         let top_bit = width.bits() - 1;
 
         match src2 {
@@ -10728,6 +10734,58 @@ mod tests {
     }
 
     #[test]
+    fn lowers_adc_x_zero_base_reg_as_adc_zero_reg_base() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Adc {
+                dst: x(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Reg(x(1)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_addsub_carry_regs(1, 0, 0, 0, 31, 1).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_sbcs_w_zero_base_zero_imm_as_sbcs_zero_regs() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Sbb {
+                dst: VReg::virt(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Imm(0),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_addsub_carry_regs(0, 1, 1, 31, 31, 31).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
     fn lowers_adc_x_zero_imm_as_adc_zero_reg() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(
@@ -10801,6 +10859,33 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_addsub_carry_regs(0, 0, 0, 0, 1, 31).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_adc_w8_zero_base_neg_one_imm_alias_as_sbc_uxtb() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Adc {
+                dst: x(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Imm(0xff),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_addsub_carry_regs(0, 1, 0, 0, 31, 31).to_le_bytes());
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
