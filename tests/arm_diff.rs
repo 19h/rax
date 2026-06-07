@@ -1567,7 +1567,12 @@ fn lower_aarch64_native_insn(insn: u32) -> Result<[u32; 3], String> {
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn enc_mov_wide(sf: u32, opc: u32, hw: u32, imm16: u32) -> u32 {
-    (sf << 31) | (opc << 29) | (0b100101 << 23) | (hw << 21) | (imm16 << 5) | RD
+    enc_mov_wide_regs(sf, opc, hw, imm16, RD)
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn enc_mov_wide_regs(sf: u32, opc: u32, hw: u32, imm16: u32, rd: u32) -> u32 {
+    (sf << 31) | (opc << 29) | (0b100101 << 23) | (hw << 21) | (imm16 << 5) | rd
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -5785,6 +5790,23 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
 
     let mut st = native_state();
     st.x[0] = 0x5555_6666_7777_8888;
+    st.pstate = 0xa000_0000;
+    push_case(
+        "divu_w8_two_masked_imms_as_mov_quot_preserves_flags",
+        enc_mov_wide(0, 0b10, 0, 5),
+        vec![OpKind::DivU {
+            quot: arm_x(0),
+            rem: None,
+            src1: VReg::Imm(0x123),
+            src2: SrcOperand::Imm(6),
+            width: OpWidth::W8,
+            flags: FlagUpdate::None,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
+    st.x[0] = 0x5555_6666_7777_8888;
     st.x[1] = 0xffff_ffff_ffff_8001;
     st.pstate = 0xc000_0000;
     push_case(
@@ -9568,6 +9590,28 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
             rem: Some(arm_x(3)),
             src1: arm_x(1),
             src2: SrcOperand::Reg(arm_x(2)),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
+    st.x[0] = 0xeeee_ffff_0000_1111;
+    st.x[3] = 0xaaaa_bbbb_cccc_dddd;
+    st.pstate = 0x5000_0000;
+    push_case3(
+        "divu_x_two_imms_as_mov_quot_rem_preserves_flags",
+        [
+            enc_mov_wide(1, 0b10, 0, 14),
+            enc_mov_wide_regs(1, 0b10, 0, 2, 3),
+            NOP,
+        ],
+        vec![OpKind::DivU {
+            quot: arm_x(0),
+            rem: Some(arm_x(3)),
+            src1: VReg::Imm(100),
+            src2: SrcOperand::Imm(7),
             width: OpWidth::W64,
             flags: FlagUpdate::None,
         }],

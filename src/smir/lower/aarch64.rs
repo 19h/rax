@@ -3508,6 +3508,36 @@ impl Aarch64Lowerer {
                 op: "AArch64 native flag-setting divide".into(),
             });
         }
+        if !signed {
+            if let (VReg::Imm(dividend), Some(divisor)) = (src1, Self::src_imm(src2)) {
+                let emit_width = match width {
+                    OpWidth::W8 | OpWidth::W16 | OpWidth::W32 => OpWidth::W32,
+                    OpWidth::W64 => OpWidth::W64,
+                    other => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("AArch64 native divide width {other:?}"),
+                        });
+                    }
+                };
+                let dividend = (dividend as u64) & width.mask();
+                let divisor = (divisor as u64) & width.mask();
+                if divisor != 0 {
+                    self.emit_mov_imm(
+                        Self::dst_gpr(quot)?,
+                        (dividend / divisor) as i64,
+                        emit_width,
+                    )?;
+                    if let Some(rem) = rem {
+                        self.emit_mov_imm(
+                            Self::dst_gpr(rem)?,
+                            (dividend % divisor) as i64,
+                            emit_width,
+                        )?;
+                    }
+                    return Ok(());
+                }
+            }
+        }
         if Self::src_imm(src2).map(|imm| (imm as u64) & width.mask()) == Some(1) {
             let quot = Self::dst_gpr(quot)?;
             let rn = Self::gpr(src1)?;
@@ -8876,6 +8906,61 @@ mod tests {
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_mov_reg(0, 0, 1).to_le_bytes());
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 15, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_divu_x_two_imms_as_mov_quot_rem() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::DivU {
+                quot: x(0),
+                rem: Some(x(3)),
+                src1: VReg::Imm(100),
+                src2: SrcOperand::Imm(7),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(1, 0b10, 0, 14, 0).to_le_bytes());
+        expected.extend_from_slice(&enc_mov_wide(1, 0b10, 0, 2, 3).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_divu_w8_two_masked_imms_as_mov_quot() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::DivU {
+                quot: x(0),
+                rem: None,
+                src1: VReg::Imm(0x123),
+                src2: SrcOperand::Imm(6),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 5, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
