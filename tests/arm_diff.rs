@@ -3250,6 +3250,88 @@ fn push_test_all_ones_left_imm_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_and_all_ones_left_imm_reg_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let test_cases = [
+        (
+            "and_x_all_ones_left_imm_reg_opkind_preserves_flags",
+            OpKind::And {
+                dst: arm_x(0),
+                src1: VReg::Imm(-1),
+                src2: SrcOperand::Reg(arm_x(2)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            [enc_logical_shift_regs(1, 0b01, 0, 0, 0, RD, 31, RM), NOP, NOP],
+            0x2121_3131_4141_5151,
+            0xfedc_ba98_7654_3210,
+            0x7000_0000,
+        ),
+        (
+            "and_w_masked_all_ones_left_imm_reg_opkind_zero_ext_preserves_flags",
+            OpKind::And {
+                dst: arm_x(0),
+                src1: VReg::Imm(0x1_ffff_ffff),
+                src2: SrcOperand::Reg(arm_x(2)),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+            [enc_logical_shift_regs(0, 0b01, 0, 0, 0, RD, 31, RM), NOP, NOP],
+            0x2222_3232_4242_5252,
+            0xffff_ffff_8000_1234,
+            0x3000_0000,
+        ),
+        (
+            "ands_x_all_ones_left_imm_reg_opkind_sets_flags",
+            OpKind::And {
+                dst: arm_x(0),
+                src1: VReg::Imm(-1),
+                src2: SrcOperand::Reg(arm_x(2)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+            [enc_logical_shift_regs(1, 0b11, 0, 0, 0, RD, RM, RM), NOP, NOP],
+            0x4141_5151_6161_7171,
+            0x8000_0000_0000_5678,
+            0xf000_0000,
+        ),
+        (
+            "ands_w_masked_all_ones_left_imm_reg_opkind_sets_flags",
+            OpKind::And {
+                dst: arm_x(0),
+                src1: VReg::Imm(0x1_ffff_ffff),
+                src2: SrcOperand::Reg(arm_x(2)),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+            [enc_logical_shift_regs(0, 0b11, 0, 0, 0, RD, RM, RM), NOP, NOP],
+            0x4242_5252_6262_7272,
+            0x0000_0000_8000_1234,
+            0x7000_0000,
+        ),
+    ];
+
+    for (name, op, source, x0, x2, pstate) in test_cases {
+        let mut st = ArmState::zeroed();
+        st.pc = PCREL_MAGIC;
+        st.x[30] = pcrel_marker(control_target);
+        st.x[0] = x0;
+        st.x[2] = x2;
+        st.pstate = pstate;
+        let lowered = lower_aarch64_native_ops(vec![op])
+            .unwrap_or_else(|e| panic!("{name}: native lowering failed: {e}"));
+        assert_eq!(
+            lowered,
+            [source[0], 0xd65f_03c0, NOP],
+            "{name}: unexpected lowering"
+        );
+        cases.push((name.into(), source, lowered, st));
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_test_all_ones_left_shifted_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -13226,6 +13308,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_logical_identity_same_reg_native_cases(&mut cases, control_target);
     push_logical_zero_base_reg_native_cases(&mut cases, control_target);
     push_test_zero_imm_operand_native_cases(&mut cases, control_target);
+    push_and_all_ones_left_imm_reg_native_cases(&mut cases, control_target);
     push_test_all_ones_left_imm_native_cases(&mut cases, control_target);
     push_test_all_ones_left_shifted_native_cases(&mut cases, control_target);
     push_test_all_ones_left_extended_native_cases(&mut cases, control_target);
