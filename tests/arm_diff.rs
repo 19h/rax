@@ -12032,6 +12032,27 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     );
 
     let mut st = native_state();
+    st.x[0] = 0xffff_ffff_0123_4567;
+    st.x[1] = 0xf800;
+    st.pstate = 0x3000_0000;
+    push_case3(
+        "shld_w16_encodable_imm_src_as_shift_orr_uxth_preserves_flags",
+        [
+            enc_bitfield_rn(0, 0b10, 27, 26, RD),
+            enc_logical_imm(0, 0b01, 0, 0, 4, RD),
+            enc_bitfield_rn(0, 0b10, 0, 15, RD),
+        ],
+        vec![OpKind::Shld {
+            dst: arm_x(0),
+            src: VReg::Imm(0xf800),
+            amount: SrcOperand::Imm(5),
+            width: OpWidth::W16,
+            flags: FlagUpdate::None,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
     st.x[0] = 0xffff_ffff_89ab_cdef;
     st.x[1] = 0xcccc_dddd_0123_4567;
     st.pstate = 0x1000_0000;
@@ -12121,6 +12142,27 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
         vec![OpKind::Shrd {
             dst: arm_x(0),
             src: VReg::Imm(0x18),
+            amount: SrcOperand::Imm(3),
+            width: OpWidth::W8,
+            flags: FlagUpdate::None,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
+    st.x[0] = 0xffff_ffff_ffff_12a5;
+    st.x[1] = 0x07;
+    st.pstate = 0xb000_0000;
+    push_case3(
+        "shrd_w8_encodable_imm_src_as_shift_orr_uxtb_preserves_flags",
+        [
+            enc_bitfield_rn(0, 0b10, 3, 31, RD),
+            enc_logical_imm(0, 0b01, 0, 27, 2, RD),
+            enc_bitfield_rn(0, 0b10, 0, 7, RD),
+        ],
+        vec![OpKind::Shrd {
+            dst: arm_x(0),
+            src: VReg::Imm(0x07),
             amount: SrcOperand::Imm(3),
             width: OpWidth::W8,
             flags: FlagUpdate::None,
