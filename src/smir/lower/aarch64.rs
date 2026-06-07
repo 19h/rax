@@ -2258,12 +2258,14 @@ impl Aarch64Lowerer {
         width: OpWidth,
     ) -> Result<(), LowerError> {
         if matches!(width, OpWidth::W8 | OpWidth::W16) {
-            if set_flags {
+            if set_flags && opc != 0b11 {
                 return Err(LowerError::UnsupportedOp {
-                    op: "AArch64 native flag-setting subword logical op".into(),
+                    op: "AArch64 native subword logical flags are only supported for ANDS/BICS"
+                        .into(),
                 });
             }
-            return self.lower_subword_logic(dst, src1, src2, opc, n, width);
+            let result_opc = if set_flags { 0b00 } else { opc };
+            return self.lower_subword_logic(dst, src1, src2, result_opc, n, set_flags, width);
         }
 
         if set_flags && opc != 0b11 {
@@ -2361,11 +2363,13 @@ impl Aarch64Lowerer {
         src2: &SrcOperand,
         opc: u32,
         n: bool,
+        set_flags: bool,
         width: OpWidth,
     ) -> Result<(), LowerError> {
         let dst = Self::dst_gpr(dst)?;
         let rn = Self::gpr(src1)?;
         let top_bit = width.bits() - 1;
+        let mut subword_sign_known_clear = false;
 
         match src2 {
             SrcOperand::Reg(reg) => {
@@ -2385,16 +2389,29 @@ impl Aarch64Lowerer {
                 } else {
                     opc
                 };
+                if set_flags && opc == 0b00 && (imm & width.sign_bit()) == 0 {
+                    subword_sign_known_clear = true;
+                }
 
                 if opc == 0b00 && imm == width.mask() {
-                    return self.emit_bitfield(dst, rn, 0b10, 0, top_bit, OpWidth::W32);
+                    self.emit_bitfield(dst, rn, 0b10, 0, top_bit, OpWidth::W32)?;
+                    if set_flags {
+                        return self.lower_bzhi_result_flags(
+                            dst,
+                            width,
+                            OpWidth::W32,
+                            false,
+                            subword_sign_known_clear,
+                        );
+                    }
+                    return Ok(());
                 }
 
                 if imm == 0 {
                     match opc {
-                        0b00 => return self.emit_mov_imm(dst, 0, OpWidth::W32),
+                        0b00 => self.emit_mov_imm(dst, 0, OpWidth::W32)?,
                         0b01 | 0b10 => {
-                            return self.emit_bitfield(dst, rn, 0b10, 0, top_bit, OpWidth::W32);
+                            self.emit_bitfield(dst, rn, 0b10, 0, top_bit, OpWidth::W32)?;
                         }
                         _ => {
                             return Err(LowerError::UnsupportedOp {
@@ -2402,6 +2419,16 @@ impl Aarch64Lowerer {
                             });
                         }
                     }
+                    if set_flags {
+                        return self.lower_bzhi_result_flags(
+                            dst,
+                            width,
+                            OpWidth::W32,
+                            false,
+                            subword_sign_known_clear,
+                        );
+                    }
+                    return Ok(());
                 } else {
                     let (imm_n, immr, imms) =
                         Self::logical_bitmask_imm(imm as i64, OpWidth::W32)?;
@@ -2415,7 +2442,17 @@ impl Aarch64Lowerer {
             }
         }
 
-        self.emit_bitfield(dst, dst, 0b10, 0, top_bit, OpWidth::W32)
+        self.emit_bitfield(dst, dst, 0b10, 0, top_bit, OpWidth::W32)?;
+        if set_flags {
+            self.lower_bzhi_result_flags(
+                dst,
+                width,
+                OpWidth::W32,
+                false,
+                subword_sign_known_clear,
+            )?;
+        }
+        Ok(())
     }
 
     fn lower_logic_special_imm(
@@ -17629,6 +17666,64 @@ mod tests {
     }
 
     #[test]
+    fn lowers_ands_w8_reg_with_flags_as_and_uxtb_shifted_ands() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::And {
+                dst: x(0),
+                src1: x(1),
+                src2: SrcOperand::Reg(x(2)),
+                width: OpWidth::W8,
+                flags: FlagUpdate::All,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_logical_reg_n(0, 0b00, 0, 0, 1, 2).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 8, 7, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&enc_logical_reg_n(0, 0b11, 0, 31, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 24, 31, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_bics_w8_imm_with_flags_as_and_uxtb_ands_when_sign_clear() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::AndNot {
+                dst: x(0),
+                src1: x(1),
+                src2: SrcOperand::Imm(0xf0),
+                width: OpWidth::W8,
+                flags: FlagUpdate::All,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_logical_imm(0, 0b00, 0, 0, 3, 0, 1).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&enc_logical_reg_n(0, 0b11, 0, 31, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
     fn lowers_ands_w_low_mask_imm_to_zero_reg_for_virtual_dst() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(
@@ -23366,22 +23461,8 @@ mod tests {
     }
 
     #[test]
-    fn rejects_flag_setting_subword_logical_lowering() {
+    fn rejects_flag_setting_subword_or_xor_lowering() {
         for kind in [
-            OpKind::And {
-                dst: x(0),
-                src1: x(1),
-                src2: SrcOperand::Reg(x(2)),
-                width: OpWidth::W8,
-                flags: FlagUpdate::All,
-            },
-            OpKind::AndNot {
-                dst: x(0),
-                src1: x(1),
-                src2: SrcOperand::Imm(0xff),
-                width: OpWidth::W16,
-                flags: FlagUpdate::All,
-            },
             OpKind::Or {
                 dst: x(0),
                 src1: x(1),
