@@ -2568,6 +2568,53 @@ fn push_shift_zero_same_reg_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_double_shift_zero_count_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let double_shift_cases = [
+        (
+            "shrd_x_zero_count_as_noop_preserves_flags",
+            OpKind::Shrd {
+                dst: arm_x(0),
+                src: arm_x(1),
+                amount: SrcOperand::Imm(0),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            0x0123_4567_89ab_cdef,
+            0xfedc_ba98_7654_3210,
+            0x4000_0000,
+        ),
+        (
+            "shld_x_effective_zero_count_as_noop_preserves_flags",
+            OpKind::Shld {
+                dst: arm_x(0),
+                src: arm_x(1),
+                amount: SrcOperand::Imm64(64),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            0x1357_9bdf_2468_ace0,
+            0x0f0f_f0f0_aaaa_5555,
+            0xb000_0000,
+        ),
+    ];
+
+    for (name, op, x0, x1, pstate) in double_shift_cases {
+        let mut st = ArmState::zeroed();
+        st.pc = PCREL_MAGIC;
+        st.x[30] = pcrel_marker(control_target);
+        st.x[0] = x0;
+        st.x[1] = x1;
+        st.pstate = pstate;
+        let lowered = lower_aarch64_native_ops(vec![op])
+            .unwrap_or_else(|e| panic!("{name}: native lowering failed: {e}"));
+        cases.push((name.into(), [0xd65f_03c0, NOP, NOP], lowered, st));
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_lea_absolute_movn_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -9740,6 +9787,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_logical_identity_same_reg_native_cases(&mut cases, control_target);
     push_addsub_zero_same_reg_native_cases(&mut cases, control_target);
     push_shift_zero_same_reg_native_cases(&mut cases, control_target);
+    push_double_shift_zero_count_native_cases(&mut cases, control_target);
     push_lea_absolute_movn_native_cases(&mut cases, control_target);
     push_lea_pcrel_movn_native_cases(&mut cases, control_target);
     push_bfi_full_width_movn_native_cases(&mut cases, control_target);

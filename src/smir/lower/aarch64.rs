@@ -5259,6 +5259,9 @@ impl Aarch64Lowerer {
         let dst_reg = Self::dst_gpr(dst)?;
         let rn = Self::gpr(dst)?;
         if amount == 0 {
+            if width == OpWidth::W64 {
+                return Ok(());
+            }
             return self.emit_mov_reg(dst_reg, rn, width);
         }
 
@@ -17767,6 +17770,41 @@ mod tests {
         expected.extend_from_slice(&enc_extract(0, 0, 1, 25).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_double_shift_x_zero_count_as_noop() {
+        let cases = [
+            OpKind::Shrd {
+                dst: x(0),
+                src: x(1),
+                amount: SrcOperand::Imm(0),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Shld {
+                dst: x(0),
+                src: x(1),
+                amount: SrcOperand::Imm64(64),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ];
+
+        for kind in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+            assert_eq!(code, expected);
+        }
     }
 
     #[test]
