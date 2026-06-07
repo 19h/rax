@@ -5406,6 +5406,34 @@ impl Aarch64Lowerer {
         }
     }
 
+    fn deposit_imm_bits(value: u64, mut mask: u64) -> u64 {
+        let mut result = 0;
+        let mut bit = 0;
+        while mask != 0 {
+            let lowest = mask & mask.wrapping_neg();
+            if ((value >> bit) & 1) != 0 {
+                result |= lowest;
+            }
+            bit += 1;
+            mask &= mask - 1;
+        }
+        result
+    }
+
+    fn extract_imm_bits(value: u64, mut mask: u64) -> u64 {
+        let mut result = 0;
+        let mut bit = 0;
+        while mask != 0 {
+            let lowest = mask & mask.wrapping_neg();
+            if (value & lowest) != 0 {
+                result |= 1_u64 << bit;
+            }
+            bit += 1;
+            mask &= mask - 1;
+        }
+        result
+    }
+
     fn lower_bit_permute_imm_mask(
         &mut self,
         op: &str,
@@ -5436,46 +5464,30 @@ impl Aarch64Lowerer {
             _ => unreachable!(),
         };
 
+        if let VReg::Imm(value) = src {
+            let value = (value as u64) & width.mask();
+            let result = if deposit {
+                Self::deposit_imm_bits(value, mask)
+            } else {
+                Self::extract_imm_bits(value, mask)
+            } & width.mask();
+            return self.emit_mov_imm_best(Self::dst_gpr(dst)?, result as i64, emit_width);
+        }
+
         if mask == 0 {
             let dst = Self::dst_gpr(dst)?;
             return self.emit_mov_imm(dst, 0, emit_width);
         }
         if mask == width.mask() {
             let dst = Self::dst_gpr(dst)?;
-            if let VReg::Imm(value) = src {
-                let result = (value as u64) & width.mask();
-                return self.emit_mov_imm_best(dst, result as i64, emit_width);
-            }
-
             let src = Self::gpr(src)?;
             return self.lower_shift_imm(dst, src, 0, ShiftOp::Lsl, width);
         }
         if Self::is_low_contiguous_mask(mask, width) {
-            if let VReg::Imm(value) = src {
-                let dst = Self::dst_gpr(dst)?;
-                let result = (value as u64) & mask;
-                return self.emit_mov_imm_best(dst, result as i64, emit_width);
-            }
-
             let mask = SrcOperand::Imm(mask as i64);
             return self.lower_logic(dst, src, &mask, 0b00, false, false, width);
         }
         if let Some((lsb, width_bits)) = Self::contiguous_mask_field(mask) {
-            if let VReg::Imm(value) = src {
-                let dst = Self::dst_gpr(dst)?;
-                let result = if deposit {
-                    let low_mask = if width_bits == 64 {
-                        u64::MAX
-                    } else {
-                        (1_u64 << u32::from(width_bits)) - 1
-                    };
-                    ((value as u64) & low_mask) << lsb
-                } else {
-                    ((value as u64) & mask) >> lsb
-                };
-                return self.emit_mov_imm_best(dst, result as i64, emit_width);
-            }
-
             if deposit {
                 return self.lower_bitfield_insert_zero(
                     dst, src, lsb, width_bits, false, emit_width,
@@ -15628,6 +15640,56 @@ mod tests {
                     width: OpWidth::W64,
                 },
                 vec![enc_mov_wide(1, 0b10, 0, 0xbc, 0), 0xd65f_03c0u32],
+            ),
+        ];
+
+        for (op, expected_words) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            for word in expected_words {
+                expected.extend_from_slice(&word.to_le_bytes());
+            }
+            assert_eq!(code, expected);
+        }
+    }
+
+    #[test]
+    fn lowers_pdep_pext_arbitrary_masks_with_imm_sources_as_constants() {
+        let cases = [
+            (
+                OpKind::Pext {
+                    dst: x(0),
+                    src: VReg::Imm(0x421),
+                    mask: VReg::Imm(0x421),
+                    width: OpWidth::W64,
+                },
+                vec![enc_mov_wide(1, 0b10, 0, 7, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Pdep {
+                    dst: x(0),
+                    src: VReg::Imm(0b101),
+                    mask: VReg::Imm(0x421),
+                    width: OpWidth::W64,
+                },
+                vec![enc_mov_wide(1, 0b10, 0, 0x401, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Pdep {
+                    dst: x(0),
+                    src: VReg::Imm(0b1010),
+                    mask: VReg::Imm(0x8421),
+                    width: OpWidth::W16,
+                },
+                vec![enc_mov_wide(0, 0b10, 0, 0x8020, 0), 0xd65f_03c0u32],
             ),
         ];
 

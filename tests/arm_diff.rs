@@ -4569,6 +4569,50 @@ fn push_bit_permute_contiguous_mask_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_bit_permute_imm_source_arbitrary_mask_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let bit_permute_cases = [
+        (
+            "pext_x_arbitrary_mask_imm_as_movz_preserves_flags",
+            OpKind::Pext {
+                dst: arm_x(0),
+                src: VReg::Imm(0x421),
+                mask: VReg::Imm(0x421),
+                width: OpWidth::W64,
+            },
+            [enc_mov_wide(1, 0b10, 0, 7), NOP, NOP],
+            0x1111_2222_3333_4444,
+            0x2000_0000,
+        ),
+        (
+            "pdep_w16_arbitrary_mask_imm_as_movz_preserves_flags",
+            OpKind::Pdep {
+                dst: arm_x(0),
+                src: VReg::Imm(0b1010),
+                mask: VReg::Imm(0x8421),
+                width: OpWidth::W16,
+            },
+            [enc_mov_wide(0, 0b10, 0, 0x8020), NOP, NOP],
+            0xffff_ffff_8765_4321,
+            0x6000_0000,
+        ),
+    ];
+
+    for (name, op, source, x0, pstate) in bit_permute_cases {
+        let mut st = ArmState::zeroed();
+        st.pc = PCREL_MAGIC;
+        st.x[30] = pcrel_marker(control_target);
+        st.x[0] = x0;
+        st.pstate = pstate;
+        let lowered = lower_aarch64_native_ops(vec![op])
+            .unwrap_or_else(|e| panic!("{name}: native lowering failed: {e}"));
+        cases.push((name.into(), source, lowered, st));
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_bit_scan_flag_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -12135,6 +12179,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_bit_permute_low_mask_native_cases(&mut cases, control_target);
     push_bit_permute_single_bit_native_cases(&mut cases, control_target);
     push_bit_permute_contiguous_mask_native_cases(&mut cases, control_target);
+    push_bit_permute_imm_source_arbitrary_mask_native_cases(&mut cases, control_target);
     push_bit_scan_flag_native_cases(&mut cases, control_target);
     push_cmove_imm_movn_native_cases(&mut cases, control_target);
     push_cmove_imm_csel_native_cases(&mut cases, control_target);
