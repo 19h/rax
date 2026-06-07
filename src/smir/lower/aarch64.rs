@@ -4915,7 +4915,7 @@ impl Aarch64Lowerer {
                 flags,
             } if *op_dst == dst
                 && *op_src1 == src1
-                && Self::src_imm_eq(op_src2, imm)
+                && Self::src_masked_imm_eq(op_src2, imm, OpWidth::W32)
                 && !flags.updates_any()
         )
     }
@@ -5727,7 +5727,7 @@ impl Aarch64Lowerer {
         {
             if Self::is_nzcv(*dst)
                 && Self::is_nzcv(*src1)
-                && Self::src_imm_eq(src2, NZCV_C)
+                && Self::src_masked_imm_eq(src2, NZCV_C, OpWidth::W32)
                 && !flags.updates_any()
             {
                 self.emit_flagm(0b000);
@@ -18301,6 +18301,32 @@ mod tests {
     fn lowers_cmc_cf_as_cfinv() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(0, OpKind::CmcCF);
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_flagm(0b000).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_masked_carry_xor_as_cfinv() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Xor {
+                dst: VReg::Arch(ArchReg::Arm(ArmReg::Nzcv)),
+                src1: VReg::Arch(ArchReg::Arm(ArmReg::Nzcv)),
+                src2: SrcOperand::Imm64(0x1_2000_0000),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        );
         builder.set_terminator(Terminator::Return { values: vec![] });
         let func = builder.finish();
 

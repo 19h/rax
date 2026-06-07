@@ -4637,6 +4637,34 @@ fn push_cond_select_true_transform_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_flagm_masked_imm_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0x1234_5678_9abc_def0;
+    st.pstate = 0x2000_0000;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Xor {
+        dst: VReg::Arch(ArchReg::Arm(ArmReg::Nzcv)),
+        src1: VReg::Arch(ArchReg::Arm(ArmReg::Nzcv)),
+        src2: SrcOperand::Imm64(0x1_2000_0000),
+        width: OpWidth::W32,
+        flags: FlagUpdate::None,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("cfinv_masked_carry_opkind_clears_c: native lowering failed: {e}")
+    });
+    cases.push((
+        "cfinv_masked_carry_opkind_clears_c".into(),
+        [enc_cfinv(), NOP, NOP],
+        lowered,
+        st,
+    ));
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_cond_compare_inverted_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -11048,6 +11076,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_select_identical_arm_native_cases(&mut cases, control_target);
     push_select_dst_arm_native_cases(&mut cases, control_target);
     push_cond_select_true_transform_native_cases(&mut cases, control_target);
+    push_flagm_masked_imm_native_cases(&mut cases, control_target);
     push_cond_compare_inverted_native_cases(&mut cases, control_target);
     push_sar_imm_movn_native_cases(&mut cases, control_target);
     push_ror_imm_movn_native_cases(&mut cases, control_target);
