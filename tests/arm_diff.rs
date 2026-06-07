@@ -4775,6 +4775,75 @@ fn push_flagm_masked_imm_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_sysreg_masked_mask_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let nzcv = VReg::Arch(ArchReg::Arm(ArmReg::Nzcv));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xaaaa_bbbb_cccc_dddd;
+    st.pstate = 0xa000_0000;
+    let masked = VReg::virt(240);
+    let lowered = lower_aarch64_native_ops_same_pc(vec![
+        OpKind::And {
+            dst: masked,
+            src1: nzcv,
+            src2: SrcOperand::Imm64(0x1_f000_0000),
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        },
+        OpKind::Mov {
+            dst: arm_x(0),
+            src: SrcOperand::Reg(masked),
+            width: OpWidth::W64,
+        },
+    ])
+    .unwrap_or_else(|e| {
+        panic!("mrs_nzcv_lifted_masked_mask_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "mrs_nzcv_lifted_masked_mask_preserves_flags".into(),
+        [enc_mrs_nzcv(RD), NOP, NOP],
+        lowered,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xbbbb_cccc_dddd_eeee;
+    st.x[1] = 0xffff_ffff_1234_5678;
+    st.pstate = 0xf000_0000;
+    let masked = VReg::virt(241);
+    let lowered = lower_aarch64_native_ops_same_pc(vec![
+        OpKind::And {
+            dst: masked,
+            src1: arm_x(1),
+            src2: SrcOperand::Imm64(0x1_f000_0000),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        },
+        OpKind::Mov {
+            dst: nzcv,
+            src: SrcOperand::Reg(masked),
+            width: OpWidth::W32,
+        },
+    ])
+    .unwrap_or_else(|e| {
+        panic!("msr_nzcv_lifted_masked_mask_preserves_regs: native lowering failed: {e}")
+    });
+    cases.push((
+        "msr_nzcv_lifted_masked_mask_preserves_regs".into(),
+        [enc_msr_nzcv(RN), NOP, NOP],
+        lowered,
+        st,
+    ));
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_flagm_masked_shift_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -11468,6 +11537,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_select_dst_arm_native_cases(&mut cases, control_target);
     push_cond_select_true_transform_native_cases(&mut cases, control_target);
     push_flagm_masked_imm_native_cases(&mut cases, control_target);
+    push_sysreg_masked_mask_native_cases(&mut cases, control_target);
     push_flagm_masked_shift_native_cases(&mut cases, control_target);
     push_cls_masked_imm_native_cases(&mut cases, control_target);
     push_cond_compare_inverted_native_cases(&mut cases, control_target);

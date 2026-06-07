@@ -6583,7 +6583,7 @@ impl Aarch64Lowerer {
             };
             if *width != info.read_width
                 || *mov_width != OpWidth::W64
-                || !Self::src_imm_eq(src2, info.mask)
+                || !Self::src_masked_imm_eq(src2, info.mask, info.read_width)
             {
                 return Ok(None);
             }
@@ -6599,7 +6599,7 @@ impl Aarch64Lowerer {
         };
         if *width != OpWidth::W64
             || *mov_width != info.write_width
-            || !Self::src_imm_eq(src2, info.mask)
+            || !Self::src_masked_imm_eq(src2, info.mask, info.write_width)
         {
             return Ok(None);
         }
@@ -19005,6 +19005,78 @@ mod tests {
         let code = lowerer.finalize().unwrap();
 
         let mut expected = Vec::new();
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn fuses_nzcv_read_with_masked_mask_imm() {
+        let nzcv = VReg::Arch(ArchReg::Arm(ArmReg::Nzcv));
+        let masked = VReg::virt(0);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::And {
+                dst: masked,
+                src1: nzcv,
+                src2: SrcOperand::Imm64(0x1_f000_0000),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Mov {
+                dst: x(0),
+                src: SrcOperand::Reg(masked),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mrs_sysreg(0, 3, 4, 2, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn fuses_nzcv_write_with_masked_mask_imm() {
+        let nzcv = VReg::Arch(ArchReg::Arm(ArmReg::Nzcv));
+        let masked = VReg::virt(0);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::And {
+                dst: masked,
+                src1: x(1),
+                src2: SrcOperand::Imm64(0x1_f000_0000),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Mov {
+                dst: nzcv,
+                src: SrcOperand::Reg(masked),
+                width: OpWidth::W32,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_msr_sysreg(1, 3, 4, 2, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
