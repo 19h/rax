@@ -2305,16 +2305,31 @@ impl Aarch64Lowerer {
             if let VReg::Imm(imm) = src1 {
                 let (_, value, all_ones) = Self::logical_imm_value(imm, width)?;
                 if value == all_ones {
-                    if let SrcOperand::Reg(reg) = src2 {
-                        let dst = Self::dst_or_zero_for_flags(dst, set_flags)?;
-                        let src = Self::gpr(*reg)?;
-                        if set_flags {
-                            return self.emit_logic_reg_n(dst, src, src, 0b11, false, width);
+                    let dst = Self::dst_or_zero_for_flags(dst, set_flags)?;
+                    match src2 {
+                        SrcOperand::Reg(reg) => {
+                            let src = Self::gpr(*reg)?;
+                            if set_flags {
+                                return self.emit_logic_reg_n(dst, src, src, 0b11, false, width);
+                            }
+                            if width == OpWidth::W64 && dst == src {
+                                return Ok(());
+                            }
+                            return self.emit_mov_reg(dst, src, width);
                         }
-                        if width == OpWidth::W64 && dst == src {
-                            return Ok(());
+                        SrcOperand::Shifted { .. } => {
+                            if set_flags {
+                                let (src, shift, amount) = Self::addsub_src2(src2, width)?;
+                                return self.emit_addsub_shifted(
+                                    dst, 31, src, false, true, shift, amount, width,
+                                );
+                            }
+                            let (src, shift, amount) = Self::logical_src2(src2, width)?;
+                            return self.emit_logic_shifted(
+                                dst, 31, src, 0b01, false, shift, amount, width,
+                            );
                         }
-                        return self.emit_mov_reg(dst, src, width);
+                        _ => {}
                     }
                 }
             }
@@ -8326,7 +8341,28 @@ mod tests {
     }
 
     fn enc_logical_reg_n(sf: u32, opc: u32, n: u32, rd: u32, rn: u32, rm: u32) -> u32 {
-        (sf << 31) | (opc << 29) | (0b01010 << 24) | (n << 21) | (rm << 16) | (rn << 5) | rd
+        enc_logical_shift_regs(sf, opc, n, 0, 0, rd, rn, rm)
+    }
+
+    fn enc_logical_shift_regs(
+        sf: u32,
+        opc: u32,
+        n: u32,
+        shift: u32,
+        imm6: u32,
+        rd: u32,
+        rn: u32,
+        rm: u32,
+    ) -> u32 {
+        (sf << 31)
+            | (opc << 29)
+            | (0b01010 << 24)
+            | (shift << 22)
+            | (n << 21)
+            | (rm << 16)
+            | (imm6 << 10)
+            | (rn << 5)
+            | rd
     }
 
     fn enc_logical_reg(sf: u32, opc: u32, rd: u32, rn: u32, rm: u32) -> u32 {
@@ -17561,6 +17597,70 @@ mod tests {
                     flags: FlagUpdate::All,
                 },
                 enc_logical_reg_n(0, 0b11, 0, 0, 2, 2),
+            ),
+        ];
+
+        for (op, expected_insn) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            expected.extend_from_slice(&expected_insn.to_le_bytes());
+            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+            assert_eq!(code, expected);
+        }
+    }
+
+    #[test]
+    fn lowers_and_all_ones_left_imm_shifted_as_orr_or_adds() {
+        let cases = [
+            (
+                OpKind::And {
+                    dst: x(0),
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Shifted {
+                        reg: x(2),
+                        shift: ShiftOp::Lsl,
+                        amount: 4,
+                    },
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                enc_logical_shift_regs(1, 0b01, 0, 0, 4, 0, 31, 2),
+            ),
+            (
+                OpKind::And {
+                    dst: x(0),
+                    src1: VReg::Imm(0x1_ffff_ffff),
+                    src2: SrcOperand::Shifted {
+                        reg: x(2),
+                        shift: ShiftOp::Ror,
+                        amount: 13,
+                    },
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+                enc_logical_shift_regs(0, 0b01, 0, 3, 13, 0, 31, 2),
+            ),
+            (
+                OpKind::And {
+                    dst: x(0),
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Shifted {
+                        reg: x(2),
+                        shift: ShiftOp::Lsr,
+                        amount: 8,
+                    },
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                enc_addsub_shift_regs(1, 0, 1, 1, 8, 0, 31, 2),
             ),
         ];
 
