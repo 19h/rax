@@ -5302,15 +5302,11 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
         op_width: OpWidth::W32,
     }])
     .unwrap_or_else(|e| {
-        panic!("sbfx_w_imm_sign_extend_as_mov_preserves_flags: native lowering failed: {e}")
+        panic!("sbfx_w_imm_sign_extend_as_movn_preserves_flags: native lowering failed: {e}")
     });
     cases.push((
-        "sbfx_w_imm_sign_extend_as_mov_preserves_flags".into(),
-        [
-            enc_mov_wide(0, 0b10, 0, 0xffff),
-            enc_mov_wide(0, 0b11, 1, 0xffff),
-            NOP,
-        ],
+        "sbfx_w_imm_sign_extend_as_movn_preserves_flags".into(),
+        [enc_mov_wide(0, 0b00, 0, 0), NOP, NOP],
         lowered,
         st,
     ));
