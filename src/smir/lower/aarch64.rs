@@ -3601,6 +3601,9 @@ impl Aarch64Lowerer {
         let src = Self::gpr(src)?;
 
         if u32::from(width_bits) == op_bits && lsb == 0 {
+            if op_width == OpWidth::W64 && dst == src {
+                return Ok(());
+            }
             return self.emit_mov_reg(dst, src, op_width);
         }
         if dst != dst_in {
@@ -19982,6 +19985,62 @@ mod tests {
         expected.extend_from_slice(&enc_mov_wide(1, 0b00, 0, 0xe, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_bfi_full_width_reg_as_mov_or_noop() {
+        let bfi_cases = [
+            (
+                OpKind::Bfi {
+                    dst: x(0),
+                    dst_in: x(1),
+                    src: x(0),
+                    lsb: 0,
+                    width_bits: 64,
+                    op_width: OpWidth::W64,
+                },
+                vec![0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Bfi {
+                    dst: x(0),
+                    dst_in: x(1),
+                    src: x(0),
+                    lsb: 0,
+                    width_bits: 32,
+                    op_width: OpWidth::W32,
+                },
+                vec![enc_mov_reg(0, 0, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Bfi {
+                    dst: x(0),
+                    dst_in: x(0),
+                    src: x(2),
+                    lsb: 0,
+                    width_bits: 64,
+                    op_width: OpWidth::W64,
+                },
+                vec![enc_mov_reg(1, 0, 2), 0xd65f_03c0u32],
+            ),
+        ];
+
+        for (op, expected_words) in bfi_cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            for word in expected_words {
+                expected.extend_from_slice(&word.to_le_bytes());
+            }
+            assert_eq!(code, expected);
+        }
     }
 
     #[test]
