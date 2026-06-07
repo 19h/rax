@@ -3481,7 +3481,7 @@ impl Aarch64Lowerer {
         sign_extend: bool,
         op_width: OpWidth,
     ) -> Result<(), LowerError> {
-        Self::bitfield_args("Bfx", lsb, width_bits, op_width)?;
+        let op_bits = Self::bitfield_args("Bfx", lsb, width_bits, op_width)?;
         if let VReg::Imm(value) = src {
             let width_bits = u32::from(width_bits);
             let mask = if width_bits == 64 {
@@ -3505,6 +3505,15 @@ impl Aarch64Lowerer {
                 return Ok(());
             }
             return self.emit_mov_imm(dst, result as i64, op_width);
+        }
+
+        if lsb == 0 && u32::from(width_bits) == op_bits {
+            let dst = Self::dst_gpr(dst)?;
+            let src = Self::gpr(src)?;
+            if op_width == OpWidth::W64 && dst == src {
+                return Ok(());
+            }
+            return self.emit_mov_reg(dst, src, op_width);
         }
 
         let opc = if sign_extend { 0b00 } else { 0b10 };
@@ -14374,6 +14383,62 @@ mod tests {
         expected.extend_from_slice(&enc_mov_wide(1, 0b10, 0, 0x9abc, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_bfx_full_width_as_mov_or_noop() {
+        let bfx_cases = [
+            (
+                OpKind::Bfx {
+                    dst: x(0),
+                    src: x(0),
+                    lsb: 0,
+                    width_bits: 64,
+                    sign_extend: false,
+                    op_width: OpWidth::W64,
+                },
+                vec![0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Bfx {
+                    dst: x(0),
+                    src: x(0),
+                    lsb: 0,
+                    width_bits: 32,
+                    sign_extend: true,
+                    op_width: OpWidth::W32,
+                },
+                vec![enc_mov_reg(0, 0, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Bfx {
+                    dst: x(0),
+                    src: x(1),
+                    lsb: 0,
+                    width_bits: 64,
+                    sign_extend: true,
+                    op_width: OpWidth::W64,
+                },
+                vec![enc_mov_reg(1, 0, 1), 0xd65f_03c0u32],
+            ),
+        ];
+
+        for (op, expected_words) in bfx_cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            for word in expected_words {
+                expected.extend_from_slice(&word.to_le_bytes());
+            }
+            assert_eq!(code, expected);
+        }
     }
 
     #[test]
