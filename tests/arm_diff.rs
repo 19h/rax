@@ -3141,6 +3141,68 @@ fn push_logical_zero_base_reg_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_test_zero_imm_operand_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let test_cases = [
+        (
+            "test_x_zero_left_imm_reg_opkind_sets_z",
+            OpKind::Test {
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Reg(arm_x(2)),
+                width: OpWidth::W64,
+            },
+            [enc_logical_shift_regs(1, 0b11, 0, 0, 0, 31, 31, 31), NOP, NOP],
+            0xffff_ffff_ffff_ffff,
+            0x8000_0000_0000_0000,
+            0xf000_0000,
+        ),
+        (
+            "test_w_masked_zero_left_imm_reg_opkind_sets_z",
+            OpKind::Test {
+                src1: VReg::Imm(0x1_0000_0000),
+                src2: SrcOperand::Reg(arm_x(2)),
+                width: OpWidth::W32,
+            },
+            [enc_logical_shift_regs(0, 0b11, 0, 0, 0, 31, 31, 31), NOP, NOP],
+            0xffff_ffff_ffff_ffff,
+            0xffff_ffff,
+            0x8000_0000,
+        ),
+        (
+            "test_w8_masked_zero_imm_opkind_sets_z",
+            OpKind::Test {
+                src1: arm_x(1),
+                src2: SrcOperand::Imm(0x100),
+                width: OpWidth::W8,
+            },
+            [enc_logical_shift_regs(0, 0b11, 0, 0, 0, 31, 31, 31), NOP, NOP],
+            0xff,
+            0,
+            0x1000_0000,
+        ),
+    ];
+
+    for (name, op, source, x1, x2, pstate) in test_cases {
+        let mut st = ArmState::zeroed();
+        st.pc = PCREL_MAGIC;
+        st.x[30] = pcrel_marker(control_target);
+        st.x[1] = x1;
+        st.x[2] = x2;
+        st.pstate = pstate;
+        let lowered = lower_aarch64_native_ops(vec![op])
+            .unwrap_or_else(|e| panic!("{name}: native lowering failed: {e}"));
+        assert_eq!(
+            lowered,
+            [source[0], 0xd65f_03c0, NOP],
+            "{name}: unexpected lowering"
+        );
+        cases.push((name.into(), source, lowered, st));
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_logical_same_source_zero_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -12976,6 +13038,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_xchg_same_reg_native_cases(&mut cases, control_target);
     push_logical_identity_same_reg_native_cases(&mut cases, control_target);
     push_logical_zero_base_reg_native_cases(&mut cases, control_target);
+    push_test_zero_imm_operand_native_cases(&mut cases, control_target);
     push_logical_same_source_zero_native_cases(&mut cases, control_target);
     push_subword_logical_flag_native_cases(&mut cases, control_target);
     push_or_xor_flag_native_cases(&mut cases, control_target);

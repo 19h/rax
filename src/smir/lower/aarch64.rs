@@ -2932,6 +2932,27 @@ impl Aarch64Lowerer {
         src2: &SrcOperand,
         width: OpWidth,
     ) -> Result<(), LowerError> {
+        let zero_operand = match width {
+            OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64 => {
+                let mask = width.mask();
+                matches!(src1, VReg::Imm(value) if (value as u64 & mask) == 0)
+                    || matches!(
+                        src2,
+                        SrcOperand::Imm(value) | SrcOperand::Imm64(value)
+                            if (*value as u64 & mask) == 0
+                    )
+            }
+            _ => false,
+        };
+        if zero_operand {
+            let emit_width = if width == OpWidth::W64 {
+                OpWidth::W64
+            } else {
+                OpWidth::W32
+            };
+            return self.emit_logic_reg_n(31, 31, 31, 0b11, false, emit_width);
+        }
+
         match src2 {
             SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) => {
                 let (_, value, all_ones) = Self::logical_imm_value(*imm, width)?;
@@ -18367,6 +18388,64 @@ mod tests {
         expected.extend_from_slice(&enc_logical_reg_n(1, 0b11, 0, 31, 31, 31).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_test_zero_imm_operand_as_ands_zero_regs() {
+        let cases = [
+            (
+                OpKind::Test {
+                    src1: VReg::Imm(0),
+                    src2: SrcOperand::Reg(x(2)),
+                    width: OpWidth::W64,
+                },
+                enc_logical_reg_n(1, 0b11, 0, 31, 31, 31),
+            ),
+            (
+                OpKind::Test {
+                    src1: VReg::Imm(0x1_0000_0000),
+                    src2: SrcOperand::Reg(x(2)),
+                    width: OpWidth::W32,
+                },
+                enc_logical_reg_n(0, 0b11, 0, 31, 31, 31),
+            ),
+            (
+                OpKind::Test {
+                    src1: x(1),
+                    src2: SrcOperand::Imm(0x100),
+                    width: OpWidth::W8,
+                },
+                enc_logical_reg_n(0, 0b11, 0, 31, 31, 31),
+            ),
+            (
+                OpKind::Test {
+                    src1: VReg::Imm(0),
+                    src2: SrcOperand::Shifted {
+                        reg: x(2),
+                        shift: ShiftOp::Ror,
+                        amount: 4,
+                    },
+                    width: OpWidth::W16,
+                },
+                enc_logical_reg_n(0, 0b11, 0, 31, 31, 31),
+            ),
+        ];
+
+        for (kind, expected_word) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            expected.extend_from_slice(&expected_word.to_le_bytes());
+            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+            assert_eq!(code, expected);
+        }
     }
 
     #[test]
