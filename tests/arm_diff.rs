@@ -2463,6 +2463,121 @@ fn push_cmove_imm_movn_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_cmove_imm_csel_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let cmove_zero = lower_aarch64_native_ops(vec![OpKind::CMove {
+        dst: arm_x(0),
+        src: VReg::Imm(0),
+        cond: Condition::Eq,
+        width: OpWidth::W64,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("cmove_x_eq_zero_imm_as_csel_preserves_flags: native lowering failed: {e}")
+    });
+    let zero_source = [enc_csel_form(1, 0, 0, 31, RD, 0), NOP, NOP];
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xaaaa_bbbb_cccc_dddd;
+    st.pstate = 0x4000_0000;
+    cases.push((
+        "cmove_x_eq_true_zero_imm_as_csel_preserves_flags".into(),
+        zero_source,
+        cmove_zero,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xbbbb_cccc_dddd_eeee;
+    st.pstate = 0;
+    cases.push((
+        "cmove_x_eq_false_zero_imm_as_csel_preserves_flags".into(),
+        zero_source,
+        cmove_zero,
+        st,
+    ));
+
+    let cmove_one = lower_aarch64_native_ops(vec![OpKind::CMove {
+        dst: arm_x(0),
+        src: VReg::Imm(1),
+        cond: Condition::Eq,
+        width: OpWidth::W64,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("cmove_x_eq_one_imm_as_csinc_preserves_flags: native lowering failed: {e}")
+    });
+    let one_source = [enc_csel_form(1, 0, 1, RD, 31, 1), NOP, NOP];
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xcccc_dddd_eeee_ffff;
+    st.pstate = 0x4000_0000;
+    cases.push((
+        "cmove_x_eq_true_one_imm_as_csinc_preserves_flags".into(),
+        one_source,
+        cmove_one,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xdddd_eeee_ffff_0000;
+    st.pstate = 0;
+    cases.push((
+        "cmove_x_eq_false_one_imm_as_csinc_preserves_flags".into(),
+        one_source,
+        cmove_one,
+        st,
+    ));
+
+    let cmove_all_ones = lower_aarch64_native_ops(vec![OpKind::CMove {
+        dst: arm_x(0),
+        src: VReg::Imm(-1),
+        cond: Condition::Ne,
+        width: OpWidth::W8,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("cmove_w8_ne_all_ones_imm_as_csinv_preserves_flags: native lowering failed: {e}")
+    });
+    let all_ones_source = [
+        enc_csel_form(0, 1, 0, RD, 31, 0),
+        enc_bitfield_regs(0, 0b10, 0, 7, RD, RD),
+        NOP,
+    ];
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xeeee_ffff_0000_1111;
+    st.pstate = 0;
+    cases.push((
+        "cmove_w8_ne_true_all_ones_imm_as_csinv_preserves_flags".into(),
+        all_ones_source,
+        cmove_all_ones,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xffff_0000_1111_2222;
+    st.pstate = 0x4000_0000;
+    cases.push((
+        "cmove_w8_ne_false_all_ones_imm_as_csinv_preserves_flags".into(),
+        all_ones_source,
+        cmove_all_ones,
+        st,
+    ));
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_cond_select_true_transform_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -9037,6 +9152,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_lea_pcrel_movn_native_cases(&mut cases, control_target);
     push_bfi_full_width_movn_native_cases(&mut cases, control_target);
     push_cmove_imm_movn_native_cases(&mut cases, control_target);
+    push_cmove_imm_csel_native_cases(&mut cases, control_target);
 
     let mut st = native_state();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
