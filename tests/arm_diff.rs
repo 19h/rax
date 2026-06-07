@@ -2001,6 +2001,54 @@ fn push_bswap_imm_movn_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_extract_masked_shift_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xaaaa_bbbb_cccc_dddd;
+    st.x[1] = 0x1122_3344_5566_7788;
+    st.x[2] = 0x99aa_bbcc_ddee_ff00;
+    st.pstate = 0x6000_0000;
+    let lo = VReg::virt(0);
+    let hi = VReg::virt(1);
+    let lowered = lower_aarch64_native_ops_same_pc(vec![
+        OpKind::Shr {
+            dst: lo,
+            src: arm_x(2),
+            amount: SrcOperand::Imm64(77),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        },
+        OpKind::Shl {
+            dst: hi,
+            src: arm_x(1),
+            amount: SrcOperand::Imm(115),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        },
+        OpKind::Or {
+            dst: arm_x(0),
+            src1: lo,
+            src2: SrcOperand::Reg(hi),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        },
+    ])
+    .unwrap_or_else(|e| {
+        panic!("extr_x_lifted_masked_shift_counts_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "extr_x_lifted_masked_shift_counts_preserves_flags".into(),
+        [enc_extract(1, RN, RM, 13), NOP, NOP],
+        lowered,
+        st,
+    ));
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_rev16_imm_movn_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -11548,6 +11596,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_shr_imm_movn_native_cases(&mut cases, control_target);
     push_rbit_imm_movn_native_cases(&mut cases, control_target);
     push_bswap_imm_movn_native_cases(&mut cases, control_target);
+    push_extract_masked_shift_native_cases(&mut cases, control_target);
     push_rev16_imm_movn_native_cases(&mut cases, control_target);
     push_rev32_imm_movn_native_cases(&mut cases, control_target);
     push_truncate_imm_movn_native_cases(&mut cases, control_target);

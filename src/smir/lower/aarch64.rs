@@ -6060,6 +6060,8 @@ impl Aarch64Lowerer {
         else {
             return Ok(None);
         };
+        let lo_amount = (lo_amount as u64 & 0x3f) as i64;
+        let hi_amount = (hi_amount as u64 & 0x3f) as i64;
         if !(1..bits).contains(&lo_amount) || hi_amount != bits - lo_amount {
             return Ok(None);
         }
@@ -13970,6 +13972,54 @@ mod tests {
                 dst: hi,
                 src: x(1),
                 amount: SrcOperand::Imm(51),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Or {
+                dst: x(0),
+                src1: lo,
+                src2: SrcOperand::Reg(hi),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_extract(1, 1, 2, 13).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn fuses_lifted_extract_sequence_with_masked_shift_counts() {
+        let lo = VReg::virt(0);
+        let hi = VReg::virt(1);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Shr {
+                dst: lo,
+                src: x(2),
+                amount: SrcOperand::Imm64(77),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Shl {
+                dst: hi,
+                src: x(1),
+                amount: SrcOperand::Imm(115),
                 width: OpWidth::W64,
                 flags: FlagUpdate::None,
             },
