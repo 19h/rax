@@ -3374,6 +3374,22 @@ impl Aarch64Lowerer {
         let op_bits = Self::bitfield_args("Bfi", lsb, width_bits, op_width)?;
         let dst = Self::dst_gpr(dst)?;
         let dst_in = Self::gpr(dst_in)?;
+        if let VReg::Imm(value) = src {
+            let low_mask = if width_bits == 64 {
+                u64::MAX
+            } else {
+                (1_u64 << u32::from(width_bits)) - 1
+            };
+            let inserted = (value as u64) & low_mask;
+            if inserted == low_mask && u32::from(width_bits) < op_bits {
+                if dst != dst_in {
+                    self.emit_mov_reg(dst, dst_in, op_width)?;
+                }
+                let field_mask = low_mask << lsb;
+                let (n, immr, imms) = Self::logical_bitmask_imm(field_mask as i64, op_width)?;
+                return self.emit_logic_imm(dst, dst, 0b01, n, immr, imms, op_width);
+            }
+        }
         let src = Self::gpr(src)?;
 
         if u32::from(width_bits) == op_bits && lsb == 0 {
@@ -16424,6 +16440,33 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_bitfield(1, 0b01, 8, 15).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_bfi_x_all_ones_imm_src_as_orr() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Bfi {
+                dst: x(0),
+                dst_in: x(0),
+                src: VReg::Imm(0xff),
+                lsb: 8,
+                width_bits: 8,
+                op_width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_logical_imm(1, 0b01, 1, 56, 7, 0, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
