@@ -2387,7 +2387,9 @@ impl Aarch64Lowerer {
         if !n && opc == 0b01 {
             if let VReg::Imm(imm) = src1 {
                 let (_, value, all_ones) = Self::logical_imm_value(imm, width)?;
-                if value == all_ones && matches!(src2, SrcOperand::Reg(_)) {
+                if value == all_ones
+                    && matches!(src2, SrcOperand::Reg(_) | SrcOperand::Shifted { .. })
+                {
                     let dst = Self::dst_gpr(dst)?;
                     return self.emit_movn_zero(dst, width);
                 }
@@ -18128,6 +18130,93 @@ mod tests {
                     dst: x(0),
                     src1: VReg::Imm(0x1_ffff_ffff),
                     src2: SrcOperand::Reg(x(2)),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::All,
+                },
+                vec![
+                    enc_mov_wide(0, 0b00, 0, 0, 0),
+                    enc_logical_reg_n(0, 0b11, 0, 31, 0, 0),
+                    0xd65f_03c0u32,
+                ],
+            ),
+        ];
+
+        for (op, expected_words) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            for word in expected_words {
+                expected.extend_from_slice(&word.to_le_bytes());
+            }
+            assert_eq!(code, expected);
+        }
+    }
+
+    #[test]
+    fn lowers_orr_all_ones_left_imm_shifted_as_movn_or_flags() {
+        let cases = [
+            (
+                OpKind::Or {
+                    dst: x(0),
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Shifted {
+                        reg: x(2),
+                        shift: ShiftOp::Lsl,
+                        amount: 4,
+                    },
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                vec![enc_mov_wide(1, 0b00, 0, 0, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Or {
+                    dst: x(0),
+                    src1: VReg::Imm(0x1_ffff_ffff),
+                    src2: SrcOperand::Shifted {
+                        reg: x(2),
+                        shift: ShiftOp::Ror,
+                        amount: 13,
+                    },
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+                vec![enc_mov_wide(0, 0b00, 0, 0, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Or {
+                    dst: x(0),
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Shifted {
+                        reg: x(2),
+                        shift: ShiftOp::Lsr,
+                        amount: 8,
+                    },
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                vec![
+                    enc_mov_wide(1, 0b00, 0, 0, 0),
+                    enc_logical_reg_n(1, 0b11, 0, 31, 0, 0),
+                    0xd65f_03c0u32,
+                ],
+            ),
+            (
+                OpKind::Or {
+                    dst: x(0),
+                    src1: VReg::Imm(0x1_ffff_ffff),
+                    src2: SrcOperand::Shifted {
+                        reg: x(2),
+                        shift: ShiftOp::Asr,
+                        amount: 31,
+                    },
                     width: OpWidth::W32,
                     flags: FlagUpdate::All,
                 },
