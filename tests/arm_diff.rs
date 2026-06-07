@@ -4569,6 +4569,60 @@ fn push_bit_permute_contiguous_mask_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_bit_scan_flag_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let mut push_case3 = |label: &str, source: [u32; 3], ops: Vec<OpKind>, st: ArmState| {
+        let lowered = lower_aarch64_native_ops(ops)
+            .unwrap_or_else(|e| panic!("{label}: native lowering failed: {e}"));
+        cases.push((label.into(), source, lowered, st));
+    };
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xaaaa_bbbb_cccc_dddd;
+    st.pstate = 0xf000_0000;
+    push_case3(
+        "bsf_x_imm_one_sets_zf_from_source_before_result_mov",
+        [
+            enc_mov_wide(1, 0b10, 0, 1),
+            enc_logical_reg_n(1, 0b11, 0, 31, RD, RD),
+            enc_mov_wide(1, 0b10, 0, 0),
+        ],
+        vec![OpKind::Bsf {
+            dst: arm_x(0),
+            src: VReg::Imm(1),
+            width: OpWidth::W64,
+            flags: FlagUpdate::All,
+        }],
+        st,
+    );
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xffff_ffff_aaaa_bbbb;
+    st.pstate = 0x2000_0000;
+    push_case3(
+        "bsr_w_imm_zero_sets_zf_from_source_before_result_mov",
+        [
+            enc_logical_reg_n(0, 0b11, 0, 31, 31, 31),
+            enc_mov_wide(0, 0b10, 0, 0),
+            NOP,
+        ],
+        vec![OpKind::Bsr {
+            dst: arm_x(0),
+            src: VReg::Imm(0),
+            width: OpWidth::W32,
+            flags: FlagUpdate::All,
+        }],
+        st,
+    );
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_cmove_imm_movn_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -12081,6 +12135,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_bit_permute_low_mask_native_cases(&mut cases, control_target);
     push_bit_permute_single_bit_native_cases(&mut cases, control_target);
     push_bit_permute_contiguous_mask_native_cases(&mut cases, control_target);
+    push_bit_scan_flag_native_cases(&mut cases, control_target);
     push_cmove_imm_movn_native_cases(&mut cases, control_target);
     push_cmove_imm_csel_native_cases(&mut cases, control_target);
     push_cmove_always_reg_native_cases(&mut cases, control_target);
