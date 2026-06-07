@@ -7406,6 +7406,47 @@ fn push_bfxil_full_width_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_bfxil_imm_source_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0x1111_2222_3333_4444;
+    st.x[1] = 0x3c0;
+    st.pstate = 0x8000_0000;
+
+    let extracted = VReg::virt(0);
+    let lowered = lower_aarch64_native_ops_same_pc(vec![
+        OpKind::Bfx {
+            dst: extracted,
+            src: VReg::Imm(0x3c0),
+            lsb: 4,
+            width_bits: 8,
+            sign_extend: false,
+            op_width: OpWidth::W64,
+        },
+        OpKind::Bfi {
+            dst: arm_x(0),
+            dst_in: arm_x(0),
+            src: extracted,
+            lsb: 0,
+            width_bits: 8,
+            op_width: OpWidth::W64,
+        },
+    ])
+    .unwrap_or_else(|e| panic!("bfxil_x_imm_source_as_low_insert_preserves_flags: {e}"));
+
+    cases.push((
+        "bfxil_x_imm_source_as_low_insert_preserves_flags".into(),
+        [enc_bitfield_regs(1, 0b01, 4, 11, RN, RD), NOP, NOP],
+        lowered,
+        st,
+    ));
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_bit_permute_identity_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -15566,6 +15607,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_bfi_full_width_reg_native_cases(&mut cases, control_target);
     push_bfx_full_width_native_cases(&mut cases, control_target);
     push_bfxil_full_width_native_cases(&mut cases, control_target);
+    push_bfxil_imm_source_native_cases(&mut cases, control_target);
     push_bit_permute_identity_native_cases(&mut cases, control_target);
     push_bit_permute_low_mask_native_cases(&mut cases, control_target);
     push_bit_permute_single_bit_native_cases(&mut cases, control_target);

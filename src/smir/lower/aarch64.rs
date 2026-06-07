@@ -4404,6 +4404,63 @@ impl Aarch64Lowerer {
         let op_bits = Self::bitfield_args("Bfxil", lsb, width_bits, op_width)?;
         let dst = Self::dst_gpr(dst)?;
         let dst_in = Self::gpr(dst_in)?;
+
+        if let VReg::Imm(value) = src {
+            let low_mask = if width_bits == 64 {
+                u64::MAX
+            } else {
+                (1_u64 << u32::from(width_bits)) - 1
+            };
+            let extracted = (((value as u64) & op_width.mask()) >> lsb) & low_mask;
+            if u32::from(width_bits) == op_bits && lsb == 0 {
+                if extracted == op_width.mask() {
+                    return self.emit_movn_zero(dst, op_width);
+                }
+                return self.emit_mov_imm_best(dst, extracted as i64, op_width);
+            }
+            if extracted == 0 && u32::from(width_bits) < op_bits {
+                let clear_mask = (!low_mask) & op_width.mask();
+                if let Ok((n, immr, imms)) =
+                    Self::logical_bitmask_imm(clear_mask as i64, op_width)
+                {
+                    return self.emit_logic_imm(dst, dst_in, 0b00, n, immr, imms, op_width);
+                }
+            }
+            if extracted == low_mask && u32::from(width_bits) < op_bits {
+                let (n, immr, imms) = Self::logical_bitmask_imm(low_mask as i64, op_width)?;
+                return self.emit_logic_imm(dst, dst_in, 0b01, n, immr, imms, op_width);
+            }
+            if extracted != 0 && u32::from(width_bits) < op_bits {
+                let clear_mask = (!low_mask) & op_width.mask();
+                if let (
+                    Ok((clear_n, clear_immr, clear_imms)),
+                    Ok((insert_n, insert_immr, insert_imms)),
+                ) = (
+                    Self::logical_bitmask_imm(clear_mask as i64, op_width),
+                    Self::logical_bitmask_imm(extracted as i64, op_width),
+                ) {
+                    self.emit_logic_imm(
+                        dst,
+                        dst_in,
+                        0b00,
+                        clear_n,
+                        clear_immr,
+                        clear_imms,
+                        op_width,
+                    )?;
+                    return self.emit_logic_imm(
+                        dst,
+                        dst,
+                        0b01,
+                        insert_n,
+                        insert_immr,
+                        insert_imms,
+                        op_width,
+                    );
+                }
+            }
+        }
+
         let src = Self::gpr(src)?;
 
         if lsb == 0 && u32::from(width_bits) == op_bits {
@@ -25337,6 +25394,96 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_bitfield(1, 0b01, 8, 15).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn fuses_lifted_bfxil_imm_source_as_and_orr() {
+        let extracted = VReg::virt(0);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Bfx {
+                dst: extracted,
+                src: VReg::Imm(0x3c0),
+                lsb: 4,
+                width_bits: 8,
+                sign_extend: false,
+                op_width: OpWidth::W64,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Bfi {
+                dst: x(0),
+                dst_in: x(1),
+                src: extracted,
+                lsb: 0,
+                width_bits: 8,
+                op_width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let clear_mask = (!0xff_u64) & OpWidth::W64.mask();
+        let (clear_n, clear_immr, clear_imms) =
+            Aarch64Lowerer::logical_bitmask_imm(clear_mask as i64, OpWidth::W64).unwrap();
+        let (insert_n, insert_immr, insert_imms) =
+            Aarch64Lowerer::logical_bitmask_imm(0x3c, OpWidth::W64).unwrap();
+        let mut expected = Vec::new();
+        expected.extend_from_slice(
+            &enc_logical_imm(1, 0b00, clear_n, clear_immr, clear_imms, 0, 1)
+                .to_le_bytes(),
+        );
+        expected.extend_from_slice(
+            &enc_logical_imm(1, 0b01, insert_n, insert_immr, insert_imms, 0, 0)
+                .to_le_bytes(),
+        );
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn fuses_lifted_full_width_bfxil_imm_source_as_movn() {
+        let extracted = VReg::virt(0);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Bfx {
+                dst: extracted,
+                src: VReg::Imm(-1),
+                lsb: 0,
+                width_bits: 64,
+                sign_extend: false,
+                op_width: OpWidth::W64,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Bfi {
+                dst: x(0),
+                dst_in: x(1),
+                src: extracted,
+                lsb: 0,
+                width_bits: 64,
+                op_width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(1, 0b00, 0, 0, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
