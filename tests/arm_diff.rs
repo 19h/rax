@@ -1838,6 +1838,58 @@ fn push_shl_imm_movn_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_shr_imm_movn_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xeeee_ffff_0000_1111;
+    st.x[1] = 0xffff_ffff_ffff_ffff;
+    st.pstate = 0xd000_0000;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Shr {
+        dst: arm_x(0),
+        src: VReg::Imm(-1),
+        amount: SrcOperand::Imm(0),
+        width: OpWidth::W32,
+        flags: FlagUpdate::None,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("shr_w_imm_src_all_ones_as_movn_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "shr_w_imm_src_all_ones_as_movn_preserves_flags".into(),
+        [enc_bitfield(0, 0b10, 0, 31), NOP, NOP],
+        lowered,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xffff_0000_1111_2222;
+    st.x[1] = 0xffff_ffff_ffff_ffff;
+    st.pstate = 0x4000_0000;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Shr {
+        dst: arm_x(0),
+        src: VReg::Imm(-1),
+        amount: SrcOperand::Imm(0),
+        width: OpWidth::W64,
+        flags: FlagUpdate::None,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("shr_x_imm_src_all_ones_as_movn_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "shr_x_imm_src_all_ones_as_movn_preserves_flags".into(),
+        [enc_bitfield(1, 0b10, 0, 63), NOP, NOP],
+        lowered,
+        st,
+    ));
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_rbit_imm_movn_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -8559,6 +8611,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_ror_imm_movn_native_cases(&mut cases, control_target);
     push_rol_imm_movn_native_cases(&mut cases, control_target);
     push_shl_imm_movn_native_cases(&mut cases, control_target);
+    push_shr_imm_movn_native_cases(&mut cases, control_target);
     push_rbit_imm_movn_native_cases(&mut cases, control_target);
     push_bswap_imm_movn_native_cases(&mut cases, control_target);
     push_rev16_imm_movn_native_cases(&mut cases, control_target);
