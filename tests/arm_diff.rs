@@ -3723,6 +3723,109 @@ fn push_andnot_all_ones_left_shifted_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_andnot_all_ones_left_extended_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let test_cases = [
+        (
+            "bic_x_all_ones_left_imm_uxtw_opkind_preserves_flags",
+            OpKind::AndNot {
+                dst: arm_x(0),
+                src1: VReg::Imm(-1),
+                src2: SrcOperand::Extended {
+                    reg: arm_x(2),
+                    extend: ExtendOp::Uxtw,
+                    shift: 0,
+                },
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            [
+                enc_addsub_ext_regs(1, 0, 0, 0b010, 0, RD, 31, RM),
+                enc_logical_shift_regs(1, 0b01, 0, 1, 0, RD, 31, RD),
+                NOP,
+            ],
+            [
+                enc_addsub_ext_regs(1, 0, 0, 0b010, 0, RD, 31, RM),
+                enc_logical_shift_regs(1, 0b01, 0, 1, 0, RD, 31, RD),
+                0xd65f_03c0,
+            ],
+            0x2a2a_3a3a_4a4a_5a5a,
+            0xffff_ffff_0000_0100,
+            0x9000_0000,
+        ),
+        (
+            "bic_x_all_ones_left_imm_sxtw_lsl2_opkind_preserves_flags",
+            OpKind::AndNot {
+                dst: arm_x(0),
+                src1: VReg::Imm(-1),
+                src2: SrcOperand::Extended {
+                    reg: arm_x(2),
+                    extend: ExtendOp::Sxtw,
+                    shift: 2,
+                },
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            [
+                enc_addsub_ext_regs(1, 0, 0, 0b110, 2, RD, 31, RM),
+                enc_logical_shift_regs(1, 0b01, 0, 1, 0, RD, 31, RD),
+                NOP,
+            ],
+            [
+                enc_addsub_ext_regs(1, 0, 0, 0b110, 2, RD, 31, RM),
+                enc_logical_shift_regs(1, 0b01, 0, 1, 0, RD, 31, RD),
+                0xd65f_03c0,
+            ],
+            0x2b2b_3b3b_4b4b_5b5b,
+            0x0000_0000_ffff_ffff,
+            0x5000_0000,
+        ),
+        (
+            "bic_w_masked_all_ones_left_imm_uxtb_lsl1_opkind_zero_ext_preserves_flags",
+            OpKind::AndNot {
+                dst: arm_x(0),
+                src1: VReg::Imm(0x1_ffff_ffff),
+                src2: SrcOperand::Extended {
+                    reg: arm_x(2),
+                    extend: ExtendOp::Uxtb,
+                    shift: 1,
+                },
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+            [
+                enc_addsub_ext_regs(0, 0, 0, 0b000, 1, RD, 31, RM),
+                enc_logical_shift_regs(0, 0b01, 0, 1, 0, RD, 31, RD),
+                NOP,
+            ],
+            [
+                enc_addsub_ext_regs(0, 0, 0, 0b000, 1, RD, 31, RM),
+                enc_logical_shift_regs(0, 0b01, 0, 1, 0, RD, 31, RD),
+                0xd65f_03c0,
+            ],
+            0xffff_ffff_2c2c_3c3c,
+            0xffff_ffff_ffff_ff0f,
+            0xd000_0000,
+        ),
+    ];
+
+    for (name, op, source, expected_lowered, x0, x2, pstate) in test_cases {
+        let mut st = ArmState::zeroed();
+        st.pc = PCREL_MAGIC;
+        st.x[30] = pcrel_marker(control_target);
+        st.x[0] = x0;
+        st.x[2] = x2;
+        st.pstate = pstate;
+        let lowered = lower_aarch64_native_ops(vec![op])
+            .unwrap_or_else(|e| panic!("{name}: native lowering failed: {e}"));
+        assert_eq!(lowered, expected_lowered, "{name}: unexpected lowering");
+        cases.push((name.into(), source, lowered, st));
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_and_all_ones_left_shifted_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -13881,6 +13984,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_and_all_ones_left_imm_reg_native_cases(&mut cases, control_target);
     push_andnot_all_ones_left_imm_reg_native_cases(&mut cases, control_target);
     push_andnot_all_ones_left_shifted_native_cases(&mut cases, control_target);
+    push_andnot_all_ones_left_extended_native_cases(&mut cases, control_target);
     push_and_all_ones_left_shifted_native_cases(&mut cases, control_target);
     push_and_all_ones_left_extended_native_cases(&mut cases, control_target);
     push_test_all_ones_left_imm_native_cases(&mut cases, control_target);
