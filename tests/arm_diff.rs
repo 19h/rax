@@ -3119,6 +3119,57 @@ fn push_mul_one_same_reg_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_mul_zero_source_reg_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let mul_zero_cases = [
+        (
+            "mulu_x_zero_source_reg_as_movz_preserves_flags",
+            OpKind::MulU {
+                dst_lo: arm_x(0),
+                dst_hi: None,
+                src1: arm_x(1),
+                src2: SrcOperand::Reg(VReg::Imm(0)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            [enc_dp3_ra_regs(1, 0b000, 0, 0, 1, 31, 31), NOP, NOP],
+            0x0123_4567_89ab_cdef,
+            0xfedc_ba98_7654_3210,
+            0x2000_0000,
+        ),
+        (
+            "muls_w_zero_source_reg_as_movz_zero_ext_preserves_flags",
+            OpKind::MulS {
+                dst_lo: arm_x(0),
+                dst_hi: None,
+                src1: arm_x(1),
+                src2: SrcOperand::Reg(VReg::Imm(0)),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+            [enc_dp3_ra_regs(0, 0b000, 0, 0, 1, 31, 31), NOP, NOP],
+            0xffff_ffff_89ab_cdef,
+            0x0f0f_f0f0_aaaa_5555,
+            0x9000_0000,
+        ),
+    ];
+
+    for (name, op, source, x0, x1, pstate) in mul_zero_cases {
+        let mut st = ArmState::zeroed();
+        st.pc = PCREL_MAGIC;
+        st.x[30] = pcrel_marker(control_target);
+        st.x[0] = x0;
+        st.x[1] = x1;
+        st.pstate = pstate;
+        let lowered = lower_aarch64_native_ops(vec![op])
+            .unwrap_or_else(|e| panic!("{name}: native lowering failed: {e}"));
+        cases.push((name.into(), source, lowered, st));
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_lea_absolute_movn_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -10296,6 +10347,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_shift_zero_same_reg_native_cases(&mut cases, control_target);
     push_double_shift_zero_count_native_cases(&mut cases, control_target);
     push_mul_one_same_reg_native_cases(&mut cases, control_target);
+    push_mul_zero_source_reg_native_cases(&mut cases, control_target);
     push_lea_absolute_movn_native_cases(&mut cases, control_target);
     push_lea_pcrel_movn_native_cases(&mut cases, control_target);
     push_bfi_full_width_movn_native_cases(&mut cases, control_target);
