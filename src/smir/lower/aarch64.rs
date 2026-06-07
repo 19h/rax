@@ -2955,9 +2955,19 @@ impl Aarch64Lowerer {
         if matches!(width, OpWidth::W32 | OpWidth::W64) {
             if let VReg::Imm(value) = src1 {
                 if (value as u64 & width.mask()) == width.mask() {
-                    if let SrcOperand::Reg(src) = src2 {
-                        let src = Self::gpr(*src)?;
-                        return self.emit_logic_reg_n(31, src, src, 0b11, false, width);
+                    match src2 {
+                        SrcOperand::Reg(src) => {
+                            let src = Self::gpr(*src)?;
+                            return self.emit_logic_reg_n(31, src, src, 0b11, false, width);
+                        }
+                        SrcOperand::Shifted { .. } => {
+                            let (src, shift, amount) = Self::addsub_src2(src2, width)?;
+                            // 0 + shifted_src sets N/Z from shifted_src and clears C/V.
+                            return self.emit_addsub_shifted(
+                                31, 31, src, false, true, shift, amount, width,
+                            );
+                        }
+                        _ => {}
                     }
                 }
             }
@@ -18476,6 +18486,64 @@ mod tests {
                     width: OpWidth::W32,
                 },
                 enc_logical_reg_n(0, 0b11, 0, 31, 2, 2),
+            ),
+        ];
+
+        for (kind, expected_word) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            expected.extend_from_slice(&expected_word.to_le_bytes());
+            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+            assert_eq!(code, expected);
+        }
+    }
+
+    #[test]
+    fn lowers_test_all_ones_left_imm_shifted_as_adds_zero_base() {
+        let cases = [
+            (
+                OpKind::Test {
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Shifted {
+                        reg: x(2),
+                        shift: ShiftOp::Lsl,
+                        amount: 4,
+                    },
+                    width: OpWidth::W64,
+                },
+                enc_addsub_shift_regs(1, 0, 1, 0, 4, 31, 31, 2),
+            ),
+            (
+                OpKind::Test {
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Shifted {
+                        reg: x(2),
+                        shift: ShiftOp::Lsr,
+                        amount: 8,
+                    },
+                    width: OpWidth::W64,
+                },
+                enc_addsub_shift_regs(1, 0, 1, 1, 8, 31, 31, 2),
+            ),
+            (
+                OpKind::Test {
+                    src1: VReg::Imm(0x1_ffff_ffff),
+                    src2: SrcOperand::Shifted {
+                        reg: x(2),
+                        shift: ShiftOp::Asr,
+                        amount: 31,
+                    },
+                    width: OpWidth::W32,
+                },
+                enc_addsub_shift_regs(0, 0, 1, 2, 31, 31, 31, 2),
             ),
         ];
 
