@@ -284,10 +284,30 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-    fn emit_movn_zero(&mut self, dst: u8, width: OpWidth) -> Result<(), LowerError> {
+    fn emit_movn_imm16(&mut self, dst: u8, imm16: u32, width: OpWidth) -> Result<(), LowerError> {
         let sf = Self::sf(width)?;
-        self.emit((sf << 31) | (0b100101 << 23) | (dst as u32));
+        self.emit(
+            (sf << 31) | (0b100101 << 23) | ((imm16 & 0xffff) << 5) | (dst as u32),
+        );
         Ok(())
+    }
+
+    fn emit_movn_zero(&mut self, dst: u8, width: OpWidth) -> Result<(), LowerError> {
+        self.emit_movn_imm16(dst, 0, width)
+    }
+
+    fn try_emit_movn_single(
+        &mut self,
+        dst: u8,
+        bits: u64,
+        width: OpWidth,
+    ) -> Result<bool, LowerError> {
+        let mask = width.mask();
+        if (bits | 0xffff) == mask {
+            self.emit_movn_imm16(dst, (!bits & 0xffff) as u32, width)?;
+            return Ok(true);
+        }
+        Ok(false)
     }
 
     fn emit_addsub_shifted(
@@ -1986,6 +2006,14 @@ impl Aarch64Lowerer {
                 } else {
                     *imm
                 };
+                let bits = match width {
+                    OpWidth::W32 => u64::from(value as u32),
+                    OpWidth::W64 => value as u64,
+                    _ => unreachable!(),
+                };
+                if subtract && self.try_emit_movn_single(dst, bits, width)? {
+                    return Ok(());
+                }
                 return self.emit_mov_imm(dst, value, width);
             }
         }
@@ -7693,7 +7721,7 @@ mod tests {
     }
 
     #[test]
-    fn lowers_sub_w_zero_base_imm_as_mov_imm() {
+    fn lowers_sub_w_zero_base_imm_as_movn() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(
             0,
@@ -7713,8 +7741,33 @@ mod tests {
         let code = lowerer.finalize().unwrap();
 
         let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 0xffcc, 0).to_le_bytes());
-        expected.extend_from_slice(&enc_mov_wide(0, 0b11, 1, 0xffff, 0).to_le_bytes());
+        expected.extend_from_slice(&enc_mov_wide(0, 0b00, 0, 0x33, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_sub_x_zero_base_imm_as_movn() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Sub {
+                dst: x(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Imm(0x34),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(1, 0b00, 0, 0x33, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
