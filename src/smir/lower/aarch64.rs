@@ -5237,6 +5237,23 @@ impl Aarch64Lowerer {
             });
         }
 
+        if matches!(
+            shift,
+            ShiftOp::Lsl | ShiftOp::Lsr | ShiftOp::Asr | ShiftOp::Ror
+        ) && src == VReg::Imm(0)
+        {
+            let emit_width = match width {
+                OpWidth::W8 | OpWidth::W16 | OpWidth::W32 => OpWidth::W32,
+                OpWidth::W64 => OpWidth::W64,
+                other => {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("AArch64 native zero-source shift width {other:?}"),
+                    });
+                }
+            };
+            return self.emit_mov_imm_best(Self::dst_gpr(dst)?, 0, emit_width);
+        }
+
         if shift == ShiftOp::Lsl {
             if let (VReg::Imm(value), Some(amount)) = (src, Self::src_imm(amount)) {
                 let emit_width = match width {
@@ -12655,6 +12672,68 @@ mod tests {
             for word in expected_words {
                 expected.extend_from_slice(&word.to_le_bytes());
             }
+            assert_eq!(code, expected);
+        }
+    }
+
+    #[test]
+    fn lowers_zero_imm_source_reg_count_shifts_as_movz() {
+        let cases = [
+            (
+                OpKind::Shl {
+                    dst: x(0),
+                    src: VReg::Imm(0),
+                    amount: SrcOperand::Reg(x(2)),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+                enc_mov_wide(0, 0b10, 0, 0, 0),
+            ),
+            (
+                OpKind::Shr {
+                    dst: x(1),
+                    src: VReg::Imm(0),
+                    amount: SrcOperand::Reg(x(2)),
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::None,
+                },
+                enc_mov_wide(0, 0b10, 0, 0, 1),
+            ),
+            (
+                OpKind::Sar {
+                    dst: x(2),
+                    src: VReg::Imm(0),
+                    amount: SrcOperand::Reg(x(3)),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::None,
+                },
+                enc_mov_wide(0, 0b10, 0, 0, 2),
+            ),
+            (
+                OpKind::Ror {
+                    dst: x(3),
+                    src: VReg::Imm(0),
+                    amount: SrcOperand::Reg(x(2)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                enc_mov_wide(1, 0b10, 0, 0, 3),
+            ),
+        ];
+
+        for (kind, expected_word) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            expected.extend_from_slice(&expected_word.to_le_bytes());
+            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
             assert_eq!(code, expected);
         }
     }
