@@ -2524,6 +2524,32 @@ fn push_logical_zero_base_reg_native_cases(
             0x3000_0000,
         ),
         (
+            "bic_x_zero_source_same_dst_as_noop_preserves_flags",
+            OpKind::AndNot {
+                dst: arm_x(0),
+                src1: arm_x(0),
+                src2: SrcOperand::Reg(VReg::Imm(0)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            [enc_logical_shift_regs(1, 0b00, 0, 1, 0, 0, 0, 31), NOP, NOP],
+            0x1357_9bdf_2468_ace0,
+            0xc000_0000,
+        ),
+        (
+            "bic_w_zero_source_same_dst_as_self_mov_zero_ext_preserves_flags",
+            OpKind::AndNot {
+                dst: arm_x(0),
+                src1: arm_x(0),
+                src2: SrcOperand::Reg(VReg::Imm(0)),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+            [enc_logical_shift_regs(0, 0b00, 0, 1, 0, 0, 0, 31), NOP, NOP],
+            0xffff_ffff_89ab_cdef,
+            0x8000_0000,
+        ),
+        (
             "orr_x_zero_base_same_dst_as_noop_preserves_flags",
             OpKind::Or {
                 dst: arm_x(0),
