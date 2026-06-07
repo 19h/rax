@@ -2056,6 +2056,66 @@ fn push_rev16_imm_movn_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_rev32_imm_movn_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xdddd_eeee_ffff_0000;
+    st.x[1] = 0xffff_ffff_ffff_ffff;
+    st.pstate = 0xb000_0000;
+    let lo_rev = VReg::virt(0);
+    let hi = VReg::virt(1);
+    let hi_rev = VReg::virt(2);
+    let hi_shifted = VReg::virt(3);
+    let src = VReg::Imm(-1);
+    let lowered = lower_aarch64_native_ops_same_pc(vec![
+        OpKind::Bswap {
+            dst: lo_rev,
+            src,
+            width: OpWidth::W32,
+        },
+        OpKind::Shr {
+            dst: hi,
+            src,
+            amount: SrcOperand::Imm(32),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        },
+        OpKind::Bswap {
+            dst: hi_rev,
+            src: hi,
+            width: OpWidth::W32,
+        },
+        OpKind::Shl {
+            dst: hi_shifted,
+            src: hi_rev,
+            amount: SrcOperand::Imm(32),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        },
+        OpKind::Or {
+            dst: arm_x(0),
+            src1: hi_shifted,
+            src2: SrcOperand::Reg(lo_rev),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        },
+    ])
+    .unwrap_or_else(|e| {
+        panic!("rev32_x_lifted_imm_all_ones_as_movn_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "rev32_x_lifted_imm_all_ones_as_movn_preserves_flags".into(),
+        [enc_dp1(1, 0b000010), NOP, NOP],
+        lowered,
+        st,
+    ));
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn enc_csel(sf: u32, cond: u32) -> u32 {
     enc_csel_form(sf, 0, 0, RN, RM, cond)
 }
@@ -8325,6 +8385,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_rbit_imm_movn_native_cases(&mut cases, control_target);
     push_bswap_imm_movn_native_cases(&mut cases, control_target);
     push_rev16_imm_movn_native_cases(&mut cases, control_target);
+    push_rev32_imm_movn_native_cases(&mut cases, control_target);
 
     let mut st = native_state();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
