@@ -2471,13 +2471,27 @@ impl Aarch64Lowerer {
             });
         }
 
+        if let VReg::Imm(value) = src {
+            let emit_width = match width {
+                OpWidth::W8 | OpWidth::W16 | OpWidth::W32 => OpWidth::W32,
+                OpWidth::W64 => OpWidth::W64,
+                other => {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("AArch64 native Inc/Dec width {other:?}"),
+                    });
+                }
+            };
+            let value = (value as u64) & width.mask();
+            let result = if decrement {
+                value.wrapping_sub(1)
+            } else {
+                value.wrapping_add(1)
+            } & width.mask();
+            return self.emit_mov_imm(Self::dst_gpr(dst)?, result as i64, emit_width);
+        }
+
         if matches!(width, OpWidth::W8 | OpWidth::W16) {
             let dst = Self::dst_gpr(dst)?;
-            if src == VReg::Imm(0) {
-                let imm = if decrement { width.mask() } else { 1 };
-                return self.emit_mov_imm(dst, imm as i64, OpWidth::W32);
-            }
-
             self.emit_addsub_imm(dst, Self::gpr(src)?, 1, decrement, false, OpWidth::W32)?;
             let imms = if width == OpWidth::W8 { 7 } else { 15 };
             return self.emit_bitfield(dst, dst, 0b10, 0, imms, OpWidth::W32);
@@ -7881,6 +7895,31 @@ mod tests {
     }
 
     #[test]
+    fn lowers_inc_w8_imm_wrap_as_movz_zero() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Inc {
+                dst: x(0),
+                src: VReg::Imm(0xff),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
     fn lowers_dec_w16_as_sub_uxth() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(
@@ -7927,6 +7966,31 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 0xffff, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_dec_x_imm_as_movz() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Dec {
+                dst: x(0),
+                src: VReg::Imm(17),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(1, 0b10, 0, 16, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
