@@ -3141,6 +3141,181 @@ fn push_logical_zero_base_reg_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_logical_zero_base_extended_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let logical_cases = [
+        (
+            "and_x_zero_base_uxtw_extended_as_movz_zero_preserves_flags",
+            OpKind::And {
+                dst: arm_x(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Extended {
+                    reg: arm_x(2),
+                    extend: ExtendOp::Uxtw,
+                    shift: 0,
+                },
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            [enc_mov_wide(1, 0b10, 0, 0), NOP, NOP],
+            [enc_mov_wide(1, 0b10, 0, 0), 0xd65f_03c0, NOP],
+            0x5151_6161_7171_8181,
+            0xffff_ffff_0000_0100,
+            0xe000_0000,
+        ),
+        (
+            "bic_w_zero_base_sxtb_lsl1_extended_as_movz_zero_preserves_flags",
+            OpKind::AndNot {
+                dst: arm_x(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Extended {
+                    reg: arm_x(2),
+                    extend: ExtendOp::Sxtb,
+                    shift: 1,
+                },
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+            [enc_mov_wide(0, 0b10, 0, 0), NOP, NOP],
+            [enc_mov_wide(0, 0b10, 0, 0), 0xd65f_03c0, NOP],
+            0xffff_ffff_5252_6262,
+            0xffff_ffff_ffff_ff80,
+            0x3000_0000,
+        ),
+        (
+            "ands_x_zero_base_sxtw_lsl2_extended_sets_zero_flags",
+            OpKind::And {
+                dst: arm_x(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Extended {
+                    reg: arm_x(2),
+                    extend: ExtendOp::Sxtw,
+                    shift: 2,
+                },
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+            [enc_logical_shift_regs(1, 0b11, 0, 0, 0, RD, 31, 31), NOP, NOP],
+            [
+                enc_logical_shift_regs(1, 0b11, 0, 0, 0, RD, 31, 31),
+                0xd65f_03c0,
+                NOP,
+            ],
+            0x5353_6363_7373_8383,
+            0x0000_0000_ffff_ffff,
+            0xf000_0000,
+        ),
+        (
+            "orr_x_zero_base_uxtw_extended_preserves_flags",
+            OpKind::Or {
+                dst: arm_x(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Extended {
+                    reg: arm_x(2),
+                    extend: ExtendOp::Uxtw,
+                    shift: 0,
+                },
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            [enc_addsub_ext_regs(1, 0, 0, 0b010, 0, RD, 31, RM), NOP, NOP],
+            [
+                enc_addsub_ext_regs(1, 0, 0, 0b010, 0, RD, 31, RM),
+                0xd65f_03c0,
+                NOP,
+            ],
+            0x5454_6464_7474_8484,
+            0xffff_ffff_0000_0100,
+            0x5000_0000,
+        ),
+        (
+            "eor_w_zero_base_uxtb_lsl1_extended_preserves_flags",
+            OpKind::Xor {
+                dst: arm_x(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Extended {
+                    reg: arm_x(2),
+                    extend: ExtendOp::Uxtb,
+                    shift: 1,
+                },
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+            [enc_addsub_ext_regs(0, 0, 0, 0b000, 1, RD, 31, RM), NOP, NOP],
+            [
+                enc_addsub_ext_regs(0, 0, 0, 0b000, 1, RD, 31, RM),
+                0xd65f_03c0,
+                NOP,
+            ],
+            0xffff_ffff_5555_6565,
+            0xffff_ffff_ffff_ff80,
+            0x9000_0000,
+        ),
+        (
+            "orrs_x_zero_base_sxtw_lsl2_extended_sets_flags",
+            OpKind::Or {
+                dst: arm_x(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Extended {
+                    reg: arm_x(2),
+                    extend: ExtendOp::Sxtw,
+                    shift: 2,
+                },
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+            [enc_addsub_ext_regs(1, 0, 1, 0b110, 2, RD, 31, RM), NOP, NOP],
+            [
+                enc_addsub_ext_regs(1, 0, 0, 0b110, 2, RD, 31, RM),
+                enc_logical_shift_regs(1, 0b11, 0, 0, 0, 31, RD, RD),
+                0xd65f_03c0,
+            ],
+            0x5656_6666_7676_8686,
+            0x0000_0000_ffff_ffff,
+            0x1000_0000,
+        ),
+        (
+            "eors_w_zero_base_uxtb_lsl1_extended_sets_flags",
+            OpKind::Xor {
+                dst: arm_x(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Extended {
+                    reg: arm_x(2),
+                    extend: ExtendOp::Uxtb,
+                    shift: 1,
+                },
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+            [enc_addsub_ext_regs(0, 0, 1, 0b000, 1, RD, 31, RM), NOP, NOP],
+            [
+                enc_addsub_ext_regs(0, 0, 0, 0b000, 1, RD, 31, RM),
+                enc_logical_shift_regs(0, 0b11, 0, 0, 0, 31, RD, RD),
+                0xd65f_03c0,
+            ],
+            0xffff_ffff_5757_6767,
+            0,
+            0xa000_0000,
+        ),
+    ];
+
+    for (name, op, source, expected_lowered, x0, x2, pstate) in logical_cases {
+        let mut st = ArmState::zeroed();
+        st.pc = PCREL_MAGIC;
+        st.x[30] = pcrel_marker(control_target);
+        st.x[0] = x0;
+        st.x[2] = x2;
+        st.pstate = pstate;
+        let lowered = lower_aarch64_native_ops(vec![op])
+            .unwrap_or_else(|e| panic!("{name}: native lowering failed: {e}"));
+        assert_eq!(lowered, expected_lowered, "{name}: unexpected lowering");
+        cases.push((name.into(), source, lowered, st));
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_test_zero_imm_operand_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -13485,6 +13660,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_xchg_same_reg_native_cases(&mut cases, control_target);
     push_logical_identity_same_reg_native_cases(&mut cases, control_target);
     push_logical_zero_base_reg_native_cases(&mut cases, control_target);
+    push_logical_zero_base_extended_native_cases(&mut cases, control_target);
     push_test_zero_imm_operand_native_cases(&mut cases, control_target);
     push_and_all_ones_left_imm_reg_native_cases(&mut cases, control_target);
     push_and_all_ones_left_shifted_native_cases(&mut cases, control_target);

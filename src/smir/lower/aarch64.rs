@@ -2341,6 +2341,27 @@ impl Aarch64Lowerer {
             }
         }
 
+        if let VReg::Imm(imm) = src1 {
+            let (_, value, _) = Self::logical_imm_value(imm, width)?;
+            if value == 0 {
+                if let SrcOperand::Extended { .. } = src2 {
+                    let dst = Self::dst_or_zero_for_flags(dst, set_flags)?;
+                    if opc == 0b00 || (set_flags && opc == 0b11) {
+                        if set_flags {
+                            return self.emit_logic_reg_n(dst, 31, 31, 0b11, false, width);
+                        }
+                        return self.emit_mov_imm(dst, 0, width);
+                    }
+                    if !n && matches!(opc, 0b01 | 0b10) {
+                        let (src, option, amount) = Self::addsub_ext_src2(src2)?;
+                        return self.emit_addsub_extended(
+                            dst, 31, src, false, false, option, amount, width,
+                        );
+                    }
+                }
+            }
+        }
+
         if !set_flags {
             if let SrcOperand::Reg(reg) = src2 {
                 let dst = Self::dst_gpr(dst)?;
@@ -18045,6 +18066,144 @@ mod tests {
                     flags: FlagUpdate::None,
                 },
                 vec![enc_mov_reg(1, 0, 1), 0xd65f_03c0u32],
+            ),
+        ];
+
+        for (kind, expected_words) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            for word in expected_words {
+                expected.extend_from_slice(&word.to_le_bytes());
+            }
+            assert_eq!(code, expected);
+        }
+    }
+
+    #[test]
+    fn lowers_logical_zero_base_extended_as_zero_or_add_zero_base() {
+        let cases = [
+            (
+                OpKind::And {
+                    dst: x(0),
+                    src1: VReg::Imm(0),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Uxtw,
+                        shift: 0,
+                    },
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                vec![enc_mov_wide(1, 0b10, 0, 0, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::AndNot {
+                    dst: x(0),
+                    src1: VReg::Imm(0),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Sxtb,
+                        shift: 1,
+                    },
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+                vec![enc_mov_wide(0, 0b10, 0, 0, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::And {
+                    dst: x(0),
+                    src1: VReg::Imm(0),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Sxtw,
+                        shift: 2,
+                    },
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                vec![
+                    enc_logical_reg_n(1, 0b11, 0, 0, 31, 31),
+                    0xd65f_03c0u32,
+                ],
+            ),
+            (
+                OpKind::Or {
+                    dst: x(0),
+                    src1: VReg::Imm(0),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Uxtw,
+                        shift: 0,
+                    },
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                vec![
+                    enc_addsub_ext_regs(1, 0, 0, 0b010, 0, 0, 31, 2),
+                    0xd65f_03c0u32,
+                ],
+            ),
+            (
+                OpKind::Xor {
+                    dst: x(0),
+                    src1: VReg::Imm(0),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Uxtb,
+                        shift: 1,
+                    },
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+                vec![
+                    enc_addsub_ext_regs(0, 0, 0, 0b000, 1, 0, 31, 2),
+                    0xd65f_03c0u32,
+                ],
+            ),
+            (
+                OpKind::Or {
+                    dst: x(0),
+                    src1: VReg::Imm(0),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Sxtw,
+                        shift: 2,
+                    },
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                vec![
+                    enc_addsub_ext_regs(1, 0, 0, 0b110, 2, 0, 31, 2),
+                    enc_logical_reg_n(1, 0b11, 0, 31, 0, 0),
+                    0xd65f_03c0u32,
+                ],
+            ),
+            (
+                OpKind::Xor {
+                    dst: x(0),
+                    src1: VReg::Imm(0),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Uxtb,
+                        shift: 1,
+                    },
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::All,
+                },
+                vec![
+                    enc_addsub_ext_regs(0, 0, 0, 0b000, 1, 0, 31, 2),
+                    enc_logical_reg_n(0, 0b11, 0, 31, 0, 0),
+                    0xd65f_03c0u32,
+                ],
             ),
         ];
 
