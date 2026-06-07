@@ -2278,6 +2278,9 @@ impl Aarch64Lowerer {
                     }
                     return self.emit_mov_reg(dst, rn, width);
                 }
+                if opc == 0b10 && rn == rm {
+                    return self.emit_mov_imm(dst, 0, width);
+                }
                 if matches!(opc, 0b01 | 0b10) && rn == 31 {
                     if width == OpWidth::W64 && dst == rm {
                         return Ok(());
@@ -15490,6 +15493,48 @@ mod tests {
 
             let mut expected = Vec::new();
             expected.extend_from_slice(&enc_mov_reg(0, 0, 0).to_le_bytes());
+            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+            assert_eq!(code, expected);
+        }
+    }
+
+    #[test]
+    fn lowers_xor_reg_same_srcs_as_movz_zero() {
+        let cases = [
+            (
+                OpKind::Xor {
+                    dst: x(0),
+                    src1: x(0),
+                    src2: SrcOperand::Reg(x(0)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                1,
+            ),
+            (
+                OpKind::Xor {
+                    dst: x(0),
+                    src1: x(0),
+                    src2: SrcOperand::Reg(x(0)),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+                0,
+            ),
+        ];
+
+        for (kind, sf) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            expected.extend_from_slice(&enc_mov_wide(sf, 0b10, 0, 0, 0).to_le_bytes());
             expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
             assert_eq!(code, expected);
         }
