@@ -3409,6 +3409,41 @@ impl Aarch64Lowerer {
         if src2 == VReg::Imm(-1) {
             return self.lower_addsub(dst, acc, &as_src_operand(src1), !subtract, false, width);
         }
+        let shifted_factor = |factor, other| {
+            let VReg::Imm(imm) = factor else {
+                return None;
+            };
+            if matches!(other, VReg::Imm(_)) {
+                return None;
+            }
+            let multiplier = (imm as u64) & width.mask();
+            if multiplier.is_power_of_two() && multiplier > 1 {
+                Some((other, multiplier.trailing_zeros()))
+            } else {
+                None
+            }
+        };
+        if let Some((reg, amount)) =
+            shifted_factor(src1, src2).or_else(|| shifted_factor(src2, src1))
+        {
+            let dst = Self::dst_gpr(dst)?;
+            let rn = Self::gpr(acc)?;
+            let rm = Self::gpr(reg)?;
+            let emit_width = match width {
+                OpWidth::W8 | OpWidth::W16 | OpWidth::W32 => OpWidth::W32,
+                OpWidth::W64 => OpWidth::W64,
+                other => {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("AArch64 native multiply-accumulate width {other:?}"),
+                    });
+                }
+            };
+            self.emit_addsub_shifted(dst, rn, rm, subtract, false, 0, amount, emit_width)?;
+            if matches!(width, OpWidth::W8 | OpWidth::W16) {
+                return self.emit_bitfield(dst, dst, 0b10, 0, width.bits() - 1, OpWidth::W32);
+            }
+            return Ok(());
+        }
 
         let dst = Self::dst_gpr(dst)?;
         let rn = Self::gpr(src1)?;
@@ -8432,6 +8467,59 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 15, 3, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_muladd_x_imm_power_of_two_as_add_shifted() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::MulAdd {
+                dst: x(0),
+                acc: x(3),
+                src1: VReg::Imm(8),
+                src2: x(1),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_addsub_shift_regs(1, 0, 0, 0, 3, 0, 3, 1).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_mulsub_w16_imm_masked_power_of_two_as_sub_shifted_uxth() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::MulSub {
+                dst: x(0),
+                acc: x(3),
+                src1: x(1),
+                src2: VReg::Imm(0x1_0004),
+                width: OpWidth::W16,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_addsub_shift_regs(0, 1, 0, 0, 2, 0, 3, 1).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 15, 0, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }

@@ -5458,6 +5458,24 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     );
 
     let mut st = native_state();
+    st.x[0] = 0xaaaa_bbbb_cccc_dddd;
+    st.x[1] = 0x0102_0304_0506_0708;
+    st.x[3] = 0x1111_2222_3333_4444;
+    st.pstate = 0x9000_0000;
+    push_case(
+        "muladd_x_imm_power_of_two_as_add_shifted_preserves_flags",
+        enc_addsub_shift_regs(1, 0, 0, 0, 3, RD, 3, RN),
+        vec![OpKind::MulAdd {
+            dst: arm_x(0),
+            acc: arm_x(3),
+            src1: VReg::Imm(8),
+            src2: arm_x(1),
+            width: OpWidth::W64,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
     st.x[0] = 0xcccc_dddd_eeee_ffff;
     st.x[1] = 0x1122_3344_5566_7788;
     st.x[3] = 0x0102_0304_0506_0708;
@@ -5511,6 +5529,41 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
         }],
         st,
     );
+
+    let mut st = native_state();
+    st.x[0] = 0xeeee_ffff_0000_1111;
+    st.x[1] = 0x7777_8888_1234_0007;
+    st.x[3] = 0x3333_4444_5555_0100;
+    st.pstate = 0xa000_0000;
+    drop(push_case);
+    let lowered = lower_aarch64_native_ops(vec![OpKind::MulSub {
+        dst: arm_x(0),
+        acc: arm_x(3),
+        src1: arm_x(1),
+        src2: VReg::Imm(0x1_0004),
+        width: OpWidth::W16,
+    }])
+    .unwrap_or_else(|e| {
+        panic!(
+            "mulsub_w16_imm_masked_power_of_two_as_sub_shifted_uxth_preserves_flags: native lowering failed: {e}"
+        )
+    });
+    cases.push((
+        "mulsub_w16_imm_masked_power_of_two_as_sub_shifted_uxth_preserves_flags".into(),
+        [
+            enc_addsub_shift_regs(0, 1, 0, 0, 2, RD, 3, RN),
+            enc_bitfield_regs(0, 0b10, 0, 15, RD, RD),
+            NOP,
+        ],
+        lowered,
+        st,
+    ));
+
+    let mut push_case = |label: &str, source: u32, ops: Vec<OpKind>, st: ArmState| {
+        let lowered = lower_aarch64_native_ops(ops)
+            .unwrap_or_else(|e| panic!("{label}: native lowering failed: {e}"));
+        cases.push((label.into(), [source, NOP, NOP], lowered, st));
+    };
 
     let mut st = native_state();
     st.x[0] = 0xcccc_dddd_eeee_ffff;
