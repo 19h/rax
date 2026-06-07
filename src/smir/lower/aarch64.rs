@@ -2049,6 +2049,11 @@ impl Aarch64Lowerer {
         }
 
         let rn = Self::gpr(src1)?;
+        let is_zero_imm = |imm: i64| match width {
+            OpWidth::W32 => imm as u32 == 0,
+            OpWidth::W64 => imm == 0,
+            _ => false,
+        };
         if !set_flags {
             match src2 {
                 SrcOperand::Reg(reg) if *reg == VReg::Imm(0) => {
@@ -2057,7 +2062,7 @@ impl Aarch64Lowerer {
                     }
                     return self.emit_mov_reg(dst, rn, width);
                 }
-                SrcOperand::Imm(0) | SrcOperand::Imm64(0) => {
+                SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) if is_zero_imm(*imm) => {
                     if width == OpWidth::W64 && dst == rn {
                         return Ok(());
                     }
@@ -8287,6 +8292,48 @@ mod tests {
         expected.extend_from_slice(&enc_mov_wide(1, 0b10, 0, 0x1234, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_addsub_w_masked_zero_imm_as_mov_or_self_mov() {
+        let cases = [
+            (
+                OpKind::Add {
+                    dst: x(0),
+                    src1: x(0),
+                    src2: SrcOperand::Imm64(0x1_0000_0000),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+                enc_mov_reg(0, 0, 0),
+            ),
+            (
+                OpKind::Sub {
+                    dst: x(3),
+                    src1: x(1),
+                    src2: SrcOperand::Imm64(0x1_0000_0000),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+                enc_mov_reg(0, 3, 1),
+            ),
+        ];
+
+        for (kind, expected_insn) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            expected.extend_from_slice(&expected_insn.to_le_bytes());
+            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+            assert_eq!(code, expected);
+        }
     }
 
     #[test]

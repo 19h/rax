@@ -3083,6 +3083,56 @@ fn push_addsub_zero_same_reg_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_addsub_masked_zero_imm_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let addsub_cases = [
+        (
+            "add_w_masked_zero_imm_same_reg_as_self_mov_zero_ext_preserves_flags",
+            OpKind::Add {
+                dst: arm_x(0),
+                src1: arm_x(0),
+                src2: SrcOperand::Imm64(0x1_0000_0000),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+            enc_mov_reg(0, RD, RD),
+            0xffff_ffff_8000_0001,
+            0xb000_0000,
+        ),
+        (
+            "sub_w_masked_zero_imm_as_mov_zero_ext_preserves_flags",
+            OpKind::Sub {
+                dst: arm_x(3),
+                src1: arm_x(1),
+                src2: SrcOperand::Imm64(0x1_0000_0000),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+            enc_mov_reg(0, 3, RN),
+            0xffff_ffff_8765_4321,
+            0x4000_0000,
+        ),
+    ];
+
+    for (name, op, source, x0_or_x1, pstate) in addsub_cases {
+        let mut st = ArmState::zeroed();
+        st.pc = PCREL_MAGIC;
+        st.x[30] = pcrel_marker(control_target);
+        if matches!(&op, OpKind::Add { .. }) {
+            st.x[0] = x0_or_x1;
+        } else {
+            st.x[1] = x0_or_x1;
+        }
+        st.pstate = pstate;
+        let lowered = lower_aarch64_native_ops(vec![op])
+            .unwrap_or_else(|e| panic!("{name}: native lowering failed: {e}"));
+        cases.push((name.into(), [source, NOP, NOP], lowered, st));
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_add_zero_base_reg_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -10985,6 +11035,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_logical_zero_base_reg_native_cases(&mut cases, control_target);
     push_logical_same_source_zero_native_cases(&mut cases, control_target);
     push_addsub_zero_same_reg_native_cases(&mut cases, control_target);
+    push_addsub_masked_zero_imm_native_cases(&mut cases, control_target);
     push_add_zero_base_reg_native_cases(&mut cases, control_target);
     push_shift_zero_same_reg_native_cases(&mut cases, control_target);
     push_shift_zero_count_reg_native_cases(&mut cases, control_target);
