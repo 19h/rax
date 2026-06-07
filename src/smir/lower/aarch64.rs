@@ -3109,6 +3109,25 @@ impl Aarch64Lowerer {
         let start = (control & 0xff) as u32;
         let len = ((control >> 8) & 0xff) as u32;
         let dst = Self::dst_gpr(dst)?;
+        if let VReg::Imm(value) = src {
+            let src = (value as u64) & width.mask();
+            let result = if start >= bits || len == 0 {
+                0
+            } else {
+                let shifted = src >> start;
+                if len >= bits {
+                    shifted
+                } else {
+                    shifted & ((1_u64 << len) - 1)
+                }
+            } & width.mask();
+            self.emit_mov_imm(dst, result as i64, emit_width)?;
+            if set_flags {
+                self.lower_bmi_result_flags(dst, emit_width, false)?;
+            }
+            return Ok(());
+        }
+
         if start >= bits || len == 0 {
             self.emit_mov_imm(dst, 0, emit_width)?;
             if set_flags {
@@ -12226,6 +12245,33 @@ mod tests {
     }
 
     #[test]
+    fn lowers_bextr_x_two_imms_as_movz_movk() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Bextr {
+                dst: x(0),
+                src: VReg::Imm(0x1234_5678_9abc_def0),
+                control: VReg::Imm((32 << 8) | 16),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(1, 0b10, 0, 0x9abc, 0).to_le_bytes());
+        expected.extend_from_slice(&enc_mov_wide(1, 0b11, 1, 0x5678, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
     fn lowers_bextr_w8_imm_control_as_ubfx() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(
@@ -12247,6 +12293,32 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 2, 4, 1, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_bextr_w8_two_imms_as_movz_masked_extract() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Bextr {
+                dst: x(0),
+                src: VReg::Imm(0x1ff),
+                control: VReg::Imm((3 << 8) | 2),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 7, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
@@ -12351,6 +12423,34 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_bitfield_regs(1, 0b10, 8, 23, 1, 0).to_le_bytes());
+        expected.extend_from_slice(&enc_logical_reg_n(1, 0b11, 0, 31, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_bextr_x_two_imms_with_flags_as_movz_movk_ands() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Bextr {
+                dst: x(0),
+                src: VReg::Imm(0x1234_5678_9abc_def0),
+                control: VReg::Imm((32 << 8) | 16),
+                width: OpWidth::W64,
+                flags: bextr_flags(),
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(1, 0b10, 0, 0x9abc, 0).to_le_bytes());
+        expected.extend_from_slice(&enc_mov_wide(1, 0b11, 1, 0x5678, 0).to_le_bytes());
         expected.extend_from_slice(&enc_logical_reg_n(1, 0b11, 0, 31, 0, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);

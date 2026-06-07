@@ -5046,6 +5046,30 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
         st,
     ));
 
+    let mut st = native_state();
+    st.x[0] = 0x7777_8888_9999_aaaa;
+    st.pstate = 0xa000_0000;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Bextr {
+        dst: arm_x(0),
+        src: VReg::Imm(0x1234_5678_9abc_def0),
+        control: VReg::Imm((32 << 8) | 16),
+        width: OpWidth::W64,
+        flags: bextr_flags(),
+    }])
+    .unwrap_or_else(|e| {
+        panic!("bextr_x_two_imms_with_flags_sets_nzcv: native lowering failed: {e}")
+    });
+    cases.push((
+        "bextr_x_two_imms_with_flags_sets_nzcv".into(),
+        [
+            enc_mov_wide(1, 0b10, 0, 0x9abc),
+            enc_mov_wide(1, 0b11, 1, 0x5678),
+            enc_logical_reg_n(1, 0b11, 0, 31, RD, RD),
+        ],
+        lowered,
+        st,
+    ));
+
     let mut push_case = |label: &str, source: u32, ops: Vec<OpKind>, st: ArmState| {
         let lowered = lower_aarch64_native_ops(ops)
             .unwrap_or_else(|e| panic!("{label}: native lowering failed: {e}"));
