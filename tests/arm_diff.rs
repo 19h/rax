@@ -3803,6 +3803,52 @@ fn push_sparse_logical_imm_in_place_native_cases(
     st.x[1] = 0xffff_ffff_8000_0021;
     st.pstate = 0x7000_0000;
     cases.push((name.into(), source, lowered, st));
+
+    let name = "orr_w8_sparse_imm_in_place_as_logical_imms_zero_ext_preserves_flags";
+    let source = [
+        enc_logical_imm_regs(0, 0b01, 0, 0, 0, RN, RN),
+        enc_logical_imm_regs(0, 0b01, 0, 30, 0, RN, RN),
+        enc_bitfield_regs(0, 0b10, 0, 7, RN, RN),
+    ];
+    let expected_lowered = source;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Or {
+        dst: arm_x(1),
+        src1: arm_x(1),
+        src2: SrcOperand::Imm(0x5),
+        width: OpWidth::W8,
+        flags: FlagUpdate::None,
+    }])
+    .unwrap_or_else(|e| panic!("{name}: native lowering failed: {e}"));
+    assert_eq!(lowered, expected_lowered, "{name}: unexpected lowering");
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[1] = 0xffff_ffff_ffff_ff00;
+    st.pstate = 0x6000_0000;
+    cases.push((name.into(), source, lowered, st));
+
+    let name = "and_w16_sparse_clear_imm_in_place_as_logical_imms_zero_ext_preserves_flags";
+    let source = [
+        enc_logical_imm_regs(0, 0b00, 0, 31, 30, RN, RN),
+        enc_logical_imm_regs(0, 0b00, 0, 29, 30, RN, RN),
+        enc_bitfield_regs(0, 0b10, 0, 15, RN, RN),
+    ];
+    let expected_lowered = source;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::And {
+        dst: arm_x(1),
+        src1: arm_x(1),
+        src2: SrcOperand::Imm(!0x5),
+        width: OpWidth::W16,
+        flags: FlagUpdate::None,
+    }])
+    .unwrap_or_else(|e| panic!("{name}: native lowering failed: {e}"));
+    assert_eq!(lowered, expected_lowered, "{name}: unexpected lowering");
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[1] = 0xffff_ffff_ffff_ffff;
+    st.pstate = 0x9000_0000;
+    cases.push((name.into(), source, lowered, st));
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]

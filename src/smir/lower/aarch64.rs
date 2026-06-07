@@ -2899,7 +2899,9 @@ impl Aarch64Lowerer {
                             self.emit_logic_imm(dst, rn, opc, imm_n, immr, imms, OpWidth::W32)?;
                         }
                         Err(_) => {
-                            self.lower_materialized_subword_logic_imm(dst, rn, opc, imm)?;
+                            self.lower_materialized_subword_logic_imm(
+                                dst, rn, opc, imm, width,
+                            )?;
                         }
                     }
                 }
@@ -2930,8 +2932,39 @@ impl Aarch64Lowerer {
         rn: u8,
         opc: u32,
         imm: u64,
+        width: OpWidth,
     ) -> Result<(), LowerError> {
         if dst == rn {
+            let all_ones = width.mask();
+            if opc == 0b00 {
+                let mut remaining = (!imm) & all_ones;
+                if remaining == 0 {
+                    return Ok(());
+                }
+                if remaining.count_ones() <= 3 {
+                    while remaining != 0 {
+                        let bit = remaining.trailing_zeros();
+                        let chunk = !(1_i64 << bit);
+                        let (imm_n, immr, imms) =
+                            Self::logical_bitmask_imm(chunk, OpWidth::W32)?;
+                        self.emit_logic_imm(dst, dst, opc, imm_n, immr, imms, OpWidth::W32)?;
+                        remaining &= remaining - 1;
+                    }
+                    return Ok(());
+                }
+            }
+            if matches!(opc, 0b01 | 0b10) && imm.count_ones() <= 3 {
+                let mut remaining = imm;
+                while remaining != 0 {
+                    let bit = remaining.trailing_zeros();
+                    let chunk = 1_i64 << bit;
+                    let (imm_n, immr, imms) =
+                        Self::logical_bitmask_imm(chunk, OpWidth::W32)?;
+                    self.emit_logic_imm(dst, dst, opc, imm_n, immr, imms, OpWidth::W32)?;
+                    remaining &= remaining - 1;
+                }
+                return Ok(());
+            }
             return Err(LowerError::UnsupportedOp {
                 op: "AArch64 native materialized subword logical immediate needs dst != src1"
                     .into(),
@@ -22102,6 +22135,90 @@ mod tests {
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_logical_imm(0, 0b11, 0, 31, 30, 0, 0).to_le_bytes());
         expected.extend_from_slice(&enc_logical_imm(0, 0b11, 0, 26, 30, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_orr_w8_sparse_imm_in_place_as_logical_imms_and_uxtb() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Or {
+                dst: x(1),
+                src1: x(1),
+                src2: SrcOperand::Imm(0x5),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_logical_imm(0, 0b01, 0, 0, 0, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&enc_logical_imm(0, 0b01, 0, 30, 0, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_xor_w16_sparse_imm_in_place_as_logical_imms_and_uxth() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Xor {
+                dst: x(1),
+                src1: x(1),
+                src2: SrcOperand::Imm(0x21),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_logical_imm(0, 0b10, 0, 0, 0, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&enc_logical_imm(0, 0b10, 0, 27, 0, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 15, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_and_w16_sparse_clear_imm_in_place_as_logical_imms_and_uxth() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::And {
+                dst: x(1),
+                src1: x(1),
+                src2: SrcOperand::Imm(!0x5),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_logical_imm(0, 0b00, 0, 31, 30, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&enc_logical_imm(0, 0b00, 0, 29, 30, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 15, 1, 1).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
