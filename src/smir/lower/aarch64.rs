@@ -5458,6 +5458,20 @@ impl Aarch64Lowerer {
                 let true_src = Self::vreg_src(src_true);
                 let false_src = Self::vreg_src(src_false);
 
+                if width == OpWidth::W64 && src_true == dst {
+                    let skip_false = self.code.position();
+                    self.emit(0xb500_0000 | (cond as u32));
+                    self.lower_select_mov(dst, &false_src, width)?;
+                    return self.patch_compare_branch_to_current(skip_false, cond, true);
+                }
+
+                if width == OpWidth::W64 && src_false == dst {
+                    let skip_true = self.code.position();
+                    self.emit(0xb400_0000 | (cond as u32));
+                    self.lower_select_mov(dst, &true_src, width)?;
+                    return self.patch_compare_branch_to_current(skip_true, cond, false);
+                }
+
                 let false_branch = self.code.position();
                 self.emit(0xb400_0000 | (cond as u32));
                 self.lower_select_mov(dst, &true_src, width)?;
@@ -15894,6 +15908,60 @@ mod tests {
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_mov_reg(0, 0, 1).to_le_bytes());
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_register_select_true_arm_dst_as_cbnz_over_false_mov() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Select {
+                dst: x(0),
+                cond: x(3),
+                src_true: x(0),
+                src_false: x(1),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_cbnz(3, 2).to_le_bytes());
+        expected.extend_from_slice(&enc_mov_reg(1, 0, 1).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_register_select_false_arm_dst_as_cbz_over_true_mov() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Select {
+                dst: x(0),
+                cond: x(3),
+                src_true: x(1),
+                src_false: x(0),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_cbz(3, 2).to_le_bytes());
+        expected.extend_from_slice(&enc_mov_reg(1, 0, 1).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }

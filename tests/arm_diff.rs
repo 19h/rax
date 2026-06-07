@@ -1593,6 +1593,16 @@ fn enc_b_cond(cond: u32, imm19: i32) -> u32 {
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn enc_cbz(rt: u32, imm19: i32) -> u32 {
+    0xb400_0000 | (((imm19 as u32) & 0x7ffff) << 5) | (rt & 0x1f)
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn enc_cbnz(rt: u32, imm19: i32) -> u32 {
+    0xb500_0000 | (((imm19 as u32) & 0x7ffff) << 5) | (rt & 0x1f)
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_not_imm_movn_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -2836,6 +2846,88 @@ fn push_select_identical_arm_native_cases(
         "select_w8_false_identical_arms_as_mov_uxtb_preserves_flags".into(),
         select_w8_source,
         select_w8,
+        st,
+    ));
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_select_dst_arm_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let true_arm_dst = lower_aarch64_native_ops(vec![OpKind::Select {
+        dst: arm_x(0),
+        cond: arm_x(3),
+        src_true: arm_x(0),
+        src_false: arm_x(1),
+        width: OpWidth::W64,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("select_x_true_arm_dst_as_cbnz_preserves_flags: native lowering failed: {e}")
+    });
+    let true_arm_dst_source = [enc_cbnz(3, 2), enc_mov_reg(1, RD, RN), NOP];
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xaaaa_bbbb_cccc_dddd;
+    st.x[1] = 0x1111_2222_3333_4444;
+    st.x[3] = 1;
+    st.pstate = 0x8000_0000;
+    cases.push((
+        "select_x_true_arm_dst_true_preserves_dst_and_flags".into(),
+        true_arm_dst_source,
+        true_arm_dst,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xbbbb_cccc_dddd_eeee;
+    st.x[1] = 0x2222_3333_4444_5555;
+    st.pstate = 0x2000_0000;
+    cases.push((
+        "select_x_true_arm_dst_false_selects_false_and_flags".into(),
+        true_arm_dst_source,
+        true_arm_dst,
+        st,
+    ));
+
+    let false_arm_dst = lower_aarch64_native_ops(vec![OpKind::Select {
+        dst: arm_x(0),
+        cond: arm_x(0),
+        src_true: arm_x(1),
+        src_false: arm_x(0),
+        width: OpWidth::W64,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("select_x_false_arm_dst_as_cbz_preserves_flags: native lowering failed: {e}")
+    });
+    let false_arm_dst_source = [enc_cbz(RD, 2), enc_mov_reg(1, RD, RN), NOP];
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xcccc_dddd_eeee_ffff;
+    st.x[1] = 0x3333_4444_5555_6666;
+    st.pstate = 0x4000_0000;
+    cases.push((
+        "select_x_false_arm_dst_true_alias_cond_selects_true_and_flags".into(),
+        false_arm_dst_source,
+        false_arm_dst,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[1] = 0x4444_5555_6666_7777;
+    st.pstate = 0xa000_0000;
+    cases.push((
+        "select_x_false_arm_dst_false_alias_cond_preserves_dst_and_flags".into(),
+        false_arm_dst_source,
+        false_arm_dst,
         st,
     ));
 }
@@ -9397,6 +9489,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     drop(push_case);
 
     push_select_identical_arm_native_cases(&mut cases, control_target);
+    push_select_dst_arm_native_cases(&mut cases, control_target);
     push_cond_select_true_transform_native_cases(&mut cases, control_target);
     push_cond_compare_inverted_native_cases(&mut cases, control_target);
     push_sar_imm_movn_native_cases(&mut cases, control_target);
