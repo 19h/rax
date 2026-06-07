@@ -2211,6 +2211,35 @@ impl Aarch64Lowerer {
             SrcOperand::Reg(reg) => {
                 self.emit_addsub_reg(dst, rn, Self::gpr(*reg)?, subtract, false, OpWidth::W32)?;
             }
+            SrcOperand::Shifted {
+                shift: ShiftOp::Lsl,
+                ..
+            } => {
+                let (rm, shift, amount) = Self::addsub_src2(src2, OpWidth::W32)?;
+                self.emit_addsub_shifted(
+                    dst,
+                    rn,
+                    rm,
+                    subtract,
+                    false,
+                    shift,
+                    amount,
+                    OpWidth::W32,
+                )?;
+            }
+            SrcOperand::Extended { .. } => {
+                let (rm, option, amount) = Self::addsub_ext_src2(src2)?;
+                self.emit_addsub_extended(
+                    dst,
+                    rn,
+                    rm,
+                    subtract,
+                    false,
+                    option,
+                    amount,
+                    OpWidth::W32,
+                )?;
+            }
             SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) => {
                 let (subtract, imm) =
                     Self::canonical_subword_addsub_imm(*imm, subtract, width)
@@ -9734,6 +9763,59 @@ mod tests {
                 },
                 enc_addsub_ext_regs(0, 1, 0, 0b000, 1, 0, 31, 1),
                 enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
+            ),
+        ];
+
+        for (kind, first, trunc) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            expected.extend_from_slice(&first.to_le_bytes());
+            expected.extend_from_slice(&trunc.to_le_bytes());
+            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+            assert_eq!(code, expected);
+        }
+    }
+
+    #[test]
+    fn lowers_subword_addsub_shifted_and_extended_sources() {
+        let cases = [
+            (
+                OpKind::Add {
+                    dst: x(0),
+                    src1: x(1),
+                    src2: SrcOperand::Shifted {
+                        reg: x(2),
+                        shift: ShiftOp::Lsl,
+                        amount: 2,
+                    },
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::None,
+                },
+                enc_addsub_shift_regs(0, 0, 0, 0, 2, 0, 1, 2),
+                enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
+            ),
+            (
+                OpKind::Sub {
+                    dst: x(0),
+                    src1: x(1),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Sxth,
+                        shift: 1,
+                    },
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::None,
+                },
+                enc_addsub_ext_regs(0, 1, 0, 0b101, 1, 0, 1, 2),
+                enc_bitfield_regs(0, 0b10, 0, 15, 0, 0),
             ),
         ];
 
