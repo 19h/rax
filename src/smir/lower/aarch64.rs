@@ -5358,9 +5358,11 @@ impl Aarch64Lowerer {
         mask != 0 && mask != width.mask() && (mask & (mask + 1)) == 0
     }
 
-    fn single_bit_mask_lsb(mask: u64) -> Option<u8> {
-        if mask != 0 && (mask & (mask - 1)) == 0 {
-            Some(mask.trailing_zeros() as u8)
+    fn contiguous_mask_field(mask: u64) -> Option<(u8, u8)> {
+        let lsb = mask.trailing_zeros();
+        let shifted = mask >> lsb;
+        if shifted != 0 && (shifted & (shifted + 1)) == 0 {
+            Some((lsb as u8, shifted.count_ones() as u8))
         } else {
             None
         }
@@ -5420,11 +5422,16 @@ impl Aarch64Lowerer {
             let mask = SrcOperand::Imm(mask as i64);
             return self.lower_logic(dst, src, &mask, 0b00, false, false, width);
         }
-        if let Some(lsb) = Self::single_bit_mask_lsb(mask) {
+        if let Some((lsb, width_bits)) = Self::contiguous_mask_field(mask) {
             if let VReg::Imm(value) = src {
                 let dst = Self::dst_gpr(dst)?;
                 let result = if deposit {
-                    ((value as u64) & 1) << lsb
+                    let low_mask = if width_bits == 64 {
+                        u64::MAX
+                    } else {
+                        (1_u64 << u32::from(width_bits)) - 1
+                    };
+                    ((value as u64) & low_mask) << lsb
                 } else {
                     ((value as u64) & mask) >> lsb
                 };
@@ -5432,9 +5439,11 @@ impl Aarch64Lowerer {
             }
 
             if deposit {
-                return self.lower_bitfield_insert_zero(dst, src, lsb, 1, false, emit_width);
+                return self.lower_bitfield_insert_zero(
+                    dst, src, lsb, width_bits, false, emit_width,
+                );
             }
-            return self.lower_bfx(dst, src, lsb, 1, false, emit_width);
+            return self.lower_bfx(dst, src, lsb, width_bits, false, emit_width);
         }
 
         Err(LowerError::UnsupportedOp {
@@ -15504,6 +15513,83 @@ mod tests {
                     width: OpWidth::W16,
                 },
                 vec![enc_mov_wide(0, 0b10, 0, 0, 0), 0xd65f_03c0u32],
+            ),
+        ];
+
+        for (op, expected_words) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            for word in expected_words {
+                expected.extend_from_slice(&word.to_le_bytes());
+            }
+            assert_eq!(code, expected);
+        }
+    }
+
+    #[test]
+    fn lowers_pdep_pext_shifted_contiguous_masks_as_bitfield_ops() {
+        let cases = [
+            (
+                OpKind::Pext {
+                    dst: x(0),
+                    src: x(1),
+                    mask: VReg::Imm(0x1f00),
+                    width: OpWidth::W64,
+                },
+                vec![enc_bitfield_regs(1, 0b10, 8, 12, 1, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Pdep {
+                    dst: x(0),
+                    src: x(1),
+                    mask: VReg::Imm(0x3f_0000),
+                    width: OpWidth::W64,
+                },
+                vec![enc_bitfield_regs(1, 0b10, 48, 5, 1, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Pext {
+                    dst: x(0),
+                    src: x(1),
+                    mask: VReg::Imm(0x03f0),
+                    width: OpWidth::W16,
+                },
+                vec![enc_bitfield_regs(0, 0b10, 4, 9, 1, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Pdep {
+                    dst: x(0),
+                    src: x(1),
+                    mask: VReg::Imm(0x70),
+                    width: OpWidth::W8,
+                },
+                vec![enc_bitfield_regs(0, 0b10, 28, 2, 1, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Pdep {
+                    dst: x(0),
+                    src: VReg::Imm(0x3f),
+                    mask: VReg::Imm(0x3f00),
+                    width: OpWidth::W16,
+                },
+                vec![enc_mov_wide(0, 0b10, 0, 0x3f00, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Pext {
+                    dst: x(0),
+                    src: VReg::Imm(0xabc0),
+                    mask: VReg::Imm(0x0ff0),
+                    width: OpWidth::W64,
+                },
+                vec![enc_mov_wide(1, 0b10, 0, 0xbc, 0), 0xd65f_03c0u32],
             ),
         ];
 
