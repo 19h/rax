@@ -2023,12 +2023,23 @@ impl Aarch64Lowerer {
                     if is_zero {
                         return self.emit_addsub_reg(dst, 31, 31, subtract, true, width);
                     }
-                    return Err(LowerError::UnsupportedOp {
-                        op: format!(
-                            "AArch64 native flag-setting zero-base {} with nonzero immediate",
-                            if subtract { "Sub" } else { "Add" }
-                        ),
-                    });
+                    if dst == 31 {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!(
+                                "AArch64 native flag-setting zero-base {} with nonzero immediate needs a destination scratch",
+                                if subtract { "Sub" } else { "Add" }
+                            ),
+                        });
+                    }
+                    let bits = match width {
+                        OpWidth::W32 => u64::from(*imm as u32),
+                        OpWidth::W64 => *imm as u64,
+                        _ => unreachable!(),
+                    };
+                    if !self.try_emit_movn_single(dst, bits, width)? {
+                        self.emit_mov_imm(dst, *imm, width)?;
+                    }
+                    return self.emit_addsub_reg(dst, 31, dst, subtract, true, width);
                 }
 
                 let value = if subtract {
@@ -8797,12 +8808,70 @@ mod tests {
     }
 
     #[test]
-    fn rejects_adds_zero_base_nonzero_imm_without_scratch() {
+    fn lowers_adds_x_zero_base_nonzero_imm_as_movz_adds_reg() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(
             0,
             OpKind::Add {
                 dst: x(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(1, 0b10, 0, 1, 0).to_le_bytes());
+        expected.extend_from_slice(
+            &enc_addsub_shift_regs(1, 0, 1, 0, 0, 0, 31, 0).to_le_bytes(),
+        );
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_subs_w_zero_base_nonzero_imm_as_movz_subs_reg() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Sub {
+                dst: x(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Imm(1),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 1, 0).to_le_bytes());
+        expected.extend_from_slice(
+            &enc_addsub_shift_regs(0, 1, 1, 0, 0, 0, 31, 0).to_le_bytes(),
+        );
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn rejects_adds_zero_base_nonzero_imm_without_destination_scratch() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Add {
+                dst: VReg::virt(0),
                 src1: VReg::Imm(0),
                 src2: SrcOperand::Imm(1),
                 width: OpWidth::W64,
