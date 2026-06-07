@@ -5052,6 +5052,20 @@ impl Aarch64Lowerer {
             return self.emit_mov_reg(dst_reg, rn, width);
         }
 
+        if let VReg::Imm(value) = src {
+            if ((value as u64) & width.mask()) == width.mask() {
+                let injected = if left {
+                    (1_u64 << amount) - 1
+                } else {
+                    width.mask() ^ ((1_u64 << (bits - amount)) - 1)
+                };
+                let shift = if left { ShiftOp::Lsl } else { ShiftOp::Lsr };
+                self.lower_shift_imm(dst_reg, rn, i64::from(amount), shift, width)?;
+                let (n, immr, imms) = Self::logical_bitmask_imm(injected as i64, width)?;
+                return self.emit_logic_imm(dst_reg, dst_reg, 0b01, n, immr, imms, width);
+            }
+        }
+
         let src = Self::gpr(src)?;
         let (rn, rm, lsb) = if left {
             (rn, src, bits - amount)
@@ -15475,6 +15489,33 @@ mod tests {
     }
 
     #[test]
+    fn lowers_shrd_x_all_ones_imm_src_as_shift_orr() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Shrd {
+                dst: x(0),
+                src: VReg::Imm(-1),
+                amount: SrcOperand::Imm(13),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_bitfield_regs(1, 0b10, 13, 63, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&enc_logical_imm(1, 0b01, 1, 13, 12, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
     fn lowers_shld_x_imm_as_extract() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(
@@ -15496,6 +15537,33 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_extract(1, 0, 1, 51).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_shld_w_all_ones_imm_src_as_shift_orr() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Shld {
+                dst: x(0),
+                src: VReg::Imm(-1),
+                amount: SrcOperand::Imm(7),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 25, 24, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&enc_logical_imm(0, 0b01, 0, 0, 6, 0, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
