@@ -3584,6 +3584,100 @@ fn push_addsub_carry_nonzero_imm_native_cases(
         lowered,
         st,
     ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xcccc_dddd_eeee_ffff;
+    st.x[1] = 0xffff_ffff_ffff_ffff;
+    st.pstate = 0xa000_0000;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Sbb {
+        dst: arm_x(1),
+        src1: arm_x(1),
+        src2: SrcOperand::Imm(-1),
+        width: OpWidth::W64,
+        flags: FlagUpdate::None,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("sbb_x_neg_one_imm_alias_as_adc_zero_reg_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "sbb_x_neg_one_imm_alias_as_adc_zero_reg_preserves_flags".into(),
+        [enc_addsub_carry_regs(1, 0, 0, RN, RN, 31), NOP, NOP],
+        lowered,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xdddd_eeee_ffff_1111;
+    st.x[1] = 0x0000_0000_8000_0000;
+    st.pstate = 0x2000_0000;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Sbb {
+        dst: VReg::virt(0),
+        src1: arm_x(1),
+        src2: SrcOperand::Imm64(0xffff_ffff),
+        width: OpWidth::W32,
+        flags: FlagUpdate::All,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("sbcs_w_masked_neg_one_imm_without_destination_scratch_as_adcs_zero_reg_sets_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "sbcs_w_masked_neg_one_imm_without_destination_scratch_as_adcs_zero_reg_sets_flags"
+            .into(),
+        [enc_addsub_carry_regs(0, 0, 1, 31, RN, 31), NOP, NOP],
+        lowered,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xeeee_ffff_1111_2222;
+    st.x[1] = 5;
+    st.pstate = 0x8000_0000;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Adc {
+        dst: arm_x(1),
+        src1: arm_x(1),
+        src2: SrcOperand::Imm(-1),
+        width: OpWidth::W64,
+        flags: FlagUpdate::None,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("adc_x_neg_one_imm_alias_as_sbc_zero_reg_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "adc_x_neg_one_imm_alias_as_sbc_zero_reg_preserves_flags".into(),
+        [enc_addsub_carry_regs(1, 1, 0, RN, RN, 31), NOP, NOP],
+        lowered,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xffff_1111_2222_3333;
+    st.x[1] = 0;
+    st.pstate = 0;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Adc {
+        dst: VReg::virt(0),
+        src1: arm_x(1),
+        src2: SrcOperand::Imm64(0xffff_ffff),
+        width: OpWidth::W32,
+        flags: FlagUpdate::All,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("adcs_w_masked_neg_one_imm_without_destination_scratch_as_sbcs_zero_reg_sets_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "adcs_w_masked_neg_one_imm_without_destination_scratch_as_sbcs_zero_reg_sets_flags"
+            .into(),
+        [enc_addsub_carry_regs(0, 1, 1, 31, RN, 31), NOP, NOP],
+        lowered,
+        st,
+    ));
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
