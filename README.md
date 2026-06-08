@@ -151,10 +151,10 @@ behind its oracle. All four also have SMIR lifters.
 
 | Core | Size | Runnable? | Coverage | Oracle |
 |------|-----:|-----------|----------|--------|
-| **x86-64** | ~53k LOC | **boots Linux** (KVM/HVF/emulator) + JIT | Legacy → SSE/AVX/AVX2 → AVX-512 → AVX10.1/10.2 → APX; x87; AES/SHA/GFNI; XSAVE | KVM (real hardware) |
-| **Hexagon** | ~37k LOC | bare-metal (`--arch hexagon`) | V73 scalar + VLIW packets + HVX, **every opcode verified** | qemu-hexagon |
-| **RISC-V** | ~10k LOC | bare-metal (`--arch riscv64`) | full RVA23 *scalar* set (RV64GC + Zfh/Zicond/Zfa/Zbk\*/Zcb + scalar crypto + vector-config) | qemu-riscv64 |
-| **AArch64 / ARM** | ~58k LOC | validated only (no backend yet) | A64 base, **complete SVE + SVE2 + SVE2.1**, NEON/VFP, FP16; AArch32/Thumb; Cortex-M (M0-M85) | qemu-aarch64 + ASL |
+| **x86-64** | ~54k LOC | **boots Linux** (KVM/HVF/emulator) + JIT | Legacy → SSE/AVX/AVX2 → AVX-512 → AVX10.1/10.2 → APX; x87; AES/SHA/GFNI; XSAVE | KVM (real hardware) |
+| **Hexagon** | ~38k LOC | bare-metal (`--arch hexagon`) | V73 scalar + VLIW packets + HVX, **every opcode verified** | qemu-hexagon |
+| **RISC-V** | ~11k LOC | bare-metal (`--arch riscv64`) | full RVA23 *scalar* set (RV64GC + Zfh/Zicond/Zfa/Zbk\*/Zcb + scalar crypto + vector-config) | qemu-riscv64 |
+| **AArch64 / ARM** | ~62k LOC | validated only (no backend yet) | A64 base, **complete SVE + SVE2 + SVE2.1**, NEON/VFP, FP16; AArch32/Thumb; Cortex-M (M0-M85) | qemu-aarch64 + ASL |
 
 ### x86-64: the complete machine
 
@@ -254,7 +254,7 @@ On top of the oracles, there are exhaustive unit suites:
 | **ARM (ASL-generated)** | 92,131 | generated from ARM's official machine-readable **ASL** spec via `tools/asl-parser/` |
 | **x86-64 instruction suite** | 28,554 | `tests/x86_64/` (850 files), behind `--features x86_64-suite` |
 | **Everything else** | ~1,600 | oracle + SMIR-lift harnesses, real-mode/ISO boot, Hexagon bare-metal, RISC-V boot, crypto known-answer (FIPS/SDM) |
-| **Total** | **122,323** | `#[test]` functions across `tests/` |
+| **Total** | **122,373** | `#[test]` functions across `tests/` |
 
 The ARM tests are not written by hand: the `asl-parser` downloads and parses ARM's ASL release and emits
 exhaustive instruction tests from it, which is how 92,000+ ARM cases exist at all.
@@ -263,7 +263,7 @@ exhaustive instruction tests from it, which is how 92,000+ ARM cases exist at al
 
 ## SMIR and the hot-block JIT
 
-**SMIR** (Sigma Machine IR, `src/smir/`, ~66k LOC; spec in
+**SMIR** (Sigma Machine IR, `src/smir/`, ~140k LOC; spec in
 [`docs/specifications/smir/`](docs/specifications/smir/)) is the layer that makes "four CPUs" one
 project. Each guest architecture has a *lifter* that translates its instructions into a common set of
 100+ typed operations; the IR is interpreted directly, optimized, and, for x86-64, lowered to native
@@ -279,7 +279,7 @@ host machine code.
   └────────────────────────┬────────────────────────┘
          ┌─────────────────┼─────────────────┐
          ▼                 ▼                 ▼
-     Interpreter       optimizer        x86-64 JIT → native
+     Interpreter       optimizer        JIT → x86-64 / ARM64
      (lazy flags)      (O0/O1/O2)       (emit · regalloc · W^X)
 ```
 
@@ -307,8 +307,14 @@ compiler (a ~31% boot speedup).
 | **Lifters** | `lift/` | x86-64, AArch64, RISC-V, AVX10, and a lift-complete Hexagon (every opcode, scalar + 100% HVX, verified) |
 | **Interpreter** | `interp.rs` | direct execution; lazy flags, block caching |
 | **Optimizer** | `opt.rs` | frontier-aware liveness; dead-flag and dead-code elimination, copy propagation, constant + branch folding (O2) |
-| **JIT lowering** | `lower/x86_64.rs`, `lower/regalloc.rs`, `lower/runtime.rs` | x86-64 emitter, 1:1 register map, W^X exec runtime + trampoline |
+| **JIT lowering** | `lower/x86_64.rs`, `lower/aarch64.rs`, `lower/regalloc.rs`, `lower/runtime.rs` | x86-64 emitter **and** a ~51k-LOC AArch64 host emitter (SMIR to native ARM64, x86 guest semantics included), plus an ARM-guest-to-x86 lowerer; 1:1 register map, W^X exec runtime + trampoline |
 | **JIT integration** | `backend/.../x86_64/cpu.rs` (on by default) | hot-loop detection, region cache, memory via MMU helpers, safety gate, SMC eviction |
+
+> **Good to know** The lowerer is retargetable. Alongside the x86-64 host backend there is now a full
+> **AArch64 host backend** (`lower/aarch64.rs`, ~51k LOC, 800+ lowering tests) that emits native ARM64 for
+> the entire SMIR op set, x86-64 guest semantics included (APX, atomics, REP MOVS, vector/FP), plus an
+> AArch64-guest-to-x86 lowerer. That is the groundwork for JIT-compiling a guest across host ISAs (x86 on
+> ARM, ARM on x86); the live exec runtime is x86-host today.
 
 > **Good to know** The JIT accelerates without changing behaviour: a kernel boots identically with it on
 > or off, because every region it can't prove correct degrades gracefully to the interpreter, and
@@ -492,12 +498,12 @@ src/
 ├── backend/
 │   ├── kvm/        # Linux hardware virtualization (HVF for macOS)
 │   └── emulator/
-│       ├── x86_64/ # ~53k LOC: decoder, mmu, flags, dispatch/{legacy,twobyte,vex,evex}, insn/ (88 files), JIT integration
-│       ├── hexagon/# ~37k LOC: scalar core, VLIW packets, full HVX, every opcode verified
+│       ├── x86_64/ # ~54k LOC: decoder, mmu, flags, dispatch/{legacy,twobyte,vex,evex}, insn/ (88 files), JIT integration
+│       ├── hexagon/# ~38k LOC: scalar core, VLIW packets, full HVX, every opcode verified
 │       └── riscv/  # RiscVVcpu bridges the rax::riscv interpreter into the VMM
-├── arm/            # ~58k LOC: aarch64 (complete SVE) · cortex_m · decoder · vfp · sysreg · cp15
-├── riscv/          # ~10k LOC: RV64GC + RVA23 scalar · cpu · decode · rvc · float · csr · crypto · disasm
-├── smir/           # ~66k LOC: ir · ops · types · interp · opt · lift/ · lower/ (x86_64 · regalloc · runtime)
+├── arm/            # ~62k LOC: aarch64 (complete SVE) · cortex_m · decoder · vfp · sysreg · cp15
+├── riscv/          # ~11k LOC: RV64GC + RVA23 scalar · cpu · decode · rvc · float · csr · crypto · disasm
+├── smir/           # ~140k LOC: ir · ops · types · interp · opt · lift/ · lower/ (x86_64 · aarch64 · regalloc · runtime)
 ├── devices/        # serial·pit·pic·lapic·ioapic·rtc·hpet·pci·fw_cfg  +  ahci·nvme·ide·virtio·e1000·vga·ac97·uhci·fdc·dma
 ├── gdb/            # Remote Serial Protocol server      (--features debug)
 └── profiling/      # per-mnemonic profiler              (--features profiling)
@@ -520,7 +526,7 @@ docs/specifications/# smir/ (the IR spec) · riscv/ (vendored RISC-V specs) · a
 | **Hexagon** | **Every opcode** (scalar + HVX) verified vs. qemu-hexagon; bootable bare-metal backend |
 | **RISC-V** | Full RVA23 scalar set + crypto; bootable `--arch riscv64` backend; verified vs. qemu-riscv64 |
 | **AArch64 / ARM** | AArch64 (NEON + SVE/SVE2/SVE2.1) and AArch32 (A32/Thumb) both bit-exact vs qemu; ~92k ASL tests; not yet a runnable backend |
-| **SMIR** | JIT on by default, auto-triggered, fail-safe (integer + memory hot regions native, bit-exact vs. KVM); RISC-V (incl. RVV) and Hexagon lifts complete |
+| **SMIR** | JIT on by default, auto-triggered, fail-safe (integer + memory hot regions native, bit-exact vs. KVM); lowers to x86-64 **and** AArch64 hosts; RISC-V (incl. RVV) and Hexagon lifts complete |
 | **Platform** | Legacy PC devices wired; PCI host bridge + `--pci-devices` (e1000 `eth0`, AHCI/NVMe/UHCI/AC97); interactive console + full `.rxc` machine checkpoint/resume |
 | **Legacy boot** | Real-mode mini-BIOS + El-Torito CD boot; **TempleOS V5.03** boots real to long mode, mounts its CD, runs its HolyC compiler |
 
