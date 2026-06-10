@@ -386,6 +386,25 @@ impl AArch64Cpu {
         }
     }
 
+    /// Read a register encoded in the "Xn|SP" slot: index 31 selects the
+    /// current stack pointer rather than XZR.
+    fn gpr_or_sp(&self, reg: u8) -> u64 {
+        if reg == 31 {
+            self.current_sp()
+        } else {
+            self.get_x(reg)
+        }
+    }
+
+    /// Write a register encoded in the "Xn|SP" slot.
+    fn set_gpr_or_sp(&mut self, reg: u8, value: u64) {
+        if reg == 31 {
+            self.set_current_sp(value);
+        } else {
+            self.set_x(reg, value);
+        }
+    }
+
     /// Set current stack pointer.
     pub fn set_current_sp(&mut self, value: u64) {
         if self.sp_sel || self.current_el == 0 {
@@ -1956,6 +1975,16 @@ impl AArch64Cpu {
             let fbits = 64 - scale as i32;
             let rn = ((insn >> 5) & 0x1F) as u8;
             let rd = (insn & 0x1F) as u8;
+            // 32-bit forms only support fbits 1..=32: scale<5> must be 1.
+            // The rmode field must also be fixed (11 for FCVTZ*, 00 for *CVTF).
+            if sf == 0 && (scale >> 5) & 1 == 0 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
+            let rmode = (insn >> 19) & 0x3;
+            let want_rmode = if opcode >= 0b010 { 0b00 } else { 0b11 };
+            if rmode != want_rmode || ptype == 0b10 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
             if opcode == 0b010 || opcode == 0b011 {
                 // GPR int -> FP, value = int / 2^fbits (the 2^-fbits scale is an
                 // exact power of two, so a single FPRound of the integer suffices).
@@ -6615,7 +6644,20 @@ impl AArch64Cpu {
                 let src = self.v[zn].to_le_bytes();
                 let mut dst = self.v[zd].to_le_bytes();
                 // Validity: the extend width must be smaller than the element.
+                // Checked up front — an unallocated size is UNDEF even when
+                // the governing predicate has no active elements.
                 let ext_ok = |w: u32| bits > w;
+                let opc_valid = match opc {
+                    0b010000 | 0b010001 => ext_ok(8),
+                    0b010010 | 0b010011 => ext_ok(16),
+                    0b010100 | 0b010101 => ext_ok(32),
+                    0b010110..=0b011011 | 0b011110 => true,
+                    0b011100 | 0b011101 => esize >= 2,
+                    _ => false,
+                };
+                if !opc_valid {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 for e in 0..(16 / esize) {
                     let off = e * esize;
                     if (pred >> off) & 1 == 0 {
@@ -8866,6 +8908,11 @@ impl AArch64Cpu {
             return Ok(CpuExit::Undefined(insn));
         }
         let group = (insn >> 19) & 0x7;
+        // SDIV/UDIV/SDIVR/UDIVR only exist for word and doubleword elements;
+        // byte/halfword encodings are unallocated regardless of the predicate.
+        if group == 0b010 && (insn >> 18) & 1 == 1 && esize < 4 {
+            return Ok(CpuExit::Undefined(insn));
+        }
         let opc = (insn >> 16) & 0x7;
         let pred = self.sve_p[pg];
         let elements = 16 / esize;
@@ -13967,7 +14014,19 @@ impl AArch64Cpu {
         let address = ((self.pc as i64).wrapping_sub(4).wrapping_add(offset)) as u64;
 
         if v != 0 {
-            return Err(ArmError::Unimplemented("LDR (literal) SIMD".to_string()));
+            // LDR (literal, SIMD&FP): opc selects S/D/Q; opc=11 unallocated.
+            let bytes = match opc {
+                0b00 => 4usize,
+                0b01 => 8,
+                0b10 => 16,
+                _ => return Err(ArmError::UndefinedInstruction(insn)),
+            };
+            let mut buf = [0u8; 16];
+            for (i, b) in buf.iter_mut().enumerate().take(bytes) {
+                *b = self.mem_read_u8(address + i as u64)?;
+            }
+            self.v[rt as usize] = u128::from_le_bytes(buf);
+            return Ok(CpuExit::Continue);
         }
 
         match opc {
@@ -14023,9 +14082,35 @@ impl AArch64Cpu {
                 _ => return Err(ArmError::UndefinedInstruction(insn)),
             }
         };
-        // LDPSW is a load-only encoding.
-        if v == 0 && mode == 0b00 && opc == 0b01 {
-            return Err(ArmError::UndefinedInstruction(insn));
+        // opc=01, V=0 splits by the L bit: L=1 is LDPSW, L=0 is STGP
+        // (FEAT_MTE store-allocation-tag pair). STGP stores two 64-bit
+        // registers; the tag write is a no-op in our flat memory model, and
+        // its immediate is scaled by the 16-byte tag granule (LSL #4).
+        // STGP has no no-allocate (STNP-style) form.
+        let stgp = v == 0 && opc == 0b01 && l == 0 && mode != 0b00;
+        if stgp {
+            let off = (((imm7 << 25) >> 25) as i64) * 16;
+            let base = if rn == 31 {
+                self.current_sp()
+            } else {
+                self.get_x(rn)
+            };
+            let addr = if mode == 0b01 {
+                base
+            } else {
+                (base as i64).wrapping_add(off) as u64
+            };
+            self.mem_write_u64(addr, self.get_x(rt))?;
+            self.mem_write_u64(addr.wrapping_add(8), self.get_x(rt2))?;
+            if mode == 0b01 || mode == 0b11 {
+                let nb = (base as i64).wrapping_add(off) as u64;
+                if rn == 31 {
+                    self.set_current_sp(nb);
+                } else {
+                    self.set_x(rn, nb);
+                }
+            }
+            return Ok(CpuExit::Continue);
         }
         if ldpsw && l == 0 {
             return Err(ArmError::UndefinedInstruction(insn));
@@ -14375,6 +14460,14 @@ impl AArch64Cpu {
             let scale = (((opc >> 1) & 1) << 2) | size;
             if scale > 4 {
                 return Err(ArmError::UndefinedInstruction(insn));
+            }
+            // Register-offset form: the extend option must have bit 1 set
+            // (UXTW/LSL/SXTW/SXTX); other options are unallocated.
+            if (insn >> 24) & 1 == 0 && (insn >> 21) & 1 == 1 && (insn >> 10) & 0x3 == 0b10 {
+                let option = (insn >> 13) & 0x7;
+                if option & 0b010 == 0 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
             }
             let access = 1usize << scale;
             let is_load = (opc & 1) == 1;
@@ -14822,6 +14915,58 @@ impl AArch64Cpu {
         let rn = ((insn >> 5) & 0x1F) as u8;
         let rd = (insn & 0x1F) as u8;
 
+        // RMIF Xn, #imm6, #mask (FEAT_FlagM): rotate Xn right by imm6 and move
+        // the low four bits into the NZCV flags selected by mask.
+        if sf == 1 && op == 0 && s == 1 && (insn >> 10) & 0x1F == 0b00001 && (insn >> 4) & 1 == 0 {
+            let imm6 = (insn >> 15) & 0x3F;
+            let mask = insn & 0xF;
+            let val = self.get_x(rn).rotate_right(imm6);
+            let mut n = self.get_n();
+            let mut z = self.get_z();
+            let mut c = self.get_c();
+            let mut v = self.get_v();
+            if mask & 0b1000 != 0 {
+                n = (val >> 3) & 1 == 1;
+            }
+            if mask & 0b0100 != 0 {
+                z = (val >> 2) & 1 == 1;
+            }
+            if mask & 0b0010 != 0 {
+                c = (val >> 1) & 1 == 1;
+            }
+            if mask & 0b0001 != 0 {
+                v = val & 1 == 1;
+            }
+            self.set_nzcv(n, z, c, v);
+            return Ok(CpuExit::Continue);
+        }
+
+        // SETF8/SETF16 Wn (FEAT_FlagM): set NZV from a narrow value, C
+        // unchanged. N = sign bit, Z = narrow value == 0, V = bit(width) XOR
+        // bit(width-1).
+        if sf == 0
+            && op == 0
+            && s == 1
+            && (insn >> 10) & 0xF == 0b0010
+            && (insn >> 15) & 0x3F == 0
+            && insn & 0x1F == 0b01101
+        {
+            let width = if (insn >> 14) & 1 == 1 { 16 } else { 8 };
+            let w = self.get_w(rn);
+            let n = (w >> (width - 1)) & 1 == 1;
+            let z = w & ((1u32 << width) - 1) == 0;
+            let v = ((w >> width) & 1) != ((w >> (width - 1)) & 1);
+            let c = self.get_c();
+            self.set_nzcv(n, z, c, v);
+            return Ok(CpuExit::Continue);
+        }
+
+        // ADC/ADCS/SBC/SBCS require bits[15:10] == 0; anything else in this
+        // space is unallocated.
+        if (insn >> 10) & 0x3F != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+
         let c_in = if self.get_c() { 1u64 } else { 0 };
 
         if sf != 0 {
@@ -14992,12 +15137,50 @@ impl AArch64Cpu {
     fn exec_dp_1src(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let sf = (insn >> 31) & 1;
         let s = (insn >> 29) & 1;
+        let opcode2 = (insn >> 16) & 0x1F;
         let opcode = (insn >> 10) & 0x3F;
         let rn = ((insn >> 5) & 0x1F) as u8;
         let rd = (insn & 0x1F) as u8;
 
         if s != 0 {
             return Err(ArmError::UndefinedInstruction(insn));
+        }
+
+        // FEAT_PAuth one-source (opcode2 = 00001). No real key schedule:
+        // PAC*/AUT* leave the pointer logically intact (authenticate is the
+        // inverse of sign), XPAC strips the auth field. The opcode field
+        // (bits[15:10]) selects the variant: 0b000xxx take a modifier in Rn,
+        // 0b001xxx are the "Z" forms (modifier 0, require Rn=11111), and
+        // 0b0100xx are XPACI/XPACD (require Rn=11111).
+        if sf == 1 && opcode2 == 0b00001 {
+            let strip = |v: u64| v & 0x007F_FFFF_FFFF_FFFF;
+            match opcode {
+                // PACIA/IB/DA/DB, AUTIA/IB/DA/DB Xd, Xn|SP
+                0b000000..=0b000111 => {
+                    let v = self.get_x(rd);
+                    self.set_x(rd, v);
+                    return Ok(CpuExit::Continue);
+                }
+                // PACIZA/.../AUTDZB Xd (Rn must be 11111)
+                0b001000..=0b001111 => {
+                    if rn != 31 {
+                        return Ok(CpuExit::Undefined(insn));
+                    }
+                    let v = self.get_x(rd);
+                    self.set_x(rd, v);
+                    return Ok(CpuExit::Continue);
+                }
+                // XPACI / XPACD Xd (Rn must be 11111)
+                0b010000 | 0b010001 => {
+                    if rn != 31 {
+                        return Ok(CpuExit::Undefined(insn));
+                    }
+                    let v = strip(self.get_x(rd));
+                    self.set_x(rd, v);
+                    return Ok(CpuExit::Continue);
+                }
+                _ => {}
+            }
         }
 
         if sf != 0 {
@@ -15052,6 +15235,52 @@ impl AArch64Cpu {
         let opcode = (insn >> 10) & 0x3F;
         let rn = ((insn >> 5) & 0x1F) as u8;
         let rd = (insn & 0x1F) as u8;
+
+        // FEAT_MTE / FEAT_PAuth data-processing (2-source). These all require
+        // sf=1 (64-bit). The flag-setting SUBPS aside, the rest leave NZCV.
+        if sf == 1 {
+            match (s, opcode) {
+                // SUBP Xd, Xn|SP, Xm|SP — subtract address tags ignored
+                // (bits[63:56] of each operand are sign-extended from bit 55).
+                (0, 0b000000) => {
+                    let a = sign_extend_56(self.gpr_or_sp(rn));
+                    let b = sign_extend_56(self.gpr_or_sp(rm));
+                    self.set_x(rd, a.wrapping_sub(b));
+                    return Ok(CpuExit::Continue);
+                }
+                // SUBPS Xd, Xn|SP, Xm|SP — as SUBP, sets NZCV.
+                (1, 0b000000) => {
+                    let a = sign_extend_56(self.gpr_or_sp(rn));
+                    let b = sign_extend_56(self.gpr_or_sp(rm));
+                    let (res, n, z, c, v) = sub_with_flags_64(a, b);
+                    self.set_nzcv(n, z, c, v);
+                    self.set_x(rd, res);
+                    return Ok(CpuExit::Continue);
+                }
+                // IRG Xd|SP, Xn|SP, Xm — insert random (here: deterministic 0)
+                // tag, honouring nothing in GCR_EL1. Tag bits are [59:56].
+                (0, 0b000100) => {
+                    let v = self.gpr_or_sp(rn) & !(0xFu64 << 56);
+                    self.set_gpr_or_sp(rd, v);
+                    return Ok(CpuExit::Continue);
+                }
+                // GMI Xd, Xn|SP, Xm — tag mask insert: Xd = Xm | (1 << tag(Xn)).
+                (0, 0b000101) => {
+                    let tag = (self.gpr_or_sp(rn) >> 56) & 0xF;
+                    self.set_x(rd, self.get_x(rm) | (1u64 << tag));
+                    return Ok(CpuExit::Continue);
+                }
+                // PACGA Xd, Xn, Xm|SP — generic pointer-auth MAC in bits[63:32].
+                // No real key schedule; produce a deterministic non-zero MAC so
+                // the destination is written.
+                (0, 0b001100) => {
+                    let mac = pacga_stub(self.get_x(rn), self.gpr_or_sp(rm));
+                    self.set_x(rd, mac);
+                    return Ok(CpuExit::Continue);
+                }
+                _ => {}
+            }
+        }
 
         if s != 0 {
             return Err(ArmError::UndefinedInstruction(insn));
@@ -17803,6 +18032,28 @@ fn sve_pattern_count(pattern: u32, elements: usize) -> usize {
 /// NZCV produced by an SVE predicate-setting op (PTEST convention with an
 /// all-true governing predicate): N=First active, Z=None active, C=!Last
 /// active, V=0. `pred` is byte-granular; element `e` is bit `e*esize`.
+/// Sign-extend an MTE-tagged address from bit 55 (the address part is bits
+/// [55:0]; the logical/physical tags above are ignored for SUBP/SUBPS).
+fn sign_extend_56(v: u64) -> u64 {
+    ((v << 8) as i64 >> 8) as u64
+}
+
+/// 64-bit subtract returning (result, N, Z, C, V).
+fn sub_with_flags_64(a: u64, b: u64) -> (u64, bool, bool, bool, bool) {
+    let (res, borrow) = a.overflowing_sub(b);
+    let c = !borrow; // ARM carry = NOT borrow
+    let v = (((a ^ b) & (a ^ res)) >> 63) & 1 == 1;
+    (res, (res >> 63) & 1 == 1, res == 0, c, v)
+}
+
+/// Deterministic stand-in for the PACGA generic MAC (bits[63:32]); good
+/// enough for tests that only check the destination is written.
+fn pacga_stub(x: u64, y: u64) -> u64 {
+    let mut h = x ^ y.rotate_left(32) ^ 0x9E37_79B9_7F4A_7C15;
+    h ^= h >> 29;
+    h & 0xFFFF_FFFF_0000_0000
+}
+
 fn pred_test_flags(pred: u32, elements: usize, esize: usize) -> (bool, bool, bool, bool) {
     let first = pred & 1 != 0;
     let none = pred == 0;

@@ -728,7 +728,13 @@ impl FlatMemory {
             return Err(MemoryError::OutOfBounds { addr, size });
         }
         let offset = (addr - self.base) as usize;
-        if offset + size > self.data.len() {
+        // checked_add: a huge synthetic address must fault, not overflow the
+        // bounds check and panic on the slice index.
+        if offset
+            .checked_add(size)
+            .map(|end| end > self.data.len())
+            .unwrap_or(true)
+        {
             return Err(MemoryError::OutOfBounds { addr, size });
         }
         Ok(offset)
