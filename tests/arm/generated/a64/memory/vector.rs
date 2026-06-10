@@ -24,11 +24,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_q_0_min_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -44,11 +45,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_q_1_max_0_4d000000() {
     let encoding: u32 = 0x4D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[8], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -64,11 +66,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_l_0_min_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -84,11 +87,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_l_1_max_0_0d400000() {
     let encoding: u32 = 0x0D400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: ld1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -104,11 +108,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_r_0_min_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -124,11 +129,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_r_1_max_0_0d200000() {
     let encoding: u32 = 0x0D200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st2	{ v0.b, v1.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -144,11 +150,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_opcode_0_min_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -164,11 +171,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_opcode_1_poweroftwo_0_0d002000(
     let encoding: u32 = 0x0D002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st3	{ v0.b, v1.b, v2.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -204,11 +212,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_s_0_min_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -224,11 +233,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_s_1_max_0_0d001000() {
     let encoding: u32 = 0x0D001000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[4], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -244,11 +254,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_size_0_min_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -264,11 +275,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_size_1_poweroftwo_0_0d000400() 
     let encoding: u32 = 0x0D000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[1], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -284,11 +296,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_size_2_poweroftwo_0_0d000800() 
     let encoding: u32 = 0x0D000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[2], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -304,11 +317,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_size_3_max_0_0d000c00() {
     let encoding: u32 = 0x0D000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[3], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -324,11 +338,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_rn_0_min_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -344,11 +359,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_rn_1_poweroftwo_0_0d000020() {
     let encoding: u32 = 0x0D000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x1]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -364,11 +380,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_rn_30_poweroftwominusone_0_0d00
     let encoding: u32 = 0x0D0003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x30]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -384,11 +401,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_rn_31_max_0_0d0003e0() {
     let encoding: u32 = 0x0D0003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [sp]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -404,11 +422,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_rt_0_min_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -424,11 +443,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_rt_1_poweroftwo_0_0d000001() {
     let encoding: u32 = 0x0D000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v1.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -444,11 +464,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_rt_30_poweroftwominusone_0_0d00
     let encoding: u32 = 0x0D00001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v30.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -464,11 +485,12 @@ fn test_aarch64_memory_vector_single_no_wb_field_rt_31_max_0_0d00001f() {
     let encoding: u32 = 0x0D00001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v31.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -484,11 +506,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_0_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -504,11 +527,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_1_0_4d000000() {
     let encoding: u32 = 0x4D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[8], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -524,11 +548,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_2_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -544,11 +569,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_3_0_0d400000() {
     let encoding: u32 = 0x0D400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: ld1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -564,11 +590,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_4_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -584,11 +611,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_5_0_0d200000() {
     let encoding: u32 = 0x0D200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st2	{ v0.b, v1.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -604,11 +632,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_6_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -624,11 +653,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_7_0_0d002000() {
     let encoding: u32 = 0x0D002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st3	{ v0.b, v1.b, v2.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -664,11 +694,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_9_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -684,11 +715,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_10_0_0d001000() {
     let encoding: u32 = 0x0D001000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[4], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -704,11 +736,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_11_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -724,11 +757,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_12_0_0d000400() {
     let encoding: u32 = 0x0D000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[1], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -744,11 +778,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_13_0_0d000800() {
     let encoding: u32 = 0x0D000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[2], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -764,11 +799,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_14_0_0d000c00() {
     let encoding: u32 = 0x0D000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[3], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -784,11 +820,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_15_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -804,11 +841,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_16_0_0d000020() {
     let encoding: u32 = 0x0D000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x1]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -824,11 +862,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_17_0_0d0003c0() {
     let encoding: u32 = 0x0D0003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x30]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -844,11 +883,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_18_0_0d0003e0() {
     let encoding: u32 = 0x0D0003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [sp]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -864,11 +904,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_19_0_0d000000() {
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -884,11 +925,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_20_0_0d000001() {
     let encoding: u32 = 0x0D000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v1.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -904,11 +946,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_21_0_0d00001e() {
     let encoding: u32 = 0x0D00001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v30.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -924,11 +967,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_22_0_0d00001f() {
     let encoding: u32 = 0x0D00001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v31.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -944,11 +988,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_23_0_0d000021() {
     let encoding: u32 = 0x0D000021;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v1.b }[0], [x1]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -964,11 +1009,12 @@ fn test_aarch64_memory_vector_single_no_wb_combo_24_0_0d0003ff() {
     let encoding: u32 = 0x0D0003FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v31.b }[0], [sp]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -984,11 +1030,12 @@ fn test_aarch64_memory_vector_single_no_wb_special_q_0_size_variant_0_0_0d000400
     let encoding: u32 = 0x0D000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[1], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1004,11 +1051,12 @@ fn test_aarch64_memory_vector_single_no_wb_special_q_1_size_variant_1_0_4d000400
     let encoding: u32 = 0x4D000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[9], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1024,11 +1072,12 @@ fn test_aarch64_memory_vector_single_no_wb_special_s_0_size_variant_0_0_0d000400
     let encoding: u32 = 0x0D000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[1], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1044,11 +1093,12 @@ fn test_aarch64_memory_vector_single_no_wb_special_s_1_size_variant_1_0_0d001400
     let encoding: u32 = 0x0D001400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[5], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1064,11 +1114,12 @@ fn test_aarch64_memory_vector_single_no_wb_special_size_0_size_variant_0_0_0d000
     let encoding: u32 = 0x0D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1084,11 +1135,12 @@ fn test_aarch64_memory_vector_single_no_wb_special_size_1_size_variant_1_0_0d000
     let encoding: u32 = 0x0D000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[1], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1104,11 +1156,12 @@ fn test_aarch64_memory_vector_single_no_wb_special_size_2_size_variant_2_0_0d000
     let encoding: u32 = 0x0D000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[2], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1124,11 +1177,12 @@ fn test_aarch64_memory_vector_single_no_wb_special_size_3_size_variant_3_0_0d000
     let encoding: u32 = 0x0D000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[3], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1145,11 +1199,12 @@ fn test_aarch64_memory_vector_single_no_wb_special_rn_31_stack_pointer_sp_may_re
     let encoding: u32 = 0x0D0007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[1], [sp]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1166,11 +1221,12 @@ fn test_aarch64_memory_vector_single_no_wb_special_rt_31_zero_register_xzr_wzr_r
     let encoding: u32 = 0x0D00041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v31.b }[1], [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1186,11 +1242,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_q_0_min_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1206,11 +1263,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_q_1_max_0_4d800000() {
     let encoding: u32 = 0x4D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[8], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1226,11 +1284,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_l_0_min_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1246,11 +1305,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_l_1_max_0_0dc00000() {
     let encoding: u32 = 0x0DC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: ld1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1266,11 +1326,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_r_0_min_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1286,11 +1347,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_r_1_max_0_0da00000() {
     let encoding: u32 = 0x0DA00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st2	{ v0.b, v1.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1306,11 +1368,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_rm_0_min_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1326,11 +1389,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_rm_1_poweroftwo_0_0d810000()
     let encoding: u32 = 0x0D810000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1346,11 +1410,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_rm_30_poweroftwominusone_0_0
     let encoding: u32 = 0x0D9E0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1366,11 +1431,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_rm_31_max_0_0d9f0000() {
     let encoding: u32 = 0x0D9F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], #1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1386,11 +1452,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_opcode_0_min_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1406,11 +1473,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_opcode_1_poweroftwo_0_0d8020
     let encoding: u32 = 0x0D802000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st3	{ v0.b, v1.b, v2.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1446,11 +1514,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_s_0_min_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1466,11 +1535,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_s_1_max_0_0d801000() {
     let encoding: u32 = 0x0D801000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[4], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1486,11 +1556,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_size_0_min_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1506,11 +1577,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_size_1_poweroftwo_0_0d800400
     let encoding: u32 = 0x0D800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[1], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1526,11 +1598,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_size_2_poweroftwo_0_0d800800
     let encoding: u32 = 0x0D800800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[2], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1546,11 +1619,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_size_3_max_0_0d800c00() {
     let encoding: u32 = 0x0D800C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[3], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1566,11 +1640,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_rn_0_min_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1586,11 +1661,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_rn_1_poweroftwo_0_0d800020()
     let encoding: u32 = 0x0D800020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x1], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1606,11 +1682,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_rn_30_poweroftwominusone_0_0
     let encoding: u32 = 0x0D8003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x30], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1626,11 +1703,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_rn_31_max_0_0d8003e0() {
     let encoding: u32 = 0x0D8003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [sp], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1646,11 +1724,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_rt_0_min_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1666,11 +1745,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_rt_1_poweroftwo_0_0d800001()
     let encoding: u32 = 0x0D800001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v1.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1686,11 +1766,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_rt_30_poweroftwominusone_0_0
     let encoding: u32 = 0x0D80001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v30.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1706,11 +1787,12 @@ fn test_aarch64_memory_vector_single_post_inc_field_rt_31_max_0_0d80001f() {
     let encoding: u32 = 0x0D80001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v31.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1726,11 +1808,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_0_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1746,11 +1829,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_1_0_4d800000() {
     let encoding: u32 = 0x4D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[8], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1766,11 +1850,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_2_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1786,11 +1871,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_3_0_0dc00000() {
     let encoding: u32 = 0x0DC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: ld1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1806,11 +1892,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_4_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1826,11 +1913,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_5_0_0da00000() {
     let encoding: u32 = 0x0DA00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st2	{ v0.b, v1.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1846,11 +1934,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_6_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1866,11 +1955,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_7_0_0d810000() {
     let encoding: u32 = 0x0D810000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1886,11 +1976,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_8_0_0d9e0000() {
     let encoding: u32 = 0x0D9E0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1906,11 +1997,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_9_0_0d9f0000() {
     let encoding: u32 = 0x0D9F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], #1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1926,11 +2018,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_10_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1946,11 +2039,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_11_0_0d802000() {
     let encoding: u32 = 0x0D802000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st3	{ v0.b, v1.b, v2.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1986,11 +2080,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_13_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2006,11 +2101,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_14_0_0d801000() {
     let encoding: u32 = 0x0D801000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[4], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2026,11 +2122,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_15_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2046,11 +2143,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_16_0_0d800400() {
     let encoding: u32 = 0x0D800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[1], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2066,11 +2164,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_17_0_0d800800() {
     let encoding: u32 = 0x0D800800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[2], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2086,11 +2185,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_18_0_0d800c00() {
     let encoding: u32 = 0x0D800C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[3], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2106,11 +2206,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_19_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2126,11 +2227,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_20_0_0d800020() {
     let encoding: u32 = 0x0D800020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x1], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2146,11 +2248,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_21_0_0d8003c0() {
     let encoding: u32 = 0x0D8003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x30], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2166,11 +2269,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_22_0_0d8003e0() {
     let encoding: u32 = 0x0D8003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [sp], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2186,11 +2290,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_23_0_0d800000() {
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2206,11 +2311,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_24_0_0d800001() {
     let encoding: u32 = 0x0D800001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v1.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2226,11 +2332,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_25_0_0d80001e() {
     let encoding: u32 = 0x0D80001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v30.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2246,11 +2353,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_26_0_0d80001f() {
     let encoding: u32 = 0x0D80001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v31.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2266,11 +2374,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_27_0_0d810020() {
     let encoding: u32 = 0x0D810020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x1], x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2286,11 +2395,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_28_0_0d9f03e0() {
     let encoding: u32 = 0x0D9F03E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [sp], #1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2306,11 +2416,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_29_0_0d810001() {
     let encoding: u32 = 0x0D810001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v1.b }[0], [x0], x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2326,11 +2437,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_30_0_0d9f001f() {
     let encoding: u32 = 0x0D9F001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v31.b }[0], [x0], #1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2346,11 +2458,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_31_0_0d800021() {
     let encoding: u32 = 0x0D800021;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v1.b }[0], [x1], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2366,11 +2479,12 @@ fn test_aarch64_memory_vector_single_post_inc_combo_32_0_0d8003ff() {
     let encoding: u32 = 0x0D8003FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v31.b }[0], [sp], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2386,11 +2500,12 @@ fn test_aarch64_memory_vector_single_post_inc_special_q_0_size_variant_0_0_0d800
     let encoding: u32 = 0x0D800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[1], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2406,11 +2521,12 @@ fn test_aarch64_memory_vector_single_post_inc_special_q_1_size_variant_1_0_4d800
     let encoding: u32 = 0x4D800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[9], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2426,11 +2542,12 @@ fn test_aarch64_memory_vector_single_post_inc_special_s_0_size_variant_0_0_0d800
     let encoding: u32 = 0x0D800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[1], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2446,11 +2563,12 @@ fn test_aarch64_memory_vector_single_post_inc_special_s_1_size_variant_1_0_0d801
     let encoding: u32 = 0x0D801400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[5], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2466,11 +2584,12 @@ fn test_aarch64_memory_vector_single_post_inc_special_size_0_size_variant_0_0_0d
     let encoding: u32 = 0x0D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[0], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2486,11 +2605,12 @@ fn test_aarch64_memory_vector_single_post_inc_special_size_1_size_variant_1_0_0d
     let encoding: u32 = 0x0D800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[1], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2506,11 +2626,12 @@ fn test_aarch64_memory_vector_single_post_inc_special_size_2_size_variant_2_0_0d
     let encoding: u32 = 0x0D800800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[2], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2526,11 +2647,12 @@ fn test_aarch64_memory_vector_single_post_inc_special_size_3_size_variant_3_0_0d
     let encoding: u32 = 0x0D800C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[3], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2547,11 +2669,12 @@ fn test_aarch64_memory_vector_single_post_inc_special_rn_31_stack_pointer_sp_may
     let encoding: u32 = 0x0D8007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.b }[1], [sp], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2568,11 +2691,12 @@ fn test_aarch64_memory_vector_single_post_inc_special_rt_31_zero_register_xzr_wz
     let encoding: u32 = 0x0D80041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v31.b }[1], [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2592,11 +2716,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_q_0_min_0_0c000000() {
     let encoding: u32 = 0x0C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2612,11 +2737,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_q_1_max_0_4c000000() {
     let encoding: u32 = 0x4C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.16b, v1.16b, v2.16b, v3.16b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2632,11 +2758,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_l_0_min_0_0c000000() {
     let encoding: u32 = 0x0C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2652,11 +2779,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_l_1_max_0_0c400000() {
     let encoding: u32 = 0x0C400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: ld4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2672,11 +2800,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_opcode_0_min_0_0c000000() {
     let encoding: u32 = 0x0C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2712,11 +2841,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_opcode_7_poweroftwominusone_0
     let encoding: u32 = 0x0C007000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2752,11 +2882,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_size_0_min_0_0c000000() {
     let encoding: u32 = 0x0C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2772,11 +2903,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_size_1_poweroftwo_0_0c000400(
     let encoding: u32 = 0x0C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.4h, v1.4h, v2.4h, v3.4h }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2792,11 +2924,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_size_2_poweroftwo_0_0c000800(
     let encoding: u32 = 0x0C000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.2s, v1.2s, v2.2s, v3.2s }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2832,11 +2965,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_rn_0_min_0_0c000000() {
     let encoding: u32 = 0x0C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2852,11 +2986,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_rn_1_poweroftwo_0_0c000020() 
     let encoding: u32 = 0x0C000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x1]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2872,11 +3007,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_rn_30_poweroftwominusone_0_0c
     let encoding: u32 = 0x0C0003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x30]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2892,11 +3028,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_rn_31_max_0_0c0003e0() {
     let encoding: u32 = 0x0C0003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [sp]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2912,11 +3049,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_rt_0_min_0_0c000000() {
     let encoding: u32 = 0x0C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2932,11 +3070,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_rt_1_poweroftwo_0_0c000001() 
     let encoding: u32 = 0x0C000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v1.8b, v2.8b, v3.8b, v4.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2952,11 +3091,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_rt_30_poweroftwominusone_0_0c
     let encoding: u32 = 0x0C00001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v30.8b, v31.8b, v0.8b, v1.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2972,11 +3112,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_field_rt_31_max_0_0c00001f() {
     let encoding: u32 = 0x0C00001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v31.8b, v0.8b, v1.8b, v2.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2992,11 +3133,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_0_0_0c000000() {
     let encoding: u32 = 0x0C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3012,11 +3154,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_1_0_4c000000() {
     let encoding: u32 = 0x4C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.16b, v1.16b, v2.16b, v3.16b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3032,11 +3175,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_2_0_0c000000() {
     let encoding: u32 = 0x0C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3052,11 +3196,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_3_0_0c400000() {
     let encoding: u32 = 0x0C400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: ld4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3072,11 +3217,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_4_0_0c000000() {
     let encoding: u32 = 0x0C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3112,11 +3258,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_6_0_0c007000() {
     let encoding: u32 = 0x0C007000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3152,11 +3299,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_8_0_0c000000() {
     let encoding: u32 = 0x0C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3172,11 +3320,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_9_0_0c000400() {
     let encoding: u32 = 0x0C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.4h, v1.4h, v2.4h, v3.4h }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3192,11 +3341,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_10_0_0c000800() {
     let encoding: u32 = 0x0C000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.2s, v1.2s, v2.2s, v3.2s }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3232,11 +3382,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_12_0_0c000000() {
     let encoding: u32 = 0x0C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3252,11 +3403,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_13_0_0c000020() {
     let encoding: u32 = 0x0C000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x1]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3272,11 +3424,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_14_0_0c0003c0() {
     let encoding: u32 = 0x0C0003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x30]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3292,11 +3445,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_15_0_0c0003e0() {
     let encoding: u32 = 0x0C0003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [sp]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3312,11 +3466,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_16_0_0c000000() {
     let encoding: u32 = 0x0C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3332,11 +3487,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_17_0_0c000001() {
     let encoding: u32 = 0x0C000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v1.8b, v2.8b, v3.8b, v4.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3352,11 +3508,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_18_0_0c00001e() {
     let encoding: u32 = 0x0C00001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v30.8b, v31.8b, v0.8b, v1.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3372,11 +3529,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_19_0_0c00001f() {
     let encoding: u32 = 0x0C00001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v31.8b, v0.8b, v1.8b, v2.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3392,11 +3550,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_20_0_0c000021() {
     let encoding: u32 = 0x0C000021;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v1.8b, v2.8b, v3.8b, v4.8b }, [x1]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3412,11 +3571,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_combo_21_0_0c0003ff() {
     let encoding: u32 = 0x0C0003FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v31.8b, v0.8b, v1.8b, v2.8b }, [sp]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3432,11 +3592,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_special_q_0_size_variant_0_0_0c0004
     let encoding: u32 = 0x0C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.4h, v1.4h, v2.4h, v3.4h }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3452,11 +3613,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_special_q_1_size_variant_1_0_4c0004
     let encoding: u32 = 0x4C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8h, v1.8h, v2.8h, v3.8h }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3472,11 +3634,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_special_size_0_size_variant_0_0_0c0
     let encoding: u32 = 0x0C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3492,11 +3655,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_special_size_1_size_variant_1_0_0c0
     let encoding: u32 = 0x0C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.4h, v1.4h, v2.4h, v3.4h }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3512,11 +3676,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_special_size_2_size_variant_2_0_0c0
     let encoding: u32 = 0x0C000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.2s, v1.2s, v2.2s, v3.2s }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3553,11 +3718,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_special_rn_31_stack_pointer_sp_may_
     let encoding: u32 = 0x0C0007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.4h, v1.4h, v2.4h, v3.4h }, [sp]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3574,11 +3740,12 @@ fn test_aarch64_memory_vector_multiple_no_wb_special_rt_31_zero_register_xzr_wzr
     let encoding: u32 = 0x0C00041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v31.4h, v0.4h, v1.4h, v2.4h }, [x0]
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3594,11 +3761,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_q_0_min_0_0c800000() {
     let encoding: u32 = 0x0C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3614,11 +3782,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_q_1_max_0_4c800000() {
     let encoding: u32 = 0x4C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.16b, v1.16b, v2.16b, v3.16b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3634,11 +3803,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_l_0_min_0_0c800000() {
     let encoding: u32 = 0x0C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3654,11 +3824,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_l_1_max_0_0cc00000() {
     let encoding: u32 = 0x0CC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: ld4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3674,11 +3845,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_rm_0_min_0_0c800000() {
     let encoding: u32 = 0x0C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3694,11 +3866,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_rm_1_poweroftwo_0_0c810000
     let encoding: u32 = 0x0C810000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3714,11 +3887,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_rm_30_poweroftwominusone_0
     let encoding: u32 = 0x0C9E0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3734,11 +3908,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_rm_31_max_0_0c9f0000() {
     let encoding: u32 = 0x0C9F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], #32
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3754,11 +3929,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_opcode_0_min_0_0c800000() 
     let encoding: u32 = 0x0C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3794,11 +3970,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_opcode_7_poweroftwominuson
     let encoding: u32 = 0x0C807000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3834,11 +4011,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_size_0_min_0_0c800000() {
     let encoding: u32 = 0x0C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3854,11 +4032,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_size_1_poweroftwo_0_0c8004
     let encoding: u32 = 0x0C800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.4h, v1.4h, v2.4h, v3.4h }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3874,11 +4053,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_size_2_poweroftwo_0_0c8008
     let encoding: u32 = 0x0C800800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.2s, v1.2s, v2.2s, v3.2s }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3914,11 +4094,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_rn_0_min_0_0c800000() {
     let encoding: u32 = 0x0C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3934,11 +4115,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_rn_1_poweroftwo_0_0c800020
     let encoding: u32 = 0x0C800020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x1], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3954,11 +4136,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_rn_30_poweroftwominusone_0
     let encoding: u32 = 0x0C8003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x30], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3974,11 +4157,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_rn_31_max_0_0c8003e0() {
     let encoding: u32 = 0x0C8003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [sp], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3994,11 +4178,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_rt_0_min_0_0c800000() {
     let encoding: u32 = 0x0C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4014,11 +4199,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_rt_1_poweroftwo_0_0c800001
     let encoding: u32 = 0x0C800001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v1.8b, v2.8b, v3.8b, v4.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4034,11 +4220,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_rt_30_poweroftwominusone_0
     let encoding: u32 = 0x0C80001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v30.8b, v31.8b, v0.8b, v1.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4054,11 +4241,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_field_rt_31_max_0_0c80001f() {
     let encoding: u32 = 0x0C80001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v31.8b, v0.8b, v1.8b, v2.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4074,11 +4262,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_0_0_0c800000() {
     let encoding: u32 = 0x0C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4094,11 +4283,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_1_0_4c800000() {
     let encoding: u32 = 0x4C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.16b, v1.16b, v2.16b, v3.16b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4114,11 +4304,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_2_0_0c800000() {
     let encoding: u32 = 0x0C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4134,11 +4325,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_3_0_0cc00000() {
     let encoding: u32 = 0x0CC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: ld4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4154,11 +4346,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_4_0_0c800000() {
     let encoding: u32 = 0x0C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4174,11 +4367,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_5_0_0c810000() {
     let encoding: u32 = 0x0C810000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4194,11 +4388,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_6_0_0c9e0000() {
     let encoding: u32 = 0x0C9E0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4214,11 +4409,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_7_0_0c9f0000() {
     let encoding: u32 = 0x0C9F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], #32
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4234,11 +4430,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_8_0_0c800000() {
     let encoding: u32 = 0x0C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4274,11 +4471,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_10_0_0c807000() {
     let encoding: u32 = 0x0C807000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st1	{ v0.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4314,11 +4512,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_12_0_0c800000() {
     let encoding: u32 = 0x0C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4334,11 +4533,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_13_0_0c800400() {
     let encoding: u32 = 0x0C800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.4h, v1.4h, v2.4h, v3.4h }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4354,11 +4554,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_14_0_0c800800() {
     let encoding: u32 = 0x0C800800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.2s, v1.2s, v2.2s, v3.2s }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4394,11 +4595,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_16_0_0c800000() {
     let encoding: u32 = 0x0C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4414,11 +4616,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_17_0_0c800020() {
     let encoding: u32 = 0x0C800020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x1], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4434,11 +4637,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_18_0_0c8003c0() {
     let encoding: u32 = 0x0C8003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x30], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4454,11 +4658,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_19_0_0c8003e0() {
     let encoding: u32 = 0x0C8003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [sp], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4474,11 +4679,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_20_0_0c800000() {
     let encoding: u32 = 0x0C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4494,11 +4700,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_21_0_0c800001() {
     let encoding: u32 = 0x0C800001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v1.8b, v2.8b, v3.8b, v4.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4514,11 +4721,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_22_0_0c80001e() {
     let encoding: u32 = 0x0C80001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v30.8b, v31.8b, v0.8b, v1.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4534,11 +4742,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_23_0_0c80001f() {
     let encoding: u32 = 0x0C80001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v31.8b, v0.8b, v1.8b, v2.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4554,11 +4763,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_24_0_0c810020() {
     let encoding: u32 = 0x0C810020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x1], x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4574,11 +4784,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_25_0_0c9f03e0() {
     let encoding: u32 = 0x0C9F03E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [sp], #32
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4594,11 +4805,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_26_0_0c810001() {
     let encoding: u32 = 0x0C810001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v1.8b, v2.8b, v3.8b, v4.8b }, [x0], x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4614,11 +4826,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_27_0_0c9f001f() {
     let encoding: u32 = 0x0C9F001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v31.8b, v0.8b, v1.8b, v2.8b }, [x0], #32
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4634,11 +4847,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_28_0_0c800021() {
     let encoding: u32 = 0x0C800021;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v1.8b, v2.8b, v3.8b, v4.8b }, [x1], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4654,11 +4868,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_combo_29_0_0c8003ff() {
     let encoding: u32 = 0x0C8003FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v31.8b, v0.8b, v1.8b, v2.8b }, [sp], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4674,11 +4889,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_special_q_0_size_variant_0_0_0c8
     let encoding: u32 = 0x0C800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.4h, v1.4h, v2.4h, v3.4h }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4694,11 +4910,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_special_q_1_size_variant_1_0_4c8
     let encoding: u32 = 0x4C800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8h, v1.8h, v2.8h, v3.8h }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4714,11 +4931,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_special_size_0_size_variant_0_0_
     let encoding: u32 = 0x0C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.8b, v1.8b, v2.8b, v3.8b }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4734,11 +4952,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_special_size_1_size_variant_1_0_
     let encoding: u32 = 0x0C800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.4h, v1.4h, v2.4h, v3.4h }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4754,11 +4973,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_special_size_2_size_variant_2_0_
     let encoding: u32 = 0x0C800800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.2s, v1.2s, v2.2s, v3.2s }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4795,11 +5015,12 @@ fn test_aarch64_memory_vector_multiple_post_inc_special_rn_31_stack_pointer_sp_m
     let encoding: u32 = 0x0C8007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v0.4h, v1.4h, v2.4h, v3.4h }, [sp], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4816,10 +5037,11 @@ fn test_aarch64_memory_vector_multiple_post_inc_special_rt_31_zero_register_xzr_
     let encoding: u32 = 0x0C80041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: st4	{ v31.4h, v0.4h, v1.4h, v2.4h }, [x0], x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }

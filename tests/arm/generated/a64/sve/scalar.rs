@@ -1318,11 +1318,12 @@ fn test_uqdecw_z_zs_field_imm4_0_zero_cc00_04a0cc00() {
     let encoding: u32 = 0x04A0CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1338,11 +1339,12 @@ fn test_uqdecw_z_zs_field_imm4_1_poweroftwo_cc00_04a1cc00() {
     let encoding: u32 = 0x04A1CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1358,11 +1360,12 @@ fn test_uqdecw_z_zs_field_imm4_3_poweroftwominusone_cc00_04a3cc00() {
     let encoding: u32 = 0x04A3CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1378,11 +1381,12 @@ fn test_uqdecw_z_zs_field_imm4_4_poweroftwo_cc00_04a4cc00() {
     let encoding: u32 = 0x04A4CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1398,11 +1402,12 @@ fn test_uqdecw_z_zs_field_imm4_7_poweroftwominusone_cc00_04a7cc00() {
     let encoding: u32 = 0x04A7CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1418,11 +1423,12 @@ fn test_uqdecw_z_zs_field_imm4_8_poweroftwo_cc00_04a8cc00() {
     let encoding: u32 = 0x04A8CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1438,11 +1444,12 @@ fn test_uqdecw_z_zs_field_imm4_15_max_cc00_04afcc00() {
     let encoding: u32 = 0x04AFCC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1458,11 +1465,12 @@ fn test_uqdecw_z_zs_field_pattern_0_min_cc00_04a0cc00() {
     let encoding: u32 = 0x04A0CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1478,11 +1486,12 @@ fn test_uqdecw_z_zs_field_pattern_1_poweroftwo_cc00_04a0cc20() {
     let encoding: u32 = 0x04A0CC20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1498,11 +1507,12 @@ fn test_uqdecw_z_zs_field_pattern_15_poweroftwominusone_cc00_04a0cde0() {
     let encoding: u32 = 0x04A0CDE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1518,11 +1528,12 @@ fn test_uqdecw_z_zs_field_pattern_31_max_cc00_04a0cfe0() {
     let encoding: u32 = 0x04A0CFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1538,11 +1549,12 @@ fn test_uqdecw_z_zs_field_zdn_0_min_cc00_04a0cc00() {
     let encoding: u32 = 0x04A0CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1558,11 +1570,12 @@ fn test_uqdecw_z_zs_field_zdn_1_poweroftwo_cc00_04a0cc01() {
     let encoding: u32 = 0x04A0CC01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z1.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1578,11 +1591,12 @@ fn test_uqdecw_z_zs_field_zdn_15_poweroftwominusone_cc00_04a0cc0f() {
     let encoding: u32 = 0x04A0CC0F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z15.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1598,11 +1612,12 @@ fn test_uqdecw_z_zs_field_zdn_31_max_cc00_04a0cc1f() {
     let encoding: u32 = 0x04A0CC1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z31.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1618,11 +1633,12 @@ fn test_uqdecw_z_zs_combo_0_cc00_04a0cc00() {
     let encoding: u32 = 0x04A0CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1638,11 +1654,12 @@ fn test_uqdecw_z_zs_combo_1_cc00_04a1cc00() {
     let encoding: u32 = 0x04A1CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1658,11 +1675,12 @@ fn test_uqdecw_z_zs_combo_2_cc00_04a3cc00() {
     let encoding: u32 = 0x04A3CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1678,11 +1696,12 @@ fn test_uqdecw_z_zs_combo_3_cc00_04a4cc00() {
     let encoding: u32 = 0x04A4CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1698,11 +1717,12 @@ fn test_uqdecw_z_zs_combo_4_cc00_04a7cc00() {
     let encoding: u32 = 0x04A7CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1718,11 +1738,12 @@ fn test_uqdecw_z_zs_combo_5_cc00_04a8cc00() {
     let encoding: u32 = 0x04A8CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1738,11 +1759,12 @@ fn test_uqdecw_z_zs_combo_6_cc00_04afcc00() {
     let encoding: u32 = 0x04AFCC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1758,11 +1780,12 @@ fn test_uqdecw_z_zs_combo_7_cc00_04a0cc00() {
     let encoding: u32 = 0x04A0CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1778,11 +1801,12 @@ fn test_uqdecw_z_zs_combo_8_cc00_04a0cc20() {
     let encoding: u32 = 0x04A0CC20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1798,11 +1822,12 @@ fn test_uqdecw_z_zs_combo_9_cc00_04a0cde0() {
     let encoding: u32 = 0x04A0CDE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1818,11 +1843,12 @@ fn test_uqdecw_z_zs_combo_10_cc00_04a0cfe0() {
     let encoding: u32 = 0x04A0CFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1838,11 +1864,12 @@ fn test_uqdecw_z_zs_combo_11_cc00_04a0cc00() {
     let encoding: u32 = 0x04A0CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1858,11 +1885,12 @@ fn test_uqdecw_z_zs_combo_12_cc00_04a0cc01() {
     let encoding: u32 = 0x04A0CC01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z1.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1878,11 +1906,12 @@ fn test_uqdecw_z_zs_combo_13_cc00_04a0cc0f() {
     let encoding: u32 = 0x04A0CC0F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z15.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1898,11 +1927,12 @@ fn test_uqdecw_z_zs_combo_14_cc00_04a0cc1f() {
     let encoding: u32 = 0x04A0CC1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecw	z31.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1922,11 +1952,12 @@ fn test_cnt_z_p_z_field_size_0_min_a000_041aa000() {
     let encoding: u32 = 0x041AA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p0/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1942,11 +1973,12 @@ fn test_cnt_z_p_z_field_size_1_poweroftwo_a000_045aa000() {
     let encoding: u32 = 0x045AA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.h, p0/m, z0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1962,11 +1994,12 @@ fn test_cnt_z_p_z_field_size_2_poweroftwo_a000_049aa000() {
     let encoding: u32 = 0x049AA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.s, p0/m, z0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1982,11 +2015,12 @@ fn test_cnt_z_p_z_field_size_3_max_a000_04daa000() {
     let encoding: u32 = 0x04DAA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.d, p0/m, z0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2002,11 +2036,12 @@ fn test_cnt_z_p_z_field_pg_0_min_a000_041aa000() {
     let encoding: u32 = 0x041AA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p0/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2022,11 +2057,12 @@ fn test_cnt_z_p_z_field_pg_1_poweroftwo_a000_041aa400() {
     let encoding: u32 = 0x041AA400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p1/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2042,11 +2078,12 @@ fn test_cnt_z_p_z_field_zn_0_min_a000_041aa000() {
     let encoding: u32 = 0x041AA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p0/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2062,11 +2099,12 @@ fn test_cnt_z_p_z_field_zn_1_poweroftwo_a000_041aa020() {
     let encoding: u32 = 0x041AA020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p0/m, z1.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2082,11 +2120,12 @@ fn test_cnt_z_p_z_field_zn_30_poweroftwominusone_a000_041aa3c0() {
     let encoding: u32 = 0x041AA3C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p0/m, z30.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2102,11 +2141,12 @@ fn test_cnt_z_p_z_field_zn_31_max_a000_041aa3e0() {
     let encoding: u32 = 0x041AA3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p0/m, z31.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2122,11 +2162,12 @@ fn test_cnt_z_p_z_field_zd_0_min_a000_041aa000() {
     let encoding: u32 = 0x041AA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p0/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2142,11 +2183,12 @@ fn test_cnt_z_p_z_field_zd_1_poweroftwo_a000_041aa001() {
     let encoding: u32 = 0x041AA001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z1.b, p0/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2162,11 +2204,12 @@ fn test_cnt_z_p_z_field_zd_30_poweroftwominusone_a000_041aa01e() {
     let encoding: u32 = 0x041AA01E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z30.b, p0/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2182,11 +2225,12 @@ fn test_cnt_z_p_z_field_zd_31_max_a000_041aa01f() {
     let encoding: u32 = 0x041AA01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z31.b, p0/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2202,11 +2246,12 @@ fn test_cnt_z_p_z_combo_0_a000_041aa000() {
     let encoding: u32 = 0x041AA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p0/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2222,11 +2267,12 @@ fn test_cnt_z_p_z_combo_1_a000_045aa000() {
     let encoding: u32 = 0x045AA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.h, p0/m, z0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2242,11 +2288,12 @@ fn test_cnt_z_p_z_combo_2_a000_049aa000() {
     let encoding: u32 = 0x049AA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.s, p0/m, z0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2262,11 +2309,12 @@ fn test_cnt_z_p_z_combo_3_a000_04daa000() {
     let encoding: u32 = 0x04DAA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.d, p0/m, z0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2282,11 +2330,12 @@ fn test_cnt_z_p_z_combo_4_a000_041aa000() {
     let encoding: u32 = 0x041AA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p0/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2302,11 +2351,12 @@ fn test_cnt_z_p_z_combo_5_a000_041aa400() {
     let encoding: u32 = 0x041AA400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p1/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2322,11 +2372,12 @@ fn test_cnt_z_p_z_combo_6_a000_041aa000() {
     let encoding: u32 = 0x041AA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p0/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2342,11 +2393,12 @@ fn test_cnt_z_p_z_combo_7_a000_041aa020() {
     let encoding: u32 = 0x041AA020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p0/m, z1.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2362,11 +2414,12 @@ fn test_cnt_z_p_z_combo_8_a000_041aa3c0() {
     let encoding: u32 = 0x041AA3C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p0/m, z30.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2382,11 +2435,12 @@ fn test_cnt_z_p_z_combo_9_a000_041aa3e0() {
     let encoding: u32 = 0x041AA3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p0/m, z31.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2402,11 +2456,12 @@ fn test_cnt_z_p_z_combo_10_a000_041aa000() {
     let encoding: u32 = 0x041AA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p0/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2422,11 +2477,12 @@ fn test_cnt_z_p_z_combo_11_a000_041aa001() {
     let encoding: u32 = 0x041AA001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z1.b, p0/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2442,11 +2498,12 @@ fn test_cnt_z_p_z_combo_12_a000_041aa01e() {
     let encoding: u32 = 0x041AA01E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z30.b, p0/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2462,11 +2519,12 @@ fn test_cnt_z_p_z_combo_13_a000_041aa01f() {
     let encoding: u32 = 0x041AA01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z31.b, p0/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2482,11 +2540,12 @@ fn test_cnt_z_p_z_special_size_0_size_variant_0_40960_041aa000() {
     let encoding: u32 = 0x041AA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.b, p0/m, z0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2502,11 +2561,12 @@ fn test_cnt_z_p_z_special_size_1_size_variant_1_40960_045aa000() {
     let encoding: u32 = 0x045AA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.h, p0/m, z0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2522,11 +2582,12 @@ fn test_cnt_z_p_z_special_size_2_size_variant_2_40960_049aa000() {
     let encoding: u32 = 0x049AA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.s, p0/m, z0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2542,11 +2603,12 @@ fn test_cnt_z_p_z_special_size_3_size_variant_3_40960_04daa000() {
     let encoding: u32 = 0x04DAA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnt	z0.d, p0/m, z0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3860,11 +3922,12 @@ fn test_uqincd_z_zs_field_imm4_0_zero_c400_04e0c400() {
     let encoding: u32 = 0x04E0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3880,11 +3943,12 @@ fn test_uqincd_z_zs_field_imm4_1_poweroftwo_c400_04e1c400() {
     let encoding: u32 = 0x04E1C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3900,11 +3964,12 @@ fn test_uqincd_z_zs_field_imm4_3_poweroftwominusone_c400_04e3c400() {
     let encoding: u32 = 0x04E3C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3920,11 +3985,12 @@ fn test_uqincd_z_zs_field_imm4_4_poweroftwo_c400_04e4c400() {
     let encoding: u32 = 0x04E4C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3940,11 +4006,12 @@ fn test_uqincd_z_zs_field_imm4_7_poweroftwominusone_c400_04e7c400() {
     let encoding: u32 = 0x04E7C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3960,11 +4027,12 @@ fn test_uqincd_z_zs_field_imm4_8_poweroftwo_c400_04e8c400() {
     let encoding: u32 = 0x04E8C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3980,11 +4048,12 @@ fn test_uqincd_z_zs_field_imm4_15_max_c400_04efc400() {
     let encoding: u32 = 0x04EFC400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4000,11 +4069,12 @@ fn test_uqincd_z_zs_field_pattern_0_min_c400_04e0c400() {
     let encoding: u32 = 0x04E0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4020,11 +4090,12 @@ fn test_uqincd_z_zs_field_pattern_1_poweroftwo_c400_04e0c420() {
     let encoding: u32 = 0x04E0C420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4040,11 +4111,12 @@ fn test_uqincd_z_zs_field_pattern_15_poweroftwominusone_c400_04e0c5e0() {
     let encoding: u32 = 0x04E0C5E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4060,11 +4132,12 @@ fn test_uqincd_z_zs_field_pattern_31_max_c400_04e0c7e0() {
     let encoding: u32 = 0x04E0C7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4080,11 +4153,12 @@ fn test_uqincd_z_zs_field_zdn_0_min_c400_04e0c400() {
     let encoding: u32 = 0x04E0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4100,11 +4174,12 @@ fn test_uqincd_z_zs_field_zdn_1_poweroftwo_c400_04e0c401() {
     let encoding: u32 = 0x04E0C401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z1.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4120,11 +4195,12 @@ fn test_uqincd_z_zs_field_zdn_15_poweroftwominusone_c400_04e0c40f() {
     let encoding: u32 = 0x04E0C40F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z15.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4140,11 +4216,12 @@ fn test_uqincd_z_zs_field_zdn_31_max_c400_04e0c41f() {
     let encoding: u32 = 0x04E0C41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z31.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4160,11 +4237,12 @@ fn test_uqincd_z_zs_combo_0_c400_04e0c400() {
     let encoding: u32 = 0x04E0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4180,11 +4258,12 @@ fn test_uqincd_z_zs_combo_1_c400_04e1c400() {
     let encoding: u32 = 0x04E1C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4200,11 +4279,12 @@ fn test_uqincd_z_zs_combo_2_c400_04e3c400() {
     let encoding: u32 = 0x04E3C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4220,11 +4300,12 @@ fn test_uqincd_z_zs_combo_3_c400_04e4c400() {
     let encoding: u32 = 0x04E4C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4240,11 +4321,12 @@ fn test_uqincd_z_zs_combo_4_c400_04e7c400() {
     let encoding: u32 = 0x04E7C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4260,11 +4342,12 @@ fn test_uqincd_z_zs_combo_5_c400_04e8c400() {
     let encoding: u32 = 0x04E8C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4280,11 +4363,12 @@ fn test_uqincd_z_zs_combo_6_c400_04efc400() {
     let encoding: u32 = 0x04EFC400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4300,11 +4384,12 @@ fn test_uqincd_z_zs_combo_7_c400_04e0c400() {
     let encoding: u32 = 0x04E0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4320,11 +4405,12 @@ fn test_uqincd_z_zs_combo_8_c400_04e0c420() {
     let encoding: u32 = 0x04E0C420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4340,11 +4426,12 @@ fn test_uqincd_z_zs_combo_9_c400_04e0c5e0() {
     let encoding: u32 = 0x04E0C5E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4360,11 +4447,12 @@ fn test_uqincd_z_zs_combo_10_c400_04e0c7e0() {
     let encoding: u32 = 0x04E0C7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4380,11 +4468,12 @@ fn test_uqincd_z_zs_combo_11_c400_04e0c400() {
     let encoding: u32 = 0x04E0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4400,11 +4489,12 @@ fn test_uqincd_z_zs_combo_12_c400_04e0c401() {
     let encoding: u32 = 0x04E0C401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z1.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4420,11 +4510,12 @@ fn test_uqincd_z_zs_combo_13_c400_04e0c40f() {
     let encoding: u32 = 0x04E0C40F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z15.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4440,11 +4531,12 @@ fn test_uqincd_z_zs_combo_14_c400_04e0c41f() {
     let encoding: u32 = 0x04E0C41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincd	z31.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4464,11 +4556,12 @@ fn test_uqdecp_r_p_r_uw_field_size_0_min_8800_252b8800() {
     let encoding: u32 = 0x252B8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4484,11 +4577,12 @@ fn test_uqdecp_r_p_r_uw_field_size_1_poweroftwo_8800_256b8800() {
     let encoding: u32 = 0x256B8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4504,11 +4598,12 @@ fn test_uqdecp_r_p_r_uw_field_size_2_poweroftwo_8800_25ab8800() {
     let encoding: u32 = 0x25AB8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4524,11 +4619,12 @@ fn test_uqdecp_r_p_r_uw_field_size_3_max_8800_25eb8800() {
     let encoding: u32 = 0x25EB8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4544,11 +4640,12 @@ fn test_uqdecp_r_p_r_uw_field_pg_0_min_8800_252b8800() {
     let encoding: u32 = 0x252B8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4564,11 +4661,12 @@ fn test_uqdecp_r_p_r_uw_field_pg_1_poweroftwo_8800_252b8820() {
     let encoding: u32 = 0x252B8820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p1.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4584,11 +4682,12 @@ fn test_uqdecp_r_p_r_uw_field_rdn_0_min_8800_252b8800() {
     let encoding: u32 = 0x252B8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4604,11 +4703,12 @@ fn test_uqdecp_r_p_r_uw_field_rdn_1_poweroftwo_8800_252b8801() {
     let encoding: u32 = 0x252B8801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w1, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4624,11 +4724,12 @@ fn test_uqdecp_r_p_r_uw_field_rdn_15_poweroftwominusone_8800_252b880f() {
     let encoding: u32 = 0x252B880F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w15, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4644,11 +4745,12 @@ fn test_uqdecp_r_p_r_uw_field_rdn_31_max_8800_252b881f() {
     let encoding: u32 = 0x252B881F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	wzr, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4664,11 +4766,12 @@ fn test_uqdecp_r_p_r_uw_combo_0_8800_252b8800() {
     let encoding: u32 = 0x252B8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4684,11 +4787,12 @@ fn test_uqdecp_r_p_r_uw_combo_1_8800_256b8800() {
     let encoding: u32 = 0x256B8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4704,11 +4808,12 @@ fn test_uqdecp_r_p_r_uw_combo_2_8800_25ab8800() {
     let encoding: u32 = 0x25AB8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4724,11 +4829,12 @@ fn test_uqdecp_r_p_r_uw_combo_3_8800_25eb8800() {
     let encoding: u32 = 0x25EB8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4744,11 +4850,12 @@ fn test_uqdecp_r_p_r_uw_combo_4_8800_252b8800() {
     let encoding: u32 = 0x252B8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4764,11 +4871,12 @@ fn test_uqdecp_r_p_r_uw_combo_5_8800_252b8820() {
     let encoding: u32 = 0x252B8820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p1.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4784,11 +4892,12 @@ fn test_uqdecp_r_p_r_uw_combo_6_8800_252b8800() {
     let encoding: u32 = 0x252B8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4804,11 +4913,12 @@ fn test_uqdecp_r_p_r_uw_combo_7_8800_252b8801() {
     let encoding: u32 = 0x252B8801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w1, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4824,11 +4934,12 @@ fn test_uqdecp_r_p_r_uw_combo_8_8800_252b880f() {
     let encoding: u32 = 0x252B880F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w15, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4844,11 +4955,12 @@ fn test_uqdecp_r_p_r_uw_combo_9_8800_252b881f() {
     let encoding: u32 = 0x252B881F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	wzr, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4864,11 +4976,12 @@ fn test_uqdecp_r_p_r_uw_special_size_0_size_variant_0_34816_252b8800() {
     let encoding: u32 = 0x252B8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4884,11 +4997,12 @@ fn test_uqdecp_r_p_r_uw_special_size_1_size_variant_1_34816_256b8800() {
     let encoding: u32 = 0x256B8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4904,11 +5018,12 @@ fn test_uqdecp_r_p_r_uw_special_size_2_size_variant_2_34816_25ab8800() {
     let encoding: u32 = 0x25AB8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4924,11 +5039,12 @@ fn test_uqdecp_r_p_r_uw_special_size_3_size_variant_3_34816_25eb8800() {
     let encoding: u32 = 0x25EB8800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	w0, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4944,11 +5060,12 @@ fn test_uqdecp_r_p_r_x_field_size_0_min_8c00_252b8c00() {
     let encoding: u32 = 0x252B8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4964,11 +5081,12 @@ fn test_uqdecp_r_p_r_x_field_size_1_poweroftwo_8c00_256b8c00() {
     let encoding: u32 = 0x256B8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4984,11 +5102,12 @@ fn test_uqdecp_r_p_r_x_field_size_2_poweroftwo_8c00_25ab8c00() {
     let encoding: u32 = 0x25AB8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5004,11 +5123,12 @@ fn test_uqdecp_r_p_r_x_field_size_3_max_8c00_25eb8c00() {
     let encoding: u32 = 0x25EB8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5024,11 +5144,12 @@ fn test_uqdecp_r_p_r_x_field_pg_0_min_8c00_252b8c00() {
     let encoding: u32 = 0x252B8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5044,11 +5165,12 @@ fn test_uqdecp_r_p_r_x_field_pg_1_poweroftwo_8c00_252b8c20() {
     let encoding: u32 = 0x252B8C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p1.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5064,11 +5186,12 @@ fn test_uqdecp_r_p_r_x_field_rdn_0_min_8c00_252b8c00() {
     let encoding: u32 = 0x252B8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5084,11 +5207,12 @@ fn test_uqdecp_r_p_r_x_field_rdn_1_poweroftwo_8c00_252b8c01() {
     let encoding: u32 = 0x252B8C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x1, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5104,11 +5228,12 @@ fn test_uqdecp_r_p_r_x_field_rdn_15_poweroftwominusone_8c00_252b8c0f() {
     let encoding: u32 = 0x252B8C0F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x15, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5124,11 +5249,12 @@ fn test_uqdecp_r_p_r_x_field_rdn_31_max_8c00_252b8c1f() {
     let encoding: u32 = 0x252B8C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	xzr, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5144,11 +5270,12 @@ fn test_uqdecp_r_p_r_x_combo_0_8c00_252b8c00() {
     let encoding: u32 = 0x252B8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5164,11 +5291,12 @@ fn test_uqdecp_r_p_r_x_combo_1_8c00_256b8c00() {
     let encoding: u32 = 0x256B8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5184,11 +5312,12 @@ fn test_uqdecp_r_p_r_x_combo_2_8c00_25ab8c00() {
     let encoding: u32 = 0x25AB8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5204,11 +5333,12 @@ fn test_uqdecp_r_p_r_x_combo_3_8c00_25eb8c00() {
     let encoding: u32 = 0x25EB8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5224,11 +5354,12 @@ fn test_uqdecp_r_p_r_x_combo_4_8c00_252b8c00() {
     let encoding: u32 = 0x252B8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5244,11 +5375,12 @@ fn test_uqdecp_r_p_r_x_combo_5_8c00_252b8c20() {
     let encoding: u32 = 0x252B8C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p1.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5264,11 +5396,12 @@ fn test_uqdecp_r_p_r_x_combo_6_8c00_252b8c00() {
     let encoding: u32 = 0x252B8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5284,11 +5417,12 @@ fn test_uqdecp_r_p_r_x_combo_7_8c00_252b8c01() {
     let encoding: u32 = 0x252B8C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x1, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5304,11 +5438,12 @@ fn test_uqdecp_r_p_r_x_combo_8_8c00_252b8c0f() {
     let encoding: u32 = 0x252B8C0F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x15, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5324,11 +5459,12 @@ fn test_uqdecp_r_p_r_x_combo_9_8c00_252b8c1f() {
     let encoding: u32 = 0x252B8C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	xzr, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5344,11 +5480,12 @@ fn test_uqdecp_r_p_r_x_special_size_0_size_variant_0_35840_252b8c00() {
     let encoding: u32 = 0x252B8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5364,11 +5501,12 @@ fn test_uqdecp_r_p_r_x_special_size_1_size_variant_1_35840_256b8c00() {
     let encoding: u32 = 0x256B8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5384,11 +5522,12 @@ fn test_uqdecp_r_p_r_x_special_size_2_size_variant_2_35840_25ab8c00() {
     let encoding: u32 = 0x25AB8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5404,11 +5543,12 @@ fn test_uqdecp_r_p_r_x_special_size_3_size_variant_3_35840_25eb8c00() {
     let encoding: u32 = 0x25EB8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	x0, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -9829,11 +9969,12 @@ fn test_uqdech_z_zs_field_imm4_0_zero_cc00_0460cc00() {
     let encoding: u32 = 0x0460CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -9849,11 +9990,12 @@ fn test_uqdech_z_zs_field_imm4_1_poweroftwo_cc00_0461cc00() {
     let encoding: u32 = 0x0461CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -9869,11 +10011,12 @@ fn test_uqdech_z_zs_field_imm4_3_poweroftwominusone_cc00_0463cc00() {
     let encoding: u32 = 0x0463CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -9889,11 +10032,12 @@ fn test_uqdech_z_zs_field_imm4_4_poweroftwo_cc00_0464cc00() {
     let encoding: u32 = 0x0464CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -9909,11 +10053,12 @@ fn test_uqdech_z_zs_field_imm4_7_poweroftwominusone_cc00_0467cc00() {
     let encoding: u32 = 0x0467CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -9929,11 +10074,12 @@ fn test_uqdech_z_zs_field_imm4_8_poweroftwo_cc00_0468cc00() {
     let encoding: u32 = 0x0468CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -9949,11 +10095,12 @@ fn test_uqdech_z_zs_field_imm4_15_max_cc00_046fcc00() {
     let encoding: u32 = 0x046FCC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -9969,11 +10116,12 @@ fn test_uqdech_z_zs_field_pattern_0_min_cc00_0460cc00() {
     let encoding: u32 = 0x0460CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -9989,11 +10137,12 @@ fn test_uqdech_z_zs_field_pattern_1_poweroftwo_cc00_0460cc20() {
     let encoding: u32 = 0x0460CC20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10009,11 +10158,12 @@ fn test_uqdech_z_zs_field_pattern_15_poweroftwominusone_cc00_0460cde0() {
     let encoding: u32 = 0x0460CDE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10029,11 +10179,12 @@ fn test_uqdech_z_zs_field_pattern_31_max_cc00_0460cfe0() {
     let encoding: u32 = 0x0460CFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10049,11 +10200,12 @@ fn test_uqdech_z_zs_field_zdn_0_min_cc00_0460cc00() {
     let encoding: u32 = 0x0460CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10069,11 +10221,12 @@ fn test_uqdech_z_zs_field_zdn_1_poweroftwo_cc00_0460cc01() {
     let encoding: u32 = 0x0460CC01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z1.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10089,11 +10242,12 @@ fn test_uqdech_z_zs_field_zdn_15_poweroftwominusone_cc00_0460cc0f() {
     let encoding: u32 = 0x0460CC0F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z15.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10109,11 +10263,12 @@ fn test_uqdech_z_zs_field_zdn_31_max_cc00_0460cc1f() {
     let encoding: u32 = 0x0460CC1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z31.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10129,11 +10284,12 @@ fn test_uqdech_z_zs_combo_0_cc00_0460cc00() {
     let encoding: u32 = 0x0460CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10149,11 +10305,12 @@ fn test_uqdech_z_zs_combo_1_cc00_0461cc00() {
     let encoding: u32 = 0x0461CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10169,11 +10326,12 @@ fn test_uqdech_z_zs_combo_2_cc00_0463cc00() {
     let encoding: u32 = 0x0463CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10189,11 +10347,12 @@ fn test_uqdech_z_zs_combo_3_cc00_0464cc00() {
     let encoding: u32 = 0x0464CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10209,11 +10368,12 @@ fn test_uqdech_z_zs_combo_4_cc00_0467cc00() {
     let encoding: u32 = 0x0467CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10229,11 +10389,12 @@ fn test_uqdech_z_zs_combo_5_cc00_0468cc00() {
     let encoding: u32 = 0x0468CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10249,11 +10410,12 @@ fn test_uqdech_z_zs_combo_6_cc00_046fcc00() {
     let encoding: u32 = 0x046FCC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10269,11 +10431,12 @@ fn test_uqdech_z_zs_combo_7_cc00_0460cc00() {
     let encoding: u32 = 0x0460CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10289,11 +10452,12 @@ fn test_uqdech_z_zs_combo_8_cc00_0460cc20() {
     let encoding: u32 = 0x0460CC20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10309,11 +10473,12 @@ fn test_uqdech_z_zs_combo_9_cc00_0460cde0() {
     let encoding: u32 = 0x0460CDE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10329,11 +10494,12 @@ fn test_uqdech_z_zs_combo_10_cc00_0460cfe0() {
     let encoding: u32 = 0x0460CFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10349,11 +10515,12 @@ fn test_uqdech_z_zs_combo_11_cc00_0460cc00() {
     let encoding: u32 = 0x0460CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10369,11 +10536,12 @@ fn test_uqdech_z_zs_combo_12_cc00_0460cc01() {
     let encoding: u32 = 0x0460CC01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z1.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10389,11 +10557,12 @@ fn test_uqdech_z_zs_combo_13_cc00_0460cc0f() {
     let encoding: u32 = 0x0460CC0F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z15.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -10409,11 +10578,12 @@ fn test_uqdech_z_zs_combo_14_cc00_0460cc1f() {
     let encoding: u32 = 0x0460CC1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdech	z31.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14063,11 +14233,12 @@ fn test_uqdecd_z_zs_field_imm4_0_zero_cc00_04e0cc00() {
     let encoding: u32 = 0x04E0CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14083,11 +14254,12 @@ fn test_uqdecd_z_zs_field_imm4_1_poweroftwo_cc00_04e1cc00() {
     let encoding: u32 = 0x04E1CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14103,11 +14275,12 @@ fn test_uqdecd_z_zs_field_imm4_3_poweroftwominusone_cc00_04e3cc00() {
     let encoding: u32 = 0x04E3CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14123,11 +14296,12 @@ fn test_uqdecd_z_zs_field_imm4_4_poweroftwo_cc00_04e4cc00() {
     let encoding: u32 = 0x04E4CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14143,11 +14317,12 @@ fn test_uqdecd_z_zs_field_imm4_7_poweroftwominusone_cc00_04e7cc00() {
     let encoding: u32 = 0x04E7CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14163,11 +14338,12 @@ fn test_uqdecd_z_zs_field_imm4_8_poweroftwo_cc00_04e8cc00() {
     let encoding: u32 = 0x04E8CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14183,11 +14359,12 @@ fn test_uqdecd_z_zs_field_imm4_15_max_cc00_04efcc00() {
     let encoding: u32 = 0x04EFCC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14203,11 +14380,12 @@ fn test_uqdecd_z_zs_field_pattern_0_min_cc00_04e0cc00() {
     let encoding: u32 = 0x04E0CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14223,11 +14401,12 @@ fn test_uqdecd_z_zs_field_pattern_1_poweroftwo_cc00_04e0cc20() {
     let encoding: u32 = 0x04E0CC20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14243,11 +14422,12 @@ fn test_uqdecd_z_zs_field_pattern_15_poweroftwominusone_cc00_04e0cde0() {
     let encoding: u32 = 0x04E0CDE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14263,11 +14443,12 @@ fn test_uqdecd_z_zs_field_pattern_31_max_cc00_04e0cfe0() {
     let encoding: u32 = 0x04E0CFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14283,11 +14464,12 @@ fn test_uqdecd_z_zs_field_zdn_0_min_cc00_04e0cc00() {
     let encoding: u32 = 0x04E0CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14303,11 +14485,12 @@ fn test_uqdecd_z_zs_field_zdn_1_poweroftwo_cc00_04e0cc01() {
     let encoding: u32 = 0x04E0CC01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z1.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14323,11 +14506,12 @@ fn test_uqdecd_z_zs_field_zdn_15_poweroftwominusone_cc00_04e0cc0f() {
     let encoding: u32 = 0x04E0CC0F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z15.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14343,11 +14527,12 @@ fn test_uqdecd_z_zs_field_zdn_31_max_cc00_04e0cc1f() {
     let encoding: u32 = 0x04E0CC1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z31.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14363,11 +14548,12 @@ fn test_uqdecd_z_zs_combo_0_cc00_04e0cc00() {
     let encoding: u32 = 0x04E0CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14383,11 +14569,12 @@ fn test_uqdecd_z_zs_combo_1_cc00_04e1cc00() {
     let encoding: u32 = 0x04E1CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14403,11 +14590,12 @@ fn test_uqdecd_z_zs_combo_2_cc00_04e3cc00() {
     let encoding: u32 = 0x04E3CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14423,11 +14611,12 @@ fn test_uqdecd_z_zs_combo_3_cc00_04e4cc00() {
     let encoding: u32 = 0x04E4CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14443,11 +14632,12 @@ fn test_uqdecd_z_zs_combo_4_cc00_04e7cc00() {
     let encoding: u32 = 0x04E7CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14463,11 +14653,12 @@ fn test_uqdecd_z_zs_combo_5_cc00_04e8cc00() {
     let encoding: u32 = 0x04E8CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14483,11 +14674,12 @@ fn test_uqdecd_z_zs_combo_6_cc00_04efcc00() {
     let encoding: u32 = 0x04EFCC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14503,11 +14695,12 @@ fn test_uqdecd_z_zs_combo_7_cc00_04e0cc00() {
     let encoding: u32 = 0x04E0CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14523,11 +14716,12 @@ fn test_uqdecd_z_zs_combo_8_cc00_04e0cc20() {
     let encoding: u32 = 0x04E0CC20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14543,11 +14737,12 @@ fn test_uqdecd_z_zs_combo_9_cc00_04e0cde0() {
     let encoding: u32 = 0x04E0CDE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14563,11 +14758,12 @@ fn test_uqdecd_z_zs_combo_10_cc00_04e0cfe0() {
     let encoding: u32 = 0x04E0CFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14583,11 +14779,12 @@ fn test_uqdecd_z_zs_combo_11_cc00_04e0cc00() {
     let encoding: u32 = 0x04E0CC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14603,11 +14800,12 @@ fn test_uqdecd_z_zs_combo_12_cc00_04e0cc01() {
     let encoding: u32 = 0x04E0CC01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z1.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14623,11 +14821,12 @@ fn test_uqdecd_z_zs_combo_13_cc00_04e0cc0f() {
     let encoding: u32 = 0x04E0CC0F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z15.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14643,11 +14842,12 @@ fn test_uqdecd_z_zs_combo_14_cc00_04e0cc1f() {
     let encoding: u32 = 0x04E0CC1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecd	z31.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14667,11 +14867,12 @@ fn test_cntb_r_s_field_imm4_0_zero_e000_0420e000() {
     let encoding: u32 = 0x0420E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14687,11 +14888,12 @@ fn test_cntb_r_s_field_imm4_1_poweroftwo_e000_0421e000() {
     let encoding: u32 = 0x0421E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14707,11 +14909,12 @@ fn test_cntb_r_s_field_imm4_3_poweroftwominusone_e000_0423e000() {
     let encoding: u32 = 0x0423E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14727,11 +14930,12 @@ fn test_cntb_r_s_field_imm4_4_poweroftwo_e000_0424e000() {
     let encoding: u32 = 0x0424E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14747,11 +14951,12 @@ fn test_cntb_r_s_field_imm4_7_poweroftwominusone_e000_0427e000() {
     let encoding: u32 = 0x0427E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14767,11 +14972,12 @@ fn test_cntb_r_s_field_imm4_8_poweroftwo_e000_0428e000() {
     let encoding: u32 = 0x0428E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14787,11 +14993,12 @@ fn test_cntb_r_s_field_imm4_15_max_e000_042fe000() {
     let encoding: u32 = 0x042FE000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14807,11 +15014,12 @@ fn test_cntb_r_s_field_pattern_0_min_e000_0420e000() {
     let encoding: u32 = 0x0420E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14827,11 +15035,12 @@ fn test_cntb_r_s_field_pattern_1_poweroftwo_e000_0420e020() {
     let encoding: u32 = 0x0420E020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14847,11 +15056,12 @@ fn test_cntb_r_s_field_pattern_15_poweroftwominusone_e000_0420e1e0() {
     let encoding: u32 = 0x0420E1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14867,11 +15077,12 @@ fn test_cntb_r_s_field_pattern_31_max_e000_0420e3e0() {
     let encoding: u32 = 0x0420E3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14887,11 +15098,12 @@ fn test_cntb_r_s_field_rd_0_min_e000_0420e000() {
     let encoding: u32 = 0x0420E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14907,11 +15119,12 @@ fn test_cntb_r_s_field_rd_1_poweroftwo_e000_0420e001() {
     let encoding: u32 = 0x0420E001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x1, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14927,11 +15140,12 @@ fn test_cntb_r_s_field_rd_30_poweroftwominusone_e000_0420e01e() {
     let encoding: u32 = 0x0420E01E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x30, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14947,11 +15161,12 @@ fn test_cntb_r_s_field_rd_31_max_e000_0420e01f() {
     let encoding: u32 = 0x0420E01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	xzr, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14967,11 +15182,12 @@ fn test_cntb_r_s_combo_0_e000_0420e000() {
     let encoding: u32 = 0x0420E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -14987,11 +15203,12 @@ fn test_cntb_r_s_combo_1_e000_0421e000() {
     let encoding: u32 = 0x0421E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15007,11 +15224,12 @@ fn test_cntb_r_s_combo_2_e000_0423e000() {
     let encoding: u32 = 0x0423E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15027,11 +15245,12 @@ fn test_cntb_r_s_combo_3_e000_0424e000() {
     let encoding: u32 = 0x0424E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15047,11 +15266,12 @@ fn test_cntb_r_s_combo_4_e000_0427e000() {
     let encoding: u32 = 0x0427E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15067,11 +15287,12 @@ fn test_cntb_r_s_combo_5_e000_0428e000() {
     let encoding: u32 = 0x0428E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15087,11 +15308,12 @@ fn test_cntb_r_s_combo_6_e000_042fe000() {
     let encoding: u32 = 0x042FE000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15107,11 +15329,12 @@ fn test_cntb_r_s_combo_7_e000_0420e000() {
     let encoding: u32 = 0x0420E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15127,11 +15350,12 @@ fn test_cntb_r_s_combo_8_e000_0420e020() {
     let encoding: u32 = 0x0420E020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15147,11 +15371,12 @@ fn test_cntb_r_s_combo_9_e000_0420e1e0() {
     let encoding: u32 = 0x0420E1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15167,11 +15392,12 @@ fn test_cntb_r_s_combo_10_e000_0420e3e0() {
     let encoding: u32 = 0x0420E3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15187,11 +15413,12 @@ fn test_cntb_r_s_combo_11_e000_0420e000() {
     let encoding: u32 = 0x0420E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15207,11 +15434,12 @@ fn test_cntb_r_s_combo_12_e000_0420e001() {
     let encoding: u32 = 0x0420E001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x1, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15227,11 +15455,12 @@ fn test_cntb_r_s_combo_13_e000_0420e01e() {
     let encoding: u32 = 0x0420E01E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	x30, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15247,11 +15476,12 @@ fn test_cntb_r_s_combo_14_e000_0420e01f() {
     let encoding: u32 = 0x0420E01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	xzr, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15267,11 +15497,12 @@ fn test_cntb_r_s_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded
     let encoding: u32 = 0x0421E01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntb	xzr, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15287,11 +15518,12 @@ fn test_cntd_r_s_field_imm4_0_zero_e000_04e0e000() {
     let encoding: u32 = 0x04E0E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15307,11 +15539,12 @@ fn test_cntd_r_s_field_imm4_1_poweroftwo_e000_04e1e000() {
     let encoding: u32 = 0x04E1E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15327,11 +15560,12 @@ fn test_cntd_r_s_field_imm4_3_poweroftwominusone_e000_04e3e000() {
     let encoding: u32 = 0x04E3E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15347,11 +15581,12 @@ fn test_cntd_r_s_field_imm4_4_poweroftwo_e000_04e4e000() {
     let encoding: u32 = 0x04E4E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15367,11 +15602,12 @@ fn test_cntd_r_s_field_imm4_7_poweroftwominusone_e000_04e7e000() {
     let encoding: u32 = 0x04E7E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15387,11 +15623,12 @@ fn test_cntd_r_s_field_imm4_8_poweroftwo_e000_04e8e000() {
     let encoding: u32 = 0x04E8E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15407,11 +15644,12 @@ fn test_cntd_r_s_field_imm4_15_max_e000_04efe000() {
     let encoding: u32 = 0x04EFE000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15427,11 +15665,12 @@ fn test_cntd_r_s_field_pattern_0_min_e000_04e0e000() {
     let encoding: u32 = 0x04E0E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15447,11 +15686,12 @@ fn test_cntd_r_s_field_pattern_1_poweroftwo_e000_04e0e020() {
     let encoding: u32 = 0x04E0E020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15467,11 +15707,12 @@ fn test_cntd_r_s_field_pattern_15_poweroftwominusone_e000_04e0e1e0() {
     let encoding: u32 = 0x04E0E1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15487,11 +15728,12 @@ fn test_cntd_r_s_field_pattern_31_max_e000_04e0e3e0() {
     let encoding: u32 = 0x04E0E3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15507,11 +15749,12 @@ fn test_cntd_r_s_field_rd_0_min_e000_04e0e000() {
     let encoding: u32 = 0x04E0E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15527,11 +15770,12 @@ fn test_cntd_r_s_field_rd_1_poweroftwo_e000_04e0e001() {
     let encoding: u32 = 0x04E0E001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x1, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15547,11 +15791,12 @@ fn test_cntd_r_s_field_rd_30_poweroftwominusone_e000_04e0e01e() {
     let encoding: u32 = 0x04E0E01E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x30, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15567,11 +15812,12 @@ fn test_cntd_r_s_field_rd_31_max_e000_04e0e01f() {
     let encoding: u32 = 0x04E0E01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	xzr, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15587,11 +15833,12 @@ fn test_cntd_r_s_combo_0_e000_04e0e000() {
     let encoding: u32 = 0x04E0E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15607,11 +15854,12 @@ fn test_cntd_r_s_combo_1_e000_04e1e000() {
     let encoding: u32 = 0x04E1E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15627,11 +15875,12 @@ fn test_cntd_r_s_combo_2_e000_04e3e000() {
     let encoding: u32 = 0x04E3E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15647,11 +15896,12 @@ fn test_cntd_r_s_combo_3_e000_04e4e000() {
     let encoding: u32 = 0x04E4E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15667,11 +15917,12 @@ fn test_cntd_r_s_combo_4_e000_04e7e000() {
     let encoding: u32 = 0x04E7E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15687,11 +15938,12 @@ fn test_cntd_r_s_combo_5_e000_04e8e000() {
     let encoding: u32 = 0x04E8E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15707,11 +15959,12 @@ fn test_cntd_r_s_combo_6_e000_04efe000() {
     let encoding: u32 = 0x04EFE000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15727,11 +15980,12 @@ fn test_cntd_r_s_combo_7_e000_04e0e000() {
     let encoding: u32 = 0x04E0E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15747,11 +16001,12 @@ fn test_cntd_r_s_combo_8_e000_04e0e020() {
     let encoding: u32 = 0x04E0E020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15767,11 +16022,12 @@ fn test_cntd_r_s_combo_9_e000_04e0e1e0() {
     let encoding: u32 = 0x04E0E1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15787,11 +16043,12 @@ fn test_cntd_r_s_combo_10_e000_04e0e3e0() {
     let encoding: u32 = 0x04E0E3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15807,11 +16064,12 @@ fn test_cntd_r_s_combo_11_e000_04e0e000() {
     let encoding: u32 = 0x04E0E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15827,11 +16085,12 @@ fn test_cntd_r_s_combo_12_e000_04e0e001() {
     let encoding: u32 = 0x04E0E001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x1, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15847,11 +16106,12 @@ fn test_cntd_r_s_combo_13_e000_04e0e01e() {
     let encoding: u32 = 0x04E0E01E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	x30, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15867,11 +16127,12 @@ fn test_cntd_r_s_combo_14_e000_04e0e01f() {
     let encoding: u32 = 0x04E0E01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	xzr, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15887,11 +16148,12 @@ fn test_cntd_r_s_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded
     let encoding: u32 = 0x04E1E01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntd	xzr, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15907,11 +16169,12 @@ fn test_cnth_r_s_field_imm4_0_zero_e000_0460e000() {
     let encoding: u32 = 0x0460E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15927,11 +16190,12 @@ fn test_cnth_r_s_field_imm4_1_poweroftwo_e000_0461e000() {
     let encoding: u32 = 0x0461E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15947,11 +16211,12 @@ fn test_cnth_r_s_field_imm4_3_poweroftwominusone_e000_0463e000() {
     let encoding: u32 = 0x0463E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15967,11 +16232,12 @@ fn test_cnth_r_s_field_imm4_4_poweroftwo_e000_0464e000() {
     let encoding: u32 = 0x0464E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15987,11 +16253,12 @@ fn test_cnth_r_s_field_imm4_7_poweroftwominusone_e000_0467e000() {
     let encoding: u32 = 0x0467E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16007,11 +16274,12 @@ fn test_cnth_r_s_field_imm4_8_poweroftwo_e000_0468e000() {
     let encoding: u32 = 0x0468E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16027,11 +16295,12 @@ fn test_cnth_r_s_field_imm4_15_max_e000_046fe000() {
     let encoding: u32 = 0x046FE000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16047,11 +16316,12 @@ fn test_cnth_r_s_field_pattern_0_min_e000_0460e000() {
     let encoding: u32 = 0x0460E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16067,11 +16337,12 @@ fn test_cnth_r_s_field_pattern_1_poweroftwo_e000_0460e020() {
     let encoding: u32 = 0x0460E020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16087,11 +16358,12 @@ fn test_cnth_r_s_field_pattern_15_poweroftwominusone_e000_0460e1e0() {
     let encoding: u32 = 0x0460E1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16107,11 +16379,12 @@ fn test_cnth_r_s_field_pattern_31_max_e000_0460e3e0() {
     let encoding: u32 = 0x0460E3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16127,11 +16400,12 @@ fn test_cnth_r_s_field_rd_0_min_e000_0460e000() {
     let encoding: u32 = 0x0460E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16147,11 +16421,12 @@ fn test_cnth_r_s_field_rd_1_poweroftwo_e000_0460e001() {
     let encoding: u32 = 0x0460E001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x1, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16167,11 +16442,12 @@ fn test_cnth_r_s_field_rd_30_poweroftwominusone_e000_0460e01e() {
     let encoding: u32 = 0x0460E01E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x30, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16187,11 +16463,12 @@ fn test_cnth_r_s_field_rd_31_max_e000_0460e01f() {
     let encoding: u32 = 0x0460E01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	xzr, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16207,11 +16484,12 @@ fn test_cnth_r_s_combo_0_e000_0460e000() {
     let encoding: u32 = 0x0460E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16227,11 +16505,12 @@ fn test_cnth_r_s_combo_1_e000_0461e000() {
     let encoding: u32 = 0x0461E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16247,11 +16526,12 @@ fn test_cnth_r_s_combo_2_e000_0463e000() {
     let encoding: u32 = 0x0463E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16267,11 +16547,12 @@ fn test_cnth_r_s_combo_3_e000_0464e000() {
     let encoding: u32 = 0x0464E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16287,11 +16568,12 @@ fn test_cnth_r_s_combo_4_e000_0467e000() {
     let encoding: u32 = 0x0467E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16307,11 +16589,12 @@ fn test_cnth_r_s_combo_5_e000_0468e000() {
     let encoding: u32 = 0x0468E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16327,11 +16610,12 @@ fn test_cnth_r_s_combo_6_e000_046fe000() {
     let encoding: u32 = 0x046FE000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16347,11 +16631,12 @@ fn test_cnth_r_s_combo_7_e000_0460e000() {
     let encoding: u32 = 0x0460E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16367,11 +16652,12 @@ fn test_cnth_r_s_combo_8_e000_0460e020() {
     let encoding: u32 = 0x0460E020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16387,11 +16673,12 @@ fn test_cnth_r_s_combo_9_e000_0460e1e0() {
     let encoding: u32 = 0x0460E1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16407,11 +16694,12 @@ fn test_cnth_r_s_combo_10_e000_0460e3e0() {
     let encoding: u32 = 0x0460E3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16427,11 +16715,12 @@ fn test_cnth_r_s_combo_11_e000_0460e000() {
     let encoding: u32 = 0x0460E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16447,11 +16736,12 @@ fn test_cnth_r_s_combo_12_e000_0460e001() {
     let encoding: u32 = 0x0460E001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x1, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16467,11 +16757,12 @@ fn test_cnth_r_s_combo_13_e000_0460e01e() {
     let encoding: u32 = 0x0460E01E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	x30, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16487,11 +16778,12 @@ fn test_cnth_r_s_combo_14_e000_0460e01f() {
     let encoding: u32 = 0x0460E01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	xzr, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16507,11 +16799,12 @@ fn test_cnth_r_s_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded
     let encoding: u32 = 0x0461E01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cnth	xzr, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16527,11 +16820,12 @@ fn test_cntw_r_s_field_imm4_0_zero_e000_04a0e000() {
     let encoding: u32 = 0x04A0E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16547,11 +16841,12 @@ fn test_cntw_r_s_field_imm4_1_poweroftwo_e000_04a1e000() {
     let encoding: u32 = 0x04A1E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16567,11 +16862,12 @@ fn test_cntw_r_s_field_imm4_3_poweroftwominusone_e000_04a3e000() {
     let encoding: u32 = 0x04A3E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16587,11 +16883,12 @@ fn test_cntw_r_s_field_imm4_4_poweroftwo_e000_04a4e000() {
     let encoding: u32 = 0x04A4E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16607,11 +16904,12 @@ fn test_cntw_r_s_field_imm4_7_poweroftwominusone_e000_04a7e000() {
     let encoding: u32 = 0x04A7E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16627,11 +16925,12 @@ fn test_cntw_r_s_field_imm4_8_poweroftwo_e000_04a8e000() {
     let encoding: u32 = 0x04A8E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16647,11 +16946,12 @@ fn test_cntw_r_s_field_imm4_15_max_e000_04afe000() {
     let encoding: u32 = 0x04AFE000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16667,11 +16967,12 @@ fn test_cntw_r_s_field_pattern_0_min_e000_04a0e000() {
     let encoding: u32 = 0x04A0E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16687,11 +16988,12 @@ fn test_cntw_r_s_field_pattern_1_poweroftwo_e000_04a0e020() {
     let encoding: u32 = 0x04A0E020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16707,11 +17009,12 @@ fn test_cntw_r_s_field_pattern_15_poweroftwominusone_e000_04a0e1e0() {
     let encoding: u32 = 0x04A0E1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16727,11 +17030,12 @@ fn test_cntw_r_s_field_pattern_31_max_e000_04a0e3e0() {
     let encoding: u32 = 0x04A0E3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16747,11 +17051,12 @@ fn test_cntw_r_s_field_rd_0_min_e000_04a0e000() {
     let encoding: u32 = 0x04A0E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16767,11 +17072,12 @@ fn test_cntw_r_s_field_rd_1_poweroftwo_e000_04a0e001() {
     let encoding: u32 = 0x04A0E001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x1, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16787,11 +17093,12 @@ fn test_cntw_r_s_field_rd_30_poweroftwominusone_e000_04a0e01e() {
     let encoding: u32 = 0x04A0E01E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x30, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16807,11 +17114,12 @@ fn test_cntw_r_s_field_rd_31_max_e000_04a0e01f() {
     let encoding: u32 = 0x04A0E01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	xzr, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16827,11 +17135,12 @@ fn test_cntw_r_s_combo_0_e000_04a0e000() {
     let encoding: u32 = 0x04A0E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16847,11 +17156,12 @@ fn test_cntw_r_s_combo_1_e000_04a1e000() {
     let encoding: u32 = 0x04A1E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16867,11 +17177,12 @@ fn test_cntw_r_s_combo_2_e000_04a3e000() {
     let encoding: u32 = 0x04A3E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16887,11 +17198,12 @@ fn test_cntw_r_s_combo_3_e000_04a4e000() {
     let encoding: u32 = 0x04A4E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16907,11 +17219,12 @@ fn test_cntw_r_s_combo_4_e000_04a7e000() {
     let encoding: u32 = 0x04A7E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16927,11 +17240,12 @@ fn test_cntw_r_s_combo_5_e000_04a8e000() {
     let encoding: u32 = 0x04A8E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16947,11 +17261,12 @@ fn test_cntw_r_s_combo_6_e000_04afe000() {
     let encoding: u32 = 0x04AFE000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16967,11 +17282,12 @@ fn test_cntw_r_s_combo_7_e000_04a0e000() {
     let encoding: u32 = 0x04A0E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16987,11 +17303,12 @@ fn test_cntw_r_s_combo_8_e000_04a0e020() {
     let encoding: u32 = 0x04A0E020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17007,11 +17324,12 @@ fn test_cntw_r_s_combo_9_e000_04a0e1e0() {
     let encoding: u32 = 0x04A0E1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17027,11 +17345,12 @@ fn test_cntw_r_s_combo_10_e000_04a0e3e0() {
     let encoding: u32 = 0x04A0E3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17047,11 +17366,12 @@ fn test_cntw_r_s_combo_11_e000_04a0e000() {
     let encoding: u32 = 0x04A0E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x0, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17067,11 +17387,12 @@ fn test_cntw_r_s_combo_12_e000_04a0e001() {
     let encoding: u32 = 0x04A0E001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x1, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17087,11 +17408,12 @@ fn test_cntw_r_s_combo_13_e000_04a0e01e() {
     let encoding: u32 = 0x04A0E01E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	x30, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17107,11 +17429,12 @@ fn test_cntw_r_s_combo_14_e000_04a0e01f() {
     let encoding: u32 = 0x04A0E01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	xzr, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17127,11 +17450,12 @@ fn test_cntw_r_s_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded
     let encoding: u32 = 0x04A1E01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntw	xzr, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17171,11 +17495,12 @@ fn test_uqincp_z_p_z_field_size_1_poweroftwo_8000_25698000() {
     let encoding: u32 = 0x25698000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17191,11 +17516,12 @@ fn test_uqincp_z_p_z_field_size_2_poweroftwo_8000_25a98000() {
     let encoding: u32 = 0x25A98000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17211,11 +17537,12 @@ fn test_uqincp_z_p_z_field_size_3_max_8000_25e98000() {
     let encoding: u32 = 0x25E98000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17371,11 +17698,12 @@ fn test_uqincp_z_p_z_combo_1_8000_25698000() {
     let encoding: u32 = 0x25698000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17391,11 +17719,12 @@ fn test_uqincp_z_p_z_combo_2_8000_25a98000() {
     let encoding: u32 = 0x25A98000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17411,11 +17740,12 @@ fn test_uqincp_z_p_z_combo_3_8000_25e98000() {
     let encoding: u32 = 0x25E98000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17571,11 +17901,12 @@ fn test_uqincp_z_p_z_special_size_1_size_variant_1_32768_25698000() {
     let encoding: u32 = 0x25698000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17591,11 +17922,12 @@ fn test_uqincp_z_p_z_special_size_2_size_variant_2_32768_25a98000() {
     let encoding: u32 = 0x25A98000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17611,11 +17943,12 @@ fn test_uqincp_z_p_z_special_size_3_size_variant_3_32768_25e98000() {
     let encoding: u32 = 0x25E98000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -18949,11 +19282,12 @@ fn test_incp_z_p_z_field_size_1_poweroftwo_8000_256c8000() {
     let encoding: u32 = 0x256C8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -18969,11 +19303,12 @@ fn test_incp_z_p_z_field_size_2_poweroftwo_8000_25ac8000() {
     let encoding: u32 = 0x25AC8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -18989,11 +19324,12 @@ fn test_incp_z_p_z_field_size_3_max_8000_25ec8000() {
     let encoding: u32 = 0x25EC8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19149,11 +19485,12 @@ fn test_incp_z_p_z_combo_1_8000_256c8000() {
     let encoding: u32 = 0x256C8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19169,11 +19506,12 @@ fn test_incp_z_p_z_combo_2_8000_25ac8000() {
     let encoding: u32 = 0x25AC8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19189,11 +19527,12 @@ fn test_incp_z_p_z_combo_3_8000_25ec8000() {
     let encoding: u32 = 0x25EC8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19349,11 +19688,12 @@ fn test_incp_z_p_z_special_size_1_size_variant_1_32768_256c8000() {
     let encoding: u32 = 0x256C8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19369,11 +19709,12 @@ fn test_incp_z_p_z_special_size_2_size_variant_2_32768_25ac8000() {
     let encoding: u32 = 0x25AC8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19389,11 +19730,12 @@ fn test_incp_z_p_z_special_size_3_size_variant_3_32768_25ec8000() {
     let encoding: u32 = 0x25EC8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19413,11 +19755,12 @@ fn test_cntp_r_p_p_field_size_0_min_8000_25208000() {
     let encoding: u32 = 0x25208000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19433,11 +19776,12 @@ fn test_cntp_r_p_p_field_size_1_poweroftwo_8000_25608000() {
     let encoding: u32 = 0x25608000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19453,11 +19797,12 @@ fn test_cntp_r_p_p_field_size_2_poweroftwo_8000_25a08000() {
     let encoding: u32 = 0x25A08000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19473,11 +19818,12 @@ fn test_cntp_r_p_p_field_size_3_max_8000_25e08000() {
     let encoding: u32 = 0x25E08000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19493,11 +19839,12 @@ fn test_cntp_r_p_p_field_pg_0_min_8000_25208000() {
     let encoding: u32 = 0x25208000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19513,11 +19860,12 @@ fn test_cntp_r_p_p_field_pg_1_poweroftwo_8000_25208400() {
     let encoding: u32 = 0x25208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p1, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19533,11 +19881,12 @@ fn test_cntp_r_p_p_field_pn_0_min_8000_25208000() {
     let encoding: u32 = 0x25208000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19553,11 +19902,12 @@ fn test_cntp_r_p_p_field_pn_1_poweroftwo_8000_25208020() {
     let encoding: u32 = 0x25208020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p1.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19573,11 +19923,12 @@ fn test_cntp_r_p_p_field_rd_0_min_8000_25208000() {
     let encoding: u32 = 0x25208000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19593,11 +19944,12 @@ fn test_cntp_r_p_p_field_rd_1_poweroftwo_8000_25208001() {
     let encoding: u32 = 0x25208001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x1, p0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19613,11 +19965,12 @@ fn test_cntp_r_p_p_field_rd_30_poweroftwominusone_8000_2520801e() {
     let encoding: u32 = 0x2520801E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x30, p0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19633,11 +19986,12 @@ fn test_cntp_r_p_p_field_rd_31_max_8000_2520801f() {
     let encoding: u32 = 0x2520801F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	xzr, p0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19653,11 +20007,12 @@ fn test_cntp_r_p_p_combo_0_8000_25208000() {
     let encoding: u32 = 0x25208000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19673,11 +20028,12 @@ fn test_cntp_r_p_p_combo_1_8000_25608000() {
     let encoding: u32 = 0x25608000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19693,11 +20049,12 @@ fn test_cntp_r_p_p_combo_2_8000_25a08000() {
     let encoding: u32 = 0x25A08000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19713,11 +20070,12 @@ fn test_cntp_r_p_p_combo_3_8000_25e08000() {
     let encoding: u32 = 0x25E08000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19733,11 +20091,12 @@ fn test_cntp_r_p_p_combo_4_8000_25208000() {
     let encoding: u32 = 0x25208000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19753,11 +20112,12 @@ fn test_cntp_r_p_p_combo_5_8000_25208400() {
     let encoding: u32 = 0x25208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p1, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19773,11 +20133,12 @@ fn test_cntp_r_p_p_combo_6_8000_25208000() {
     let encoding: u32 = 0x25208000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19793,11 +20154,12 @@ fn test_cntp_r_p_p_combo_7_8000_25208020() {
     let encoding: u32 = 0x25208020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p1.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19813,11 +20175,12 @@ fn test_cntp_r_p_p_combo_8_8000_25208000() {
     let encoding: u32 = 0x25208000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19833,11 +20196,12 @@ fn test_cntp_r_p_p_combo_9_8000_25208001() {
     let encoding: u32 = 0x25208001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x1, p0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19853,11 +20217,12 @@ fn test_cntp_r_p_p_combo_10_8000_2520801e() {
     let encoding: u32 = 0x2520801E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x30, p0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19873,11 +20238,12 @@ fn test_cntp_r_p_p_combo_11_8000_2520801f() {
     let encoding: u32 = 0x2520801F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	xzr, p0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19893,11 +20259,12 @@ fn test_cntp_r_p_p_combo_12_8000_25208420() {
     let encoding: u32 = 0x25208420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p1, p1.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19913,11 +20280,12 @@ fn test_cntp_r_p_p_combo_13_8000_2520bde0() {
     let encoding: u32 = 0x2520BDE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p15, p15.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19933,11 +20301,12 @@ fn test_cntp_r_p_p_combo_14_8000_25208401() {
     let encoding: u32 = 0x25208401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x1, p1, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19953,11 +20322,12 @@ fn test_cntp_r_p_p_combo_15_8000_2520bc1f() {
     let encoding: u32 = 0x2520BC1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	xzr, p15, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19973,11 +20343,12 @@ fn test_cntp_r_p_p_combo_16_8000_25208021() {
     let encoding: u32 = 0x25208021;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x1, p0, p1.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -19993,11 +20364,12 @@ fn test_cntp_r_p_p_combo_17_8000_252081ff() {
     let encoding: u32 = 0x252081FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	xzr, p0, p15.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20013,11 +20385,12 @@ fn test_cntp_r_p_p_special_size_0_size_variant_0_32768_25208000() {
     let encoding: u32 = 0x25208000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.b
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20033,11 +20406,12 @@ fn test_cntp_r_p_p_special_size_1_size_variant_1_32768_25608000() {
     let encoding: u32 = 0x25608000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20053,11 +20427,12 @@ fn test_cntp_r_p_p_special_size_2_size_variant_2_32768_25a08000() {
     let encoding: u32 = 0x25A08000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20073,11 +20448,12 @@ fn test_cntp_r_p_p_special_size_3_size_variant_3_32768_25e08000() {
     let encoding: u32 = 0x25E08000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	x0, p0, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20094,11 +20470,12 @@ fn test_cntp_r_p_p_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discard
     let encoding: u32 = 0x2560801F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: cntp	xzr, p0, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20118,11 +20495,12 @@ fn test_uqincw_z_zs_field_imm4_0_zero_c400_04a0c400() {
     let encoding: u32 = 0x04A0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20138,11 +20516,12 @@ fn test_uqincw_z_zs_field_imm4_1_poweroftwo_c400_04a1c400() {
     let encoding: u32 = 0x04A1C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20158,11 +20537,12 @@ fn test_uqincw_z_zs_field_imm4_3_poweroftwominusone_c400_04a3c400() {
     let encoding: u32 = 0x04A3C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20178,11 +20558,12 @@ fn test_uqincw_z_zs_field_imm4_4_poweroftwo_c400_04a4c400() {
     let encoding: u32 = 0x04A4C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20198,11 +20579,12 @@ fn test_uqincw_z_zs_field_imm4_7_poweroftwominusone_c400_04a7c400() {
     let encoding: u32 = 0x04A7C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20218,11 +20600,12 @@ fn test_uqincw_z_zs_field_imm4_8_poweroftwo_c400_04a8c400() {
     let encoding: u32 = 0x04A8C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20238,11 +20621,12 @@ fn test_uqincw_z_zs_field_imm4_15_max_c400_04afc400() {
     let encoding: u32 = 0x04AFC400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20258,11 +20642,12 @@ fn test_uqincw_z_zs_field_pattern_0_min_c400_04a0c400() {
     let encoding: u32 = 0x04A0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20278,11 +20663,12 @@ fn test_uqincw_z_zs_field_pattern_1_poweroftwo_c400_04a0c420() {
     let encoding: u32 = 0x04A0C420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20298,11 +20684,12 @@ fn test_uqincw_z_zs_field_pattern_15_poweroftwominusone_c400_04a0c5e0() {
     let encoding: u32 = 0x04A0C5E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20318,11 +20705,12 @@ fn test_uqincw_z_zs_field_pattern_31_max_c400_04a0c7e0() {
     let encoding: u32 = 0x04A0C7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20338,11 +20726,12 @@ fn test_uqincw_z_zs_field_zdn_0_min_c400_04a0c400() {
     let encoding: u32 = 0x04A0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20358,11 +20747,12 @@ fn test_uqincw_z_zs_field_zdn_1_poweroftwo_c400_04a0c401() {
     let encoding: u32 = 0x04A0C401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z1.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20378,11 +20768,12 @@ fn test_uqincw_z_zs_field_zdn_15_poweroftwominusone_c400_04a0c40f() {
     let encoding: u32 = 0x04A0C40F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z15.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20398,11 +20789,12 @@ fn test_uqincw_z_zs_field_zdn_31_max_c400_04a0c41f() {
     let encoding: u32 = 0x04A0C41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z31.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20418,11 +20810,12 @@ fn test_uqincw_z_zs_combo_0_c400_04a0c400() {
     let encoding: u32 = 0x04A0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20438,11 +20831,12 @@ fn test_uqincw_z_zs_combo_1_c400_04a1c400() {
     let encoding: u32 = 0x04A1C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20458,11 +20852,12 @@ fn test_uqincw_z_zs_combo_2_c400_04a3c400() {
     let encoding: u32 = 0x04A3C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20478,11 +20873,12 @@ fn test_uqincw_z_zs_combo_3_c400_04a4c400() {
     let encoding: u32 = 0x04A4C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20498,11 +20894,12 @@ fn test_uqincw_z_zs_combo_4_c400_04a7c400() {
     let encoding: u32 = 0x04A7C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20518,11 +20915,12 @@ fn test_uqincw_z_zs_combo_5_c400_04a8c400() {
     let encoding: u32 = 0x04A8C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20538,11 +20936,12 @@ fn test_uqincw_z_zs_combo_6_c400_04afc400() {
     let encoding: u32 = 0x04AFC400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20558,11 +20957,12 @@ fn test_uqincw_z_zs_combo_7_c400_04a0c400() {
     let encoding: u32 = 0x04A0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20578,11 +20978,12 @@ fn test_uqincw_z_zs_combo_8_c400_04a0c420() {
     let encoding: u32 = 0x04A0C420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20598,11 +20999,12 @@ fn test_uqincw_z_zs_combo_9_c400_04a0c5e0() {
     let encoding: u32 = 0x04A0C5E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20618,11 +21020,12 @@ fn test_uqincw_z_zs_combo_10_c400_04a0c7e0() {
     let encoding: u32 = 0x04A0C7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20638,11 +21041,12 @@ fn test_uqincw_z_zs_combo_11_c400_04a0c400() {
     let encoding: u32 = 0x04A0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20658,11 +21062,12 @@ fn test_uqincw_z_zs_combo_12_c400_04a0c401() {
     let encoding: u32 = 0x04A0C401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z1.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20678,11 +21083,12 @@ fn test_uqincw_z_zs_combo_13_c400_04a0c40f() {
     let encoding: u32 = 0x04A0C40F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z15.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20698,11 +21104,12 @@ fn test_uqincw_z_zs_combo_14_c400_04a0c41f() {
     let encoding: u32 = 0x04A0C41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqincw	z31.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20722,11 +21129,12 @@ fn test_uqinch_z_zs_field_imm4_0_zero_c400_0460c400() {
     let encoding: u32 = 0x0460C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20742,11 +21150,12 @@ fn test_uqinch_z_zs_field_imm4_1_poweroftwo_c400_0461c400() {
     let encoding: u32 = 0x0461C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20762,11 +21171,12 @@ fn test_uqinch_z_zs_field_imm4_3_poweroftwominusone_c400_0463c400() {
     let encoding: u32 = 0x0463C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20782,11 +21192,12 @@ fn test_uqinch_z_zs_field_imm4_4_poweroftwo_c400_0464c400() {
     let encoding: u32 = 0x0464C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20802,11 +21213,12 @@ fn test_uqinch_z_zs_field_imm4_7_poweroftwominusone_c400_0467c400() {
     let encoding: u32 = 0x0467C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20822,11 +21234,12 @@ fn test_uqinch_z_zs_field_imm4_8_poweroftwo_c400_0468c400() {
     let encoding: u32 = 0x0468C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20842,11 +21255,12 @@ fn test_uqinch_z_zs_field_imm4_15_max_c400_046fc400() {
     let encoding: u32 = 0x046FC400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20862,11 +21276,12 @@ fn test_uqinch_z_zs_field_pattern_0_min_c400_0460c400() {
     let encoding: u32 = 0x0460C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20882,11 +21297,12 @@ fn test_uqinch_z_zs_field_pattern_1_poweroftwo_c400_0460c420() {
     let encoding: u32 = 0x0460C420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20902,11 +21318,12 @@ fn test_uqinch_z_zs_field_pattern_15_poweroftwominusone_c400_0460c5e0() {
     let encoding: u32 = 0x0460C5E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20922,11 +21339,12 @@ fn test_uqinch_z_zs_field_pattern_31_max_c400_0460c7e0() {
     let encoding: u32 = 0x0460C7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20942,11 +21360,12 @@ fn test_uqinch_z_zs_field_zdn_0_min_c400_0460c400() {
     let encoding: u32 = 0x0460C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20962,11 +21381,12 @@ fn test_uqinch_z_zs_field_zdn_1_poweroftwo_c400_0460c401() {
     let encoding: u32 = 0x0460C401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z1.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -20982,11 +21402,12 @@ fn test_uqinch_z_zs_field_zdn_15_poweroftwominusone_c400_0460c40f() {
     let encoding: u32 = 0x0460C40F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z15.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21002,11 +21423,12 @@ fn test_uqinch_z_zs_field_zdn_31_max_c400_0460c41f() {
     let encoding: u32 = 0x0460C41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z31.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21022,11 +21444,12 @@ fn test_uqinch_z_zs_combo_0_c400_0460c400() {
     let encoding: u32 = 0x0460C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21042,11 +21465,12 @@ fn test_uqinch_z_zs_combo_1_c400_0461c400() {
     let encoding: u32 = 0x0461C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21062,11 +21486,12 @@ fn test_uqinch_z_zs_combo_2_c400_0463c400() {
     let encoding: u32 = 0x0463C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21082,11 +21507,12 @@ fn test_uqinch_z_zs_combo_3_c400_0464c400() {
     let encoding: u32 = 0x0464C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21102,11 +21528,12 @@ fn test_uqinch_z_zs_combo_4_c400_0467c400() {
     let encoding: u32 = 0x0467C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21122,11 +21549,12 @@ fn test_uqinch_z_zs_combo_5_c400_0468c400() {
     let encoding: u32 = 0x0468C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21142,11 +21570,12 @@ fn test_uqinch_z_zs_combo_6_c400_046fc400() {
     let encoding: u32 = 0x046FC400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21162,11 +21591,12 @@ fn test_uqinch_z_zs_combo_7_c400_0460c400() {
     let encoding: u32 = 0x0460C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21182,11 +21612,12 @@ fn test_uqinch_z_zs_combo_8_c400_0460c420() {
     let encoding: u32 = 0x0460C420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21202,11 +21633,12 @@ fn test_uqinch_z_zs_combo_9_c400_0460c5e0() {
     let encoding: u32 = 0x0460C5E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21222,11 +21654,12 @@ fn test_uqinch_z_zs_combo_10_c400_0460c7e0() {
     let encoding: u32 = 0x0460C7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21242,11 +21675,12 @@ fn test_uqinch_z_zs_combo_11_c400_0460c400() {
     let encoding: u32 = 0x0460C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21262,11 +21696,12 @@ fn test_uqinch_z_zs_combo_12_c400_0460c401() {
     let encoding: u32 = 0x0460C401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z1.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21282,11 +21717,12 @@ fn test_uqinch_z_zs_combo_13_c400_0460c40f() {
     let encoding: u32 = 0x0460C40F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z15.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -21302,11 +21738,12 @@ fn test_uqinch_z_zs_combo_14_c400_0460c41f() {
     let encoding: u32 = 0x0460C41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqinch	z31.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -26518,11 +26955,12 @@ fn test_sqincp_z_p_z_field_size_1_poweroftwo_8000_25688000() {
     let encoding: u32 = 0x25688000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -26538,11 +26976,12 @@ fn test_sqincp_z_p_z_field_size_2_poweroftwo_8000_25a88000() {
     let encoding: u32 = 0x25A88000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -26558,11 +26997,12 @@ fn test_sqincp_z_p_z_field_size_3_max_8000_25e88000() {
     let encoding: u32 = 0x25E88000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -26718,11 +27158,12 @@ fn test_sqincp_z_p_z_combo_1_8000_25688000() {
     let encoding: u32 = 0x25688000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -26738,11 +27179,12 @@ fn test_sqincp_z_p_z_combo_2_8000_25a88000() {
     let encoding: u32 = 0x25A88000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -26758,11 +27200,12 @@ fn test_sqincp_z_p_z_combo_3_8000_25e88000() {
     let encoding: u32 = 0x25E88000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -26918,11 +27361,12 @@ fn test_sqincp_z_p_z_special_size_1_size_variant_1_32768_25688000() {
     let encoding: u32 = 0x25688000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -26938,11 +27382,12 @@ fn test_sqincp_z_p_z_special_size_2_size_variant_2_32768_25a88000() {
     let encoding: u32 = 0x25A88000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -26958,11 +27403,12 @@ fn test_sqincp_z_p_z_special_size_3_size_variant_3_32768_25e88000() {
     let encoding: u32 = 0x25E88000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28276,11 +28722,12 @@ fn test_sqincw_z_zs_field_imm4_0_zero_c000_04a0c000() {
     let encoding: u32 = 0x04A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28296,11 +28743,12 @@ fn test_sqincw_z_zs_field_imm4_1_poweroftwo_c000_04a1c000() {
     let encoding: u32 = 0x04A1C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28316,11 +28764,12 @@ fn test_sqincw_z_zs_field_imm4_3_poweroftwominusone_c000_04a3c000() {
     let encoding: u32 = 0x04A3C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28336,11 +28785,12 @@ fn test_sqincw_z_zs_field_imm4_4_poweroftwo_c000_04a4c000() {
     let encoding: u32 = 0x04A4C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28356,11 +28806,12 @@ fn test_sqincw_z_zs_field_imm4_7_poweroftwominusone_c000_04a7c000() {
     let encoding: u32 = 0x04A7C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28376,11 +28827,12 @@ fn test_sqincw_z_zs_field_imm4_8_poweroftwo_c000_04a8c000() {
     let encoding: u32 = 0x04A8C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28396,11 +28848,12 @@ fn test_sqincw_z_zs_field_imm4_15_max_c000_04afc000() {
     let encoding: u32 = 0x04AFC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28416,11 +28869,12 @@ fn test_sqincw_z_zs_field_pattern_0_min_c000_04a0c000() {
     let encoding: u32 = 0x04A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28436,11 +28890,12 @@ fn test_sqincw_z_zs_field_pattern_1_poweroftwo_c000_04a0c020() {
     let encoding: u32 = 0x04A0C020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28456,11 +28911,12 @@ fn test_sqincw_z_zs_field_pattern_15_poweroftwominusone_c000_04a0c1e0() {
     let encoding: u32 = 0x04A0C1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28476,11 +28932,12 @@ fn test_sqincw_z_zs_field_pattern_31_max_c000_04a0c3e0() {
     let encoding: u32 = 0x04A0C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28496,11 +28953,12 @@ fn test_sqincw_z_zs_field_zdn_0_min_c000_04a0c000() {
     let encoding: u32 = 0x04A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28516,11 +28974,12 @@ fn test_sqincw_z_zs_field_zdn_1_poweroftwo_c000_04a0c001() {
     let encoding: u32 = 0x04A0C001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z1.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28536,11 +28995,12 @@ fn test_sqincw_z_zs_field_zdn_15_poweroftwominusone_c000_04a0c00f() {
     let encoding: u32 = 0x04A0C00F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z15.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28556,11 +29016,12 @@ fn test_sqincw_z_zs_field_zdn_31_max_c000_04a0c01f() {
     let encoding: u32 = 0x04A0C01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z31.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28576,11 +29037,12 @@ fn test_sqincw_z_zs_combo_0_c000_04a0c000() {
     let encoding: u32 = 0x04A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28596,11 +29058,12 @@ fn test_sqincw_z_zs_combo_1_c000_04a1c000() {
     let encoding: u32 = 0x04A1C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28616,11 +29079,12 @@ fn test_sqincw_z_zs_combo_2_c000_04a3c000() {
     let encoding: u32 = 0x04A3C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28636,11 +29100,12 @@ fn test_sqincw_z_zs_combo_3_c000_04a4c000() {
     let encoding: u32 = 0x04A4C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28656,11 +29121,12 @@ fn test_sqincw_z_zs_combo_4_c000_04a7c000() {
     let encoding: u32 = 0x04A7C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28676,11 +29142,12 @@ fn test_sqincw_z_zs_combo_5_c000_04a8c000() {
     let encoding: u32 = 0x04A8C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28696,11 +29163,12 @@ fn test_sqincw_z_zs_combo_6_c000_04afc000() {
     let encoding: u32 = 0x04AFC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28716,11 +29184,12 @@ fn test_sqincw_z_zs_combo_7_c000_04a0c000() {
     let encoding: u32 = 0x04A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28736,11 +29205,12 @@ fn test_sqincw_z_zs_combo_8_c000_04a0c020() {
     let encoding: u32 = 0x04A0C020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28756,11 +29226,12 @@ fn test_sqincw_z_zs_combo_9_c000_04a0c1e0() {
     let encoding: u32 = 0x04A0C1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28776,11 +29247,12 @@ fn test_sqincw_z_zs_combo_10_c000_04a0c3e0() {
     let encoding: u32 = 0x04A0C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28796,11 +29268,12 @@ fn test_sqincw_z_zs_combo_11_c000_04a0c000() {
     let encoding: u32 = 0x04A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28816,11 +29289,12 @@ fn test_sqincw_z_zs_combo_12_c000_04a0c001() {
     let encoding: u32 = 0x04A0C001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z1.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28836,11 +29310,12 @@ fn test_sqincw_z_zs_combo_13_c000_04a0c00f() {
     let encoding: u32 = 0x04A0C00F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z15.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -28856,11 +29331,12 @@ fn test_sqincw_z_zs_combo_14_c000_04a0c01f() {
     let encoding: u32 = 0x04A0C01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincw	z31.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31216,11 +31692,12 @@ fn test_sqdecd_z_zs_field_imm4_0_zero_c800_04e0c800() {
     let encoding: u32 = 0x04E0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31236,11 +31713,12 @@ fn test_sqdecd_z_zs_field_imm4_1_poweroftwo_c800_04e1c800() {
     let encoding: u32 = 0x04E1C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31256,11 +31734,12 @@ fn test_sqdecd_z_zs_field_imm4_3_poweroftwominusone_c800_04e3c800() {
     let encoding: u32 = 0x04E3C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31276,11 +31755,12 @@ fn test_sqdecd_z_zs_field_imm4_4_poweroftwo_c800_04e4c800() {
     let encoding: u32 = 0x04E4C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31296,11 +31776,12 @@ fn test_sqdecd_z_zs_field_imm4_7_poweroftwominusone_c800_04e7c800() {
     let encoding: u32 = 0x04E7C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31316,11 +31797,12 @@ fn test_sqdecd_z_zs_field_imm4_8_poweroftwo_c800_04e8c800() {
     let encoding: u32 = 0x04E8C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31336,11 +31818,12 @@ fn test_sqdecd_z_zs_field_imm4_15_max_c800_04efc800() {
     let encoding: u32 = 0x04EFC800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31356,11 +31839,12 @@ fn test_sqdecd_z_zs_field_pattern_0_min_c800_04e0c800() {
     let encoding: u32 = 0x04E0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31376,11 +31860,12 @@ fn test_sqdecd_z_zs_field_pattern_1_poweroftwo_c800_04e0c820() {
     let encoding: u32 = 0x04E0C820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31396,11 +31881,12 @@ fn test_sqdecd_z_zs_field_pattern_15_poweroftwominusone_c800_04e0c9e0() {
     let encoding: u32 = 0x04E0C9E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31416,11 +31902,12 @@ fn test_sqdecd_z_zs_field_pattern_31_max_c800_04e0cbe0() {
     let encoding: u32 = 0x04E0CBE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31436,11 +31923,12 @@ fn test_sqdecd_z_zs_field_zdn_0_min_c800_04e0c800() {
     let encoding: u32 = 0x04E0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31456,11 +31944,12 @@ fn test_sqdecd_z_zs_field_zdn_1_poweroftwo_c800_04e0c801() {
     let encoding: u32 = 0x04E0C801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z1.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31476,11 +31965,12 @@ fn test_sqdecd_z_zs_field_zdn_15_poweroftwominusone_c800_04e0c80f() {
     let encoding: u32 = 0x04E0C80F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z15.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31496,11 +31986,12 @@ fn test_sqdecd_z_zs_field_zdn_31_max_c800_04e0c81f() {
     let encoding: u32 = 0x04E0C81F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z31.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31516,11 +32007,12 @@ fn test_sqdecd_z_zs_combo_0_c800_04e0c800() {
     let encoding: u32 = 0x04E0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31536,11 +32028,12 @@ fn test_sqdecd_z_zs_combo_1_c800_04e1c800() {
     let encoding: u32 = 0x04E1C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31556,11 +32049,12 @@ fn test_sqdecd_z_zs_combo_2_c800_04e3c800() {
     let encoding: u32 = 0x04E3C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31576,11 +32070,12 @@ fn test_sqdecd_z_zs_combo_3_c800_04e4c800() {
     let encoding: u32 = 0x04E4C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31596,11 +32091,12 @@ fn test_sqdecd_z_zs_combo_4_c800_04e7c800() {
     let encoding: u32 = 0x04E7C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31616,11 +32112,12 @@ fn test_sqdecd_z_zs_combo_5_c800_04e8c800() {
     let encoding: u32 = 0x04E8C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31636,11 +32133,12 @@ fn test_sqdecd_z_zs_combo_6_c800_04efc800() {
     let encoding: u32 = 0x04EFC800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31656,11 +32154,12 @@ fn test_sqdecd_z_zs_combo_7_c800_04e0c800() {
     let encoding: u32 = 0x04E0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31676,11 +32175,12 @@ fn test_sqdecd_z_zs_combo_8_c800_04e0c820() {
     let encoding: u32 = 0x04E0C820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31696,11 +32196,12 @@ fn test_sqdecd_z_zs_combo_9_c800_04e0c9e0() {
     let encoding: u32 = 0x04E0C9E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31716,11 +32217,12 @@ fn test_sqdecd_z_zs_combo_10_c800_04e0cbe0() {
     let encoding: u32 = 0x04E0CBE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31736,11 +32238,12 @@ fn test_sqdecd_z_zs_combo_11_c800_04e0c800() {
     let encoding: u32 = 0x04E0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31756,11 +32259,12 @@ fn test_sqdecd_z_zs_combo_12_c800_04e0c801() {
     let encoding: u32 = 0x04E0C801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z1.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31776,11 +32280,12 @@ fn test_sqdecd_z_zs_combo_13_c800_04e0c80f() {
     let encoding: u32 = 0x04E0C80F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z15.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -31796,11 +32301,12 @@ fn test_sqdecd_z_zs_combo_14_c800_04e0c81f() {
     let encoding: u32 = 0x04E0C81F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecd	z31.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32506,11 +33012,12 @@ fn test_decd_z_zs_field_imm4_0_zero_c400_04f0c400() {
     let encoding: u32 = 0x04F0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32526,11 +33033,12 @@ fn test_decd_z_zs_field_imm4_1_poweroftwo_c400_04f1c400() {
     let encoding: u32 = 0x04F1C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32546,11 +33054,12 @@ fn test_decd_z_zs_field_imm4_3_poweroftwominusone_c400_04f3c400() {
     let encoding: u32 = 0x04F3C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32566,11 +33075,12 @@ fn test_decd_z_zs_field_imm4_4_poweroftwo_c400_04f4c400() {
     let encoding: u32 = 0x04F4C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32586,11 +33096,12 @@ fn test_decd_z_zs_field_imm4_7_poweroftwominusone_c400_04f7c400() {
     let encoding: u32 = 0x04F7C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32606,11 +33117,12 @@ fn test_decd_z_zs_field_imm4_8_poweroftwo_c400_04f8c400() {
     let encoding: u32 = 0x04F8C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32626,11 +33138,12 @@ fn test_decd_z_zs_field_imm4_15_max_c400_04ffc400() {
     let encoding: u32 = 0x04FFC400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32646,11 +33159,12 @@ fn test_decd_z_zs_field_pattern_0_min_c400_04f0c400() {
     let encoding: u32 = 0x04F0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32666,11 +33180,12 @@ fn test_decd_z_zs_field_pattern_1_poweroftwo_c400_04f0c420() {
     let encoding: u32 = 0x04F0C420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32686,11 +33201,12 @@ fn test_decd_z_zs_field_pattern_15_poweroftwominusone_c400_04f0c5e0() {
     let encoding: u32 = 0x04F0C5E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32706,11 +33222,12 @@ fn test_decd_z_zs_field_pattern_31_max_c400_04f0c7e0() {
     let encoding: u32 = 0x04F0C7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32726,11 +33243,12 @@ fn test_decd_z_zs_field_zdn_0_min_c400_04f0c400() {
     let encoding: u32 = 0x04F0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32746,11 +33264,12 @@ fn test_decd_z_zs_field_zdn_1_poweroftwo_c400_04f0c401() {
     let encoding: u32 = 0x04F0C401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z1.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32766,11 +33285,12 @@ fn test_decd_z_zs_field_zdn_15_poweroftwominusone_c400_04f0c40f() {
     let encoding: u32 = 0x04F0C40F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z15.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32786,11 +33306,12 @@ fn test_decd_z_zs_field_zdn_31_max_c400_04f0c41f() {
     let encoding: u32 = 0x04F0C41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z31.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32806,11 +33327,12 @@ fn test_decd_z_zs_combo_0_c400_04f0c400() {
     let encoding: u32 = 0x04F0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32826,11 +33348,12 @@ fn test_decd_z_zs_combo_1_c400_04f1c400() {
     let encoding: u32 = 0x04F1C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32846,11 +33369,12 @@ fn test_decd_z_zs_combo_2_c400_04f3c400() {
     let encoding: u32 = 0x04F3C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32866,11 +33390,12 @@ fn test_decd_z_zs_combo_3_c400_04f4c400() {
     let encoding: u32 = 0x04F4C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32886,11 +33411,12 @@ fn test_decd_z_zs_combo_4_c400_04f7c400() {
     let encoding: u32 = 0x04F7C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32906,11 +33432,12 @@ fn test_decd_z_zs_combo_5_c400_04f8c400() {
     let encoding: u32 = 0x04F8C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32926,11 +33453,12 @@ fn test_decd_z_zs_combo_6_c400_04ffc400() {
     let encoding: u32 = 0x04FFC400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32946,11 +33474,12 @@ fn test_decd_z_zs_combo_7_c400_04f0c400() {
     let encoding: u32 = 0x04F0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32966,11 +33495,12 @@ fn test_decd_z_zs_combo_8_c400_04f0c420() {
     let encoding: u32 = 0x04F0C420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -32986,11 +33516,12 @@ fn test_decd_z_zs_combo_9_c400_04f0c5e0() {
     let encoding: u32 = 0x04F0C5E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33006,11 +33537,12 @@ fn test_decd_z_zs_combo_10_c400_04f0c7e0() {
     let encoding: u32 = 0x04F0C7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33026,11 +33558,12 @@ fn test_decd_z_zs_combo_11_c400_04f0c400() {
     let encoding: u32 = 0x04F0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33046,11 +33579,12 @@ fn test_decd_z_zs_combo_12_c400_04f0c401() {
     let encoding: u32 = 0x04F0C401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z1.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33066,11 +33600,12 @@ fn test_decd_z_zs_combo_13_c400_04f0c40f() {
     let encoding: u32 = 0x04F0C40F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z15.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33086,11 +33621,12 @@ fn test_decd_z_zs_combo_14_c400_04f0c41f() {
     let encoding: u32 = 0x04F0C41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decd	z31.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33106,11 +33642,12 @@ fn test_dech_z_zs_field_imm4_0_zero_c400_0470c400() {
     let encoding: u32 = 0x0470C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33126,11 +33663,12 @@ fn test_dech_z_zs_field_imm4_1_poweroftwo_c400_0471c400() {
     let encoding: u32 = 0x0471C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33146,11 +33684,12 @@ fn test_dech_z_zs_field_imm4_3_poweroftwominusone_c400_0473c400() {
     let encoding: u32 = 0x0473C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33166,11 +33705,12 @@ fn test_dech_z_zs_field_imm4_4_poweroftwo_c400_0474c400() {
     let encoding: u32 = 0x0474C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33186,11 +33726,12 @@ fn test_dech_z_zs_field_imm4_7_poweroftwominusone_c400_0477c400() {
     let encoding: u32 = 0x0477C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33206,11 +33747,12 @@ fn test_dech_z_zs_field_imm4_8_poweroftwo_c400_0478c400() {
     let encoding: u32 = 0x0478C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33226,11 +33768,12 @@ fn test_dech_z_zs_field_imm4_15_max_c400_047fc400() {
     let encoding: u32 = 0x047FC400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33246,11 +33789,12 @@ fn test_dech_z_zs_field_pattern_0_min_c400_0470c400() {
     let encoding: u32 = 0x0470C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33266,11 +33810,12 @@ fn test_dech_z_zs_field_pattern_1_poweroftwo_c400_0470c420() {
     let encoding: u32 = 0x0470C420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33286,11 +33831,12 @@ fn test_dech_z_zs_field_pattern_15_poweroftwominusone_c400_0470c5e0() {
     let encoding: u32 = 0x0470C5E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33306,11 +33852,12 @@ fn test_dech_z_zs_field_pattern_31_max_c400_0470c7e0() {
     let encoding: u32 = 0x0470C7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33326,11 +33873,12 @@ fn test_dech_z_zs_field_zdn_0_min_c400_0470c400() {
     let encoding: u32 = 0x0470C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33346,11 +33894,12 @@ fn test_dech_z_zs_field_zdn_1_poweroftwo_c400_0470c401() {
     let encoding: u32 = 0x0470C401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z1.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33366,11 +33915,12 @@ fn test_dech_z_zs_field_zdn_15_poweroftwominusone_c400_0470c40f() {
     let encoding: u32 = 0x0470C40F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z15.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33386,11 +33936,12 @@ fn test_dech_z_zs_field_zdn_31_max_c400_0470c41f() {
     let encoding: u32 = 0x0470C41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z31.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33406,11 +33957,12 @@ fn test_dech_z_zs_combo_0_c400_0470c400() {
     let encoding: u32 = 0x0470C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33426,11 +33978,12 @@ fn test_dech_z_zs_combo_1_c400_0471c400() {
     let encoding: u32 = 0x0471C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33446,11 +33999,12 @@ fn test_dech_z_zs_combo_2_c400_0473c400() {
     let encoding: u32 = 0x0473C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33466,11 +34020,12 @@ fn test_dech_z_zs_combo_3_c400_0474c400() {
     let encoding: u32 = 0x0474C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33486,11 +34041,12 @@ fn test_dech_z_zs_combo_4_c400_0477c400() {
     let encoding: u32 = 0x0477C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33506,11 +34062,12 @@ fn test_dech_z_zs_combo_5_c400_0478c400() {
     let encoding: u32 = 0x0478C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33526,11 +34083,12 @@ fn test_dech_z_zs_combo_6_c400_047fc400() {
     let encoding: u32 = 0x047FC400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33546,11 +34104,12 @@ fn test_dech_z_zs_combo_7_c400_0470c400() {
     let encoding: u32 = 0x0470C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33566,11 +34125,12 @@ fn test_dech_z_zs_combo_8_c400_0470c420() {
     let encoding: u32 = 0x0470C420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33586,11 +34146,12 @@ fn test_dech_z_zs_combo_9_c400_0470c5e0() {
     let encoding: u32 = 0x0470C5E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33606,11 +34167,12 @@ fn test_dech_z_zs_combo_10_c400_0470c7e0() {
     let encoding: u32 = 0x0470C7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33626,11 +34188,12 @@ fn test_dech_z_zs_combo_11_c400_0470c400() {
     let encoding: u32 = 0x0470C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33646,11 +34209,12 @@ fn test_dech_z_zs_combo_12_c400_0470c401() {
     let encoding: u32 = 0x0470C401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z1.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33666,11 +34230,12 @@ fn test_dech_z_zs_combo_13_c400_0470c40f() {
     let encoding: u32 = 0x0470C40F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z15.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33686,11 +34251,12 @@ fn test_dech_z_zs_combo_14_c400_0470c41f() {
     let encoding: u32 = 0x0470C41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: dech	z31.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33706,11 +34272,12 @@ fn test_decw_z_zs_field_imm4_0_zero_c400_04b0c400() {
     let encoding: u32 = 0x04B0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33726,11 +34293,12 @@ fn test_decw_z_zs_field_imm4_1_poweroftwo_c400_04b1c400() {
     let encoding: u32 = 0x04B1C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33746,11 +34314,12 @@ fn test_decw_z_zs_field_imm4_3_poweroftwominusone_c400_04b3c400() {
     let encoding: u32 = 0x04B3C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33766,11 +34335,12 @@ fn test_decw_z_zs_field_imm4_4_poweroftwo_c400_04b4c400() {
     let encoding: u32 = 0x04B4C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33786,11 +34356,12 @@ fn test_decw_z_zs_field_imm4_7_poweroftwominusone_c400_04b7c400() {
     let encoding: u32 = 0x04B7C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33806,11 +34377,12 @@ fn test_decw_z_zs_field_imm4_8_poweroftwo_c400_04b8c400() {
     let encoding: u32 = 0x04B8C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33826,11 +34398,12 @@ fn test_decw_z_zs_field_imm4_15_max_c400_04bfc400() {
     let encoding: u32 = 0x04BFC400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33846,11 +34419,12 @@ fn test_decw_z_zs_field_pattern_0_min_c400_04b0c400() {
     let encoding: u32 = 0x04B0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33866,11 +34440,12 @@ fn test_decw_z_zs_field_pattern_1_poweroftwo_c400_04b0c420() {
     let encoding: u32 = 0x04B0C420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33886,11 +34461,12 @@ fn test_decw_z_zs_field_pattern_15_poweroftwominusone_c400_04b0c5e0() {
     let encoding: u32 = 0x04B0C5E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33906,11 +34482,12 @@ fn test_decw_z_zs_field_pattern_31_max_c400_04b0c7e0() {
     let encoding: u32 = 0x04B0C7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33926,11 +34503,12 @@ fn test_decw_z_zs_field_zdn_0_min_c400_04b0c400() {
     let encoding: u32 = 0x04B0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33946,11 +34524,12 @@ fn test_decw_z_zs_field_zdn_1_poweroftwo_c400_04b0c401() {
     let encoding: u32 = 0x04B0C401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z1.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33966,11 +34545,12 @@ fn test_decw_z_zs_field_zdn_15_poweroftwominusone_c400_04b0c40f() {
     let encoding: u32 = 0x04B0C40F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z15.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -33986,11 +34566,12 @@ fn test_decw_z_zs_field_zdn_31_max_c400_04b0c41f() {
     let encoding: u32 = 0x04B0C41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z31.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -34006,11 +34587,12 @@ fn test_decw_z_zs_combo_0_c400_04b0c400() {
     let encoding: u32 = 0x04B0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -34026,11 +34608,12 @@ fn test_decw_z_zs_combo_1_c400_04b1c400() {
     let encoding: u32 = 0x04B1C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -34046,11 +34629,12 @@ fn test_decw_z_zs_combo_2_c400_04b3c400() {
     let encoding: u32 = 0x04B3C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -34066,11 +34650,12 @@ fn test_decw_z_zs_combo_3_c400_04b4c400() {
     let encoding: u32 = 0x04B4C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -34086,11 +34671,12 @@ fn test_decw_z_zs_combo_4_c400_04b7c400() {
     let encoding: u32 = 0x04B7C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -34106,11 +34692,12 @@ fn test_decw_z_zs_combo_5_c400_04b8c400() {
     let encoding: u32 = 0x04B8C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -34126,11 +34713,12 @@ fn test_decw_z_zs_combo_6_c400_04bfc400() {
     let encoding: u32 = 0x04BFC400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -34146,11 +34734,12 @@ fn test_decw_z_zs_combo_7_c400_04b0c400() {
     let encoding: u32 = 0x04B0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -34166,11 +34755,12 @@ fn test_decw_z_zs_combo_8_c400_04b0c420() {
     let encoding: u32 = 0x04B0C420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -34186,11 +34776,12 @@ fn test_decw_z_zs_combo_9_c400_04b0c5e0() {
     let encoding: u32 = 0x04B0C5E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -34206,11 +34797,12 @@ fn test_decw_z_zs_combo_10_c400_04b0c7e0() {
     let encoding: u32 = 0x04B0C7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -34226,11 +34818,12 @@ fn test_decw_z_zs_combo_11_c400_04b0c400() {
     let encoding: u32 = 0x04B0C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -34246,11 +34839,12 @@ fn test_decw_z_zs_combo_12_c400_04b0c401() {
     let encoding: u32 = 0x04B0C401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z1.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -34266,11 +34860,12 @@ fn test_decw_z_zs_combo_13_c400_04b0c40f() {
     let encoding: u32 = 0x04B0C40F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z15.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -34286,11 +34881,12 @@ fn test_decw_z_zs_combo_14_c400_04b0c41f() {
     let encoding: u32 = 0x04B0C41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decw	z31.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35604,11 +36200,12 @@ fn test_sqinch_z_zs_field_imm4_0_zero_c000_0460c000() {
     let encoding: u32 = 0x0460C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35624,11 +36221,12 @@ fn test_sqinch_z_zs_field_imm4_1_poweroftwo_c000_0461c000() {
     let encoding: u32 = 0x0461C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35644,11 +36242,12 @@ fn test_sqinch_z_zs_field_imm4_3_poweroftwominusone_c000_0463c000() {
     let encoding: u32 = 0x0463C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35664,11 +36263,12 @@ fn test_sqinch_z_zs_field_imm4_4_poweroftwo_c000_0464c000() {
     let encoding: u32 = 0x0464C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35684,11 +36284,12 @@ fn test_sqinch_z_zs_field_imm4_7_poweroftwominusone_c000_0467c000() {
     let encoding: u32 = 0x0467C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35704,11 +36305,12 @@ fn test_sqinch_z_zs_field_imm4_8_poweroftwo_c000_0468c000() {
     let encoding: u32 = 0x0468C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35724,11 +36326,12 @@ fn test_sqinch_z_zs_field_imm4_15_max_c000_046fc000() {
     let encoding: u32 = 0x046FC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35744,11 +36347,12 @@ fn test_sqinch_z_zs_field_pattern_0_min_c000_0460c000() {
     let encoding: u32 = 0x0460C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35764,11 +36368,12 @@ fn test_sqinch_z_zs_field_pattern_1_poweroftwo_c000_0460c020() {
     let encoding: u32 = 0x0460C020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35784,11 +36389,12 @@ fn test_sqinch_z_zs_field_pattern_15_poweroftwominusone_c000_0460c1e0() {
     let encoding: u32 = 0x0460C1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35804,11 +36410,12 @@ fn test_sqinch_z_zs_field_pattern_31_max_c000_0460c3e0() {
     let encoding: u32 = 0x0460C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35824,11 +36431,12 @@ fn test_sqinch_z_zs_field_zdn_0_min_c000_0460c000() {
     let encoding: u32 = 0x0460C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35844,11 +36452,12 @@ fn test_sqinch_z_zs_field_zdn_1_poweroftwo_c000_0460c001() {
     let encoding: u32 = 0x0460C001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z1.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35864,11 +36473,12 @@ fn test_sqinch_z_zs_field_zdn_15_poweroftwominusone_c000_0460c00f() {
     let encoding: u32 = 0x0460C00F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z15.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35884,11 +36494,12 @@ fn test_sqinch_z_zs_field_zdn_31_max_c000_0460c01f() {
     let encoding: u32 = 0x0460C01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z31.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35904,11 +36515,12 @@ fn test_sqinch_z_zs_combo_0_c000_0460c000() {
     let encoding: u32 = 0x0460C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35924,11 +36536,12 @@ fn test_sqinch_z_zs_combo_1_c000_0461c000() {
     let encoding: u32 = 0x0461C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35944,11 +36557,12 @@ fn test_sqinch_z_zs_combo_2_c000_0463c000() {
     let encoding: u32 = 0x0463C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35964,11 +36578,12 @@ fn test_sqinch_z_zs_combo_3_c000_0464c000() {
     let encoding: u32 = 0x0464C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -35984,11 +36599,12 @@ fn test_sqinch_z_zs_combo_4_c000_0467c000() {
     let encoding: u32 = 0x0467C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -36004,11 +36620,12 @@ fn test_sqinch_z_zs_combo_5_c000_0468c000() {
     let encoding: u32 = 0x0468C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -36024,11 +36641,12 @@ fn test_sqinch_z_zs_combo_6_c000_046fc000() {
     let encoding: u32 = 0x046FC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -36044,11 +36662,12 @@ fn test_sqinch_z_zs_combo_7_c000_0460c000() {
     let encoding: u32 = 0x0460C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -36064,11 +36683,12 @@ fn test_sqinch_z_zs_combo_8_c000_0460c020() {
     let encoding: u32 = 0x0460C020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -36084,11 +36704,12 @@ fn test_sqinch_z_zs_combo_9_c000_0460c1e0() {
     let encoding: u32 = 0x0460C1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -36104,11 +36725,12 @@ fn test_sqinch_z_zs_combo_10_c000_0460c3e0() {
     let encoding: u32 = 0x0460C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -36124,11 +36746,12 @@ fn test_sqinch_z_zs_combo_11_c000_0460c000() {
     let encoding: u32 = 0x0460C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -36144,11 +36767,12 @@ fn test_sqinch_z_zs_combo_12_c000_0460c001() {
     let encoding: u32 = 0x0460C001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z1.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -36164,11 +36788,12 @@ fn test_sqinch_z_zs_combo_13_c000_0460c00f() {
     let encoding: u32 = 0x0460C00F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z15.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -36184,11 +36809,12 @@ fn test_sqinch_z_zs_combo_14_c000_0460c01f() {
     let encoding: u32 = 0x0460C01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqinch	z31.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40361,11 +40987,12 @@ fn test_sqincd_z_zs_field_imm4_0_zero_c000_04e0c000() {
     let encoding: u32 = 0x04E0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40381,11 +41008,12 @@ fn test_sqincd_z_zs_field_imm4_1_poweroftwo_c000_04e1c000() {
     let encoding: u32 = 0x04E1C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40401,11 +41029,12 @@ fn test_sqincd_z_zs_field_imm4_3_poweroftwominusone_c000_04e3c000() {
     let encoding: u32 = 0x04E3C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40421,11 +41050,12 @@ fn test_sqincd_z_zs_field_imm4_4_poweroftwo_c000_04e4c000() {
     let encoding: u32 = 0x04E4C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40441,11 +41071,12 @@ fn test_sqincd_z_zs_field_imm4_7_poweroftwominusone_c000_04e7c000() {
     let encoding: u32 = 0x04E7C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40461,11 +41092,12 @@ fn test_sqincd_z_zs_field_imm4_8_poweroftwo_c000_04e8c000() {
     let encoding: u32 = 0x04E8C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40481,11 +41113,12 @@ fn test_sqincd_z_zs_field_imm4_15_max_c000_04efc000() {
     let encoding: u32 = 0x04EFC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40501,11 +41134,12 @@ fn test_sqincd_z_zs_field_pattern_0_min_c000_04e0c000() {
     let encoding: u32 = 0x04E0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40521,11 +41155,12 @@ fn test_sqincd_z_zs_field_pattern_1_poweroftwo_c000_04e0c020() {
     let encoding: u32 = 0x04E0C020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40541,11 +41176,12 @@ fn test_sqincd_z_zs_field_pattern_15_poweroftwominusone_c000_04e0c1e0() {
     let encoding: u32 = 0x04E0C1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40561,11 +41197,12 @@ fn test_sqincd_z_zs_field_pattern_31_max_c000_04e0c3e0() {
     let encoding: u32 = 0x04E0C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40581,11 +41218,12 @@ fn test_sqincd_z_zs_field_zdn_0_min_c000_04e0c000() {
     let encoding: u32 = 0x04E0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40601,11 +41239,12 @@ fn test_sqincd_z_zs_field_zdn_1_poweroftwo_c000_04e0c001() {
     let encoding: u32 = 0x04E0C001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z1.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40621,11 +41260,12 @@ fn test_sqincd_z_zs_field_zdn_15_poweroftwominusone_c000_04e0c00f() {
     let encoding: u32 = 0x04E0C00F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z15.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40641,11 +41281,12 @@ fn test_sqincd_z_zs_field_zdn_31_max_c000_04e0c01f() {
     let encoding: u32 = 0x04E0C01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z31.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40661,11 +41302,12 @@ fn test_sqincd_z_zs_combo_0_c000_04e0c000() {
     let encoding: u32 = 0x04E0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40681,11 +41323,12 @@ fn test_sqincd_z_zs_combo_1_c000_04e1c000() {
     let encoding: u32 = 0x04E1C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40701,11 +41344,12 @@ fn test_sqincd_z_zs_combo_2_c000_04e3c000() {
     let encoding: u32 = 0x04E3C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40721,11 +41365,12 @@ fn test_sqincd_z_zs_combo_3_c000_04e4c000() {
     let encoding: u32 = 0x04E4C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40741,11 +41386,12 @@ fn test_sqincd_z_zs_combo_4_c000_04e7c000() {
     let encoding: u32 = 0x04E7C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40761,11 +41407,12 @@ fn test_sqincd_z_zs_combo_5_c000_04e8c000() {
     let encoding: u32 = 0x04E8C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40781,11 +41428,12 @@ fn test_sqincd_z_zs_combo_6_c000_04efc000() {
     let encoding: u32 = 0x04EFC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40801,11 +41449,12 @@ fn test_sqincd_z_zs_combo_7_c000_04e0c000() {
     let encoding: u32 = 0x04E0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40821,11 +41470,12 @@ fn test_sqincd_z_zs_combo_8_c000_04e0c020() {
     let encoding: u32 = 0x04E0C020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40841,11 +41491,12 @@ fn test_sqincd_z_zs_combo_9_c000_04e0c1e0() {
     let encoding: u32 = 0x04E0C1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40861,11 +41512,12 @@ fn test_sqincd_z_zs_combo_10_c000_04e0c3e0() {
     let encoding: u32 = 0x04E0C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40881,11 +41533,12 @@ fn test_sqincd_z_zs_combo_11_c000_04e0c000() {
     let encoding: u32 = 0x04E0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40901,11 +41554,12 @@ fn test_sqincd_z_zs_combo_12_c000_04e0c001() {
     let encoding: u32 = 0x04E0C001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z1.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40921,11 +41575,12 @@ fn test_sqincd_z_zs_combo_13_c000_04e0c00f() {
     let encoding: u32 = 0x04E0C00F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z15.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -40941,11 +41596,12 @@ fn test_sqincd_z_zs_combo_14_c000_04e0c01f() {
     let encoding: u32 = 0x04E0C01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqincd	z31.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42279,11 +42935,12 @@ fn test_sqdecp_z_p_z_field_size_1_poweroftwo_8000_256a8000() {
     let encoding: u32 = 0x256A8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42299,11 +42956,12 @@ fn test_sqdecp_z_p_z_field_size_2_poweroftwo_8000_25aa8000() {
     let encoding: u32 = 0x25AA8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42319,11 +42977,12 @@ fn test_sqdecp_z_p_z_field_size_3_max_8000_25ea8000() {
     let encoding: u32 = 0x25EA8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42479,11 +43138,12 @@ fn test_sqdecp_z_p_z_combo_1_8000_256a8000() {
     let encoding: u32 = 0x256A8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42499,11 +43159,12 @@ fn test_sqdecp_z_p_z_combo_2_8000_25aa8000() {
     let encoding: u32 = 0x25AA8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42519,11 +43180,12 @@ fn test_sqdecp_z_p_z_combo_3_8000_25ea8000() {
     let encoding: u32 = 0x25EA8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42679,11 +43341,12 @@ fn test_sqdecp_z_p_z_special_size_1_size_variant_1_32768_256a8000() {
     let encoding: u32 = 0x256A8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42699,11 +43362,12 @@ fn test_sqdecp_z_p_z_special_size_2_size_variant_2_32768_25aa8000() {
     let encoding: u32 = 0x25AA8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42719,11 +43383,12 @@ fn test_sqdecp_z_p_z_special_size_3_size_variant_3_32768_25ea8000() {
     let encoding: u32 = 0x25EA8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42743,11 +43408,12 @@ fn test_sqdecw_z_zs_field_imm4_0_zero_c800_04a0c800() {
     let encoding: u32 = 0x04A0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42763,11 +43429,12 @@ fn test_sqdecw_z_zs_field_imm4_1_poweroftwo_c800_04a1c800() {
     let encoding: u32 = 0x04A1C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42783,11 +43450,12 @@ fn test_sqdecw_z_zs_field_imm4_3_poweroftwominusone_c800_04a3c800() {
     let encoding: u32 = 0x04A3C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42803,11 +43471,12 @@ fn test_sqdecw_z_zs_field_imm4_4_poweroftwo_c800_04a4c800() {
     let encoding: u32 = 0x04A4C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42823,11 +43492,12 @@ fn test_sqdecw_z_zs_field_imm4_7_poweroftwominusone_c800_04a7c800() {
     let encoding: u32 = 0x04A7C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42843,11 +43513,12 @@ fn test_sqdecw_z_zs_field_imm4_8_poweroftwo_c800_04a8c800() {
     let encoding: u32 = 0x04A8C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42863,11 +43534,12 @@ fn test_sqdecw_z_zs_field_imm4_15_max_c800_04afc800() {
     let encoding: u32 = 0x04AFC800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42883,11 +43555,12 @@ fn test_sqdecw_z_zs_field_pattern_0_min_c800_04a0c800() {
     let encoding: u32 = 0x04A0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42903,11 +43576,12 @@ fn test_sqdecw_z_zs_field_pattern_1_poweroftwo_c800_04a0c820() {
     let encoding: u32 = 0x04A0C820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42923,11 +43597,12 @@ fn test_sqdecw_z_zs_field_pattern_15_poweroftwominusone_c800_04a0c9e0() {
     let encoding: u32 = 0x04A0C9E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42943,11 +43618,12 @@ fn test_sqdecw_z_zs_field_pattern_31_max_c800_04a0cbe0() {
     let encoding: u32 = 0x04A0CBE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42963,11 +43639,12 @@ fn test_sqdecw_z_zs_field_zdn_0_min_c800_04a0c800() {
     let encoding: u32 = 0x04A0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -42983,11 +43660,12 @@ fn test_sqdecw_z_zs_field_zdn_1_poweroftwo_c800_04a0c801() {
     let encoding: u32 = 0x04A0C801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z1.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43003,11 +43681,12 @@ fn test_sqdecw_z_zs_field_zdn_15_poweroftwominusone_c800_04a0c80f() {
     let encoding: u32 = 0x04A0C80F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z15.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43023,11 +43702,12 @@ fn test_sqdecw_z_zs_field_zdn_31_max_c800_04a0c81f() {
     let encoding: u32 = 0x04A0C81F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z31.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43043,11 +43723,12 @@ fn test_sqdecw_z_zs_combo_0_c800_04a0c800() {
     let encoding: u32 = 0x04A0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43063,11 +43744,12 @@ fn test_sqdecw_z_zs_combo_1_c800_04a1c800() {
     let encoding: u32 = 0x04A1C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43083,11 +43765,12 @@ fn test_sqdecw_z_zs_combo_2_c800_04a3c800() {
     let encoding: u32 = 0x04A3C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43103,11 +43786,12 @@ fn test_sqdecw_z_zs_combo_3_c800_04a4c800() {
     let encoding: u32 = 0x04A4C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43123,11 +43807,12 @@ fn test_sqdecw_z_zs_combo_4_c800_04a7c800() {
     let encoding: u32 = 0x04A7C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43143,11 +43828,12 @@ fn test_sqdecw_z_zs_combo_5_c800_04a8c800() {
     let encoding: u32 = 0x04A8C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43163,11 +43849,12 @@ fn test_sqdecw_z_zs_combo_6_c800_04afc800() {
     let encoding: u32 = 0x04AFC800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43183,11 +43870,12 @@ fn test_sqdecw_z_zs_combo_7_c800_04a0c800() {
     let encoding: u32 = 0x04A0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43203,11 +43891,12 @@ fn test_sqdecw_z_zs_combo_8_c800_04a0c820() {
     let encoding: u32 = 0x04A0C820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43223,11 +43912,12 @@ fn test_sqdecw_z_zs_combo_9_c800_04a0c9e0() {
     let encoding: u32 = 0x04A0C9E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43243,11 +43933,12 @@ fn test_sqdecw_z_zs_combo_10_c800_04a0cbe0() {
     let encoding: u32 = 0x04A0CBE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43263,11 +43954,12 @@ fn test_sqdecw_z_zs_combo_11_c800_04a0c800() {
     let encoding: u32 = 0x04A0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43283,11 +43975,12 @@ fn test_sqdecw_z_zs_combo_12_c800_04a0c801() {
     let encoding: u32 = 0x04A0C801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z1.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43303,11 +43996,12 @@ fn test_sqdecw_z_zs_combo_13_c800_04a0c80f() {
     let encoding: u32 = 0x04A0C80F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z15.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43323,11 +44017,12 @@ fn test_sqdecw_z_zs_combo_14_c800_04a0c81f() {
     let encoding: u32 = 0x04A0C81F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdecw	z31.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43347,11 +44042,12 @@ fn test_sqdech_z_zs_field_imm4_0_zero_c800_0460c800() {
     let encoding: u32 = 0x0460C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43367,11 +44063,12 @@ fn test_sqdech_z_zs_field_imm4_1_poweroftwo_c800_0461c800() {
     let encoding: u32 = 0x0461C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43387,11 +44084,12 @@ fn test_sqdech_z_zs_field_imm4_3_poweroftwominusone_c800_0463c800() {
     let encoding: u32 = 0x0463C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43407,11 +44105,12 @@ fn test_sqdech_z_zs_field_imm4_4_poweroftwo_c800_0464c800() {
     let encoding: u32 = 0x0464C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43427,11 +44126,12 @@ fn test_sqdech_z_zs_field_imm4_7_poweroftwominusone_c800_0467c800() {
     let encoding: u32 = 0x0467C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43447,11 +44147,12 @@ fn test_sqdech_z_zs_field_imm4_8_poweroftwo_c800_0468c800() {
     let encoding: u32 = 0x0468C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43467,11 +44168,12 @@ fn test_sqdech_z_zs_field_imm4_15_max_c800_046fc800() {
     let encoding: u32 = 0x046FC800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43487,11 +44189,12 @@ fn test_sqdech_z_zs_field_pattern_0_min_c800_0460c800() {
     let encoding: u32 = 0x0460C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43507,11 +44210,12 @@ fn test_sqdech_z_zs_field_pattern_1_poweroftwo_c800_0460c820() {
     let encoding: u32 = 0x0460C820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43527,11 +44231,12 @@ fn test_sqdech_z_zs_field_pattern_15_poweroftwominusone_c800_0460c9e0() {
     let encoding: u32 = 0x0460C9E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43547,11 +44252,12 @@ fn test_sqdech_z_zs_field_pattern_31_max_c800_0460cbe0() {
     let encoding: u32 = 0x0460CBE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43567,11 +44273,12 @@ fn test_sqdech_z_zs_field_zdn_0_min_c800_0460c800() {
     let encoding: u32 = 0x0460C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43587,11 +44294,12 @@ fn test_sqdech_z_zs_field_zdn_1_poweroftwo_c800_0460c801() {
     let encoding: u32 = 0x0460C801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z1.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43607,11 +44315,12 @@ fn test_sqdech_z_zs_field_zdn_15_poweroftwominusone_c800_0460c80f() {
     let encoding: u32 = 0x0460C80F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z15.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43627,11 +44336,12 @@ fn test_sqdech_z_zs_field_zdn_31_max_c800_0460c81f() {
     let encoding: u32 = 0x0460C81F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z31.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43647,11 +44357,12 @@ fn test_sqdech_z_zs_combo_0_c800_0460c800() {
     let encoding: u32 = 0x0460C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43667,11 +44378,12 @@ fn test_sqdech_z_zs_combo_1_c800_0461c800() {
     let encoding: u32 = 0x0461C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43687,11 +44399,12 @@ fn test_sqdech_z_zs_combo_2_c800_0463c800() {
     let encoding: u32 = 0x0463C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43707,11 +44420,12 @@ fn test_sqdech_z_zs_combo_3_c800_0464c800() {
     let encoding: u32 = 0x0464C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43727,11 +44441,12 @@ fn test_sqdech_z_zs_combo_4_c800_0467c800() {
     let encoding: u32 = 0x0467C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43747,11 +44462,12 @@ fn test_sqdech_z_zs_combo_5_c800_0468c800() {
     let encoding: u32 = 0x0468C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43767,11 +44483,12 @@ fn test_sqdech_z_zs_combo_6_c800_046fc800() {
     let encoding: u32 = 0x046FC800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43787,11 +44504,12 @@ fn test_sqdech_z_zs_combo_7_c800_0460c800() {
     let encoding: u32 = 0x0460C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43807,11 +44525,12 @@ fn test_sqdech_z_zs_combo_8_c800_0460c820() {
     let encoding: u32 = 0x0460C820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43827,11 +44546,12 @@ fn test_sqdech_z_zs_combo_9_c800_0460c9e0() {
     let encoding: u32 = 0x0460C9E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43847,11 +44567,12 @@ fn test_sqdech_z_zs_combo_10_c800_0460cbe0() {
     let encoding: u32 = 0x0460CBE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43867,11 +44588,12 @@ fn test_sqdech_z_zs_combo_11_c800_0460c800() {
     let encoding: u32 = 0x0460C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43887,11 +44609,12 @@ fn test_sqdech_z_zs_combo_12_c800_0460c801() {
     let encoding: u32 = 0x0460C801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z1.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43907,11 +44630,12 @@ fn test_sqdech_z_zs_combo_13_c800_0460c80f() {
     let encoding: u32 = 0x0460C80F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z15.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -43927,11 +44651,12 @@ fn test_sqdech_z_zs_combo_14_c800_0460c81f() {
     let encoding: u32 = 0x0460C81F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: sqdech	z31.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45245,11 +45970,12 @@ fn test_incd_z_zs_field_imm4_0_zero_c000_04f0c000() {
     let encoding: u32 = 0x04F0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45265,11 +45991,12 @@ fn test_incd_z_zs_field_imm4_1_poweroftwo_c000_04f1c000() {
     let encoding: u32 = 0x04F1C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45285,11 +46012,12 @@ fn test_incd_z_zs_field_imm4_3_poweroftwominusone_c000_04f3c000() {
     let encoding: u32 = 0x04F3C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45305,11 +46033,12 @@ fn test_incd_z_zs_field_imm4_4_poweroftwo_c000_04f4c000() {
     let encoding: u32 = 0x04F4C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45325,11 +46054,12 @@ fn test_incd_z_zs_field_imm4_7_poweroftwominusone_c000_04f7c000() {
     let encoding: u32 = 0x04F7C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45345,11 +46075,12 @@ fn test_incd_z_zs_field_imm4_8_poweroftwo_c000_04f8c000() {
     let encoding: u32 = 0x04F8C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45365,11 +46096,12 @@ fn test_incd_z_zs_field_imm4_15_max_c000_04ffc000() {
     let encoding: u32 = 0x04FFC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45385,11 +46117,12 @@ fn test_incd_z_zs_field_pattern_0_min_c000_04f0c000() {
     let encoding: u32 = 0x04F0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45405,11 +46138,12 @@ fn test_incd_z_zs_field_pattern_1_poweroftwo_c000_04f0c020() {
     let encoding: u32 = 0x04F0C020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45425,11 +46159,12 @@ fn test_incd_z_zs_field_pattern_15_poweroftwominusone_c000_04f0c1e0() {
     let encoding: u32 = 0x04F0C1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45445,11 +46180,12 @@ fn test_incd_z_zs_field_pattern_31_max_c000_04f0c3e0() {
     let encoding: u32 = 0x04F0C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45465,11 +46201,12 @@ fn test_incd_z_zs_field_zdn_0_min_c000_04f0c000() {
     let encoding: u32 = 0x04F0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45485,11 +46222,12 @@ fn test_incd_z_zs_field_zdn_1_poweroftwo_c000_04f0c001() {
     let encoding: u32 = 0x04F0C001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z1.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45505,11 +46243,12 @@ fn test_incd_z_zs_field_zdn_15_poweroftwominusone_c000_04f0c00f() {
     let encoding: u32 = 0x04F0C00F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z15.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45525,11 +46264,12 @@ fn test_incd_z_zs_field_zdn_31_max_c000_04f0c01f() {
     let encoding: u32 = 0x04F0C01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z31.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45545,11 +46285,12 @@ fn test_incd_z_zs_combo_0_c000_04f0c000() {
     let encoding: u32 = 0x04F0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45565,11 +46306,12 @@ fn test_incd_z_zs_combo_1_c000_04f1c000() {
     let encoding: u32 = 0x04F1C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45585,11 +46327,12 @@ fn test_incd_z_zs_combo_2_c000_04f3c000() {
     let encoding: u32 = 0x04F3C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45605,11 +46348,12 @@ fn test_incd_z_zs_combo_3_c000_04f4c000() {
     let encoding: u32 = 0x04F4C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45625,11 +46369,12 @@ fn test_incd_z_zs_combo_4_c000_04f7c000() {
     let encoding: u32 = 0x04F7C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45645,11 +46390,12 @@ fn test_incd_z_zs_combo_5_c000_04f8c000() {
     let encoding: u32 = 0x04F8C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45665,11 +46411,12 @@ fn test_incd_z_zs_combo_6_c000_04ffc000() {
     let encoding: u32 = 0x04FFC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45685,11 +46432,12 @@ fn test_incd_z_zs_combo_7_c000_04f0c000() {
     let encoding: u32 = 0x04F0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45705,11 +46453,12 @@ fn test_incd_z_zs_combo_8_c000_04f0c020() {
     let encoding: u32 = 0x04F0C020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45725,11 +46474,12 @@ fn test_incd_z_zs_combo_9_c000_04f0c1e0() {
     let encoding: u32 = 0x04F0C1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45745,11 +46495,12 @@ fn test_incd_z_zs_combo_10_c000_04f0c3e0() {
     let encoding: u32 = 0x04F0C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45765,11 +46516,12 @@ fn test_incd_z_zs_combo_11_c000_04f0c000() {
     let encoding: u32 = 0x04F0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z0.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45785,11 +46537,12 @@ fn test_incd_z_zs_combo_12_c000_04f0c001() {
     let encoding: u32 = 0x04F0C001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z1.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45805,11 +46558,12 @@ fn test_incd_z_zs_combo_13_c000_04f0c00f() {
     let encoding: u32 = 0x04F0C00F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z15.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45825,11 +46579,12 @@ fn test_incd_z_zs_combo_14_c000_04f0c01f() {
     let encoding: u32 = 0x04F0C01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incd	z31.d, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45845,11 +46600,12 @@ fn test_inch_z_zs_field_imm4_0_zero_c000_0470c000() {
     let encoding: u32 = 0x0470C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45865,11 +46621,12 @@ fn test_inch_z_zs_field_imm4_1_poweroftwo_c000_0471c000() {
     let encoding: u32 = 0x0471C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45885,11 +46642,12 @@ fn test_inch_z_zs_field_imm4_3_poweroftwominusone_c000_0473c000() {
     let encoding: u32 = 0x0473C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45905,11 +46663,12 @@ fn test_inch_z_zs_field_imm4_4_poweroftwo_c000_0474c000() {
     let encoding: u32 = 0x0474C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45925,11 +46684,12 @@ fn test_inch_z_zs_field_imm4_7_poweroftwominusone_c000_0477c000() {
     let encoding: u32 = 0x0477C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45945,11 +46705,12 @@ fn test_inch_z_zs_field_imm4_8_poweroftwo_c000_0478c000() {
     let encoding: u32 = 0x0478C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45965,11 +46726,12 @@ fn test_inch_z_zs_field_imm4_15_max_c000_047fc000() {
     let encoding: u32 = 0x047FC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -45985,11 +46747,12 @@ fn test_inch_z_zs_field_pattern_0_min_c000_0470c000() {
     let encoding: u32 = 0x0470C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46005,11 +46768,12 @@ fn test_inch_z_zs_field_pattern_1_poweroftwo_c000_0470c020() {
     let encoding: u32 = 0x0470C020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46025,11 +46789,12 @@ fn test_inch_z_zs_field_pattern_15_poweroftwominusone_c000_0470c1e0() {
     let encoding: u32 = 0x0470C1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46045,11 +46810,12 @@ fn test_inch_z_zs_field_pattern_31_max_c000_0470c3e0() {
     let encoding: u32 = 0x0470C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46065,11 +46831,12 @@ fn test_inch_z_zs_field_zdn_0_min_c000_0470c000() {
     let encoding: u32 = 0x0470C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46085,11 +46852,12 @@ fn test_inch_z_zs_field_zdn_1_poweroftwo_c000_0470c001() {
     let encoding: u32 = 0x0470C001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z1.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46105,11 +46873,12 @@ fn test_inch_z_zs_field_zdn_15_poweroftwominusone_c000_0470c00f() {
     let encoding: u32 = 0x0470C00F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z15.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46125,11 +46894,12 @@ fn test_inch_z_zs_field_zdn_31_max_c000_0470c01f() {
     let encoding: u32 = 0x0470C01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z31.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46145,11 +46915,12 @@ fn test_inch_z_zs_combo_0_c000_0470c000() {
     let encoding: u32 = 0x0470C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46165,11 +46936,12 @@ fn test_inch_z_zs_combo_1_c000_0471c000() {
     let encoding: u32 = 0x0471C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46185,11 +46957,12 @@ fn test_inch_z_zs_combo_2_c000_0473c000() {
     let encoding: u32 = 0x0473C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46205,11 +46978,12 @@ fn test_inch_z_zs_combo_3_c000_0474c000() {
     let encoding: u32 = 0x0474C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46225,11 +46999,12 @@ fn test_inch_z_zs_combo_4_c000_0477c000() {
     let encoding: u32 = 0x0477C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46245,11 +47020,12 @@ fn test_inch_z_zs_combo_5_c000_0478c000() {
     let encoding: u32 = 0x0478C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46265,11 +47041,12 @@ fn test_inch_z_zs_combo_6_c000_047fc000() {
     let encoding: u32 = 0x047FC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46285,11 +47062,12 @@ fn test_inch_z_zs_combo_7_c000_0470c000() {
     let encoding: u32 = 0x0470C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46305,11 +47083,12 @@ fn test_inch_z_zs_combo_8_c000_0470c020() {
     let encoding: u32 = 0x0470C020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46325,11 +47104,12 @@ fn test_inch_z_zs_combo_9_c000_0470c1e0() {
     let encoding: u32 = 0x0470C1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46345,11 +47125,12 @@ fn test_inch_z_zs_combo_10_c000_0470c3e0() {
     let encoding: u32 = 0x0470C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46365,11 +47146,12 @@ fn test_inch_z_zs_combo_11_c000_0470c000() {
     let encoding: u32 = 0x0470C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z0.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46385,11 +47167,12 @@ fn test_inch_z_zs_combo_12_c000_0470c001() {
     let encoding: u32 = 0x0470C001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z1.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46405,11 +47188,12 @@ fn test_inch_z_zs_combo_13_c000_0470c00f() {
     let encoding: u32 = 0x0470C00F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z15.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46425,11 +47209,12 @@ fn test_inch_z_zs_combo_14_c000_0470c01f() {
     let encoding: u32 = 0x0470C01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: inch	z31.h, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46445,11 +47230,12 @@ fn test_incw_z_zs_field_imm4_0_zero_c000_04b0c000() {
     let encoding: u32 = 0x04B0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46465,11 +47251,12 @@ fn test_incw_z_zs_field_imm4_1_poweroftwo_c000_04b1c000() {
     let encoding: u32 = 0x04B1C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46485,11 +47272,12 @@ fn test_incw_z_zs_field_imm4_3_poweroftwominusone_c000_04b3c000() {
     let encoding: u32 = 0x04B3C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46505,11 +47293,12 @@ fn test_incw_z_zs_field_imm4_4_poweroftwo_c000_04b4c000() {
     let encoding: u32 = 0x04B4C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46525,11 +47314,12 @@ fn test_incw_z_zs_field_imm4_7_poweroftwominusone_c000_04b7c000() {
     let encoding: u32 = 0x04B7C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46545,11 +47335,12 @@ fn test_incw_z_zs_field_imm4_8_poweroftwo_c000_04b8c000() {
     let encoding: u32 = 0x04B8C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46565,11 +47356,12 @@ fn test_incw_z_zs_field_imm4_15_max_c000_04bfc000() {
     let encoding: u32 = 0x04BFC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46585,11 +47377,12 @@ fn test_incw_z_zs_field_pattern_0_min_c000_04b0c000() {
     let encoding: u32 = 0x04B0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46605,11 +47398,12 @@ fn test_incw_z_zs_field_pattern_1_poweroftwo_c000_04b0c020() {
     let encoding: u32 = 0x04B0C020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46625,11 +47419,12 @@ fn test_incw_z_zs_field_pattern_15_poweroftwominusone_c000_04b0c1e0() {
     let encoding: u32 = 0x04B0C1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46645,11 +47440,12 @@ fn test_incw_z_zs_field_pattern_31_max_c000_04b0c3e0() {
     let encoding: u32 = 0x04B0C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46665,11 +47461,12 @@ fn test_incw_z_zs_field_zdn_0_min_c000_04b0c000() {
     let encoding: u32 = 0x04B0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46685,11 +47482,12 @@ fn test_incw_z_zs_field_zdn_1_poweroftwo_c000_04b0c001() {
     let encoding: u32 = 0x04B0C001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z1.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46705,11 +47503,12 @@ fn test_incw_z_zs_field_zdn_15_poweroftwominusone_c000_04b0c00f() {
     let encoding: u32 = 0x04B0C00F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z15.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46725,11 +47524,12 @@ fn test_incw_z_zs_field_zdn_31_max_c000_04b0c01f() {
     let encoding: u32 = 0x04B0C01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z31.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46745,11 +47545,12 @@ fn test_incw_z_zs_combo_0_c000_04b0c000() {
     let encoding: u32 = 0x04B0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46765,11 +47566,12 @@ fn test_incw_z_zs_combo_1_c000_04b1c000() {
     let encoding: u32 = 0x04B1C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2, mul #2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46785,11 +47587,12 @@ fn test_incw_z_zs_combo_2_c000_04b3c000() {
     let encoding: u32 = 0x04B3C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2, mul #4
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46805,11 +47608,12 @@ fn test_incw_z_zs_combo_3_c000_04b4c000() {
     let encoding: u32 = 0x04B4C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2, mul #5
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46825,11 +47629,12 @@ fn test_incw_z_zs_combo_4_c000_04b7c000() {
     let encoding: u32 = 0x04B7C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2, mul #8
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46845,11 +47650,12 @@ fn test_incw_z_zs_combo_5_c000_04b8c000() {
     let encoding: u32 = 0x04B8C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2, mul #9
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46865,11 +47671,12 @@ fn test_incw_z_zs_combo_6_c000_04bfc000() {
     let encoding: u32 = 0x04BFC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2, mul #16
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46885,11 +47692,12 @@ fn test_incw_z_zs_combo_7_c000_04b0c000() {
     let encoding: u32 = 0x04B0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46905,11 +47713,12 @@ fn test_incw_z_zs_combo_8_c000_04b0c020() {
     let encoding: u32 = 0x04B0C020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, vl1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46925,11 +47734,12 @@ fn test_incw_z_zs_combo_9_c000_04b0c1e0() {
     let encoding: u32 = 0x04B0C1E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, #15
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46945,11 +47755,12 @@ fn test_incw_z_zs_combo_10_c000_04b0c3e0() {
     let encoding: u32 = 0x04B0C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46965,11 +47776,12 @@ fn test_incw_z_zs_combo_11_c000_04b0c000() {
     let encoding: u32 = 0x04B0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z0.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -46985,11 +47797,12 @@ fn test_incw_z_zs_combo_12_c000_04b0c001() {
     let encoding: u32 = 0x04B0C001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z1.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -47005,11 +47818,12 @@ fn test_incw_z_zs_combo_13_c000_04b0c00f() {
     let encoding: u32 = 0x04B0C00F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z15.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -47025,11 +47839,12 @@ fn test_incw_z_zs_combo_14_c000_04b0c01f() {
     let encoding: u32 = 0x04B0C01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: incw	z31.s, pow2
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -47069,11 +47884,12 @@ fn test_decp_z_p_z_field_size_1_poweroftwo_8000_256d8000() {
     let encoding: u32 = 0x256D8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -47089,11 +47905,12 @@ fn test_decp_z_p_z_field_size_2_poweroftwo_8000_25ad8000() {
     let encoding: u32 = 0x25AD8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -47109,11 +47926,12 @@ fn test_decp_z_p_z_field_size_3_max_8000_25ed8000() {
     let encoding: u32 = 0x25ED8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -47269,11 +48087,12 @@ fn test_decp_z_p_z_combo_1_8000_256d8000() {
     let encoding: u32 = 0x256D8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -47289,11 +48108,12 @@ fn test_decp_z_p_z_combo_2_8000_25ad8000() {
     let encoding: u32 = 0x25AD8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -47309,11 +48129,12 @@ fn test_decp_z_p_z_combo_3_8000_25ed8000() {
     let encoding: u32 = 0x25ED8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -47469,11 +48290,12 @@ fn test_decp_z_p_z_special_size_1_size_variant_1_32768_256d8000() {
     let encoding: u32 = 0x256D8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -47489,11 +48311,12 @@ fn test_decp_z_p_z_special_size_2_size_variant_2_32768_25ad8000() {
     let encoding: u32 = 0x25AD8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -47509,11 +48332,12 @@ fn test_decp_z_p_z_special_size_3_size_variant_3_32768_25ed8000() {
     let encoding: u32 = 0x25ED8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: decp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -48847,11 +49671,12 @@ fn test_uqdecp_z_p_z_field_size_1_poweroftwo_8000_256b8000() {
     let encoding: u32 = 0x256B8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -48867,11 +49692,12 @@ fn test_uqdecp_z_p_z_field_size_2_poweroftwo_8000_25ab8000() {
     let encoding: u32 = 0x25AB8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -48887,11 +49713,12 @@ fn test_uqdecp_z_p_z_field_size_3_max_8000_25eb8000() {
     let encoding: u32 = 0x25EB8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -49047,11 +49874,12 @@ fn test_uqdecp_z_p_z_combo_1_8000_256b8000() {
     let encoding: u32 = 0x256B8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -49067,11 +49895,12 @@ fn test_uqdecp_z_p_z_combo_2_8000_25ab8000() {
     let encoding: u32 = 0x25AB8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -49087,11 +49916,12 @@ fn test_uqdecp_z_p_z_combo_3_8000_25eb8000() {
     let encoding: u32 = 0x25EB8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -49247,11 +50077,12 @@ fn test_uqdecp_z_p_z_special_size_1_size_variant_1_32768_256b8000() {
     let encoding: u32 = 0x256B8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	z0.h, p0.h
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -49267,11 +50098,12 @@ fn test_uqdecp_z_p_z_special_size_2_size_variant_2_32768_25ab8000() {
     let encoding: u32 = 0x25AB8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	z0.s, p0.s
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -49287,10 +50119,11 @@ fn test_uqdecp_z_p_z_special_size_3_size_variant_3_32768_25eb8000() {
     let encoding: u32 = 0x25EB8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: uqdecp	z0.d, p0.d
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }

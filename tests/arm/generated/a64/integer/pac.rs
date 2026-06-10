@@ -126,9 +126,8 @@ fn test_aarch64_integer_pac_strip_dp_1src_field_rn_31_max_4000_dac143e0() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -326,9 +325,8 @@ fn test_aarch64_integer_pac_strip_dp_1src_combo_5_4000_dac143e0() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -446,9 +444,8 @@ fn test_aarch64_integer_pac_strip_dp_1src_combo_11_4000_dac143ff() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -467,9 +464,8 @@ fn test_aarch64_integer_pac_strip_dp_1src_special_rn_31_stack_pointer_sp_may_req
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -525,8 +521,13 @@ fn test_aarch64_integer_pac_strip_dp_1src_reg_write_0_dac14000() {
     let mut cpu = create_test_cpu();
     let encoding: u32 = 0xDAC14000;
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -555,9 +556,13 @@ fn test_aarch64_integer_pac_strip_dp_1src_zr_rd_dac1401f() {
     let mut cpu = create_test_cpu();
     let encoding: u32 = 0xDAC1401F;
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_hint
@@ -593,9 +598,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rm_0_min_3000_9ac03000() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -613,9 +617,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rm_1_poweroftwo_3000_9ac13000() 
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -633,9 +636,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rm_30_poweroftwominusone_3000_9a
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -653,9 +655,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rm_31_max_3000_9adf3000() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -673,9 +674,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rn_0_min_3000_9ac03000() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -693,9 +693,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rn_1_poweroftwo_3000_9ac03020() 
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -713,9 +712,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rn_30_poweroftwominusone_3000_9a
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -733,9 +731,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rn_31_max_3000_9ac033e0() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -753,9 +750,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rd_0_min_3000_9ac03000() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -773,9 +769,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rd_1_poweroftwo_3000_9ac03001() 
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -793,9 +788,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rd_30_poweroftwominusone_3000_9a
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -813,9 +807,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rd_31_max_3000_9ac0301f() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -833,9 +826,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_0_3000_9ac03000() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -853,9 +845,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_1_3000_9ac13000() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -873,9 +864,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_2_3000_9ade3000() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -893,9 +883,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_3_3000_9adf3000() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -913,9 +902,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_4_3000_9ac03000() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -933,9 +921,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_5_3000_9ac03020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -953,9 +940,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_6_3000_9ac033c0() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -973,9 +959,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_7_3000_9ac033e0() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -993,9 +978,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_8_3000_9ac03000() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -1013,9 +997,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_9_3000_9ac03001() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -1033,9 +1016,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_10_3000_9ac0301e() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -1053,9 +1035,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_11_3000_9ac0301f() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -1073,9 +1054,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_12_3000_9ac13020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -1093,9 +1073,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_13_3000_9adf33e0() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -1113,9 +1092,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_14_3000_9ac13001() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -1133,9 +1111,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_15_3000_9adf301f() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -1153,9 +1130,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_16_3000_9ac03021() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -1173,9 +1149,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_17_3000_9ac033ff() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -1194,9 +1169,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_special_rn_31_stack_pointer_sp_may_req
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -1215,9 +1189,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_special_rd_31_zero_register_xzr_wzr_re
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -1396,11 +1369,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_z_0_min_800_dac10800() {
     let encoding: u32 = 0xDAC10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1436,11 +1410,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rn_0_min_800_dac10800() {
     let encoding: u32 = 0xDAC10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1456,11 +1431,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rn_1_poweroftwo_800_dac10820() {
     let encoding: u32 = 0xDAC10820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x0, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1476,11 +1452,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rn_30_poweroftwominusone_800_dac
     let encoding: u32 = 0xDAC10BC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x0, x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1496,11 +1473,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rn_31_max_800_dac10be0() {
     let encoding: u32 = 0xDAC10BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1516,11 +1494,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rd_0_min_800_dac10800() {
     let encoding: u32 = 0xDAC10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1536,11 +1515,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rd_1_poweroftwo_800_dac10801() {
     let encoding: u32 = 0xDAC10801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x1, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1556,11 +1536,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rd_30_poweroftwominusone_800_dac
     let encoding: u32 = 0xDAC1081E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x30, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1576,11 +1557,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rd_31_max_800_dac1081f() {
     let encoding: u32 = 0xDAC1081F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1596,11 +1578,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_0_800_dac10800() {
     let encoding: u32 = 0xDAC10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1636,11 +1619,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_2_800_dac10800() {
     let encoding: u32 = 0xDAC10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1656,11 +1640,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_3_800_dac10820() {
     let encoding: u32 = 0xDAC10820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x0, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1676,11 +1661,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_4_800_dac10bc0() {
     let encoding: u32 = 0xDAC10BC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x0, x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1696,11 +1682,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_5_800_dac10be0() {
     let encoding: u32 = 0xDAC10BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1716,11 +1703,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_6_800_dac10800() {
     let encoding: u32 = 0xDAC10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1736,11 +1724,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_7_800_dac10801() {
     let encoding: u32 = 0xDAC10801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x1, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1756,11 +1745,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_8_800_dac1081e() {
     let encoding: u32 = 0xDAC1081E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x30, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1776,11 +1766,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_9_800_dac1081f() {
     let encoding: u32 = 0xDAC1081F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1796,11 +1787,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_10_800_dac10821() {
     let encoding: u32 = 0xDAC10821;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x1, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1816,11 +1808,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_11_800_dac10bff() {
     let encoding: u32 = 0xDAC10BFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	xzr, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1837,11 +1830,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_special_rn_31_stack_pointer_sp_may_req
     let encoding: u32 = 0xDAC10BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1858,11 +1852,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     let encoding: u32 = 0xDAC1081F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacda	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1943,11 +1938,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_z_0_min_1400_dac11400() {
     let encoding: u32 = 0xDAC11400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1983,11 +1979,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rn_0_min_1400_dac11400() {
     let encoding: u32 = 0xDAC11400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2003,11 +2000,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rn_1_poweroftwo_1400_dac11420() 
     let encoding: u32 = 0xDAC11420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x0, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2023,11 +2021,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rn_30_poweroftwominusone_1400_da
     let encoding: u32 = 0xDAC117C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x0, x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2043,11 +2042,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rn_31_max_1400_dac117e0() {
     let encoding: u32 = 0xDAC117E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2063,11 +2063,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rd_0_min_1400_dac11400() {
     let encoding: u32 = 0xDAC11400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2083,11 +2084,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rd_1_poweroftwo_1400_dac11401() 
     let encoding: u32 = 0xDAC11401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x1, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2103,11 +2105,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rd_30_poweroftwominusone_1400_da
     let encoding: u32 = 0xDAC1141E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x30, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2123,11 +2126,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rd_31_max_1400_dac1141f() {
     let encoding: u32 = 0xDAC1141F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2143,11 +2147,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_0_1400_dac11400() {
     let encoding: u32 = 0xDAC11400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2183,11 +2188,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_2_1400_dac11400() {
     let encoding: u32 = 0xDAC11400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2203,11 +2209,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_3_1400_dac11420() {
     let encoding: u32 = 0xDAC11420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x0, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2223,11 +2230,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_4_1400_dac117c0() {
     let encoding: u32 = 0xDAC117C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x0, x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2243,11 +2251,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_5_1400_dac117e0() {
     let encoding: u32 = 0xDAC117E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2263,11 +2272,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_6_1400_dac11400() {
     let encoding: u32 = 0xDAC11400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2283,11 +2293,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_7_1400_dac11401() {
     let encoding: u32 = 0xDAC11401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x1, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2303,11 +2314,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_8_1400_dac1141e() {
     let encoding: u32 = 0xDAC1141E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x30, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2323,11 +2335,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_9_1400_dac1141f() {
     let encoding: u32 = 0xDAC1141F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2343,11 +2356,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_10_1400_dac11421() {
     let encoding: u32 = 0xDAC11421;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x1, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2363,11 +2377,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_11_1400_dac117ff() {
     let encoding: u32 = 0xDAC117FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	xzr, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2384,11 +2399,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_special_rn_31_stack_pointer_sp_may_req
     let encoding: u32 = 0xDAC117E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2405,11 +2421,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     let encoding: u32 = 0xDAC1141F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autib	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2425,11 +2442,12 @@ fn test_aarch64_integer_pac_autib_hint_field_crm_0_min_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2445,11 +2463,12 @@ fn test_aarch64_integer_pac_autib_hint_field_crm_1_poweroftwo_201f_d503211f() {
     let encoding: u32 = 0xD503211F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia1716
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2465,11 +2484,12 @@ fn test_aarch64_integer_pac_autib_hint_field_crm_7_poweroftwominusone_201f_d5032
     let encoding: u32 = 0xD503271F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#56
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2485,11 +2505,12 @@ fn test_aarch64_integer_pac_autib_hint_field_crm_15_max_201f_d5032f1f() {
     let encoding: u32 = 0xD5032F1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#120
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2505,11 +2526,12 @@ fn test_aarch64_integer_pac_autib_hint_field_op2_0_min_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2525,11 +2547,12 @@ fn test_aarch64_integer_pac_autib_hint_field_op2_1_poweroftwo_201f_d503203f() {
     let encoding: u32 = 0xD503203F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: yield
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2545,11 +2568,12 @@ fn test_aarch64_integer_pac_autib_hint_field_op2_7_max_201f_d50320ff() {
     let encoding: u32 = 0xD50320FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: xpaclri
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2565,11 +2589,12 @@ fn test_aarch64_integer_pac_autib_hint_combo_0_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2585,11 +2610,12 @@ fn test_aarch64_integer_pac_autib_hint_combo_1_201f_d503211f() {
     let encoding: u32 = 0xD503211F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia1716
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2605,11 +2631,12 @@ fn test_aarch64_integer_pac_autib_hint_combo_2_201f_d503271f() {
     let encoding: u32 = 0xD503271F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#56
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2625,11 +2652,12 @@ fn test_aarch64_integer_pac_autib_hint_combo_3_201f_d5032f1f() {
     let encoding: u32 = 0xD5032F1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#120
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2645,11 +2673,12 @@ fn test_aarch64_integer_pac_autib_hint_combo_4_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2665,11 +2694,12 @@ fn test_aarch64_integer_pac_autib_hint_combo_5_201f_d503203f() {
     let encoding: u32 = 0xD503203F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: yield
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2685,11 +2715,12 @@ fn test_aarch64_integer_pac_autib_hint_combo_6_201f_d50320ff() {
     let encoding: u32 = 0xD50320FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: xpaclri
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2800,11 +2831,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_z_0_min_c00_dac10c00() {
     let encoding: u32 = 0xDAC10C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2840,11 +2872,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rn_0_min_c00_dac10c00() {
     let encoding: u32 = 0xDAC10C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2860,11 +2893,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rn_1_poweroftwo_c00_dac10c20() {
     let encoding: u32 = 0xDAC10C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x0, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2880,11 +2914,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rn_30_poweroftwominusone_c00_dac
     let encoding: u32 = 0xDAC10FC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x0, x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2900,11 +2935,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rn_31_max_c00_dac10fe0() {
     let encoding: u32 = 0xDAC10FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2920,11 +2956,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_0_min_c00_dac10c00() {
     let encoding: u32 = 0xDAC10C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2940,11 +2977,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_1_poweroftwo_c00_dac10c01() {
     let encoding: u32 = 0xDAC10C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x1, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2960,11 +2998,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_30_poweroftwominusone_c00_dac
     let encoding: u32 = 0xDAC10C1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x30, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2980,11 +3019,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_31_max_c00_dac10c1f() {
     let encoding: u32 = 0xDAC10C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3000,11 +3040,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_0_c00_dac10c00() {
     let encoding: u32 = 0xDAC10C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3040,11 +3081,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_2_c00_dac10c00() {
     let encoding: u32 = 0xDAC10C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3060,11 +3102,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_3_c00_dac10c20() {
     let encoding: u32 = 0xDAC10C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x0, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3080,11 +3123,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_4_c00_dac10fc0() {
     let encoding: u32 = 0xDAC10FC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x0, x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3100,11 +3144,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_5_c00_dac10fe0() {
     let encoding: u32 = 0xDAC10FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3120,11 +3165,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_6_c00_dac10c00() {
     let encoding: u32 = 0xDAC10C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3140,11 +3186,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_7_c00_dac10c01() {
     let encoding: u32 = 0xDAC10C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x1, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3160,11 +3207,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_8_c00_dac10c1e() {
     let encoding: u32 = 0xDAC10C1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x30, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3180,11 +3228,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_9_c00_dac10c1f() {
     let encoding: u32 = 0xDAC10C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3200,11 +3249,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_10_c00_dac10c21() {
     let encoding: u32 = 0xDAC10C21;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x1, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3220,11 +3270,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_11_c00_dac10fff() {
     let encoding: u32 = 0xDAC10FFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	xzr, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3241,11 +3292,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_special_rn_31_stack_pointer_sp_may_req
     let encoding: u32 = 0xDAC10FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3262,11 +3314,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     let encoding: u32 = 0xDAC10C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacdb	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3347,11 +3400,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_z_0_min_1000_dac11000() {
     let encoding: u32 = 0xDAC11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3387,11 +3441,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rn_0_min_1000_dac11000() {
     let encoding: u32 = 0xDAC11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3407,11 +3462,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rn_1_poweroftwo_1000_dac11020() 
     let encoding: u32 = 0xDAC11020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x0, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3427,11 +3483,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rn_30_poweroftwominusone_1000_da
     let encoding: u32 = 0xDAC113C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x0, x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3447,11 +3504,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rn_31_max_1000_dac113e0() {
     let encoding: u32 = 0xDAC113E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3467,11 +3525,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rd_0_min_1000_dac11000() {
     let encoding: u32 = 0xDAC11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3487,11 +3546,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rd_1_poweroftwo_1000_dac11001() 
     let encoding: u32 = 0xDAC11001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x1, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3507,11 +3567,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rd_30_poweroftwominusone_1000_da
     let encoding: u32 = 0xDAC1101E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x30, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3527,11 +3588,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rd_31_max_1000_dac1101f() {
     let encoding: u32 = 0xDAC1101F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3547,11 +3609,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_0_1000_dac11000() {
     let encoding: u32 = 0xDAC11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3587,11 +3650,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_2_1000_dac11000() {
     let encoding: u32 = 0xDAC11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3607,11 +3671,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_3_1000_dac11020() {
     let encoding: u32 = 0xDAC11020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x0, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3627,11 +3692,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_4_1000_dac113c0() {
     let encoding: u32 = 0xDAC113C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x0, x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3647,11 +3713,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_5_1000_dac113e0() {
     let encoding: u32 = 0xDAC113E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3667,11 +3734,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_6_1000_dac11000() {
     let encoding: u32 = 0xDAC11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3687,11 +3755,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_7_1000_dac11001() {
     let encoding: u32 = 0xDAC11001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x1, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3707,11 +3776,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_8_1000_dac1101e() {
     let encoding: u32 = 0xDAC1101E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x30, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3727,11 +3797,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_9_1000_dac1101f() {
     let encoding: u32 = 0xDAC1101F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3747,11 +3818,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_10_1000_dac11021() {
     let encoding: u32 = 0xDAC11021;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x1, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3767,11 +3839,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_11_1000_dac113ff() {
     let encoding: u32 = 0xDAC113FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	xzr, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3788,11 +3861,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_special_rn_31_stack_pointer_sp_may_req
     let encoding: u32 = 0xDAC113E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3809,11 +3883,12 @@ fn test_aarch64_integer_pac_autia_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     let encoding: u32 = 0xDAC1101F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: autia	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3829,11 +3904,12 @@ fn test_aarch64_integer_pac_autia_hint_field_crm_0_min_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3849,11 +3925,12 @@ fn test_aarch64_integer_pac_autia_hint_field_crm_1_poweroftwo_201f_d503211f() {
     let encoding: u32 = 0xD503211F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia1716
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3869,11 +3946,12 @@ fn test_aarch64_integer_pac_autia_hint_field_crm_7_poweroftwominusone_201f_d5032
     let encoding: u32 = 0xD503271F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#56
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3889,11 +3967,12 @@ fn test_aarch64_integer_pac_autia_hint_field_crm_15_max_201f_d5032f1f() {
     let encoding: u32 = 0xD5032F1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#120
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3909,11 +3988,12 @@ fn test_aarch64_integer_pac_autia_hint_field_op2_0_min_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3929,11 +4009,12 @@ fn test_aarch64_integer_pac_autia_hint_field_op2_1_poweroftwo_201f_d503203f() {
     let encoding: u32 = 0xD503203F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: yield
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3949,11 +4030,12 @@ fn test_aarch64_integer_pac_autia_hint_field_op2_7_max_201f_d50320ff() {
     let encoding: u32 = 0xD50320FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: xpaclri
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3969,11 +4051,12 @@ fn test_aarch64_integer_pac_autia_hint_combo_0_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3989,11 +4072,12 @@ fn test_aarch64_integer_pac_autia_hint_combo_1_201f_d503211f() {
     let encoding: u32 = 0xD503211F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia1716
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4009,11 +4093,12 @@ fn test_aarch64_integer_pac_autia_hint_combo_2_201f_d503271f() {
     let encoding: u32 = 0xD503271F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#56
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4029,11 +4114,12 @@ fn test_aarch64_integer_pac_autia_hint_combo_3_201f_d5032f1f() {
     let encoding: u32 = 0xD5032F1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#120
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4049,11 +4135,12 @@ fn test_aarch64_integer_pac_autia_hint_combo_4_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4069,11 +4156,12 @@ fn test_aarch64_integer_pac_autia_hint_combo_5_201f_d503203f() {
     let encoding: u32 = 0xD503203F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: yield
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4089,11 +4177,12 @@ fn test_aarch64_integer_pac_autia_hint_combo_6_201f_d50320ff() {
     let encoding: u32 = 0xD50320FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: xpaclri
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4206,9 +4295,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_z_0_min_1c00_dac11c00() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4246,9 +4334,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rn_0_min_1c00_dac11c00() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4266,9 +4353,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rn_1_poweroftwo_1c00_dac11c20() 
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4286,9 +4372,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rn_30_poweroftwominusone_1c00_da
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4306,9 +4391,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rn_31_max_1c00_dac11fe0() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4326,9 +4410,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_0_min_1c00_dac11c00() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4346,9 +4429,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_1_poweroftwo_1c00_dac11c01() 
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4366,9 +4448,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_30_poweroftwominusone_1c00_da
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4386,9 +4467,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_31_max_1c00_dac11c1f() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4406,9 +4486,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_0_1c00_dac11c00() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4446,9 +4525,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_2_1c00_dac11c00() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4466,9 +4544,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_3_1c00_dac11c20() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4486,9 +4563,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_4_1c00_dac11fc0() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4506,9 +4582,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_5_1c00_dac11fe0() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4526,9 +4601,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_6_1c00_dac11c00() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4546,9 +4620,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_7_1c00_dac11c01() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4566,9 +4639,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_8_1c00_dac11c1e() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4586,9 +4658,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_9_1c00_dac11c1f() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4606,9 +4677,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_10_1c00_dac11c21() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4626,9 +4696,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_11_1c00_dac11fff() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4647,9 +4716,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_special_rn_31_stack_pointer_sp_may_req
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4668,9 +4736,8 @@ fn test_aarch64_integer_pac_autdb_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -4751,11 +4818,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_z_0_min_0_dac10000() {
     let encoding: u32 = 0xDAC10000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4791,11 +4859,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_0_min_0_dac10000() {
     let encoding: u32 = 0xDAC10000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4811,11 +4880,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_1_poweroftwo_0_dac10020() {
     let encoding: u32 = 0xDAC10020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x0, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4831,11 +4901,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_30_poweroftwominusone_0_dac10
     let encoding: u32 = 0xDAC103C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x0, x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4851,11 +4922,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_31_max_0_dac103e0() {
     let encoding: u32 = 0xDAC103E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4871,11 +4943,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_0_min_0_dac10000() {
     let encoding: u32 = 0xDAC10000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4891,11 +4964,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_1_poweroftwo_0_dac10001() {
     let encoding: u32 = 0xDAC10001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x1, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4911,11 +4985,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_30_poweroftwominusone_0_dac10
     let encoding: u32 = 0xDAC1001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x30, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4931,11 +5006,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_31_max_0_dac1001f() {
     let encoding: u32 = 0xDAC1001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4951,11 +5027,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_0_0_dac10000() {
     let encoding: u32 = 0xDAC10000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4991,11 +5068,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_2_0_dac10000() {
     let encoding: u32 = 0xDAC10000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5011,11 +5089,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_3_0_dac10020() {
     let encoding: u32 = 0xDAC10020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x0, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5031,11 +5110,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_4_0_dac103c0() {
     let encoding: u32 = 0xDAC103C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x0, x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5051,11 +5131,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_5_0_dac103e0() {
     let encoding: u32 = 0xDAC103E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5071,11 +5152,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_6_0_dac10000() {
     let encoding: u32 = 0xDAC10000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5091,11 +5173,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_7_0_dac10001() {
     let encoding: u32 = 0xDAC10001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x1, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5111,11 +5194,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_8_0_dac1001e() {
     let encoding: u32 = 0xDAC1001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x30, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5131,11 +5215,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_9_0_dac1001f() {
     let encoding: u32 = 0xDAC1001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5151,11 +5236,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_10_0_dac10021() {
     let encoding: u32 = 0xDAC10021;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x1, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5171,11 +5257,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_11_0_dac103ff() {
     let encoding: u32 = 0xDAC103FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	xzr, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5192,11 +5279,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_special_rn_31_stack_pointer_sp_may_req
     let encoding: u32 = 0xDAC103E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5213,11 +5301,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     let encoding: u32 = 0xDAC1001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5233,11 +5322,12 @@ fn test_aarch64_integer_pac_pacia_hint_field_crm_0_min_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5253,11 +5343,12 @@ fn test_aarch64_integer_pac_pacia_hint_field_crm_1_poweroftwo_201f_d503211f() {
     let encoding: u32 = 0xD503211F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia1716
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5273,11 +5364,12 @@ fn test_aarch64_integer_pac_pacia_hint_field_crm_7_poweroftwominusone_201f_d5032
     let encoding: u32 = 0xD503271F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#56
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5293,11 +5385,12 @@ fn test_aarch64_integer_pac_pacia_hint_field_crm_15_max_201f_d5032f1f() {
     let encoding: u32 = 0xD5032F1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#120
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5313,11 +5406,12 @@ fn test_aarch64_integer_pac_pacia_hint_field_op2_0_min_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5333,11 +5427,12 @@ fn test_aarch64_integer_pac_pacia_hint_field_op2_1_poweroftwo_201f_d503203f() {
     let encoding: u32 = 0xD503203F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: yield
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5353,11 +5448,12 @@ fn test_aarch64_integer_pac_pacia_hint_field_op2_7_max_201f_d50320ff() {
     let encoding: u32 = 0xD50320FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: xpaclri
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5373,11 +5469,12 @@ fn test_aarch64_integer_pac_pacia_hint_combo_0_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5393,11 +5490,12 @@ fn test_aarch64_integer_pac_pacia_hint_combo_1_201f_d503211f() {
     let encoding: u32 = 0xD503211F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia1716
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5413,11 +5511,12 @@ fn test_aarch64_integer_pac_pacia_hint_combo_2_201f_d503271f() {
     let encoding: u32 = 0xD503271F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#56
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5433,11 +5532,12 @@ fn test_aarch64_integer_pac_pacia_hint_combo_3_201f_d5032f1f() {
     let encoding: u32 = 0xD5032F1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#120
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5453,11 +5553,12 @@ fn test_aarch64_integer_pac_pacia_hint_combo_4_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5473,11 +5574,12 @@ fn test_aarch64_integer_pac_pacia_hint_combo_5_201f_d503203f() {
     let encoding: u32 = 0xD503203F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: yield
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5493,11 +5595,12 @@ fn test_aarch64_integer_pac_pacia_hint_combo_6_201f_d50320ff() {
     let encoding: u32 = 0xD50320FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: xpaclri
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5610,9 +5713,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_z_0_min_1800_dac11800() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5650,9 +5752,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rn_0_min_1800_dac11800() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5670,9 +5771,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rn_1_poweroftwo_1800_dac11820() 
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5690,9 +5790,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rn_30_poweroftwominusone_1800_da
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5710,9 +5809,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rn_31_max_1800_dac11be0() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5730,9 +5828,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rd_0_min_1800_dac11800() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5750,9 +5847,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rd_1_poweroftwo_1800_dac11801() 
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5770,9 +5866,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rd_30_poweroftwominusone_1800_da
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5790,9 +5885,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rd_31_max_1800_dac1181f() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5810,9 +5904,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_0_1800_dac11800() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5850,9 +5943,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_2_1800_dac11800() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5870,9 +5962,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_3_1800_dac11820() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5890,9 +5981,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_4_1800_dac11bc0() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5910,9 +6000,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_5_1800_dac11be0() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5930,9 +6019,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_6_1800_dac11800() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5950,9 +6038,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_7_1800_dac11801() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5970,9 +6057,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_8_1800_dac1181e() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -5990,9 +6076,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_9_1800_dac1181f() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -6010,9 +6095,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_10_1800_dac11821() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -6030,9 +6114,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_11_1800_dac11bff() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -6051,9 +6134,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_special_rn_31_stack_pointer_sp_may_req
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -6072,9 +6154,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -6155,11 +6236,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_z_0_min_400_dac10400() {
     let encoding: u32 = 0xDAC10400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6195,11 +6277,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_0_min_400_dac10400() {
     let encoding: u32 = 0xDAC10400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6215,11 +6298,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_1_poweroftwo_400_dac10420() {
     let encoding: u32 = 0xDAC10420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x0, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6235,11 +6319,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_30_poweroftwominusone_400_dac
     let encoding: u32 = 0xDAC107C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x0, x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6255,11 +6340,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_31_max_400_dac107e0() {
     let encoding: u32 = 0xDAC107E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6275,11 +6361,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rd_0_min_400_dac10400() {
     let encoding: u32 = 0xDAC10400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6295,11 +6382,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rd_1_poweroftwo_400_dac10401() {
     let encoding: u32 = 0xDAC10401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x1, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6315,11 +6403,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rd_30_poweroftwominusone_400_dac
     let encoding: u32 = 0xDAC1041E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x30, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6335,11 +6424,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rd_31_max_400_dac1041f() {
     let encoding: u32 = 0xDAC1041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6355,11 +6445,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_0_400_dac10400() {
     let encoding: u32 = 0xDAC10400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6395,11 +6486,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_2_400_dac10400() {
     let encoding: u32 = 0xDAC10400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6415,11 +6507,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_3_400_dac10420() {
     let encoding: u32 = 0xDAC10420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x0, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6435,11 +6528,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_4_400_dac107c0() {
     let encoding: u32 = 0xDAC107C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x0, x30
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6455,11 +6549,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_5_400_dac107e0() {
     let encoding: u32 = 0xDAC107E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6475,11 +6570,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_6_400_dac10400() {
     let encoding: u32 = 0xDAC10400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x0, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6495,11 +6591,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_7_400_dac10401() {
     let encoding: u32 = 0xDAC10401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x1, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6515,11 +6612,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_8_400_dac1041e() {
     let encoding: u32 = 0xDAC1041E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x30, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6535,11 +6633,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_9_400_dac1041f() {
     let encoding: u32 = 0xDAC1041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6555,11 +6654,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_10_400_dac10421() {
     let encoding: u32 = 0xDAC10421;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x1, x1
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6575,11 +6675,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_11_400_dac107ff() {
     let encoding: u32 = 0xDAC107FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	xzr, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6596,11 +6697,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_special_rn_31_stack_pointer_sp_may_req
     let encoding: u32 = 0xDAC107E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	x0, sp
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6617,11 +6719,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     let encoding: u32 = 0xDAC1041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacib	xzr, x0
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6637,11 +6740,12 @@ fn test_aarch64_integer_pac_pacib_hint_field_crm_0_min_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6657,11 +6761,12 @@ fn test_aarch64_integer_pac_pacib_hint_field_crm_1_poweroftwo_201f_d503211f() {
     let encoding: u32 = 0xD503211F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia1716
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6677,11 +6782,12 @@ fn test_aarch64_integer_pac_pacib_hint_field_crm_7_poweroftwominusone_201f_d5032
     let encoding: u32 = 0xD503271F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#56
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6697,11 +6803,12 @@ fn test_aarch64_integer_pac_pacib_hint_field_crm_15_max_201f_d5032f1f() {
     let encoding: u32 = 0xD5032F1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#120
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6717,11 +6824,12 @@ fn test_aarch64_integer_pac_pacib_hint_field_op2_0_min_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6737,11 +6845,12 @@ fn test_aarch64_integer_pac_pacib_hint_field_op2_1_poweroftwo_201f_d503203f() {
     let encoding: u32 = 0xD503203F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: yield
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6757,11 +6866,12 @@ fn test_aarch64_integer_pac_pacib_hint_field_op2_7_max_201f_d50320ff() {
     let encoding: u32 = 0xD50320FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: xpaclri
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6777,11 +6887,12 @@ fn test_aarch64_integer_pac_pacib_hint_combo_0_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6797,11 +6908,12 @@ fn test_aarch64_integer_pac_pacib_hint_combo_1_201f_d503211f() {
     let encoding: u32 = 0xD503211F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: pacia1716
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6817,11 +6929,12 @@ fn test_aarch64_integer_pac_pacib_hint_combo_2_201f_d503271f() {
     let encoding: u32 = 0xD503271F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#56
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6837,11 +6950,12 @@ fn test_aarch64_integer_pac_pacib_hint_combo_3_201f_d5032f1f() {
     let encoding: u32 = 0xD5032F1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: hint	#120
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6857,11 +6971,12 @@ fn test_aarch64_integer_pac_pacib_hint_combo_4_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: nop
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6877,11 +6992,12 @@ fn test_aarch64_integer_pac_pacib_hint_combo_5_201f_d503203f() {
     let encoding: u32 = 0xD503203F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: yield
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6897,11 +7013,12 @@ fn test_aarch64_integer_pac_pacib_hint_combo_6_201f_d50320ff() {
     let encoding: u32 = 0xD50320FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
+    // llvm-mc: xpaclri
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 

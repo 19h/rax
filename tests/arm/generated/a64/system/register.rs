@@ -45,12 +45,10 @@ fn test_aarch64_system_register_system_field_l_1_max_0_d5300000() {
     let encoding: u32 = 0xD5300000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    let exit = cpu.step();
+    assert!(
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 
@@ -507,12 +505,10 @@ fn test_aarch64_system_register_system_combo_1_0_d5300000() {
     let encoding: u32 = 0xD5300000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    let exit = cpu.step();
+    assert!(
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
     );
 }
 

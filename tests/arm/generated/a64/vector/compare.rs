@@ -1019,12 +1019,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_int_bulk_simd_field_size_3_max_8800_
     let encoding: u32 = 0x0EE08800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1399,12 +1399,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_int_bulk_simd_combo_7_8800_0ee08800(
     let encoding: u32 = 0x0EE08800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -1783,12 +1783,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_int_bulk_simd_special_size_3_size_va
     let encoding: u32 = 0x0EE08800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2007,12 +2007,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_sisd_field_e_1_max_240
     let encoding: u32 = 0x5EC02400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2135,12 +2135,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_sisd_field_ac_1_max_24
     let encoding: u32 = 0x5E402C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2391,12 +2391,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_sisd_combo_3_2400_5ec0
     let encoding: u32 = 0x5EC02400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2517,12 +2517,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_sisd_combo_9_2400_5e40
     let encoding: u32 = 0x5E402C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -2939,12 +2939,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_sisd_field_e_1_max_e400_
     let encoding: u32 = 0x5EA0E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3108,12 +3108,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_sisd_field_ac_1_max_e400
     let encoding: u32 = 0x5E20EC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3362,12 +3362,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_sisd_combo_3_e400_5ea0e4
     let encoding: u32 = 0x5EA0E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -3530,12 +3530,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_sisd_combo_11_e400_5e20e
     let encoding: u32 = 0x5E20EC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4038,12 +4038,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_simd_field_e_1_max_240
     let encoding: u32 = 0x0EC02400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4166,12 +4166,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_simd_field_ac_1_max_24
     let encoding: u32 = 0x0E402C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4464,12 +4464,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_simd_combo_5_2400_0ec0
     let encoding: u32 = 0x0EC02400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -4590,12 +4590,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_simd_combo_11_2400_0e4
     let encoding: u32 = 0x0E402C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5098,12 +5098,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_field_e_1_max_e400_
     let encoding: u32 = 0x0EA0E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5140,12 +5140,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_field_sz_1_max_e400
     let encoding: u32 = 0x0E60E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5563,12 +5563,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_combo_5_e400_0ea0e4
     let encoding: u32 = 0x0EA0E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -5605,12 +5605,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_combo_7_e400_0e60e4
     let encoding: u32 = 0x0E60E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6047,12 +6047,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_special_q_0_size_va
     let encoding: u32 = 0x0E60E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6113,12 +6113,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_special_sz_1_size_v
     let encoding: u32 = 0x0E60E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6135,12 +6135,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_special_rn_31_stack
     let encoding: u32 = 0x0E60E7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6157,12 +6157,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_special_rd_31_zero_
     let encoding: u32 = 0x0E60E41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6366,12 +6366,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_u_0_min_3400
     let encoding: u32 = 0x5E203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6387,12 +6387,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_u_1_max_3400
     let encoding: u32 = 0x7E203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6408,12 +6408,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_size_0_min_3
     let encoding: u32 = 0x5E203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6430,12 +6430,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_size_1_power
     let encoding: u32 = 0x5E603400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6452,12 +6452,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_size_2_power
     let encoding: u32 = 0x5EA03400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6494,12 +6494,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rm_0_min_340
     let encoding: u32 = 0x5E203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6516,12 +6516,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rm_1_powerof
     let encoding: u32 = 0x5E213400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6538,12 +6538,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rm_30_powero
     let encoding: u32 = 0x5E3E3400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6559,12 +6559,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rm_31_max_34
     let encoding: u32 = 0x5E3F3400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6580,12 +6580,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_eq_0_min_340
     let encoding: u32 = 0x5E203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6601,12 +6601,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_eq_1_max_340
     let encoding: u32 = 0x5E203C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6622,12 +6622,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rn_0_min_340
     let encoding: u32 = 0x5E203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6644,12 +6644,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rn_1_powerof
     let encoding: u32 = 0x5E203420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6666,12 +6666,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rn_30_powero
     let encoding: u32 = 0x5E2037C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6687,12 +6687,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rn_31_max_34
     let encoding: u32 = 0x5E2037E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6708,12 +6708,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rd_0_min_340
     let encoding: u32 = 0x5E203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6730,12 +6730,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rd_1_powerof
     let encoding: u32 = 0x5E203401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6752,12 +6752,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rd_30_powero
     let encoding: u32 = 0x5E20341E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6773,12 +6773,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rd_31_max_34
     let encoding: u32 = 0x5E20341F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6794,12 +6794,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_0_3400_5e203
     let encoding: u32 = 0x5E203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6815,12 +6815,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_1_3400_7e203
     let encoding: u32 = 0x7E203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6836,12 +6836,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_2_3400_5e203
     let encoding: u32 = 0x5E203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6857,12 +6857,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_3_3400_5e603
     let encoding: u32 = 0x5E603400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6878,12 +6878,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_4_3400_5ea03
     let encoding: u32 = 0x5EA03400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6920,12 +6920,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_6_3400_5e203
     let encoding: u32 = 0x5E203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6941,12 +6941,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_7_3400_5e213
     let encoding: u32 = 0x5E213400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6962,12 +6962,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_8_3400_5e3e3
     let encoding: u32 = 0x5E3E3400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -6983,12 +6983,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_9_3400_5e3f3
     let encoding: u32 = 0x5E3F3400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7004,12 +7004,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_10_3400_5e20
     let encoding: u32 = 0x5E203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7025,12 +7025,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_11_3400_5e20
     let encoding: u32 = 0x5E203C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7046,12 +7046,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_12_3400_5e20
     let encoding: u32 = 0x5E203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7067,12 +7067,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_13_3400_5e20
     let encoding: u32 = 0x5E203420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7088,12 +7088,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_14_3400_5e20
     let encoding: u32 = 0x5E2037C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7109,12 +7109,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_15_3400_5e20
     let encoding: u32 = 0x5E2037E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7130,12 +7130,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_16_3400_5e20
     let encoding: u32 = 0x5E203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7151,12 +7151,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_17_3400_5e20
     let encoding: u32 = 0x5E203401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7172,12 +7172,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_18_3400_5e20
     let encoding: u32 = 0x5E20341E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7193,12 +7193,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_19_3400_5e20
     let encoding: u32 = 0x5E20341F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7214,12 +7214,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_20_3400_5e21
     let encoding: u32 = 0x5E213420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7235,12 +7235,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_21_3400_5e3f
     let encoding: u32 = 0x5E3F37E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7256,12 +7256,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_22_3400_5e21
     let encoding: u32 = 0x5E213401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7277,12 +7277,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_23_3400_5e3f
     let encoding: u32 = 0x5E3F341F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7298,12 +7298,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_24_3400_5e20
     let encoding: u32 = 0x5E203421;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7319,12 +7319,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_25_3400_5e20
     let encoding: u32 = 0x5E2037FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7341,12 +7341,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_special_size_0_siz
     let encoding: u32 = 0x5E203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7363,12 +7363,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_special_size_1_siz
     let encoding: u32 = 0x5E603400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7385,12 +7385,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_special_size_2_siz
     let encoding: u32 = 0x5EA03400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7429,12 +7429,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_special_rn_31_stac
     let encoding: u32 = 0x5E6037E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7451,12 +7451,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_special_rd_31_zero
     let encoding: u32 = 0x5E60341F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -7621,12 +7621,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_simd_field_size_3_max_3
     let encoding: u32 = 0x0EE03400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -8089,12 +8089,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_simd_combo_7_3400_0ee03
     let encoding: u32 = 0x0EE03400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -8641,12 +8641,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_simd_special_size_3_siz
     let encoding: u32 = 0x0EE03400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -8705,8 +8705,13 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_reg_write_0_5e2034
     let mut cpu = create_test_cpu();
     let encoding: u32 = 0x5E203400;
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd
@@ -8720,8 +8725,13 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_sp_rn_5e2037e0() {
     let mut cpu = create_test_cpu();
     let encoding: u32 = 0x5E2037E0;
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd
@@ -8735,9 +8745,13 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_zr_rd_5e20341f() {
     let mut cpu = create_test_cpu();
     let encoding: u32 = 0x5E20341F;
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_cmp_int_simd
@@ -10939,12 +10953,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_bulk_simd_field_sz_1_max_c800_
     let encoding: u32 = 0x0EE0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -11277,12 +11291,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_bulk_simd_combo_5_c800_0ee0c80
     let encoding: u32 = 0x0EE0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -11551,12 +11565,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_bulk_simd_special_q_0_size_var
     let encoding: u32 = 0x0EE0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -11617,12 +11631,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_bulk_simd_special_sz_1_size_va
     let encoding: u32 = 0x0EE0C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -11639,12 +11653,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_bulk_simd_special_rn_31_stack_
     let encoding: u32 = 0x0EE0CBE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -11661,12 +11675,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_bulk_simd_special_rd_31_zero_r
     let encoding: u32 = 0x0EE0C81F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -12661,12 +12675,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_int_lessthan_simd_field_size_3_max_a
     let encoding: u32 = 0x0EE0A800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -12959,12 +12973,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_int_lessthan_simd_combo_5_a800_0ee0a
     let encoding: u32 = 0x0EE0A800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -13301,12 +13315,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_int_lessthan_simd_special_size_3_siz
     let encoding: u32 = 0x0EE0A800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15059,12 +15073,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_lessthan_simd_field_sz_1_max_e
     let encoding: u32 = 0x0EE0E800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15315,12 +15329,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_lessthan_simd_combo_3_e800_0ee
     let encoding: u32 = 0x0EE0E800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15547,12 +15561,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_lessthan_simd_special_q_0_size
     let encoding: u32 = 0x0EE0E800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15613,12 +15627,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_lessthan_simd_special_sz_1_siz
     let encoding: u32 = 0x0EE0E800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15635,12 +15649,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_lessthan_simd_special_rn_31_st
     let encoding: u32 = 0x0EE0EBE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15657,12 +15671,12 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_lessthan_simd_special_rd_31_ze
     let encoding: u32 = 0x0EE0E81F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15866,12 +15880,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_u_0_min_
     let encoding: u32 = 0x5E208C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15887,12 +15901,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_u_1_max_
     let encoding: u32 = 0x7E208C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15908,12 +15922,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_size_0_m
     let encoding: u32 = 0x5E208C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15930,12 +15944,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_size_1_p
     let encoding: u32 = 0x5E608C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15952,12 +15966,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_size_2_p
     let encoding: u32 = 0x5EA08C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -15994,12 +16008,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rm_0_min
     let encoding: u32 = 0x5E208C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16016,12 +16030,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rm_1_pow
     let encoding: u32 = 0x5E218C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16038,12 +16052,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rm_30_po
     let encoding: u32 = 0x5E3E8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16059,12 +16073,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rm_31_ma
     let encoding: u32 = 0x5E3F8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16080,12 +16094,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rn_0_min
     let encoding: u32 = 0x5E208C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16102,12 +16116,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rn_1_pow
     let encoding: u32 = 0x5E208C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16124,12 +16138,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rn_30_po
     let encoding: u32 = 0x5E208FC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16145,12 +16159,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rn_31_ma
     let encoding: u32 = 0x5E208FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16166,12 +16180,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rd_0_min
     let encoding: u32 = 0x5E208C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16188,12 +16202,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rd_1_pow
     let encoding: u32 = 0x5E208C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16210,12 +16224,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rd_30_po
     let encoding: u32 = 0x5E208C1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16231,12 +16245,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rd_31_ma
     let encoding: u32 = 0x5E208C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16252,12 +16266,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_0_8c00_5
     let encoding: u32 = 0x5E208C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16273,12 +16287,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_1_8c00_7
     let encoding: u32 = 0x7E208C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16294,12 +16308,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_2_8c00_5
     let encoding: u32 = 0x5E208C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16315,12 +16329,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_3_8c00_5
     let encoding: u32 = 0x5E608C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16336,12 +16350,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_4_8c00_5
     let encoding: u32 = 0x5EA08C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16378,12 +16392,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_6_8c00_5
     let encoding: u32 = 0x5E208C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16399,12 +16413,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_7_8c00_5
     let encoding: u32 = 0x5E218C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16420,12 +16434,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_8_8c00_5
     let encoding: u32 = 0x5E3E8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16441,12 +16455,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_9_8c00_5
     let encoding: u32 = 0x5E3F8C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16462,12 +16476,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_10_8c00_
     let encoding: u32 = 0x5E208C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16483,12 +16497,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_11_8c00_
     let encoding: u32 = 0x5E208C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16504,12 +16518,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_12_8c00_
     let encoding: u32 = 0x5E208FC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16525,12 +16539,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_13_8c00_
     let encoding: u32 = 0x5E208FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16546,12 +16560,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_14_8c00_
     let encoding: u32 = 0x5E208C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16567,12 +16581,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_15_8c00_
     let encoding: u32 = 0x5E208C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16588,12 +16602,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_16_8c00_
     let encoding: u32 = 0x5E208C1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16609,12 +16623,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_17_8c00_
     let encoding: u32 = 0x5E208C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16630,12 +16644,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_18_8c00_
     let encoding: u32 = 0x5E218C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16651,12 +16665,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_19_8c00_
     let encoding: u32 = 0x5E3F8FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16672,12 +16686,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_20_8c00_
     let encoding: u32 = 0x5E218C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16693,12 +16707,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_21_8c00_
     let encoding: u32 = 0x5E3F8C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16714,12 +16728,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_22_8c00_
     let encoding: u32 = 0x5E208C21;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16735,12 +16749,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_23_8c00_
     let encoding: u32 = 0x5E208FFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16757,12 +16771,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_special_size_0
     let encoding: u32 = 0x5E208C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16779,12 +16793,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_special_size_1
     let encoding: u32 = 0x5E608C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16801,12 +16815,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_special_size_2
     let encoding: u32 = 0x5EA08C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16845,12 +16859,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_special_rn_31_
     let encoding: u32 = 0x5E608FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -16867,12 +16881,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_special_rd_31_
     let encoding: u32 = 0x5E608C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17037,12 +17051,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_simd_field_size_3_m
     let encoding: u32 = 0x0EE08C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17463,12 +17477,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_simd_combo_7_8c00_0
     let encoding: u32 = 0x0EE08C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -17973,12 +17987,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_simd_special_size_3
     let encoding: u32 = 0x0EE08C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
     );
 }
 
@@ -18037,8 +18051,13 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_reg_write_0_5e
     let mut cpu = create_test_cpu();
     let encoding: u32 = 0x5E208C00;
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd
@@ -18052,8 +18071,13 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_sp_rn_5e208fe0
     let mut cpu = create_test_cpu();
     let encoding: u32 = 0x5E208FE0;
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd
@@ -18067,9 +18091,13 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_zr_rd_5e208c1f
     let mut cpu = create_test_cpu();
     let encoding: u32 = 0x5E208C1F;
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
+    // llvm-mc: -
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_simd
