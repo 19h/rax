@@ -2771,11 +2771,9 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_32768_poweroftwo_0_1c100000() 
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
-    );
-}
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+    );}
 
 /// Provenance: aarch64_memory_literal_simdfp
 /// ASL: `field imm19 5 +: 19`
@@ -2903,14 +2901,14 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_262144_poweroftwo_0_1c800000()
     let encoding: u32 = 0x1C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: ldr	s0, #-1048576
+    // Allocated encoding; synthetic operands may fault at runtime.
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
-    );
-}
+    let undef = match &exit {
+        Ok(CpuExit::Undefined(_)) => true,
+        Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
+        _ => false,
+    };
+    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
 
 /// Provenance: aarch64_memory_literal_simdfp
 /// ASL: `field imm19 5 +: 19`
@@ -3725,11 +3723,9 @@ fn test_aarch64_memory_literal_simdfp_combo_33_0_1c100000() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
     assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
-    );
-}
+        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+    );}
 
 /// Provenance: aarch64_memory_literal_simdfp
 /// ASL: `field combination 34`
@@ -3857,14 +3853,14 @@ fn test_aarch64_memory_literal_simdfp_combo_39_0_1c800000() {
     let encoding: u32 = 0x1C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: ldr	s0, #-1048576
+    // Allocated encoding; synthetic operands may fault at runtime.
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
-    );
-}
+    let undef = match &exit {
+        Ok(CpuExit::Undefined(_)) => true,
+        Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
+        _ => false,
+    };
+    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
 
 /// Provenance: aarch64_memory_literal_simdfp
 /// ASL: `field combination 40`

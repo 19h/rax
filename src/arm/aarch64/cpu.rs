@@ -933,9 +933,10 @@ impl AArch64Cpu {
         }
 
         // Unallocated registers in the ID/cache-info space (op0=3, crn=0:
-        // ID_*, AIDR, CCSIDR, ...) are RAZ by architecture; a booting kernel
+        // ID_*, AIDR, CCSIDR, ...) and the debug ID space (op0=2, crn=0:
+        // MDCCSR, DBGDTR, ...) are RAZ by architecture; a booting kernel
         // reads the whole block.
-        if encoding.op0 == 3 && encoding.crn == 0 {
+        if (encoding.op0 == 3 || encoding.op0 == 2) && encoding.crn == 0 {
             return Ok(self
                 .sysregs
                 .read(encoding, self.current_el)
@@ -1298,8 +1299,78 @@ impl AArch64Cpu {
             return self.exec_ldst_exclusive(insn);
         }
 
-        // Load register (literal): bits[29:27] = 01x, bit[26] = 0
-        if bits_29_27 & 0b110 == 0b010 && op1 == 0 {
+        // FEAT_MTE tag load/stores: bits[31:24] = 0xD9. Without tag-capable
+        // memory the tag side is a no-op, but the architected data side-
+        // effects (granule zeroing, writeback, LDG's register write) are
+        // honoured. The 16-byte tag granule is TG.
+        if (insn >> 24) & 0xFF == 0xD9 {
+            const TG: u64 = 16;
+            let opc = (insn >> 22) & 0x3;
+            let imm9 = (((insn >> 12) & 0x1FF) as i32) << 23 >> 23;
+            let op2 = (insn >> 10) & 0x3;
+            let rn = ((insn >> 5) & 0x1F) as u8;
+            let rt = (insn & 0x1F) as u8;
+            let base = self.gpr_or_sp(rn);
+            let off = (imm9 as i64).wrapping_mul(TG as i64);
+
+            // Bulk forms have imm9==0 and op2==00: STZGM (opc 00), LDG
+            // (opc 01 op2 00 is LDG with any imm), STGM (10), LDGM (11).
+            if op2 == 0b00 {
+                match opc {
+                    0b01 => {
+                        // LDG Xt, [Xn, #imm]: load the allocation tag for the
+                        // address into Xt's tag field. No tag memory: tag 0.
+                        let v = self.get_x(rt) & !(0xFu64 << 56);
+                        self.set_x(rt, v);
+                        return Ok(CpuExit::Continue);
+                    }
+                    0b00 => {
+                        // STZGM: zero the data of the naturally-aligned
+                        // region (DCZID block size).
+                        let block = 4u64 << (self.sysregs.dczid_el0 & 0xF);
+                        let addr = base & !(block - 1);
+                        for o in (0..block).step_by(8) {
+                            self.mem_write_u64(addr + o, 0)?;
+                        }
+                        return Ok(CpuExit::Continue);
+                    }
+                    _ => {
+                        // STGM (10): tag store only — no data effect.
+                        // LDGM (11): bulk tag load — no tags, Xt = 0.
+                        if opc == 0b11 {
+                            self.set_x(rt, 0);
+                        }
+                        return Ok(CpuExit::Continue);
+                    }
+                }
+            }
+
+            // Indexed forms: op2 01=post-index, 10=signed-offset, 11=pre-index.
+            let addr = if op2 == 0b01 {
+                base
+            } else {
+                (base as i64).wrapping_add(off) as u64
+            } & !(TG - 1);
+            // STG (00) / ST2G (10): tag-only stores, no data effect.
+            // STZG (01) / STZ2G (11): also zero the granule(s).
+            if opc == 0b01 || opc == 0b11 {
+                let granules = if opc == 0b11 { 2 } else { 1 };
+                for g in 0..granules {
+                    for o in (0..TG).step_by(8) {
+                        self.mem_write_u64(addr + g * TG + o, 0)?;
+                    }
+                }
+            }
+            if op2 == 0b01 || op2 == 0b11 {
+                let nb = (base as i64).wrapping_add(off) as u64;
+                self.set_gpr_or_sp(rn, nb);
+            }
+            return Ok(CpuExit::Continue);
+        }
+
+        // Load register (literal), integer and SIMD&FP forms:
+        // bits[29:27] = 01x, bits[25:24] = 00.
+        if bits_29_27 & 0b110 == 0b010 && (insn >> 24) & 0x3 == 0 {
             return self.exec_ldr_literal(insn);
         }
 
@@ -2404,6 +2475,40 @@ impl AArch64Cpu {
                 0b11 => return self.exec_simd_bfmlal(insn, true), // BFMLALB/T by element
                 _ => {}
             }
+        }
+
+        // FEAT_FP8FMA FMLALB/FMLALT (by element): 0 Q 0 01111 11 idx Rm 0000
+        // idx 0 Rn Rd. FP8 (E5M2: an exact f16 with the mantissa truncated to
+        // 2 bits, so widening is a left shift) multiplied into f16 lanes;
+        // Q selects bottom (0) / top (1) source bytes.
+        if op_bits == 0b01111
+            && (insn >> 29) & 1 == 0
+            && (insn >> 22) & 0x3 == 0b11
+            && (insn >> 12) & 0xF == 0b0000
+            && (insn >> 10) & 1 == 0
+        {
+            let top = (insn >> 30) & 1 == 1;
+            let rm = ((insn >> 16) & 0xF) as usize;
+            let rn = ((insn >> 5) & 0x1F) as usize;
+            let rd = (insn & 0x1F) as usize;
+            let idx = ((((insn >> 11) & 1) << 3)
+                | (((insn >> 21) & 1) << 2)
+                | (((insn >> 20) & 1) << 1)
+                | ((insn >> 10) & 1)) as usize;
+            let f8_to_f16 = |b: u8| (b as u16) << 8;
+            let n = self.v[rn].to_le_bytes();
+            let m = self.v[rm].to_le_bytes();
+            let mut d = self.v[rd].to_le_bytes();
+            let mb = f8_to_f16(m[idx & 0xF]);
+            for i in 0..8 {
+                let nb = f8_to_f16(n[2 * i + usize::from(top)]);
+                let prod = fp16_mul(nb, mb);
+                let cur = u16::from_le_bytes([d[2 * i], d[2 * i + 1]]);
+                let r = fp16_add(cur, prod);
+                d[2 * i..2 * i + 2].copy_from_slice(&r.to_le_bytes());
+            }
+            self.v[rd] = u128::from_le_bytes(d);
+            return Ok(CpuExit::Continue);
         }
 
         // FEAT_FHM FMLAL/FMLSL/FMLAL2/FMLSL2 by element: 0Q U 01111 10 L M Rm
@@ -5657,6 +5762,41 @@ impl AArch64Cpu {
         }
         if self.current_el == 1 && zen == 0x0 {
             return Ok(CpuExit::Undefined(insn));
+        }
+
+        // Early rejects for reserved field combinations that broader dispatch
+        // arms below would otherwise accept.
+        let top = (insn >> 24) & 0xFF;
+        // 0x04, bit21==1, bits[15:13]==100, bit12==0: unpredicated shift by
+        // wide elements (ASR/LSR/LSL Zd, Zn, Zm.D). The wide operand is .D, so
+        // doubleword element size is unallocated.
+        if top == 0b0000_0100
+            && (insn >> 21) & 1 == 1
+            && (insn >> 13) & 0x7 == 0b100
+            && (insn >> 12) & 1 == 0
+            && (insn >> 22) & 0x3 == 0b11
+        {
+            return Ok(CpuExit::Undefined(insn));
+        }
+        // 0x25 integer arith with shifted immediate (bits[21:19]==100,
+        // bits[15:14]==11): sh=1 with byte elements is unallocated.
+        if top == 0b0010_0101
+            && (insn >> 19) & 0x7 == 0b100
+            && (insn >> 14) & 0x3 == 0b11
+            && (insn >> 13) & 1 == 1
+            && (insn >> 22) & 0x3 == 0
+        {
+            return Ok(CpuExit::Undefined(insn));
+        }
+        // 0x05 bitwise logical with immediate (AND/EOR/ORR/DUPM space,
+        // bits[21:18]==x00000 family): a reserved imm13 pattern is unallocated.
+        if top == 0b0000_0101 && (insn >> 18) & 0xF == 0b0000 {
+            let n = (insn >> 17) & 1 == 1;
+            let immr = (insn >> 11) & 0x3F;
+            let imms = (insn >> 5) & 0x3F;
+            if decode_bitmask(n, imms, immr, true).is_err() {
+                return Ok(CpuExit::Undefined(insn));
+            }
         }
 
         // Extract primary classification bits
@@ -13358,8 +13498,8 @@ impl AArch64Cpu {
                 (0b000, 0b10) => Ok(CpuExit::Hvc(imm16)),
                 (0b000, 0b11) => Ok(CpuExit::Smc(imm16)),
                 (0b001, 0b00) => Ok(CpuExit::Breakpoint(imm16 as u32)),
-                (0b010, 0b00) => {
-                    // HLT
+                (0b010, 0b00) | (0b101, 0b01..=0b11) => {
+                    // HLT / DCPS1-3: halt into (emulated) debug state.
                     self.halted = true;
                     Ok(CpuExit::Halt)
                 }
@@ -13617,8 +13757,9 @@ impl AArch64Cpu {
                 return self.exception_return();
             }
             (0b0101, 0) => {
-                // DRPS
-                return Err(ArmError::Unimplemented("DRPS".to_string()));
+                // DRPS: debug restore process state. Outside real debug state
+                // this behaves as a NOP in our model.
+                return Ok(CpuExit::Continue);
             }
             _ => return Err(ArmError::UndefinedInstruction(insn)),
         }
@@ -14079,7 +14220,10 @@ impl AArch64Cpu {
                 0b00 => (4usize, false), // 32-bit
                 0b01 => (4, true),       // LDPSW (load only)
                 0b10 => (8, false),      // 64-bit
-                _ => return Err(ArmError::UndefinedInstruction(insn)),
+                // STTP/LDTP/STTNP/LDTNP (FEAT_LRCPC3 unprivileged pair):
+                // privilege-checking aside, plain 64-bit pair semantics.
+                0b11 => (8, false),
+                _ => unreachable!(),
             }
         };
         // opc=01, V=0 splits by the L bit: L=1 is LDPSW, L=0 is STGP
@@ -14410,6 +14554,16 @@ impl AArch64Cpu {
         let new = if o3 == 1 {
             if opc == 0 {
                 operand // SWP
+            } else if opc == 0b100 && rs == 31 && (insn >> 23) & 1 == 1 && (insn >> 22) & 1 == 0
+            {
+                // LDAPR/LDAPRB/LDAPRH (FEAT_LRCPC): load-acquire RCpc. In a
+                // single-threaded model this is a plain load.
+                if size == 3 {
+                    self.set_x(rt, old);
+                } else {
+                    self.set_w(rt, old as u32);
+                }
+                return Ok(CpuExit::Continue);
             } else {
                 return Err(ArmError::UndefinedInstruction(insn));
             }

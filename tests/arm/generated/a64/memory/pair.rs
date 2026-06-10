@@ -6822,7 +6822,10 @@ fn test_aarch64_memory_pair_general_offset_str_oracle_0_39000020() {
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
     {
         let buf = cpu.read_memory(0x1000, 1).unwrap();
-        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0; 8]));
+        let mut bytes = [0u8; 8];
+        let n = buf.len().min(8);
+        bytes[..n].copy_from_slice(&buf[..n]);
+        let val = u64::from_le_bytes(bytes);
         assert_eq!(val, 0x0, "Memory at 0x1000 should be 0x0");
     }
 }
@@ -6847,7 +6850,10 @@ fn test_aarch64_memory_pair_general_offset_str_oracle_1_39000020() {
     );
     {
         let buf = cpu.read_memory(0x1000, 1).unwrap();
-        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0; 8]));
+        let mut bytes = [0u8; 8];
+        let n = buf.len().min(8);
+        bytes[..n].copy_from_slice(&buf[..n]);
+        let val = u64::from_le_bytes(bytes);
         assert_eq!(val, 0xFF, "Memory at 0x1000 should be 0xFF");
     }
 }
@@ -6872,7 +6878,10 @@ fn test_aarch64_memory_pair_general_offset_str_oracle_2_39000020() {
     );
     {
         let buf = cpu.read_memory(0x1000, 1).unwrap();
-        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0; 8]));
+        let mut bytes = [0u8; 8];
+        let n = buf.len().min(8);
+        bytes[..n].copy_from_slice(&buf[..n]);
+        let val = u64::from_le_bytes(bytes);
         assert_eq!(val, 0x34, "Memory at 0x1000 should be 0x34");
     }
 }
@@ -6897,7 +6906,10 @@ fn test_aarch64_memory_pair_general_offset_str_oracle_3_39000020() {
     );
     {
         let buf = cpu.read_memory(0x1000, 1).unwrap();
-        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0; 8]));
+        let mut bytes = [0u8; 8];
+        let n = buf.len().min(8);
+        bytes[..n].copy_from_slice(&buf[..n]);
+        let val = u64::from_le_bytes(bytes);
         assert_eq!(val, 0x78, "Memory at 0x1000 should be 0x78");
     }
 }
@@ -6922,7 +6934,10 @@ fn test_aarch64_memory_pair_general_offset_str_oracle_4_39000020() {
     );
     {
         let buf = cpu.read_memory(0x1000, 1).unwrap();
-        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0; 8]));
+        let mut bytes = [0u8; 8];
+        let n = buf.len().min(8);
+        bytes[..n].copy_from_slice(&buf[..n]);
+        let val = u64::from_le_bytes(bytes);
         assert_eq!(val, 0xF0, "Memory at 0x1000 should be 0xF0");
     }
 }
