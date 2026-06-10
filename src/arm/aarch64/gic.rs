@@ -273,6 +273,8 @@ pub struct CpuInterface {
     pub igrpen1: u64,
     /// ICC_IGRPEN1_EL3.
     pub igrpen1_el3: u64,
+    /// GICR_WAKER.ProcessorSleep (redistributor wake handshake).
+    pub waker_processor_sleep: bool,
 }
 
 impl CpuInterface {
@@ -310,6 +312,7 @@ impl CpuInterface {
             igrpen0: 0,
             igrpen1: 0,
             igrpen1_el3: 0,
+            waker_processor_sleep: true,
         }
     }
 
@@ -488,6 +491,9 @@ pub struct Gic {
     spis: Vec<InterruptConfig>,
     /// Per-CPU interfaces.
     cpu_interfaces: Vec<CpuInterface>,
+    /// Published per-CPU IRQ line levels: lets the CPU's hot path test for a
+    /// pending interrupt without taking a lock on a shared GIC.
+    irq_lines: Vec<std::sync::Arc<std::sync::atomic::AtomicBool>>,
 }
 
 impl Gic {
@@ -506,6 +512,10 @@ impl Gic {
             cpu_interfaces.push(CpuInterface::new(i as u8));
         }
 
+        let irq_lines = (0..num_cpus)
+            .map(|_| std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)))
+            .collect();
+
         Self {
             config,
             dist_enabled: false,
@@ -514,7 +524,14 @@ impl Gic {
             are_ns: true,
             spis,
             cpu_interfaces,
+            irq_lines,
         }
+    }
+
+    /// Shared handle to a CPU's IRQ line level (updated on every GIC state
+    /// change).
+    pub fn irq_line(&self, cpu_id: usize) -> Option<std::sync::Arc<std::sync::atomic::AtomicBool>> {
+        self.irq_lines.get(cpu_id).cloned()
     }
 
     /// Get GIC configuration.
@@ -536,6 +553,7 @@ impl Gic {
         for (i, cpu) in self.cpu_interfaces.iter_mut().enumerate() {
             *cpu = CpuInterface::new(i as u8);
         }
+        self.update_all_cpus();
     }
 
     /// Get CPU interface.
@@ -666,8 +684,14 @@ impl Gic {
 
     /// Update pending state for all CPUs.
     fn update_all_cpus(&mut self) {
-        for cpu in &mut self.cpu_interfaces {
+        for (i, cpu) in self.cpu_interfaces.iter_mut().enumerate() {
             cpu.update_pending(&self.spis);
+            if let Some(line) = self.irq_lines.get(i) {
+                line.store(
+                    cpu.pending_interrupt(),
+                    std::sync::atomic::Ordering::Release,
+                );
+            }
         }
     }
 
@@ -948,6 +972,254 @@ impl Gic {
             }
             _ => {}
         }
+    }
+
+    // =========================================================================
+    // Redistributor Register Access (GICv3)
+    // =========================================================================
+    //
+    // Each CPU owns one 128KB redistributor: the RD_base frame (control /
+    // identification) at +0x0000 and the SGI_base frame (SGI/PPI
+    // configuration) at +0x10000.
+
+    /// Read redistributor register for a CPU (offset within its 128KB frame).
+    pub fn read_redist(&self, cpu_id: usize, offset: u64) -> u32 {
+        let Some(cpu) = self.cpu_interfaces.get(cpu_id) else {
+            return 0;
+        };
+        match offset {
+            // GICR_CTLR: no LPIs, no register writes in progress
+            0x0000 => 0,
+            // GICR_IIDR (same implementer as the distributor)
+            0x0004 => 0x0200_043B,
+            // GICR_TYPER (low): processor number, Last on the final CPU
+            0x0008 => {
+                let mut val = (cpu_id as u32) << 8;
+                if cpu_id + 1 == self.cpu_interfaces.len() {
+                    val |= 1 << 4; // Last
+                }
+                val
+            }
+            // GICR_TYPER (high): affinity value
+            0x000C => cpu.affinity as u32,
+            // GICR_WAKER
+            0x0014 => {
+                if cpu.waker_processor_sleep {
+                    (1 << 1) | (1 << 2) // ProcessorSleep | ChildrenAsleep
+                } else {
+                    0
+                }
+            }
+            // GICR_PIDR2: GICv3
+            0xFFE8 => 0x3B,
+
+            // ----- SGI_base frame -----
+            // GICR_IGROUPR0
+            0x10080 => {
+                let mut val = 0u32;
+                for (i, cfg) in cpu.private_interrupts.iter().enumerate() {
+                    if cfg.group == 1 {
+                        val |= 1 << i;
+                    }
+                }
+                val
+            }
+            // GICR_ISENABLER0 / GICR_ICENABLER0
+            0x10100 | 0x10180 => {
+                let mut val = 0u32;
+                for (i, cfg) in cpu.private_interrupts.iter().enumerate() {
+                    if cfg.enabled {
+                        val |= 1 << i;
+                    }
+                }
+                val
+            }
+            // GICR_ISPENDR0 / GICR_ICPENDR0
+            0x10200 | 0x10280 => {
+                let mut val = 0u32;
+                for (i, cfg) in cpu.private_interrupts.iter().enumerate() {
+                    if cfg.state.is_pending() {
+                        val |= 1 << i;
+                    }
+                }
+                val
+            }
+            // GICR_ISACTIVER0 / GICR_ICACTIVER0
+            0x10300 | 0x10380 => {
+                let mut val = 0u32;
+                for (i, cfg) in cpu.private_interrupts.iter().enumerate() {
+                    if cfg.state.is_active() {
+                        val |= 1 << i;
+                    }
+                }
+                val
+            }
+            // GICR_IPRIORITYR0-7
+            0x10400..=0x1041C => {
+                let base = ((offset - 0x10400) / 4) as usize * 4;
+                let mut val = 0u32;
+                for byte in 0..4 {
+                    if let Some(cfg) = cpu.private_interrupts.get(base + byte) {
+                        val |= (cfg.priority as u32) << (byte * 8);
+                    }
+                }
+                val
+            }
+            // GICR_ICFGR0: SGIs are always edge-triggered
+            0x10C00 => 0xAAAA_AAAA,
+            // GICR_ICFGR1: PPI trigger config
+            0x10C04 => {
+                let mut val = 0u32;
+                for i in 0..NUM_PPI {
+                    if cpu.private_interrupts[NUM_SGI + i].trigger == TriggerType::Edge {
+                        val |= 0b10 << (i * 2);
+                    }
+                }
+                val
+            }
+            _ => 0,
+        }
+    }
+
+    /// Write redistributor register for a CPU.
+    pub fn write_redist(&mut self, cpu_id: usize, offset: u64, value: u32) {
+        let Some(cpu) = self.cpu_interfaces.get_mut(cpu_id) else {
+            return;
+        };
+        match offset {
+            // GICR_WAKER
+            0x0014 => {
+                cpu.waker_processor_sleep = (value >> 1) & 1 != 0;
+            }
+            // GICR_IGROUPR0
+            0x10080 => {
+                for (i, cfg) in cpu.private_interrupts.iter_mut().enumerate() {
+                    cfg.group = ((value >> i) & 1) as u8;
+                }
+            }
+            // GICR_ISENABLER0
+            0x10100 => {
+                for (i, cfg) in cpu.private_interrupts.iter_mut().enumerate() {
+                    if (value >> i) & 1 != 0 {
+                        cfg.enabled = true;
+                    }
+                }
+            }
+            // GICR_ICENABLER0
+            0x10180 => {
+                for (i, cfg) in cpu.private_interrupts.iter_mut().enumerate() {
+                    if (value >> i) & 1 != 0 {
+                        cfg.enabled = false;
+                    }
+                }
+            }
+            // GICR_ISPENDR0
+            0x10200 => {
+                for (i, cfg) in cpu.private_interrupts.iter_mut().enumerate() {
+                    if (value >> i) & 1 != 0 {
+                        cfg.state.set_pending();
+                    }
+                }
+            }
+            // GICR_ICPENDR0
+            0x10280 => {
+                for (i, cfg) in cpu.private_interrupts.iter_mut().enumerate() {
+                    if (value >> i) & 1 != 0 {
+                        cfg.state.clear_pending();
+                    }
+                }
+            }
+            // GICR_ICACTIVER0
+            0x10380 => {
+                for (i, cfg) in cpu.private_interrupts.iter_mut().enumerate() {
+                    if (value >> i) & 1 != 0 {
+                        cfg.state.clear_active();
+                    }
+                }
+            }
+            // GICR_IPRIORITYR0-7
+            0x10400..=0x1041C => {
+                let base = ((offset - 0x10400) / 4) as usize * 4;
+                for byte in 0..4 {
+                    if let Some(cfg) = cpu.private_interrupts.get_mut(base + byte) {
+                        cfg.priority = ((value >> (byte * 8)) & 0xFF) as u8;
+                    }
+                }
+            }
+            // GICR_ICFGR1: PPI trigger config
+            0x10C04 => {
+                for i in 0..NUM_PPI {
+                    let edge = (value >> (i * 2 + 1)) & 1 != 0;
+                    cpu.private_interrupts[NUM_SGI + i].trigger = if edge {
+                        TriggerType::Edge
+                    } else {
+                        TriggerType::Level
+                    };
+                }
+            }
+            _ => {}
+        }
+        self.update_all_cpus();
+    }
+
+    // =========================================================================
+    // CPU-facing helpers (ICC system registers, device level lines)
+    // =========================================================================
+
+    /// Drive the level of a private (PPI) interrupt line for a CPU.
+    pub fn set_ppi_level(&mut self, cpu_id: usize, intid: u32, level: bool) {
+        let Some(cpu) = self.cpu_interfaces.get_mut(cpu_id) else {
+            return;
+        };
+        let idx = intid as usize;
+        if !(NUM_SGI..NUM_SGI + NUM_PPI).contains(&idx) {
+            return;
+        }
+        if level {
+            cpu.private_interrupts[idx].state.set_pending();
+        } else {
+            cpu.private_interrupts[idx].state.clear_pending();
+        }
+        self.update_all_cpus();
+    }
+
+    /// ICC_PMR_EL1 write.
+    pub fn set_priority_mask(&mut self, cpu_id: usize, mask: u8) {
+        if let Some(cpu) = self.cpu_interfaces.get_mut(cpu_id) {
+            cpu.priority_mask = mask;
+        }
+        self.update_all_cpus();
+    }
+
+    /// ICC_IGRPEN0/1_EL1 write.
+    pub fn set_group_enable(&mut self, cpu_id: usize, group1: bool, enabled: bool) {
+        if let Some(cpu) = self.cpu_interfaces.get_mut(cpu_id) {
+            if group1 {
+                cpu.enable_grp1 = enabled;
+                cpu.igrpen1 = enabled as u64;
+            } else {
+                cpu.enable_grp0 = enabled;
+                cpu.igrpen0 = enabled as u64;
+            }
+        }
+        self.update_all_cpus();
+    }
+
+    /// ICC_DIR_EL1 write (deactivate, for EOImode=1).
+    pub fn deactivate(&mut self, cpu_id: usize, intid: u32) {
+        if let Some(cpu) = self.cpu_interfaces.get_mut(cpu_id) {
+            cpu.deactivate(intid, &mut self.spis);
+        }
+        self.update_all_cpus();
+    }
+
+    /// ICC_SGI1R_EL1 write: raise an SGI. On this single-/few-CPU machine the
+    /// target list is interpreted over the local cluster (IRM targets all).
+    pub fn raise_sgi(&mut self, value: u64) {
+        let intid = ((value >> 24) & 0xF) as u32;
+        let irm = (value >> 40) & 1 != 0;
+        let target_list = (value & 0xFFFF) as u16;
+        self.send_sgi(intid, target_list, irm);
     }
 }
 

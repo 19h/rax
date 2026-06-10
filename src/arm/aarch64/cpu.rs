@@ -199,8 +199,25 @@ pub struct AArch64Cpu {
     // =========================================================================
     // GIC
     // =========================================================================
-    /// Generic Interrupt Controller.
-    gic: Option<Gic>,
+    /// Generic Interrupt Controller, shared with the memory bridge so that
+    /// distributor/redistributor MMIO and the CPU's ICC system registers
+    /// observe the same state.
+    gic: Option<std::sync::Arc<std::sync::Mutex<Gic>>>,
+    /// Lock-free mirror of this CPU's GIC IRQ line (published by the GIC on
+    /// every state change); checked on the hot path of `step_system`.
+    gic_irq_line: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
+    /// Cached generic-timer output levels mirrored into GIC PPIs (virt PPI 27,
+    /// phys PPI 30); avoids locking the GIC when nothing changed.
+    timer_levels: (bool, bool),
+    /// Translation level of the most recent MMU fault, for abort syndromes.
+    /// (Atomic only for interior mutability behind `&self`; the CPU is
+    /// single-threaded.)
+    last_fault_level: std::sync::atomic::AtomicU8,
+    /// Remaining debug-log quota for delivered faults.
+    fault_log_budget: u32,
+    /// Ring buffer of recently executed PCs (boot debugging).
+    pc_ring: [u64; 64],
+    pc_ring_idx: usize,
 
     // =========================================================================
     // Memory
@@ -265,7 +282,13 @@ impl std::fmt::Debug for AArch64Cpu {
 impl AArch64Cpu {
     /// Create a new AArch64 CPU.
     pub fn new(config: AArch64Config, memory: Box<dyn ArmMemory>) -> Self {
-        let gic = config.gic_config.as_ref().map(|gc| Gic::new(gc.clone()));
+        let gic = config
+            .gic_config
+            .as_ref()
+            .map(|gc| std::sync::Arc::new(std::sync::Mutex::new(Gic::new(gc.clone()))));
+        let gic_irq_line = gic
+            .as_ref()
+            .and_then(|g| g.lock().ok().and_then(|g| g.irq_line(0)));
 
         Self {
             x: [0; NUM_GPRS],
@@ -297,6 +320,12 @@ impl AArch64Cpu {
             sysregs: SystemRegisters::new(),
             mmu: Mmu::new(),
             gic,
+            gic_irq_line,
+            timer_levels: (false, false),
+            last_fault_level: std::sync::atomic::AtomicU8::new(0),
+            fault_log_budget: 64,
+            pc_ring: [0; 64],
+            pc_ring_idx: 0,
             memory,
 
             insn_count: 0,
@@ -575,6 +604,9 @@ impl AArch64Cpu {
             TranslationFaultType::ExternalAbort => MemoryFaultType::External,
         };
 
+        self.last_fault_level
+            .store(fault.level, std::sync::atomic::Ordering::Relaxed);
+
         ArmError::MemoryError(MemoryFaultInfo {
             address: fault.va,
             access: if is_write {
@@ -585,6 +617,24 @@ impl AArch64Cpu {
             fault_type,
             stage2: fault.stage2,
         })
+    }
+
+    /// Shared handle to the GIC (for the platform memory bridge to service
+    /// distributor/redistributor MMIO).
+    pub fn gic_handle(&self) -> Option<std::sync::Arc<std::sync::Mutex<Gic>>> {
+        self.gic.clone()
+    }
+
+    /// Recently executed PCs, oldest first (boot debugging).
+    pub fn recent_pcs(&self) -> Vec<u64> {
+        let mut out = Vec::with_capacity(self.pc_ring.len());
+        for i in 0..self.pc_ring.len() {
+            let pc = self.pc_ring[(self.pc_ring_idx + i) % self.pc_ring.len()];
+            if pc != 0 {
+                out.push(pc);
+            }
+        }
+        out
     }
 
     // =========================================================================
@@ -694,10 +744,13 @@ impl AArch64Cpu {
             self.ss,
         );
 
-        // Save state to target EL
+        // Save state to target EL. Asynchronous exceptions (IRQ/FIQ) do not
+        // report a syndrome; leave ESR untouched for them.
         self.sysregs.bank_mut(target_el).spsr = saved_spsr;
         self.sysregs.bank_mut(target_el).elr = self.pc;
-        self.sysregs.bank_mut(target_el).esr = syndrome.value;
+        if !matches!(exc_type, ExceptionType::Irq | ExceptionType::Fiq) {
+            self.sysregs.bank_mut(target_el).esr = syndrome.value;
+        }
 
         // Calculate vector offset
         let offset = vector_offset(
@@ -773,7 +826,7 @@ impl AArch64Cpu {
         if let Some(ref gic) = self.gic {
             let cpu_id = 0; // Assume single core for now
 
-            if gic.pending_interrupt(cpu_id) {
+            if gic.lock().map(|g| g.pending_interrupt(cpu_id)).unwrap_or(false) {
                 // Check if IRQ is masked
                 let irq_masked = (self.daif & 0x2) != 0;
 
@@ -855,10 +908,125 @@ impl AArch64Cpu {
             _ => {}
         }
 
+        // GICv3 CPU interface (ICC_*)
+        if let Some(value) = self.read_icc(encoding) {
+            return Ok(value);
+        }
+
+        // Unallocated registers in the ID/cache-info space (op0=3, crn=0:
+        // ID_*, AIDR, CCSIDR, ...) are RAZ by architecture; a booting kernel
+        // reads the whole block.
+        if encoding.op0 == 3 && encoding.crn == 0 {
+            return Ok(self
+                .sysregs
+                .read(encoding, self.current_el)
+                .unwrap_or(0));
+        }
+
         // Read from sysregs
         self.sysregs
             .read(encoding, self.current_el)
             .ok_or_else(|| ArmError::Unimplemented(format!("System register {}", encoding)))
+    }
+
+    /// Read a GICv3 CPU interface (ICC_*) register. Returns None when the
+    /// encoding is not an implemented ICC register.
+    fn read_icc(&self, encoding: Aarch64SysRegEncoding) -> Option<u64> {
+        let gic = self.gic.as_ref()?;
+        let enc = (
+            encoding.op0,
+            encoding.op1,
+            encoding.crn,
+            encoding.crm,
+            encoding.op2,
+        );
+        let mut gic = gic.lock().ok()?;
+        let value = match enc {
+            // ICC_PMR_EL1
+            (3, 0, 4, 6, 0) => gic.cpu(0)?.priority_mask as u64,
+            // ICC_IAR0_EL1 / ICC_IAR1_EL1 (read acknowledges)
+            (3, 0, 12, 8, 0) | (3, 0, 12, 12, 0) => gic.acknowledge(0) as u64,
+            // ICC_HPPIR0_EL1 / ICC_HPPIR1_EL1
+            (3, 0, 12, 8, 2) | (3, 0, 12, 12, 2) => gic.cpu(0)?.highest_pending_intid as u64,
+            // ICC_BPR0_EL1
+            (3, 0, 12, 8, 3) => gic.cpu(0)?.bpr0 as u64,
+            // ICC_BPR1_EL1
+            (3, 0, 12, 12, 3) => gic.cpu(0)?.bpr1 as u64,
+            // ICC_AP0R / ICC_AP1R (active priorities: RAZ)
+            (3, 0, 12, 8, 4..=7) | (3, 0, 12, 9, 0..=3) => 0,
+            // ICC_RPR_EL1
+            (3, 0, 12, 11, 3) => gic.cpu(0)?.running_priority as u64,
+            // ICC_CTLR_EL1: PRIbits=7 (8 priority bits), IDbits=0 (16-bit)
+            (3, 0, 12, 12, 4) => {
+                let cpu = gic.cpu(0)?;
+                (7 << 8) | (cpu.eoi_mode as u64) << 1
+            }
+            // ICC_SRE_EL1: system register interface enabled, locked on
+            (3, 0, 12, 12, 5) => 0x7,
+            // ICC_IGRPEN0_EL1
+            (3, 0, 12, 12, 6) => gic.cpu(0)?.igrpen0,
+            // ICC_IGRPEN1_EL1
+            (3, 0, 12, 12, 7) => gic.cpu(0)?.igrpen1,
+            _ => return None,
+        };
+        Some(value)
+    }
+
+    /// Write a GICv3 CPU interface (ICC_*) register. Returns true when the
+    /// encoding was handled.
+    fn write_icc(&mut self, encoding: Aarch64SysRegEncoding, value: u64) -> bool {
+        let Some(gic) = self.gic.as_ref() else {
+            return false;
+        };
+        let enc = (
+            encoding.op0,
+            encoding.op1,
+            encoding.crn,
+            encoding.crm,
+            encoding.op2,
+        );
+        let Ok(mut gic) = gic.lock() else {
+            return false;
+        };
+        match enc {
+            // ICC_PMR_EL1
+            (3, 0, 4, 6, 0) => gic.set_priority_mask(0, value as u8),
+            // ICC_EOIR0_EL1 / ICC_EOIR1_EL1
+            (3, 0, 12, 8, 1) | (3, 0, 12, 12, 1) => gic.end_of_interrupt(0, value as u32),
+            // ICC_BPR0_EL1
+            (3, 0, 12, 8, 3) => {
+                if let Some(cpu) = gic.cpu_mut(0) {
+                    cpu.bpr0 = (value & 0x7) as u8;
+                }
+            }
+            // ICC_BPR1_EL1
+            (3, 0, 12, 12, 3) => {
+                if let Some(cpu) = gic.cpu_mut(0) {
+                    cpu.bpr1 = (value & 0x7) as u8;
+                }
+            }
+            // ICC_AP0R / ICC_AP1R: WI
+            (3, 0, 12, 8, 4..=7) | (3, 0, 12, 9, 0..=3) => {}
+            // ICC_DIR_EL1
+            (3, 0, 12, 11, 1) => gic.deactivate(0, value as u32),
+            // ICC_SGI1R_EL1 / ICC_ASGI1R_EL1 / ICC_SGI0R_EL1
+            (3, 0, 12, 11, 5) | (3, 0, 12, 11, 6) | (3, 0, 12, 11, 7) => gic.raise_sgi(value),
+            // ICC_CTLR_EL1: only EOImode is writable here
+            (3, 0, 12, 12, 4) => {
+                if let Some(cpu) = gic.cpu_mut(0) {
+                    cpu.eoi_mode = (value >> 1) & 1 != 0;
+                    cpu.ctlr_el1 = value;
+                }
+            }
+            // ICC_SRE_EL1: WI (system register interface is always on)
+            (3, 0, 12, 12, 5) => {}
+            // ICC_IGRPEN0_EL1
+            (3, 0, 12, 12, 6) => gic.set_group_enable(0, false, value & 1 != 0),
+            // ICC_IGRPEN1_EL1
+            (3, 0, 12, 12, 7) => gic.set_group_enable(0, true, value & 1 != 0),
+            _ => return false,
+        }
+        true
     }
 
     /// Write system register.
@@ -954,6 +1122,11 @@ impl AArch64Cpu {
                 return Ok(());
             }
             _ => {}
+        }
+
+        // GICv3 CPU interface (ICC_*)
+        if self.write_icc(encoding, value) {
+            return Ok(());
         }
 
         // Write to sysregs
@@ -1074,6 +1247,18 @@ impl AArch64Cpu {
 
     /// Execute load/store instruction.
     fn exec_load_store(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        // SIMD&FP register load/stores (V=1, bit 26) respect the CPACR FP
+        // trap: lazy FP context switching depends on the first FP touch
+        // (including vector loads in memcpy) trapping.
+        if (insn >> 26) & 1 != 0 {
+            let fpen = (self.sysregs.el1.cpacr >> 20) & 0x3;
+            if (self.current_el == 0 && fpen != 0x3)
+                || (self.current_el == 1 && (fpen & 1) == 0)
+            {
+                return self.take_fp_access_trap();
+            }
+        }
+
         // Advanced SIMD load/store multiple structures (LD1-4 / ST1-4).
         // bits[31]=0, bits[29:24] = 001100 (no-offset or post-index variant).
         if (insn >> 31) & 1 == 0 && (insn >> 24) & 0x3F == 0b001100 {
@@ -1170,11 +1355,11 @@ impl AArch64Cpu {
 
         if self.current_el == 0 && fpen != 0x3 {
             // FP/SIMD trapped at EL0
-            return Ok(CpuExit::Undefined(insn));
+            return self.take_fp_access_trap();
         }
-        if self.current_el == 1 && fpen == 0x0 {
+        if self.current_el == 1 && (fpen & 1) == 0 {
             // FP/SIMD trapped at EL1
-            return Ok(CpuExit::Undefined(insn));
+            return self.take_fp_access_trap();
         }
 
         // Decode SIMD/FP instruction groups
@@ -13026,21 +13211,25 @@ impl AArch64Cpu {
             (src >> immr) | (src << (datasize - immr))
         };
 
+        // Per the ARM pseudocode: bot = ROR(src, immr) AND wmask, and the
+        // destination combines top/bot under TMASK (not wmask — using wmask
+        // here turns e.g. `asr xD, xN, #32` into a rotate).
+        let bot = bot & wmask;
         let result = match opc {
             0b00 => {
                 // SBFM
                 // Sign-extend based on imms
                 let top = if (src >> imms) & 1 != 0 { !0u64 } else { 0u64 };
-                (top & !tmask) | (bot & wmask)
+                (top & !tmask) | (bot & tmask)
             }
             0b01 => {
                 // BFM
-                let mask = wmask & tmask;
-                (dst & !mask) | (bot & mask)
+                let merged = (dst & !wmask) | bot;
+                (dst & !tmask) | (merged & tmask)
             }
             0b10 => {
                 // UBFM
-                bot & wmask & tmask
+                bot & tmask
             }
             _ => return Err(ArmError::UndefinedInstruction(insn)),
         };
@@ -13110,28 +13299,19 @@ impl AArch64Cpu {
         let bits_31_24 = (insn >> 24) & 0xFF;
 
         if bits_31_24 == 0xD4 {
-            // Exception generation (SVC, HVC, SMC, BRK, HLT)
+            // Exception generation: opc (bits 23:21) selects the group and
+            // LL (bits 1:0) the target level — SVC/HVC/SMC share opc=000 and
+            // differ only in LL.
             let opc = (insn >> 21) & 0x7;
+            let ll = insn & 0x3;
             let imm16 = ((insn >> 5) & 0xFFFF) as u16;
 
-            return match opc {
-                0b000 => {
-                    // SVC
-                    Ok(CpuExit::Svc(imm16 as u32))
-                }
-                0b001 => {
-                    // HVC
-                    Ok(CpuExit::Hvc(imm16))
-                }
-                0b010 => {
-                    // SMC
-                    Ok(CpuExit::Smc(imm16))
-                }
-                0b011 => {
-                    // BRK
-                    Ok(CpuExit::Breakpoint(imm16 as u32))
-                }
-                0b100 => {
+            return match (opc, ll) {
+                (0b000, 0b01) => Ok(CpuExit::Svc(imm16 as u32)),
+                (0b000, 0b10) => Ok(CpuExit::Hvc(imm16)),
+                (0b000, 0b11) => Ok(CpuExit::Smc(imm16)),
+                (0b001, 0b00) => Ok(CpuExit::Breakpoint(imm16 as u32)),
+                (0b010, 0b00) => {
                     // HLT
                     self.halted = true;
                     Ok(CpuExit::Halt)
@@ -13146,13 +13326,18 @@ impl AArch64Cpu {
         let op0 = (insn >> 19) & 0x3;
 
         if l == 0 && op0 == 0 {
-            // System instructions with L=0, op0=00 (hints, barriers)
+            // System instructions with L=0, op0=00 (hints, barriers, MSR imm)
             return self.exec_system(insn);
+        }
+
+        // SYS/SYSL (op0=01): cache/TLB maintenance, DC ZVA, AT
+        if op0 == 1 {
+            return self.exec_sys_insn(insn, l == 1);
         }
 
         // MSR/MRS (system register access)
         // L=0: MSR (write), L=1: MRS (read)
-        // op0 = 01, 10, or 11 for different register categories
+        // op0 = 10 or 11 for different register categories
         if op0 != 0 || l == 1 {
             return self.exec_msr_mrs(insn);
         }
@@ -13160,13 +13345,127 @@ impl AArch64Cpu {
         Err(ArmError::UndefinedInstruction(insn))
     }
 
+    /// Execute SYS/SYSL (op0=01): DC/IC/TLBI/AT space. Maintenance operations
+    /// are no-ops for this memory model, with the exception of DC ZVA which
+    /// architecturally zeroes a block of memory and is relied on by kernels
+    /// for page clearing.
+    fn exec_sys_insn(&mut self, insn: u32, is_read: bool) -> Result<CpuExit, ArmError> {
+        let op1 = ((insn >> 16) & 0x7) as u8;
+        let crn = ((insn >> 12) & 0xF) as u8;
+        let crm = ((insn >> 8) & 0xF) as u8;
+        let op2 = ((insn >> 5) & 0x7) as u8;
+        let rt = (insn & 0x1F) as u8;
+
+        if is_read {
+            // SYSL: nothing implemented reads back state
+            if rt != 31 {
+                self.set_x(rt, 0);
+            }
+            return Ok(CpuExit::Continue);
+        }
+
+        // DC ZVA: zero a block of memory at X[rt]
+        if (op1, crn, crm, op2) == (3, 7, 4, 1) {
+            let block = 4usize << (self.sysregs.dczid_el0 & 0xF);
+            let va = self.get_x(rt) & !(block as u64 - 1);
+            for off in (0..block as u64).step_by(8) {
+                self.mem_write_u64(va + off, 0)?;
+            }
+            return Ok(CpuExit::Continue);
+        }
+
+        // AT S1E1R/S1E1W/S1E0R/S1E0W: stage-1 address translation probe;
+        // result lands in PAR_EL1.
+        if (op1, crn, crm) == (0, 7, 8) && op2 < 4 {
+            let va = self.get_x(rt);
+            let privileged = op2 < 2;
+            let is_write = op2 & 1 != 0;
+            let par = match self.mmu.translate(
+                va,
+                self.memory.as_ref(),
+                is_write,
+                false,
+                privileged,
+                self.current_el,
+            ) {
+                // F=0, PA in bits 51:12, outer/inner WB cacheable attrs.
+                Ok(desc) => (desc.pa & 0x000F_FFFF_FFFF_F000) | (0xFFu64 << 56),
+                // F=1, fault status in bits 6:1.
+                Err(fault) => {
+                    let fsc =
+                        fsc_for_fault(translation_fault_type_of(&fault), fault.level) as u64;
+                    1 | (fsc << 1)
+                }
+            };
+            let enc = Aarch64SysRegEncoding::new(3, 0, 7, 4, 0); // PAR_EL1
+            let _ = self.sysregs.write(enc, par, self.current_el);
+            return Ok(CpuExit::Continue);
+        }
+
+        // Everything else (DC/IC/TLBI/...) is a no-op: there are no caches,
+        // and translations are walked on every access.
+        Ok(CpuExit::Continue)
+    }
+
     fn exec_system(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let crn = ((insn >> 12) & 0xF) as u8;
         let op1 = ((insn >> 16) & 0x7) as u8;
         let op2 = ((insn >> 5) & 0x7) as u8;
 
+        if crn == 4 {
+            // PSTATE space: MSR (immediate) writes of PSTATE fields (CRm
+            // carries the immediate) plus the FEAT_FlagM flag-format ops.
+            // Kernels lean on DAIFSet/DAIFClr for interrupt masking, so these
+            // must not fall through as hints.
+            let imm = ((insn >> 8) & 0xF) as u8;
+            match (op1, op2) {
+                // CFINV
+                (0, 0b000) => {
+                    let c = self.get_c();
+                    self.set_nzcv(self.get_n(), self.get_z(), !c, self.get_v());
+                }
+                // XAFLAG
+                (0, 0b001) => {
+                    let (z, c) = (self.get_z(), self.get_c());
+                    self.set_nzcv(!c && z, z && c, c || z, !c && z);
+                }
+                // AXFLAG
+                (0, 0b010) => {
+                    let (z, c, v) = (self.get_z(), self.get_c(), self.get_v());
+                    self.set_nzcv(false, z || v, c && !v, false);
+                }
+                // UAO
+                (0, 0b011) => self.uao = imm & 1 != 0,
+                // PAN
+                (0, 0b100) => self.pan = imm & 1 != 0,
+                // SPSel
+                (0, 0b101) => self.sp_sel = imm & 1 != 0,
+                // SSBS
+                (3, 0b001) => self.ssbs = imm & 1 != 0,
+                // DIT
+                (3, 0b010) => self.dit = imm & 1 != 0,
+                // TCO
+                (3, 0b100) => self.tco = imm & 1 != 0,
+                // DAIFSet
+                (3, 0b110) => self.daif |= imm,
+                // DAIFClr
+                (3, 0b111) => self.daif &= !imm,
+                // Unallocated PSTATE ops behave as NOPs here (lenient, like
+                // the pre-existing fall-through).
+                _ => {}
+            }
+            return Ok(CpuExit::Continue);
+        }
+
         if crn == 2 && op1 == 3 {
-            // Hints
+            // Hints: HINT #imm7 where imm7 = CRm:op2. Only CRm=0 carries the
+            // classic NOP/YIELD/WFE/WFI/SEV/SEVL group; higher CRm values are
+            // BTI landing pads, pointer-auth hints (PACIASP/AUTIASP), etc.,
+            // which behave as NOPs here.
+            let crm = ((insn >> 8) & 0xF) as u8;
+            if crm != 0 {
+                return Ok(CpuExit::Continue);
+            }
             match op2 {
                 0b000 => Ok(CpuExit::Continue), // NOP
                 0b001 => Ok(CpuExit::Continue), // YIELD
@@ -13439,6 +13738,63 @@ impl AArch64Cpu {
                 }
                 self.set_x(rs, lo);
                 self.set_x((s + 1) as u8, hi);
+            }
+            return Ok(CpuExit::Continue);
+        }
+
+        // LDAR/STLR (and the LDARB/LDARH/STLRB/STLRH byte/halfword forms,
+        // plus the LDLAR/STLLR LORegion variants): ordered but NOT exclusive
+        // — plain accesses with acquire/release semantics. They carry
+        // Rs=Rt2=11111 and must not consult the exclusive monitor: a
+        // spin-unlock's STLRB would otherwise be silently dropped.
+        if o2 == 1 && o1 == 0 {
+            let address = if rn == 31 {
+                self.current_sp()
+            } else {
+                self.get_x(rn)
+            };
+            // Ordered accesses are alignment-checked regardless of SCTLR.A.
+            let elsize = 1u64 << size;
+            if address & (elsize - 1) != 0 {
+                return Err(ArmError::MemoryError(MemoryFaultInfo {
+                    address,
+                    access: if l == 1 {
+                        crate::arm::cpu_trait::AccessType::Read
+                    } else {
+                        crate::arm::cpu_trait::AccessType::Write
+                    },
+                    fault_type: MemoryFaultType::Alignment,
+                    stage2: false,
+                }));
+            }
+            let pa = self.translate_address(address, l == 0, false)?;
+            if l == 1 {
+                match size {
+                    0 => {
+                        let val = self.memory.read_u8(pa)?;
+                        self.set_w(rt, val as u32);
+                    }
+                    1 => {
+                        let val = self.memory.read_u16(pa)?;
+                        self.set_w(rt, val as u32);
+                    }
+                    2 => {
+                        let val = self.memory.read_u32(pa)?;
+                        self.set_w(rt, val);
+                    }
+                    _ => {
+                        let val = self.memory.read_u64(pa)?;
+                        self.set_x(rt, val);
+                    }
+                }
+            } else {
+                let val = if rt == 31 { 0 } else { self.get_x(rt) };
+                match size {
+                    0 => self.memory.write_u8(pa, val as u8)?,
+                    1 => self.memory.write_u16(pa, val as u16)?,
+                    2 => self.memory.write_u32(pa, val as u32)?,
+                    _ => self.memory.write_u64(pa, val)?,
+                }
             }
             return Ok(CpuExit::Continue);
         }
@@ -14152,9 +14508,11 @@ impl AArch64Cpu {
             self.get_x(rn)
         };
 
-        // Check for unsigned offset (bit 24 = 1, bit 21 = 0)
-        if (insn >> 24) & 1 != 0 && (insn >> 21) & 1 == 0 {
-            // Unsigned offset
+        // Unsigned offset form: selected by bit 24 alone. Bit 21 is the top
+        // bit of imm12 here, NOT a mode selector — gating on it sent every
+        // access with an offset >= 0x800 << scale down the indexed path,
+        // where the imm12 payload was misread as a post-index writeback.
+        if (insn >> 24) & 1 != 0 {
             let imm12 = ((insn >> 10) & 0xFFF) as u64;
             let offset = imm12 << scale;
             return Ok((base.wrapping_add(offset), false, 0));
@@ -14944,6 +15302,287 @@ impl AArch64Cpu {
 // ArmCpu Trait Implementation
 // =============================================================================
 
+// =============================================================================
+// System-mode execution (full-machine emulation)
+// =============================================================================
+//
+// `ArmCpu::step` surfaces faults and exception-generating instructions as
+// errors/exits — the right behavior for the instruction-level oracle tests.
+// Booting an OS instead requires architectural delivery: SVC vectors to the
+// EL1 handler, page faults become data aborts with a syndrome, and GIC/timer
+// interrupts asynchronously enter the vector table. `step_system` wraps the
+// same execution core with that delivery layer.
+impl AArch64Cpu {
+    /// Cycles the counter advances per emulated instruction.
+    const TIMER_TICKS_PER_INSN: u64 = 16;
+
+    /// Execute one instruction with full system semantics.
+    pub fn step_system(&mut self) -> Result<CpuExit, ArmError> {
+        self.tick_system(Self::TIMER_TICKS_PER_INSN);
+
+        if self.halted {
+            return Ok(CpuExit::Halt);
+        }
+
+        let irq_line = self
+            .gic_irq_line
+            .as_ref()
+            .map(|l| l.load(std::sync::atomic::Ordering::Acquire))
+            .unwrap_or(false);
+
+        // WFE may complete spuriously (real hardware wakes it via the timer
+        // event stream, which is not modelled): never actually sleep on it,
+        // just yield once so spin loops (LDXR; WFE) keep making progress.
+        if self.wfe {
+            self.wfe = false;
+            self.event_register = false;
+            return Ok(CpuExit::Wfe);
+        }
+
+        if self.wfi {
+            if irq_line {
+                self.wfi = false;
+            } else {
+                // Idle: skip the counter ahead to the next timer deadline so
+                // a sleeping guest doesn't burn host time waiting for ticks.
+                self.fast_forward_timers();
+                return Ok(CpuExit::Wfi);
+            }
+        }
+
+        // Deliver a pending IRQ if PSTATE.I allows.
+        if irq_line && (self.daif & 0x2) == 0 {
+            self.take_irq()?;
+            return Ok(CpuExit::Continue);
+        }
+
+        self.pc_ring[self.pc_ring_idx] = self.pc;
+        self.pc_ring_idx = (self.pc_ring_idx + 1) % self.pc_ring.len();
+
+        match self.execute_instruction() {
+            Ok(CpuExit::Svc(imm)) => {
+                // PC already points past the SVC: that is the preferred
+                // return address.
+                self.enter_sync_exception(SyndromeRegister::svc(imm as u16), None)?;
+                Ok(CpuExit::Continue)
+            }
+            Ok(CpuExit::Breakpoint(imm)) if !self.breakpoints.contains(&self.pc) => {
+                // Guest BRK instruction (not a host debugger breakpoint):
+                // the preferred return address is the BRK itself.
+                self.pc = self.pc.wrapping_sub(4);
+                self.enter_sync_exception(SyndromeRegister::brk(imm as u16), None)?;
+                Ok(CpuExit::Continue)
+            }
+            Ok(exit) => Ok(exit),
+            Err(err) => self.deliver_fault(err),
+        }
+    }
+
+    /// Advance the generic timer and mirror its output lines into GIC PPIs
+    /// (27 = virtual timer, 30 = non-secure physical timer).
+    fn tick_system(&mut self, cycles: u64) {
+        self.sysregs.tick_timers(cycles);
+
+        let levels = (
+            self.sysregs.cntv_interrupt_pending(),
+            self.sysregs.cntp_interrupt_pending(),
+        );
+        if levels != self.timer_levels {
+            if let Some(ref gic) = self.gic {
+                if let Ok(mut gic) = gic.lock() {
+                    gic.set_ppi_level(0, 27, levels.0);
+                    gic.set_ppi_level(0, 30, levels.1);
+                }
+            }
+            self.timer_levels = levels;
+        }
+    }
+
+    /// During WFI, jump the counter to the nearest armed timer deadline (or
+    /// nudge it forward when no timer is armed).
+    fn fast_forward_timers(&mut self) {
+        let cntpct = self.sysregs.cntpct_el0;
+        let cntvoff = self.sysregs.cntvoff_el2;
+        let mut target: Option<u64> = None;
+
+        // CNTP deadline in physical-counter terms.
+        if self.sysregs.cntp_ctl_el0 & 0x3 == 0x1 && self.sysregs.cntp_cval_el0 > cntpct {
+            target = Some(self.sysregs.cntp_cval_el0);
+        }
+        // CNTV deadline converted to physical-counter terms.
+        if self.sysregs.cntv_ctl_el0 & 0x3 == 0x1 {
+            let phys = self.sysregs.cntv_cval_el0.wrapping_add(cntvoff);
+            if phys > cntpct {
+                target = Some(target.map_or(phys, |t| t.min(phys)));
+            }
+        }
+
+        let jump = match target {
+            Some(t) => t.saturating_sub(cntpct),
+            // No armed timer: advance ~1ms of counter time per idle pass.
+            None => self.sysregs.cntfrq_el0 / 1000,
+        };
+        self.tick_system(jump);
+    }
+
+    /// Take an IRQ exception now.
+    fn take_irq(&mut self) -> Result<(), ArmError> {
+        let target = exception_target_el(
+            ExceptionType::Irq,
+            self.current_el,
+            self.sysregs.hcr_el2,
+            self.sysregs.scr_el3,
+        );
+        self.take_exception(target, ExceptionType::Irq, SyndromeRegister::new())
+    }
+
+    /// Take a synchronous exception with the given syndrome (and FAR, for
+    /// aborts).
+    fn enter_sync_exception(
+        &mut self,
+        syndrome: SyndromeRegister,
+        far: Option<u64>,
+    ) -> Result<(), ArmError> {
+        let target = exception_target_el(
+            ExceptionType::Synchronous,
+            self.current_el,
+            self.sysregs.hcr_el2,
+            self.sysregs.scr_el3,
+        );
+        if let Some(addr) = far {
+            self.sysregs.bank_mut(target).far = addr;
+        }
+        self.take_exception(target, ExceptionType::Synchronous, syndrome)
+    }
+
+    /// FP/SIMD access trap (CPACR.FPEN): vector to the EL1 handler with
+    /// EC=0x07 so the kernel can do its lazy FP context switch. Called from
+    /// inside instruction execution, where PC has already been advanced.
+    fn take_fp_access_trap(&mut self) -> Result<CpuExit, ArmError> {
+        self.pc = self.pc.wrapping_sub(4);
+        self.enter_sync_exception(SyndromeRegister::simd_fp_trap(), None)?;
+        Ok(CpuExit::Continue)
+    }
+
+    /// Convert an execution error into the corresponding guest exception.
+    /// PC has been restored to the faulting instruction by
+    /// `execute_instruction`.
+    fn deliver_fault(&mut self, err: ArmError) -> Result<CpuExit, ArmError> {
+        use crate::arm::cpu_trait::AccessType;
+
+        // Boot debugging: surface the first faults (and any fault storm).
+        self.fault_log_budget = self.fault_log_budget.saturating_sub(1);
+        if self.fault_log_budget > 0 {
+            tracing::debug!(
+                pc = format!("{:#x}", self.pc),
+                el = self.current_el,
+                insns = self.insn_count,
+                err = ?err,
+                level = self.last_fault_level.load(std::sync::atomic::Ordering::Relaxed),
+                sctlr = format!("{:#x}", self.sysregs.el1.sctlr),
+                tcr = format!("{:#x}", self.sysregs.el1.tcr),
+                ttbr0 = format!("{:#x}", self.sysregs.el1.ttbr0),
+                ttbr1 = format!("{:#x}", self.sysregs.el1.ttbr1),
+                "guest fault"
+            );
+        }
+
+        match err {
+            ArmError::MemoryError(info) => {
+                let level = self
+                    .last_fault_level
+                    .load(std::sync::atomic::Ordering::Relaxed);
+                let fsc = fsc_for_fault(info.fault_type, level);
+                let from_lower = self.current_el == 0;
+                let syndrome = if info.access == AccessType::InstructionFetch {
+                    SyndromeRegister::instruction_abort(from_lower, fsc, false)
+                } else {
+                    SyndromeRegister::data_abort(
+                        from_lower,
+                        fsc,
+                        info.access == AccessType::Write || info.access == AccessType::Atomic,
+                        false, // cm
+                        false, // s1ptw
+                        false, // isv
+                        0,     // sas
+                        false, // sse
+                        0,     // srt
+                        false, // sf
+                        false, // ar
+                        false, // vncr
+                        false, // fnv
+                        false, // ea
+                        0,     // set
+                    )
+                };
+                self.enter_sync_exception(syndrome, Some(info.address))?;
+                Ok(CpuExit::Continue)
+            }
+            ArmError::UndefinedInstruction(_) => {
+                self.enter_sync_exception(SyndromeRegister::unknown(), None)?;
+                Ok(CpuExit::Continue)
+            }
+            ArmError::Unimplemented(what) => {
+                // Trap-on-unknown: report it once at debug level, then let
+                // the guest's undef handler decide.
+                tracing::debug!(what, pc = format!("{:#x}", self.pc), "UNDEF injection");
+                self.enter_sync_exception(SyndromeRegister::unknown(), None)?;
+                Ok(CpuExit::Continue)
+            }
+            other => Err(other),
+        }
+    }
+}
+
+/// Map an MMU walk fault to the internal fault-type enum (for AT/PAR).
+fn translation_fault_type_of(fault: &TranslationFault) -> MemoryFaultType {
+    use super::mmu::TranslationFaultType as T;
+    match fault.fault_type {
+        T::Translation => MemoryFaultType::Translation,
+        T::Permission => MemoryFaultType::Permission,
+        T::Alignment => MemoryFaultType::Alignment,
+        T::AccessFlag => MemoryFaultType::AccessFlag,
+        T::AddressSize => MemoryFaultType::AddressSize,
+        T::ExternalAbort => MemoryFaultType::External,
+    }
+}
+
+/// Map an internal fault type + translation level to the architectural fault
+/// status code.
+fn fsc_for_fault(
+    fault_type: MemoryFaultType,
+    level: u8,
+) -> super::exceptions::FaultStatusCode {
+    use super::exceptions::FaultStatusCode as F;
+    let level = level.min(3);
+    match fault_type {
+        MemoryFaultType::Translation => match level {
+            0 => F::TranslationL0,
+            1 => F::TranslationL1,
+            2 => F::TranslationL2,
+            _ => F::TranslationL3,
+        },
+        MemoryFaultType::AccessFlag => match level {
+            1 => F::AccessFlagL1,
+            2 => F::AccessFlagL2,
+            _ => F::AccessFlagL3,
+        },
+        MemoryFaultType::Permission => match level {
+            1 => F::PermissionL1,
+            2 => F::PermissionL2,
+            _ => F::PermissionL3,
+        },
+        MemoryFaultType::Alignment => F::Alignment,
+        MemoryFaultType::AddressSize => match level {
+            0 => F::AddressSizeL0,
+            1 => F::AddressSizeL1,
+            2 => F::AddressSizeL2,
+            _ => F::AddressSizeL3,
+        },
+        _ => F::SyncExternal,
+    }
+}
+
 impl ArmCpu for AArch64Cpu {
     fn step(&mut self) -> Result<CpuExit, ArmError> {
         if self.halted {
@@ -15002,9 +15641,12 @@ impl ArmCpu for AArch64Cpu {
 
         self.sysregs.reset();
         self.mmu = Mmu::new();
-        if let Some(ref mut gic) = self.gic {
-            gic.reset();
+        if let Some(ref gic) = self.gic {
+            if let Ok(mut gic) = gic.lock() {
+                gic.reset();
+            }
         }
+        self.timer_levels = (false, false);
 
         self.insn_count = 0;
         self.cycle_count = 0;

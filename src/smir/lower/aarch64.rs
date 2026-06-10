@@ -15046,7 +15046,7 @@ mod tests {
     fn run_aarch64_code(code: &[u8], regs: &[(u8, u64)], nzcv: u8) -> ([u64; 31], u8, u64) {
         let mut image = vec![0u8; 0x10000];
         image[..code.len()].copy_from_slice(code);
-        image[code.len()..code.len() + 4].copy_from_slice(&0xd460_0000u32.to_le_bytes());
+        image[code.len()..code.len() + 4].copy_from_slice(&0xd420_0000u32.to_le_bytes());
 
         let memory = FlatMemory::with_data(0, image);
         let mut cpu = AArch64Cpu::new(AArch64Config::default(), Box::new(memory));
@@ -15099,7 +15099,7 @@ mod tests {
     ) -> ([(u64, u64); 32], u8) {
         let mut image = vec![0u8; 0x10000];
         image[..code.len()].copy_from_slice(code);
-        image[code.len()..code.len() + 4].copy_from_slice(&0xd460_0000u32.to_le_bytes());
+        image[code.len()..code.len() + 4].copy_from_slice(&0xd420_0000u32.to_le_bytes());
 
         let memory = FlatMemory::with_data(0, image);
         let mut cpu = AArch64Cpu::new(AArch64Config::default(), Box::new(memory));
@@ -15148,7 +15148,7 @@ mod tests {
     ) -> ([u64; 31], [(u64, u64); 32], u64) {
         let mut image = vec![0u8; 0x10000];
         image[..code.len()].copy_from_slice(code);
-        image[code.len()..code.len() + 4].copy_from_slice(&0xd460_0000u32.to_le_bytes());
+        image[code.len()..code.len() + 4].copy_from_slice(&0xd420_0000u32.to_le_bytes());
 
         let memory = FlatMemory::with_data(0, image);
         let mut cpu = AArch64Cpu::new(AArch64Config::default(), Box::new(memory));
@@ -15197,7 +15197,7 @@ mod tests {
     ) -> ([u64; 31], [(u64, u64); 32], Vec<u8>) {
         let mut image = vec![0u8; 0x10000];
         image[..code.len()].copy_from_slice(code);
-        image[code.len()..code.len() + 4].copy_from_slice(&0xd460_0000u32.to_le_bytes());
+        image[code.len()..code.len() + 4].copy_from_slice(&0xd420_0000u32.to_le_bytes());
         for &(addr, data) in mem_init {
             let offset = addr as usize;
             image[offset..offset + data.len()].copy_from_slice(data);
@@ -15251,7 +15251,7 @@ mod tests {
     ) -> ([u64; 31], u8, u64, u64) {
         let mut image = vec![0u8; 0x10000];
         image[..code.len()].copy_from_slice(code);
-        image[code.len()..code.len() + 4].copy_from_slice(&0xd460_0000u32.to_le_bytes());
+        image[code.len()..code.len() + 4].copy_from_slice(&0xd420_0000u32.to_le_bytes());
         let mem_len = width.bytes() as usize;
         let mem_offset = mem_addr as usize;
         image[mem_offset..mem_offset + mem_len]

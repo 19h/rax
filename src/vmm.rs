@@ -559,6 +559,12 @@ impl Vmm {
                 vcpu.set_state(&initial_state)?;
             }
 
+            // Share the PL011 console device with the vCPU so its memory
+            // bridge services UART MMIO against the instance the VMM feeds.
+            if let (Some(pl011), Some(base)) = (&pl011, serial_mmio_base) {
+                vcpu.attach_pl011(base, pl011.clone());
+            }
+
             debug!(vcpu_id = cpu_id, "created vCPU");
             vcpus.push(vcpu);
         }

@@ -854,13 +854,11 @@ fn detect_arch_from_kernel(kernel: &Path) -> Option<ArchKind> {
 }
 
 /// Pick a backend suited to the guest architecture when none was requested.
+/// AArch64 defaults to the software emulator everywhere; on Apple Silicon,
+/// `--backend hvf` selects near-native Hypervisor.framework instead.
 fn default_backend_for(arch: ArchKind) -> BackendKind {
     match arch {
         ArchKind::X86_64 => BackendKind::default(),
-        // AArch64 guests on Apple Silicon run near-native under
-        // Hypervisor.framework.
-        #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-        ArchKind::Aarch64 => BackendKind::Hvf,
         _ => BackendKind::Emulator,
     }
 }

@@ -91,6 +91,17 @@ pub trait VCpu: Send {
         Ok(false)
     }
 
+    /// Attach the shared PL011 console device so the vCPU's memory bridge can
+    /// service UART MMIO synchronously against the same instance the VMM
+    /// feeds with host console input. Default no-op — only the AArch64
+    /// emulator backend uses it.
+    fn attach_pl011(
+        &mut self,
+        _base: u64,
+        _uart: std::sync::Arc<std::sync::Mutex<crate::devices::pl011::Pl011>>,
+    ) {
+    }
+
     /// Attach the PCI host bridge so the emulator MMU can divert a physical
     /// MMIO aperture from RAM to PCI device BAR handlers. `ap_base..ap_end`
     /// bounds that aperture. Default no-op — only the x86_64 emulator backend

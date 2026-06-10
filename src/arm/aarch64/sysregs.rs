@@ -391,7 +391,11 @@ impl SystemRegisters {
             midr_el1: 0x410F_D083,  // Cortex-A53 r0p3
             mpidr_el1: 0x8000_0000, // Uniprocessor, Aff0=0
             revidr_el1: 0,
-            id_aa64pfr0_el1: 0x0000_0011_1112_2222, // EL0-EL3, AArch64
+            // EL0-EL3 (AArch64+AArch32), FP + AdvSIMD (with FP16), GICv3
+            // system register interface. SVE/SEL2/RAS deliberately not
+            // advertised: their system registers are not implemented, and a
+            // booting kernel probes whatever the ID registers claim.
+            id_aa64pfr0_el1: 0x0000_0000_0112_2222,
             id_aa64pfr1_el1: 0,
             id_aa64dfr0_el1: 0x0000_0000_0101_0106, // 6 BPs, 4 WPs
             id_aa64dfr1_el1: 0,
@@ -642,24 +646,42 @@ impl SystemRegisters {
             (3, 6, 1, 1, 0) => Some(self.scr_el3),
 
             // Timer registers
+            // CNTKCTL_EL1
+            (3, 0, 14, 1, 0) => Some(self.cntkctl_el1),
             // CNTFRQ_EL0
             (3, 3, 14, 0, 0) => Some(self.cntfrq_el0),
             // CNTPCT_EL0
             (3, 3, 14, 0, 1) => Some(self.cntpct_el0),
             // CNTVCT_EL0
             (3, 3, 14, 0, 2) => Some(self.cntvct_el0),
-            // CNTP_CTL_EL0
-            (3, 3, 14, 2, 1) => Some(self.cntp_ctl_el0),
+            // CNTP_CTL_EL0 (ISTATUS computed from the live counter)
+            (3, 3, 14, 2, 1) => {
+                let mut ctl = self.cntp_ctl_el0 & 0x3;
+                if (ctl & 1) != 0 && self.cntpct_el0 >= self.cntp_cval_el0 {
+                    ctl |= 4;
+                }
+                Some(ctl)
+            }
             // CNTP_CVAL_EL0
             (3, 3, 14, 2, 2) => Some(self.cntp_cval_el0),
-            // CNTP_TVAL_EL0
-            (3, 3, 14, 2, 0) => Some(self.cntp_tval_el0),
-            // CNTV_CTL_EL0
-            (3, 3, 14, 3, 1) => Some(self.cntv_ctl_el0),
+            // CNTP_TVAL_EL0 = bits(32) of (CVAL - count)
+            (3, 3, 14, 2, 0) => {
+                Some(self.cntp_cval_el0.wrapping_sub(self.cntpct_el0) & 0xFFFF_FFFF)
+            }
+            // CNTV_CTL_EL0 (ISTATUS computed from the live counter)
+            (3, 3, 14, 3, 1) => {
+                let mut ctl = self.cntv_ctl_el0 & 0x3;
+                if (ctl & 1) != 0 && self.cntvct_el0 >= self.cntv_cval_el0 {
+                    ctl |= 4;
+                }
+                Some(ctl)
+            }
             // CNTV_CVAL_EL0
             (3, 3, 14, 3, 2) => Some(self.cntv_cval_el0),
-            // CNTV_TVAL_EL0
-            (3, 3, 14, 3, 0) => Some(self.cntv_tval_el0),
+            // CNTV_TVAL_EL0 = bits(32) of (CVAL - count)
+            (3, 3, 14, 3, 0) => {
+                Some(self.cntv_cval_el0.wrapping_sub(self.cntvct_el0) & 0xFFFF_FFFF)
+            }
 
             // CTR_EL0
             (3, 3, 0, 0, 1) => Some(self.ctr_el0),
@@ -896,32 +918,43 @@ impl SystemRegisters {
             }
 
             // Timer registers
+            // CNTKCTL_EL1
+            (3, 0, 14, 1, 0) => {
+                self.cntkctl_el1 = value;
+                true
+            }
             (3, 3, 14, 0, 0) if current_el >= 1 => {
                 self.cntfrq_el0 = value;
                 true
             }
+            // CNTP_CTL_EL0: only ENABLE and IMASK are writable
             (3, 3, 14, 2, 1) => {
-                self.cntp_ctl_el0 = value;
+                self.cntp_ctl_el0 = value & 0x3;
                 true
             }
             (3, 3, 14, 2, 2) => {
                 self.cntp_cval_el0 = value;
                 true
             }
+            // CNTP_TVAL_EL0 write: CVAL = count + SignExtend(value<31:0>)
             (3, 3, 14, 2, 0) => {
-                self.cntp_tval_el0 = value;
+                self.cntp_cval_el0 =
+                    self.cntpct_el0.wrapping_add(value as u32 as i32 as i64 as u64);
                 true
             }
+            // CNTV_CTL_EL0: only ENABLE and IMASK are writable
             (3, 3, 14, 3, 1) => {
-                self.cntv_ctl_el0 = value;
+                self.cntv_ctl_el0 = value & 0x3;
                 true
             }
             (3, 3, 14, 3, 2) => {
                 self.cntv_cval_el0 = value;
                 true
             }
+            // CNTV_TVAL_EL0 write: CVAL = count + SignExtend(value<31:0>)
             (3, 3, 14, 3, 0) => {
-                self.cntv_tval_el0 = value;
+                self.cntv_cval_el0 =
+                    self.cntvct_el0.wrapping_add(value as u32 as i32 as i64 as u64);
                 true
             }
 
