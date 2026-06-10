@@ -18,7 +18,7 @@ use crate::backend::kvm::KvmVm;
 use crate::backend::{self, Vm};
 #[cfg(any(
     all(feature = "kvm", target_os = "linux"),
-    all(feature = "hvf", target_os = "macos", target_arch = "x86_64")
+    all(feature = "hvf", target_os = "macos")
 ))]
 use crate::config::BackendKind;
 use crate::config::{ArchKind, CheckpointConfig, VmConfig};
@@ -31,6 +31,7 @@ use crate::devices::lapic::{
 use crate::devices::pci::{PCI_CONFIG_ADDRESS, PciStub};
 use crate::devices::pic::{DualPic, MasterPicDevice, SlavePicDevice};
 use crate::devices::pit::Pit;
+use crate::devices::pl011::{Pl011, Pl011MmioDevice};
 use crate::devices::serial::{Serial16550, SerialMmioDevice};
 use crate::error::{Error, Result};
 #[cfg(feature = "debug")]
@@ -303,6 +304,8 @@ pub struct Vmm {
     io_bus: IoBus,
     mmio_bus: MmioBus,
     serial: Arc<std::sync::Mutex<Serial16550>>,
+    /// PL011 console device (AArch64 machines only).
+    pl011: Option<Arc<std::sync::Mutex<Pl011>>>,
     pit: Arc<std::sync::Mutex<Pit>>,
     pic: Arc<std::sync::Mutex<DualPic>>,
     lapic: Arc<std::sync::Mutex<LocalApic>>,
@@ -410,6 +413,18 @@ impl Vmm {
         let arch = arch::from_kind(config.arch);
         info!(arch = arch.name(), "selected architecture");
 
+        // ARM64 HVF: map only the platform RAM window into the guest so that
+        // device MMIO below it (UART, ...) traps out as data aborts.
+        #[cfg(all(feature = "hvf", target_os = "macos", target_arch = "aarch64"))]
+        if matches!(config.backend, BackendKind::Hvf) {
+            use crate::backend::hvf::HvfArm64Vm;
+            let hvf_vm = vm
+                .as_any()
+                .downcast_ref::<HvfArm64Vm>()
+                .ok_or_else(|| Error::InvalidConfig("expected ARM64 HVF VM".to_string()))?;
+            hvf_vm.register_memory(&guest_mem, arch.ram_base(), config.memory.bytes())?;
+        }
+
         // Setup I/O devices
         let mut io_bus = IoBus::new();
         let mut mmio_bus = MmioBus::new();
@@ -443,18 +458,34 @@ impl Vmm {
         let serial_mmio_base = arch.serial_mmio_base();
         let serial_irq = arch.serial_irq();
 
-        // Create serial device with input enabled
+        // Create serial device with input enabled. AArch64 uses a PL011 at
+        // the platform UART base; everything else keeps the 16550.
+        let pl011 = if config.arch == ArchKind::Aarch64 {
+            let uart = Arc::new(std::sync::Mutex::new(Pl011::new()));
+            if let Some(base) = serial_mmio_base {
+                mmio_bus.register(
+                    MmioRange { base, len: 0x1000 },
+                    Box::new(Pl011MmioDevice::new(base, uart.clone())),
+                )?;
+            }
+            Some(uart)
+        } else {
+            None
+        };
+
         let serial = Arc::new(std::sync::Mutex::new(Serial16550::new(SERIAL_BASE)));
         if let Ok(mut serial_guard) = serial.lock() {
             if let Some(base) = serial_mmio_base {
                 serial_guard.set_mmio_base(base);
             }
         }
-        if let Some(base) = serial_mmio_base {
-            mmio_bus.register(
-                MmioRange { base, len: 8 },
-                Box::new(SerialMmioDevice::new(serial.clone())),
-            )?;
+        if pl011.is_none() {
+            if let Some(base) = serial_mmio_base {
+                mmio_bus.register(
+                    MmioRange { base, len: 8 },
+                    Box::new(SerialMmioDevice::new(serial.clone())),
+                )?;
+            }
         }
 
         // Create PIT (Programmable Interval Timer) at ports 0x40-0x43
@@ -576,6 +607,7 @@ impl Vmm {
             io_bus,
             mmio_bus,
             serial,
+            pl011,
             pit,
             pic,
             lapic,
@@ -684,17 +716,36 @@ impl Vmm {
                 if CHECKPOINT_SIGNAL.swap(false, std::sync::atomic::Ordering::SeqCst) {
                     self.console_checkpoint();
                 }
-                let pending = if let Ok(mut serial) = self.serial.lock() {
-                    if !guest_bytes.is_empty() {
-                        serial.queue_input(&guest_bytes);
+                if let Some(ref pl011) = self.pl011 {
+                    // AArch64: feed the PL011 and drive its SPI line through
+                    // the VM's interrupt controller (in-kernel GIC on HVF).
+                    let pending = if let Ok(mut uart) = pl011.lock() {
+                        if !guest_bytes.is_empty() {
+                            debug!(n = guest_bytes.len(), "console input queued to PL011");
+                            uart.queue_input(&guest_bytes);
+                        }
+                        uart.irq_pending()
+                    } else {
+                        false
+                    };
+                    if let Some(irq) = self.serial_irq {
+                        if let Err(e) = self.vm.set_irq_line(irq, pending) {
+                            debug!(irq, pending, error = %e, "failed to drive UART irq line");
+                        }
                     }
-                    serial.has_pending_interrupt()
                 } else {
-                    false
-                };
-                if let Some(irq) = self.serial_irq {
-                    if let Ok(mut pic) = self.pic.lock() {
-                        pic.set_irq(irq as u8, pending);
+                    let pending = if let Ok(mut serial) = self.serial.lock() {
+                        if !guest_bytes.is_empty() {
+                            serial.queue_input(&guest_bytes);
+                        }
+                        serial.has_pending_interrupt()
+                    } else {
+                        false
+                    };
+                    if let Some(irq) = self.serial_irq {
+                        if let Ok(mut pic) = self.pic.lock() {
+                            pic.set_irq(irq as u8, pending);
+                        }
                     }
                 }
             }
@@ -939,6 +990,15 @@ impl Vmm {
                                 pc = format!("{:#x}", regs.pc()),
                                 sp = format!("{:#x}", sp),
                                 usr = format!("{:#x}", regs.usr()),
+                                "vCPU shutdown"
+                            );
+                        }
+                        CpuState::Aarch64(state) => {
+                            let regs = state.regs;
+                            info!(
+                                pc = format!("{:#x}", regs.pc),
+                                sp = format!("{:#x}", regs.sp),
+                                pstate = format!("{:#x}", regs.pstate),
                                 "vCPU shutdown"
                             );
                         }

@@ -42,14 +42,51 @@ pub struct ArmBootInfo {
 // AArch64 Architecture
 // =============================================================================
 
-/// Default UART base address for PL011 (ARM PrimeCell UART)
-const AARCH64_UART_BASE: u64 = 0x0900_0000;
-/// Default GIC (Generic Interrupt Controller) distributor base
-const AARCH64_GICD_BASE: u64 = 0x0800_0000;
-/// Default GIC CPU interface base
-const AARCH64_GICC_BASE: u64 = 0x0801_0000;
-/// Default RAM base address
-const AARCH64_RAM_BASE: u64 = 0x4000_0000;
+/// UART base address for the PL011 (ARM PrimeCell UART)
+pub const AARCH64_UART_BASE: u64 = 0x0900_0000;
+/// PL011 interrupt: SPI 1 = GIC INTID 33
+pub const AARCH64_UART_IRQ: u32 = 33;
+/// GICv3 distributor base
+pub const AARCH64_GICD_BASE: u64 = 0x0800_0000;
+/// GICv3 redistributor region base
+pub const AARCH64_GICR_BASE: u64 = 0x080A_0000;
+/// RAM base address
+pub const AARCH64_RAM_BASE: u64 = 0x4000_0000;
+
+/// GICv3 distributor frame size advertised in the device tree.
+const GICD_SIZE: u64 = 0x1_0000;
+/// GICv3 redistributor frame size per CPU (RD + SGI frames).
+const GICR_SIZE_PER_CPU: u64 = 0x2_0000;
+
+/// ARM64 `Image` header magic ("ARM\x64") at offset 56.
+pub const AARCH64_IMAGE_MAGIC: u32 = 0x644D_5241;
+
+/// Fields of the ARM64 Image header needed for placement (all little-endian).
+struct Aarch64ImageHeader {
+    /// Image load offset from a 2MB-aligned RAM base.
+    text_offset: u64,
+    /// Effective kernel memory footprint (incl. BSS); 0 on very old kernels.
+    image_size: u64,
+}
+
+fn parse_aarch64_image_header(buf: &[u8]) -> Option<Aarch64ImageHeader> {
+    if buf.len() < 64 {
+        return None;
+    }
+    let magic = u32::from_le_bytes(buf[56..60].try_into().unwrap());
+    if magic != AARCH64_IMAGE_MAGIC {
+        return None;
+    }
+    Some(Aarch64ImageHeader {
+        text_offset: u64::from_le_bytes(buf[8..16].try_into().unwrap()),
+        image_size: u64::from_le_bytes(buf[16..24].try_into().unwrap()),
+    })
+}
+
+/// Returns true when the file looks like an ARM64 Linux `Image`.
+pub fn is_aarch64_image(buf: &[u8]) -> bool {
+    parse_aarch64_image_header(buf).is_some()
+}
 
 pub struct Aarch64Arch;
 
@@ -110,16 +147,154 @@ impl Aarch64Arch {
     }
 
     fn load_raw(mem: &GuestMemoryMmap, buf: &[u8]) -> Result<ArmBootInfo> {
-        let load_addr = AARCH64_RAM_BASE;
+        // ARM64 boot protocol: load the Image at a 2MB-aligned base plus the
+        // header's text_offset. image_size covers BSS, which must not overlap
+        // anything we place after the kernel.
+        let header = parse_aarch64_image_header(buf);
+        let text_offset = header.as_ref().map(|h| h.text_offset).unwrap_or(0);
+        let image_size = header
+            .as_ref()
+            .map(|h| h.image_size)
+            .filter(|&s| s != 0)
+            .unwrap_or(buf.len() as u64)
+            .max(buf.len() as u64);
+
+        let load_addr = AARCH64_RAM_BASE + text_offset;
         mem.write_slice(buf, GuestAddress(load_addr))?;
 
         Ok(ArmBootInfo {
             entry_point: load_addr,
             load_addr,
-            image_size: buf.len() as u64,
+            image_size,
             dtb_addr: None,
             initial_sp: None,
         })
+    }
+
+    /// Build the device tree for the AArch64 virt machine: RAM, one CPU,
+    /// GICv3, the architected timer, PSCI over HVC, and a PL011 console.
+    fn build_dtb(
+        cmdline: &str,
+        ram_base: u64,
+        ram_size: u64,
+        initrd: Option<(u64, u64)>,
+    ) -> Vec<u8> {
+        use crate::arch::fdt::FdtBuilder;
+
+        const PHANDLE_GIC: u32 = 1;
+        const PHANDLE_CLK: u32 = 2;
+        // Device tree interrupt cells: <type intid flags>.
+        const GIC_SPI: u32 = 0;
+        const GIC_PPI: u32 = 1;
+        const IRQ_LEVEL_HI: u32 = 4;
+
+        let mut fdt = FdtBuilder::new();
+        fdt.begin_node("");
+        fdt.prop_str("compatible", "linux,dummy-virt");
+        fdt.prop_u32("#address-cells", 2);
+        fdt.prop_u32("#size-cells", 2);
+        fdt.prop_u32("interrupt-parent", PHANDLE_GIC);
+
+        fdt.begin_node("chosen");
+        fdt.prop_str("bootargs", cmdline);
+        fdt.prop_str("stdout-path", &format!("/pl011@{AARCH64_UART_BASE:x}"));
+        if let Some((start, end)) = initrd {
+            fdt.prop_u64("linux,initrd-start", start);
+            fdt.prop_u64("linux,initrd-end", end);
+        }
+        fdt.end_node();
+
+        fdt.begin_node(&format!("memory@{ram_base:x}"));
+        fdt.prop_str("device_type", "memory");
+        fdt.prop_cells(
+            "reg",
+            &[
+                (ram_base >> 32) as u32,
+                ram_base as u32,
+                (ram_size >> 32) as u32,
+                ram_size as u32,
+            ],
+        );
+        fdt.end_node();
+
+        fdt.begin_node("cpus");
+        fdt.prop_u32("#address-cells", 1);
+        fdt.prop_u32("#size-cells", 0);
+        fdt.begin_node("cpu@0");
+        fdt.prop_str("device_type", "cpu");
+        fdt.prop_str("compatible", "arm,arm-v8");
+        fdt.prop_u32("reg", 0);
+        fdt.end_node();
+        fdt.end_node();
+
+        fdt.begin_node("psci");
+        fdt.prop_str_list("compatible", &["arm,psci-1.0", "arm,psci-0.2"]);
+        fdt.prop_str("method", "hvc");
+        fdt.end_node();
+
+        fdt.begin_node(&format!("intc@{AARCH64_GICD_BASE:x}"));
+        fdt.prop_str("compatible", "arm,gic-v3");
+        fdt.prop_u32("#interrupt-cells", 3);
+        fdt.prop_empty("interrupt-controller");
+        fdt.prop_cells(
+            "reg",
+            &[
+                (AARCH64_GICD_BASE >> 32) as u32,
+                AARCH64_GICD_BASE as u32,
+                (GICD_SIZE >> 32) as u32,
+                GICD_SIZE as u32,
+                (AARCH64_GICR_BASE >> 32) as u32,
+                AARCH64_GICR_BASE as u32,
+                (GICR_SIZE_PER_CPU >> 32) as u32,
+                GICR_SIZE_PER_CPU as u32,
+            ],
+        );
+        fdt.prop_u32("phandle", PHANDLE_GIC);
+        fdt.end_node();
+
+        fdt.begin_node("timer");
+        fdt.prop_str("compatible", "arm,armv8-timer");
+        fdt.prop_cells(
+            "interrupts",
+            &[
+                GIC_PPI, 13, IRQ_LEVEL_HI, // secure physical
+                GIC_PPI, 14, IRQ_LEVEL_HI, // non-secure physical
+                GIC_PPI, 11, IRQ_LEVEL_HI, // virtual
+                GIC_PPI, 10, IRQ_LEVEL_HI, // hypervisor
+            ],
+        );
+        fdt.prop_empty("always-on");
+        fdt.end_node();
+
+        fdt.begin_node("apb-pclk");
+        fdt.prop_str("compatible", "fixed-clock");
+        fdt.prop_u32("#clock-cells", 0);
+        fdt.prop_u32("clock-frequency", 24_000_000);
+        fdt.prop_str("clock-output-names", "clk24mhz");
+        fdt.prop_u32("phandle", PHANDLE_CLK);
+        fdt.end_node();
+
+        fdt.begin_node(&format!("pl011@{AARCH64_UART_BASE:x}"));
+        fdt.prop_str_list("compatible", &["arm,pl011", "arm,primecell"]);
+        fdt.prop_cells(
+            "reg",
+            &[
+                (AARCH64_UART_BASE >> 32) as u32,
+                AARCH64_UART_BASE as u32,
+                0,
+                0x1000,
+            ],
+        );
+        fdt.prop_cells(
+            "interrupts",
+            &[GIC_SPI, AARCH64_UART_IRQ - 32, IRQ_LEVEL_HI],
+        );
+        fdt.prop_cells("clocks", &[PHANDLE_CLK, PHANDLE_CLK]);
+        fdt.prop_str_list("clock-names", &["uartclk", "apb_pclk"]);
+        fdt.end_node();
+
+        fdt.end_node();
+        fdt.finish()
     }
 }
 
@@ -139,7 +314,11 @@ impl Arch for Aarch64Arch {
     }
 
     fn serial_irq(&self) -> Option<u32> {
-        Some(33) // SPI 1 (first SPI is 32)
+        Some(AARCH64_UART_IRQ) // SPI 1 (first SPI is 32)
+    }
+
+    fn ram_base(&self) -> u64 {
+        AARCH64_RAM_BASE
     }
 
     fn load_kernel(&self, mem: &GuestMemoryMmap, config: &VmConfig) -> Result<BootInfo> {
@@ -151,12 +330,59 @@ impl Arch for Aarch64Arch {
             return Err(Error::KernelLoad("image is too small".to_string()));
         }
 
-        let info = if buf.starts_with(b"\x7fELF") {
+        let mut info = if buf.starts_with(b"\x7fELF") {
             Self::load_elf(mem, &buf)?
         } else {
             Self::load_raw(mem, &buf)?
         };
 
+        let ram_size = config.memory.bytes();
+        let ram_end = AARCH64_RAM_BASE + ram_size;
+        const ALIGN_2M: u64 = 0x20_0000;
+        let align_2m = |addr: u64| (addr + ALIGN_2M - 1) & !(ALIGN_2M - 1);
+
+        // Place the initrd (optional) and DTB above the kernel footprint.
+        let mut next = align_2m(info.load_addr + info.image_size);
+
+        let initrd_range = match &config.initrd {
+            Some(path) => {
+                let mut initrd = Vec::new();
+                File::open(path)?.read_to_end(&mut initrd)?;
+                let start = next;
+                let end = start + initrd.len() as u64;
+                if end > ram_end {
+                    return Err(Error::KernelLoad(format!(
+                        "initrd ({} bytes) does not fit in guest RAM",
+                        initrd.len()
+                    )));
+                }
+                mem.write_slice(&initrd, GuestAddress(start))?;
+                next = align_2m(end);
+                Some((start, end))
+            }
+            None => None,
+        };
+
+        let dtb = Self::build_dtb(&config.cmdline, AARCH64_RAM_BASE, ram_size, initrd_range);
+        let dtb_addr = next;
+        if dtb_addr + dtb.len() as u64 > ram_end {
+            return Err(Error::KernelLoad(
+                "no room for device tree in guest RAM".to_string(),
+            ));
+        }
+        mem.write_slice(&dtb, GuestAddress(dtb_addr))?;
+
+        tracing::info!(
+            entry = format!("{:#x}", info.entry_point),
+            image_size = info.image_size,
+            dtb_addr = format!("{:#x}", dtb_addr),
+            dtb_size = dtb.len(),
+            initrd = ?initrd_range.map(|(s, e)| format!("{s:#x}..{e:#x}")),
+            "AArch64 boot layout"
+        );
+
+        info.dtb_addr = Some(dtb_addr);
+        info.initial_sp = Some(ram_end & !0xF);
         Ok(BootInfo::Arm(info))
     }
 
@@ -168,7 +394,7 @@ impl Arch for Aarch64Arch {
         ))
     }
 
-    fn initial_cpu_state(&self, mem: &GuestMemoryMmap, boot: &BootInfo) -> Result<CpuState> {
+    fn initial_cpu_state(&self, _mem: &GuestMemoryMmap, boot: &BootInfo) -> Result<CpuState> {
         use crate::cpu::{Aarch64Registers, Aarch64SystemRegisters};
 
         let boot = match boot {
@@ -176,19 +402,15 @@ impl Arch for Aarch64Arch {
             _ => return Err(Error::InvalidConfig("expected ARM boot info".to_string())),
         };
 
+        // ARM64 boot protocol: PC at the image entry, x0 = DTB physical
+        // address, x1-x3 zero, MMU off, all interrupts masked at EL1h (the
+        // default PSTATE is 0x3C5). The kernel sets up its own stack.
         let mut regs = Aarch64Registers::default();
         regs.pc = boot.entry_point;
-
-        // Set up initial stack at end of memory
-        let mem_end = mem.last_addr().raw_value().saturating_add(1);
-        let sp = (mem_end - 16) & !0xF; // 16-byte aligned
-        regs.sp = sp;
-
-        // X0 = DTB address (if present), otherwise 0
+        regs.sp = boot.initial_sp.unwrap_or(0) & !0xF;
         regs.x[0] = boot.dtb_addr.unwrap_or(0);
 
         let mut sregs = Aarch64SystemRegisters::default();
-        // Set up minimal system state for EL1
         sregs.sctlr_el1 = 0; // MMU off, caches off initially
 
         Ok(CpuState::aarch64(regs, sregs))

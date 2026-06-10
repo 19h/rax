@@ -117,6 +117,7 @@ pub const fn encode_sys_reg(op0: u8, op1: u8, crn: u8, crm: u8, op2: u8) -> hv_s
 }
 
 // Common system registers (EL1)
+pub const HV_SYS_REG_MPIDR_EL1: hv_sys_reg_t = encode_sys_reg(3, 0, 0, 0, 5);
 pub const HV_SYS_REG_SCTLR_EL1: hv_sys_reg_t = encode_sys_reg(3, 0, 1, 0, 0);
 pub const HV_SYS_REG_TTBR0_EL1: hv_sys_reg_t = encode_sys_reg(3, 0, 2, 0, 0);
 pub const HV_SYS_REG_TTBR1_EL1: hv_sys_reg_t = encode_sys_reg(3, 0, 2, 0, 1);
@@ -319,6 +320,9 @@ unsafe extern "C" {
     /// Run a vCPU until exit.
     pub fn hv_vcpu_run(vcpu: hv_vcpu_t) -> hv_return_t;
 
+    /// Force an immediate exit of a set of vCPUs (callable from any thread).
+    pub fn hv_vcpus_exit(vcpus: *mut hv_vcpu_t, vcpu_count: u32) -> hv_return_t;
+
     /// Get a general-purpose register.
     pub fn hv_vcpu_get_reg(vcpu: hv_vcpu_t, reg: hv_reg_t, value: *mut u64) -> hv_return_t;
 
@@ -375,6 +379,69 @@ unsafe extern "C" {
 // Interrupt types for ARM64
 pub const HV_INTERRUPT_TYPE_IRQ: u32 = 0;
 pub const HV_INTERRUPT_TYPE_FIQ: u32 = 1;
+
+// =============================================================================
+// In-kernel GICv3 (Hypervisor.framework, macOS 15+)
+// =============================================================================
+
+/// Opaque GIC configuration object (`hv_gic_config_t`, an os_object).
+pub type hv_gic_config_t = *mut c_void;
+
+/// `hv_gic_redistributor_reg_t` value for GICR_ISPENDR0 (SGI/PPI pending set).
+pub const HV_GIC_REDISTRIBUTOR_REG_GICR_ISPENDR0: u32 = 0x10200;
+
+/// GIC INTID of the EL1 virtual timer PPI (delivered on
+/// HV_EXIT_REASON_VTIMER_ACTIVATED).
+pub const HV_GIC_INT_EL1_VIRTUAL_TIMER: u32 = 27;
+
+#[cfg(target_arch = "aarch64")]
+#[link(name = "Hypervisor", kind = "framework")]
+unsafe extern "C" {
+    /// Create a GIC configuration object (caller owns the returned os_object).
+    pub fn hv_gic_config_create() -> hv_gic_config_t;
+
+    /// Set the guest physical address of the GICv3 distributor.
+    pub fn hv_gic_config_set_distributor_base(
+        config: hv_gic_config_t,
+        base: hv_gpaddr_t,
+    ) -> hv_return_t;
+
+    /// Set the guest physical address of the GICv3 redistributor region.
+    pub fn hv_gic_config_set_redistributor_base(
+        config: hv_gic_config_t,
+        base: hv_gpaddr_t,
+    ) -> hv_return_t;
+
+    /// Create the in-kernel GICv3 for the current VM (before vCPU creation).
+    pub fn hv_gic_create(config: hv_gic_config_t) -> hv_return_t;
+
+    /// Assert or deassert an SPI line (intid >= 32).
+    pub fn hv_gic_set_spi(intid: u32, level: bool) -> hv_return_t;
+
+    /// Size of the distributor MMIO region.
+    pub fn hv_gic_get_distributor_size(size: *mut usize) -> hv_return_t;
+
+    /// Size of one redistributor (per vCPU).
+    pub fn hv_gic_get_redistributor_size(size: *mut usize) -> hv_return_t;
+
+    /// Total size of the redistributor region (all vCPUs).
+    pub fn hv_gic_get_redistributor_region_size(size: *mut usize) -> hv_return_t;
+
+    /// Write a redistributor register for a vCPU (reg is hv_gic_redistributor_reg_t).
+    pub fn hv_gic_set_redistributor_reg(vcpu: hv_vcpu_t, reg: u32, value: u64) -> hv_return_t;
+
+    /// Range of SPI INTIDs supported by the GIC.
+    pub fn hv_gic_get_spi_interrupt_range(base: *mut u32, count: *mut u32) -> hv_return_t;
+
+    /// Required alignment for the distributor base.
+    pub fn hv_gic_get_distributor_base_alignment(alignment: *mut usize) -> hv_return_t;
+
+    /// Required alignment for the redistributor region base.
+    pub fn hv_gic_get_redistributor_base_alignment(alignment: *mut usize) -> hv_return_t;
+
+    /// Actual redistributor base for a vCPU.
+    pub fn hv_gic_get_redistributor_base(vcpu: hv_vcpu_t, base: *mut hv_gpaddr_t) -> hv_return_t;
+}
 
 /// Check if ARM64 Hypervisor.framework is available
 #[cfg(target_arch = "aarch64")]

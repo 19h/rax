@@ -146,15 +146,16 @@ Write *(UINT64*)0x9000 = 0x000000000000a003
 
 x86-64 is the complete VM target: it boots Linux, with the full device platform, boot protocol, tracing,
 GDB, snapshots, and the JIT. Hexagon and RISC-V are bootable emulator backends for bare-metal programs.
-AArch64 is the deepest-tested core but the one *not* yet wired as a runnable backend. It lives entirely
-behind its oracle. All four also have SMIR lifters.
+AArch64 boots Linux on Apple Silicon through the native HVF backend (in-kernel GICv3, generated DTB,
+PL011 console); its deep software core is still validated behind the oracle rather than wired as an
+emulator backend. All four also have SMIR lifters.
 
 | Core | Size | Runnable? | Coverage | Oracle |
 |------|-----:|-----------|----------|--------|
 | **x86-64** | ~54k LOC | **boots Linux** (KVM/HVF/emulator) + JIT | Legacy → SSE/AVX/AVX2 → AVX-512 → AVX10.1/10.2 → APX; x87; AES/SHA/GFNI; XSAVE | KVM (real hardware) |
 | **Hexagon** | ~38k LOC | bare-metal (`--arch hexagon`) | V73 scalar + VLIW packets + HVX, **every opcode verified** | qemu-hexagon |
 | **RISC-V** | ~11k LOC | bare-metal (`--arch riscv64`) | full RVA23 *scalar* set (RV64GC + Zfh/Zicond/Zfa/Zbk\*/Zcb + scalar crypto + vector-config) | qemu-riscv64 |
-| **AArch64 / ARM** | ~62k LOC | validated only (no backend yet) | A64 base, **complete SVE + SVE2 + SVE2.1**, NEON/VFP, FP16; AArch32/Thumb; Cortex-M (M0-M85) | qemu-aarch64 + ASL |
+| **AArch64 / ARM** | ~62k LOC | **boots Linux** (HVF on Apple Silicon); software core validated-only | A64 base, **complete SVE + SVE2 + SVE2.1**, NEON/VFP, FP16; AArch32/Thumb; Cortex-M (M0-M85) | qemu-aarch64 + ASL |
 
 ### x86-64: the complete machine
 
@@ -455,6 +456,16 @@ cargo build --release --no-default-features
 
 # Fastest local interpreter (uses your host's full ISA).
 RUSTFLAGS="-C target-cpu=native" cargo build --release
+
+# Apple Silicon: native AArch64 guests on Hypervisor.framework (in-kernel GICv3,
+# macOS 15+). The binary must carry the hypervisor entitlement after every build.
+cargo build --release --features hvf
+codesign -s - -f --entitlements rax.entitlements target/release/rax
+
+# Then boot an ARM64 Image directly — the architecture is sniffed from the
+# kernel's magic, the backend defaults to HVF, and a DTB (RAM, GICv3, PL011,
+# armv8 timer, PSCI) is generated on the fly:
+./target/release/rax --kernel linux-aarch64/Image --initrd initramfs.cpio
 ```
 
 > **Good to know** `.cargo/config.toml` ships `target-cpu=x86-64-v3` as a portable default. It still
@@ -464,6 +475,7 @@ RUSTFLAGS="-C target-cpu=native" cargo build --release
 | Feature | Default | Enables |
 |---------|---------|---------|
 | `kvm` | ✓ (Linux) | KVM backend (`kvm-bindings` / `kvm-ioctls`) |
+| `hvf` | | Hypervisor.framework backend (macOS): x86-64 guests on Intel, AArch64 guests on Apple Silicon |
 | `smir-jit` | ✓ | SMIR native hot-block JIT (x86-64 host; on by default, `RAX_NO_JIT=1` disables at runtime) |
 | `trace` | | SDE-compatible instruction tracing |
 | `debug` | | GDB Remote Serial Protocol server |

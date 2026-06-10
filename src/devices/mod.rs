@@ -16,6 +16,7 @@ pub mod nvme;
 pub mod pci;
 pub mod pic;
 pub mod pit;
+pub mod pl011;
 pub mod rtc;
 pub mod serial;
 pub mod sysctl;

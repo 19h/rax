@@ -90,13 +90,9 @@ pub fn regs_from_hvf(vcpu: hv_vcpuid_t) -> Result<Registers> {
         r15: read_register(vcpu, HV_X86_R15)?,
         rip: read_register(vcpu, HV_X86_RIP)?,
         rflags: read_register(vcpu, HV_X86_RFLAGS)?,
-        // SIMD registers will be read via FP state
-        xmm: [[0; 2]; 16],
-        ymm_high: [[0; 2]; 16],
-        zmm_high: [[0; 4]; 16],
-        zmm_ext: [[0; 8]; 16],
-        k: [0; 8],
-        mm: [0; 8],
+        // SIMD registers will be read via FP state; APX EGPRs are not
+        // exposed by HVF.
+        ..Default::default()
     })
 }
 

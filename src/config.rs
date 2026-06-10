@@ -16,6 +16,9 @@ const DEFAULT_VCPUS: u8 = 1;
 /// - clocksource=tsc: Use TSC as clock source (we emulate it based on instruction count)
 const DEFAULT_CMDLINE: &str =
     "console=ttyS0 earlyprintk=serial,ttyS0,115200 nokaslr tsc=reliable nohz=off clocksource=tsc";
+/// Default kernel command line for AArch64 guests: PL011 console at the virt
+/// machine UART base.
+const DEFAULT_CMDLINE_AARCH64: &str = "console=ttyAMA0 earlycon=pl011,mmio32,0x09000000";
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, ValueEnum, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -822,22 +825,78 @@ pub struct VmConfig {
     pub pci_devices: bool,
 }
 
+/// Sniff the guest architecture from the kernel image: the ARM64 `Image`
+/// magic, or an ELF `e_machine`. Returns None when the format is unknown
+/// (e.g. an x86 bzImage), letting the caller fall back to the default.
+fn detect_arch_from_kernel(kernel: &Path) -> Option<ArchKind> {
+    use std::io::Read;
+
+    let mut head = [0u8; 64];
+    let mut f = std::fs::File::open(kernel).ok()?;
+    let n = f.read(&mut head).ok()?;
+    let head = &head[..n];
+
+    // ARM64 Linux Image: "ARM\x64" magic at offset 56.
+    if n >= 60 && u32::from_le_bytes(head[56..60].try_into().unwrap()) == 0x644D_5241 {
+        return Some(ArchKind::Aarch64);
+    }
+    if head.starts_with(b"\x7fELF") && n >= 20 {
+        return match u16::from_le_bytes(head[18..20].try_into().unwrap()) {
+            62 => Some(ArchKind::X86_64),
+            183 => Some(ArchKind::Aarch64),
+            243 => Some(ArchKind::Riscv64),
+            164 => Some(ArchKind::Hexagon),
+            40 => Some(ArchKind::Armv7a),
+            _ => None,
+        };
+    }
+    None
+}
+
+/// Pick a backend suited to the guest architecture when none was requested.
+fn default_backend_for(arch: ArchKind) -> BackendKind {
+    match arch {
+        ArchKind::X86_64 => BackendKind::default(),
+        // AArch64 guests on Apple Silicon run near-native under
+        // Hypervisor.framework.
+        #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+        ArchKind::Aarch64 => BackendKind::Hvf,
+        _ => BackendKind::Emulator,
+    }
+}
+
 impl VmConfig {
     pub fn from_sources(cli: CliConfig, file: Option<FileConfig>) -> Result<Self> {
         let file = file.unwrap_or_default();
-        let arch = cli.arch.or(file.arch).unwrap_or_default();
-        let backend = cli.backend.or(file.backend).unwrap_or_default();
-        let memory = cli.memory.or(file.memory).unwrap_or_default();
-        let vcpus = cli.vcpus.or(file.vcpus).unwrap_or(DEFAULT_VCPUS);
         let kernel = cli
             .kernel
             .or(file.kernel)
             .ok_or_else(|| Error::InvalidConfig("kernel path is required".to_string()))?;
+        let arch = cli
+            .arch
+            .or(file.arch)
+            .or_else(|| {
+                let detected = detect_arch_from_kernel(&kernel);
+                if let Some(a) = detected {
+                    tracing::info!(arch = ?a, "auto-detected guest architecture from kernel image");
+                }
+                detected
+            })
+            .unwrap_or_default();
+        let backend = cli
+            .backend
+            .or(file.backend)
+            .unwrap_or_else(|| default_backend_for(arch));
+        let memory = cli.memory.or(file.memory).unwrap_or_default();
+        let vcpus = cli.vcpus.or(file.vcpus).unwrap_or(DEFAULT_VCPUS);
         let initrd = cli.initrd.or(file.initrd);
-        let cmdline = cli
-            .cmdline
-            .or(file.cmdline)
-            .unwrap_or_else(|| DEFAULT_CMDLINE.to_string());
+        let cmdline = cli.cmdline.or(file.cmdline).unwrap_or_else(|| {
+            match arch {
+                ArchKind::Aarch64 => DEFAULT_CMDLINE_AARCH64,
+                _ => DEFAULT_CMDLINE,
+            }
+            .to_string()
+        });
         // Hexagon options
         let hexagon_isa = cli.hexagon_isa.or(file.hexagon_isa).unwrap_or_default();
         let hexagon_endian = cli

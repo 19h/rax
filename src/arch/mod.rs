@@ -1,6 +1,7 @@
 //! Architecture abstraction layer.
 
 pub mod arm;
+pub mod fdt;
 pub mod hexagon;
 pub mod riscv;
 pub mod x86_64;
@@ -102,6 +103,12 @@ pub trait Arch: Send + Sync {
     /// Optional IRQ line for the serial device.
     fn serial_irq(&self) -> Option<u32> {
         None
+    }
+
+    /// Guest physical address where platform RAM begins. x86 RAM starts at 0;
+    /// ARM platforms place RAM above the device MMIO window.
+    fn ram_base(&self) -> u64 {
+        0
     }
 
     /// Load kernel and prepare boot environment.
