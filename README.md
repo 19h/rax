@@ -219,7 +219,9 @@ The largest and most thoroughly tested ISA, and now a runnable backend that boot
 - **AArch32 / Thumb / Cortex-M (M0-M85)**: the A32 + Thumb (T16/T32) integer ISA is bit-exact against a
   new qemu-arm oracle (`tests/arm_diff32.rs`, a 1666-encoding sweep), now with VFP and NEON (Advanced
   SIMD) execution and hardware exception routing; Cortex-M adds NVIC/SysTick/SCB/MPU, ARMv6-M to v8.1-M,
-  and there is an ARMv6 core (CP15 + MMU) with an emulated S3C64xx SoC machine.
+  and there is an ARMv6 core (CP15 + MMU) with two emulated SoC machines: the S3C64xx, and the S5L8900
+  (the original iPhone / iPod Touch 1G), which boots Apple's **iBoot** from real device firmware
+  (bootrom + LLB + NOR, with the VIC/SYSIC/timer/I2C/PMU/UART platform set; `RAX_MACHINE=s5l8900`).
 
 ---
 
@@ -521,7 +523,7 @@ src/
 ├── arm/            # ~64k LOC: aarch64 (complete SVE) · cortex_m · decoder · vfp · sysreg · cp15
 ├── riscv/          # ~11k LOC: RV64GC + RVA23 scalar · cpu · decode · rvc · float · csr · crypto · disasm
 ├── smir/           # ~140k LOC: ir · ops · types · interp · opt · lift/ · lower/ (x86_64 · aarch64 · regalloc · runtime)
-├── devices/        # serial·pit·pic·lapic·ioapic·rtc·hpet·pci·fw_cfg·pl011·s3c64xx  +  ahci·nvme·ide·virtio·e1000·vga·ac97·uhci·fdc·dma
+├── devices/        # serial·pit·pic·lapic·ioapic·rtc·hpet·pci·fw_cfg·pl011·s3c64xx·s5l8900  +  ahci·nvme·ide·virtio·e1000·vga·ac97·uhci·fdc·dma
 ├── gdb/            # Remote Serial Protocol server      (--features debug)
 └── profiling/      # per-mnemonic profiler              (--features profiling)
 
@@ -542,7 +544,7 @@ docs/specifications/# smir/ (the IR spec) · riscv/ (vendored RISC-V specs) · a
 | **x86-64 (software)** | Boots Linux to a BusyBox shell; full modern ISA; 463 differential cases vs. KVM; native JIT (`smir-jit`) at ~80× on hot loops |
 | **Hexagon** | **Every opcode** (scalar + HVX) verified vs. qemu-hexagon; bootable bare-metal backend |
 | **RISC-V** | Full RVA23 scalar set + crypto; bootable `--arch riscv64` backend; verified vs. qemu-riscv64 |
-| **AArch64 / ARM** | **Boots Linux** (HVF near-native on Apple Silicon, or full EL0/EL1 software emulation); AArch64 + AArch32 bit-exact vs qemu; ~92k ASL tests |
+| **AArch64 / ARM** | **Boots Linux** (HVF near-native on Apple Silicon, or full EL0/EL1 software emulation); AArch64 + AArch32 bit-exact vs qemu; ~92k ASL tests; the ARMv6/S5L8900 machine boots Apple's iBoot |
 | **SMIR** | JIT on by default, auto-triggered, fail-safe (integer + memory hot regions native, bit-exact vs. KVM); lowers to x86-64 **and** AArch64 hosts; RISC-V (incl. RVV) and Hexagon lifts complete |
 | **Platform** | Legacy PC devices wired; PCI host bridge + `--pci-devices` (e1000 `eth0`, AHCI/NVMe/UHCI/AC97); interactive console + full `.rxc` machine checkpoint/resume |
 | **Legacy boot** | Real-mode mini-BIOS + El-Torito CD boot; **TempleOS V5.03** boots real to long mode, mounts its CD, runs its HolyC compiler |
