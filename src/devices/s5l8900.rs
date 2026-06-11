@@ -98,7 +98,13 @@ impl Default for S5lClock {
 /// TICKSLOW) for microsecond delay loops. We drive it from a tick value the
 /// vCPU advances with executed instructions, so guest busy-waits terminate.
 pub struct S5lTimer {
-    pub ticks: u64,
+    /// Free-running microsecond counter. iBoot treats the timer as a µs clock
+    /// (it divides by 1_000_000 to get seconds). The value is updated coarsely
+    /// (every N instructions) from a host clock so it tracks real time yet
+    /// stays stable across a guest's few-instruction atomic counter read
+    /// (read-low / read-high / read-low again, which assumes the timer is
+    /// slower than the CPU).
+    micros: u64,
     status: u32,
     config: u32,
     bcount1: u32,
@@ -111,7 +117,7 @@ pub struct S5lTimer {
 impl S5lTimer {
     pub fn new() -> Self {
         S5lTimer {
-            ticks: 0,
+            micros: 0,
             status: 0,
             config: 0,
             bcount1: 0,
@@ -121,9 +127,13 @@ impl S5lTimer {
         }
     }
 
-    /// Advance the free-running counter (called per executed instruction).
-    pub fn tick(&mut self, n: u64) {
-        self.ticks = self.ticks.wrapping_add(n);
+    /// Set the µs counter from the host clock (called periodically, NOT every
+    /// instruction, so the value is stable across a guest atomic read).
+    pub fn set_micros(&mut self, micros: u64) {
+        // Monotonic: never let the counter go backwards.
+        if micros > self.micros {
+            self.micros = micros;
+        }
     }
 
     pub fn irq_pending(&self) -> bool {
@@ -131,11 +141,12 @@ impl S5lTimer {
     }
 
     pub fn read(&mut self, offset: u32) -> u32 {
+        let t = self.micros;
         match offset {
-            0x80 => (self.ticks >> 32) as u32, // TICKSHIGH
-            0x84 => self.ticks as u32,          // TICKSLOW
-            0x10000 => !0,                      // IRQSTAT
-            0xF8 => 0xFFFF_FFFF,                // IRQLATCH
+            0x80 => (t >> 32) as u32, // TICKSHIGH
+            0x84 => t as u32,          // TICKSLOW
+            0x10000 => !0,             // IRQSTAT
+            0xF8 => 0xFFFF_FFFF,       // IRQLATCH
             _ => 0,
         }
     }
@@ -583,6 +594,275 @@ impl S5lI2c {
 impl Default for S5lI2c {
     fn default() -> Self {
         Self::new(false)
+    }
+}
+
+// =============================================================================
+// SPI controller (Apple/S5L SPI) + attached peripherals
+// =============================================================================
+
+/// An SSI peripheral attached to an SPI bus. `transfer` exchanges one byte.
+enum SpiPeripheral {
+    /// No device — reads back zero.
+    None,
+    /// The LCD panel (on SPI1): responds to ID/info commands.
+    LcdPanel { cur_cmd: u8 },
+    /// The multitouch controller (on SPI2): stubbed (returns zero).
+    Multitouch,
+}
+
+impl SpiPeripheral {
+    fn transfer(&mut self, value: u8) -> u8 {
+        match self {
+            SpiPeripheral::None | SpiPeripheral::Multitouch => 0,
+            SpiPeripheral::LcdPanel { cur_cmd } => {
+                if *cur_cmd == 0
+                    && matches!(value, 0x95 | 0xDA | 0xDB | 0xDC)
+                {
+                    *cur_cmd = value;
+                    return 0;
+                }
+                if *cur_cmd != 0 {
+                    let res = match *cur_cmd {
+                        0x95 => 0x01,
+                        0xDA => 0x71, // panel ID byte 0
+                        0xDB => 0xC2, // panel ID byte 1
+                        0xDC => 0x00,
+                        _ => 0,
+                    };
+                    *cur_cmd = 0;
+                    return res;
+                }
+                0
+            }
+        }
+    }
+}
+
+const SPI_CTRL: u32 = 0x000;
+const SPI_CFG: u32 = 0x004;
+const SPI_STATUS: u32 = 0x008;
+const SPI_PIN: u32 = 0x00c;
+const SPI_TXDATA: u32 = 0x010;
+const SPI_RXDATA: u32 = 0x020;
+const SPI_RXCNT: u32 = 0x034;
+
+const CTRL_RUN: u32 = 1 << 0;
+const CTRL_TX_RESET: u32 = 1 << 2;
+const CTRL_RX_RESET: u32 = 1 << 3;
+const CFG_AGD: u32 = 1 << 0;
+const STATUS_RXREADY: u32 = 1 << 0;
+const STATUS_TXEMPTY: u32 = 1 << 1;
+const STATUS_COMPLETE: u32 = 1 << 22;
+const STATUS_TXFIFO_SHIFT: u32 = 4;
+const STATUS_RXFIFO_SHIFT: u32 = 8;
+const STATUS_TXFIFO_MASK: u32 = 31 << STATUS_TXFIFO_SHIFT;
+const STATUS_RXFIFO_MASK: u32 = 31 << STATUS_RXFIFO_SHIFT;
+
+/// Apple/S5L SPI master. iBoot drives it in polled mode: reset FIFOs, push TX
+/// bytes, set RXCNT, RUN, then poll STATUS for COMPLETE and drain RXDATA.
+pub struct S5lSpi {
+    regs: [u32; 64],
+    tx: VecDeque<u8>,
+    rx: VecDeque<u8>,
+    peripheral: SpiPeripheral,
+}
+
+impl S5lSpi {
+    /// `index` selects the attached peripheral (0=none, 1=LCD panel,
+    /// 2=multitouch), matching the S5L8900 machine wiring.
+    pub fn new(index: u8) -> Self {
+        let peripheral = match index {
+            1 => SpiPeripheral::LcdPanel { cur_cmd: 0 },
+            2 => SpiPeripheral::Multitouch,
+            _ => SpiPeripheral::None,
+        };
+        S5lSpi {
+            regs: [0; 64],
+            tx: VecDeque::new(),
+            rx: VecDeque::new(),
+            peripheral,
+        }
+    }
+
+    fn word_size(&self) -> usize {
+        match (self.regs[(SPI_CFG >> 2) as usize] >> 13) & 0x3 {
+            0 => 1,
+            1 => 2,
+            2 => 4,
+            _ => 1,
+        }
+    }
+
+    fn run(&mut self) {
+        let ctrl_i = (SPI_CTRL >> 2) as usize;
+        let status_i = (SPI_STATUS >> 2) as usize;
+        let cfg_i = (SPI_CFG >> 2) as usize;
+        let rxcnt_i = (SPI_RXCNT >> 2) as usize;
+        if self.regs[ctrl_i] & CTRL_RUN == 0 {
+            return;
+        }
+        while let Some(tx) = self.tx.pop_front() {
+            let rx = self.peripheral.transfer(tx);
+            if self.tx.is_empty() {
+                self.regs[status_i] |= STATUS_TXEMPTY;
+            }
+            if self.regs[rxcnt_i] > 0 {
+                self.rx.push_back(rx);
+                self.regs[rxcnt_i] -= 1;
+                self.regs[status_i] |= STATUS_RXREADY;
+            }
+        }
+        // Auto-get-data: fetch the remaining receive bytes with sentinels.
+        while self.regs[rxcnt_i] > 0 && self.regs[cfg_i] & CFG_AGD != 0 {
+            let rx = self.peripheral.transfer(0xff);
+            self.rx.push_back(rx);
+            self.regs[rxcnt_i] -= 1;
+            self.regs[status_i] |= STATUS_RXREADY;
+        }
+        if self.regs[rxcnt_i] == 0 && self.tx.is_empty() {
+            self.regs[status_i] |= STATUS_COMPLETE;
+            self.regs[ctrl_i] &= !CTRL_RUN;
+        }
+    }
+
+    pub fn read(&mut self, offset: u32) -> u32 {
+        let idx = (offset >> 2) as usize;
+        if idx >= self.regs.len() {
+            return 0;
+        }
+        let mut r = self.regs[idx];
+        let mut run = false;
+        match offset {
+            SPI_RXDATA => {
+                let ws = self.word_size();
+                let mut bytes = [0u8; 4];
+                for b in bytes.iter_mut().take(ws) {
+                    *b = self.rx.pop_front().unwrap_or(0);
+                }
+                r = u32::from_le_bytes(bytes);
+                if self.rx.is_empty() {
+                    run = true;
+                }
+            }
+            SPI_STATUS => {
+                let mut val = (self.tx.len() as u32) << STATUS_TXFIFO_SHIFT;
+                val |= (self.rx.len() as u32) << STATUS_RXFIFO_SHIFT;
+                val &= STATUS_TXFIFO_MASK | STATUS_RXFIFO_MASK;
+                r &= !(STATUS_TXFIFO_MASK | STATUS_RXFIFO_MASK);
+                r |= val;
+            }
+            _ => {}
+        }
+        if run {
+            self.run();
+        }
+        r
+    }
+
+    pub fn write(&mut self, offset: u32, value: u32) {
+        let idx = (offset >> 2) as usize;
+        if idx >= self.regs.len() {
+            return;
+        }
+        let mut run = false;
+        match offset {
+            SPI_CTRL => {
+                if value & CTRL_TX_RESET != 0 {
+                    self.tx.clear();
+                }
+                if value & CTRL_RX_RESET != 0 {
+                    self.rx.clear();
+                }
+                if value & CTRL_RUN != 0 && !self.tx.is_empty() {
+                    run = true;
+                }
+                self.regs[idx] = value;
+            }
+            SPI_STATUS => {
+                // Write-1-to-clear.
+                self.regs[idx] &= !value;
+                run = true;
+            }
+            SPI_TXDATA..=0x013 => {
+                let ws = self.word_size();
+                for b in value.to_le_bytes().iter().take(ws) {
+                    self.tx.push_back(*b);
+                }
+                self.regs[idx] = value;
+            }
+            SPI_CFG => {
+                self.regs[idx] = value;
+                run = true;
+            }
+            SPI_PIN => self.regs[idx] = value,
+            _ => self.regs[idx] = value,
+        }
+        if run {
+            self.run();
+        }
+    }
+}
+
+// =============================================================================
+// LCD controller (register file + framebuffer base)
+// =============================================================================
+
+/// S5L8900 LCD controller. Mostly a register file; the window-1 framebuffer
+/// base (`0x60`) points at the BGRA framebuffer the display scans out.
+pub struct S5lLcd {
+    regs: [u32; 0x400],
+    /// Periodic vsync/refresh interrupt level (raised by `tick`).
+    irq: bool,
+    tick_acc: u64,
+}
+
+impl S5lLcd {
+    pub fn new() -> Self {
+        S5lLcd {
+            regs: [0; 0x400],
+            irq: false,
+            tick_acc: 0,
+        }
+    }
+
+    /// Advance the refresh timer; raise the vsync IRQ roughly periodically.
+    pub fn tick(&mut self, n: u64) {
+        self.tick_acc = self.tick_acc.wrapping_add(n);
+        if self.tick_acc >= 200_000 {
+            self.tick_acc = 0;
+            self.irq = true;
+        }
+    }
+
+    pub fn irq_pending(&self) -> bool {
+        self.irq
+    }
+
+    pub fn framebuffer_base(&self) -> u32 {
+        self.regs[0x60 >> 2]
+    }
+
+    pub fn read(&self, offset: u32) -> u32 {
+        let idx = (offset >> 2) as usize;
+        self.regs.get(idx).copied().unwrap_or(0)
+    }
+
+    pub fn write(&mut self, offset: u32, value: u32) {
+        let idx = (offset >> 2) as usize;
+        if idx < self.regs.len() {
+            self.regs[idx] = value;
+        }
+        // Writing the interrupt-ack register (0x18) lowers the vsync IRQ.
+        if offset == 0x18 {
+            self.irq = false;
+        }
+    }
+}
+
+impl Default for S5lLcd {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

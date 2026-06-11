@@ -23,7 +23,7 @@ use crate::cpu::{
 };
 use crate::devices::s3c64xx::S3cUart;
 use crate::devices::s5l8900::{
-    Pl192, S5lChipId, S5lClock, S5lGpio, S5lI2c, S5lSysic, S5lTimer,
+    Pl192, S5lChipId, S5lClock, S5lGpio, S5lI2c, S5lLcd, S5lSpi, S5lSysic, S5lTimer,
 };
 use crate::error::{Error, Result};
 
@@ -39,6 +39,10 @@ const CHIPID_BASE: u32 = 0x3E50_0000;
 const UART0_BASE: u32 = 0x3CC0_0000;
 const I2C0_BASE: u32 = 0x3C60_0000;
 const I2C1_BASE: u32 = 0x3C90_0000;
+const SPI0_BASE: u32 = 0x3C30_0000;
+const SPI1_BASE: u32 = 0x3CE0_0000;
+const SPI2_BASE: u32 = 0x3D20_0000;
+const LCD_BASE: u32 = 0x3890_0000;
 const ENGINE_8900_BASE: u32 = 0x3F00_0000;
 
 const IBOOT_BASE: u32 = 0x1800_0000;
@@ -46,10 +50,23 @@ const LLB_BASE: u32 = 0x2200_0000;
 
 // IRQ line numbers on VIC0.
 const TIMER1_IRQ: u32 = 0x7;
+const LCD_IRQ: u32 = 0xD;
 const UART0_IRQ: u32 = 24;
 
 /// Instructions per `run()` batch before yielding to the VMM loop.
 const BATCH: u32 = 65_536;
+
+/// Default guest-time speedup for the µs timer: firmware delays elapse this
+/// many times faster than real wall-clock time (keeps multi-second boot waits
+/// short). Overridable with RAX_S5L_TIMER_SPEEDUP. Stability of the guest's
+/// atomic counter read is unaffected — that depends only on the update cadence
+/// (every 256 instructions), not the magnitude of each step.
+fn timer_speedup() -> u64 {
+    std::env::var("RAX_S5L_TIMER_SPEEDUP")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(256)
+}
 
 /// Last memory fault recorded by the bridge (for DFSR/DFAR reporting).
 #[derive(Clone, Copy, Default)]
@@ -74,12 +91,18 @@ struct BridgeInner {
     timer: S5lTimer,
     i2c0: S5lI2c,
     i2c1: S5lI2c,
+    spi0: S5lSpi,
+    spi1: S5lSpi,
+    spi2: S5lSpi,
+    lcd: S5lLcd,
     uart: Arc<OnceLock<Arc<Mutex<S3cUart>>>>,
     /// Pending 8900-engine decryption request: the physical address of the
     /// image header written to the engine MMIO. Serviced by the vCPU step.
     engine_8900_req: Option<u32>,
     /// Budget-limited log of accesses to unmapped MMIO windows.
     openbus_log_budget: u32,
+    /// Log all handled device reads too (RAX_S5L_DEVLOG).
+    devlog: bool,
 }
 
 /// Memory bridge: VA→PA via the v6 MMU, S5L8900 device windows at their
@@ -157,6 +180,18 @@ impl BridgeInner {
             _ if (I2C1_BASE..I2C1_BASE + 0x1000).contains(&pa) => {
                 Some(self.i2c1.read(off(I2C1_BASE)))
             }
+            _ if (SPI0_BASE..SPI0_BASE + 0x100).contains(&pa) => {
+                Some(self.spi0.read(off(SPI0_BASE)))
+            }
+            _ if (SPI1_BASE..SPI1_BASE + 0x100).contains(&pa) => {
+                Some(self.spi1.read(off(SPI1_BASE)))
+            }
+            _ if (SPI2_BASE..SPI2_BASE + 0x100).contains(&pa) => {
+                Some(self.spi2.read(off(SPI2_BASE)))
+            }
+            _ if (LCD_BASE..LCD_BASE + 0x1000).contains(&pa) => {
+                Some(self.lcd.read(off(LCD_BASE)))
+            }
             _ if (UART0_BASE..UART0_BASE + 0x1000).contains(&pa) => Some(
                 self.uart
                     .get()
@@ -219,6 +254,22 @@ impl BridgeInner {
                 self.i2c1.write(off(I2C1_BASE), value);
                 true
             }
+            _ if (SPI0_BASE..SPI0_BASE + 0x100).contains(&pa) => {
+                self.spi0.write(off(SPI0_BASE), value);
+                true
+            }
+            _ if (SPI1_BASE..SPI1_BASE + 0x100).contains(&pa) => {
+                self.spi1.write(off(SPI1_BASE), value);
+                true
+            }
+            _ if (SPI2_BASE..SPI2_BASE + 0x100).contains(&pa) => {
+                self.spi2.write(off(SPI2_BASE), value);
+                true
+            }
+            _ if (LCD_BASE..LCD_BASE + 0x1000).contains(&pa) => {
+                self.lcd.write(off(LCD_BASE), value);
+                true
+            }
             _ if (UART0_BASE..UART0_BASE + 0x1000).contains(&pa) => {
                 if let Some(u) = self.uart.get() {
                     if let Ok(mut u) = u.lock() {
@@ -254,6 +305,10 @@ impl BridgeInner {
     ) -> std::result::Result<(), MemoryError> {
         if buf.len() <= 4 && !is_memory(pa) {
             if let Some(v) = self.dev_read(pa & !0x3) {
+                if self.openbus_log_budget > 0 && self.devlog {
+                    self.openbus_log_budget -= 1;
+                    debug!(pa = format!("{pa:#x}"), val = format!("{v:#x}"), "dev read");
+                }
                 let lane = (pa & 0x3) as usize;
                 let bytes = v.to_le_bytes();
                 for (i, b) in buf.iter_mut().enumerate() {
@@ -365,6 +420,9 @@ pub struct S5L8900Vcpu {
     trace_log_budget: u32,
     fault_log_budget: u32,
     last_heartbeat: std::time::Instant,
+    boot_instant: std::time::Instant,
+    timer_speedup: u64,
+    input_seeded: bool,
     shutdown: bool,
 }
 
@@ -393,9 +451,17 @@ impl S5L8900Vcpu {
                 timer: S5lTimer::new(),
                 i2c0: S5lI2c::new(false),
                 i2c1: S5lI2c::new(true), // PMU (pcf50633) lives on I2C1
+                spi0: S5lSpi::new(0),
+                spi1: S5lSpi::new(1), // LCD panel
+                spi2: S5lSpi::new(2), // multitouch
+                lcd: S5lLcd::new(),
                 uart: uart.clone(),
                 engine_8900_req: None,
-                openbus_log_budget: 256,
+                openbus_log_budget: std::env::var("RAX_S5L_OPENBUS_LOG")
+                    .ok()
+                    .and_then(|v| v.parse().ok())
+                    .unwrap_or(256),
+                devlog: std::env::var("RAX_S5L_DEVLOG").is_ok(),
             }),
         };
         let mut cpu = Armv7Cpu::new();
@@ -424,6 +490,9 @@ impl S5L8900Vcpu {
             trace_log_budget: 400,
             fault_log_budget: 64,
             last_heartbeat: std::time::Instant::now(),
+            boot_instant: std::time::Instant::now(),
+            timer_speedup: timer_speedup(),
+            input_seeded: false,
             shutdown: false,
         }
     }
@@ -451,7 +520,9 @@ impl S5L8900Vcpu {
             .unwrap_or(false);
         let mut inner = self.bridge.inner.borrow_mut();
         let timer_lvl = inner.timer.irq_pending();
+        let lcd_lvl = inner.lcd.irq_pending();
         inner.vic0.set_line(TIMER1_IRQ, timer_lvl);
+        inner.vic0.set_line(LCD_IRQ, lcd_lvl);
         inner.vic0.set_line(UART0_IRQ, uart_lvl);
         // VIC1 daisy-chains into VIC0.
         let daisy = inner.vic1.irq_asserted();
@@ -476,7 +547,18 @@ impl S5L8900Vcpu {
 
     fn step(&mut self) -> StepOutcome {
         self.sync_mmu();
-        self.bridge.inner.borrow_mut().timer.tick(1);
+        {
+            let mut inner = self.bridge.inner.borrow_mut();
+            inner.lcd.tick(1);
+            // Update the µs timer from the host clock periodically (not every
+            // instruction) so it tracks real time but stays stable across a
+            // guest atomic counter read. The speedup factor makes firmware
+            // delays elapse in a fraction of real time.
+            if self.insn_count & 0xFF == 0 {
+                let us = self.boot_instant.elapsed().as_micros() as u64;
+                inner.timer.set_micros(us.wrapping_mul(self.timer_speedup));
+            }
+        }
 
         let irq_pending = self.sync_irqs();
         if irq_pending {
@@ -488,8 +570,30 @@ impl S5L8900Vcpu {
         }
 
         if self.cpu.is_halted {
-            self.bridge.inner.borrow_mut().timer.tick(256);
+            let us = self.boot_instant.elapsed().as_micros() as u64;
+            let sp = self.timer_speedup;
+            self.bridge
+                .inner
+                .borrow_mut()
+                .timer
+                .set_micros(us.wrapping_mul(sp));
             return StepOutcome::Idle;
+        }
+
+        // Debug aid: once iBoot has reached its console wait, inject serial
+        // input (RAX_S5L_INPUT) into the UART RX so its recovery console can be
+        // driven (e.g. a boot command). Seeded once.
+        if !self.input_seeded && self.insn_count > 50_000_000 {
+            if let Ok(s) = std::env::var("RAX_S5L_INPUT") {
+                if let Some(u) = self.uart.get() {
+                    if let Ok(mut u) = u.lock() {
+                        let mut bytes = s.replace("\\r", "\r").replace("\\n", "\n").into_bytes();
+                        bytes.push(b'\r');
+                        u.queue_input(&bytes);
+                    }
+                }
+                self.input_seeded = true;
+            }
         }
 
         let pc = self.cpu.regs[15];
@@ -679,6 +783,42 @@ impl S5L8900Vcpu {
                 mmu = self.bridge.inner.borrow().mmu.enabled,
                 "s5l8900 emulator heartbeat"
             );
+            // Debug aid: dump the call stack (likely iBoot return addresses
+            // in 0x18xxxxxx found on the stack) to reveal the active loop.
+            if std::env::var("RAX_S5L_STACKDUMP").is_ok() {
+                let sp = self.cpu.regs[13];
+                let mut frames = Vec::new();
+                for i in 0..256u32 {
+                    if let Ok(w) = self.bridge.read_word(sp.wrapping_add(i * 4)) {
+                        let a = w & !1; // strip Thumb bit
+                        if (0x1800_0000..0x1802_0000).contains(&a) {
+                            frames.push(format!("{a:#x}"));
+                        }
+                    }
+                }
+                debug!(
+                    sp = format!("{sp:#x}"),
+                    pc = format!("{:#x}", self.cpu.regs[15]),
+                    stack = frames.join(" "),
+                    "stack dump"
+                );
+            }
+            // Debug aid: dump an arbitrary physical region (RAX_S5L_MEMDUMP=
+            // <hexaddr>:<hexlen>:<path>) — e.g. iBoot's log/heap area.
+            if let Ok(spec) = std::env::var("RAX_S5L_MEMDUMP") {
+                let parts: Vec<&str> = spec.split(':').collect();
+                if parts.len() == 3 {
+                    if let (Ok(addr), Ok(len)) = (
+                        u64::from_str_radix(parts[0].trim_start_matches("0x"), 16),
+                        usize::from_str_radix(parts[1].trim_start_matches("0x"), 16),
+                    ) {
+                        let mut buf = vec![0u8; len];
+                        if self.bridge.mem.read_slice(&mut buf, GuestAddress(addr)).is_ok() {
+                            let _ = std::fs::write(parts[2], &buf);
+                        }
+                    }
+                }
+            }
             // Debug aid: dump the LCD framebuffer (physical 0x0fe00000,
             // 320x480 BGRA) to a file so the rendered boot image can be
             // inspected. Gated by RAX_S5L_FBDUMP=<path>.
