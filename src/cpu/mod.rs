@@ -102,6 +102,14 @@ pub trait VCpu: Send {
     ) {
     }
 
+    /// Attach the shared Samsung S3C UART console device (ARMv6/S3C64xx
+    /// machines). Default no-op.
+    fn attach_s3c_uart(
+        &mut self,
+        _uart: std::sync::Arc<std::sync::Mutex<crate::devices::s3c64xx::S3cUart>>,
+    ) {
+    }
+
     /// Attach the PCI host bridge so the emulator MMU can divert a physical
     /// MMIO aperture from RAM to PCI device BAR handlers. `ap_base..ap_end`
     /// bounds that aperture. Default no-op — only the x86_64 emulator backend

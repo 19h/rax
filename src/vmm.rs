@@ -32,6 +32,7 @@ use crate::devices::pci::{PCI_CONFIG_ADDRESS, PciStub};
 use crate::devices::pic::{DualPic, MasterPicDevice, SlavePicDevice};
 use crate::devices::pit::Pit;
 use crate::devices::pl011::{Pl011, Pl011MmioDevice};
+use crate::devices::s3c64xx::S3cUart;
 use crate::devices::serial::{Serial16550, SerialMmioDevice};
 use crate::error::{Error, Result};
 #[cfg(feature = "debug")]
@@ -306,6 +307,8 @@ pub struct Vmm {
     serial: Arc<std::sync::Mutex<Serial16550>>,
     /// PL011 console device (AArch64 machines only).
     pl011: Option<Arc<std::sync::Mutex<Pl011>>>,
+    /// Samsung S3C UART console device (ARMv6 machines only).
+    s3c_uart: Option<Arc<std::sync::Mutex<S3cUart>>>,
     pit: Arc<std::sync::Mutex<Pit>>,
     pic: Arc<std::sync::Mutex<DualPic>>,
     lapic: Arc<std::sync::Mutex<LocalApic>>,
@@ -473,13 +476,21 @@ impl Vmm {
             None
         };
 
+        // ARMv6/S3C64xx console: the UART lives inside the vCPU's memory
+        // bridge; the VMM only feeds it host console input.
+        let s3c_uart = if config.arch == ArchKind::Armv7a {
+            Some(Arc::new(std::sync::Mutex::new(S3cUart::new())))
+        } else {
+            None
+        };
+
         let serial = Arc::new(std::sync::Mutex::new(Serial16550::new(SERIAL_BASE)));
         if let Ok(mut serial_guard) = serial.lock() {
             if let Some(base) = serial_mmio_base {
                 serial_guard.set_mmio_base(base);
             }
         }
-        if pl011.is_none() {
+        if pl011.is_none() && s3c_uart.is_none() {
             if let Some(base) = serial_mmio_base {
                 mmio_bus.register(
                     MmioRange { base, len: 8 },
@@ -564,6 +575,9 @@ impl Vmm {
             if let (Some(pl011), Some(base)) = (&pl011, serial_mmio_base) {
                 vcpu.attach_pl011(base, pl011.clone());
             }
+            if let Some(uart) = &s3c_uart {
+                vcpu.attach_s3c_uart(uart.clone());
+            }
 
             debug!(vcpu_id = cpu_id, "created vCPU");
             vcpus.push(vcpu);
@@ -614,6 +628,7 @@ impl Vmm {
             mmio_bus,
             serial,
             pl011,
+            s3c_uart,
             pit,
             pic,
             lapic,
@@ -722,7 +737,15 @@ impl Vmm {
                 if CHECKPOINT_SIGNAL.swap(false, std::sync::atomic::Ordering::SeqCst) {
                     self.console_checkpoint();
                 }
-                if let Some(ref pl011) = self.pl011 {
+                if let Some(ref uart) = self.s3c_uart {
+                    // ARMv6: queue console input; the vCPU's own IRQ scan
+                    // raises the VIC line.
+                    if !guest_bytes.is_empty() {
+                        if let Ok(mut u) = uart.lock() {
+                            u.queue_input(&guest_bytes);
+                        }
+                    }
+                } else if let Some(ref pl011) = self.pl011 {
                     // AArch64: feed the PL011 and drive its SPI line through
                     // the VM's interrupt controller (in-kernel GIC on HVF).
                     let pending = if let Ok(mut uart) = pl011.lock() {

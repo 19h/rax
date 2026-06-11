@@ -39,6 +39,9 @@ struct Cli {
     kernel: Option<PathBuf>,
     #[arg(long)]
     initrd: Option<PathBuf>,
+    /// Device tree blob for ARM DT boot (armv7a)
+    #[arg(long)]
+    dtb: Option<PathBuf>,
     #[arg(long)]
     cmdline: Option<String>,
     #[arg(long, value_enum)]
@@ -135,7 +138,7 @@ fn main() -> Result<()> {
         cortexr_isa: None,
         arm_entry: None,
         arm_load_addr: None,
-        arm_dtb: None,
+        arm_dtb: cli.dtb,
         trace: cli.trace,
         gdb_port: cli.gdb,
         wait_gdb: cli.wait_gdb,

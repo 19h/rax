@@ -599,6 +599,9 @@ pub struct Armv7Cpu {
     pub regs_usr: [u32; 2], // SP, LR
     /// FIQ mode R8-R14
     pub regs_fiq: [u32; 7], // R8-R14
+    /// User/common R8-R12, saved while executing in FIQ mode (FIQ banks
+    /// R8-R12 in addition to SP/LR; every other mode shares the user copies).
+    pub regs_usr_high: [u32; 5],
     /// IRQ mode R13-R14
     pub regs_irq: [u32; 2],
     /// Supervisor mode R13-R14
@@ -650,6 +653,7 @@ impl Armv7Cpu {
             cpsr: Psr::default(),
             regs_usr: [0; 2],
             regs_fiq: [0; 7],
+            regs_usr_high: [0; 5],
             regs_irq: [0; 2],
             regs_svc: [0; 2],
             regs_mon: [0; 2],
@@ -814,6 +818,15 @@ impl Armv7Cpu {
 
         // Save current registers
         self.save_to_banked(old_mode);
+
+        // FIQ banks R8-R12 on top of SP/LR; all other modes share the user
+        // copies, so swap them only when crossing the FIQ boundary.
+        if new_mode == ProcessorMode::Fiq && old_mode != ProcessorMode::Fiq {
+            self.regs_usr_high.copy_from_slice(&self.regs[8..13]);
+        }
+        if old_mode == ProcessorMode::Fiq && new_mode != ProcessorMode::Fiq {
+            self.regs[8..13].copy_from_slice(&self.regs_usr_high);
+        }
 
         // Update mode
         self.cpsr.mode = new_mode as u8;

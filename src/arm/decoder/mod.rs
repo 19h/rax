@@ -558,6 +558,9 @@ pub enum Mnemonic {
     // System Instructions
     // =========================================================================
     SVC,
+    CPS,
+    SRS,
+    RFE,
     HVC,
     SMC,
     BRK,
@@ -1346,6 +1349,9 @@ impl Mnemonic {
 
             // System
             Mnemonic::SVC => "svc",
+            Mnemonic::CPS => "cps",
+            Mnemonic::SRS => "srs",
+            Mnemonic::RFE => "rfe",
             Mnemonic::HVC => "hvc",
             Mnemonic::SMC => "smc",
             Mnemonic::BRK => "brk",

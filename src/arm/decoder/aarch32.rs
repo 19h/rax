@@ -21,6 +21,69 @@ impl Aarch32Decoder {
             return Self::decode_unconditional(raw);
         }
 
+        // Synchronization primitives (LDREX/STREX and byte/half/double
+        // variants): cccc 0001 1xxL Rn Rd 1111 1001 Rm. Same bits[7:4]=1001
+        // as the multiply space, so peel them off first. The executor reads
+        // the registers straight from `raw` (A32 layout).
+        if raw & 0x0F80_0F90 == 0x0180_0F90 {
+            let op = (raw >> 20) & 0x7; // L:sz
+            let mnemonic = match op {
+                0b000 => Some(Mnemonic::STXR),
+                0b001 => Some(Mnemonic::LDXR),
+                0b010 => Some(Mnemonic::STXP), // STREXD
+                0b011 => Some(Mnemonic::LDXP), // LDREXD
+                0b100 => Some(Mnemonic::STXRB),
+                0b101 => Some(Mnemonic::LDXRB),
+                0b110 => Some(Mnemonic::STXRH),
+                0b111 => Some(Mnemonic::LDXRH),
+                _ => None,
+            };
+            if let Some(m) = mnemonic {
+                let insn = DecodedInsn::new(m, ExecutionState::Aarch32, raw, 4);
+                return Ok(if cond != Condition::AL {
+                    insn.with_cond(cond)
+                } else {
+                    insn
+                });
+            }
+        }
+
+        // SWP/SWPB: cccc 0001 0B00 Rn Rd 0000 1001 Rm. Shares bits[7:4]=1001
+        // with the multiply space, so it must be peeled off first.
+        if raw & 0x0FB0_0FF0 == 0x0100_0090 {
+            let insn = DecodedInsn::new(Mnemonic::SWP, ExecutionState::Aarch32, raw, 4);
+            return Ok(if cond != Condition::AL {
+                insn.with_cond(cond)
+            } else {
+                insn
+            });
+        }
+
+        // MRS/MSR live in the data-processing TST/TEQ/CMP/CMN hole (op=10xx,
+        // S=0), so they must be peeled off before the generic DP decode:
+        //   MRS:     cccc 0001 0R00 1111 Rd   0000 0000 0000
+        //   MSR reg: cccc 0001 0R10 mask 1111 0000 0000 Rm
+        //   MSR imm: cccc 0011 0R10 mask 1111 imm12
+        let psr_xfer = if raw & 0x0FBF_0FFF == 0x010F_0000 {
+            Some(Mnemonic::MRS)
+        } else if raw & 0x0FB0_FFF0 == 0x0120_F000
+            || (raw & 0x0FB0_F000 == 0x0320_F000 && raw & 0x000F_0000 != 0)
+        {
+            // MSR register / MSR immediate; the immediate form with mask=0000
+            // is the hint space (NOP/YIELD/WFE/WFI/SEV), not MSR.
+            Some(Mnemonic::MSR)
+        } else {
+            None
+        };
+        if let Some(m) = psr_xfer {
+            let insn = DecodedInsn::new(m, ExecutionState::Aarch32, raw, 4);
+            return Ok(if cond != Condition::AL {
+                insn.with_cond(cond)
+            } else {
+                insn
+            });
+        }
+
         // Extract op1 (bits 27:25) and op (bit 4)
         let op1 = (raw >> 25) & 0x7;
         let op = (raw >> 4) & 1;
@@ -85,6 +148,26 @@ impl Aarch32Decoder {
     // =========================================================================
 
     fn decode_unconditional(raw: u32) -> Result<DecodedInsn, DecodeError> {
+        // PLD/PLDW/PLI (preload hints): 1111 01xx U x01/UR01 Rn 1111 ... —
+        // load/store-class encodings with Rt=0b1111. Architecturally hints;
+        // executed as NOPs.
+        if raw & 0x0C10_F000 == 0x0410_F000 {
+            return Ok(DecodedInsn::new(Mnemonic::NOP, ExecutionState::Aarch32, raw, 4));
+        }
+
+        // CPS<effect> {#mode}: 1111 0001 0000 imod M 0 xxxx xxxx AIF 0 mode
+        if raw & 0xFFF1_FE20 == 0xF100_0000 {
+            return Ok(DecodedInsn::new(Mnemonic::CPS, ExecutionState::Aarch32, raw, 4));
+        }
+        // SRS{<amode>} sp{!}, #mode: 1111 100P U1W0 1101 0000 0101 000 mode
+        if raw & 0xFE5F_FFE0 == 0xF84D_0500 {
+            return Ok(DecodedInsn::new(Mnemonic::SRS, ExecutionState::Aarch32, raw, 4));
+        }
+        // RFE{<amode>} Rn{!}: 1111 100P U0W1 Rn 0000 1010 0000 0000
+        if raw & 0xFE50_FFFF == 0xF810_0A00 {
+            return Ok(DecodedInsn::new(Mnemonic::RFE, ExecutionState::Aarch32, raw, 4));
+        }
+
         if let Some(insn) = Self::decode_neon_vext(raw) {
             return Ok(insn);
         }

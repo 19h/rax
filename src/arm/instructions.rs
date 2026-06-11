@@ -333,6 +333,8 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             Mnemonic::STXRB => self.exec_strexb(insn),
             Mnemonic::LDXRH => self.exec_ldrexh(insn),
             Mnemonic::STXRH => self.exec_strexh(insn),
+            Mnemonic::LDXP => self.exec_ldrexd(insn),
+            Mnemonic::STXP => self.exec_strexd(insn),
             Mnemonic::CLREX => self.exec_clrex(insn),
 
             // Load/Store Multiple
@@ -353,6 +355,10 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                 ExecResult::Continue
             }
             Mnemonic::WFI | Mnemonic::WFE => ExecResult::Halt,
+            Mnemonic::CPS => self.exec_cps(insn),
+            Mnemonic::SRS => self.exec_srs(insn),
+            Mnemonic::RFE => self.exec_rfe(insn),
+            Mnemonic::SWP => self.exec_swp(insn),
             Mnemonic::BKPT => self.exec_bkpt(insn),
             Mnemonic::UDF => ExecResult::Exception(ExceptionType::UndefinedInstruction),
             Mnemonic::MRS => self.exec_mrs(insn),
@@ -686,16 +692,13 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
     pub fn exception_return(&mut self) {
         if let Some(spsr) = self.cpu.get_current_spsr() {
             let spsr_value = spsr.to_u32();
-            let new_mode = ProcessorMode::from_bits(spsr.mode);
 
-            if let Some(mode) = new_mode {
-                // Restore CPSR from SPSR
+            if let Some(mode) = ProcessorMode::from_bits(spsr.mode) {
+                // Bank-switch first: change_mode reads the OLD mode from
+                // cpsr.mode to save the outgoing SP/LR, so the full CPSR
+                // restore must happen after it.
+                self.cpu.change_mode(mode);
                 self.cpu.cpsr = Psr::from_u32(spsr_value);
-
-                // Switch mode
-                if mode as u8 != self.cpu.cpsr.mode {
-                    self.cpu.change_mode(mode);
-                }
             }
         }
     }
@@ -1205,13 +1208,16 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
 
     fn exec_blx(&mut self, insn: &DecodedInsn) -> ExecResult {
         let return_addr = self.cpu.regs[15].wrapping_add(4);
-        self.cpu.regs[14] = return_addr;
 
         if let Some(m) = self.decode_reg_operand(insn, 0) {
+            // Read the target BEFORE writing LR: `blx lr` must branch to the
+            // old LR value.
             let target = self.reg(m);
+            self.cpu.regs[14] = return_addr;
             self.cpu.cpsr.t = (target & 1) != 0;
             ExecResult::Branch(target & !1)
         } else if let Some(target) = self.decode_branch_target(insn) {
+            self.cpu.regs[14] = return_addr;
             self.cpu.cpsr.t = true;
             ExecResult::Branch(target)
         } else {
@@ -1523,6 +1529,54 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
+    /// LDREXD: doubleword exclusive load into an even/odd register pair.
+    fn exec_ldrexd(&mut self, insn: &DecodedInsn) -> ExecResult {
+        let t = ((insn.raw >> 12) & 0xF) as usize;
+        let n = ((insn.raw >> 16) & 0xF) as usize;
+        if t & 1 != 0 || t == 14 {
+            return ExecResult::Undefined;
+        }
+        let address = self.reg(n);
+
+        self.exclusive_monitor.mark_exclusive(address, 8);
+
+        let lo = match self.mem.read_word(address) {
+            Ok(d) => d,
+            Err(e) => return ExecResult::MemoryFault(e),
+        };
+        let hi = match self.mem.read_word(address.wrapping_add(4)) {
+            Ok(d) => d,
+            Err(e) => return ExecResult::MemoryFault(e),
+        };
+        self.cpu.regs[t] = lo;
+        self.cpu.regs[t + 1] = hi;
+        ExecResult::Continue
+    }
+
+    /// STREXD: doubleword exclusive store from an even/odd register pair.
+    fn exec_strexd(&mut self, insn: &DecodedInsn) -> ExecResult {
+        let d = ((insn.raw >> 12) & 0xF) as usize;
+        let t = (insn.raw & 0xF) as usize;
+        let n = ((insn.raw >> 16) & 0xF) as usize;
+        if t & 1 != 0 || t == 14 {
+            return ExecResult::Undefined;
+        }
+        let address = self.reg(n);
+
+        if self.exclusive_monitor.check_and_clear(address, 8) {
+            if let Err(e) = self.mem.write_word(address, self.reg(t)) {
+                return ExecResult::MemoryFault(e);
+            }
+            if let Err(e) = self.mem.write_word(address.wrapping_add(4), self.reg(t + 1)) {
+                return ExecResult::MemoryFault(e);
+            }
+            self.cpu.regs[d] = 0; // Success
+        } else {
+            self.cpu.regs[d] = 1; // Failure
+        }
+        ExecResult::Continue
+    }
+
     fn exec_ldrexb(&mut self, insn: &DecodedInsn) -> ExecResult {
         let t = ((insn.raw >> 12) & 0xF) as usize;
         let n = ((insn.raw >> 16) & 0xF) as usize;
@@ -1626,6 +1680,13 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             base.wrapping_sub(count * 4)
         };
 
+        // A32 S bit (the `^` forms): without PC in an LDM list it selects the
+        // USER bank for the transfer; an LDM with PC additionally restores
+        // CPSR from the current SPSR (exception return).
+        let s_bit = insn.state == crate::arm::ExecutionState::Aarch32 && (insn.raw >> 22) & 1 == 1;
+        let exception_return = s_bit && is_load && reglist & 0x8000 != 0;
+        let user_bank = s_bit && !exception_return && !self.cpu.is_user_or_system();
+
         let mut addr = low;
         let mut branch_target = None;
         for i in 0..16 {
@@ -1637,6 +1698,8 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                     Ok(d) => {
                         if i == 15 {
                             branch_target = Some(d);
+                        } else if user_bank && (i == 13 || i == 14) {
+                            self.cpu.regs_usr[i - 13] = d;
                         } else {
                             self.cpu.regs[i] = d;
                         }
@@ -1646,6 +1709,8 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             } else {
                 let val = if i == 15 {
                     self.cpu.get_pc()
+                } else if user_bank && (i == 13 || i == 14) {
+                    self.cpu.regs_usr[i - 13]
                 } else {
                     self.reg(i)
                 };
@@ -1659,6 +1724,11 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         // Writeback (suppressed for LDM when the base is in the loaded list).
         if wback && !(is_load && reglist & (1 << n) != 0) {
             self.cpu.regs[n] = wb_val;
+        }
+
+        if exception_return {
+            let spsr = self.current_spsr_bits();
+            self.write_cpsr_all(spsr);
         }
 
         if let Some(target) = branch_target {
@@ -1986,6 +2056,188 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
     // =========================================================================
     // Coprocessor Operations
     // =========================================================================
+
+    /// CPS: change processor state (ARMv6). NOP in user mode.
+    fn exec_cps(&mut self, insn: &DecodedInsn) -> ExecResult {
+        if self.cpu.is_user_or_system() && self.cpu.cpsr.mode == ProcessorMode::User as u8 {
+            return ExecResult::Continue;
+        }
+        let raw = insn.raw;
+        let imod = (raw >> 18) & 0x3;
+        let m = (raw >> 17) & 1;
+        let (a, i, f) = ((raw >> 8) & 1, (raw >> 7) & 1, (raw >> 6) & 1);
+        match imod {
+            0b10 => {
+                // CPSIE: enable = clear mask bits
+                if a == 1 { self.cpu.cpsr.a = false; }
+                if i == 1 { self.cpu.cpsr.i = false; }
+                if f == 1 { self.cpu.cpsr.f = false; }
+            }
+            0b11 => {
+                // CPSID: disable = set mask bits
+                if a == 1 { self.cpu.cpsr.a = true; }
+                if i == 1 { self.cpu.cpsr.i = true; }
+                if f == 1 { self.cpu.cpsr.f = true; }
+            }
+            _ => {}
+        }
+        if m == 1 {
+            if let Some(mode) = ProcessorMode::from_bits((raw & 0x1F) as u8) {
+                self.cpu.change_mode(mode);
+            }
+        }
+        ExecResult::Continue
+    }
+
+    /// SRS: store return state (LR and SPSR of the current mode) to the
+    /// stack of the mode given in the instruction.
+    fn exec_srs(&mut self, insn: &DecodedInsn) -> ExecResult {
+        let raw = insn.raw;
+        let p = (raw >> 24) & 1 == 1;
+        let u = (raw >> 23) & 1 == 1;
+        let w = (raw >> 21) & 1 == 1;
+        let mode_bits = (raw & 0x1F) as u8;
+        let cur_mode = self.cpu.cpsr.mode;
+        let sp = self.banked_sp(mode_bits);
+        let low = match (p, u) {
+            (false, true) => sp,                      // IA
+            (true, true) => sp.wrapping_add(4),       // IB
+            (false, false) => sp.wrapping_sub(4),     // DA
+            (true, false) => sp.wrapping_sub(8),      // DB
+        };
+        let lr = self.cpu.regs[14];
+        let spsr = self.current_spsr_bits();
+        if let Err(e) = self.mem.write_word(low, lr) {
+            return ExecResult::MemoryFault(e);
+        }
+        if let Err(e) = self.mem.write_word(low.wrapping_add(4), spsr) {
+            return ExecResult::MemoryFault(e);
+        }
+        if w {
+            let nb = if u { sp.wrapping_add(8) } else { sp.wrapping_sub(8) };
+            self.set_banked_sp(mode_bits, nb);
+        }
+        let _ = cur_mode;
+        ExecResult::Continue
+    }
+
+    /// RFE: return from exception — load PC and CPSR from [Rn].
+    fn exec_rfe(&mut self, insn: &DecodedInsn) -> ExecResult {
+        let raw = insn.raw;
+        let p = (raw >> 24) & 1 == 1;
+        let u = (raw >> 23) & 1 == 1;
+        let w = (raw >> 21) & 1 == 1;
+        let n = ((raw >> 16) & 0xF) as usize;
+        let base = self.cpu.regs[n];
+        let low = match (p, u) {
+            (false, true) => base,
+            (true, true) => base.wrapping_add(4),
+            (false, false) => base.wrapping_sub(4),
+            (true, false) => base.wrapping_sub(8),
+        };
+        let new_pc = match self.mem.read_word(low) {
+            Ok(v) => v,
+            Err(e) => return ExecResult::MemoryFault(e),
+        };
+        let new_cpsr = match self.mem.read_word(low.wrapping_add(4)) {
+            Ok(v) => v,
+            Err(e) => return ExecResult::MemoryFault(e),
+        };
+        if w {
+            let nb = if u { base.wrapping_add(8) } else { base.wrapping_sub(8) };
+            self.cpu.regs[n] = nb;
+        }
+        self.write_cpsr_all(new_cpsr);
+        ExecResult::Branch(new_pc)
+    }
+
+    /// SWP/SWPB: atomic swap (ARMv6-deprecated but still used).
+    fn exec_swp(&mut self, insn: &DecodedInsn) -> ExecResult {
+        let raw = insn.raw;
+        let byte = (raw >> 22) & 1 == 1;
+        let n = ((raw >> 16) & 0xF) as usize;
+        let d = ((raw >> 12) & 0xF) as usize;
+        let m = (raw & 0xF) as usize;
+        let addr = self.cpu.regs[n];
+        if byte {
+            let old = match self.mem.read_byte(addr) {
+                Ok(v) => v,
+                Err(e) => return ExecResult::MemoryFault(e),
+            };
+            if let Err(e) = self.mem.write_byte(addr, self.cpu.regs[m] as u8) {
+                return ExecResult::MemoryFault(e);
+            }
+            self.cpu.regs[d] = old as u32;
+        } else {
+            let old = match self.mem.read_word(addr) {
+                Ok(v) => v,
+                Err(e) => return ExecResult::MemoryFault(e),
+            };
+            if let Err(e) = self.mem.write_word(addr, self.cpu.regs[m]) {
+                return ExecResult::MemoryFault(e);
+            }
+            self.cpu.regs[d] = old;
+        }
+        ExecResult::Continue
+    }
+
+    /// SP of an arbitrary mode (live register if it is the current mode).
+    fn banked_sp(&self, mode_bits: u8) -> u32 {
+        if mode_bits == self.cpu.cpsr.mode {
+            return self.cpu.regs[13];
+        }
+        match ProcessorMode::from_bits(mode_bits) {
+            Some(ProcessorMode::User) | Some(ProcessorMode::System) => self.cpu.regs_usr[0],
+            Some(ProcessorMode::Fiq) => self.cpu.regs_fiq[5],
+            Some(ProcessorMode::Irq) => self.cpu.regs_irq[0],
+            Some(ProcessorMode::Supervisor) => self.cpu.regs_svc[0],
+            Some(ProcessorMode::Monitor) => self.cpu.regs_mon[0],
+            Some(ProcessorMode::Abort) => self.cpu.regs_abt[0],
+            Some(ProcessorMode::Undefined) => self.cpu.regs_und[0],
+            _ => self.cpu.regs[13],
+        }
+    }
+
+    fn set_banked_sp(&mut self, mode_bits: u8, value: u32) {
+        if mode_bits == self.cpu.cpsr.mode {
+            self.cpu.regs[13] = value;
+            return;
+        }
+        match ProcessorMode::from_bits(mode_bits) {
+            Some(ProcessorMode::User) | Some(ProcessorMode::System) => {
+                self.cpu.regs_usr[0] = value;
+            }
+            Some(ProcessorMode::Fiq) => self.cpu.regs_fiq[5] = value,
+            Some(ProcessorMode::Irq) => self.cpu.regs_irq[0] = value,
+            Some(ProcessorMode::Supervisor) => self.cpu.regs_svc[0] = value,
+            Some(ProcessorMode::Monitor) => self.cpu.regs_mon[0] = value,
+            Some(ProcessorMode::Abort) => self.cpu.regs_abt[0] = value,
+            Some(ProcessorMode::Undefined) => self.cpu.regs_und[0] = value,
+            _ => self.cpu.regs[13] = value,
+        }
+    }
+
+    /// Raw bits of the current mode's SPSR (CPSR if none).
+    fn current_spsr_bits(&self) -> u32 {
+        match ProcessorMode::from_bits(self.cpu.cpsr.mode) {
+            Some(ProcessorMode::Fiq) => self.cpu.spsr_fiq.to_u32(),
+            Some(ProcessorMode::Irq) => self.cpu.spsr_irq.to_u32(),
+            Some(ProcessorMode::Supervisor) => self.cpu.spsr_svc.to_u32(),
+            Some(ProcessorMode::Monitor) => self.cpu.spsr_mon.to_u32(),
+            Some(ProcessorMode::Abort) => self.cpu.spsr_abt.to_u32(),
+            Some(ProcessorMode::Undefined) => self.cpu.spsr_und.to_u32(),
+            _ => self.cpu.cpsr.to_u32(),
+        }
+    }
+
+    /// Write CPSR including the mode field (exception-return semantics).
+    fn write_cpsr_all(&mut self, value: u32) {
+        let new_mode = (value & 0x1F) as u8;
+        if let Some(mode) = ProcessorMode::from_bits(new_mode) {
+            self.cpu.change_mode(mode);
+        }
+        self.cpu.cpsr = Psr::from_u32(value);
+    }
 
     fn exec_mcr(&mut self, insn: &DecodedInsn) -> ExecResult {
         let t = ((insn.raw >> 12) & 0xF) as usize;

@@ -432,6 +432,124 @@ impl Armv7aArch {
     }
 }
 
+/// Samsung S3C64xx physical RAM base (SMDK6410: 128MB at 0x50000000) — the
+/// platform the 32-bit ARMv6 machine models.
+pub const ARMV7A_RAM_BASE: u64 = 0x5000_0000;
+/// Kernel Image load offset (TEXT_OFFSET 0x8000 for 32-bit ARM).
+pub const ARMV7A_TEXT_OFFSET: u64 = 0x8000;
+/// Where the DTB is placed.
+pub const ARMV7A_DTB_ADDR: u64 = 0x5300_0000;
+/// Where the initrd/initramfs is placed.
+pub const ARMV7A_INITRD_ADDR: u64 = 0x5400_0000;
+
+/// Insert `linux,initrd-start`/`linux,initrd-end` into a flattened device
+/// tree's `/chosen` node (creating the node if absent), rebuilding the blob.
+fn fdt_set_initrd(dtb: &[u8], start: u32, end: u32) -> Result<Vec<u8>> {
+    let be32 = |off: usize| -> u32 { u32::from_be_bytes(dtb[off..off + 4].try_into().unwrap()) };
+    if dtb.len() < 40 || be32(0) != 0xD00D_FEED {
+        return Err(Error::KernelLoad("invalid device tree blob".to_string()));
+    }
+    let off_struct = be32(8) as usize;
+    let off_strings = be32(12) as usize;
+    let size_strings = be32(32) as usize;
+    let size_struct = be32(36) as usize;
+
+    let structure = &dtb[off_struct..off_struct + size_struct];
+    let strings = &dtb[off_strings..off_strings + size_strings];
+
+    // Locate `/chosen`: depth-1 BEGIN_NODE named "chosen". Token stream:
+    // BEGIN_NODE(1) name..pad4 | END_NODE(2) | PROP(3) len nameoff data..pad4
+    // | NOP(4) | END(9).
+    let tok = |p: usize| -> u32 {
+        u32::from_be_bytes(structure[p..p + 4].try_into().unwrap())
+    };
+    let mut p = 0usize;
+    let mut depth = 0usize;
+    let mut chosen_body: Option<usize> = None; // offset right after the node name
+    let mut root_body: Option<usize> = None;
+    while p + 4 <= structure.len() {
+        match tok(p) {
+            1 => {
+                let name_start = p + 4;
+                let name_end = name_start
+                    + structure[name_start..]
+                        .iter()
+                        .position(|&b| b == 0)
+                        .unwrap_or(0);
+                let name = &structure[name_start..name_end];
+                p = (name_end + 1 + 3) & !3;
+                if depth == 0 {
+                    root_body = Some(p);
+                } else if depth == 1 && name == b"chosen" {
+                    chosen_body = Some(p);
+                    break;
+                }
+                depth += 1;
+            }
+            2 => {
+                depth = depth.saturating_sub(1);
+                p += 4;
+            }
+            3 => {
+                let len = tok(p + 4) as usize;
+                p = (p + 12 + len + 3) & !3;
+            }
+            4 => p += 4,
+            _ => break, // END
+        }
+    }
+
+    // Property name strings appended to the strings block.
+    let mut new_strings = strings.to_vec();
+    let start_nameoff = new_strings.len() as u32;
+    new_strings.extend_from_slice(b"linux,initrd-start\0");
+    let end_nameoff = new_strings.len() as u32;
+    new_strings.extend_from_slice(b"linux,initrd-end\0");
+
+    let mut props = Vec::new();
+    for (nameoff, value) in [(start_nameoff, start), (end_nameoff, end)] {
+        props.extend_from_slice(&3u32.to_be_bytes());
+        props.extend_from_slice(&4u32.to_be_bytes());
+        props.extend_from_slice(&nameoff.to_be_bytes());
+        props.extend_from_slice(&value.to_be_bytes());
+    }
+
+    let mut new_struct = Vec::with_capacity(size_struct + 96);
+    match (chosen_body, root_body) {
+        (Some(at), _) => {
+            new_struct.extend_from_slice(&structure[..at]);
+            new_struct.extend_from_slice(&props);
+            new_struct.extend_from_slice(&structure[at..]);
+        }
+        (None, Some(at)) => {
+            new_struct.extend_from_slice(&structure[..at]);
+            new_struct.extend_from_slice(&1u32.to_be_bytes());
+            new_struct.extend_from_slice(b"chosen\0\0"); // name + pad to 4
+            new_struct.extend_from_slice(&props);
+            new_struct.extend_from_slice(&2u32.to_be_bytes());
+            new_struct.extend_from_slice(&structure[at..]);
+        }
+        _ => {
+            return Err(Error::KernelLoad(
+                "device tree has no root node".to_string(),
+            ));
+        }
+    }
+
+    // Reassemble: header | (everything between header and struct, i.e. the
+    // memory reservation map) | struct | strings.
+    let mut out = dtb[..off_struct].to_vec();
+    out.extend_from_slice(&new_struct);
+    let new_off_strings = out.len();
+    out.extend_from_slice(&new_strings);
+    let total = out.len();
+    out[4..8].copy_from_slice(&(total as u32).to_be_bytes());
+    out[12..16].copy_from_slice(&(new_off_strings as u32).to_be_bytes());
+    out[32..36].copy_from_slice(&(new_strings.len() as u32).to_be_bytes());
+    out[36..40].copy_from_slice(&(new_struct.len() as u32).to_be_bytes());
+    Ok(out)
+}
+
 impl Arch for Armv7aArch {
     fn name(&self) -> &'static str {
         "armv7a"
@@ -442,7 +560,12 @@ impl Arch for Armv7aArch {
     }
 
     fn serial_mmio_base(&self) -> Option<u64> {
-        Some(ARMV7A_UART_BASE)
+        // Samsung S3C64xx UART0 (served inside the vCPU's memory bridge).
+        Some(0x7F00_5000)
+    }
+
+    fn ram_base(&self) -> u64 {
+        ARMV7A_RAM_BASE
     }
 
     fn load_kernel(&self, mem: &GuestMemoryMmap, config: &VmConfig) -> Result<BootInfo> {
@@ -454,15 +577,63 @@ impl Arch for Armv7aArch {
             return Err(Error::KernelLoad("image is too small".to_string()));
         }
 
-        // Load at 0x10000 (common for ARM Linux zImage)
-        let load_addr = 0x0001_0000u64;
+        // 32-bit ARM boot protocol (DT): uncompressed Image at RAM base +
+        // TEXT_OFFSET, device tree above it, r2 = DTB physical address.
+        let load_addr = ARMV7A_RAM_BASE + ARMV7A_TEXT_OFFSET;
         mem.write_slice(&buf, GuestAddress(load_addr))?;
+
+        // The device tree: --dtb on the command line, with a fallback to a
+        // `dtbs/` directory next to the kernel image.
+        let dtb_path = match &config.arm_dtb {
+            Some(p) => p.clone(),
+            None => {
+                let fallback = config
+                    .kernel
+                    .parent()
+                    .map(|d| d.join("dtbs/s3c6410-smdk6410.dtb"))
+                    .filter(|p| p.exists());
+                fallback.ok_or_else(|| {
+                    Error::InvalidConfig(
+                        "armv7a DT boot requires --dtb <file> (no dtbs/s3c6410-smdk6410.dtb \
+                         found next to the kernel)"
+                            .to_string(),
+                    )
+                })?
+            }
+        };
+        let mut dtb = Vec::new();
+        File::open(&dtb_path)?.read_to_end(&mut dtb)?;
+
+        // Optional initramfs: loaded high in RAM and advertised through the
+        // /chosen node so the kernel picks it up.
+        let mut initrd_len = 0usize;
+        if let Some(initrd_path) = &config.initrd {
+            let mut initrd = Vec::new();
+            File::open(initrd_path)?.read_to_end(&mut initrd)?;
+            initrd_len = initrd.len();
+            mem.write_slice(&initrd, GuestAddress(ARMV7A_INITRD_ADDR))?;
+            dtb = fdt_set_initrd(
+                &dtb,
+                ARMV7A_INITRD_ADDR as u32,
+                (ARMV7A_INITRD_ADDR as usize + initrd_len) as u32,
+            )?;
+        }
+        mem.write_slice(&dtb, GuestAddress(ARMV7A_DTB_ADDR))?;
+
+        tracing::info!(
+            entry = format!("{:#x}", load_addr),
+            image_size = buf.len(),
+            dtb = %dtb_path.display(),
+            dtb_addr = format!("{:#x}", ARMV7A_DTB_ADDR),
+            initrd_len,
+            "ARMv6/ARMv7-A boot layout"
+        );
 
         let info = ArmBootInfo {
             entry_point: load_addr,
             load_addr,
             image_size: buf.len() as u64,
-            dtb_addr: None,
+            dtb_addr: Some(ARMV7A_DTB_ADDR),
             initial_sp: None,
         };
 
@@ -496,6 +667,9 @@ impl Arch for Armv7aArch {
         regs.r[0] = 0;
         regs.r[1] = 0xFFFF_FFFF; // Machine type (0xFFFFFFFF = use DTB)
         regs.r[2] = boot.dtb_addr.unwrap_or(0) as u32;
+
+        // Supervisor mode, IRQ/FIQ masked, ARM state.
+        regs.cpsr = 0xD3;
 
         let sregs = Aarch32SystemRegisters::default();
 

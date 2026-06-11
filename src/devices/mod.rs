@@ -18,6 +18,7 @@ pub mod pic;
 pub mod pit;
 pub mod pl011;
 pub mod rtc;
+pub mod s3c64xx;
 pub mod serial;
 pub mod sysctl;
 pub mod uhci;
