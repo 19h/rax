@@ -3470,16 +3470,8 @@ impl X86_64Lifter {
             });
         }
 
-        let width = if prefix.w {
-            OpWidth::W64
-        } else {
-            OpWidth::W32
-        };
-        let mem_width = if prefix.w {
-            MemWidth::B8
-        } else {
-            MemWidth::B4
-        };
+        let width = if prefix.w { OpWidth::W64 } else { OpWidth::W32 };
+        let mem_width = if prefix.w { MemWidth::B8 } else { MemWidth::B4 };
         let modrm_prefix = X86Prefix {
             rex: prefix.rex,
             cursor: prefix.bytes + 1,
@@ -3774,16 +3766,8 @@ impl X86_64Lifter {
             });
         }
 
-        let width = if prefix.w {
-            OpWidth::W64
-        } else {
-            OpWidth::W32
-        };
-        let mem_width = if prefix.w {
-            MemWidth::B8
-        } else {
-            MemWidth::B4
-        };
+        let width = if prefix.w { OpWidth::W64 } else { OpWidth::W32 };
+        let mem_width = if prefix.w { MemWidth::B8 } else { MemWidth::B4 };
         let modrm_prefix = X86Prefix {
             rex: prefix.rex,
             rep_prefix: match prefix.pp {
@@ -3860,16 +3844,8 @@ impl X86_64Lifter {
             });
         }
 
-        let width = if prefix.w {
-            OpWidth::W64
-        } else {
-            OpWidth::W32
-        };
-        let mem_width = if prefix.w {
-            MemWidth::B8
-        } else {
-            MemWidth::B4
-        };
+        let width = if prefix.w { OpWidth::W64 } else { OpWidth::W32 };
+        let mem_width = if prefix.w { MemWidth::B8 } else { MemWidth::B4 };
         let modrm_prefix = X86Prefix {
             rex: prefix.rex,
             rep_prefix: Some(0xF2),
@@ -3939,16 +3915,8 @@ impl X86_64Lifter {
             });
         }
 
-        let width = if prefix.w {
-            OpWidth::W64
-        } else {
-            OpWidth::W32
-        };
-        let mem_width = if prefix.w {
-            MemWidth::B8
-        } else {
-            MemWidth::B4
-        };
+        let width = if prefix.w { OpWidth::W64 } else { OpWidth::W32 };
+        let mem_width = if prefix.w { MemWidth::B8 } else { MemWidth::B4 };
         let modrm_prefix = X86Prefix {
             rex: prefix.rex,
             rep_prefix: match prefix.pp {
@@ -4050,16 +4018,8 @@ impl X86_64Lifter {
             });
         }
 
-        let width = if prefix.w {
-            OpWidth::W64
-        } else {
-            OpWidth::W32
-        };
-        let mem_width = if prefix.w {
-            MemWidth::B8
-        } else {
-            MemWidth::B4
-        };
+        let width = if prefix.w { OpWidth::W64 } else { OpWidth::W32 };
+        let mem_width = if prefix.w { MemWidth::B8 } else { MemWidth::B4 };
         let modrm_prefix = X86Prefix {
             rex: prefix.rex,
             rep_prefix: Some(0xF2),
@@ -4522,9 +4482,8 @@ impl X86_64Lifter {
             },
             X86VecMap::Map0F38 => match opcode {
                 0xE0..=0xEF => self.lift_cmpccxadd(prefix, opcode, bytes, pc, ctx),
-                0xF2
-                    if prefix.encoding == VecEncodingKind::Vex
-                        && prefix.pp == X86SsePrefix::None =>
+                0xF2 if prefix.encoding == VecEncodingKind::Vex
+                    && prefix.pp == X86SsePrefix::None =>
                 {
                     self.lift_vex_andn_0f38(prefix, bytes, pc, ctx)
                 }
@@ -4534,9 +4493,8 @@ impl X86_64Lifter {
                 {
                     self.lift_vex_bzhi_bextr_0f38(prefix, opcode, bytes, pc, ctx)
                 }
-                0xF5
-                    if prefix.encoding == VecEncodingKind::Vex
-                        && matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne) =>
+                0xF5 if prefix.encoding == VecEncodingKind::Vex
+                    && matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne) =>
                 {
                     self.lift_vex_pdep_pext_0f38(prefix, bytes, pc, ctx)
                 }
@@ -4545,12 +4503,11 @@ impl X86_64Lifter {
                 {
                     self.lift_vex_mulx_0f38(prefix, bytes, pc, ctx)
                 }
-                0xF7
-                    if prefix.encoding == VecEncodingKind::Vex
-                        && matches!(
-                            prefix.pp,
-                            X86SsePrefix::OpSize | X86SsePrefix::Rep | X86SsePrefix::Repne
-                        ) =>
+                0xF7 if prefix.encoding == VecEncodingKind::Vex
+                    && matches!(
+                        prefix.pp,
+                        X86SsePrefix::OpSize | X86SsePrefix::Rep | X86SsePrefix::Repne
+                    ) =>
                 {
                     self.lift_vex_bmi2_shift_0f38(prefix, bytes, pc, ctx)
                 }
@@ -4613,9 +4570,8 @@ impl X86_64Lifter {
                 }),
             },
             X86VecMap::Map0F3A => match opcode {
-                0xF0
-                    if prefix.encoding == VecEncodingKind::Vex
-                        && prefix.pp == X86SsePrefix::Repne =>
+                0xF0 if prefix.encoding == VecEncodingKind::Vex
+                    && prefix.pp == X86SsePrefix::Repne =>
                 {
                     self.lift_vex_bmi2_rorx_0f3a(prefix, bytes, pc, ctx)
                 }
@@ -10479,26 +10435,10 @@ mod tests {
     #[test]
     fn lift_vex_bzhi_bextr_registers_like_llvm() {
         for (bytes, name, width) in [
-            (
-                &[0xC4, 0xE2, 0x70, 0xF5, 0xC2][..],
-                "bzhi",
-                OpWidth::W32,
-            ),
-            (
-                &[0xC4, 0xE2, 0x70, 0xF7, 0xC2][..],
-                "bextr",
-                OpWidth::W32,
-            ),
-            (
-                &[0xC4, 0xE2, 0xF0, 0xF5, 0xC2][..],
-                "bzhi",
-                OpWidth::W64,
-            ),
-            (
-                &[0xC4, 0xE2, 0xF0, 0xF7, 0xC2][..],
-                "bextr",
-                OpWidth::W64,
-            ),
+            (&[0xC4, 0xE2, 0x70, 0xF5, 0xC2][..], "bzhi", OpWidth::W32),
+            (&[0xC4, 0xE2, 0x70, 0xF7, 0xC2][..], "bextr", OpWidth::W32),
+            (&[0xC4, 0xE2, 0xF0, 0xF5, 0xC2][..], "bzhi", OpWidth::W64),
+            (&[0xC4, 0xE2, 0xF0, 0xF7, 0xC2][..], "bextr", OpWidth::W64),
         ] {
             // LLVM 23 examples:
             //   `bzhi eax, edx, ecx`  => c4 e2 70 f5 c2
@@ -10523,14 +10463,8 @@ mod tests {
     #[test]
     fn lift_vex_bzhi_bextr_memory_source_like_llvm() {
         for (bytes, name) in [
-            (
-                &[0xC4, 0x82, 0x30, 0xF5, 0x44, 0x9A, 0x20][..],
-                "bzhi",
-            ),
-            (
-                &[0xC4, 0x82, 0x30, 0xF7, 0x44, 0x9A, 0x20][..],
-                "bextr",
-            ),
+            (&[0xC4, 0x82, 0x30, 0xF5, 0x44, 0x9A, 0x20][..], "bzhi"),
+            (&[0xC4, 0x82, 0x30, 0xF7, 0x44, 0x9A, 0x20][..], "bextr"),
         ] {
             // LLVM 23:
             //   `bzhi eax, dword ptr [r10 + 4*r11 + 32], r9d`
@@ -10626,26 +10560,10 @@ mod tests {
     #[test]
     fn lift_vex_pdep_pext_registers_like_llvm() {
         for (bytes, name, width) in [
-            (
-                &[0xC4, 0xE2, 0x73, 0xF5, 0xC2][..],
-                "pdep",
-                OpWidth::W32,
-            ),
-            (
-                &[0xC4, 0xE2, 0x72, 0xF5, 0xC2][..],
-                "pext",
-                OpWidth::W32,
-            ),
-            (
-                &[0xC4, 0xE2, 0xF3, 0xF5, 0xC2][..],
-                "pdep",
-                OpWidth::W64,
-            ),
-            (
-                &[0xC4, 0xE2, 0xF2, 0xF5, 0xC2][..],
-                "pext",
-                OpWidth::W64,
-            ),
+            (&[0xC4, 0xE2, 0x73, 0xF5, 0xC2][..], "pdep", OpWidth::W32),
+            (&[0xC4, 0xE2, 0x72, 0xF5, 0xC2][..], "pext", OpWidth::W32),
+            (&[0xC4, 0xE2, 0xF3, 0xF5, 0xC2][..], "pdep", OpWidth::W64),
+            (&[0xC4, 0xE2, 0xF2, 0xF5, 0xC2][..], "pext", OpWidth::W64),
         ] {
             // LLVM 23 examples:
             //   `pdep eax, ecx, edx` => c4 e2 73 f5 c2
@@ -10670,14 +10588,8 @@ mod tests {
     #[test]
     fn lift_vex_pdep_pext_memory_mask_like_llvm() {
         for (bytes, name) in [
-            (
-                &[0xC4, 0x82, 0x33, 0xF5, 0x44, 0x9A, 0x20][..],
-                "pdep",
-            ),
-            (
-                &[0xC4, 0x82, 0x32, 0xF5, 0x44, 0x9A, 0x20][..],
-                "pext",
-            ),
+            (&[0xC4, 0x82, 0x33, 0xF5, 0x44, 0x9A, 0x20][..], "pdep"),
+            (&[0xC4, 0x82, 0x32, 0xF5, 0x44, 0x9A, 0x20][..], "pext"),
         ] {
             // LLVM 23:
             //   `pdep eax, r9d, dword ptr [r10 + 4*r11 + 32]`
@@ -10807,14 +10719,7 @@ mod tests {
             }
             other => panic!("expected VEX MULX memory source load, got {other:?}"),
         };
-        assert_vex_mulx_op(
-            &result.ops,
-            1,
-            x86_gpr(0),
-            x86_gpr(9),
-            src2,
-            OpWidth::W32,
-        );
+        assert_vex_mulx_op(&result.ops, 1, x86_gpr(0), x86_gpr(9), src2, OpWidth::W32);
     }
 
     #[test]
@@ -10923,36 +10828,12 @@ mod tests {
     #[test]
     fn lift_vex_bmi2_shift_registers_like_llvm() {
         for (bytes, expected_op, width) in [
-            (
-                &[0xC4, 0xE2, 0x72, 0xF7, 0xC3][..],
-                "sarx",
-                OpWidth::W32,
-            ),
-            (
-                &[0xC4, 0xE2, 0x73, 0xF7, 0xC3][..],
-                "shrx",
-                OpWidth::W32,
-            ),
-            (
-                &[0xC4, 0xE2, 0x71, 0xF7, 0xC3][..],
-                "shlx",
-                OpWidth::W32,
-            ),
-            (
-                &[0xC4, 0xE2, 0xF2, 0xF7, 0xC3][..],
-                "sarx",
-                OpWidth::W64,
-            ),
-            (
-                &[0xC4, 0xE2, 0xF3, 0xF7, 0xC3][..],
-                "shrx",
-                OpWidth::W64,
-            ),
-            (
-                &[0xC4, 0xE2, 0xF1, 0xF7, 0xC3][..],
-                "shlx",
-                OpWidth::W64,
-            ),
+            (&[0xC4, 0xE2, 0x72, 0xF7, 0xC3][..], "sarx", OpWidth::W32),
+            (&[0xC4, 0xE2, 0x73, 0xF7, 0xC3][..], "shrx", OpWidth::W32),
+            (&[0xC4, 0xE2, 0x71, 0xF7, 0xC3][..], "shlx", OpWidth::W32),
+            (&[0xC4, 0xE2, 0xF2, 0xF7, 0xC3][..], "sarx", OpWidth::W64),
+            (&[0xC4, 0xE2, 0xF3, 0xF7, 0xC3][..], "shrx", OpWidth::W64),
+            (&[0xC4, 0xE2, 0xF1, 0xF7, 0xC3][..], "shlx", OpWidth::W64),
         ] {
             // LLVM 23 examples:
             //   `sarx eax, ebx, ecx` => c4 e2 72 f7 c3
@@ -10975,18 +10856,9 @@ mod tests {
     #[test]
     fn lift_vex_bmi2_shift_memory_source_like_llvm() {
         for (bytes, expected_op) in [
-            (
-                &[0xC4, 0x82, 0x32, 0xF7, 0x44, 0x9A, 0x20][..],
-                "sarx",
-            ),
-            (
-                &[0xC4, 0x82, 0x33, 0xF7, 0x44, 0x9A, 0x20][..],
-                "shrx",
-            ),
-            (
-                &[0xC4, 0x82, 0x31, 0xF7, 0x44, 0x9A, 0x20][..],
-                "shlx",
-            ),
+            (&[0xC4, 0x82, 0x32, 0xF7, 0x44, 0x9A, 0x20][..], "sarx"),
+            (&[0xC4, 0x82, 0x33, 0xF7, 0x44, 0x9A, 0x20][..], "shrx"),
+            (&[0xC4, 0x82, 0x31, 0xF7, 0x44, 0x9A, 0x20][..], "shlx"),
         ] {
             // LLVM 23:
             //   `sarx eax, dword ptr [r10 + 4*r11 + 32], r9d`
@@ -11073,14 +10945,8 @@ mod tests {
     #[test]
     fn lift_vex_rorx_registers_like_llvm() {
         for (bytes, width) in [
-            (
-                &[0xC4, 0xE3, 0x7B, 0xF0, 0xC3, 0x0D][..],
-                OpWidth::W32,
-            ),
-            (
-                &[0xC4, 0xE3, 0xFB, 0xF0, 0xC3, 0x0D][..],
-                OpWidth::W64,
-            ),
+            (&[0xC4, 0xE3, 0x7B, 0xF0, 0xC3, 0x0D][..], OpWidth::W32),
+            (&[0xC4, 0xE3, 0xFB, 0xF0, 0xC3, 0x0D][..], OpWidth::W64),
         ] {
             // LLVM 23 examples:
             //   `rorx eax, ebx, 13` => c4 e3 7b f0 c3 0d
@@ -11097,8 +10963,7 @@ mod tests {
         // LLVM 23:
         //   `rorx eax, dword ptr [r10 + 4*r11 + 32], 13`
         //       => c4 83 7b f0 44 9a 20 0d
-        let result =
-            lift_single(&[0xC4, 0x83, 0x7B, 0xF0, 0x44, 0x9A, 0x20, 0x0D]).unwrap();
+        let result = lift_single(&[0xC4, 0x83, 0x7B, 0xF0, 0x44, 0x9A, 0x20, 0x0D]).unwrap();
         assert_eq!(result.bytes_consumed, 8);
         assert_eq!(result.ops.len(), 2);
         let src = match &result.ops[0].kind {
@@ -11127,10 +10992,7 @@ mod tests {
     #[test]
     fn lift_vex_rorx_rejects_invalid_forms_like_llvm() {
         for (bytes, name) in [
-            (
-                &[0xC4, 0xE3, 0x7F, 0xF0, 0xC3, 0x0D][..],
-                "rorx VEX.L=1",
-            ),
+            (&[0xC4, 0xE3, 0x7F, 0xF0, 0xC3, 0x0D][..], "rorx VEX.L=1"),
             (
                 &[0xC4, 0xE3, 0x73, 0xF0, 0xC3, 0x0D][..],
                 "rorx reserved vvvv",
@@ -12916,10 +12778,7 @@ mod tests {
 
         // Intel documents BSWAP r16 as undefined; LLVM 23 rejects the assembly
         // form even though its disassembler can print raw data16-prefixed bytes.
-        for bytes in [
-            &[0x66, 0x0F, 0xC8][..],
-            &[0x66, 0xD5, 0x90, 0xC8][..],
-        ] {
+        for bytes in [&[0x66, 0x0F, 0xC8][..], &[0x66, 0xD5, 0x90, 0xC8][..]] {
             let err = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap_err();
             assert!(matches!(err, LiftError::InvalidEncoding { .. }), "{err:?}");
         }

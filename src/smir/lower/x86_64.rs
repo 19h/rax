@@ -10545,9 +10545,7 @@ mod tests {
             src: rdx,
             control: rcx,
             width: OpWidth::W64,
-            flags: FlagUpdate::Specific(
-                FlagSet::CF.union(FlagSet::ZF).union(FlagSet::OF),
-            ),
+            flags: FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF).union(FlagSet::OF)),
         });
         assert!(
             flagful_bextr

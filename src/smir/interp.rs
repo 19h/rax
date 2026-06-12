@@ -7268,12 +7268,11 @@ mod tests {
         let mut ctx = SmirContext::new_x86_64();
         if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
             x86.xmm[2] = vec_from_bytes(&[
-                0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0xff, 0x00, 0x00, 0x00,
-                0x00, 0xff, 0x00,
+                0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00,
+                0xff, 0x00,
             ]);
-            x86.xmm[3] = vec_from_bytes(&[
-                0, 63, 1, 62, 2, 61, 3, 60, 8, 15, 16, 47, 48, 55, 56, 63,
-            ]);
+            x86.xmm[3] =
+                vec_from_bytes(&[0, 63, 1, 62, 2, 61, 3, 60, 8, 15, 16, 47, 48, 55, 56, 63]);
         }
 
         let interp = SmirInterpreter::new();
@@ -7475,8 +7474,7 @@ mod tests {
         const SF: u64 = 1 << 7;
         const OF: u64 = 1 << 11;
 
-        let bextr_flags =
-            FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF).union(FlagSet::OF));
+        let bextr_flags = FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF).union(FlagSet::OF));
         let bzhi_flags = FlagUpdate::Specific(
             FlagSet::CF
                 .union(FlagSet::ZF)

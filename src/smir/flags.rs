@@ -592,9 +592,7 @@ impl FlagState {
             | LazyFlagOp::Ror
             | LazyFlagOp::Rcl
             | LazyFlagOp::Rcr
-            | LazyFlagOp::Bextr => {
-                self.materialized.sf
-            }
+            | LazyFlagOp::Bextr => self.materialized.sf,
             _ => (lazy.result & lazy.width.sign_bit()) != 0,
         }
     }
@@ -719,9 +717,7 @@ impl FlagState {
             | LazyFlagOp::Rcl
             | LazyFlagOp::Rcr
             | LazyFlagOp::Bextr
-            | LazyFlagOp::Bzhi => {
-                self.materialized.pf
-            }
+            | LazyFlagOp::Bzhi => self.materialized.pf,
             _ => {
                 let byte = (lazy.result & 0xFF) as u8;
                 byte.count_ones() % 2 == 0

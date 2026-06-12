@@ -4,8 +4,7 @@ use crate::common::*;
 
 fn assert_invalid_bcd_opcode_raises_ud(opcode: u8) {
     let code = [
-        opcode,
-        0x48, 0xc7, 0xc0, 0xff, 0x00, 0x00, 0x00, // MOV RAX, 0xFF
+        opcode, 0x48, 0xc7, 0xc0, 0xff, 0x00, 0x00, 0x00, // MOV RAX, 0xFF
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm_no_idt(&code, None);

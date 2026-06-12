@@ -5,8 +5,8 @@
 use std::collections::HashSet;
 
 use crate::arm::decoder::{
-    AddressingMode, Condition as ArmCondition, DecodedInsn, ExtendType, MemOffset, MemOperand,
-    Mnemonic, Operand, Register, ShiftType,
+    AddressingMode, Condition as ArmCondition, DecodedInsn, ExtendType, FpRegSize, FpRegister,
+    MemOffset, MemOperand, Mnemonic, Operand, Register, ShiftType,
 };
 use crate::smir::flags::FlagUpdate;
 use crate::smir::ir::{
@@ -708,6 +708,23 @@ impl Aarch64Lifter {
                     width: OpWidth::W32,
                 },
             );
+        }
+    }
+
+    // ========================================================================
+    // FP Helpers
+    // ========================================================================
+
+    fn fp_vreg(reg: &FpRegister) -> VReg {
+        VReg::Arch(ArchReg::Arm(ArmReg::V(reg.num)))
+    }
+
+    fn fp_precision(size: &FpRegSize) -> FpPrecision {
+        match size {
+            FpRegSize::S => FpPrecision::F32,
+            FpRegSize::D => FpPrecision::F64,
+            FpRegSize::H => FpPrecision::F16,
+            _ => FpPrecision::F32,
         }
     }
 
@@ -1764,6 +1781,49 @@ impl Aarch64Lifter {
                 control = ControlFlow::IndirectBranch { target };
             }
 
+            Mnemonic::BLRAA | Mnemonic::BLRAB => {
+                if let Some(Operand::Reg(rn)) = insn.operands.get(0) {
+                    let ret_addr = pc + 4;
+                    push_op!(OpKind::Mov {
+                        dst: VReg::Arch(ArchReg::Arm(ArmReg::X(30))),
+                        src: SrcOperand::Imm(ret_addr as i64),
+                        width: OpWidth::W64,
+                    });
+                    control = ControlFlow::Call {
+                        target: CallTarget::Indirect(self.arm_reg(rn)),
+                    };
+                }
+            }
+
+            Mnemonic::RETAA | Mnemonic::RETAB => {
+                let target = VReg::Arch(ArchReg::Arm(ArmReg::X(30)));
+                control = ControlFlow::IndirectBranch { target };
+            }
+
+            Mnemonic::PACIA
+            | Mnemonic::PACIB
+            | Mnemonic::PACDA
+            | Mnemonic::PACDB
+            | Mnemonic::AUTIA
+            | Mnemonic::AUTIB
+            | Mnemonic::AUTDA
+            | Mnemonic::AUTDB
+            | Mnemonic::PACIZA
+            | Mnemonic::PACIZB
+            | Mnemonic::PACDZA
+            | Mnemonic::PACDZB
+            | Mnemonic::AUTIZA
+            | Mnemonic::AUTIZB
+            | Mnemonic::AUTDZA
+            | Mnemonic::AUTDZB
+            | Mnemonic::XPACI
+            | Mnemonic::XPACD
+            | Mnemonic::PACGA
+            | Mnemonic::IRG
+            | Mnemonic::GMI => {
+                push_op!(OpKind::Nop);
+            }
+
             Mnemonic::BCC => {
                 if let (Some(Operand::Label(offset)), Some(cond)) =
                     (insn.operands.get(0), insn.cond)
@@ -1962,6 +2022,652 @@ impl Aarch64Lifter {
                 push_op!(OpKind::Fence {
                     kind: FenceKind::Full,
                 });
+            }
+
+            // =================================================================
+            // Scalar FP - 2-source
+            // =================================================================
+            Mnemonic::FADD
+            | Mnemonic::FSUB
+            | Mnemonic::FMUL
+            | Mnemonic::FDIV
+            | Mnemonic::FMAX
+            | Mnemonic::FMIN
+            | Mnemonic::FMAXNM
+            | Mnemonic::FMINNM => {
+                let rd = match insn.operands.get(0) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rd".to_string())),
+                };
+                let rn = match insn.operands.get(1) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rn".to_string())),
+                };
+                let rm = match insn.operands.get(2) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rm".to_string())),
+                };
+                let precision = Self::fp_precision(&rd.size);
+                let kind = match insn.mnemonic {
+                    Mnemonic::FADD => OpKind::FAdd {
+                        dst: Self::fp_vreg(rd),
+                        src1: Self::fp_vreg(rn),
+                        src2: Self::fp_vreg(rm),
+                        precision,
+                    },
+                    Mnemonic::FSUB => OpKind::FSub {
+                        dst: Self::fp_vreg(rd),
+                        src1: Self::fp_vreg(rn),
+                        src2: Self::fp_vreg(rm),
+                        precision,
+                    },
+                    Mnemonic::FMUL => OpKind::FMul {
+                        dst: Self::fp_vreg(rd),
+                        src1: Self::fp_vreg(rn),
+                        src2: Self::fp_vreg(rm),
+                        precision,
+                    },
+                    Mnemonic::FDIV => OpKind::FDiv {
+                        dst: Self::fp_vreg(rd),
+                        src1: Self::fp_vreg(rn),
+                        src2: Self::fp_vreg(rm),
+                        precision,
+                    },
+                    Mnemonic::FMAX | Mnemonic::FMAXNM => OpKind::FMax {
+                        dst: Self::fp_vreg(rd),
+                        src1: Self::fp_vreg(rn),
+                        src2: Self::fp_vreg(rm),
+                        precision,
+                    },
+                    Mnemonic::FMIN | Mnemonic::FMINNM => OpKind::FMin {
+                        dst: Self::fp_vreg(rd),
+                        src1: Self::fp_vreg(rn),
+                        src2: Self::fp_vreg(rm),
+                        precision,
+                    },
+                    _ => unreachable!(),
+                };
+                ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+            }
+
+            Mnemonic::FNMUL => {
+                let rd = match insn.operands.get(0) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rd".to_string())),
+                };
+                let rn = match insn.operands.get(1) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rn".to_string())),
+                };
+                let rm = match insn.operands.get(2) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rm".to_string())),
+                };
+                let precision = Self::fp_precision(&rd.size);
+                let mul_dst = ctx.alloc_vreg();
+                Self::push_lifted_op(
+                    &mut ops,
+                    pc,
+                    OpKind::FMul {
+                        dst: mul_dst,
+                        src1: Self::fp_vreg(rn),
+                        src2: Self::fp_vreg(rm),
+                        precision,
+                    },
+                );
+                Self::push_lifted_op(
+                    &mut ops,
+                    pc,
+                    OpKind::FNeg {
+                        dst: Self::fp_vreg(rd),
+                        src: mul_dst,
+                        precision,
+                    },
+                );
+            }
+
+            // =================================================================
+            // Scalar FP - 3-source (FMA)
+            // =================================================================
+            Mnemonic::FMADD | Mnemonic::FMSUB | Mnemonic::FNMADD | Mnemonic::FNMSUB => {
+                let rd = match insn.operands.get(0) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rd".to_string())),
+                };
+                let rn = match insn.operands.get(1) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rn".to_string())),
+                };
+                let rm = match insn.operands.get(2) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rm".to_string())),
+                };
+                let ra = match insn.operands.get(3) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp ra".to_string())),
+                };
+                let precision = Self::fp_precision(&rd.size);
+                match insn.mnemonic {
+                    Mnemonic::FMADD => {
+                        Self::push_lifted_op(
+                            &mut ops,
+                            pc,
+                            OpKind::FFma {
+                                dst: Self::fp_vreg(rd),
+                                src1: Self::fp_vreg(rn),
+                                src2: Self::fp_vreg(rm),
+                                src3: Self::fp_vreg(ra),
+                                precision,
+                            },
+                        );
+                    }
+                    Mnemonic::FMSUB => {
+                        let mul_dst = ctx.alloc_vreg();
+                        Self::push_lifted_op(
+                            &mut ops,
+                            pc,
+                            OpKind::FMul {
+                                dst: mul_dst,
+                                src1: Self::fp_vreg(rn),
+                                src2: Self::fp_vreg(rm),
+                                precision,
+                            },
+                        );
+                        Self::push_lifted_op(
+                            &mut ops,
+                            pc,
+                            OpKind::FSub {
+                                dst: Self::fp_vreg(rd),
+                                src1: mul_dst,
+                                src2: Self::fp_vreg(ra),
+                                precision,
+                            },
+                        );
+                    }
+                    Mnemonic::FNMADD => {
+                        let mul_dst = ctx.alloc_vreg();
+                        let neg_dst = ctx.alloc_vreg();
+                        Self::push_lifted_op(
+                            &mut ops,
+                            pc,
+                            OpKind::FMul {
+                                dst: mul_dst,
+                                src1: Self::fp_vreg(rn),
+                                src2: Self::fp_vreg(rm),
+                                precision,
+                            },
+                        );
+                        Self::push_lifted_op(
+                            &mut ops,
+                            pc,
+                            OpKind::FNeg {
+                                dst: neg_dst,
+                                src: mul_dst,
+                                precision,
+                            },
+                        );
+                        Self::push_lifted_op(
+                            &mut ops,
+                            pc,
+                            OpKind::FAdd {
+                                dst: Self::fp_vreg(rd),
+                                src1: neg_dst,
+                                src2: Self::fp_vreg(ra),
+                                precision,
+                            },
+                        );
+                    }
+                    Mnemonic::FNMSUB => {
+                        let fma_dst = ctx.alloc_vreg();
+                        Self::push_lifted_op(
+                            &mut ops,
+                            pc,
+                            OpKind::FFma {
+                                dst: fma_dst,
+                                src1: Self::fp_vreg(rn),
+                                src2: Self::fp_vreg(rm),
+                                src3: Self::fp_vreg(ra),
+                                precision,
+                            },
+                        );
+                        Self::push_lifted_op(
+                            &mut ops,
+                            pc,
+                            OpKind::FNeg {
+                                dst: Self::fp_vreg(rd),
+                                src: fma_dst,
+                                precision,
+                            },
+                        );
+                    }
+                    _ => unreachable!(),
+                }
+            }
+
+            // =================================================================
+            // Scalar FP - Unary
+            // =================================================================
+            Mnemonic::FMOV | Mnemonic::FABS | Mnemonic::FNEG | Mnemonic::FSQRT => {
+                let rd = match insn.operands.get(0) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rd".to_string())),
+                };
+                let rn = match insn.operands.get(1) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rn".to_string())),
+                };
+                let precision = Self::fp_precision(&rd.size);
+                let kind = match insn.mnemonic {
+                    Mnemonic::FMOV => OpKind::Mov {
+                        dst: Self::fp_vreg(rd),
+                        src: SrcOperand::Reg(Self::fp_vreg(rn)),
+                        width: match precision {
+                            FpPrecision::F32 => OpWidth::W32,
+                            FpPrecision::F64 => OpWidth::W64,
+                            _ => OpWidth::W32,
+                        },
+                    },
+                    Mnemonic::FABS => OpKind::FAbs {
+                        dst: Self::fp_vreg(rd),
+                        src: Self::fp_vreg(rn),
+                        precision,
+                    },
+                    Mnemonic::FNEG => OpKind::FNeg {
+                        dst: Self::fp_vreg(rd),
+                        src: Self::fp_vreg(rn),
+                        precision,
+                    },
+                    Mnemonic::FSQRT => OpKind::FSqrt {
+                        dst: Self::fp_vreg(rd),
+                        src: Self::fp_vreg(rn),
+                        precision,
+                    },
+                    _ => unreachable!(),
+                };
+                ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+            }
+
+            // =================================================================
+            // Scalar FP - Compare
+            // =================================================================
+            Mnemonic::FCMP | Mnemonic::FCMPE => {
+                let rn = match insn.operands.get(0) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rn".to_string())),
+                };
+                let precision = Self::fp_precision(&rn.size);
+                let src2 = match insn.operands.get(1) {
+                    Some(Operand::FpReg(rm)) => Self::fp_vreg(rm),
+                    None => VReg::Imm(0),
+                    _ => return Err(LiftError::Internal("invalid FCMP operand".to_string())),
+                };
+                Self::push_lifted_op(
+                    &mut ops,
+                    pc,
+                    OpKind::FCmp {
+                        src1: Self::fp_vreg(rn),
+                        src2,
+                        precision,
+                    },
+                );
+            }
+
+            Mnemonic::FCCMP | Mnemonic::FCCMPE => {
+                let rn = match insn.operands.get(0) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rn".to_string())),
+                };
+                let rm = match insn.operands.get(1) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rm".to_string())),
+                };
+                let _nzcv_imm = match insn.operands.get(2) {
+                    Some(Operand::Imm(imm)) => imm.effective_value(),
+                    _ => return Err(LiftError::Internal("missing FCCMP nzcv".to_string())),
+                };
+                let precision = Self::fp_precision(&rn.size);
+                Self::push_lifted_op(
+                    &mut ops,
+                    pc,
+                    OpKind::FCmp {
+                        src1: Self::fp_vreg(rn),
+                        src2: Self::fp_vreg(rm),
+                        precision,
+                    },
+                );
+            }
+
+            // =================================================================
+            // Scalar FP - Convert
+            // =================================================================
+            Mnemonic::FCVT => {
+                let rd = match insn.operands.get(0) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rd".to_string())),
+                };
+                let rn = match insn.operands.get(1) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rn".to_string())),
+                };
+                let from = Self::fp_precision(&rn.size);
+                let to = Self::fp_precision(&rd.size);
+                Self::push_lifted_op(
+                    &mut ops,
+                    pc,
+                    OpKind::FConvert {
+                        dst: Self::fp_vreg(rd),
+                        src: Self::fp_vreg(rn),
+                        from,
+                        to,
+                    },
+                );
+            }
+
+            Mnemonic::FCVTNS
+            | Mnemonic::FCVTNU
+            | Mnemonic::FCVTAS
+            | Mnemonic::FCVTAU
+            | Mnemonic::FCVTPS
+            | Mnemonic::FCVTPU
+            | Mnemonic::FCVTMS
+            | Mnemonic::FCVTMU
+            | Mnemonic::FCVTZS
+            | Mnemonic::FCVTZU => {
+                let rd = match insn.operands.get(0) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rd".to_string())),
+                };
+                let rn = match insn.operands.get(1) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rn".to_string())),
+                };
+                let precision = Self::fp_precision(&rn.size);
+                let int_width = match precision {
+                    FpPrecision::F32 => OpWidth::W32,
+                    FpPrecision::F64 => OpWidth::W64,
+                    _ => OpWidth::W32,
+                };
+                let (signed, round) = match insn.mnemonic {
+                    Mnemonic::FCVTNS => (true, FpRoundMode::RoundNearest),
+                    Mnemonic::FCVTNU => (false, FpRoundMode::RoundNearest),
+                    Mnemonic::FCVTAS => (true, FpRoundMode::Dynamic),
+                    Mnemonic::FCVTAU => (false, FpRoundMode::Dynamic),
+                    Mnemonic::FCVTPS => (true, FpRoundMode::RoundUp),
+                    Mnemonic::FCVTPU => (false, FpRoundMode::RoundUp),
+                    Mnemonic::FCVTMS => (true, FpRoundMode::RoundDown),
+                    Mnemonic::FCVTMU => (false, FpRoundMode::RoundDown),
+                    Mnemonic::FCVTZS => (true, FpRoundMode::RoundTowardZero),
+                    Mnemonic::FCVTZU => (false, FpRoundMode::RoundTowardZero),
+                    _ => unreachable!(),
+                };
+                Self::push_lifted_op(
+                    &mut ops,
+                    pc,
+                    OpKind::FpToInt {
+                        dst: Self::fp_vreg(rd),
+                        src: Self::fp_vreg(rn),
+                        fp_precision: precision,
+                        int_width,
+                        signed,
+                        round,
+                    },
+                );
+            }
+
+            Mnemonic::SCVTF | Mnemonic::UCVTF => {
+                let rd = match insn.operands.get(0) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rd".to_string())),
+                };
+                let rn = match insn.operands.get(1) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rn".to_string())),
+                };
+                let fp_precision = Self::fp_precision(&rd.size);
+                let int_width = match fp_precision {
+                    FpPrecision::F32 => OpWidth::W32,
+                    FpPrecision::F64 => OpWidth::W64,
+                    _ => OpWidth::W32,
+                };
+                let signed = insn.mnemonic == Mnemonic::SCVTF;
+                Self::push_lifted_op(
+                    &mut ops,
+                    pc,
+                    OpKind::IntToFp {
+                        dst: Self::fp_vreg(rd),
+                        src: Self::fp_vreg(rn),
+                        int_width,
+                        fp_precision,
+                        signed,
+                    },
+                );
+            }
+
+            // =================================================================
+            // Scalar FP - Round
+            // =================================================================
+            Mnemonic::FRINTN
+            | Mnemonic::FRINTP
+            | Mnemonic::FRINTM
+            | Mnemonic::FRINTZ
+            | Mnemonic::FRINTA
+            | Mnemonic::FRINTX
+            | Mnemonic::FRINTI => {
+                let rd = match insn.operands.get(0) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rd".to_string())),
+                };
+                let rn = match insn.operands.get(1) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rn".to_string())),
+                };
+                let precision = Self::fp_precision(&rd.size);
+                let mode = match insn.mnemonic {
+                    Mnemonic::FRINTN => FpRoundMode::RoundNearest,
+                    Mnemonic::FRINTP => FpRoundMode::RoundUp,
+                    Mnemonic::FRINTM => FpRoundMode::RoundDown,
+                    Mnemonic::FRINTZ => FpRoundMode::RoundTowardZero,
+                    Mnemonic::FRINTA => FpRoundMode::RoundNearest,
+                    Mnemonic::FRINTX => FpRoundMode::Dynamic,
+                    Mnemonic::FRINTI => FpRoundMode::Dynamic,
+                    _ => unreachable!(),
+                };
+                Self::push_lifted_op(
+                    &mut ops,
+                    pc,
+                    OpKind::FRound {
+                        dst: Self::fp_vreg(rd),
+                        src: Self::fp_vreg(rn),
+                        precision,
+                        mode,
+                    },
+                );
+            }
+
+            // =================================================================
+            // Scalar FP - Conditional Select
+            // =================================================================
+            Mnemonic::FCSEL => {
+                let rd = match insn.operands.get(0) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rd".to_string())),
+                };
+                let rn = match insn.operands.get(1) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rn".to_string())),
+                };
+                let rm = match insn.operands.get(2) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing fp rm".to_string())),
+                };
+                let cond = match insn.operands.get(3) {
+                    Some(Operand::Cond(c)) => self.arm_cond(*c),
+                    _ => return Err(LiftError::Internal("missing FCSEL cond".to_string())),
+                };
+                let width = match Self::fp_precision(&rd.size) {
+                    FpPrecision::F32 => OpWidth::W32,
+                    FpPrecision::F64 => OpWidth::W64,
+                    _ => OpWidth::W32,
+                };
+                Self::push_lifted_op(
+                    &mut ops,
+                    pc,
+                    OpKind::Mov {
+                        dst: Self::fp_vreg(rd),
+                        src: SrcOperand::Reg(Self::fp_vreg(rm)),
+                        width,
+                    },
+                );
+                Self::push_lifted_op(
+                    &mut ops,
+                    pc,
+                    OpKind::CMove {
+                        dst: Self::fp_vreg(rd),
+                        src: Self::fp_vreg(rn),
+                        cond,
+                        width,
+                    },
+                );
+            }
+
+            // =================================================================
+            // NEON Integer Three-Same
+            // =================================================================
+            Mnemonic::VADD | Mnemonic::VSUB | Mnemonic::VMUL | Mnemonic::VMAX | Mnemonic::VMIN => {
+                let rd = match insn.operands.get(0) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing vec rd".to_string())),
+                };
+                let rn = match insn.operands.get(1) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing vec rn".to_string())),
+                };
+                let rm = match insn.operands.get(2) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing vec rm".to_string())),
+                };
+                let q = (insn.raw >> 30) & 1;
+                let size = (insn.raw >> 22) & 3;
+                let (elem, lanes) = match (size, q) {
+                    (0, 0) => (VecElementType::I8, 8),
+                    (0, 1) => (VecElementType::I8, 16),
+                    (1, 0) => (VecElementType::I16, 4),
+                    (1, 1) => (VecElementType::I16, 8),
+                    (2, 0) => (VecElementType::I32, 2),
+                    (2, 1) => (VecElementType::I32, 4),
+                    (3, 0) => (VecElementType::I64, 1),
+                    (3, 1) => (VecElementType::I64, 2),
+                    _ => (VecElementType::I8, 16),
+                };
+                let kind = match insn.mnemonic {
+                    Mnemonic::VADD => OpKind::VAdd {
+                        dst: Self::fp_vreg(rd),
+                        src1: Self::fp_vreg(rn),
+                        src2: Self::fp_vreg(rm),
+                        elem,
+                        lanes,
+                    },
+                    Mnemonic::VSUB => OpKind::VSub {
+                        dst: Self::fp_vreg(rd),
+                        src1: Self::fp_vreg(rn),
+                        src2: Self::fp_vreg(rm),
+                        elem,
+                        lanes,
+                    },
+                    Mnemonic::VMUL => OpKind::VMul {
+                        dst: Self::fp_vreg(rd),
+                        src1: Self::fp_vreg(rn),
+                        src2: Self::fp_vreg(rm),
+                        elem,
+                        lanes,
+                    },
+                    Mnemonic::VMAX => OpKind::VMax {
+                        dst: Self::fp_vreg(rd),
+                        src1: Self::fp_vreg(rn),
+                        src2: Self::fp_vreg(rm),
+                        elem,
+                        lanes,
+                    },
+                    Mnemonic::VMIN => {
+                        let u = (insn.raw >> 29) & 1;
+                        OpKind::VMin {
+                            dst: Self::fp_vreg(rd),
+                            src1: Self::fp_vreg(rn),
+                            src2: Self::fp_vreg(rm),
+                            elem,
+                            lanes,
+                            signed: u == 0,
+                        }
+                    }
+                    _ => unreachable!(),
+                };
+                push_op!(kind);
+            }
+
+            // =================================================================
+            // NEON Logical Three-Same
+            // =================================================================
+            Mnemonic::VAND | Mnemonic::VBIC | Mnemonic::VORR | Mnemonic::VEOR => {
+                let rd = match insn.operands.get(0) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing vec rd".to_string())),
+                };
+                let rn = match insn.operands.get(1) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing vec rn".to_string())),
+                };
+                let rm = match insn.operands.get(2) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing vec rm".to_string())),
+                };
+                let q = (insn.raw >> 30) & 1;
+                let vec_width = if q == 1 {
+                    VecWidth::V128
+                } else {
+                    VecWidth::V64
+                };
+                match insn.mnemonic {
+                    Mnemonic::VAND => {
+                        push_op!(OpKind::VAnd {
+                            dst: Self::fp_vreg(rd),
+                            src1: Self::fp_vreg(rn),
+                            src2: Self::fp_vreg(rm),
+                            width: vec_width,
+                        });
+                    }
+                    Mnemonic::VORR => {
+                        push_op!(OpKind::VOr {
+                            dst: Self::fp_vreg(rd),
+                            src1: Self::fp_vreg(rn),
+                            src2: Self::fp_vreg(rm),
+                            width: vec_width,
+                        });
+                    }
+                    Mnemonic::VEOR => {
+                        push_op!(OpKind::VXor {
+                            dst: Self::fp_vreg(rd),
+                            src1: Self::fp_vreg(rn),
+                            src2: Self::fp_vreg(rm),
+                            width: vec_width,
+                        });
+                    }
+                    Mnemonic::VBIC => {
+                        let not_rm = ctx.alloc_vreg();
+                        push_op!(OpKind::VXor {
+                            dst: not_rm,
+                            src1: Self::fp_vreg(rm),
+                            src2: VReg::Imm(-1),
+                            width: vec_width,
+                        });
+                        push_op!(OpKind::VAnd {
+                            dst: Self::fp_vreg(rd),
+                            src1: Self::fp_vreg(rn),
+                            src2: not_rm,
+                            width: vec_width,
+                        });
+                    }
+                    _ => unreachable!(),
+                };
             }
 
             // =================================================================
@@ -4034,5 +4740,115 @@ mod tests {
     fn test_lift_context_aarch64() {
         let ctx = LiftContext::new(SourceArch::Aarch64);
         assert_eq!(ctx.endian, Endian::Little);
+    }
+
+    fn lift_single(bytes: [u8; 4]) -> (Vec<SmirOp>, ControlFlow) {
+        let mut lifter = Aarch64Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Aarch64);
+        let result = lifter.lift_insn(0x1000, &bytes, &mut ctx).unwrap();
+        (result.ops, result.control_flow)
+    }
+
+    #[test]
+    fn test_lift_fadd_scalar() {
+        let (ops, _) = lift_single([0x20, 0x28, 0x22, 0x1e]);
+        assert_eq!(ops.len(), 1);
+        match &ops[0].kind {
+            OpKind::FAdd { precision, .. } => assert_eq!(*precision, FpPrecision::F32),
+            other => panic!("expected FAdd, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_lift_fadd_scalar_d() {
+        let (ops, _) = lift_single([0x20, 0x18, 0x62, 0x1e]);
+        assert_eq!(ops.len(), 1);
+        match &ops[0].kind {
+            OpKind::FAdd { precision, .. } => assert_eq!(*precision, FpPrecision::F64),
+            other => panic!("expected FAdd F64, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_lift_fsub_scalar() {
+        let (ops, _) = lift_single([0x20, 0x58, 0x22, 0x1e]);
+        assert_eq!(ops.len(), 1);
+        match &ops[0].kind {
+            OpKind::FSub { .. } => {}
+            other => panic!("expected FSub, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_lift_fdiv_scalar() {
+        let (ops, _) = lift_single([0x20, 0x68, 0x22, 0x1e]);
+        assert_eq!(ops.len(), 1);
+        match &ops[0].kind {
+            OpKind::FDiv { .. } => {}
+            other => panic!("expected FDiv, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_lift_fabs_scalar() {
+        let (ops, _) = lift_single([0x20, 0x40, 0x21, 0x1e]);
+        assert_eq!(ops.len(), 1);
+        match &ops[0].kind {
+            OpKind::FAbs { precision, .. } => assert_eq!(*precision, FpPrecision::F32),
+            other => panic!("expected FAbs, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_lift_fneg_scalar() {
+        let (ops, _) = lift_single([0x20, 0x40, 0x24, 0x1e]);
+        assert_eq!(ops.len(), 1);
+        match &ops[0].kind {
+            OpKind::FNeg { .. } => {}
+            other => panic!("expected FNeg, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_lift_fsqrt_scalar() {
+        let (ops, _) = lift_single([0x20, 0xc0, 0x21, 0x1e]);
+        assert_eq!(ops.len(), 1);
+        match &ops[0].kind {
+            OpKind::FSqrt { .. } => {}
+            other => panic!("expected FSqrt, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_lift_fmadd_scalar() {
+        let (ops, _) = lift_single([0x20, 0x0c, 0x02, 0x1f]);
+        assert_eq!(ops.len(), 1);
+        match &ops[0].kind {
+            OpKind::FFma { precision, .. } => assert_eq!(*precision, FpPrecision::F32),
+            other => panic!("expected FFma, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_lift_fcmp_scalar() {
+        let (ops, _) = lift_single([0x20, 0x1c, 0x22, 0x1e]);
+        assert_eq!(ops.len(), 1);
+        match &ops[0].kind {
+            OpKind::FCmp { precision, .. } => assert_eq!(*precision, FpPrecision::F32),
+            other => panic!("expected FCmp, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_lift_fcvt_s_to_d() {
+        let (ops, _) = lift_single([0x20, 0xc0, 0x22, 0x1e]);
+        assert_eq!(ops.len(), 1);
+        match &ops[0].kind {
+            OpKind::FConvert { from, to, .. } => {
+                assert_eq!(*from, FpPrecision::F32);
+                assert_eq!(*to, FpPrecision::F64);
+            }
+            other => panic!("expected FConvert S->D, got {:?}", other),
+        }
     }
 }
