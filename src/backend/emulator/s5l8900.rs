@@ -506,6 +506,18 @@ impl BridgeInner {
             bytes = total,
             "dma_run"
         );
+        if std::env::var("RAX_S5L_DMADUMP").is_ok() {
+            if let Ok(path) = std::env::var("RAX_S5L_DMADUMP") {
+                use std::io::Write;
+                if let Ok(mut f) =
+                    std::fs::OpenOptions::new().create(true).append(true).open(&path)
+                {
+                    let _ = writeln!(f, "--- ch{ch} src={src:#x} dst={dst:#x} bytes={total}");
+                    let _ = f.write_all(&buf);
+                    let _ = writeln!(f);
+                }
+            }
+        }
         self.dmac0.complete(ch);
     }
 }
