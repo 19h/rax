@@ -554,7 +554,8 @@ fn test_aarch64_integer_logical_shiftedreg_field_imm6_32_poweroftwo_0_0a008000()
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -575,7 +576,8 @@ fn test_aarch64_integer_logical_shiftedreg_field_imm6_63_max_0_0a00fc00() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1289,7 +1291,8 @@ fn test_aarch64_integer_logical_shiftedreg_combo_25_0_0a008000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1310,7 +1313,8 @@ fn test_aarch64_integer_logical_shiftedreg_combo_26_0_0a00fc00() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2104,7 +2108,9 @@ fn test_aarch64_integer_logical_shiftedreg_flags_zeroresult_0_8a020020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -2124,7 +2130,9 @@ fn test_aarch64_integer_logical_shiftedreg_flags_zeroresult_1_8a020020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -2144,7 +2152,9 @@ fn test_aarch64_integer_logical_shiftedreg_flags_negativeresult_2_8a020020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -2164,7 +2174,9 @@ fn test_aarch64_integer_logical_shiftedreg_flags_unsignedoverflow_3_8a020020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -2184,7 +2196,9 @@ fn test_aarch64_integer_logical_shiftedreg_flags_unsignedoverflow_4_8a020020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -2204,7 +2218,9 @@ fn test_aarch64_integer_logical_shiftedreg_flags_signedoverflow_5_8a020020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -2224,7 +2240,9 @@ fn test_aarch64_integer_logical_shiftedreg_flags_signedoverflow_6_8a020020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -2837,7 +2855,8 @@ fn test_aarch64_integer_logical_immediate_field_imms_31_poweroftwominusone_0_120
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2879,7 +2898,8 @@ fn test_aarch64_integer_logical_immediate_field_imms_63_max_0_1200fc00() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3635,7 +3655,8 @@ fn test_aarch64_integer_logical_immediate_combo_27_0_12007c00() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3677,7 +3698,8 @@ fn test_aarch64_integer_logical_immediate_combo_29_0_1200fc00() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4282,7 +4304,9 @@ fn test_aarch64_integer_logical_immediate_flags_zeroresult_0_92000020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4302,7 +4326,9 @@ fn test_aarch64_integer_logical_immediate_flags_zeroresult_1_92000020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4322,7 +4348,9 @@ fn test_aarch64_integer_logical_immediate_flags_negativeresult_2_92000020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4342,7 +4370,9 @@ fn test_aarch64_integer_logical_immediate_flags_unsignedoverflow_3_92000020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4362,7 +4392,9 @@ fn test_aarch64_integer_logical_immediate_flags_unsignedoverflow_4_92000020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4382,7 +4414,9 @@ fn test_aarch64_integer_logical_immediate_flags_signedoverflow_5_92000020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4402,7 +4436,9 @@ fn test_aarch64_integer_logical_immediate_flags_signedoverflow_6_92000020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 

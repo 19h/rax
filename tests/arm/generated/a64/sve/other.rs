@@ -29,7 +29,8 @@ fn test_asrr_z_p_zz_field_size_0_min_8000_04148000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50,7 +51,8 @@ fn test_asrr_z_p_zz_field_size_1_poweroftwo_8000_04548000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -71,7 +73,8 @@ fn test_asrr_z_p_zz_field_size_2_poweroftwo_8000_04948000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -92,7 +95,8 @@ fn test_asrr_z_p_zz_field_size_3_max_8000_04d48000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -113,7 +117,8 @@ fn test_asrr_z_p_zz_field_pg_0_min_8000_04148000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -134,7 +139,8 @@ fn test_asrr_z_p_zz_field_pg_1_poweroftwo_8000_04148400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -155,7 +161,8 @@ fn test_asrr_z_p_zz_field_zm_0_min_8000_04148000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -176,7 +183,8 @@ fn test_asrr_z_p_zz_field_zm_1_poweroftwo_8000_04148020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -197,7 +205,8 @@ fn test_asrr_z_p_zz_field_zm_30_poweroftwominusone_8000_041483c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -218,7 +227,8 @@ fn test_asrr_z_p_zz_field_zm_31_max_8000_041483e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -239,7 +249,8 @@ fn test_asrr_z_p_zz_field_zdn_0_min_8000_04148000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -260,7 +271,8 @@ fn test_asrr_z_p_zz_field_zdn_1_poweroftwo_8000_04148001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -281,7 +293,8 @@ fn test_asrr_z_p_zz_field_zdn_15_poweroftwominusone_8000_0414800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -302,7 +315,8 @@ fn test_asrr_z_p_zz_field_zdn_31_max_8000_0414801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -323,7 +337,8 @@ fn test_asrr_z_p_zz_combo_0_8000_04148000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -344,7 +359,8 @@ fn test_asrr_z_p_zz_combo_1_8000_04548000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -365,7 +381,8 @@ fn test_asrr_z_p_zz_combo_2_8000_04948000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -386,7 +403,8 @@ fn test_asrr_z_p_zz_combo_3_8000_04d48000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -407,7 +425,8 @@ fn test_asrr_z_p_zz_combo_4_8000_04148000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -428,7 +447,8 @@ fn test_asrr_z_p_zz_combo_5_8000_04148400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -449,7 +469,8 @@ fn test_asrr_z_p_zz_combo_6_8000_04148000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -470,7 +491,8 @@ fn test_asrr_z_p_zz_combo_7_8000_04148020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -491,7 +513,8 @@ fn test_asrr_z_p_zz_combo_8_8000_041483c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -512,7 +535,8 @@ fn test_asrr_z_p_zz_combo_9_8000_041483e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -533,7 +557,8 @@ fn test_asrr_z_p_zz_combo_10_8000_04148000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -554,7 +579,8 @@ fn test_asrr_z_p_zz_combo_11_8000_04148001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -575,7 +601,8 @@ fn test_asrr_z_p_zz_combo_12_8000_0414800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -596,7 +623,8 @@ fn test_asrr_z_p_zz_combo_13_8000_0414801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -617,7 +645,8 @@ fn test_asrr_z_p_zz_special_size_0_size_variant_0_32768_04148000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -638,7 +667,8 @@ fn test_asrr_z_p_zz_special_size_1_size_variant_1_32768_04548000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -659,7 +689,8 @@ fn test_asrr_z_p_zz_special_size_2_size_variant_2_32768_04948000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -680,7 +711,8 @@ fn test_asrr_z_p_zz_special_size_3_size_variant_3_32768_04d48000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -705,7 +737,8 @@ fn test_ext_z_zi_des_field_imm8h_0_zero_0_05200000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -726,7 +759,8 @@ fn test_ext_z_zi_des_field_imm8h_1_poweroftwo_0_05210000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -747,7 +781,8 @@ fn test_ext_z_zi_des_field_imm8h_3_poweroftwominusone_0_05230000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -768,7 +803,8 @@ fn test_ext_z_zi_des_field_imm8h_4_poweroftwo_0_05240000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -789,7 +825,8 @@ fn test_ext_z_zi_des_field_imm8h_7_poweroftwominusone_0_05270000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -810,7 +847,8 @@ fn test_ext_z_zi_des_field_imm8h_8_poweroftwo_0_05280000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -831,7 +869,8 @@ fn test_ext_z_zi_des_field_imm8h_15_poweroftwominusone_0_052f0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -852,7 +891,8 @@ fn test_ext_z_zi_des_field_imm8h_16_poweroftwo_0_05300000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -873,7 +913,8 @@ fn test_ext_z_zi_des_field_imm8h_31_max_0_053f0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -894,7 +935,8 @@ fn test_ext_z_zi_des_field_imm8l_0_zero_0_05200000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -915,7 +957,8 @@ fn test_ext_z_zi_des_field_imm8l_1_poweroftwo_0_05200400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -936,7 +979,8 @@ fn test_ext_z_zi_des_field_imm8l_3_poweroftwominusone_0_05200c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -957,7 +1001,8 @@ fn test_ext_z_zi_des_field_imm8l_7_max_0_05201c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -978,7 +1023,8 @@ fn test_ext_z_zi_des_field_zm_0_min_0_05200000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -999,7 +1045,8 @@ fn test_ext_z_zi_des_field_zm_1_poweroftwo_0_05200020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1020,7 +1067,8 @@ fn test_ext_z_zi_des_field_zm_30_poweroftwominusone_0_052003c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1041,7 +1089,8 @@ fn test_ext_z_zi_des_field_zm_31_max_0_052003e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1062,7 +1111,8 @@ fn test_ext_z_zi_des_field_zdn_0_min_0_05200000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1083,7 +1133,8 @@ fn test_ext_z_zi_des_field_zdn_1_poweroftwo_0_05200001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1104,7 +1155,8 @@ fn test_ext_z_zi_des_field_zdn_15_poweroftwominusone_0_0520000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1125,7 +1177,8 @@ fn test_ext_z_zi_des_field_zdn_31_max_0_0520001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1146,7 +1199,8 @@ fn test_ext_z_zi_des_combo_0_0_05200000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1167,7 +1221,8 @@ fn test_ext_z_zi_des_combo_1_0_05210000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1188,7 +1243,8 @@ fn test_ext_z_zi_des_combo_2_0_05230000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1209,7 +1265,8 @@ fn test_ext_z_zi_des_combo_3_0_05240000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1230,7 +1287,8 @@ fn test_ext_z_zi_des_combo_4_0_05270000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1251,7 +1309,8 @@ fn test_ext_z_zi_des_combo_5_0_05280000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1272,7 +1331,8 @@ fn test_ext_z_zi_des_combo_6_0_052f0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1293,7 +1353,8 @@ fn test_ext_z_zi_des_combo_7_0_05300000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1314,7 +1375,8 @@ fn test_ext_z_zi_des_combo_8_0_053f0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1335,7 +1397,8 @@ fn test_ext_z_zi_des_combo_9_0_05200000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1356,7 +1419,8 @@ fn test_ext_z_zi_des_combo_10_0_05200400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1377,7 +1441,8 @@ fn test_ext_z_zi_des_combo_11_0_05200c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1398,7 +1463,8 @@ fn test_ext_z_zi_des_combo_12_0_05201c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1419,7 +1485,8 @@ fn test_ext_z_zi_des_combo_13_0_05200000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1440,7 +1507,8 @@ fn test_ext_z_zi_des_combo_14_0_05200020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1461,7 +1529,8 @@ fn test_ext_z_zi_des_combo_15_0_052003c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1482,7 +1551,8 @@ fn test_ext_z_zi_des_combo_16_0_052003e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1503,7 +1573,8 @@ fn test_ext_z_zi_des_combo_17_0_05200000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1524,7 +1595,8 @@ fn test_ext_z_zi_des_combo_18_0_05200001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1545,7 +1617,8 @@ fn test_ext_z_zi_des_combo_19_0_0520000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1566,7 +1639,8 @@ fn test_ext_z_zi_des_combo_20_0_0520001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1591,7 +1665,8 @@ fn test_abs_z_p_z_field_size_0_min_a000_0416a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1612,7 +1687,8 @@ fn test_abs_z_p_z_field_size_1_poweroftwo_a000_0456a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1633,7 +1709,8 @@ fn test_abs_z_p_z_field_size_2_poweroftwo_a000_0496a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1654,7 +1731,8 @@ fn test_abs_z_p_z_field_size_3_max_a000_04d6a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1675,7 +1753,8 @@ fn test_abs_z_p_z_field_pg_0_min_a000_0416a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1696,7 +1775,8 @@ fn test_abs_z_p_z_field_pg_1_poweroftwo_a000_0416a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1717,7 +1797,8 @@ fn test_abs_z_p_z_field_zn_0_min_a000_0416a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1738,7 +1819,8 @@ fn test_abs_z_p_z_field_zn_1_poweroftwo_a000_0416a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1759,7 +1841,8 @@ fn test_abs_z_p_z_field_zn_30_poweroftwominusone_a000_0416a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1780,7 +1863,8 @@ fn test_abs_z_p_z_field_zn_31_max_a000_0416a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1801,7 +1885,8 @@ fn test_abs_z_p_z_field_zd_0_min_a000_0416a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1822,7 +1907,8 @@ fn test_abs_z_p_z_field_zd_1_poweroftwo_a000_0416a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1843,7 +1929,8 @@ fn test_abs_z_p_z_field_zd_30_poweroftwominusone_a000_0416a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1864,7 +1951,8 @@ fn test_abs_z_p_z_field_zd_31_max_a000_0416a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1885,7 +1973,8 @@ fn test_abs_z_p_z_combo_0_a000_0416a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1906,7 +1995,8 @@ fn test_abs_z_p_z_combo_1_a000_0456a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1927,7 +2017,8 @@ fn test_abs_z_p_z_combo_2_a000_0496a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1948,7 +2039,8 @@ fn test_abs_z_p_z_combo_3_a000_04d6a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1969,7 +2061,8 @@ fn test_abs_z_p_z_combo_4_a000_0416a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1990,7 +2083,8 @@ fn test_abs_z_p_z_combo_5_a000_0416a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2011,7 +2105,8 @@ fn test_abs_z_p_z_combo_6_a000_0416a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2032,7 +2127,8 @@ fn test_abs_z_p_z_combo_7_a000_0416a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2053,7 +2149,8 @@ fn test_abs_z_p_z_combo_8_a000_0416a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2074,7 +2171,8 @@ fn test_abs_z_p_z_combo_9_a000_0416a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2095,7 +2193,8 @@ fn test_abs_z_p_z_combo_10_a000_0416a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2116,7 +2215,8 @@ fn test_abs_z_p_z_combo_11_a000_0416a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2137,7 +2237,8 @@ fn test_abs_z_p_z_combo_12_a000_0416a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2158,7 +2259,8 @@ fn test_abs_z_p_z_combo_13_a000_0416a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2179,7 +2281,8 @@ fn test_abs_z_p_z_special_size_0_size_variant_0_40960_0416a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2200,7 +2303,8 @@ fn test_abs_z_p_z_special_size_1_size_variant_1_40960_0456a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2221,7 +2325,8 @@ fn test_abs_z_p_z_special_size_2_size_variant_2_40960_0496a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2242,7 +2347,8 @@ fn test_abs_z_p_z_special_size_3_size_variant_3_40960_04d6a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2365,7 +2471,9 @@ fn test_uqsub_z_zi_field_sh_1_max_c000_2527e000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -2864,7 +2972,9 @@ fn test_uqsub_z_zi_combo_5_c000_2527e000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3365,7 +3475,8 @@ fn test_uqsub_z_zi_special_sh_1_shift_type_lsr_49152_2567e020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3406,7 +3517,8 @@ fn test_uqsub_z_zi_special_sh_3_shift_type_ror_49152_2567e020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3429,7 +3541,9 @@ fn test_udivr_z_p_zz_field_size_0_min_0_04170000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3448,7 +3562,9 @@ fn test_udivr_z_p_zz_field_size_1_poweroftwo_0_04570000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3469,7 +3585,8 @@ fn test_udivr_z_p_zz_field_size_2_poweroftwo_0_04970000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3490,7 +3607,8 @@ fn test_udivr_z_p_zz_field_size_3_max_0_04d70000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3509,7 +3627,9 @@ fn test_udivr_z_p_zz_field_pg_0_min_0_04170000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3528,7 +3648,9 @@ fn test_udivr_z_p_zz_field_pg_1_poweroftwo_0_04170400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3547,7 +3669,9 @@ fn test_udivr_z_p_zz_field_zm_0_min_0_04170000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3566,7 +3690,9 @@ fn test_udivr_z_p_zz_field_zm_1_poweroftwo_0_04170020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3585,7 +3711,9 @@ fn test_udivr_z_p_zz_field_zm_30_poweroftwominusone_0_041703c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3604,7 +3732,9 @@ fn test_udivr_z_p_zz_field_zm_31_max_0_041703e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3623,7 +3753,9 @@ fn test_udivr_z_p_zz_field_zdn_0_min_0_04170000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3642,7 +3774,9 @@ fn test_udivr_z_p_zz_field_zdn_1_poweroftwo_0_04170001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3661,7 +3795,9 @@ fn test_udivr_z_p_zz_field_zdn_15_poweroftwominusone_0_0417000f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3680,7 +3816,9 @@ fn test_udivr_z_p_zz_field_zdn_31_max_0_0417001f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3699,7 +3837,9 @@ fn test_udivr_z_p_zz_combo_0_0_04170000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3718,7 +3858,9 @@ fn test_udivr_z_p_zz_combo_1_0_04570000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3739,7 +3881,8 @@ fn test_udivr_z_p_zz_combo_2_0_04970000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3760,7 +3903,8 @@ fn test_udivr_z_p_zz_combo_3_0_04d70000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3779,7 +3923,9 @@ fn test_udivr_z_p_zz_combo_4_0_04170000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3798,7 +3944,9 @@ fn test_udivr_z_p_zz_combo_5_0_04170400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3817,7 +3965,9 @@ fn test_udivr_z_p_zz_combo_6_0_04170000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3836,7 +3986,9 @@ fn test_udivr_z_p_zz_combo_7_0_04170020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3855,7 +4007,9 @@ fn test_udivr_z_p_zz_combo_8_0_041703c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3874,7 +4028,9 @@ fn test_udivr_z_p_zz_combo_9_0_041703e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3893,7 +4049,9 @@ fn test_udivr_z_p_zz_combo_10_0_04170000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3912,7 +4070,9 @@ fn test_udivr_z_p_zz_combo_11_0_04170001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3931,7 +4091,9 @@ fn test_udivr_z_p_zz_combo_12_0_0417000f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3950,7 +4112,9 @@ fn test_udivr_z_p_zz_combo_13_0_0417001f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3969,7 +4133,9 @@ fn test_udivr_z_p_zz_special_size_0_size_variant_0_0_04170000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3988,7 +4154,9 @@ fn test_udivr_z_p_zz_special_size_1_size_variant_1_0_04570000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4009,7 +4177,8 @@ fn test_udivr_z_p_zz_special_size_2_size_variant_2_0_04970000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4030,7 +4199,8 @@ fn test_udivr_z_p_zz_special_size_3_size_variant_3_0_04d70000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4095,7 +4265,8 @@ fn test_asr_z_zw_field_size_2_poweroftwo_8000_04a08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4114,7 +4285,9 @@ fn test_asr_z_zw_field_size_3_max_8000_04e08000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4415,7 +4588,8 @@ fn test_asr_z_zw_combo_2_8000_04a08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4434,7 +4608,9 @@ fn test_asr_z_zw_combo_3_8000_04e08000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4735,7 +4911,8 @@ fn test_asr_z_zw_special_size_2_size_variant_2_32768_04a08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4754,7 +4931,9 @@ fn test_asr_z_zw_special_size_3_size_variant_3_32768_04e08000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4779,7 +4958,8 @@ fn test_umin_z_p_zz_field_size_0_min_0_040b0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4800,7 +4980,8 @@ fn test_umin_z_p_zz_field_size_1_poweroftwo_0_044b0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4821,7 +5002,8 @@ fn test_umin_z_p_zz_field_size_2_poweroftwo_0_048b0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4842,7 +5024,8 @@ fn test_umin_z_p_zz_field_size_3_max_0_04cb0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4863,7 +5046,8 @@ fn test_umin_z_p_zz_field_pg_0_min_0_040b0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4884,7 +5068,8 @@ fn test_umin_z_p_zz_field_pg_1_poweroftwo_0_040b0400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4905,7 +5090,8 @@ fn test_umin_z_p_zz_field_zm_0_min_0_040b0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4926,7 +5112,8 @@ fn test_umin_z_p_zz_field_zm_1_poweroftwo_0_040b0020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4947,7 +5134,8 @@ fn test_umin_z_p_zz_field_zm_30_poweroftwominusone_0_040b03c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4968,7 +5156,8 @@ fn test_umin_z_p_zz_field_zm_31_max_0_040b03e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4989,7 +5178,8 @@ fn test_umin_z_p_zz_field_zdn_0_min_0_040b0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5010,7 +5200,8 @@ fn test_umin_z_p_zz_field_zdn_1_poweroftwo_0_040b0001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5031,7 +5222,8 @@ fn test_umin_z_p_zz_field_zdn_15_poweroftwominusone_0_040b000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5052,7 +5244,8 @@ fn test_umin_z_p_zz_field_zdn_31_max_0_040b001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5073,7 +5266,8 @@ fn test_umin_z_p_zz_combo_0_0_040b0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5094,7 +5288,8 @@ fn test_umin_z_p_zz_combo_1_0_044b0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5115,7 +5310,8 @@ fn test_umin_z_p_zz_combo_2_0_048b0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5136,7 +5332,8 @@ fn test_umin_z_p_zz_combo_3_0_04cb0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5157,7 +5354,8 @@ fn test_umin_z_p_zz_combo_4_0_040b0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5178,7 +5376,8 @@ fn test_umin_z_p_zz_combo_5_0_040b0400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5199,7 +5398,8 @@ fn test_umin_z_p_zz_combo_6_0_040b0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5220,7 +5420,8 @@ fn test_umin_z_p_zz_combo_7_0_040b0020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5241,7 +5442,8 @@ fn test_umin_z_p_zz_combo_8_0_040b03c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5262,7 +5464,8 @@ fn test_umin_z_p_zz_combo_9_0_040b03e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5283,7 +5486,8 @@ fn test_umin_z_p_zz_combo_10_0_040b0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5304,7 +5508,8 @@ fn test_umin_z_p_zz_combo_11_0_040b0001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5325,7 +5530,8 @@ fn test_umin_z_p_zz_combo_12_0_040b000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5346,7 +5552,8 @@ fn test_umin_z_p_zz_combo_13_0_040b001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5367,7 +5574,8 @@ fn test_umin_z_p_zz_special_size_0_size_variant_0_0_040b0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5388,7 +5596,8 @@ fn test_umin_z_p_zz_special_size_1_size_variant_1_0_044b0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5409,7 +5618,8 @@ fn test_umin_z_p_zz_special_size_2_size_variant_2_0_048b0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5430,7 +5640,8 @@ fn test_umin_z_p_zz_special_size_3_size_variant_3_0_04cb0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5455,7 +5666,8 @@ fn test_index_z_ii_field_size_0_min_4000_04204000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5476,7 +5688,8 @@ fn test_index_z_ii_field_size_1_poweroftwo_4000_04604000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5497,7 +5710,8 @@ fn test_index_z_ii_field_size_2_poweroftwo_4000_04a04000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5518,7 +5732,8 @@ fn test_index_z_ii_field_size_3_max_4000_04e04000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5539,7 +5754,8 @@ fn test_index_z_ii_field_imm5b_0_zero_4000_04204000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5560,7 +5776,8 @@ fn test_index_z_ii_field_imm5b_1_poweroftwo_4000_04214000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5581,7 +5798,8 @@ fn test_index_z_ii_field_imm5b_3_poweroftwominusone_4000_04234000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5602,7 +5820,8 @@ fn test_index_z_ii_field_imm5b_4_poweroftwo_4000_04244000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5623,7 +5842,8 @@ fn test_index_z_ii_field_imm5b_7_poweroftwominusone_4000_04274000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5644,7 +5864,8 @@ fn test_index_z_ii_field_imm5b_8_poweroftwo_4000_04284000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5665,7 +5886,8 @@ fn test_index_z_ii_field_imm5b_15_poweroftwominusone_4000_042f4000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5686,7 +5908,8 @@ fn test_index_z_ii_field_imm5b_16_poweroftwo_4000_04304000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5707,7 +5930,8 @@ fn test_index_z_ii_field_imm5b_31_max_4000_043f4000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5728,7 +5952,8 @@ fn test_index_z_ii_field_imm5_0_zero_4000_04204000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5749,7 +5974,8 @@ fn test_index_z_ii_field_imm5_1_poweroftwo_4000_04204020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5770,7 +5996,8 @@ fn test_index_z_ii_field_imm5_3_poweroftwominusone_4000_04204060() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5791,7 +6018,8 @@ fn test_index_z_ii_field_imm5_4_poweroftwo_4000_04204080() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5812,7 +6040,8 @@ fn test_index_z_ii_field_imm5_7_poweroftwominusone_4000_042040e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5833,7 +6062,8 @@ fn test_index_z_ii_field_imm5_8_poweroftwo_4000_04204100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5854,7 +6084,8 @@ fn test_index_z_ii_field_imm5_15_poweroftwominusone_4000_042041e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5875,7 +6106,8 @@ fn test_index_z_ii_field_imm5_16_poweroftwo_4000_04204200() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5896,7 +6128,8 @@ fn test_index_z_ii_field_imm5_31_max_4000_042043e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5917,7 +6150,8 @@ fn test_index_z_ii_field_zd_0_min_4000_04204000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5938,7 +6172,8 @@ fn test_index_z_ii_field_zd_1_poweroftwo_4000_04204001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5959,7 +6194,8 @@ fn test_index_z_ii_field_zd_30_poweroftwominusone_4000_0420401e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5980,7 +6216,8 @@ fn test_index_z_ii_field_zd_31_max_4000_0420401f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6001,7 +6238,8 @@ fn test_index_z_ii_combo_0_4000_04204000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6022,7 +6260,8 @@ fn test_index_z_ii_combo_1_4000_04604000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6043,7 +6282,8 @@ fn test_index_z_ii_combo_2_4000_04a04000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6064,7 +6304,8 @@ fn test_index_z_ii_combo_3_4000_04e04000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6085,7 +6326,8 @@ fn test_index_z_ii_combo_4_4000_04204000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6106,7 +6348,8 @@ fn test_index_z_ii_combo_5_4000_04214000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6127,7 +6370,8 @@ fn test_index_z_ii_combo_6_4000_04234000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6148,7 +6392,8 @@ fn test_index_z_ii_combo_7_4000_04244000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6169,7 +6414,8 @@ fn test_index_z_ii_combo_8_4000_04274000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6190,7 +6436,8 @@ fn test_index_z_ii_combo_9_4000_04284000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6211,7 +6458,8 @@ fn test_index_z_ii_combo_10_4000_042f4000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6232,7 +6480,8 @@ fn test_index_z_ii_combo_11_4000_04304000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6253,7 +6502,8 @@ fn test_index_z_ii_combo_12_4000_043f4000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6274,7 +6524,8 @@ fn test_index_z_ii_combo_13_4000_04204000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6295,7 +6546,8 @@ fn test_index_z_ii_combo_14_4000_04204020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6316,7 +6568,8 @@ fn test_index_z_ii_combo_15_4000_04204060() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6337,7 +6590,8 @@ fn test_index_z_ii_combo_16_4000_04204080() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6358,7 +6612,8 @@ fn test_index_z_ii_combo_17_4000_042040e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6379,7 +6634,8 @@ fn test_index_z_ii_combo_18_4000_04204100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6400,7 +6656,8 @@ fn test_index_z_ii_combo_19_4000_042041e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6421,7 +6678,8 @@ fn test_index_z_ii_combo_20_4000_04204200() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6442,7 +6700,8 @@ fn test_index_z_ii_combo_21_4000_042043e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6463,7 +6722,8 @@ fn test_index_z_ii_combo_22_4000_04204000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6484,7 +6744,8 @@ fn test_index_z_ii_combo_23_4000_04204001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6505,7 +6766,8 @@ fn test_index_z_ii_combo_24_4000_0420401e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6526,7 +6788,8 @@ fn test_index_z_ii_combo_25_4000_0420401f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6547,7 +6810,8 @@ fn test_index_z_ii_special_size_0_size_variant_0_16384_04214020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6568,7 +6832,8 @@ fn test_index_z_ii_special_size_1_size_variant_1_16384_04614020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6589,7 +6854,8 @@ fn test_index_z_ii_special_size_2_size_variant_2_16384_04a14020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6610,7 +6876,8 @@ fn test_index_z_ii_special_size_3_size_variant_3_16384_04e14020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6635,7 +6902,8 @@ fn test_uzp1_z_zz_field_size_0_min_6800_05206800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6656,7 +6924,8 @@ fn test_uzp1_z_zz_field_size_1_poweroftwo_6800_05606800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6677,7 +6946,8 @@ fn test_uzp1_z_zz_field_size_2_poweroftwo_6800_05a06800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6698,7 +6968,8 @@ fn test_uzp1_z_zz_field_size_3_max_6800_05e06800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6719,7 +6990,8 @@ fn test_uzp1_z_zz_field_zm_0_min_6800_05206800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6740,7 +7012,8 @@ fn test_uzp1_z_zz_field_zm_1_poweroftwo_6800_05216800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6761,7 +7034,8 @@ fn test_uzp1_z_zz_field_zm_30_poweroftwominusone_6800_053e6800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6782,7 +7056,8 @@ fn test_uzp1_z_zz_field_zm_31_max_6800_053f6800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6803,7 +7078,8 @@ fn test_uzp1_z_zz_field_zn_0_min_6800_05206800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6824,7 +7100,8 @@ fn test_uzp1_z_zz_field_zn_1_poweroftwo_6800_05206820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6845,7 +7122,8 @@ fn test_uzp1_z_zz_field_zn_30_poweroftwominusone_6800_05206bc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6866,7 +7144,8 @@ fn test_uzp1_z_zz_field_zn_31_max_6800_05206be0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6887,7 +7166,8 @@ fn test_uzp1_z_zz_field_zd_0_min_6800_05206800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6908,7 +7188,8 @@ fn test_uzp1_z_zz_field_zd_1_poweroftwo_6800_05206801() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6929,7 +7210,8 @@ fn test_uzp1_z_zz_field_zd_30_poweroftwominusone_6800_0520681e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6950,7 +7232,8 @@ fn test_uzp1_z_zz_field_zd_31_max_6800_0520681f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6971,7 +7254,8 @@ fn test_uzp1_z_zz_combo_0_6800_05206800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6992,7 +7276,8 @@ fn test_uzp1_z_zz_combo_1_6800_05606800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7013,7 +7298,8 @@ fn test_uzp1_z_zz_combo_2_6800_05a06800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7034,7 +7320,8 @@ fn test_uzp1_z_zz_combo_3_6800_05e06800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7055,7 +7342,8 @@ fn test_uzp1_z_zz_combo_4_6800_05206800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7076,7 +7364,8 @@ fn test_uzp1_z_zz_combo_5_6800_05216800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7097,7 +7386,8 @@ fn test_uzp1_z_zz_combo_6_6800_053e6800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7118,7 +7408,8 @@ fn test_uzp1_z_zz_combo_7_6800_053f6800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7139,7 +7430,8 @@ fn test_uzp1_z_zz_combo_8_6800_05206800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7160,7 +7452,8 @@ fn test_uzp1_z_zz_combo_9_6800_05206820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7181,7 +7474,8 @@ fn test_uzp1_z_zz_combo_10_6800_05206bc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7202,7 +7496,8 @@ fn test_uzp1_z_zz_combo_11_6800_05206be0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7223,7 +7518,8 @@ fn test_uzp1_z_zz_combo_12_6800_05206800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7244,7 +7540,8 @@ fn test_uzp1_z_zz_combo_13_6800_05206801() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7265,7 +7562,8 @@ fn test_uzp1_z_zz_combo_14_6800_0520681e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7286,7 +7584,8 @@ fn test_uzp1_z_zz_combo_15_6800_0520681f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7307,7 +7606,8 @@ fn test_uzp1_z_zz_special_size_0_size_variant_0_26624_05206800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7328,7 +7628,8 @@ fn test_uzp1_z_zz_special_size_1_size_variant_1_26624_05606800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7349,7 +7650,8 @@ fn test_uzp1_z_zz_special_size_2_size_variant_2_26624_05a06800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7370,7 +7672,8 @@ fn test_uzp1_z_zz_special_size_3_size_variant_3_26624_05e06800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7391,7 +7694,8 @@ fn test_uzp2_z_zz_field_size_0_min_6c00_05206c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7412,7 +7716,8 @@ fn test_uzp2_z_zz_field_size_1_poweroftwo_6c00_05606c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7433,7 +7738,8 @@ fn test_uzp2_z_zz_field_size_2_poweroftwo_6c00_05a06c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7454,7 +7760,8 @@ fn test_uzp2_z_zz_field_size_3_max_6c00_05e06c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7475,7 +7782,8 @@ fn test_uzp2_z_zz_field_zm_0_min_6c00_05206c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7496,7 +7804,8 @@ fn test_uzp2_z_zz_field_zm_1_poweroftwo_6c00_05216c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7517,7 +7826,8 @@ fn test_uzp2_z_zz_field_zm_30_poweroftwominusone_6c00_053e6c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7538,7 +7848,8 @@ fn test_uzp2_z_zz_field_zm_31_max_6c00_053f6c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7559,7 +7870,8 @@ fn test_uzp2_z_zz_field_zn_0_min_6c00_05206c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7580,7 +7892,8 @@ fn test_uzp2_z_zz_field_zn_1_poweroftwo_6c00_05206c20() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7601,7 +7914,8 @@ fn test_uzp2_z_zz_field_zn_30_poweroftwominusone_6c00_05206fc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7622,7 +7936,8 @@ fn test_uzp2_z_zz_field_zn_31_max_6c00_05206fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7643,7 +7958,8 @@ fn test_uzp2_z_zz_field_zd_0_min_6c00_05206c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7664,7 +7980,8 @@ fn test_uzp2_z_zz_field_zd_1_poweroftwo_6c00_05206c01() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7685,7 +8002,8 @@ fn test_uzp2_z_zz_field_zd_30_poweroftwominusone_6c00_05206c1e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7706,7 +8024,8 @@ fn test_uzp2_z_zz_field_zd_31_max_6c00_05206c1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7727,7 +8046,8 @@ fn test_uzp2_z_zz_combo_0_6c00_05206c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7748,7 +8068,8 @@ fn test_uzp2_z_zz_combo_1_6c00_05606c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7769,7 +8090,8 @@ fn test_uzp2_z_zz_combo_2_6c00_05a06c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7790,7 +8112,8 @@ fn test_uzp2_z_zz_combo_3_6c00_05e06c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7811,7 +8134,8 @@ fn test_uzp2_z_zz_combo_4_6c00_05206c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7832,7 +8156,8 @@ fn test_uzp2_z_zz_combo_5_6c00_05216c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7853,7 +8178,8 @@ fn test_uzp2_z_zz_combo_6_6c00_053e6c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7874,7 +8200,8 @@ fn test_uzp2_z_zz_combo_7_6c00_053f6c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7895,7 +8222,8 @@ fn test_uzp2_z_zz_combo_8_6c00_05206c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7916,7 +8244,8 @@ fn test_uzp2_z_zz_combo_9_6c00_05206c20() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7937,7 +8266,8 @@ fn test_uzp2_z_zz_combo_10_6c00_05206fc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7958,7 +8288,8 @@ fn test_uzp2_z_zz_combo_11_6c00_05206fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7979,7 +8310,8 @@ fn test_uzp2_z_zz_combo_12_6c00_05206c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8000,7 +8332,8 @@ fn test_uzp2_z_zz_combo_13_6c00_05206c01() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8021,7 +8354,8 @@ fn test_uzp2_z_zz_combo_14_6c00_05206c1e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8042,7 +8376,8 @@ fn test_uzp2_z_zz_combo_15_6c00_05206c1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8063,7 +8398,8 @@ fn test_uzp2_z_zz_special_size_0_size_variant_0_27648_05206c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8084,7 +8420,8 @@ fn test_uzp2_z_zz_special_size_1_size_variant_1_27648_05606c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8105,7 +8442,8 @@ fn test_uzp2_z_zz_special_size_2_size_variant_2_27648_05a06c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8126,7 +8464,8 @@ fn test_uzp2_z_zz_special_size_3_size_variant_3_27648_05e06c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8632,7 +8971,8 @@ fn test_splice_z_p_zz_des_field_size_0_min_8000_052c8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8653,7 +8993,8 @@ fn test_splice_z_p_zz_des_field_size_1_poweroftwo_8000_056c8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8674,7 +9015,8 @@ fn test_splice_z_p_zz_des_field_size_2_poweroftwo_8000_05ac8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8695,7 +9037,8 @@ fn test_splice_z_p_zz_des_field_size_3_max_8000_05ec8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8716,7 +9059,8 @@ fn test_splice_z_p_zz_des_field_pg_0_min_8000_052c8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8737,7 +9081,8 @@ fn test_splice_z_p_zz_des_field_pg_1_poweroftwo_8000_052c8400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8758,7 +9103,8 @@ fn test_splice_z_p_zz_des_field_zm_0_min_8000_052c8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8779,7 +9125,8 @@ fn test_splice_z_p_zz_des_field_zm_1_poweroftwo_8000_052c8020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8800,7 +9147,8 @@ fn test_splice_z_p_zz_des_field_zm_30_poweroftwominusone_8000_052c83c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8821,7 +9169,8 @@ fn test_splice_z_p_zz_des_field_zm_31_max_8000_052c83e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8842,7 +9191,8 @@ fn test_splice_z_p_zz_des_field_zdn_0_min_8000_052c8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8863,7 +9213,8 @@ fn test_splice_z_p_zz_des_field_zdn_1_poweroftwo_8000_052c8001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8884,7 +9235,8 @@ fn test_splice_z_p_zz_des_field_zdn_15_poweroftwominusone_8000_052c800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8905,7 +9257,8 @@ fn test_splice_z_p_zz_des_field_zdn_31_max_8000_052c801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8926,7 +9279,8 @@ fn test_splice_z_p_zz_des_combo_0_8000_052c8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8947,7 +9301,8 @@ fn test_splice_z_p_zz_des_combo_1_8000_056c8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8968,7 +9323,8 @@ fn test_splice_z_p_zz_des_combo_2_8000_05ac8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8989,7 +9345,8 @@ fn test_splice_z_p_zz_des_combo_3_8000_05ec8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9010,7 +9367,8 @@ fn test_splice_z_p_zz_des_combo_4_8000_052c8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9031,7 +9389,8 @@ fn test_splice_z_p_zz_des_combo_5_8000_052c8400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9052,7 +9411,8 @@ fn test_splice_z_p_zz_des_combo_6_8000_052c8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9073,7 +9433,8 @@ fn test_splice_z_p_zz_des_combo_7_8000_052c8020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9094,7 +9455,8 @@ fn test_splice_z_p_zz_des_combo_8_8000_052c83c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9115,7 +9477,8 @@ fn test_splice_z_p_zz_des_combo_9_8000_052c83e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9136,7 +9499,8 @@ fn test_splice_z_p_zz_des_combo_10_8000_052c8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9157,7 +9521,8 @@ fn test_splice_z_p_zz_des_combo_11_8000_052c8001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9178,7 +9543,8 @@ fn test_splice_z_p_zz_des_combo_12_8000_052c800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9199,7 +9565,8 @@ fn test_splice_z_p_zz_des_combo_13_8000_052c801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9220,7 +9587,8 @@ fn test_splice_z_p_zz_des_special_size_0_size_variant_0_32768_052c8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9241,7 +9609,8 @@ fn test_splice_z_p_zz_des_special_size_1_size_variant_1_32768_056c8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9262,7 +9631,8 @@ fn test_splice_z_p_zz_des_special_size_2_size_variant_2_32768_05ac8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9283,7 +9653,8 @@ fn test_splice_z_p_zz_des_special_size_3_size_variant_3_32768_05ec8000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9308,7 +9679,8 @@ fn test_smulh_z_p_zz_field_size_0_min_0_04120000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9329,7 +9701,8 @@ fn test_smulh_z_p_zz_field_size_1_poweroftwo_0_04520000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9350,7 +9723,8 @@ fn test_smulh_z_p_zz_field_size_2_poweroftwo_0_04920000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9371,7 +9745,8 @@ fn test_smulh_z_p_zz_field_size_3_max_0_04d20000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9392,7 +9767,8 @@ fn test_smulh_z_p_zz_field_pg_0_min_0_04120000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9413,7 +9789,8 @@ fn test_smulh_z_p_zz_field_pg_1_poweroftwo_0_04120400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9434,7 +9811,8 @@ fn test_smulh_z_p_zz_field_zm_0_min_0_04120000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9455,7 +9833,8 @@ fn test_smulh_z_p_zz_field_zm_1_poweroftwo_0_04120020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9476,7 +9855,8 @@ fn test_smulh_z_p_zz_field_zm_30_poweroftwominusone_0_041203c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9497,7 +9877,8 @@ fn test_smulh_z_p_zz_field_zm_31_max_0_041203e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9518,7 +9899,8 @@ fn test_smulh_z_p_zz_field_zdn_0_min_0_04120000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9539,7 +9921,8 @@ fn test_smulh_z_p_zz_field_zdn_1_poweroftwo_0_04120001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9560,7 +9943,8 @@ fn test_smulh_z_p_zz_field_zdn_15_poweroftwominusone_0_0412000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9581,7 +9965,8 @@ fn test_smulh_z_p_zz_field_zdn_31_max_0_0412001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9602,7 +9987,8 @@ fn test_smulh_z_p_zz_combo_0_0_04120000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9623,7 +10009,8 @@ fn test_smulh_z_p_zz_combo_1_0_04520000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9644,7 +10031,8 @@ fn test_smulh_z_p_zz_combo_2_0_04920000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9665,7 +10053,8 @@ fn test_smulh_z_p_zz_combo_3_0_04d20000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9686,7 +10075,8 @@ fn test_smulh_z_p_zz_combo_4_0_04120000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9707,7 +10097,8 @@ fn test_smulh_z_p_zz_combo_5_0_04120400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9728,7 +10119,8 @@ fn test_smulh_z_p_zz_combo_6_0_04120000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9749,7 +10141,8 @@ fn test_smulh_z_p_zz_combo_7_0_04120020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9770,7 +10163,8 @@ fn test_smulh_z_p_zz_combo_8_0_041203c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9791,7 +10185,8 @@ fn test_smulh_z_p_zz_combo_9_0_041203e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9812,7 +10207,8 @@ fn test_smulh_z_p_zz_combo_10_0_04120000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9833,7 +10229,8 @@ fn test_smulh_z_p_zz_combo_11_0_04120001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9854,7 +10251,8 @@ fn test_smulh_z_p_zz_combo_12_0_0412000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9875,7 +10273,8 @@ fn test_smulh_z_p_zz_combo_13_0_0412001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9896,7 +10295,8 @@ fn test_smulh_z_p_zz_special_size_0_size_variant_0_0_04120000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9917,7 +10317,8 @@ fn test_smulh_z_p_zz_special_size_1_size_variant_1_0_04520000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9938,7 +10339,8 @@ fn test_smulh_z_p_zz_special_size_2_size_variant_2_0_04920000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9959,7 +10361,8 @@ fn test_smulh_z_p_zz_special_size_3_size_variant_3_0_04d20000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -10004,7 +10407,8 @@ fn test_asrd_z_p_zi_field_tszh_1_poweroftwo_8000_04448000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -10025,7 +10429,8 @@ fn test_asrd_z_p_zi_field_tszh_3_max_8000_04c48000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -10106,7 +10511,8 @@ fn test_asrd_z_p_zi_field_tszl_1_poweroftwo_8000_04048100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -10127,7 +10533,8 @@ fn test_asrd_z_p_zi_field_tszl_3_max_8000_04048300() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -10328,7 +10735,8 @@ fn test_asrd_z_p_zi_combo_1_8000_04448000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -10349,7 +10757,8 @@ fn test_asrd_z_p_zi_combo_2_8000_04c48000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -10430,7 +10839,8 @@ fn test_asrd_z_p_zi_combo_6_8000_04048100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -10451,7 +10861,8 @@ fn test_asrd_z_p_zi_combo_7_8000_04048300() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -10676,7 +11087,8 @@ fn test_lsr_z_zw_field_size_2_poweroftwo_8400_04a08400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -10695,7 +11107,9 @@ fn test_lsr_z_zw_field_size_3_max_8400_04e08400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -10996,7 +11410,8 @@ fn test_lsr_z_zw_combo_2_8400_04a08400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11015,7 +11430,9 @@ fn test_lsr_z_zw_combo_3_8400_04e08400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -11316,7 +11733,8 @@ fn test_lsr_z_zw_special_size_2_size_variant_2_33792_04a08400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11335,7 +11753,9 @@ fn test_lsr_z_zw_special_size_3_size_variant_3_33792_04e08400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -11360,7 +11780,8 @@ fn test_sqsub_z_zz_field_size_0_min_1800_04201800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11381,7 +11802,8 @@ fn test_sqsub_z_zz_field_size_1_poweroftwo_1800_04601800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11402,7 +11824,8 @@ fn test_sqsub_z_zz_field_size_2_poweroftwo_1800_04a01800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11423,7 +11846,8 @@ fn test_sqsub_z_zz_field_size_3_max_1800_04e01800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11444,7 +11868,8 @@ fn test_sqsub_z_zz_field_zm_0_min_1800_04201800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11465,7 +11890,8 @@ fn test_sqsub_z_zz_field_zm_1_poweroftwo_1800_04211800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11486,7 +11912,8 @@ fn test_sqsub_z_zz_field_zm_30_poweroftwominusone_1800_043e1800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11507,7 +11934,8 @@ fn test_sqsub_z_zz_field_zm_31_max_1800_043f1800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11528,7 +11956,8 @@ fn test_sqsub_z_zz_field_zn_0_min_1800_04201800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11549,7 +11978,8 @@ fn test_sqsub_z_zz_field_zn_1_poweroftwo_1800_04201820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11570,7 +12000,8 @@ fn test_sqsub_z_zz_field_zn_30_poweroftwominusone_1800_04201bc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11591,7 +12022,8 @@ fn test_sqsub_z_zz_field_zn_31_max_1800_04201be0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11612,7 +12044,8 @@ fn test_sqsub_z_zz_field_zd_0_min_1800_04201800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11633,7 +12066,8 @@ fn test_sqsub_z_zz_field_zd_1_poweroftwo_1800_04201801() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11654,7 +12088,8 @@ fn test_sqsub_z_zz_field_zd_30_poweroftwominusone_1800_0420181e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11675,7 +12110,8 @@ fn test_sqsub_z_zz_field_zd_31_max_1800_0420181f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11696,7 +12132,8 @@ fn test_sqsub_z_zz_combo_0_1800_04201800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11717,7 +12154,8 @@ fn test_sqsub_z_zz_combo_1_1800_04601800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11738,7 +12176,8 @@ fn test_sqsub_z_zz_combo_2_1800_04a01800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11759,7 +12198,8 @@ fn test_sqsub_z_zz_combo_3_1800_04e01800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11780,7 +12220,8 @@ fn test_sqsub_z_zz_combo_4_1800_04201800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11801,7 +12242,8 @@ fn test_sqsub_z_zz_combo_5_1800_04211800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11822,7 +12264,8 @@ fn test_sqsub_z_zz_combo_6_1800_043e1800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11843,7 +12286,8 @@ fn test_sqsub_z_zz_combo_7_1800_043f1800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11864,7 +12308,8 @@ fn test_sqsub_z_zz_combo_8_1800_04201800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11885,7 +12330,8 @@ fn test_sqsub_z_zz_combo_9_1800_04201820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11906,7 +12352,8 @@ fn test_sqsub_z_zz_combo_10_1800_04201bc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11927,7 +12374,8 @@ fn test_sqsub_z_zz_combo_11_1800_04201be0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11948,7 +12396,8 @@ fn test_sqsub_z_zz_combo_12_1800_04201800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11969,7 +12418,8 @@ fn test_sqsub_z_zz_combo_13_1800_04201801() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11990,7 +12440,8 @@ fn test_sqsub_z_zz_combo_14_1800_0420181e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12011,7 +12462,8 @@ fn test_sqsub_z_zz_combo_15_1800_0420181f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12032,7 +12484,8 @@ fn test_sqsub_z_zz_special_size_0_size_variant_0_6144_04201800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12053,7 +12506,8 @@ fn test_sqsub_z_zz_special_size_1_size_variant_1_6144_04601800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12074,7 +12528,8 @@ fn test_sqsub_z_zz_special_size_2_size_variant_2_6144_04a01800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12095,7 +12550,8 @@ fn test_sqsub_z_zz_special_size_3_size_variant_3_6144_04e01800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12120,7 +12576,8 @@ fn test_rev_z_z_field_size_0_min_3800_05383800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12141,7 +12598,8 @@ fn test_rev_z_z_field_size_1_poweroftwo_3800_05783800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12162,7 +12620,8 @@ fn test_rev_z_z_field_size_2_poweroftwo_3800_05b83800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12183,7 +12642,8 @@ fn test_rev_z_z_field_size_3_max_3800_05f83800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12204,7 +12664,8 @@ fn test_rev_z_z_field_zn_0_min_3800_05383800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12225,7 +12686,8 @@ fn test_rev_z_z_field_zn_1_poweroftwo_3800_05383820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12246,7 +12708,8 @@ fn test_rev_z_z_field_zn_30_poweroftwominusone_3800_05383bc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12267,7 +12730,8 @@ fn test_rev_z_z_field_zn_31_max_3800_05383be0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12288,7 +12752,8 @@ fn test_rev_z_z_field_zd_0_min_3800_05383800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12309,7 +12774,8 @@ fn test_rev_z_z_field_zd_1_poweroftwo_3800_05383801() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12330,7 +12796,8 @@ fn test_rev_z_z_field_zd_30_poweroftwominusone_3800_0538381e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12351,7 +12818,8 @@ fn test_rev_z_z_field_zd_31_max_3800_0538381f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12372,7 +12840,8 @@ fn test_rev_z_z_combo_0_3800_05383800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12393,7 +12862,8 @@ fn test_rev_z_z_combo_1_3800_05783800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12414,7 +12884,8 @@ fn test_rev_z_z_combo_2_3800_05b83800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12435,7 +12906,8 @@ fn test_rev_z_z_combo_3_3800_05f83800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12456,7 +12928,8 @@ fn test_rev_z_z_combo_4_3800_05383800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12477,7 +12950,8 @@ fn test_rev_z_z_combo_5_3800_05383820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12498,7 +12972,8 @@ fn test_rev_z_z_combo_6_3800_05383bc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12519,7 +12994,8 @@ fn test_rev_z_z_combo_7_3800_05383be0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12540,7 +13016,8 @@ fn test_rev_z_z_combo_8_3800_05383800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12561,7 +13038,8 @@ fn test_rev_z_z_combo_9_3800_05383801() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12582,7 +13060,8 @@ fn test_rev_z_z_combo_10_3800_0538381e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12603,7 +13082,8 @@ fn test_rev_z_z_combo_11_3800_0538381f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12624,7 +13104,8 @@ fn test_rev_z_z_special_size_0_size_variant_0_14336_05383800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12645,7 +13126,8 @@ fn test_rev_z_z_special_size_1_size_variant_1_14336_05783800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12666,7 +13148,8 @@ fn test_rev_z_z_special_size_2_size_variant_2_14336_05b83800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12687,7 +13170,8 @@ fn test_rev_z_z_special_size_3_size_variant_3_14336_05f83800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -13534,7 +14018,9 @@ fn test_sqsub_z_zi_field_sh_1_max_c000_2526e000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14033,7 +14519,9 @@ fn test_sqsub_z_zi_combo_5_c000_2526e000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14534,7 +15022,8 @@ fn test_sqsub_z_zi_special_sh_1_shift_type_lsr_49152_2566e020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -14575,7 +15064,8 @@ fn test_sqsub_z_zi_special_sh_3_shift_type_ror_49152_2566e020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -14598,7 +15088,9 @@ fn test_sdivr_z_p_zz_field_size_0_min_0_04160000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14617,7 +15109,9 @@ fn test_sdivr_z_p_zz_field_size_1_poweroftwo_0_04560000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14638,7 +15132,8 @@ fn test_sdivr_z_p_zz_field_size_2_poweroftwo_0_04960000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -14659,7 +15154,8 @@ fn test_sdivr_z_p_zz_field_size_3_max_0_04d60000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -14678,7 +15174,9 @@ fn test_sdivr_z_p_zz_field_pg_0_min_0_04160000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14697,7 +15195,9 @@ fn test_sdivr_z_p_zz_field_pg_1_poweroftwo_0_04160400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14716,7 +15216,9 @@ fn test_sdivr_z_p_zz_field_zm_0_min_0_04160000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14735,7 +15237,9 @@ fn test_sdivr_z_p_zz_field_zm_1_poweroftwo_0_04160020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14754,7 +15258,9 @@ fn test_sdivr_z_p_zz_field_zm_30_poweroftwominusone_0_041603c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14773,7 +15279,9 @@ fn test_sdivr_z_p_zz_field_zm_31_max_0_041603e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14792,7 +15300,9 @@ fn test_sdivr_z_p_zz_field_zdn_0_min_0_04160000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14811,7 +15321,9 @@ fn test_sdivr_z_p_zz_field_zdn_1_poweroftwo_0_04160001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14830,7 +15342,9 @@ fn test_sdivr_z_p_zz_field_zdn_15_poweroftwominusone_0_0416000f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14849,7 +15363,9 @@ fn test_sdivr_z_p_zz_field_zdn_31_max_0_0416001f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14868,7 +15384,9 @@ fn test_sdivr_z_p_zz_combo_0_0_04160000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14887,7 +15405,9 @@ fn test_sdivr_z_p_zz_combo_1_0_04560000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14908,7 +15428,8 @@ fn test_sdivr_z_p_zz_combo_2_0_04960000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -14929,7 +15450,8 @@ fn test_sdivr_z_p_zz_combo_3_0_04d60000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -14948,7 +15470,9 @@ fn test_sdivr_z_p_zz_combo_4_0_04160000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14967,7 +15491,9 @@ fn test_sdivr_z_p_zz_combo_5_0_04160400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -14986,7 +15512,9 @@ fn test_sdivr_z_p_zz_combo_6_0_04160000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15005,7 +15533,9 @@ fn test_sdivr_z_p_zz_combo_7_0_04160020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15024,7 +15554,9 @@ fn test_sdivr_z_p_zz_combo_8_0_041603c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15043,7 +15575,9 @@ fn test_sdivr_z_p_zz_combo_9_0_041603e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15062,7 +15596,9 @@ fn test_sdivr_z_p_zz_combo_10_0_04160000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15081,7 +15617,9 @@ fn test_sdivr_z_p_zz_combo_11_0_04160001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15100,7 +15638,9 @@ fn test_sdivr_z_p_zz_combo_12_0_0416000f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15119,7 +15659,9 @@ fn test_sdivr_z_p_zz_combo_13_0_0416001f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15138,7 +15680,9 @@ fn test_sdivr_z_p_zz_special_size_0_size_variant_0_0_04160000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15157,7 +15701,9 @@ fn test_sdivr_z_p_zz_special_size_1_size_variant_1_0_04560000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15178,7 +15724,8 @@ fn test_sdivr_z_p_zz_special_size_2_size_variant_2_0_04960000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15199,7 +15746,8 @@ fn test_sdivr_z_p_zz_special_size_3_size_variant_3_0_04d60000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15224,7 +15772,8 @@ fn test_lasta_r_p_z_field_size_0_min_a000_0520a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15245,7 +15794,8 @@ fn test_lasta_r_p_z_field_size_1_poweroftwo_a000_0560a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15266,7 +15816,8 @@ fn test_lasta_r_p_z_field_size_2_poweroftwo_a000_05a0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15287,7 +15838,8 @@ fn test_lasta_r_p_z_field_size_3_max_a000_05e0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15308,7 +15860,8 @@ fn test_lasta_r_p_z_field_pg_0_min_a000_0520a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15329,7 +15882,8 @@ fn test_lasta_r_p_z_field_pg_1_poweroftwo_a000_0520a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15350,7 +15904,8 @@ fn test_lasta_r_p_z_field_zn_0_min_a000_0520a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15371,7 +15926,8 @@ fn test_lasta_r_p_z_field_zn_1_poweroftwo_a000_0520a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15392,7 +15948,8 @@ fn test_lasta_r_p_z_field_zn_30_poweroftwominusone_a000_0520a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15413,7 +15970,8 @@ fn test_lasta_r_p_z_field_zn_31_max_a000_0520a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15434,7 +15992,8 @@ fn test_lasta_r_p_z_field_rd_0_min_a000_0520a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15455,7 +16014,8 @@ fn test_lasta_r_p_z_field_rd_1_poweroftwo_a000_0520a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15476,7 +16036,8 @@ fn test_lasta_r_p_z_field_rd_30_poweroftwominusone_a000_0520a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15497,7 +16058,8 @@ fn test_lasta_r_p_z_field_rd_31_max_a000_0520a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15518,7 +16080,8 @@ fn test_lasta_r_p_z_combo_0_a000_0520a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15539,7 +16102,8 @@ fn test_lasta_r_p_z_combo_1_a000_0560a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15560,7 +16124,8 @@ fn test_lasta_r_p_z_combo_2_a000_05a0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15581,7 +16146,8 @@ fn test_lasta_r_p_z_combo_3_a000_05e0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15602,7 +16168,8 @@ fn test_lasta_r_p_z_combo_4_a000_0520a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15623,7 +16190,8 @@ fn test_lasta_r_p_z_combo_5_a000_0520a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15644,7 +16212,8 @@ fn test_lasta_r_p_z_combo_6_a000_0520a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15665,7 +16234,8 @@ fn test_lasta_r_p_z_combo_7_a000_0520a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15686,7 +16256,8 @@ fn test_lasta_r_p_z_combo_8_a000_0520a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15707,7 +16278,8 @@ fn test_lasta_r_p_z_combo_9_a000_0520a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15728,7 +16300,8 @@ fn test_lasta_r_p_z_combo_10_a000_0520a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15749,7 +16322,8 @@ fn test_lasta_r_p_z_combo_11_a000_0520a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15770,7 +16344,8 @@ fn test_lasta_r_p_z_combo_12_a000_0520a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15791,7 +16366,8 @@ fn test_lasta_r_p_z_combo_13_a000_0520a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15812,7 +16388,8 @@ fn test_lasta_r_p_z_combo_14_a000_0520a401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15833,7 +16410,8 @@ fn test_lasta_r_p_z_combo_15_a000_0520bc1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15854,7 +16432,8 @@ fn test_lasta_r_p_z_special_size_0_size_variant_0_40960_0520a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15875,7 +16454,8 @@ fn test_lasta_r_p_z_special_size_1_size_variant_1_40960_0560a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15896,7 +16476,8 @@ fn test_lasta_r_p_z_special_size_2_size_variant_2_40960_05a0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15917,7 +16498,8 @@ fn test_lasta_r_p_z_special_size_3_size_variant_3_40960_05e0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15939,7 +16521,8 @@ fn test_lasta_r_p_z_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discar
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15964,7 +16547,8 @@ fn test_index_z_rr_field_size_0_min_4c00_04204c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15985,7 +16569,8 @@ fn test_index_z_rr_field_size_1_poweroftwo_4c00_04604c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16006,7 +16591,8 @@ fn test_index_z_rr_field_size_2_poweroftwo_4c00_04a04c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16027,7 +16613,8 @@ fn test_index_z_rr_field_size_3_max_4c00_04e04c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16048,7 +16635,8 @@ fn test_index_z_rr_field_rm_0_min_4c00_04204c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16069,7 +16657,8 @@ fn test_index_z_rr_field_rm_1_poweroftwo_4c00_04214c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16090,7 +16679,8 @@ fn test_index_z_rr_field_rm_30_poweroftwominusone_4c00_043e4c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16111,7 +16701,8 @@ fn test_index_z_rr_field_rm_31_max_4c00_043f4c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16132,7 +16723,8 @@ fn test_index_z_rr_field_rn_0_min_4c00_04204c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16153,7 +16745,8 @@ fn test_index_z_rr_field_rn_1_poweroftwo_4c00_04204c20() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16174,7 +16767,8 @@ fn test_index_z_rr_field_rn_30_poweroftwominusone_4c00_04204fc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16195,7 +16789,8 @@ fn test_index_z_rr_field_rn_31_max_4c00_04204fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16216,7 +16811,8 @@ fn test_index_z_rr_field_zd_0_min_4c00_04204c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16237,7 +16833,8 @@ fn test_index_z_rr_field_zd_1_poweroftwo_4c00_04204c01() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16258,7 +16855,8 @@ fn test_index_z_rr_field_zd_30_poweroftwominusone_4c00_04204c1e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16279,7 +16877,8 @@ fn test_index_z_rr_field_zd_31_max_4c00_04204c1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16300,7 +16899,8 @@ fn test_index_z_rr_combo_0_4c00_04204c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16321,7 +16921,8 @@ fn test_index_z_rr_combo_1_4c00_04604c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16342,7 +16943,8 @@ fn test_index_z_rr_combo_2_4c00_04a04c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16363,7 +16965,8 @@ fn test_index_z_rr_combo_3_4c00_04e04c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16384,7 +16987,8 @@ fn test_index_z_rr_combo_4_4c00_04204c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16405,7 +17009,8 @@ fn test_index_z_rr_combo_5_4c00_04214c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16426,7 +17031,8 @@ fn test_index_z_rr_combo_6_4c00_043e4c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16447,7 +17053,8 @@ fn test_index_z_rr_combo_7_4c00_043f4c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16468,7 +17075,8 @@ fn test_index_z_rr_combo_8_4c00_04204c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16489,7 +17097,8 @@ fn test_index_z_rr_combo_9_4c00_04204c20() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16510,7 +17119,8 @@ fn test_index_z_rr_combo_10_4c00_04204fc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16531,7 +17141,8 @@ fn test_index_z_rr_combo_11_4c00_04204fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16552,7 +17163,8 @@ fn test_index_z_rr_combo_12_4c00_04204c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16573,7 +17185,8 @@ fn test_index_z_rr_combo_13_4c00_04204c01() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16594,7 +17207,8 @@ fn test_index_z_rr_combo_14_4c00_04204c1e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16615,7 +17229,8 @@ fn test_index_z_rr_combo_15_4c00_04204c1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16636,7 +17251,8 @@ fn test_index_z_rr_combo_16_4c00_04214c20() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16657,7 +17273,8 @@ fn test_index_z_rr_combo_17_4c00_043f4fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16678,7 +17295,8 @@ fn test_index_z_rr_special_size_0_size_variant_0_19456_04204c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16699,7 +17317,8 @@ fn test_index_z_rr_special_size_1_size_variant_1_19456_04604c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16720,7 +17339,8 @@ fn test_index_z_rr_special_size_2_size_variant_2_19456_04a04c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16741,7 +17361,8 @@ fn test_index_z_rr_special_size_3_size_variant_3_19456_04e04c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16762,7 +17383,8 @@ fn test_index_z_rr_special_rn_31_stack_pointer_sp_may_require_alignment_19456_04
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16787,7 +17409,8 @@ fn test_lastb_v_p_z_field_size_0_min_8000_05238000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16808,7 +17431,8 @@ fn test_lastb_v_p_z_field_size_1_poweroftwo_8000_05638000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16829,7 +17453,8 @@ fn test_lastb_v_p_z_field_size_2_poweroftwo_8000_05a38000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16850,7 +17475,8 @@ fn test_lastb_v_p_z_field_size_3_max_8000_05e38000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16871,7 +17497,8 @@ fn test_lastb_v_p_z_field_pg_0_min_8000_05238000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16892,7 +17519,8 @@ fn test_lastb_v_p_z_field_pg_1_poweroftwo_8000_05238400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16913,7 +17541,8 @@ fn test_lastb_v_p_z_field_zn_0_min_8000_05238000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16934,7 +17563,8 @@ fn test_lastb_v_p_z_field_zn_1_poweroftwo_8000_05238020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16955,7 +17585,8 @@ fn test_lastb_v_p_z_field_zn_30_poweroftwominusone_8000_052383c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16976,7 +17607,8 @@ fn test_lastb_v_p_z_field_zn_31_max_8000_052383e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16997,7 +17629,8 @@ fn test_lastb_v_p_z_field_vd_0_min_8000_05238000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17018,7 +17651,8 @@ fn test_lastb_v_p_z_field_vd_1_poweroftwo_8000_05238001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17039,7 +17673,8 @@ fn test_lastb_v_p_z_field_vd_30_poweroftwominusone_8000_0523801e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17060,7 +17695,8 @@ fn test_lastb_v_p_z_field_vd_31_max_8000_0523801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17081,7 +17717,8 @@ fn test_lastb_v_p_z_combo_0_8000_05238000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17102,7 +17739,8 @@ fn test_lastb_v_p_z_combo_1_8000_05638000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17123,7 +17761,8 @@ fn test_lastb_v_p_z_combo_2_8000_05a38000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17144,7 +17783,8 @@ fn test_lastb_v_p_z_combo_3_8000_05e38000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17165,7 +17805,8 @@ fn test_lastb_v_p_z_combo_4_8000_05238000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17186,7 +17827,8 @@ fn test_lastb_v_p_z_combo_5_8000_05238400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17207,7 +17849,8 @@ fn test_lastb_v_p_z_combo_6_8000_05238000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17228,7 +17871,8 @@ fn test_lastb_v_p_z_combo_7_8000_05238020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17249,7 +17893,8 @@ fn test_lastb_v_p_z_combo_8_8000_052383c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17270,7 +17915,8 @@ fn test_lastb_v_p_z_combo_9_8000_052383e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17291,7 +17937,8 @@ fn test_lastb_v_p_z_combo_10_8000_05238000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17312,7 +17959,8 @@ fn test_lastb_v_p_z_combo_11_8000_05238001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17333,7 +17981,8 @@ fn test_lastb_v_p_z_combo_12_8000_0523801e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17354,7 +18003,8 @@ fn test_lastb_v_p_z_combo_13_8000_0523801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17375,7 +18025,8 @@ fn test_lastb_v_p_z_special_size_0_size_variant_0_32768_05238000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17396,7 +18047,8 @@ fn test_lastb_v_p_z_special_size_1_size_variant_1_32768_05638000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17417,7 +18069,8 @@ fn test_lastb_v_p_z_special_size_2_size_variant_2_32768_05a38000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17438,7 +18091,8 @@ fn test_lastb_v_p_z_special_size_3_size_variant_3_32768_05e38000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17463,7 +18117,8 @@ fn test_cpy_z_p_i_field_size_0_min_0_05100000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17484,7 +18139,8 @@ fn test_cpy_z_p_i_field_size_1_poweroftwo_0_05500000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17505,7 +18161,8 @@ fn test_cpy_z_p_i_field_size_2_poweroftwo_0_05900000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17526,7 +18183,8 @@ fn test_cpy_z_p_i_field_size_3_max_0_05d00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17547,7 +18205,8 @@ fn test_cpy_z_p_i_field_pg_0_min_0_05100000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17568,7 +18227,8 @@ fn test_cpy_z_p_i_field_pg_1_poweroftwo_0_05110000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17589,7 +18249,8 @@ fn test_cpy_z_p_i_field_m_0_min_0_05100000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17610,7 +18271,8 @@ fn test_cpy_z_p_i_field_m_1_max_0_05104000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17631,7 +18293,8 @@ fn test_cpy_z_p_i_field_sh_0_min_0_05100000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17672,7 +18335,8 @@ fn test_cpy_z_p_i_field_imm8_0_zero_0_05100000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17693,7 +18357,8 @@ fn test_cpy_z_p_i_field_imm8_1_poweroftwo_0_05100020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17714,7 +18379,8 @@ fn test_cpy_z_p_i_field_imm8_3_poweroftwominusone_0_05100060() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17735,7 +18401,8 @@ fn test_cpy_z_p_i_field_imm8_4_poweroftwo_0_05100080() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17756,7 +18423,8 @@ fn test_cpy_z_p_i_field_imm8_7_poweroftwominusone_0_051000e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17777,7 +18445,8 @@ fn test_cpy_z_p_i_field_imm8_8_poweroftwo_0_05100100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17798,7 +18467,8 @@ fn test_cpy_z_p_i_field_imm8_15_poweroftwominusone_0_051001e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17819,7 +18489,8 @@ fn test_cpy_z_p_i_field_imm8_16_poweroftwo_0_05100200() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17840,7 +18511,8 @@ fn test_cpy_z_p_i_field_imm8_31_poweroftwominusone_0_051003e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17861,7 +18533,8 @@ fn test_cpy_z_p_i_field_imm8_32_poweroftwo_0_05100400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17882,7 +18555,8 @@ fn test_cpy_z_p_i_field_imm8_63_poweroftwominusone_0_051007e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17903,7 +18577,8 @@ fn test_cpy_z_p_i_field_imm8_64_poweroftwo_0_05100800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17924,7 +18599,8 @@ fn test_cpy_z_p_i_field_imm8_127_poweroftwominusone_0_05100fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17945,7 +18621,8 @@ fn test_cpy_z_p_i_field_imm8_128_poweroftwo_0_05101000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17966,7 +18643,8 @@ fn test_cpy_z_p_i_field_imm8_255_max_0_05101fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17987,7 +18665,8 @@ fn test_cpy_z_p_i_field_zd_0_min_0_05100000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18008,7 +18687,8 @@ fn test_cpy_z_p_i_field_zd_1_poweroftwo_0_05100001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18029,7 +18709,8 @@ fn test_cpy_z_p_i_field_zd_30_poweroftwominusone_0_0510001e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18050,7 +18731,8 @@ fn test_cpy_z_p_i_field_zd_31_max_0_0510001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18071,7 +18753,8 @@ fn test_cpy_z_p_i_combo_0_0_05100000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18092,7 +18775,8 @@ fn test_cpy_z_p_i_combo_1_0_05500000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18113,7 +18797,8 @@ fn test_cpy_z_p_i_combo_2_0_05900000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18134,7 +18819,8 @@ fn test_cpy_z_p_i_combo_3_0_05d00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18155,7 +18841,8 @@ fn test_cpy_z_p_i_combo_4_0_05100000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18176,7 +18863,8 @@ fn test_cpy_z_p_i_combo_5_0_05110000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18197,7 +18885,8 @@ fn test_cpy_z_p_i_combo_6_0_05100000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18218,7 +18907,8 @@ fn test_cpy_z_p_i_combo_7_0_05104000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18239,7 +18929,8 @@ fn test_cpy_z_p_i_combo_8_0_05100000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18280,7 +18971,8 @@ fn test_cpy_z_p_i_combo_10_0_05100000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18301,7 +18993,8 @@ fn test_cpy_z_p_i_combo_11_0_05100020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18322,7 +19015,8 @@ fn test_cpy_z_p_i_combo_12_0_05100060() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18343,7 +19037,8 @@ fn test_cpy_z_p_i_combo_13_0_05100080() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18364,7 +19059,8 @@ fn test_cpy_z_p_i_combo_14_0_051000e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18385,7 +19081,8 @@ fn test_cpy_z_p_i_combo_15_0_05100100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18406,7 +19103,8 @@ fn test_cpy_z_p_i_combo_16_0_051001e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18427,7 +19125,8 @@ fn test_cpy_z_p_i_combo_17_0_05100200() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18448,7 +19147,8 @@ fn test_cpy_z_p_i_combo_18_0_051003e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18469,7 +19169,8 @@ fn test_cpy_z_p_i_combo_19_0_05100400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18490,7 +19191,8 @@ fn test_cpy_z_p_i_combo_20_0_051007e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18511,7 +19213,8 @@ fn test_cpy_z_p_i_combo_21_0_05100800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18532,7 +19235,8 @@ fn test_cpy_z_p_i_combo_22_0_05100fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18553,7 +19257,8 @@ fn test_cpy_z_p_i_combo_23_0_05101000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18574,7 +19279,8 @@ fn test_cpy_z_p_i_combo_24_0_05101fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18595,7 +19301,8 @@ fn test_cpy_z_p_i_combo_25_0_05100000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18616,7 +19323,8 @@ fn test_cpy_z_p_i_combo_26_0_05100001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18637,7 +19345,8 @@ fn test_cpy_z_p_i_combo_27_0_0510001e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18658,7 +19367,8 @@ fn test_cpy_z_p_i_combo_28_0_0510001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18679,7 +19389,8 @@ fn test_cpy_z_p_i_special_size_0_size_variant_0_0_05100020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18700,7 +19411,8 @@ fn test_cpy_z_p_i_special_size_1_size_variant_1_0_05500020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18721,7 +19433,8 @@ fn test_cpy_z_p_i_special_size_2_size_variant_2_0_05900020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18742,7 +19455,8 @@ fn test_cpy_z_p_i_special_size_3_size_variant_3_0_05d00020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18763,7 +19477,8 @@ fn test_cpy_z_p_i_special_sh_0_shift_type_lsl_0_05500020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18784,7 +19499,8 @@ fn test_cpy_z_p_i_special_sh_1_shift_type_lsr_0_05502020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18805,7 +19521,8 @@ fn test_cpy_z_p_i_special_sh_2_shift_type_asr_0_05500020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18826,7 +19543,8 @@ fn test_cpy_z_p_i_special_sh_3_shift_type_ror_0_05502020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18851,7 +19569,8 @@ fn test_cnot_z_p_z_field_size_0_min_a000_041ba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18872,7 +19591,8 @@ fn test_cnot_z_p_z_field_size_1_poweroftwo_a000_045ba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18893,7 +19613,8 @@ fn test_cnot_z_p_z_field_size_2_poweroftwo_a000_049ba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18914,7 +19635,8 @@ fn test_cnot_z_p_z_field_size_3_max_a000_04dba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18935,7 +19657,8 @@ fn test_cnot_z_p_z_field_pg_0_min_a000_041ba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18956,7 +19679,8 @@ fn test_cnot_z_p_z_field_pg_1_poweroftwo_a000_041ba400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18977,7 +19701,8 @@ fn test_cnot_z_p_z_field_zn_0_min_a000_041ba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18998,7 +19723,8 @@ fn test_cnot_z_p_z_field_zn_1_poweroftwo_a000_041ba020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19019,7 +19745,8 @@ fn test_cnot_z_p_z_field_zn_30_poweroftwominusone_a000_041ba3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19040,7 +19767,8 @@ fn test_cnot_z_p_z_field_zn_31_max_a000_041ba3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19061,7 +19789,8 @@ fn test_cnot_z_p_z_field_zd_0_min_a000_041ba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19082,7 +19811,8 @@ fn test_cnot_z_p_z_field_zd_1_poweroftwo_a000_041ba001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19103,7 +19833,8 @@ fn test_cnot_z_p_z_field_zd_30_poweroftwominusone_a000_041ba01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19124,7 +19855,8 @@ fn test_cnot_z_p_z_field_zd_31_max_a000_041ba01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19145,7 +19877,8 @@ fn test_cnot_z_p_z_combo_0_a000_041ba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19166,7 +19899,8 @@ fn test_cnot_z_p_z_combo_1_a000_045ba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19187,7 +19921,8 @@ fn test_cnot_z_p_z_combo_2_a000_049ba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19208,7 +19943,8 @@ fn test_cnot_z_p_z_combo_3_a000_04dba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19229,7 +19965,8 @@ fn test_cnot_z_p_z_combo_4_a000_041ba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19250,7 +19987,8 @@ fn test_cnot_z_p_z_combo_5_a000_041ba400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19271,7 +20009,8 @@ fn test_cnot_z_p_z_combo_6_a000_041ba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19292,7 +20031,8 @@ fn test_cnot_z_p_z_combo_7_a000_041ba020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19313,7 +20053,8 @@ fn test_cnot_z_p_z_combo_8_a000_041ba3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19334,7 +20075,8 @@ fn test_cnot_z_p_z_combo_9_a000_041ba3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19355,7 +20097,8 @@ fn test_cnot_z_p_z_combo_10_a000_041ba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19376,7 +20119,8 @@ fn test_cnot_z_p_z_combo_11_a000_041ba001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19397,7 +20141,8 @@ fn test_cnot_z_p_z_combo_12_a000_041ba01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19418,7 +20163,8 @@ fn test_cnot_z_p_z_combo_13_a000_041ba01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19439,7 +20185,8 @@ fn test_cnot_z_p_z_special_size_0_size_variant_0_40960_041ba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19460,7 +20207,8 @@ fn test_cnot_z_p_z_special_size_1_size_variant_1_40960_045ba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19481,7 +20229,8 @@ fn test_cnot_z_p_z_special_size_2_size_variant_2_40960_049ba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19502,7 +20251,8 @@ fn test_cnot_z_p_z_special_size_3_size_variant_3_40960_04dba000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19527,7 +20277,8 @@ fn test_uqsub_z_zz_field_size_0_min_1c00_04201c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19548,7 +20299,8 @@ fn test_uqsub_z_zz_field_size_1_poweroftwo_1c00_04601c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19569,7 +20321,8 @@ fn test_uqsub_z_zz_field_size_2_poweroftwo_1c00_04a01c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19590,7 +20343,8 @@ fn test_uqsub_z_zz_field_size_3_max_1c00_04e01c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19611,7 +20365,8 @@ fn test_uqsub_z_zz_field_zm_0_min_1c00_04201c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19632,7 +20387,8 @@ fn test_uqsub_z_zz_field_zm_1_poweroftwo_1c00_04211c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19653,7 +20409,8 @@ fn test_uqsub_z_zz_field_zm_30_poweroftwominusone_1c00_043e1c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19674,7 +20431,8 @@ fn test_uqsub_z_zz_field_zm_31_max_1c00_043f1c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19695,7 +20453,8 @@ fn test_uqsub_z_zz_field_zn_0_min_1c00_04201c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19716,7 +20475,8 @@ fn test_uqsub_z_zz_field_zn_1_poweroftwo_1c00_04201c20() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19737,7 +20497,8 @@ fn test_uqsub_z_zz_field_zn_30_poweroftwominusone_1c00_04201fc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19758,7 +20519,8 @@ fn test_uqsub_z_zz_field_zn_31_max_1c00_04201fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19779,7 +20541,8 @@ fn test_uqsub_z_zz_field_zd_0_min_1c00_04201c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19800,7 +20563,8 @@ fn test_uqsub_z_zz_field_zd_1_poweroftwo_1c00_04201c01() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19821,7 +20585,8 @@ fn test_uqsub_z_zz_field_zd_30_poweroftwominusone_1c00_04201c1e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19842,7 +20607,8 @@ fn test_uqsub_z_zz_field_zd_31_max_1c00_04201c1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19863,7 +20629,8 @@ fn test_uqsub_z_zz_combo_0_1c00_04201c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19884,7 +20651,8 @@ fn test_uqsub_z_zz_combo_1_1c00_04601c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19905,7 +20673,8 @@ fn test_uqsub_z_zz_combo_2_1c00_04a01c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19926,7 +20695,8 @@ fn test_uqsub_z_zz_combo_3_1c00_04e01c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19947,7 +20717,8 @@ fn test_uqsub_z_zz_combo_4_1c00_04201c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19968,7 +20739,8 @@ fn test_uqsub_z_zz_combo_5_1c00_04211c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -19989,7 +20761,8 @@ fn test_uqsub_z_zz_combo_6_1c00_043e1c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20010,7 +20783,8 @@ fn test_uqsub_z_zz_combo_7_1c00_043f1c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20031,7 +20805,8 @@ fn test_uqsub_z_zz_combo_8_1c00_04201c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20052,7 +20827,8 @@ fn test_uqsub_z_zz_combo_9_1c00_04201c20() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20073,7 +20849,8 @@ fn test_uqsub_z_zz_combo_10_1c00_04201fc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20094,7 +20871,8 @@ fn test_uqsub_z_zz_combo_11_1c00_04201fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20115,7 +20893,8 @@ fn test_uqsub_z_zz_combo_12_1c00_04201c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20136,7 +20915,8 @@ fn test_uqsub_z_zz_combo_13_1c00_04201c01() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20157,7 +20937,8 @@ fn test_uqsub_z_zz_combo_14_1c00_04201c1e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20178,7 +20959,8 @@ fn test_uqsub_z_zz_combo_15_1c00_04201c1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20199,7 +20981,8 @@ fn test_uqsub_z_zz_special_size_0_size_variant_0_7168_04201c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20220,7 +21003,8 @@ fn test_uqsub_z_zz_special_size_1_size_variant_1_7168_04601c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20241,7 +21025,8 @@ fn test_uqsub_z_zz_special_size_2_size_variant_2_7168_04a01c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20262,7 +21047,8 @@ fn test_uqsub_z_zz_special_size_3_size_variant_3_7168_04e01c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20931,7 +21717,8 @@ fn test_cls_z_p_z_field_size_0_min_a000_0418a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20952,7 +21739,8 @@ fn test_cls_z_p_z_field_size_1_poweroftwo_a000_0458a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20973,7 +21761,8 @@ fn test_cls_z_p_z_field_size_2_poweroftwo_a000_0498a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -20994,7 +21783,8 @@ fn test_cls_z_p_z_field_size_3_max_a000_04d8a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21015,7 +21805,8 @@ fn test_cls_z_p_z_field_pg_0_min_a000_0418a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21036,7 +21827,8 @@ fn test_cls_z_p_z_field_pg_1_poweroftwo_a000_0418a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21057,7 +21849,8 @@ fn test_cls_z_p_z_field_zn_0_min_a000_0418a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21078,7 +21871,8 @@ fn test_cls_z_p_z_field_zn_1_poweroftwo_a000_0418a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21099,7 +21893,8 @@ fn test_cls_z_p_z_field_zn_30_poweroftwominusone_a000_0418a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21120,7 +21915,8 @@ fn test_cls_z_p_z_field_zn_31_max_a000_0418a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21141,7 +21937,8 @@ fn test_cls_z_p_z_field_zd_0_min_a000_0418a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21162,7 +21959,8 @@ fn test_cls_z_p_z_field_zd_1_poweroftwo_a000_0418a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21183,7 +21981,8 @@ fn test_cls_z_p_z_field_zd_30_poweroftwominusone_a000_0418a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21204,7 +22003,8 @@ fn test_cls_z_p_z_field_zd_31_max_a000_0418a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21225,7 +22025,8 @@ fn test_cls_z_p_z_combo_0_a000_0418a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21246,7 +22047,8 @@ fn test_cls_z_p_z_combo_1_a000_0458a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21267,7 +22069,8 @@ fn test_cls_z_p_z_combo_2_a000_0498a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21288,7 +22091,8 @@ fn test_cls_z_p_z_combo_3_a000_04d8a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21309,7 +22113,8 @@ fn test_cls_z_p_z_combo_4_a000_0418a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21330,7 +22135,8 @@ fn test_cls_z_p_z_combo_5_a000_0418a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21351,7 +22157,8 @@ fn test_cls_z_p_z_combo_6_a000_0418a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21372,7 +22179,8 @@ fn test_cls_z_p_z_combo_7_a000_0418a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21393,7 +22201,8 @@ fn test_cls_z_p_z_combo_8_a000_0418a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21414,7 +22223,8 @@ fn test_cls_z_p_z_combo_9_a000_0418a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21435,7 +22245,8 @@ fn test_cls_z_p_z_combo_10_a000_0418a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21456,7 +22267,8 @@ fn test_cls_z_p_z_combo_11_a000_0418a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21477,7 +22289,8 @@ fn test_cls_z_p_z_combo_12_a000_0418a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21498,7 +22311,8 @@ fn test_cls_z_p_z_combo_13_a000_0418a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21519,7 +22333,8 @@ fn test_cls_z_p_z_special_size_0_size_variant_0_40960_0418a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21540,7 +22355,8 @@ fn test_cls_z_p_z_special_size_1_size_variant_1_40960_0458a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21561,7 +22377,8 @@ fn test_cls_z_p_z_special_size_2_size_variant_2_40960_0498a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21582,7 +22399,8 @@ fn test_cls_z_p_z_special_size_3_size_variant_3_40960_04d8a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21607,7 +22425,8 @@ fn test_sabd_z_p_zz_field_size_0_min_0_040c0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21628,7 +22447,8 @@ fn test_sabd_z_p_zz_field_size_1_poweroftwo_0_044c0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21649,7 +22469,8 @@ fn test_sabd_z_p_zz_field_size_2_poweroftwo_0_048c0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21670,7 +22491,8 @@ fn test_sabd_z_p_zz_field_size_3_max_0_04cc0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21691,7 +22513,8 @@ fn test_sabd_z_p_zz_field_pg_0_min_0_040c0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21712,7 +22535,8 @@ fn test_sabd_z_p_zz_field_pg_1_poweroftwo_0_040c0400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21733,7 +22557,8 @@ fn test_sabd_z_p_zz_field_zm_0_min_0_040c0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21754,7 +22579,8 @@ fn test_sabd_z_p_zz_field_zm_1_poweroftwo_0_040c0020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21775,7 +22601,8 @@ fn test_sabd_z_p_zz_field_zm_30_poweroftwominusone_0_040c03c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21796,7 +22623,8 @@ fn test_sabd_z_p_zz_field_zm_31_max_0_040c03e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21817,7 +22645,8 @@ fn test_sabd_z_p_zz_field_zdn_0_min_0_040c0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21838,7 +22667,8 @@ fn test_sabd_z_p_zz_field_zdn_1_poweroftwo_0_040c0001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21859,7 +22689,8 @@ fn test_sabd_z_p_zz_field_zdn_15_poweroftwominusone_0_040c000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21880,7 +22711,8 @@ fn test_sabd_z_p_zz_field_zdn_31_max_0_040c001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21901,7 +22733,8 @@ fn test_sabd_z_p_zz_combo_0_0_040c0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21922,7 +22755,8 @@ fn test_sabd_z_p_zz_combo_1_0_044c0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21943,7 +22777,8 @@ fn test_sabd_z_p_zz_combo_2_0_048c0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21964,7 +22799,8 @@ fn test_sabd_z_p_zz_combo_3_0_04cc0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -21985,7 +22821,8 @@ fn test_sabd_z_p_zz_combo_4_0_040c0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -22006,7 +22843,8 @@ fn test_sabd_z_p_zz_combo_5_0_040c0400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -22027,7 +22865,8 @@ fn test_sabd_z_p_zz_combo_6_0_040c0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -22048,7 +22887,8 @@ fn test_sabd_z_p_zz_combo_7_0_040c0020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -22069,7 +22909,8 @@ fn test_sabd_z_p_zz_combo_8_0_040c03c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -22090,7 +22931,8 @@ fn test_sabd_z_p_zz_combo_9_0_040c03e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -22111,7 +22953,8 @@ fn test_sabd_z_p_zz_combo_10_0_040c0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -22132,7 +22975,8 @@ fn test_sabd_z_p_zz_combo_11_0_040c0001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -22153,7 +22997,8 @@ fn test_sabd_z_p_zz_combo_12_0_040c000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -22174,7 +23019,8 @@ fn test_sabd_z_p_zz_combo_13_0_040c001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -22195,7 +23041,8 @@ fn test_sabd_z_p_zz_special_size_0_size_variant_0_0_040c0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -22216,7 +23063,8 @@ fn test_sabd_z_p_zz_special_size_1_size_variant_1_0_044c0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -22237,7 +23085,8 @@ fn test_sabd_z_p_zz_special_size_2_size_variant_2_0_048c0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -22258,7 +23107,8 @@ fn test_sabd_z_p_zz_special_size_3_size_variant_3_0_04cc0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24356,7 +25206,8 @@ fn test_umulh_z_p_zz_field_size_0_min_0_04130000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24377,7 +25228,8 @@ fn test_umulh_z_p_zz_field_size_1_poweroftwo_0_04530000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24398,7 +25250,8 @@ fn test_umulh_z_p_zz_field_size_2_poweroftwo_0_04930000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24419,7 +25272,8 @@ fn test_umulh_z_p_zz_field_size_3_max_0_04d30000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24440,7 +25294,8 @@ fn test_umulh_z_p_zz_field_pg_0_min_0_04130000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24461,7 +25316,8 @@ fn test_umulh_z_p_zz_field_pg_1_poweroftwo_0_04130400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24482,7 +25338,8 @@ fn test_umulh_z_p_zz_field_zm_0_min_0_04130000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24503,7 +25360,8 @@ fn test_umulh_z_p_zz_field_zm_1_poweroftwo_0_04130020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24524,7 +25382,8 @@ fn test_umulh_z_p_zz_field_zm_30_poweroftwominusone_0_041303c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24545,7 +25404,8 @@ fn test_umulh_z_p_zz_field_zm_31_max_0_041303e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24566,7 +25426,8 @@ fn test_umulh_z_p_zz_field_zdn_0_min_0_04130000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24587,7 +25448,8 @@ fn test_umulh_z_p_zz_field_zdn_1_poweroftwo_0_04130001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24608,7 +25470,8 @@ fn test_umulh_z_p_zz_field_zdn_15_poweroftwominusone_0_0413000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24629,7 +25492,8 @@ fn test_umulh_z_p_zz_field_zdn_31_max_0_0413001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24650,7 +25514,8 @@ fn test_umulh_z_p_zz_combo_0_0_04130000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24671,7 +25536,8 @@ fn test_umulh_z_p_zz_combo_1_0_04530000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24692,7 +25558,8 @@ fn test_umulh_z_p_zz_combo_2_0_04930000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24713,7 +25580,8 @@ fn test_umulh_z_p_zz_combo_3_0_04d30000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24734,7 +25602,8 @@ fn test_umulh_z_p_zz_combo_4_0_04130000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24755,7 +25624,8 @@ fn test_umulh_z_p_zz_combo_5_0_04130400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24776,7 +25646,8 @@ fn test_umulh_z_p_zz_combo_6_0_04130000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24797,7 +25668,8 @@ fn test_umulh_z_p_zz_combo_7_0_04130020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24818,7 +25690,8 @@ fn test_umulh_z_p_zz_combo_8_0_041303c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24839,7 +25712,8 @@ fn test_umulh_z_p_zz_combo_9_0_041303e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24860,7 +25734,8 @@ fn test_umulh_z_p_zz_combo_10_0_04130000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24881,7 +25756,8 @@ fn test_umulh_z_p_zz_combo_11_0_04130001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24902,7 +25778,8 @@ fn test_umulh_z_p_zz_combo_12_0_0413000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24923,7 +25800,8 @@ fn test_umulh_z_p_zz_combo_13_0_0413001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24944,7 +25822,8 @@ fn test_umulh_z_p_zz_special_size_0_size_variant_0_0_04130000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24965,7 +25844,8 @@ fn test_umulh_z_p_zz_special_size_1_size_variant_1_0_04530000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -24986,7 +25866,8 @@ fn test_umulh_z_p_zz_special_size_2_size_variant_2_0_04930000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -25007,7 +25888,8 @@ fn test_umulh_z_p_zz_special_size_3_size_variant_3_0_04d30000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -25716,7 +26598,8 @@ fn test_dup_z_r_field_size_2_poweroftwo_3800_05a03800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -25737,7 +26620,8 @@ fn test_dup_z_r_field_size_3_max_3800_05e03800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -25958,7 +26842,8 @@ fn test_dup_z_r_combo_2_3800_05a03800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -25979,7 +26864,8 @@ fn test_dup_z_r_combo_3_3800_05e03800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26200,7 +27086,8 @@ fn test_dup_z_r_special_size_2_size_variant_2_14336_05a03800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26221,7 +27108,8 @@ fn test_dup_z_r_special_size_3_size_variant_3_14336_05e03800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26266,7 +27154,8 @@ fn test_uqadd_z_zz_field_size_0_min_1400_04201400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26287,7 +27176,8 @@ fn test_uqadd_z_zz_field_size_1_poweroftwo_1400_04601400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26308,7 +27198,8 @@ fn test_uqadd_z_zz_field_size_2_poweroftwo_1400_04a01400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26329,7 +27220,8 @@ fn test_uqadd_z_zz_field_size_3_max_1400_04e01400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26350,7 +27242,8 @@ fn test_uqadd_z_zz_field_zm_0_min_1400_04201400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26371,7 +27264,8 @@ fn test_uqadd_z_zz_field_zm_1_poweroftwo_1400_04211400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26392,7 +27286,8 @@ fn test_uqadd_z_zz_field_zm_30_poweroftwominusone_1400_043e1400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26413,7 +27308,8 @@ fn test_uqadd_z_zz_field_zm_31_max_1400_043f1400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26434,7 +27330,8 @@ fn test_uqadd_z_zz_field_zn_0_min_1400_04201400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26455,7 +27352,8 @@ fn test_uqadd_z_zz_field_zn_1_poweroftwo_1400_04201420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26476,7 +27374,8 @@ fn test_uqadd_z_zz_field_zn_30_poweroftwominusone_1400_042017c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26497,7 +27396,8 @@ fn test_uqadd_z_zz_field_zn_31_max_1400_042017e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26518,7 +27418,8 @@ fn test_uqadd_z_zz_field_zd_0_min_1400_04201400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26539,7 +27440,8 @@ fn test_uqadd_z_zz_field_zd_1_poweroftwo_1400_04201401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26560,7 +27462,8 @@ fn test_uqadd_z_zz_field_zd_30_poweroftwominusone_1400_0420141e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26581,7 +27484,8 @@ fn test_uqadd_z_zz_field_zd_31_max_1400_0420141f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26602,7 +27506,8 @@ fn test_uqadd_z_zz_combo_0_1400_04201400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26623,7 +27528,8 @@ fn test_uqadd_z_zz_combo_1_1400_04601400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26644,7 +27550,8 @@ fn test_uqadd_z_zz_combo_2_1400_04a01400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26665,7 +27572,8 @@ fn test_uqadd_z_zz_combo_3_1400_04e01400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26686,7 +27594,8 @@ fn test_uqadd_z_zz_combo_4_1400_04201400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26707,7 +27616,8 @@ fn test_uqadd_z_zz_combo_5_1400_04211400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26728,7 +27638,8 @@ fn test_uqadd_z_zz_combo_6_1400_043e1400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26749,7 +27660,8 @@ fn test_uqadd_z_zz_combo_7_1400_043f1400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26770,7 +27682,8 @@ fn test_uqadd_z_zz_combo_8_1400_04201400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26791,7 +27704,8 @@ fn test_uqadd_z_zz_combo_9_1400_04201420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26812,7 +27726,8 @@ fn test_uqadd_z_zz_combo_10_1400_042017c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26833,7 +27748,8 @@ fn test_uqadd_z_zz_combo_11_1400_042017e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26854,7 +27770,8 @@ fn test_uqadd_z_zz_combo_12_1400_04201400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26875,7 +27792,8 @@ fn test_uqadd_z_zz_combo_13_1400_04201401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26896,7 +27814,8 @@ fn test_uqadd_z_zz_combo_14_1400_0420141e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26917,7 +27836,8 @@ fn test_uqadd_z_zz_combo_15_1400_0420141f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26938,7 +27858,8 @@ fn test_uqadd_z_zz_special_size_0_size_variant_0_5120_04201400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26959,7 +27880,8 @@ fn test_uqadd_z_zz_special_size_1_size_variant_1_5120_04601400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -26980,7 +27902,8 @@ fn test_uqadd_z_zz_special_size_2_size_variant_2_5120_04a01400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27001,7 +27924,8 @@ fn test_uqadd_z_zz_special_size_3_size_variant_3_5120_04e01400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27026,7 +27950,8 @@ fn test_lsrr_z_p_zz_field_size_0_min_8000_04158000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27047,7 +27972,8 @@ fn test_lsrr_z_p_zz_field_size_1_poweroftwo_8000_04558000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27068,7 +27994,8 @@ fn test_lsrr_z_p_zz_field_size_2_poweroftwo_8000_04958000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27089,7 +28016,8 @@ fn test_lsrr_z_p_zz_field_size_3_max_8000_04d58000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27110,7 +28038,8 @@ fn test_lsrr_z_p_zz_field_pg_0_min_8000_04158000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27131,7 +28060,8 @@ fn test_lsrr_z_p_zz_field_pg_1_poweroftwo_8000_04158400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27152,7 +28082,8 @@ fn test_lsrr_z_p_zz_field_zm_0_min_8000_04158000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27173,7 +28104,8 @@ fn test_lsrr_z_p_zz_field_zm_1_poweroftwo_8000_04158020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27194,7 +28126,8 @@ fn test_lsrr_z_p_zz_field_zm_30_poweroftwominusone_8000_041583c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27215,7 +28148,8 @@ fn test_lsrr_z_p_zz_field_zm_31_max_8000_041583e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27236,7 +28170,8 @@ fn test_lsrr_z_p_zz_field_zdn_0_min_8000_04158000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27257,7 +28192,8 @@ fn test_lsrr_z_p_zz_field_zdn_1_poweroftwo_8000_04158001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27278,7 +28214,8 @@ fn test_lsrr_z_p_zz_field_zdn_15_poweroftwominusone_8000_0415800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27299,7 +28236,8 @@ fn test_lsrr_z_p_zz_field_zdn_31_max_8000_0415801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27320,7 +28258,8 @@ fn test_lsrr_z_p_zz_combo_0_8000_04158000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27341,7 +28280,8 @@ fn test_lsrr_z_p_zz_combo_1_8000_04558000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27362,7 +28302,8 @@ fn test_lsrr_z_p_zz_combo_2_8000_04958000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27383,7 +28324,8 @@ fn test_lsrr_z_p_zz_combo_3_8000_04d58000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27404,7 +28346,8 @@ fn test_lsrr_z_p_zz_combo_4_8000_04158000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27425,7 +28368,8 @@ fn test_lsrr_z_p_zz_combo_5_8000_04158400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27446,7 +28390,8 @@ fn test_lsrr_z_p_zz_combo_6_8000_04158000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27467,7 +28412,8 @@ fn test_lsrr_z_p_zz_combo_7_8000_04158020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27488,7 +28434,8 @@ fn test_lsrr_z_p_zz_combo_8_8000_041583c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27509,7 +28456,8 @@ fn test_lsrr_z_p_zz_combo_9_8000_041583e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27530,7 +28478,8 @@ fn test_lsrr_z_p_zz_combo_10_8000_04158000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27551,7 +28500,8 @@ fn test_lsrr_z_p_zz_combo_11_8000_04158001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27572,7 +28522,8 @@ fn test_lsrr_z_p_zz_combo_12_8000_0415800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27593,7 +28544,8 @@ fn test_lsrr_z_p_zz_combo_13_8000_0415801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27614,7 +28566,8 @@ fn test_lsrr_z_p_zz_special_size_0_size_variant_0_32768_04158000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27635,7 +28588,8 @@ fn test_lsrr_z_p_zz_special_size_1_size_variant_1_32768_04558000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27656,7 +28610,8 @@ fn test_lsrr_z_p_zz_special_size_2_size_variant_2_32768_04958000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27677,7 +28632,8 @@ fn test_lsrr_z_p_zz_special_size_3_size_variant_3_32768_04d58000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27742,7 +28698,8 @@ fn test_sdot_z_zzz_field_size_2_poweroftwo_0_44800000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -27763,7 +28720,8 @@ fn test_sdot_z_zzz_field_size_3_max_0_44c00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -28064,7 +29022,8 @@ fn test_sdot_z_zzz_combo_2_0_44800000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -28085,7 +29044,8 @@ fn test_sdot_z_zzz_combo_3_0_44c00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -28386,7 +29346,8 @@ fn test_sdot_z_zzz_special_size_2_size_variant_2_0_44800000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -28407,7 +29368,8 @@ fn test_sdot_z_zzz_special_size_3_size_variant_3_0_44c00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29123,7 +30085,8 @@ fn test_insr_z_v_field_size_0_min_3800_05343800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29144,7 +30107,8 @@ fn test_insr_z_v_field_size_1_poweroftwo_3800_05743800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29165,7 +30129,8 @@ fn test_insr_z_v_field_size_2_poweroftwo_3800_05b43800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29186,7 +30151,8 @@ fn test_insr_z_v_field_size_3_max_3800_05f43800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29207,7 +30173,8 @@ fn test_insr_z_v_field_vm_0_min_3800_05343800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29228,7 +30195,8 @@ fn test_insr_z_v_field_vm_1_poweroftwo_3800_05343820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29249,7 +30217,8 @@ fn test_insr_z_v_field_vm_30_poweroftwominusone_3800_05343bc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29270,7 +30239,8 @@ fn test_insr_z_v_field_vm_31_max_3800_05343be0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29291,7 +30261,8 @@ fn test_insr_z_v_field_zdn_0_min_3800_05343800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29312,7 +30283,8 @@ fn test_insr_z_v_field_zdn_1_poweroftwo_3800_05343801() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29333,7 +30305,8 @@ fn test_insr_z_v_field_zdn_15_poweroftwominusone_3800_0534380f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29354,7 +30327,8 @@ fn test_insr_z_v_field_zdn_31_max_3800_0534381f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29375,7 +30349,8 @@ fn test_insr_z_v_combo_0_3800_05343800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29396,7 +30371,8 @@ fn test_insr_z_v_combo_1_3800_05743800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29417,7 +30393,8 @@ fn test_insr_z_v_combo_2_3800_05b43800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29438,7 +30415,8 @@ fn test_insr_z_v_combo_3_3800_05f43800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29459,7 +30437,8 @@ fn test_insr_z_v_combo_4_3800_05343800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29480,7 +30459,8 @@ fn test_insr_z_v_combo_5_3800_05343820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29501,7 +30481,8 @@ fn test_insr_z_v_combo_6_3800_05343bc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29522,7 +30503,8 @@ fn test_insr_z_v_combo_7_3800_05343be0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29543,7 +30525,8 @@ fn test_insr_z_v_combo_8_3800_05343800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29564,7 +30547,8 @@ fn test_insr_z_v_combo_9_3800_05343801() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29585,7 +30569,8 @@ fn test_insr_z_v_combo_10_3800_0534380f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29606,7 +30591,8 @@ fn test_insr_z_v_combo_11_3800_0534381f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29627,7 +30613,8 @@ fn test_insr_z_v_special_size_0_size_variant_0_14336_05343800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29648,7 +30635,8 @@ fn test_insr_z_v_special_size_1_size_variant_1_14336_05743800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29669,7 +30657,8 @@ fn test_insr_z_v_special_size_2_size_variant_2_14336_05b43800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -29690,7 +30679,8 @@ fn test_insr_z_v_special_size_3_size_variant_3_14336_05f43800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30359,7 +31349,8 @@ fn test_zip2_z_zz_field_size_0_min_6400_05206400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30380,7 +31371,8 @@ fn test_zip2_z_zz_field_size_1_poweroftwo_6400_05606400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30401,7 +31393,8 @@ fn test_zip2_z_zz_field_size_2_poweroftwo_6400_05a06400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30422,7 +31415,8 @@ fn test_zip2_z_zz_field_size_3_max_6400_05e06400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30443,7 +31437,8 @@ fn test_zip2_z_zz_field_zm_0_min_6400_05206400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30464,7 +31459,8 @@ fn test_zip2_z_zz_field_zm_1_poweroftwo_6400_05216400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30485,7 +31481,8 @@ fn test_zip2_z_zz_field_zm_30_poweroftwominusone_6400_053e6400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30506,7 +31503,8 @@ fn test_zip2_z_zz_field_zm_31_max_6400_053f6400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30527,7 +31525,8 @@ fn test_zip2_z_zz_field_zn_0_min_6400_05206400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30548,7 +31547,8 @@ fn test_zip2_z_zz_field_zn_1_poweroftwo_6400_05206420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30569,7 +31569,8 @@ fn test_zip2_z_zz_field_zn_30_poweroftwominusone_6400_052067c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30590,7 +31591,8 @@ fn test_zip2_z_zz_field_zn_31_max_6400_052067e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30611,7 +31613,8 @@ fn test_zip2_z_zz_field_zd_0_min_6400_05206400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30632,7 +31635,8 @@ fn test_zip2_z_zz_field_zd_1_poweroftwo_6400_05206401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30653,7 +31657,8 @@ fn test_zip2_z_zz_field_zd_30_poweroftwominusone_6400_0520641e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30674,7 +31679,8 @@ fn test_zip2_z_zz_field_zd_31_max_6400_0520641f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30695,7 +31701,8 @@ fn test_zip2_z_zz_combo_0_6400_05206400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30716,7 +31723,8 @@ fn test_zip2_z_zz_combo_1_6400_05606400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30737,7 +31745,8 @@ fn test_zip2_z_zz_combo_2_6400_05a06400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30758,7 +31767,8 @@ fn test_zip2_z_zz_combo_3_6400_05e06400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30779,7 +31789,8 @@ fn test_zip2_z_zz_combo_4_6400_05206400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30800,7 +31811,8 @@ fn test_zip2_z_zz_combo_5_6400_05216400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30821,7 +31833,8 @@ fn test_zip2_z_zz_combo_6_6400_053e6400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30842,7 +31855,8 @@ fn test_zip2_z_zz_combo_7_6400_053f6400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30863,7 +31877,8 @@ fn test_zip2_z_zz_combo_8_6400_05206400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30884,7 +31899,8 @@ fn test_zip2_z_zz_combo_9_6400_05206420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30905,7 +31921,8 @@ fn test_zip2_z_zz_combo_10_6400_052067c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30926,7 +31943,8 @@ fn test_zip2_z_zz_combo_11_6400_052067e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30947,7 +31965,8 @@ fn test_zip2_z_zz_combo_12_6400_05206400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30968,7 +31987,8 @@ fn test_zip2_z_zz_combo_13_6400_05206401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -30989,7 +32009,8 @@ fn test_zip2_z_zz_combo_14_6400_0520641e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31010,7 +32031,8 @@ fn test_zip2_z_zz_combo_15_6400_0520641f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31031,7 +32053,8 @@ fn test_zip2_z_zz_special_size_0_size_variant_0_25600_05206400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31052,7 +32075,8 @@ fn test_zip2_z_zz_special_size_1_size_variant_1_25600_05606400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31073,7 +32097,8 @@ fn test_zip2_z_zz_special_size_2_size_variant_2_25600_05a06400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31094,7 +32119,8 @@ fn test_zip2_z_zz_special_size_3_size_variant_3_25600_05e06400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31115,7 +32141,8 @@ fn test_zip1_z_zz_field_size_0_min_6000_05206000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31136,7 +32163,8 @@ fn test_zip1_z_zz_field_size_1_poweroftwo_6000_05606000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31157,7 +32185,8 @@ fn test_zip1_z_zz_field_size_2_poweroftwo_6000_05a06000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31178,7 +32207,8 @@ fn test_zip1_z_zz_field_size_3_max_6000_05e06000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31199,7 +32229,8 @@ fn test_zip1_z_zz_field_zm_0_min_6000_05206000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31220,7 +32251,8 @@ fn test_zip1_z_zz_field_zm_1_poweroftwo_6000_05216000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31241,7 +32273,8 @@ fn test_zip1_z_zz_field_zm_30_poweroftwominusone_6000_053e6000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31262,7 +32295,8 @@ fn test_zip1_z_zz_field_zm_31_max_6000_053f6000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31283,7 +32317,8 @@ fn test_zip1_z_zz_field_zn_0_min_6000_05206000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31304,7 +32339,8 @@ fn test_zip1_z_zz_field_zn_1_poweroftwo_6000_05206020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31325,7 +32361,8 @@ fn test_zip1_z_zz_field_zn_30_poweroftwominusone_6000_052063c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31346,7 +32383,8 @@ fn test_zip1_z_zz_field_zn_31_max_6000_052063e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31367,7 +32405,8 @@ fn test_zip1_z_zz_field_zd_0_min_6000_05206000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31388,7 +32427,8 @@ fn test_zip1_z_zz_field_zd_1_poweroftwo_6000_05206001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31409,7 +32449,8 @@ fn test_zip1_z_zz_field_zd_30_poweroftwominusone_6000_0520601e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31430,7 +32471,8 @@ fn test_zip1_z_zz_field_zd_31_max_6000_0520601f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31451,7 +32493,8 @@ fn test_zip1_z_zz_combo_0_6000_05206000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31472,7 +32515,8 @@ fn test_zip1_z_zz_combo_1_6000_05606000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31493,7 +32537,8 @@ fn test_zip1_z_zz_combo_2_6000_05a06000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31514,7 +32559,8 @@ fn test_zip1_z_zz_combo_3_6000_05e06000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31535,7 +32581,8 @@ fn test_zip1_z_zz_combo_4_6000_05206000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31556,7 +32603,8 @@ fn test_zip1_z_zz_combo_5_6000_05216000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31577,7 +32625,8 @@ fn test_zip1_z_zz_combo_6_6000_053e6000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31598,7 +32647,8 @@ fn test_zip1_z_zz_combo_7_6000_053f6000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31619,7 +32669,8 @@ fn test_zip1_z_zz_combo_8_6000_05206000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31640,7 +32691,8 @@ fn test_zip1_z_zz_combo_9_6000_05206020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31661,7 +32713,8 @@ fn test_zip1_z_zz_combo_10_6000_052063c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31682,7 +32735,8 @@ fn test_zip1_z_zz_combo_11_6000_052063e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31703,7 +32757,8 @@ fn test_zip1_z_zz_combo_12_6000_05206000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31724,7 +32779,8 @@ fn test_zip1_z_zz_combo_13_6000_05206001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31745,7 +32801,8 @@ fn test_zip1_z_zz_combo_14_6000_0520601e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31766,7 +32823,8 @@ fn test_zip1_z_zz_combo_15_6000_0520601f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31787,7 +32845,8 @@ fn test_zip1_z_zz_special_size_0_size_variant_0_24576_05206000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31808,7 +32867,8 @@ fn test_zip1_z_zz_special_size_1_size_variant_1_24576_05606000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31829,7 +32889,8 @@ fn test_zip1_z_zz_special_size_2_size_variant_2_24576_05a06000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31850,7 +32911,8 @@ fn test_zip1_z_zz_special_size_3_size_variant_3_24576_05e06000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -31973,7 +33035,9 @@ fn test_sqadd_z_zi_field_sh_1_max_c000_2524e000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -32472,7 +33536,9 @@ fn test_sqadd_z_zi_combo_5_c000_2524e000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -32973,7 +34039,8 @@ fn test_sqadd_z_zi_special_sh_1_shift_type_lsr_49152_2564e020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -33014,7 +34081,8 @@ fn test_sqadd_z_zi_special_sh_3_shift_type_ror_49152_2564e020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -33037,7 +34105,9 @@ fn test_sxtb_z_p_z_field_size_0_min_a000_0410a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33058,7 +34128,8 @@ fn test_sxtb_z_p_z_field_size_1_poweroftwo_a000_0450a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -33079,7 +34150,8 @@ fn test_sxtb_z_p_z_field_size_2_poweroftwo_a000_0490a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -33100,7 +34172,8 @@ fn test_sxtb_z_p_z_field_size_3_max_a000_04d0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -33119,7 +34192,9 @@ fn test_sxtb_z_p_z_field_pg_0_min_a000_0410a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33138,7 +34213,9 @@ fn test_sxtb_z_p_z_field_pg_1_poweroftwo_a000_0410a400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33157,7 +34234,9 @@ fn test_sxtb_z_p_z_field_zn_0_min_a000_0410a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33176,7 +34255,9 @@ fn test_sxtb_z_p_z_field_zn_1_poweroftwo_a000_0410a020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33195,7 +34276,9 @@ fn test_sxtb_z_p_z_field_zn_30_poweroftwominusone_a000_0410a3c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33214,7 +34297,9 @@ fn test_sxtb_z_p_z_field_zn_31_max_a000_0410a3e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33233,7 +34318,9 @@ fn test_sxtb_z_p_z_field_zd_0_min_a000_0410a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33252,7 +34339,9 @@ fn test_sxtb_z_p_z_field_zd_1_poweroftwo_a000_0410a001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33271,7 +34360,9 @@ fn test_sxtb_z_p_z_field_zd_30_poweroftwominusone_a000_0410a01e() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33290,7 +34381,9 @@ fn test_sxtb_z_p_z_field_zd_31_max_a000_0410a01f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33309,7 +34402,9 @@ fn test_sxtb_z_p_z_combo_0_a000_0410a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33330,7 +34425,8 @@ fn test_sxtb_z_p_z_combo_1_a000_0450a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -33351,7 +34447,8 @@ fn test_sxtb_z_p_z_combo_2_a000_0490a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -33372,7 +34469,8 @@ fn test_sxtb_z_p_z_combo_3_a000_04d0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -33391,7 +34489,9 @@ fn test_sxtb_z_p_z_combo_4_a000_0410a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33410,7 +34510,9 @@ fn test_sxtb_z_p_z_combo_5_a000_0410a400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33429,7 +34531,9 @@ fn test_sxtb_z_p_z_combo_6_a000_0410a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33448,7 +34552,9 @@ fn test_sxtb_z_p_z_combo_7_a000_0410a020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33467,7 +34573,9 @@ fn test_sxtb_z_p_z_combo_8_a000_0410a3c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33486,7 +34594,9 @@ fn test_sxtb_z_p_z_combo_9_a000_0410a3e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33505,7 +34615,9 @@ fn test_sxtb_z_p_z_combo_10_a000_0410a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33524,7 +34636,9 @@ fn test_sxtb_z_p_z_combo_11_a000_0410a001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33543,7 +34657,9 @@ fn test_sxtb_z_p_z_combo_12_a000_0410a01e() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33562,7 +34678,9 @@ fn test_sxtb_z_p_z_combo_13_a000_0410a01f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33581,7 +34699,9 @@ fn test_sxtb_z_p_z_special_size_0_size_variant_0_40960_0410a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33602,7 +34722,8 @@ fn test_sxtb_z_p_z_special_size_1_size_variant_1_40960_0450a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -33623,7 +34744,8 @@ fn test_sxtb_z_p_z_special_size_2_size_variant_2_40960_0490a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -33644,7 +34766,8 @@ fn test_sxtb_z_p_z_special_size_3_size_variant_3_40960_04d0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -33663,7 +34786,9 @@ fn test_sxth_z_p_z_field_size_0_min_a000_0412a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33682,7 +34807,9 @@ fn test_sxth_z_p_z_field_size_1_poweroftwo_a000_0452a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33703,7 +34830,8 @@ fn test_sxth_z_p_z_field_size_2_poweroftwo_a000_0492a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -33724,7 +34852,8 @@ fn test_sxth_z_p_z_field_size_3_max_a000_04d2a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -33743,7 +34872,9 @@ fn test_sxth_z_p_z_field_pg_0_min_a000_0412a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33762,7 +34893,9 @@ fn test_sxth_z_p_z_field_pg_1_poweroftwo_a000_0412a400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33781,7 +34914,9 @@ fn test_sxth_z_p_z_field_zn_0_min_a000_0412a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33800,7 +34935,9 @@ fn test_sxth_z_p_z_field_zn_1_poweroftwo_a000_0412a020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33819,7 +34956,9 @@ fn test_sxth_z_p_z_field_zn_30_poweroftwominusone_a000_0412a3c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33838,7 +34977,9 @@ fn test_sxth_z_p_z_field_zn_31_max_a000_0412a3e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33857,7 +34998,9 @@ fn test_sxth_z_p_z_field_zd_0_min_a000_0412a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33876,7 +35019,9 @@ fn test_sxth_z_p_z_field_zd_1_poweroftwo_a000_0412a001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33895,7 +35040,9 @@ fn test_sxth_z_p_z_field_zd_30_poweroftwominusone_a000_0412a01e() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33914,7 +35061,9 @@ fn test_sxth_z_p_z_field_zd_31_max_a000_0412a01f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33933,7 +35082,9 @@ fn test_sxth_z_p_z_combo_0_a000_0412a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33952,7 +35103,9 @@ fn test_sxth_z_p_z_combo_1_a000_0452a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -33973,7 +35126,8 @@ fn test_sxth_z_p_z_combo_2_a000_0492a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -33994,7 +35148,8 @@ fn test_sxth_z_p_z_combo_3_a000_04d2a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -34013,7 +35168,9 @@ fn test_sxth_z_p_z_combo_4_a000_0412a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34032,7 +35189,9 @@ fn test_sxth_z_p_z_combo_5_a000_0412a400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34051,7 +35210,9 @@ fn test_sxth_z_p_z_combo_6_a000_0412a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34070,7 +35231,9 @@ fn test_sxth_z_p_z_combo_7_a000_0412a020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34089,7 +35252,9 @@ fn test_sxth_z_p_z_combo_8_a000_0412a3c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34108,7 +35273,9 @@ fn test_sxth_z_p_z_combo_9_a000_0412a3e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34127,7 +35294,9 @@ fn test_sxth_z_p_z_combo_10_a000_0412a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34146,7 +35315,9 @@ fn test_sxth_z_p_z_combo_11_a000_0412a001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34165,7 +35336,9 @@ fn test_sxth_z_p_z_combo_12_a000_0412a01e() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34184,7 +35357,9 @@ fn test_sxth_z_p_z_combo_13_a000_0412a01f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34203,7 +35378,9 @@ fn test_sxth_z_p_z_special_size_0_size_variant_0_40960_0412a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34222,7 +35399,9 @@ fn test_sxth_z_p_z_special_size_1_size_variant_1_40960_0452a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34243,7 +35422,8 @@ fn test_sxth_z_p_z_special_size_2_size_variant_2_40960_0492a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -34264,7 +35444,8 @@ fn test_sxth_z_p_z_special_size_3_size_variant_3_40960_04d2a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -34283,7 +35464,9 @@ fn test_sxtw_z_p_z_field_size_0_min_a000_0414a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34302,7 +35485,9 @@ fn test_sxtw_z_p_z_field_size_1_poweroftwo_a000_0454a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34321,7 +35506,9 @@ fn test_sxtw_z_p_z_field_size_2_poweroftwo_a000_0494a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34342,7 +35529,8 @@ fn test_sxtw_z_p_z_field_size_3_max_a000_04d4a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -34361,7 +35549,9 @@ fn test_sxtw_z_p_z_field_pg_0_min_a000_0414a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34380,7 +35570,9 @@ fn test_sxtw_z_p_z_field_pg_1_poweroftwo_a000_0414a400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34399,7 +35591,9 @@ fn test_sxtw_z_p_z_field_zn_0_min_a000_0414a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34418,7 +35612,9 @@ fn test_sxtw_z_p_z_field_zn_1_poweroftwo_a000_0414a020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34437,7 +35633,9 @@ fn test_sxtw_z_p_z_field_zn_30_poweroftwominusone_a000_0414a3c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34456,7 +35654,9 @@ fn test_sxtw_z_p_z_field_zn_31_max_a000_0414a3e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34475,7 +35675,9 @@ fn test_sxtw_z_p_z_field_zd_0_min_a000_0414a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34494,7 +35696,9 @@ fn test_sxtw_z_p_z_field_zd_1_poweroftwo_a000_0414a001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34513,7 +35717,9 @@ fn test_sxtw_z_p_z_field_zd_30_poweroftwominusone_a000_0414a01e() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34532,7 +35738,9 @@ fn test_sxtw_z_p_z_field_zd_31_max_a000_0414a01f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34551,7 +35759,9 @@ fn test_sxtw_z_p_z_combo_0_a000_0414a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34570,7 +35780,9 @@ fn test_sxtw_z_p_z_combo_1_a000_0454a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34589,7 +35801,9 @@ fn test_sxtw_z_p_z_combo_2_a000_0494a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34610,7 +35824,8 @@ fn test_sxtw_z_p_z_combo_3_a000_04d4a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -34629,7 +35844,9 @@ fn test_sxtw_z_p_z_combo_4_a000_0414a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34648,7 +35865,9 @@ fn test_sxtw_z_p_z_combo_5_a000_0414a400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34667,7 +35886,9 @@ fn test_sxtw_z_p_z_combo_6_a000_0414a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34686,7 +35907,9 @@ fn test_sxtw_z_p_z_combo_7_a000_0414a020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34705,7 +35928,9 @@ fn test_sxtw_z_p_z_combo_8_a000_0414a3c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34724,7 +35949,9 @@ fn test_sxtw_z_p_z_combo_9_a000_0414a3e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34743,7 +35970,9 @@ fn test_sxtw_z_p_z_combo_10_a000_0414a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34762,7 +35991,9 @@ fn test_sxtw_z_p_z_combo_11_a000_0414a001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34781,7 +36012,9 @@ fn test_sxtw_z_p_z_combo_12_a000_0414a01e() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34800,7 +36033,9 @@ fn test_sxtw_z_p_z_combo_13_a000_0414a01f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34819,7 +36054,9 @@ fn test_sxtw_z_p_z_special_size_0_size_variant_0_40960_0414a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34838,7 +36075,9 @@ fn test_sxtw_z_p_z_special_size_1_size_variant_1_40960_0454a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34857,7 +36096,9 @@ fn test_sxtw_z_p_z_special_size_2_size_variant_2_40960_0494a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -34878,7 +36119,8 @@ fn test_sxtw_z_p_z_special_size_3_size_variant_3_40960_04d4a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -34903,7 +36145,8 @@ fn test_smax_z_p_zz_field_size_0_min_0_04080000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -34924,7 +36167,8 @@ fn test_smax_z_p_zz_field_size_1_poweroftwo_0_04480000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -34945,7 +36189,8 @@ fn test_smax_z_p_zz_field_size_2_poweroftwo_0_04880000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -34966,7 +36211,8 @@ fn test_smax_z_p_zz_field_size_3_max_0_04c80000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -34987,7 +36233,8 @@ fn test_smax_z_p_zz_field_pg_0_min_0_04080000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35008,7 +36255,8 @@ fn test_smax_z_p_zz_field_pg_1_poweroftwo_0_04080400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35029,7 +36277,8 @@ fn test_smax_z_p_zz_field_zm_0_min_0_04080000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35050,7 +36299,8 @@ fn test_smax_z_p_zz_field_zm_1_poweroftwo_0_04080020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35071,7 +36321,8 @@ fn test_smax_z_p_zz_field_zm_30_poweroftwominusone_0_040803c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35092,7 +36343,8 @@ fn test_smax_z_p_zz_field_zm_31_max_0_040803e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35113,7 +36365,8 @@ fn test_smax_z_p_zz_field_zdn_0_min_0_04080000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35134,7 +36387,8 @@ fn test_smax_z_p_zz_field_zdn_1_poweroftwo_0_04080001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35155,7 +36409,8 @@ fn test_smax_z_p_zz_field_zdn_15_poweroftwominusone_0_0408000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35176,7 +36431,8 @@ fn test_smax_z_p_zz_field_zdn_31_max_0_0408001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35197,7 +36453,8 @@ fn test_smax_z_p_zz_combo_0_0_04080000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35218,7 +36475,8 @@ fn test_smax_z_p_zz_combo_1_0_04480000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35239,7 +36497,8 @@ fn test_smax_z_p_zz_combo_2_0_04880000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35260,7 +36519,8 @@ fn test_smax_z_p_zz_combo_3_0_04c80000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35281,7 +36541,8 @@ fn test_smax_z_p_zz_combo_4_0_04080000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35302,7 +36563,8 @@ fn test_smax_z_p_zz_combo_5_0_04080400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35323,7 +36585,8 @@ fn test_smax_z_p_zz_combo_6_0_04080000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35344,7 +36607,8 @@ fn test_smax_z_p_zz_combo_7_0_04080020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35365,7 +36629,8 @@ fn test_smax_z_p_zz_combo_8_0_040803c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35386,7 +36651,8 @@ fn test_smax_z_p_zz_combo_9_0_040803e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35407,7 +36673,8 @@ fn test_smax_z_p_zz_combo_10_0_04080000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35428,7 +36695,8 @@ fn test_smax_z_p_zz_combo_11_0_04080001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35449,7 +36717,8 @@ fn test_smax_z_p_zz_combo_12_0_0408000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35470,7 +36739,8 @@ fn test_smax_z_p_zz_combo_13_0_0408001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35491,7 +36761,8 @@ fn test_smax_z_p_zz_special_size_0_size_variant_0_0_04080000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35512,7 +36783,8 @@ fn test_smax_z_p_zz_special_size_1_size_variant_1_0_04480000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35533,7 +36805,8 @@ fn test_smax_z_p_zz_special_size_2_size_variant_2_0_04880000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35554,7 +36827,8 @@ fn test_smax_z_p_zz_special_size_3_size_variant_3_0_04c80000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35659,7 +36933,8 @@ fn test_dup_z_zi_field_tsz_1_poweroftwo_2000_05212000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35680,7 +36955,8 @@ fn test_dup_z_zi_field_tsz_15_poweroftwominusone_2000_052f2000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35701,7 +36977,8 @@ fn test_dup_z_zi_field_tsz_31_max_2000_053f2000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35962,7 +37239,8 @@ fn test_dup_z_zi_combo_4_2000_05212000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -35983,7 +37261,8 @@ fn test_dup_z_zi_combo_5_2000_052f2000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36004,7 +37283,8 @@ fn test_dup_z_zi_combo_6_2000_053f2000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36189,7 +37469,8 @@ fn test_neg_z_p_z_field_size_0_min_a000_0417a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36210,7 +37491,8 @@ fn test_neg_z_p_z_field_size_1_poweroftwo_a000_0457a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36231,7 +37513,8 @@ fn test_neg_z_p_z_field_size_2_poweroftwo_a000_0497a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36252,7 +37535,8 @@ fn test_neg_z_p_z_field_size_3_max_a000_04d7a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36273,7 +37557,8 @@ fn test_neg_z_p_z_field_pg_0_min_a000_0417a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36294,7 +37579,8 @@ fn test_neg_z_p_z_field_pg_1_poweroftwo_a000_0417a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36315,7 +37601,8 @@ fn test_neg_z_p_z_field_zn_0_min_a000_0417a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36336,7 +37623,8 @@ fn test_neg_z_p_z_field_zn_1_poweroftwo_a000_0417a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36357,7 +37645,8 @@ fn test_neg_z_p_z_field_zn_30_poweroftwominusone_a000_0417a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36378,7 +37667,8 @@ fn test_neg_z_p_z_field_zn_31_max_a000_0417a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36399,7 +37689,8 @@ fn test_neg_z_p_z_field_zd_0_min_a000_0417a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36420,7 +37711,8 @@ fn test_neg_z_p_z_field_zd_1_poweroftwo_a000_0417a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36441,7 +37733,8 @@ fn test_neg_z_p_z_field_zd_30_poweroftwominusone_a000_0417a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36462,7 +37755,8 @@ fn test_neg_z_p_z_field_zd_31_max_a000_0417a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36483,7 +37777,8 @@ fn test_neg_z_p_z_combo_0_a000_0417a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36504,7 +37799,8 @@ fn test_neg_z_p_z_combo_1_a000_0457a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36525,7 +37821,8 @@ fn test_neg_z_p_z_combo_2_a000_0497a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36546,7 +37843,8 @@ fn test_neg_z_p_z_combo_3_a000_04d7a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36567,7 +37865,8 @@ fn test_neg_z_p_z_combo_4_a000_0417a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36588,7 +37887,8 @@ fn test_neg_z_p_z_combo_5_a000_0417a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36609,7 +37909,8 @@ fn test_neg_z_p_z_combo_6_a000_0417a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36630,7 +37931,8 @@ fn test_neg_z_p_z_combo_7_a000_0417a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36651,7 +37953,8 @@ fn test_neg_z_p_z_combo_8_a000_0417a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36672,7 +37975,8 @@ fn test_neg_z_p_z_combo_9_a000_0417a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36693,7 +37997,8 @@ fn test_neg_z_p_z_combo_10_a000_0417a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36714,7 +38019,8 @@ fn test_neg_z_p_z_combo_11_a000_0417a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36735,7 +38041,8 @@ fn test_neg_z_p_z_combo_12_a000_0417a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36756,7 +38063,8 @@ fn test_neg_z_p_z_combo_13_a000_0417a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36777,7 +38085,8 @@ fn test_neg_z_p_z_special_size_0_size_variant_0_40960_0417a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36798,7 +38107,8 @@ fn test_neg_z_p_z_special_size_1_size_variant_1_40960_0457a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36819,7 +38129,8 @@ fn test_neg_z_p_z_special_size_2_size_variant_2_40960_0497a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -36840,7 +38151,8 @@ fn test_neg_z_p_z_special_size_3_size_variant_3_40960_04d7a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -38850,7 +40162,8 @@ fn test_rbit_z_p_z_field_size_0_min_8000_05278000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -38871,7 +40184,8 @@ fn test_rbit_z_p_z_field_size_1_poweroftwo_8000_05678000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -38892,7 +40206,8 @@ fn test_rbit_z_p_z_field_size_2_poweroftwo_8000_05a78000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -38913,7 +40228,8 @@ fn test_rbit_z_p_z_field_size_3_max_8000_05e78000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -38934,7 +40250,8 @@ fn test_rbit_z_p_z_field_pg_0_min_8000_05278000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -38955,7 +40272,8 @@ fn test_rbit_z_p_z_field_pg_1_poweroftwo_8000_05278400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -38976,7 +40294,8 @@ fn test_rbit_z_p_z_field_zn_0_min_8000_05278000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -38997,7 +40316,8 @@ fn test_rbit_z_p_z_field_zn_1_poweroftwo_8000_05278020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39018,7 +40338,8 @@ fn test_rbit_z_p_z_field_zn_30_poweroftwominusone_8000_052783c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39039,7 +40360,8 @@ fn test_rbit_z_p_z_field_zn_31_max_8000_052783e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39060,7 +40382,8 @@ fn test_rbit_z_p_z_field_zd_0_min_8000_05278000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39081,7 +40404,8 @@ fn test_rbit_z_p_z_field_zd_1_poweroftwo_8000_05278001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39102,7 +40426,8 @@ fn test_rbit_z_p_z_field_zd_30_poweroftwominusone_8000_0527801e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39123,7 +40448,8 @@ fn test_rbit_z_p_z_field_zd_31_max_8000_0527801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39144,7 +40470,8 @@ fn test_rbit_z_p_z_combo_0_8000_05278000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39165,7 +40492,8 @@ fn test_rbit_z_p_z_combo_1_8000_05678000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39186,7 +40514,8 @@ fn test_rbit_z_p_z_combo_2_8000_05a78000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39207,7 +40536,8 @@ fn test_rbit_z_p_z_combo_3_8000_05e78000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39228,7 +40558,8 @@ fn test_rbit_z_p_z_combo_4_8000_05278000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39249,7 +40580,8 @@ fn test_rbit_z_p_z_combo_5_8000_05278400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39270,7 +40602,8 @@ fn test_rbit_z_p_z_combo_6_8000_05278000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39291,7 +40624,8 @@ fn test_rbit_z_p_z_combo_7_8000_05278020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39312,7 +40646,8 @@ fn test_rbit_z_p_z_combo_8_8000_052783c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39333,7 +40668,8 @@ fn test_rbit_z_p_z_combo_9_8000_052783e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39354,7 +40690,8 @@ fn test_rbit_z_p_z_combo_10_8000_05278000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39375,7 +40712,8 @@ fn test_rbit_z_p_z_combo_11_8000_05278001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39396,7 +40734,8 @@ fn test_rbit_z_p_z_combo_12_8000_0527801e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39417,7 +40756,8 @@ fn test_rbit_z_p_z_combo_13_8000_0527801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39438,7 +40778,8 @@ fn test_rbit_z_p_z_special_size_0_size_variant_0_32768_05278000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39459,7 +40800,8 @@ fn test_rbit_z_p_z_special_size_1_size_variant_1_32768_05678000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39480,7 +40822,8 @@ fn test_rbit_z_p_z_special_size_2_size_variant_2_32768_05a78000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39501,7 +40844,8 @@ fn test_rbit_z_p_z_special_size_3_size_variant_3_32768_05e78000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39524,7 +40868,9 @@ fn test_udiv_z_p_zz_field_size_0_min_0_04150000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39543,7 +40889,9 @@ fn test_udiv_z_p_zz_field_size_1_poweroftwo_0_04550000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39564,7 +40912,8 @@ fn test_udiv_z_p_zz_field_size_2_poweroftwo_0_04950000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39585,7 +40934,8 @@ fn test_udiv_z_p_zz_field_size_3_max_0_04d50000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39604,7 +40954,9 @@ fn test_udiv_z_p_zz_field_pg_0_min_0_04150000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39623,7 +40975,9 @@ fn test_udiv_z_p_zz_field_pg_1_poweroftwo_0_04150400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39642,7 +40996,9 @@ fn test_udiv_z_p_zz_field_zm_0_min_0_04150000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39661,7 +41017,9 @@ fn test_udiv_z_p_zz_field_zm_1_poweroftwo_0_04150020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39680,7 +41038,9 @@ fn test_udiv_z_p_zz_field_zm_30_poweroftwominusone_0_041503c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39699,7 +41059,9 @@ fn test_udiv_z_p_zz_field_zm_31_max_0_041503e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39718,7 +41080,9 @@ fn test_udiv_z_p_zz_field_zdn_0_min_0_04150000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39737,7 +41101,9 @@ fn test_udiv_z_p_zz_field_zdn_1_poweroftwo_0_04150001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39756,7 +41122,9 @@ fn test_udiv_z_p_zz_field_zdn_15_poweroftwominusone_0_0415000f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39775,7 +41143,9 @@ fn test_udiv_z_p_zz_field_zdn_31_max_0_0415001f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39794,7 +41164,9 @@ fn test_udiv_z_p_zz_combo_0_0_04150000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39813,7 +41185,9 @@ fn test_udiv_z_p_zz_combo_1_0_04550000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39834,7 +41208,8 @@ fn test_udiv_z_p_zz_combo_2_0_04950000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39855,7 +41230,8 @@ fn test_udiv_z_p_zz_combo_3_0_04d50000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -39874,7 +41250,9 @@ fn test_udiv_z_p_zz_combo_4_0_04150000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39893,7 +41271,9 @@ fn test_udiv_z_p_zz_combo_5_0_04150400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39912,7 +41292,9 @@ fn test_udiv_z_p_zz_combo_6_0_04150000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39931,7 +41313,9 @@ fn test_udiv_z_p_zz_combo_7_0_04150020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39950,7 +41334,9 @@ fn test_udiv_z_p_zz_combo_8_0_041503c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39969,7 +41355,9 @@ fn test_udiv_z_p_zz_combo_9_0_041503e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -39988,7 +41376,9 @@ fn test_udiv_z_p_zz_combo_10_0_04150000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -40007,7 +41397,9 @@ fn test_udiv_z_p_zz_combo_11_0_04150001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -40026,7 +41418,9 @@ fn test_udiv_z_p_zz_combo_12_0_0415000f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -40045,7 +41439,9 @@ fn test_udiv_z_p_zz_combo_13_0_0415001f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -40064,7 +41460,9 @@ fn test_udiv_z_p_zz_special_size_0_size_variant_0_0_04150000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -40083,7 +41481,9 @@ fn test_udiv_z_p_zz_special_size_1_size_variant_1_0_04550000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -40104,7 +41504,8 @@ fn test_udiv_z_p_zz_special_size_2_size_variant_2_0_04950000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -40125,7 +41526,8 @@ fn test_udiv_z_p_zz_special_size_3_size_variant_3_0_04d50000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -40190,7 +41592,8 @@ fn test_udot_z_zzz_field_size_2_poweroftwo_400_44800400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -40211,7 +41614,8 @@ fn test_udot_z_zzz_field_size_3_max_400_44c00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -40512,7 +41916,8 @@ fn test_udot_z_zzz_combo_2_400_44800400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -40533,7 +41938,8 @@ fn test_udot_z_zzz_combo_3_400_44c00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -40834,7 +42240,8 @@ fn test_udot_z_zzz_special_size_2_size_variant_2_1024_44800400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -40855,7 +42262,8 @@ fn test_udot_z_zzz_special_size_3_size_variant_3_1024_44c00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -40880,7 +42288,8 @@ fn test_sqadd_z_zz_field_size_0_min_1000_04201000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -40901,7 +42310,8 @@ fn test_sqadd_z_zz_field_size_1_poweroftwo_1000_04601000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -40922,7 +42332,8 @@ fn test_sqadd_z_zz_field_size_2_poweroftwo_1000_04a01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -40943,7 +42354,8 @@ fn test_sqadd_z_zz_field_size_3_max_1000_04e01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -40964,7 +42376,8 @@ fn test_sqadd_z_zz_field_zm_0_min_1000_04201000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -40985,7 +42398,8 @@ fn test_sqadd_z_zz_field_zm_1_poweroftwo_1000_04211000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41006,7 +42420,8 @@ fn test_sqadd_z_zz_field_zm_30_poweroftwominusone_1000_043e1000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41027,7 +42442,8 @@ fn test_sqadd_z_zz_field_zm_31_max_1000_043f1000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41048,7 +42464,8 @@ fn test_sqadd_z_zz_field_zn_0_min_1000_04201000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41069,7 +42486,8 @@ fn test_sqadd_z_zz_field_zn_1_poweroftwo_1000_04201020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41090,7 +42508,8 @@ fn test_sqadd_z_zz_field_zn_30_poweroftwominusone_1000_042013c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41111,7 +42530,8 @@ fn test_sqadd_z_zz_field_zn_31_max_1000_042013e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41132,7 +42552,8 @@ fn test_sqadd_z_zz_field_zd_0_min_1000_04201000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41153,7 +42574,8 @@ fn test_sqadd_z_zz_field_zd_1_poweroftwo_1000_04201001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41174,7 +42596,8 @@ fn test_sqadd_z_zz_field_zd_30_poweroftwominusone_1000_0420101e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41195,7 +42618,8 @@ fn test_sqadd_z_zz_field_zd_31_max_1000_0420101f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41216,7 +42640,8 @@ fn test_sqadd_z_zz_combo_0_1000_04201000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41237,7 +42662,8 @@ fn test_sqadd_z_zz_combo_1_1000_04601000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41258,7 +42684,8 @@ fn test_sqadd_z_zz_combo_2_1000_04a01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41279,7 +42706,8 @@ fn test_sqadd_z_zz_combo_3_1000_04e01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41300,7 +42728,8 @@ fn test_sqadd_z_zz_combo_4_1000_04201000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41321,7 +42750,8 @@ fn test_sqadd_z_zz_combo_5_1000_04211000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41342,7 +42772,8 @@ fn test_sqadd_z_zz_combo_6_1000_043e1000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41363,7 +42794,8 @@ fn test_sqadd_z_zz_combo_7_1000_043f1000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41384,7 +42816,8 @@ fn test_sqadd_z_zz_combo_8_1000_04201000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41405,7 +42838,8 @@ fn test_sqadd_z_zz_combo_9_1000_04201020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41426,7 +42860,8 @@ fn test_sqadd_z_zz_combo_10_1000_042013c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41447,7 +42882,8 @@ fn test_sqadd_z_zz_combo_11_1000_042013e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41468,7 +42904,8 @@ fn test_sqadd_z_zz_combo_12_1000_04201000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41489,7 +42926,8 @@ fn test_sqadd_z_zz_combo_13_1000_04201001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41510,7 +42948,8 @@ fn test_sqadd_z_zz_combo_14_1000_0420101e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41531,7 +42970,8 @@ fn test_sqadd_z_zz_combo_15_1000_0420101f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41552,7 +42992,8 @@ fn test_sqadd_z_zz_special_size_0_size_variant_0_4096_04201000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41573,7 +43014,8 @@ fn test_sqadd_z_zz_special_size_1_size_variant_1_4096_04601000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41594,7 +43036,8 @@ fn test_sqadd_z_zz_special_size_2_size_variant_2_4096_04a01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41615,7 +43058,8 @@ fn test_sqadd_z_zz_special_size_3_size_variant_3_4096_04e01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41638,7 +43082,9 @@ fn test_uxtb_z_p_z_field_size_0_min_a000_0411a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -41659,7 +43105,8 @@ fn test_uxtb_z_p_z_field_size_1_poweroftwo_a000_0451a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41680,7 +43127,8 @@ fn test_uxtb_z_p_z_field_size_2_poweroftwo_a000_0491a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41701,7 +43149,8 @@ fn test_uxtb_z_p_z_field_size_3_max_a000_04d1a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41720,7 +43169,9 @@ fn test_uxtb_z_p_z_field_pg_0_min_a000_0411a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -41739,7 +43190,9 @@ fn test_uxtb_z_p_z_field_pg_1_poweroftwo_a000_0411a400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -41758,7 +43211,9 @@ fn test_uxtb_z_p_z_field_zn_0_min_a000_0411a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -41777,7 +43232,9 @@ fn test_uxtb_z_p_z_field_zn_1_poweroftwo_a000_0411a020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -41796,7 +43253,9 @@ fn test_uxtb_z_p_z_field_zn_30_poweroftwominusone_a000_0411a3c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -41815,7 +43274,9 @@ fn test_uxtb_z_p_z_field_zn_31_max_a000_0411a3e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -41834,7 +43295,9 @@ fn test_uxtb_z_p_z_field_zd_0_min_a000_0411a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -41853,7 +43316,9 @@ fn test_uxtb_z_p_z_field_zd_1_poweroftwo_a000_0411a001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -41872,7 +43337,9 @@ fn test_uxtb_z_p_z_field_zd_30_poweroftwominusone_a000_0411a01e() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -41891,7 +43358,9 @@ fn test_uxtb_z_p_z_field_zd_31_max_a000_0411a01f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -41910,7 +43379,9 @@ fn test_uxtb_z_p_z_combo_0_a000_0411a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -41931,7 +43402,8 @@ fn test_uxtb_z_p_z_combo_1_a000_0451a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41952,7 +43424,8 @@ fn test_uxtb_z_p_z_combo_2_a000_0491a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41973,7 +43446,8 @@ fn test_uxtb_z_p_z_combo_3_a000_04d1a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -41992,7 +43466,9 @@ fn test_uxtb_z_p_z_combo_4_a000_0411a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42011,7 +43487,9 @@ fn test_uxtb_z_p_z_combo_5_a000_0411a400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42030,7 +43508,9 @@ fn test_uxtb_z_p_z_combo_6_a000_0411a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42049,7 +43529,9 @@ fn test_uxtb_z_p_z_combo_7_a000_0411a020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42068,7 +43550,9 @@ fn test_uxtb_z_p_z_combo_8_a000_0411a3c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42087,7 +43571,9 @@ fn test_uxtb_z_p_z_combo_9_a000_0411a3e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42106,7 +43592,9 @@ fn test_uxtb_z_p_z_combo_10_a000_0411a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42125,7 +43613,9 @@ fn test_uxtb_z_p_z_combo_11_a000_0411a001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42144,7 +43634,9 @@ fn test_uxtb_z_p_z_combo_12_a000_0411a01e() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42163,7 +43655,9 @@ fn test_uxtb_z_p_z_combo_13_a000_0411a01f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42182,7 +43676,9 @@ fn test_uxtb_z_p_z_special_size_0_size_variant_0_40960_0411a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42203,7 +43699,8 @@ fn test_uxtb_z_p_z_special_size_1_size_variant_1_40960_0451a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -42224,7 +43721,8 @@ fn test_uxtb_z_p_z_special_size_2_size_variant_2_40960_0491a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -42245,7 +43743,8 @@ fn test_uxtb_z_p_z_special_size_3_size_variant_3_40960_04d1a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -42264,7 +43763,9 @@ fn test_uxth_z_p_z_field_size_0_min_a000_0413a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42283,7 +43784,9 @@ fn test_uxth_z_p_z_field_size_1_poweroftwo_a000_0453a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42304,7 +43807,8 @@ fn test_uxth_z_p_z_field_size_2_poweroftwo_a000_0493a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -42325,7 +43829,8 @@ fn test_uxth_z_p_z_field_size_3_max_a000_04d3a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -42344,7 +43849,9 @@ fn test_uxth_z_p_z_field_pg_0_min_a000_0413a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42363,7 +43870,9 @@ fn test_uxth_z_p_z_field_pg_1_poweroftwo_a000_0413a400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42382,7 +43891,9 @@ fn test_uxth_z_p_z_field_zn_0_min_a000_0413a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42401,7 +43912,9 @@ fn test_uxth_z_p_z_field_zn_1_poweroftwo_a000_0413a020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42420,7 +43933,9 @@ fn test_uxth_z_p_z_field_zn_30_poweroftwominusone_a000_0413a3c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42439,7 +43954,9 @@ fn test_uxth_z_p_z_field_zn_31_max_a000_0413a3e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42458,7 +43975,9 @@ fn test_uxth_z_p_z_field_zd_0_min_a000_0413a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42477,7 +43996,9 @@ fn test_uxth_z_p_z_field_zd_1_poweroftwo_a000_0413a001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42496,7 +44017,9 @@ fn test_uxth_z_p_z_field_zd_30_poweroftwominusone_a000_0413a01e() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42515,7 +44038,9 @@ fn test_uxth_z_p_z_field_zd_31_max_a000_0413a01f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42534,7 +44059,9 @@ fn test_uxth_z_p_z_combo_0_a000_0413a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42553,7 +44080,9 @@ fn test_uxth_z_p_z_combo_1_a000_0453a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42574,7 +44103,8 @@ fn test_uxth_z_p_z_combo_2_a000_0493a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -42595,7 +44125,8 @@ fn test_uxth_z_p_z_combo_3_a000_04d3a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -42614,7 +44145,9 @@ fn test_uxth_z_p_z_combo_4_a000_0413a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42633,7 +44166,9 @@ fn test_uxth_z_p_z_combo_5_a000_0413a400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42652,7 +44187,9 @@ fn test_uxth_z_p_z_combo_6_a000_0413a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42671,7 +44208,9 @@ fn test_uxth_z_p_z_combo_7_a000_0413a020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42690,7 +44229,9 @@ fn test_uxth_z_p_z_combo_8_a000_0413a3c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42709,7 +44250,9 @@ fn test_uxth_z_p_z_combo_9_a000_0413a3e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42728,7 +44271,9 @@ fn test_uxth_z_p_z_combo_10_a000_0413a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42747,7 +44292,9 @@ fn test_uxth_z_p_z_combo_11_a000_0413a001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42766,7 +44313,9 @@ fn test_uxth_z_p_z_combo_12_a000_0413a01e() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42785,7 +44334,9 @@ fn test_uxth_z_p_z_combo_13_a000_0413a01f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42804,7 +44355,9 @@ fn test_uxth_z_p_z_special_size_0_size_variant_0_40960_0413a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42823,7 +44376,9 @@ fn test_uxth_z_p_z_special_size_1_size_variant_1_40960_0453a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42844,7 +44399,8 @@ fn test_uxth_z_p_z_special_size_2_size_variant_2_40960_0493a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -42865,7 +44421,8 @@ fn test_uxth_z_p_z_special_size_3_size_variant_3_40960_04d3a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -42884,7 +44441,9 @@ fn test_uxtw_z_p_z_field_size_0_min_a000_0415a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42903,7 +44462,9 @@ fn test_uxtw_z_p_z_field_size_1_poweroftwo_a000_0455a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42922,7 +44483,9 @@ fn test_uxtw_z_p_z_field_size_2_poweroftwo_a000_0495a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42943,7 +44506,8 @@ fn test_uxtw_z_p_z_field_size_3_max_a000_04d5a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -42962,7 +44526,9 @@ fn test_uxtw_z_p_z_field_pg_0_min_a000_0415a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -42981,7 +44547,9 @@ fn test_uxtw_z_p_z_field_pg_1_poweroftwo_a000_0415a400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43000,7 +44568,9 @@ fn test_uxtw_z_p_z_field_zn_0_min_a000_0415a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43019,7 +44589,9 @@ fn test_uxtw_z_p_z_field_zn_1_poweroftwo_a000_0415a020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43038,7 +44610,9 @@ fn test_uxtw_z_p_z_field_zn_30_poweroftwominusone_a000_0415a3c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43057,7 +44631,9 @@ fn test_uxtw_z_p_z_field_zn_31_max_a000_0415a3e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43076,7 +44652,9 @@ fn test_uxtw_z_p_z_field_zd_0_min_a000_0415a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43095,7 +44673,9 @@ fn test_uxtw_z_p_z_field_zd_1_poweroftwo_a000_0415a001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43114,7 +44694,9 @@ fn test_uxtw_z_p_z_field_zd_30_poweroftwominusone_a000_0415a01e() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43133,7 +44715,9 @@ fn test_uxtw_z_p_z_field_zd_31_max_a000_0415a01f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43152,7 +44736,9 @@ fn test_uxtw_z_p_z_combo_0_a000_0415a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43171,7 +44757,9 @@ fn test_uxtw_z_p_z_combo_1_a000_0455a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43190,7 +44778,9 @@ fn test_uxtw_z_p_z_combo_2_a000_0495a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43211,7 +44801,8 @@ fn test_uxtw_z_p_z_combo_3_a000_04d5a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43230,7 +44821,9 @@ fn test_uxtw_z_p_z_combo_4_a000_0415a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43249,7 +44842,9 @@ fn test_uxtw_z_p_z_combo_5_a000_0415a400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43268,7 +44863,9 @@ fn test_uxtw_z_p_z_combo_6_a000_0415a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43287,7 +44884,9 @@ fn test_uxtw_z_p_z_combo_7_a000_0415a020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43306,7 +44905,9 @@ fn test_uxtw_z_p_z_combo_8_a000_0415a3c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43325,7 +44926,9 @@ fn test_uxtw_z_p_z_combo_9_a000_0415a3e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43344,7 +44947,9 @@ fn test_uxtw_z_p_z_combo_10_a000_0415a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43363,7 +44968,9 @@ fn test_uxtw_z_p_z_combo_11_a000_0415a001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43382,7 +44989,9 @@ fn test_uxtw_z_p_z_combo_12_a000_0415a01e() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43401,7 +45010,9 @@ fn test_uxtw_z_p_z_combo_13_a000_0415a01f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43420,7 +45031,9 @@ fn test_uxtw_z_p_z_special_size_0_size_variant_0_40960_0415a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43439,7 +45052,9 @@ fn test_uxtw_z_p_z_special_size_1_size_variant_1_40960_0455a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43458,7 +45073,9 @@ fn test_uxtw_z_p_z_special_size_2_size_variant_2_40960_0495a000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -43479,7 +45096,8 @@ fn test_uxtw_z_p_z_special_size_3_size_variant_3_40960_04d5a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43504,7 +45122,8 @@ fn test_insr_z_r_field_size_0_min_3800_05243800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43525,7 +45144,8 @@ fn test_insr_z_r_field_size_1_poweroftwo_3800_05643800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43546,7 +45166,8 @@ fn test_insr_z_r_field_size_2_poweroftwo_3800_05a43800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43567,7 +45188,8 @@ fn test_insr_z_r_field_size_3_max_3800_05e43800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43588,7 +45210,8 @@ fn test_insr_z_r_field_rm_0_min_3800_05243800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43609,7 +45232,8 @@ fn test_insr_z_r_field_rm_1_poweroftwo_3800_05243820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43630,7 +45254,8 @@ fn test_insr_z_r_field_rm_30_poweroftwominusone_3800_05243bc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43651,7 +45276,8 @@ fn test_insr_z_r_field_rm_31_max_3800_05243be0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43672,7 +45298,8 @@ fn test_insr_z_r_field_zdn_0_min_3800_05243800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43693,7 +45320,8 @@ fn test_insr_z_r_field_zdn_1_poweroftwo_3800_05243801() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43714,7 +45342,8 @@ fn test_insr_z_r_field_zdn_15_poweroftwominusone_3800_0524380f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43735,7 +45364,8 @@ fn test_insr_z_r_field_zdn_31_max_3800_0524381f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43756,7 +45386,8 @@ fn test_insr_z_r_combo_0_3800_05243800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43777,7 +45408,8 @@ fn test_insr_z_r_combo_1_3800_05643800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43798,7 +45430,8 @@ fn test_insr_z_r_combo_2_3800_05a43800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43819,7 +45452,8 @@ fn test_insr_z_r_combo_3_3800_05e43800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43840,7 +45474,8 @@ fn test_insr_z_r_combo_4_3800_05243800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43861,7 +45496,8 @@ fn test_insr_z_r_combo_5_3800_05243820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43882,7 +45518,8 @@ fn test_insr_z_r_combo_6_3800_05243bc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43903,7 +45540,8 @@ fn test_insr_z_r_combo_7_3800_05243be0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43924,7 +45562,8 @@ fn test_insr_z_r_combo_8_3800_05243800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43945,7 +45584,8 @@ fn test_insr_z_r_combo_9_3800_05243801() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43966,7 +45606,8 @@ fn test_insr_z_r_combo_10_3800_0524380f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -43987,7 +45628,8 @@ fn test_insr_z_r_combo_11_3800_0524381f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44008,7 +45650,8 @@ fn test_insr_z_r_special_size_0_size_variant_0_14336_05243800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44029,7 +45672,8 @@ fn test_insr_z_r_special_size_1_size_variant_1_14336_05643800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44050,7 +45694,8 @@ fn test_insr_z_r_special_size_2_size_variant_2_14336_05a43800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44071,7 +45716,8 @@ fn test_insr_z_r_special_size_3_size_variant_3_14336_05e43800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44116,7 +45762,8 @@ fn test_uunpkhi_z_z_field_size_1_poweroftwo_3800_05733800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44137,7 +45784,8 @@ fn test_uunpkhi_z_z_field_size_2_poweroftwo_3800_05b33800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44158,7 +45806,8 @@ fn test_uunpkhi_z_z_field_size_3_max_3800_05f33800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44359,7 +46008,8 @@ fn test_uunpkhi_z_z_combo_1_3800_05733800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44380,7 +46030,8 @@ fn test_uunpkhi_z_z_combo_2_3800_05b33800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44401,7 +46052,8 @@ fn test_uunpkhi_z_z_combo_3_3800_05f33800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44602,7 +46254,8 @@ fn test_uunpkhi_z_z_special_size_1_size_variant_1_14336_05733800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44623,7 +46276,8 @@ fn test_uunpkhi_z_z_special_size_2_size_variant_2_14336_05b33800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44644,7 +46298,8 @@ fn test_uunpkhi_z_z_special_size_3_size_variant_3_14336_05f33800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44685,7 +46340,8 @@ fn test_uunpklo_z_z_field_size_1_poweroftwo_3800_05723800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44706,7 +46362,8 @@ fn test_uunpklo_z_z_field_size_2_poweroftwo_3800_05b23800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44727,7 +46384,8 @@ fn test_uunpklo_z_z_field_size_3_max_3800_05f23800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44928,7 +46586,8 @@ fn test_uunpklo_z_z_combo_1_3800_05723800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44949,7 +46608,8 @@ fn test_uunpklo_z_z_combo_2_3800_05b23800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -44970,7 +46630,8 @@ fn test_uunpklo_z_z_combo_3_3800_05f23800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -45171,7 +46832,8 @@ fn test_uunpklo_z_z_special_size_1_size_variant_1_14336_05723800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -45192,7 +46854,8 @@ fn test_uunpklo_z_z_special_size_2_size_variant_2_14336_05b23800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -45213,7 +46876,8 @@ fn test_uunpklo_z_z_special_size_3_size_variant_3_14336_05f23800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -45336,7 +47000,9 @@ fn test_uqadd_z_zi_field_sh_1_max_c000_2525e000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -45835,7 +47501,9 @@ fn test_uqadd_z_zi_combo_5_c000_2525e000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -46336,7 +48004,8 @@ fn test_uqadd_z_zi_special_sh_1_shift_type_lsr_49152_2565e020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46377,7 +48046,8 @@ fn test_uqadd_z_zi_special_sh_3_shift_type_ror_49152_2565e020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46402,7 +48072,8 @@ fn test_clastb_z_p_zz_field_size_0_min_8000_05298000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46423,7 +48094,8 @@ fn test_clastb_z_p_zz_field_size_1_poweroftwo_8000_05698000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46444,7 +48116,8 @@ fn test_clastb_z_p_zz_field_size_2_poweroftwo_8000_05a98000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46465,7 +48138,8 @@ fn test_clastb_z_p_zz_field_size_3_max_8000_05e98000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46486,7 +48160,8 @@ fn test_clastb_z_p_zz_field_pg_0_min_8000_05298000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46507,7 +48182,8 @@ fn test_clastb_z_p_zz_field_pg_1_poweroftwo_8000_05298400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46528,7 +48204,8 @@ fn test_clastb_z_p_zz_field_zm_0_min_8000_05298000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46549,7 +48226,8 @@ fn test_clastb_z_p_zz_field_zm_1_poweroftwo_8000_05298020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46570,7 +48248,8 @@ fn test_clastb_z_p_zz_field_zm_30_poweroftwominusone_8000_052983c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46591,7 +48270,8 @@ fn test_clastb_z_p_zz_field_zm_31_max_8000_052983e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46612,7 +48292,8 @@ fn test_clastb_z_p_zz_field_zdn_0_min_8000_05298000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46633,7 +48314,8 @@ fn test_clastb_z_p_zz_field_zdn_1_poweroftwo_8000_05298001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46654,7 +48336,8 @@ fn test_clastb_z_p_zz_field_zdn_15_poweroftwominusone_8000_0529800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46675,7 +48358,8 @@ fn test_clastb_z_p_zz_field_zdn_31_max_8000_0529801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46696,7 +48380,8 @@ fn test_clastb_z_p_zz_combo_0_8000_05298000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46717,7 +48402,8 @@ fn test_clastb_z_p_zz_combo_1_8000_05698000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46738,7 +48424,8 @@ fn test_clastb_z_p_zz_combo_2_8000_05a98000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46759,7 +48446,8 @@ fn test_clastb_z_p_zz_combo_3_8000_05e98000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46780,7 +48468,8 @@ fn test_clastb_z_p_zz_combo_4_8000_05298000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46801,7 +48490,8 @@ fn test_clastb_z_p_zz_combo_5_8000_05298400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46822,7 +48512,8 @@ fn test_clastb_z_p_zz_combo_6_8000_05298000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46843,7 +48534,8 @@ fn test_clastb_z_p_zz_combo_7_8000_05298020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46864,7 +48556,8 @@ fn test_clastb_z_p_zz_combo_8_8000_052983c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46885,7 +48578,8 @@ fn test_clastb_z_p_zz_combo_9_8000_052983e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46906,7 +48600,8 @@ fn test_clastb_z_p_zz_combo_10_8000_05298000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46927,7 +48622,8 @@ fn test_clastb_z_p_zz_combo_11_8000_05298001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46948,7 +48644,8 @@ fn test_clastb_z_p_zz_combo_12_8000_0529800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46969,7 +48666,8 @@ fn test_clastb_z_p_zz_combo_13_8000_0529801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -46990,7 +48688,8 @@ fn test_clastb_z_p_zz_special_size_0_size_variant_0_32768_05298000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47011,7 +48710,8 @@ fn test_clastb_z_p_zz_special_size_1_size_variant_1_32768_05698000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47032,7 +48732,8 @@ fn test_clastb_z_p_zz_special_size_2_size_variant_2_32768_05a98000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47053,7 +48754,8 @@ fn test_clastb_z_p_zz_special_size_3_size_variant_3_32768_05e98000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47078,7 +48780,8 @@ fn test_movprfx_z_z_field_zn_0_min_bc00_0420bc00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47099,7 +48802,8 @@ fn test_movprfx_z_z_field_zn_1_poweroftwo_bc00_0420bc20() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47120,7 +48824,8 @@ fn test_movprfx_z_z_field_zn_30_poweroftwominusone_bc00_0420bfc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47141,7 +48846,8 @@ fn test_movprfx_z_z_field_zn_31_max_bc00_0420bfe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47162,7 +48868,8 @@ fn test_movprfx_z_z_field_zd_0_min_bc00_0420bc00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47183,7 +48890,8 @@ fn test_movprfx_z_z_field_zd_1_poweroftwo_bc00_0420bc01() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47204,7 +48912,8 @@ fn test_movprfx_z_z_field_zd_30_poweroftwominusone_bc00_0420bc1e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47225,7 +48934,8 @@ fn test_movprfx_z_z_field_zd_31_max_bc00_0420bc1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47246,7 +48956,8 @@ fn test_movprfx_z_z_combo_0_bc00_0420bc00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47267,7 +48978,8 @@ fn test_movprfx_z_z_combo_1_bc00_0420bc20() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47288,7 +49000,8 @@ fn test_movprfx_z_z_combo_2_bc00_0420bfc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47309,7 +49022,8 @@ fn test_movprfx_z_z_combo_3_bc00_0420bfe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47330,7 +49044,8 @@ fn test_movprfx_z_z_combo_4_bc00_0420bc00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47351,7 +49066,8 @@ fn test_movprfx_z_z_combo_5_bc00_0420bc01() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47372,7 +49088,8 @@ fn test_movprfx_z_z_combo_6_bc00_0420bc1e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47393,7 +49110,8 @@ fn test_movprfx_z_z_combo_7_bc00_0420bc1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47418,7 +49136,8 @@ fn test_udot_z_zzzi_s_field_i2_0_min_400_44a00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47439,7 +49158,8 @@ fn test_udot_z_zzzi_s_field_i2_1_poweroftwo_400_44a80400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47460,7 +49180,8 @@ fn test_udot_z_zzzi_s_field_i2_3_max_400_44b80400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47481,7 +49202,8 @@ fn test_udot_z_zzzi_s_field_zm_0_min_400_44a00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47502,7 +49224,8 @@ fn test_udot_z_zzzi_s_field_zm_1_poweroftwo_400_44a10400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47523,7 +49246,8 @@ fn test_udot_z_zzzi_s_field_zn_0_min_400_44a00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47544,7 +49268,8 @@ fn test_udot_z_zzzi_s_field_zn_1_poweroftwo_400_44a00420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47565,7 +49290,8 @@ fn test_udot_z_zzzi_s_field_zn_30_poweroftwominusone_400_44a007c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47586,7 +49312,8 @@ fn test_udot_z_zzzi_s_field_zn_31_max_400_44a007e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47607,7 +49334,8 @@ fn test_udot_z_zzzi_s_field_zda_0_min_400_44a00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47628,7 +49356,8 @@ fn test_udot_z_zzzi_s_field_zda_1_poweroftwo_400_44a00401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47649,7 +49378,8 @@ fn test_udot_z_zzzi_s_field_zda_15_poweroftwominusone_400_44a0040f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47670,7 +49400,8 @@ fn test_udot_z_zzzi_s_field_zda_31_max_400_44a0041f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47691,7 +49422,8 @@ fn test_udot_z_zzzi_s_combo_0_400_44a00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47712,7 +49444,8 @@ fn test_udot_z_zzzi_s_combo_1_400_44a80400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47733,7 +49466,8 @@ fn test_udot_z_zzzi_s_combo_2_400_44b80400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47754,7 +49488,8 @@ fn test_udot_z_zzzi_s_combo_3_400_44a00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47775,7 +49510,8 @@ fn test_udot_z_zzzi_s_combo_4_400_44a10400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47796,7 +49532,8 @@ fn test_udot_z_zzzi_s_combo_5_400_44a00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47817,7 +49554,8 @@ fn test_udot_z_zzzi_s_combo_6_400_44a00420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47838,7 +49576,8 @@ fn test_udot_z_zzzi_s_combo_7_400_44a007c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47859,7 +49598,8 @@ fn test_udot_z_zzzi_s_combo_8_400_44a007e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47880,7 +49620,8 @@ fn test_udot_z_zzzi_s_combo_9_400_44a00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47901,7 +49642,8 @@ fn test_udot_z_zzzi_s_combo_10_400_44a00401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47922,7 +49664,8 @@ fn test_udot_z_zzzi_s_combo_11_400_44a0040f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47943,7 +49686,8 @@ fn test_udot_z_zzzi_s_combo_12_400_44a0041f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47964,7 +49708,8 @@ fn test_udot_z_zzzi_d_field_i1_0_min_400_44e00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -47985,7 +49730,8 @@ fn test_udot_z_zzzi_d_field_i1_1_max_400_44f00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48006,7 +49752,8 @@ fn test_udot_z_zzzi_d_field_zm_0_min_400_44e00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48027,7 +49774,8 @@ fn test_udot_z_zzzi_d_field_zm_1_poweroftwo_400_44e10400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48048,7 +49796,8 @@ fn test_udot_z_zzzi_d_field_zn_0_min_400_44e00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48069,7 +49818,8 @@ fn test_udot_z_zzzi_d_field_zn_1_poweroftwo_400_44e00420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48090,7 +49840,8 @@ fn test_udot_z_zzzi_d_field_zn_30_poweroftwominusone_400_44e007c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48111,7 +49862,8 @@ fn test_udot_z_zzzi_d_field_zn_31_max_400_44e007e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48132,7 +49884,8 @@ fn test_udot_z_zzzi_d_field_zda_0_min_400_44e00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48153,7 +49906,8 @@ fn test_udot_z_zzzi_d_field_zda_1_poweroftwo_400_44e00401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48174,7 +49928,8 @@ fn test_udot_z_zzzi_d_field_zda_15_poweroftwominusone_400_44e0040f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48195,7 +49950,8 @@ fn test_udot_z_zzzi_d_field_zda_31_max_400_44e0041f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48216,7 +49972,8 @@ fn test_udot_z_zzzi_d_combo_0_400_44e00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48237,7 +49994,8 @@ fn test_udot_z_zzzi_d_combo_1_400_44f00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48258,7 +50016,8 @@ fn test_udot_z_zzzi_d_combo_2_400_44e00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48279,7 +50038,8 @@ fn test_udot_z_zzzi_d_combo_3_400_44e10400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48300,7 +50060,8 @@ fn test_udot_z_zzzi_d_combo_4_400_44e00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48321,7 +50082,8 @@ fn test_udot_z_zzzi_d_combo_5_400_44e00420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48342,7 +50104,8 @@ fn test_udot_z_zzzi_d_combo_6_400_44e007c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48363,7 +50126,8 @@ fn test_udot_z_zzzi_d_combo_7_400_44e007e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48384,7 +50148,8 @@ fn test_udot_z_zzzi_d_combo_8_400_44e00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48405,7 +50170,8 @@ fn test_udot_z_zzzi_d_combo_9_400_44e00401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48426,7 +50192,8 @@ fn test_udot_z_zzzi_d_combo_10_400_44e0040f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -48447,7 +50214,8 @@ fn test_udot_z_zzzi_d_combo_11_400_44e0041f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -49766,7 +51534,8 @@ fn test_movprfx_z_p_z_field_size_0_min_2000_04102000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -49787,7 +51556,8 @@ fn test_movprfx_z_p_z_field_size_1_poweroftwo_2000_04502000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -49808,7 +51578,8 @@ fn test_movprfx_z_p_z_field_size_2_poweroftwo_2000_04902000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -49829,7 +51600,8 @@ fn test_movprfx_z_p_z_field_size_3_max_2000_04d02000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -49850,7 +51622,8 @@ fn test_movprfx_z_p_z_field_m_0_min_2000_04102000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -49871,7 +51644,8 @@ fn test_movprfx_z_p_z_field_m_1_max_2000_04112000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -49892,7 +51666,8 @@ fn test_movprfx_z_p_z_field_pg_0_min_2000_04102000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -49913,7 +51688,8 @@ fn test_movprfx_z_p_z_field_pg_1_poweroftwo_2000_04102400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -49934,7 +51710,8 @@ fn test_movprfx_z_p_z_field_zn_0_min_2000_04102000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -49955,7 +51732,8 @@ fn test_movprfx_z_p_z_field_zn_1_poweroftwo_2000_04102020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -49976,7 +51754,8 @@ fn test_movprfx_z_p_z_field_zn_30_poweroftwominusone_2000_041023c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -49997,7 +51776,8 @@ fn test_movprfx_z_p_z_field_zn_31_max_2000_041023e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50018,7 +51798,8 @@ fn test_movprfx_z_p_z_field_zd_0_min_2000_04102000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50039,7 +51820,8 @@ fn test_movprfx_z_p_z_field_zd_1_poweroftwo_2000_04102001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50060,7 +51842,8 @@ fn test_movprfx_z_p_z_field_zd_30_poweroftwominusone_2000_0410201e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50081,7 +51864,8 @@ fn test_movprfx_z_p_z_field_zd_31_max_2000_0410201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50102,7 +51886,8 @@ fn test_movprfx_z_p_z_combo_0_2000_04102000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50123,7 +51908,8 @@ fn test_movprfx_z_p_z_combo_1_2000_04502000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50144,7 +51930,8 @@ fn test_movprfx_z_p_z_combo_2_2000_04902000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50165,7 +51952,8 @@ fn test_movprfx_z_p_z_combo_3_2000_04d02000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50186,7 +51974,8 @@ fn test_movprfx_z_p_z_combo_4_2000_04102000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50207,7 +51996,8 @@ fn test_movprfx_z_p_z_combo_5_2000_04112000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50228,7 +52018,8 @@ fn test_movprfx_z_p_z_combo_6_2000_04102000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50249,7 +52040,8 @@ fn test_movprfx_z_p_z_combo_7_2000_04102400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50270,7 +52062,8 @@ fn test_movprfx_z_p_z_combo_8_2000_04102000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50291,7 +52084,8 @@ fn test_movprfx_z_p_z_combo_9_2000_04102020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50312,7 +52106,8 @@ fn test_movprfx_z_p_z_combo_10_2000_041023c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50333,7 +52128,8 @@ fn test_movprfx_z_p_z_combo_11_2000_041023e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50354,7 +52150,8 @@ fn test_movprfx_z_p_z_combo_12_2000_04102000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50375,7 +52172,8 @@ fn test_movprfx_z_p_z_combo_13_2000_04102001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50396,7 +52194,8 @@ fn test_movprfx_z_p_z_combo_14_2000_0410201e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50417,7 +52216,8 @@ fn test_movprfx_z_p_z_combo_15_2000_0410201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50438,7 +52238,8 @@ fn test_movprfx_z_p_z_special_size_0_size_variant_0_8192_04102000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50459,7 +52260,8 @@ fn test_movprfx_z_p_z_special_size_1_size_variant_1_8192_04502000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50480,7 +52282,8 @@ fn test_movprfx_z_p_z_special_size_2_size_variant_2_8192_04902000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50501,7 +52304,8 @@ fn test_movprfx_z_p_z_special_size_3_size_variant_3_8192_04d02000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50526,7 +52330,8 @@ fn test_clz_z_p_z_field_size_0_min_a000_0419a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50547,7 +52352,8 @@ fn test_clz_z_p_z_field_size_1_poweroftwo_a000_0459a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50568,7 +52374,8 @@ fn test_clz_z_p_z_field_size_2_poweroftwo_a000_0499a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50589,7 +52396,8 @@ fn test_clz_z_p_z_field_size_3_max_a000_04d9a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50610,7 +52418,8 @@ fn test_clz_z_p_z_field_pg_0_min_a000_0419a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50631,7 +52440,8 @@ fn test_clz_z_p_z_field_pg_1_poweroftwo_a000_0419a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50652,7 +52462,8 @@ fn test_clz_z_p_z_field_zn_0_min_a000_0419a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50673,7 +52484,8 @@ fn test_clz_z_p_z_field_zn_1_poweroftwo_a000_0419a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50694,7 +52506,8 @@ fn test_clz_z_p_z_field_zn_30_poweroftwominusone_a000_0419a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50715,7 +52528,8 @@ fn test_clz_z_p_z_field_zn_31_max_a000_0419a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50736,7 +52550,8 @@ fn test_clz_z_p_z_field_zd_0_min_a000_0419a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50757,7 +52572,8 @@ fn test_clz_z_p_z_field_zd_1_poweroftwo_a000_0419a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50778,7 +52594,8 @@ fn test_clz_z_p_z_field_zd_30_poweroftwominusone_a000_0419a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50799,7 +52616,8 @@ fn test_clz_z_p_z_field_zd_31_max_a000_0419a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50820,7 +52638,8 @@ fn test_clz_z_p_z_combo_0_a000_0419a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50841,7 +52660,8 @@ fn test_clz_z_p_z_combo_1_a000_0459a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50862,7 +52682,8 @@ fn test_clz_z_p_z_combo_2_a000_0499a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50883,7 +52704,8 @@ fn test_clz_z_p_z_combo_3_a000_04d9a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50904,7 +52726,8 @@ fn test_clz_z_p_z_combo_4_a000_0419a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50925,7 +52748,8 @@ fn test_clz_z_p_z_combo_5_a000_0419a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50946,7 +52770,8 @@ fn test_clz_z_p_z_combo_6_a000_0419a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50967,7 +52792,8 @@ fn test_clz_z_p_z_combo_7_a000_0419a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50988,7 +52814,8 @@ fn test_clz_z_p_z_combo_8_a000_0419a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51009,7 +52836,8 @@ fn test_clz_z_p_z_combo_9_a000_0419a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51030,7 +52858,8 @@ fn test_clz_z_p_z_combo_10_a000_0419a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51051,7 +52880,8 @@ fn test_clz_z_p_z_combo_11_a000_0419a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51072,7 +52902,8 @@ fn test_clz_z_p_z_combo_12_a000_0419a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51093,7 +52924,8 @@ fn test_clz_z_p_z_combo_13_a000_0419a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51114,7 +52946,8 @@ fn test_clz_z_p_z_special_size_0_size_variant_0_40960_0419a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51135,7 +52968,8 @@ fn test_clz_z_p_z_special_size_1_size_variant_1_40960_0459a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51156,7 +52990,8 @@ fn test_clz_z_p_z_special_size_2_size_variant_2_40960_0499a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51177,7 +53012,8 @@ fn test_clz_z_p_z_special_size_3_size_variant_3_40960_04d9a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51202,7 +53038,8 @@ fn test_umax_z_p_zz_field_size_0_min_0_04090000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51223,7 +53060,8 @@ fn test_umax_z_p_zz_field_size_1_poweroftwo_0_04490000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51244,7 +53082,8 @@ fn test_umax_z_p_zz_field_size_2_poweroftwo_0_04890000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51265,7 +53104,8 @@ fn test_umax_z_p_zz_field_size_3_max_0_04c90000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51286,7 +53126,8 @@ fn test_umax_z_p_zz_field_pg_0_min_0_04090000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51307,7 +53148,8 @@ fn test_umax_z_p_zz_field_pg_1_poweroftwo_0_04090400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51328,7 +53170,8 @@ fn test_umax_z_p_zz_field_zm_0_min_0_04090000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51349,7 +53192,8 @@ fn test_umax_z_p_zz_field_zm_1_poweroftwo_0_04090020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51370,7 +53214,8 @@ fn test_umax_z_p_zz_field_zm_30_poweroftwominusone_0_040903c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51391,7 +53236,8 @@ fn test_umax_z_p_zz_field_zm_31_max_0_040903e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51412,7 +53258,8 @@ fn test_umax_z_p_zz_field_zdn_0_min_0_04090000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51433,7 +53280,8 @@ fn test_umax_z_p_zz_field_zdn_1_poweroftwo_0_04090001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51454,7 +53302,8 @@ fn test_umax_z_p_zz_field_zdn_15_poweroftwominusone_0_0409000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51475,7 +53324,8 @@ fn test_umax_z_p_zz_field_zdn_31_max_0_0409001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51496,7 +53346,8 @@ fn test_umax_z_p_zz_combo_0_0_04090000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51517,7 +53368,8 @@ fn test_umax_z_p_zz_combo_1_0_04490000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51538,7 +53390,8 @@ fn test_umax_z_p_zz_combo_2_0_04890000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51559,7 +53412,8 @@ fn test_umax_z_p_zz_combo_3_0_04c90000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51580,7 +53434,8 @@ fn test_umax_z_p_zz_combo_4_0_04090000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51601,7 +53456,8 @@ fn test_umax_z_p_zz_combo_5_0_04090400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51622,7 +53478,8 @@ fn test_umax_z_p_zz_combo_6_0_04090000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51643,7 +53500,8 @@ fn test_umax_z_p_zz_combo_7_0_04090020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51664,7 +53522,8 @@ fn test_umax_z_p_zz_combo_8_0_040903c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51685,7 +53544,8 @@ fn test_umax_z_p_zz_combo_9_0_040903e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51706,7 +53566,8 @@ fn test_umax_z_p_zz_combo_10_0_04090000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51727,7 +53588,8 @@ fn test_umax_z_p_zz_combo_11_0_04090001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51748,7 +53610,8 @@ fn test_umax_z_p_zz_combo_12_0_0409000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51769,7 +53632,8 @@ fn test_umax_z_p_zz_combo_13_0_0409001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51790,7 +53654,8 @@ fn test_umax_z_p_zz_special_size_0_size_variant_0_0_04090000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51811,7 +53676,8 @@ fn test_umax_z_p_zz_special_size_1_size_variant_1_0_04490000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51832,7 +53698,8 @@ fn test_umax_z_p_zz_special_size_2_size_variant_2_0_04890000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51853,7 +53720,8 @@ fn test_umax_z_p_zz_special_size_3_size_variant_3_0_04c90000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51898,7 +53766,8 @@ fn test_asr_z_p_zi_field_tszh_1_poweroftwo_8000_04408000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -51919,7 +53788,8 @@ fn test_asr_z_p_zi_field_tszh_3_max_8000_04c08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -52000,7 +53870,8 @@ fn test_asr_z_p_zi_field_tszl_1_poweroftwo_8000_04008100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -52021,7 +53892,8 @@ fn test_asr_z_p_zi_field_tszl_3_max_8000_04008300() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -52222,7 +54094,8 @@ fn test_asr_z_p_zi_combo_1_8000_04408000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -52243,7 +54116,8 @@ fn test_asr_z_p_zi_combo_2_8000_04c08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -52324,7 +54198,8 @@ fn test_asr_z_p_zi_combo_6_8000_04008100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -52345,7 +54220,8 @@ fn test_asr_z_p_zi_combo_7_8000_04008300() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -53554,7 +55430,8 @@ fn test_revb_z_z_field_size_1_poweroftwo_8000_05648000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -53575,7 +55452,8 @@ fn test_revb_z_z_field_size_2_poweroftwo_8000_05a48000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -53596,7 +55474,8 @@ fn test_revb_z_z_field_size_3_max_8000_05e48000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -53837,7 +55716,8 @@ fn test_revb_z_z_combo_1_8000_05648000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -53858,7 +55738,8 @@ fn test_revb_z_z_combo_2_8000_05a48000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -53879,7 +55760,8 @@ fn test_revb_z_z_combo_3_8000_05e48000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -54120,7 +56002,8 @@ fn test_revb_z_z_special_size_1_size_variant_1_32768_05648000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -54141,7 +56024,8 @@ fn test_revb_z_z_special_size_2_size_variant_2_32768_05a48000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -54162,7 +56046,8 @@ fn test_revb_z_z_special_size_3_size_variant_3_32768_05e48000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -54223,7 +56108,8 @@ fn test_revh_z_z_field_size_2_poweroftwo_8000_05a58000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -54244,7 +56130,8 @@ fn test_revh_z_z_field_size_3_max_8000_05e58000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -54505,7 +56392,8 @@ fn test_revh_z_z_combo_2_8000_05a58000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -54526,7 +56414,8 @@ fn test_revh_z_z_combo_3_8000_05e58000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -54787,7 +56676,8 @@ fn test_revh_z_z_special_size_2_size_variant_2_32768_05a58000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -54808,7 +56698,8 @@ fn test_revh_z_z_special_size_3_size_variant_3_32768_05e58000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -54889,7 +56780,8 @@ fn test_revw_z_z_field_size_3_max_8000_05e68000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -55170,7 +57062,8 @@ fn test_revw_z_z_combo_3_8000_05e68000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -55451,7 +57344,8 @@ fn test_revw_z_z_special_size_3_size_variant_3_32768_05e68000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -55930,7 +57824,8 @@ fn test_clasta_z_p_zz_field_size_0_min_8000_05288000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -55951,7 +57846,8 @@ fn test_clasta_z_p_zz_field_size_1_poweroftwo_8000_05688000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -55972,7 +57868,8 @@ fn test_clasta_z_p_zz_field_size_2_poweroftwo_8000_05a88000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -55993,7 +57890,8 @@ fn test_clasta_z_p_zz_field_size_3_max_8000_05e88000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56014,7 +57912,8 @@ fn test_clasta_z_p_zz_field_pg_0_min_8000_05288000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56035,7 +57934,8 @@ fn test_clasta_z_p_zz_field_pg_1_poweroftwo_8000_05288400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56056,7 +57956,8 @@ fn test_clasta_z_p_zz_field_zm_0_min_8000_05288000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56077,7 +57978,8 @@ fn test_clasta_z_p_zz_field_zm_1_poweroftwo_8000_05288020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56098,7 +58000,8 @@ fn test_clasta_z_p_zz_field_zm_30_poweroftwominusone_8000_052883c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56119,7 +58022,8 @@ fn test_clasta_z_p_zz_field_zm_31_max_8000_052883e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56140,7 +58044,8 @@ fn test_clasta_z_p_zz_field_zdn_0_min_8000_05288000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56161,7 +58066,8 @@ fn test_clasta_z_p_zz_field_zdn_1_poweroftwo_8000_05288001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56182,7 +58088,8 @@ fn test_clasta_z_p_zz_field_zdn_15_poweroftwominusone_8000_0528800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56203,7 +58110,8 @@ fn test_clasta_z_p_zz_field_zdn_31_max_8000_0528801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56224,7 +58132,8 @@ fn test_clasta_z_p_zz_combo_0_8000_05288000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56245,7 +58154,8 @@ fn test_clasta_z_p_zz_combo_1_8000_05688000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56266,7 +58176,8 @@ fn test_clasta_z_p_zz_combo_2_8000_05a88000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56287,7 +58198,8 @@ fn test_clasta_z_p_zz_combo_3_8000_05e88000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56308,7 +58220,8 @@ fn test_clasta_z_p_zz_combo_4_8000_05288000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56329,7 +58242,8 @@ fn test_clasta_z_p_zz_combo_5_8000_05288400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56350,7 +58264,8 @@ fn test_clasta_z_p_zz_combo_6_8000_05288000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56371,7 +58286,8 @@ fn test_clasta_z_p_zz_combo_7_8000_05288020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56392,7 +58308,8 @@ fn test_clasta_z_p_zz_combo_8_8000_052883c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56413,7 +58330,8 @@ fn test_clasta_z_p_zz_combo_9_8000_052883e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56434,7 +58352,8 @@ fn test_clasta_z_p_zz_combo_10_8000_05288000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56455,7 +58374,8 @@ fn test_clasta_z_p_zz_combo_11_8000_05288001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56476,7 +58396,8 @@ fn test_clasta_z_p_zz_combo_12_8000_0528800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56497,7 +58418,8 @@ fn test_clasta_z_p_zz_combo_13_8000_0528801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56518,7 +58440,8 @@ fn test_clasta_z_p_zz_special_size_0_size_variant_0_32768_05288000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56539,7 +58462,8 @@ fn test_clasta_z_p_zz_special_size_1_size_variant_1_32768_05688000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56560,7 +58484,8 @@ fn test_clasta_z_p_zz_special_size_2_size_variant_2_32768_05a88000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56581,7 +58506,8 @@ fn test_clasta_z_p_zz_special_size_3_size_variant_3_32768_05e88000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56669,7 +58595,8 @@ fn test_saddv_r_p_z_field_size_3_max_2000_04c02000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -56963,7 +58890,8 @@ fn test_saddv_r_p_z_combo_3_2000_04c02000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57257,7 +59185,8 @@ fn test_saddv_r_p_z_special_size_3_size_variant_3_8192_04c02000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57297,7 +59226,8 @@ fn test_adr_z_az_sd_same_scaled_field_sz_0_min_a000_04a0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57318,7 +59248,8 @@ fn test_adr_z_az_sd_same_scaled_field_sz_1_max_a000_04e0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57339,7 +59270,8 @@ fn test_adr_z_az_sd_same_scaled_field_zm_0_min_a000_04a0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57360,7 +59292,8 @@ fn test_adr_z_az_sd_same_scaled_field_zm_1_poweroftwo_a000_04a1a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57381,7 +59314,8 @@ fn test_adr_z_az_sd_same_scaled_field_zm_30_poweroftwominusone_a000_04bea000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57402,7 +59336,8 @@ fn test_adr_z_az_sd_same_scaled_field_zm_31_max_a000_04bfa000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57423,7 +59358,8 @@ fn test_adr_z_az_sd_same_scaled_field_msz_0_min_a000_04a0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57444,7 +59380,8 @@ fn test_adr_z_az_sd_same_scaled_field_msz_1_poweroftwo_a000_04a0a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57465,7 +59402,8 @@ fn test_adr_z_az_sd_same_scaled_field_msz_3_max_a000_04a0ac00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57486,7 +59424,8 @@ fn test_adr_z_az_sd_same_scaled_field_zn_0_min_a000_04a0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57507,7 +59446,8 @@ fn test_adr_z_az_sd_same_scaled_field_zn_1_poweroftwo_a000_04a0a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57528,7 +59468,8 @@ fn test_adr_z_az_sd_same_scaled_field_zn_30_poweroftwominusone_a000_04a0a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57549,7 +59490,8 @@ fn test_adr_z_az_sd_same_scaled_field_zn_31_max_a000_04a0a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57570,7 +59512,8 @@ fn test_adr_z_az_sd_same_scaled_field_zd_0_min_a000_04a0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57591,7 +59534,8 @@ fn test_adr_z_az_sd_same_scaled_field_zd_1_poweroftwo_a000_04a0a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57612,7 +59556,8 @@ fn test_adr_z_az_sd_same_scaled_field_zd_30_poweroftwominusone_a000_04a0a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57633,7 +59578,8 @@ fn test_adr_z_az_sd_same_scaled_field_zd_31_max_a000_04a0a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57654,7 +59600,8 @@ fn test_adr_z_az_sd_same_scaled_combo_0_a000_04a0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57675,7 +59622,8 @@ fn test_adr_z_az_sd_same_scaled_combo_1_a000_04e0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57696,7 +59644,8 @@ fn test_adr_z_az_sd_same_scaled_combo_2_a000_04a0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57717,7 +59666,8 @@ fn test_adr_z_az_sd_same_scaled_combo_3_a000_04a1a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57738,7 +59688,8 @@ fn test_adr_z_az_sd_same_scaled_combo_4_a000_04bea000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57759,7 +59710,8 @@ fn test_adr_z_az_sd_same_scaled_combo_5_a000_04bfa000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57780,7 +59732,8 @@ fn test_adr_z_az_sd_same_scaled_combo_6_a000_04a0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57801,7 +59754,8 @@ fn test_adr_z_az_sd_same_scaled_combo_7_a000_04a0a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57822,7 +59776,8 @@ fn test_adr_z_az_sd_same_scaled_combo_8_a000_04a0ac00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57843,7 +59798,8 @@ fn test_adr_z_az_sd_same_scaled_combo_9_a000_04a0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57864,7 +59820,8 @@ fn test_adr_z_az_sd_same_scaled_combo_10_a000_04a0a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57885,7 +59842,8 @@ fn test_adr_z_az_sd_same_scaled_combo_11_a000_04a0a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57906,7 +59864,8 @@ fn test_adr_z_az_sd_same_scaled_combo_12_a000_04a0a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57927,7 +59886,8 @@ fn test_adr_z_az_sd_same_scaled_combo_13_a000_04a0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57948,7 +59908,8 @@ fn test_adr_z_az_sd_same_scaled_combo_14_a000_04a0a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57969,7 +59930,8 @@ fn test_adr_z_az_sd_same_scaled_combo_15_a000_04a0a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -57990,7 +59952,8 @@ fn test_adr_z_az_sd_same_scaled_combo_16_a000_04a0a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58011,7 +59974,8 @@ fn test_adr_z_az_sd_same_scaled_special_sz_0_size_variant_0_40960_04a0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58032,7 +59996,8 @@ fn test_adr_z_az_sd_same_scaled_special_sz_1_size_variant_1_40960_04e0a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58053,7 +60018,8 @@ fn test_adr_z_az_d_s32_scaled_field_zm_0_min_a000_0420a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58074,7 +60040,8 @@ fn test_adr_z_az_d_s32_scaled_field_zm_1_poweroftwo_a000_0421a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58095,7 +60062,8 @@ fn test_adr_z_az_d_s32_scaled_field_zm_30_poweroftwominusone_a000_043ea000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58116,7 +60084,8 @@ fn test_adr_z_az_d_s32_scaled_field_zm_31_max_a000_043fa000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58137,7 +60106,8 @@ fn test_adr_z_az_d_s32_scaled_field_msz_0_min_a000_0420a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58158,7 +60128,8 @@ fn test_adr_z_az_d_s32_scaled_field_msz_1_poweroftwo_a000_0420a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58179,7 +60150,8 @@ fn test_adr_z_az_d_s32_scaled_field_msz_3_max_a000_0420ac00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58200,7 +60172,8 @@ fn test_adr_z_az_d_s32_scaled_field_zn_0_min_a000_0420a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58221,7 +60194,8 @@ fn test_adr_z_az_d_s32_scaled_field_zn_1_poweroftwo_a000_0420a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58242,7 +60216,8 @@ fn test_adr_z_az_d_s32_scaled_field_zn_30_poweroftwominusone_a000_0420a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58263,7 +60238,8 @@ fn test_adr_z_az_d_s32_scaled_field_zn_31_max_a000_0420a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58284,7 +60260,8 @@ fn test_adr_z_az_d_s32_scaled_field_zd_0_min_a000_0420a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58305,7 +60282,8 @@ fn test_adr_z_az_d_s32_scaled_field_zd_1_poweroftwo_a000_0420a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58326,7 +60304,8 @@ fn test_adr_z_az_d_s32_scaled_field_zd_30_poweroftwominusone_a000_0420a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58347,7 +60326,8 @@ fn test_adr_z_az_d_s32_scaled_field_zd_31_max_a000_0420a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58368,7 +60348,8 @@ fn test_adr_z_az_d_s32_scaled_combo_0_a000_0420a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58389,7 +60370,8 @@ fn test_adr_z_az_d_s32_scaled_combo_1_a000_0421a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58410,7 +60392,8 @@ fn test_adr_z_az_d_s32_scaled_combo_2_a000_043ea000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58431,7 +60414,8 @@ fn test_adr_z_az_d_s32_scaled_combo_3_a000_043fa000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58452,7 +60436,8 @@ fn test_adr_z_az_d_s32_scaled_combo_4_a000_0420a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58473,7 +60458,8 @@ fn test_adr_z_az_d_s32_scaled_combo_5_a000_0420a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58494,7 +60480,8 @@ fn test_adr_z_az_d_s32_scaled_combo_6_a000_0420ac00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58515,7 +60502,8 @@ fn test_adr_z_az_d_s32_scaled_combo_7_a000_0420a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58536,7 +60524,8 @@ fn test_adr_z_az_d_s32_scaled_combo_8_a000_0420a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58557,7 +60546,8 @@ fn test_adr_z_az_d_s32_scaled_combo_9_a000_0420a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58578,7 +60568,8 @@ fn test_adr_z_az_d_s32_scaled_combo_10_a000_0420a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58599,7 +60590,8 @@ fn test_adr_z_az_d_s32_scaled_combo_11_a000_0420a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58620,7 +60612,8 @@ fn test_adr_z_az_d_s32_scaled_combo_12_a000_0420a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58641,7 +60634,8 @@ fn test_adr_z_az_d_s32_scaled_combo_13_a000_0420a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58662,7 +60656,8 @@ fn test_adr_z_az_d_s32_scaled_combo_14_a000_0420a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58683,7 +60678,8 @@ fn test_adr_z_az_d_u32_scaled_field_zm_0_min_a000_0460a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58704,7 +60700,8 @@ fn test_adr_z_az_d_u32_scaled_field_zm_1_poweroftwo_a000_0461a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58725,7 +60722,8 @@ fn test_adr_z_az_d_u32_scaled_field_zm_30_poweroftwominusone_a000_047ea000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58746,7 +60744,8 @@ fn test_adr_z_az_d_u32_scaled_field_zm_31_max_a000_047fa000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58767,7 +60766,8 @@ fn test_adr_z_az_d_u32_scaled_field_msz_0_min_a000_0460a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58788,7 +60788,8 @@ fn test_adr_z_az_d_u32_scaled_field_msz_1_poweroftwo_a000_0460a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58809,7 +60810,8 @@ fn test_adr_z_az_d_u32_scaled_field_msz_3_max_a000_0460ac00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58830,7 +60832,8 @@ fn test_adr_z_az_d_u32_scaled_field_zn_0_min_a000_0460a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58851,7 +60854,8 @@ fn test_adr_z_az_d_u32_scaled_field_zn_1_poweroftwo_a000_0460a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58872,7 +60876,8 @@ fn test_adr_z_az_d_u32_scaled_field_zn_30_poweroftwominusone_a000_0460a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58893,7 +60898,8 @@ fn test_adr_z_az_d_u32_scaled_field_zn_31_max_a000_0460a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58914,7 +60920,8 @@ fn test_adr_z_az_d_u32_scaled_field_zd_0_min_a000_0460a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58935,7 +60942,8 @@ fn test_adr_z_az_d_u32_scaled_field_zd_1_poweroftwo_a000_0460a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58956,7 +60964,8 @@ fn test_adr_z_az_d_u32_scaled_field_zd_30_poweroftwominusone_a000_0460a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58977,7 +60986,8 @@ fn test_adr_z_az_d_u32_scaled_field_zd_31_max_a000_0460a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -58998,7 +61008,8 @@ fn test_adr_z_az_d_u32_scaled_combo_0_a000_0460a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59019,7 +61030,8 @@ fn test_adr_z_az_d_u32_scaled_combo_1_a000_0461a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59040,7 +61052,8 @@ fn test_adr_z_az_d_u32_scaled_combo_2_a000_047ea000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59061,7 +61074,8 @@ fn test_adr_z_az_d_u32_scaled_combo_3_a000_047fa000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59082,7 +61096,8 @@ fn test_adr_z_az_d_u32_scaled_combo_4_a000_0460a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59103,7 +61118,8 @@ fn test_adr_z_az_d_u32_scaled_combo_5_a000_0460a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59124,7 +61140,8 @@ fn test_adr_z_az_d_u32_scaled_combo_6_a000_0460ac00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59145,7 +61162,8 @@ fn test_adr_z_az_d_u32_scaled_combo_7_a000_0460a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59166,7 +61184,8 @@ fn test_adr_z_az_d_u32_scaled_combo_8_a000_0460a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59187,7 +61206,8 @@ fn test_adr_z_az_d_u32_scaled_combo_9_a000_0460a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59208,7 +61228,8 @@ fn test_adr_z_az_d_u32_scaled_combo_10_a000_0460a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59229,7 +61250,8 @@ fn test_adr_z_az_d_u32_scaled_combo_11_a000_0460a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59250,7 +61272,8 @@ fn test_adr_z_az_d_u32_scaled_combo_12_a000_0460a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59271,7 +61294,8 @@ fn test_adr_z_az_d_u32_scaled_combo_13_a000_0460a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59292,7 +61316,8 @@ fn test_adr_z_az_d_u32_scaled_combo_14_a000_0460a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59317,7 +61342,8 @@ fn test_tbl_z_zz_1_field_size_0_min_3000_05203000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59338,7 +61364,8 @@ fn test_tbl_z_zz_1_field_size_1_poweroftwo_3000_05603000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59359,7 +61386,8 @@ fn test_tbl_z_zz_1_field_size_2_poweroftwo_3000_05a03000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59380,7 +61408,8 @@ fn test_tbl_z_zz_1_field_size_3_max_3000_05e03000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59401,7 +61430,8 @@ fn test_tbl_z_zz_1_field_zm_0_min_3000_05203000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59422,7 +61452,8 @@ fn test_tbl_z_zz_1_field_zm_1_poweroftwo_3000_05213000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59443,7 +61474,8 @@ fn test_tbl_z_zz_1_field_zm_30_poweroftwominusone_3000_053e3000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59464,7 +61496,8 @@ fn test_tbl_z_zz_1_field_zm_31_max_3000_053f3000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59485,7 +61518,8 @@ fn test_tbl_z_zz_1_field_zn_0_min_3000_05203000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59506,7 +61540,8 @@ fn test_tbl_z_zz_1_field_zn_1_poweroftwo_3000_05203020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59527,7 +61562,8 @@ fn test_tbl_z_zz_1_field_zn_30_poweroftwominusone_3000_052033c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59548,7 +61584,8 @@ fn test_tbl_z_zz_1_field_zn_31_max_3000_052033e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59569,7 +61606,8 @@ fn test_tbl_z_zz_1_field_zd_0_min_3000_05203000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59590,7 +61628,8 @@ fn test_tbl_z_zz_1_field_zd_1_poweroftwo_3000_05203001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59611,7 +61650,8 @@ fn test_tbl_z_zz_1_field_zd_30_poweroftwominusone_3000_0520301e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59632,7 +61672,8 @@ fn test_tbl_z_zz_1_field_zd_31_max_3000_0520301f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59653,7 +61694,8 @@ fn test_tbl_z_zz_1_combo_0_3000_05203000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59674,7 +61716,8 @@ fn test_tbl_z_zz_1_combo_1_3000_05603000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59695,7 +61738,8 @@ fn test_tbl_z_zz_1_combo_2_3000_05a03000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59716,7 +61760,8 @@ fn test_tbl_z_zz_1_combo_3_3000_05e03000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59737,7 +61782,8 @@ fn test_tbl_z_zz_1_combo_4_3000_05203000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59758,7 +61804,8 @@ fn test_tbl_z_zz_1_combo_5_3000_05213000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59779,7 +61826,8 @@ fn test_tbl_z_zz_1_combo_6_3000_053e3000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59800,7 +61848,8 @@ fn test_tbl_z_zz_1_combo_7_3000_053f3000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59821,7 +61870,8 @@ fn test_tbl_z_zz_1_combo_8_3000_05203000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59842,7 +61892,8 @@ fn test_tbl_z_zz_1_combo_9_3000_05203020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59863,7 +61914,8 @@ fn test_tbl_z_zz_1_combo_10_3000_052033c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59884,7 +61936,8 @@ fn test_tbl_z_zz_1_combo_11_3000_052033e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59905,7 +61958,8 @@ fn test_tbl_z_zz_1_combo_12_3000_05203000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59926,7 +61980,8 @@ fn test_tbl_z_zz_1_combo_13_3000_05203001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59947,7 +62002,8 @@ fn test_tbl_z_zz_1_combo_14_3000_0520301e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59968,7 +62024,8 @@ fn test_tbl_z_zz_1_combo_15_3000_0520301f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -59989,7 +62046,8 @@ fn test_tbl_z_zz_1_special_size_0_size_variant_0_12288_05203000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60010,7 +62068,8 @@ fn test_tbl_z_zz_1_special_size_1_size_variant_1_12288_05603000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60031,7 +62090,8 @@ fn test_tbl_z_zz_1_special_size_2_size_variant_2_12288_05a03000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60052,7 +62112,8 @@ fn test_tbl_z_zz_1_special_size_3_size_variant_3_12288_05e03000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60077,7 +62138,8 @@ fn test_trn1_z_zz_field_size_0_min_7000_05207000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60098,7 +62160,8 @@ fn test_trn1_z_zz_field_size_1_poweroftwo_7000_05607000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60119,7 +62182,8 @@ fn test_trn1_z_zz_field_size_2_poweroftwo_7000_05a07000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60140,7 +62204,8 @@ fn test_trn1_z_zz_field_size_3_max_7000_05e07000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60161,7 +62226,8 @@ fn test_trn1_z_zz_field_zm_0_min_7000_05207000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60182,7 +62248,8 @@ fn test_trn1_z_zz_field_zm_1_poweroftwo_7000_05217000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60203,7 +62270,8 @@ fn test_trn1_z_zz_field_zm_30_poweroftwominusone_7000_053e7000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60224,7 +62292,8 @@ fn test_trn1_z_zz_field_zm_31_max_7000_053f7000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60245,7 +62314,8 @@ fn test_trn1_z_zz_field_zn_0_min_7000_05207000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60266,7 +62336,8 @@ fn test_trn1_z_zz_field_zn_1_poweroftwo_7000_05207020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60287,7 +62358,8 @@ fn test_trn1_z_zz_field_zn_30_poweroftwominusone_7000_052073c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60308,7 +62380,8 @@ fn test_trn1_z_zz_field_zn_31_max_7000_052073e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60329,7 +62402,8 @@ fn test_trn1_z_zz_field_zd_0_min_7000_05207000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60350,7 +62424,8 @@ fn test_trn1_z_zz_field_zd_1_poweroftwo_7000_05207001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60371,7 +62446,8 @@ fn test_trn1_z_zz_field_zd_30_poweroftwominusone_7000_0520701e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60392,7 +62468,8 @@ fn test_trn1_z_zz_field_zd_31_max_7000_0520701f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60413,7 +62490,8 @@ fn test_trn1_z_zz_combo_0_7000_05207000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60434,7 +62512,8 @@ fn test_trn1_z_zz_combo_1_7000_05607000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60455,7 +62534,8 @@ fn test_trn1_z_zz_combo_2_7000_05a07000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60476,7 +62556,8 @@ fn test_trn1_z_zz_combo_3_7000_05e07000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60497,7 +62578,8 @@ fn test_trn1_z_zz_combo_4_7000_05207000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60518,7 +62600,8 @@ fn test_trn1_z_zz_combo_5_7000_05217000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60539,7 +62622,8 @@ fn test_trn1_z_zz_combo_6_7000_053e7000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60560,7 +62644,8 @@ fn test_trn1_z_zz_combo_7_7000_053f7000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60581,7 +62666,8 @@ fn test_trn1_z_zz_combo_8_7000_05207000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60602,7 +62688,8 @@ fn test_trn1_z_zz_combo_9_7000_05207020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60623,7 +62710,8 @@ fn test_trn1_z_zz_combo_10_7000_052073c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60644,7 +62732,8 @@ fn test_trn1_z_zz_combo_11_7000_052073e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60665,7 +62754,8 @@ fn test_trn1_z_zz_combo_12_7000_05207000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60686,7 +62776,8 @@ fn test_trn1_z_zz_combo_13_7000_05207001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60707,7 +62798,8 @@ fn test_trn1_z_zz_combo_14_7000_0520701e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60728,7 +62820,8 @@ fn test_trn1_z_zz_combo_15_7000_0520701f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60749,7 +62842,8 @@ fn test_trn1_z_zz_special_size_0_size_variant_0_28672_05207000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60770,7 +62864,8 @@ fn test_trn1_z_zz_special_size_1_size_variant_1_28672_05607000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60791,7 +62886,8 @@ fn test_trn1_z_zz_special_size_2_size_variant_2_28672_05a07000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60812,7 +62908,8 @@ fn test_trn1_z_zz_special_size_3_size_variant_3_28672_05e07000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60833,7 +62930,8 @@ fn test_trn2_z_zz_field_size_0_min_7400_05207400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60854,7 +62952,8 @@ fn test_trn2_z_zz_field_size_1_poweroftwo_7400_05607400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60875,7 +62974,8 @@ fn test_trn2_z_zz_field_size_2_poweroftwo_7400_05a07400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60896,7 +62996,8 @@ fn test_trn2_z_zz_field_size_3_max_7400_05e07400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60917,7 +63018,8 @@ fn test_trn2_z_zz_field_zm_0_min_7400_05207400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60938,7 +63040,8 @@ fn test_trn2_z_zz_field_zm_1_poweroftwo_7400_05217400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60959,7 +63062,8 @@ fn test_trn2_z_zz_field_zm_30_poweroftwominusone_7400_053e7400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -60980,7 +63084,8 @@ fn test_trn2_z_zz_field_zm_31_max_7400_053f7400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61001,7 +63106,8 @@ fn test_trn2_z_zz_field_zn_0_min_7400_05207400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61022,7 +63128,8 @@ fn test_trn2_z_zz_field_zn_1_poweroftwo_7400_05207420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61043,7 +63150,8 @@ fn test_trn2_z_zz_field_zn_30_poweroftwominusone_7400_052077c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61064,7 +63172,8 @@ fn test_trn2_z_zz_field_zn_31_max_7400_052077e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61085,7 +63194,8 @@ fn test_trn2_z_zz_field_zd_0_min_7400_05207400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61106,7 +63216,8 @@ fn test_trn2_z_zz_field_zd_1_poweroftwo_7400_05207401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61127,7 +63238,8 @@ fn test_trn2_z_zz_field_zd_30_poweroftwominusone_7400_0520741e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61148,7 +63260,8 @@ fn test_trn2_z_zz_field_zd_31_max_7400_0520741f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61169,7 +63282,8 @@ fn test_trn2_z_zz_combo_0_7400_05207400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61190,7 +63304,8 @@ fn test_trn2_z_zz_combo_1_7400_05607400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61211,7 +63326,8 @@ fn test_trn2_z_zz_combo_2_7400_05a07400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61232,7 +63348,8 @@ fn test_trn2_z_zz_combo_3_7400_05e07400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61253,7 +63370,8 @@ fn test_trn2_z_zz_combo_4_7400_05207400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61274,7 +63392,8 @@ fn test_trn2_z_zz_combo_5_7400_05217400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61295,7 +63414,8 @@ fn test_trn2_z_zz_combo_6_7400_053e7400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61316,7 +63436,8 @@ fn test_trn2_z_zz_combo_7_7400_053f7400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61337,7 +63458,8 @@ fn test_trn2_z_zz_combo_8_7400_05207400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61358,7 +63480,8 @@ fn test_trn2_z_zz_combo_9_7400_05207420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61379,7 +63502,8 @@ fn test_trn2_z_zz_combo_10_7400_052077c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61400,7 +63524,8 @@ fn test_trn2_z_zz_combo_11_7400_052077e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61421,7 +63546,8 @@ fn test_trn2_z_zz_combo_12_7400_05207400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61442,7 +63568,8 @@ fn test_trn2_z_zz_combo_13_7400_05207401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61463,7 +63590,8 @@ fn test_trn2_z_zz_combo_14_7400_0520741e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61484,7 +63612,8 @@ fn test_trn2_z_zz_combo_15_7400_0520741f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61505,7 +63634,8 @@ fn test_trn2_z_zz_special_size_0_size_variant_0_29696_05207400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61526,7 +63656,8 @@ fn test_trn2_z_zz_special_size_1_size_variant_1_29696_05607400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61547,7 +63678,8 @@ fn test_trn2_z_zz_special_size_2_size_variant_2_29696_05a07400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61568,7 +63700,8 @@ fn test_trn2_z_zz_special_size_3_size_variant_3_29696_05e07400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61593,7 +63726,8 @@ fn test_sdot_z_zzzi_s_field_i2_0_min_0_44a00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61614,7 +63748,8 @@ fn test_sdot_z_zzzi_s_field_i2_1_poweroftwo_0_44a80000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61635,7 +63770,8 @@ fn test_sdot_z_zzzi_s_field_i2_3_max_0_44b80000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61656,7 +63792,8 @@ fn test_sdot_z_zzzi_s_field_zm_0_min_0_44a00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61677,7 +63814,8 @@ fn test_sdot_z_zzzi_s_field_zm_1_poweroftwo_0_44a10000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61698,7 +63836,8 @@ fn test_sdot_z_zzzi_s_field_zn_0_min_0_44a00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61719,7 +63858,8 @@ fn test_sdot_z_zzzi_s_field_zn_1_poweroftwo_0_44a00020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61740,7 +63880,8 @@ fn test_sdot_z_zzzi_s_field_zn_30_poweroftwominusone_0_44a003c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61761,7 +63902,8 @@ fn test_sdot_z_zzzi_s_field_zn_31_max_0_44a003e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61782,7 +63924,8 @@ fn test_sdot_z_zzzi_s_field_zda_0_min_0_44a00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61803,7 +63946,8 @@ fn test_sdot_z_zzzi_s_field_zda_1_poweroftwo_0_44a00001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61824,7 +63968,8 @@ fn test_sdot_z_zzzi_s_field_zda_15_poweroftwominusone_0_44a0000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61845,7 +63990,8 @@ fn test_sdot_z_zzzi_s_field_zda_31_max_0_44a0001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61866,7 +64012,8 @@ fn test_sdot_z_zzzi_s_combo_0_0_44a00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61887,7 +64034,8 @@ fn test_sdot_z_zzzi_s_combo_1_0_44a80000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61908,7 +64056,8 @@ fn test_sdot_z_zzzi_s_combo_2_0_44b80000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61929,7 +64078,8 @@ fn test_sdot_z_zzzi_s_combo_3_0_44a00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61950,7 +64100,8 @@ fn test_sdot_z_zzzi_s_combo_4_0_44a10000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61971,7 +64122,8 @@ fn test_sdot_z_zzzi_s_combo_5_0_44a00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -61992,7 +64144,8 @@ fn test_sdot_z_zzzi_s_combo_6_0_44a00020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62013,7 +64166,8 @@ fn test_sdot_z_zzzi_s_combo_7_0_44a003c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62034,7 +64188,8 @@ fn test_sdot_z_zzzi_s_combo_8_0_44a003e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62055,7 +64210,8 @@ fn test_sdot_z_zzzi_s_combo_9_0_44a00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62076,7 +64232,8 @@ fn test_sdot_z_zzzi_s_combo_10_0_44a00001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62097,7 +64254,8 @@ fn test_sdot_z_zzzi_s_combo_11_0_44a0000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62118,7 +64276,8 @@ fn test_sdot_z_zzzi_s_combo_12_0_44a0001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62139,7 +64298,8 @@ fn test_sdot_z_zzzi_d_field_i1_0_min_0_44e00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62160,7 +64320,8 @@ fn test_sdot_z_zzzi_d_field_i1_1_max_0_44f00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62181,7 +64342,8 @@ fn test_sdot_z_zzzi_d_field_zm_0_min_0_44e00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62202,7 +64364,8 @@ fn test_sdot_z_zzzi_d_field_zm_1_poweroftwo_0_44e10000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62223,7 +64386,8 @@ fn test_sdot_z_zzzi_d_field_zn_0_min_0_44e00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62244,7 +64408,8 @@ fn test_sdot_z_zzzi_d_field_zn_1_poweroftwo_0_44e00020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62265,7 +64430,8 @@ fn test_sdot_z_zzzi_d_field_zn_30_poweroftwominusone_0_44e003c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62286,7 +64452,8 @@ fn test_sdot_z_zzzi_d_field_zn_31_max_0_44e003e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62307,7 +64474,8 @@ fn test_sdot_z_zzzi_d_field_zda_0_min_0_44e00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62328,7 +64496,8 @@ fn test_sdot_z_zzzi_d_field_zda_1_poweroftwo_0_44e00001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62349,7 +64518,8 @@ fn test_sdot_z_zzzi_d_field_zda_15_poweroftwominusone_0_44e0000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62370,7 +64540,8 @@ fn test_sdot_z_zzzi_d_field_zda_31_max_0_44e0001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62391,7 +64562,8 @@ fn test_sdot_z_zzzi_d_combo_0_0_44e00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62412,7 +64584,8 @@ fn test_sdot_z_zzzi_d_combo_1_0_44f00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62433,7 +64606,8 @@ fn test_sdot_z_zzzi_d_combo_2_0_44e00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62454,7 +64628,8 @@ fn test_sdot_z_zzzi_d_combo_3_0_44e10000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62475,7 +64650,8 @@ fn test_sdot_z_zzzi_d_combo_4_0_44e00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62496,7 +64672,8 @@ fn test_sdot_z_zzzi_d_combo_5_0_44e00020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62517,7 +64694,8 @@ fn test_sdot_z_zzzi_d_combo_6_0_44e003c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62538,7 +64716,8 @@ fn test_sdot_z_zzzi_d_combo_7_0_44e003e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62559,7 +64738,8 @@ fn test_sdot_z_zzzi_d_combo_8_0_44e00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62580,7 +64760,8 @@ fn test_sdot_z_zzzi_d_combo_9_0_44e00001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62601,7 +64782,8 @@ fn test_sdot_z_zzzi_d_combo_10_0_44e0000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62622,7 +64804,8 @@ fn test_sdot_z_zzzi_d_combo_11_0_44e0001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62667,7 +64850,8 @@ fn test_sunpkhi_z_z_field_size_1_poweroftwo_3800_05713800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62688,7 +64872,8 @@ fn test_sunpkhi_z_z_field_size_2_poweroftwo_3800_05b13800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62709,7 +64894,8 @@ fn test_sunpkhi_z_z_field_size_3_max_3800_05f13800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62910,7 +65096,8 @@ fn test_sunpkhi_z_z_combo_1_3800_05713800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62931,7 +65118,8 @@ fn test_sunpkhi_z_z_combo_2_3800_05b13800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -62952,7 +65140,8 @@ fn test_sunpkhi_z_z_combo_3_3800_05f13800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63153,7 +65342,8 @@ fn test_sunpkhi_z_z_special_size_1_size_variant_1_14336_05713800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63174,7 +65364,8 @@ fn test_sunpkhi_z_z_special_size_2_size_variant_2_14336_05b13800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63195,7 +65386,8 @@ fn test_sunpkhi_z_z_special_size_3_size_variant_3_14336_05f13800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63236,7 +65428,8 @@ fn test_sunpklo_z_z_field_size_1_poweroftwo_3800_05703800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63257,7 +65450,8 @@ fn test_sunpklo_z_z_field_size_2_poweroftwo_3800_05b03800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63278,7 +65472,8 @@ fn test_sunpklo_z_z_field_size_3_max_3800_05f03800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63479,7 +65674,8 @@ fn test_sunpklo_z_z_combo_1_3800_05703800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63500,7 +65696,8 @@ fn test_sunpklo_z_z_combo_2_3800_05b03800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63521,7 +65718,8 @@ fn test_sunpklo_z_z_combo_3_3800_05f03800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63722,7 +65920,8 @@ fn test_sunpklo_z_z_special_size_1_size_variant_1_14336_05703800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63743,7 +65942,8 @@ fn test_sunpklo_z_z_special_size_2_size_variant_2_14336_05b03800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63764,7 +65964,8 @@ fn test_sunpklo_z_z_special_size_3_size_variant_3_14336_05f03800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63789,7 +65990,8 @@ fn test_dupm_z_i_field_imm13_0_zero_0_05c00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63810,7 +66012,8 @@ fn test_dupm_z_i_field_imm13_1_poweroftwo_0_05c00020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63831,7 +66034,8 @@ fn test_dupm_z_i_field_imm13_3_poweroftwominusone_0_05c00060() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63852,7 +66056,8 @@ fn test_dupm_z_i_field_imm13_4_poweroftwo_0_05c00080() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63873,7 +66078,8 @@ fn test_dupm_z_i_field_imm13_7_poweroftwominusone_0_05c000e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63894,7 +66100,8 @@ fn test_dupm_z_i_field_imm13_8_poweroftwo_0_05c00100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63915,7 +66122,8 @@ fn test_dupm_z_i_field_imm13_15_poweroftwominusone_0_05c001e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63936,7 +66144,8 @@ fn test_dupm_z_i_field_imm13_16_poweroftwo_0_05c00200() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -63977,7 +66186,8 @@ fn test_dupm_z_i_field_imm13_32_poweroftwo_0_05c00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64018,7 +66228,8 @@ fn test_dupm_z_i_field_imm13_64_poweroftwo_0_05c00800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64059,7 +66270,8 @@ fn test_dupm_z_i_field_imm13_128_poweroftwo_0_05c01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64100,7 +66312,8 @@ fn test_dupm_z_i_field_imm13_256_poweroftwo_0_05c02000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64141,7 +66354,8 @@ fn test_dupm_z_i_field_imm13_512_poweroftwo_0_05c04000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64182,7 +66396,8 @@ fn test_dupm_z_i_field_imm13_1024_poweroftwo_0_05c08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64223,7 +66438,8 @@ fn test_dupm_z_i_field_imm13_2048_poweroftwo_0_05c10000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64264,7 +66480,8 @@ fn test_dupm_z_i_field_imm13_4096_poweroftwo_0_05c20000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64305,7 +66522,8 @@ fn test_dupm_z_i_field_zd_0_min_0_05c00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64326,7 +66544,8 @@ fn test_dupm_z_i_field_zd_1_poweroftwo_0_05c00001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64347,7 +66566,8 @@ fn test_dupm_z_i_field_zd_30_poweroftwominusone_0_05c0001e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64368,7 +66588,8 @@ fn test_dupm_z_i_field_zd_31_max_0_05c0001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64389,7 +66610,8 @@ fn test_dupm_z_i_combo_0_0_05c00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64410,7 +66632,8 @@ fn test_dupm_z_i_combo_1_0_05c00020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64431,7 +66654,8 @@ fn test_dupm_z_i_combo_2_0_05c00060() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64452,7 +66676,8 @@ fn test_dupm_z_i_combo_3_0_05c00080() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64473,7 +66698,8 @@ fn test_dupm_z_i_combo_4_0_05c000e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64494,7 +66720,8 @@ fn test_dupm_z_i_combo_5_0_05c00100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64515,7 +66742,8 @@ fn test_dupm_z_i_combo_6_0_05c001e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64536,7 +66764,8 @@ fn test_dupm_z_i_combo_7_0_05c00200() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64577,7 +66806,8 @@ fn test_dupm_z_i_combo_9_0_05c00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64618,7 +66848,8 @@ fn test_dupm_z_i_combo_11_0_05c00800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64659,7 +66890,8 @@ fn test_dupm_z_i_combo_13_0_05c01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64700,7 +66932,8 @@ fn test_dupm_z_i_combo_15_0_05c02000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64741,7 +66974,8 @@ fn test_dupm_z_i_combo_17_0_05c04000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64782,7 +67016,8 @@ fn test_dupm_z_i_combo_19_0_05c08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64823,7 +67058,8 @@ fn test_dupm_z_i_combo_21_0_05c10000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64864,7 +67100,8 @@ fn test_dupm_z_i_combo_23_0_05c20000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64905,7 +67142,8 @@ fn test_dupm_z_i_combo_25_0_05c00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64926,7 +67164,8 @@ fn test_dupm_z_i_combo_26_0_05c00001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64947,7 +67186,8 @@ fn test_dupm_z_i_combo_27_0_05c0001e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64968,7 +67208,8 @@ fn test_dupm_z_i_combo_28_0_05c0001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -64993,7 +67234,8 @@ fn test_dup_z_i_field_size_0_min_c000_2538c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65014,7 +67256,8 @@ fn test_dup_z_i_field_size_1_poweroftwo_c000_2578c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65035,7 +67278,8 @@ fn test_dup_z_i_field_size_2_poweroftwo_c000_25b8c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65056,7 +67300,8 @@ fn test_dup_z_i_field_size_3_max_c000_25f8c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65077,7 +67322,8 @@ fn test_dup_z_i_field_sh_0_min_c000_2538c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65118,7 +67364,8 @@ fn test_dup_z_i_field_imm8_0_zero_c000_2538c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65139,7 +67386,8 @@ fn test_dup_z_i_field_imm8_1_poweroftwo_c000_2538c020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65160,7 +67408,8 @@ fn test_dup_z_i_field_imm8_3_poweroftwominusone_c000_2538c060() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65181,7 +67430,8 @@ fn test_dup_z_i_field_imm8_4_poweroftwo_c000_2538c080() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65202,7 +67452,8 @@ fn test_dup_z_i_field_imm8_7_poweroftwominusone_c000_2538c0e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65223,7 +67474,8 @@ fn test_dup_z_i_field_imm8_8_poweroftwo_c000_2538c100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65244,7 +67496,8 @@ fn test_dup_z_i_field_imm8_15_poweroftwominusone_c000_2538c1e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65265,7 +67518,8 @@ fn test_dup_z_i_field_imm8_16_poweroftwo_c000_2538c200() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65286,7 +67540,8 @@ fn test_dup_z_i_field_imm8_31_poweroftwominusone_c000_2538c3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65307,7 +67562,8 @@ fn test_dup_z_i_field_imm8_32_poweroftwo_c000_2538c400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65328,7 +67584,8 @@ fn test_dup_z_i_field_imm8_63_poweroftwominusone_c000_2538c7e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65349,7 +67606,8 @@ fn test_dup_z_i_field_imm8_64_poweroftwo_c000_2538c800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65370,7 +67628,8 @@ fn test_dup_z_i_field_imm8_127_poweroftwominusone_c000_2538cfe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65391,7 +67650,8 @@ fn test_dup_z_i_field_imm8_128_poweroftwo_c000_2538d000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65412,7 +67672,8 @@ fn test_dup_z_i_field_imm8_255_max_c000_2538dfe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65433,7 +67694,8 @@ fn test_dup_z_i_field_zd_0_min_c000_2538c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65454,7 +67716,8 @@ fn test_dup_z_i_field_zd_1_poweroftwo_c000_2538c001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65475,7 +67738,8 @@ fn test_dup_z_i_field_zd_30_poweroftwominusone_c000_2538c01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65496,7 +67760,8 @@ fn test_dup_z_i_field_zd_31_max_c000_2538c01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65517,7 +67782,8 @@ fn test_dup_z_i_combo_0_c000_2538c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65538,7 +67804,8 @@ fn test_dup_z_i_combo_1_c000_2578c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65559,7 +67826,8 @@ fn test_dup_z_i_combo_2_c000_25b8c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65580,7 +67848,8 @@ fn test_dup_z_i_combo_3_c000_25f8c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65601,7 +67870,8 @@ fn test_dup_z_i_combo_4_c000_2538c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65642,7 +67912,8 @@ fn test_dup_z_i_combo_6_c000_2538c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65663,7 +67934,8 @@ fn test_dup_z_i_combo_7_c000_2538c020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65684,7 +67956,8 @@ fn test_dup_z_i_combo_8_c000_2538c060() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65705,7 +67978,8 @@ fn test_dup_z_i_combo_9_c000_2538c080() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65726,7 +68000,8 @@ fn test_dup_z_i_combo_10_c000_2538c0e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65747,7 +68022,8 @@ fn test_dup_z_i_combo_11_c000_2538c100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65768,7 +68044,8 @@ fn test_dup_z_i_combo_12_c000_2538c1e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65789,7 +68066,8 @@ fn test_dup_z_i_combo_13_c000_2538c200() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65810,7 +68088,8 @@ fn test_dup_z_i_combo_14_c000_2538c3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65831,7 +68110,8 @@ fn test_dup_z_i_combo_15_c000_2538c400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65852,7 +68132,8 @@ fn test_dup_z_i_combo_16_c000_2538c7e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65873,7 +68154,8 @@ fn test_dup_z_i_combo_17_c000_2538c800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65894,7 +68176,8 @@ fn test_dup_z_i_combo_18_c000_2538cfe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65915,7 +68198,8 @@ fn test_dup_z_i_combo_19_c000_2538d000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65936,7 +68220,8 @@ fn test_dup_z_i_combo_20_c000_2538dfe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65957,7 +68242,8 @@ fn test_dup_z_i_combo_21_c000_2538c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65978,7 +68264,8 @@ fn test_dup_z_i_combo_22_c000_2538c001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -65999,7 +68286,8 @@ fn test_dup_z_i_combo_23_c000_2538c01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -66020,7 +68308,8 @@ fn test_dup_z_i_combo_24_c000_2538c01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -66041,7 +68330,8 @@ fn test_dup_z_i_special_size_0_size_variant_0_49152_2538c020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -66062,7 +68352,8 @@ fn test_dup_z_i_special_size_1_size_variant_1_49152_2578c020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -66083,7 +68374,8 @@ fn test_dup_z_i_special_size_2_size_variant_2_49152_25b8c020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -66104,7 +68396,8 @@ fn test_dup_z_i_special_size_3_size_variant_3_49152_25f8c020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -66125,7 +68418,8 @@ fn test_dup_z_i_special_sh_0_shift_type_lsl_49152_2578c020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -66146,7 +68440,8 @@ fn test_dup_z_i_special_sh_1_shift_type_lsr_49152_2578e020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -66167,7 +68462,8 @@ fn test_dup_z_i_special_sh_2_shift_type_asr_49152_2578c020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -66188,7 +68484,8 @@ fn test_dup_z_i_special_sh_3_shift_type_ror_49152_2578e020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67217,7 +69514,8 @@ fn test_asr_z_p_zz_field_size_0_min_8000_04108000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67238,7 +69536,8 @@ fn test_asr_z_p_zz_field_size_1_poweroftwo_8000_04508000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67259,7 +69558,8 @@ fn test_asr_z_p_zz_field_size_2_poweroftwo_8000_04908000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67280,7 +69580,8 @@ fn test_asr_z_p_zz_field_size_3_max_8000_04d08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67301,7 +69602,8 @@ fn test_asr_z_p_zz_field_pg_0_min_8000_04108000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67322,7 +69624,8 @@ fn test_asr_z_p_zz_field_pg_1_poweroftwo_8000_04108400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67343,7 +69646,8 @@ fn test_asr_z_p_zz_field_zm_0_min_8000_04108000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67364,7 +69668,8 @@ fn test_asr_z_p_zz_field_zm_1_poweroftwo_8000_04108020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67385,7 +69690,8 @@ fn test_asr_z_p_zz_field_zm_30_poweroftwominusone_8000_041083c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67406,7 +69712,8 @@ fn test_asr_z_p_zz_field_zm_31_max_8000_041083e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67427,7 +69734,8 @@ fn test_asr_z_p_zz_field_zdn_0_min_8000_04108000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67448,7 +69756,8 @@ fn test_asr_z_p_zz_field_zdn_1_poweroftwo_8000_04108001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67469,7 +69778,8 @@ fn test_asr_z_p_zz_field_zdn_15_poweroftwominusone_8000_0410800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67490,7 +69800,8 @@ fn test_asr_z_p_zz_field_zdn_31_max_8000_0410801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67511,7 +69822,8 @@ fn test_asr_z_p_zz_combo_0_8000_04108000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67532,7 +69844,8 @@ fn test_asr_z_p_zz_combo_1_8000_04508000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67553,7 +69866,8 @@ fn test_asr_z_p_zz_combo_2_8000_04908000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67574,7 +69888,8 @@ fn test_asr_z_p_zz_combo_3_8000_04d08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67595,7 +69910,8 @@ fn test_asr_z_p_zz_combo_4_8000_04108000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67616,7 +69932,8 @@ fn test_asr_z_p_zz_combo_5_8000_04108400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67637,7 +69954,8 @@ fn test_asr_z_p_zz_combo_6_8000_04108000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67658,7 +69976,8 @@ fn test_asr_z_p_zz_combo_7_8000_04108020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67679,7 +69998,8 @@ fn test_asr_z_p_zz_combo_8_8000_041083c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67700,7 +70020,8 @@ fn test_asr_z_p_zz_combo_9_8000_041083e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67721,7 +70042,8 @@ fn test_asr_z_p_zz_combo_10_8000_04108000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67742,7 +70064,8 @@ fn test_asr_z_p_zz_combo_11_8000_04108001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67763,7 +70086,8 @@ fn test_asr_z_p_zz_combo_12_8000_0410800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67784,7 +70108,8 @@ fn test_asr_z_p_zz_combo_13_8000_0410801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67805,7 +70130,8 @@ fn test_asr_z_p_zz_special_size_0_size_variant_0_32768_04108000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67826,7 +70152,8 @@ fn test_asr_z_p_zz_special_size_1_size_variant_1_32768_04508000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67847,7 +70174,8 @@ fn test_asr_z_p_zz_special_size_2_size_variant_2_32768_04908000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67868,7 +70196,8 @@ fn test_asr_z_p_zz_special_size_3_size_variant_3_32768_04d08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67891,7 +70220,9 @@ fn test_sdiv_z_p_zz_field_size_0_min_0_04140000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -67910,7 +70241,9 @@ fn test_sdiv_z_p_zz_field_size_1_poweroftwo_0_04540000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -67931,7 +70264,8 @@ fn test_sdiv_z_p_zz_field_size_2_poweroftwo_0_04940000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67952,7 +70286,8 @@ fn test_sdiv_z_p_zz_field_size_3_max_0_04d40000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -67971,7 +70306,9 @@ fn test_sdiv_z_p_zz_field_pg_0_min_0_04140000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -67990,7 +70327,9 @@ fn test_sdiv_z_p_zz_field_pg_1_poweroftwo_0_04140400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68009,7 +70348,9 @@ fn test_sdiv_z_p_zz_field_zm_0_min_0_04140000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68028,7 +70369,9 @@ fn test_sdiv_z_p_zz_field_zm_1_poweroftwo_0_04140020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68047,7 +70390,9 @@ fn test_sdiv_z_p_zz_field_zm_30_poweroftwominusone_0_041403c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68066,7 +70411,9 @@ fn test_sdiv_z_p_zz_field_zm_31_max_0_041403e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68085,7 +70432,9 @@ fn test_sdiv_z_p_zz_field_zdn_0_min_0_04140000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68104,7 +70453,9 @@ fn test_sdiv_z_p_zz_field_zdn_1_poweroftwo_0_04140001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68123,7 +70474,9 @@ fn test_sdiv_z_p_zz_field_zdn_15_poweroftwominusone_0_0414000f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68142,7 +70495,9 @@ fn test_sdiv_z_p_zz_field_zdn_31_max_0_0414001f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68161,7 +70516,9 @@ fn test_sdiv_z_p_zz_combo_0_0_04140000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68180,7 +70537,9 @@ fn test_sdiv_z_p_zz_combo_1_0_04540000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68201,7 +70560,8 @@ fn test_sdiv_z_p_zz_combo_2_0_04940000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -68222,7 +70582,8 @@ fn test_sdiv_z_p_zz_combo_3_0_04d40000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -68241,7 +70602,9 @@ fn test_sdiv_z_p_zz_combo_4_0_04140000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68260,7 +70623,9 @@ fn test_sdiv_z_p_zz_combo_5_0_04140400() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68279,7 +70644,9 @@ fn test_sdiv_z_p_zz_combo_6_0_04140000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68298,7 +70665,9 @@ fn test_sdiv_z_p_zz_combo_7_0_04140020() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68317,7 +70686,9 @@ fn test_sdiv_z_p_zz_combo_8_0_041403c0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68336,7 +70707,9 @@ fn test_sdiv_z_p_zz_combo_9_0_041403e0() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68355,7 +70728,9 @@ fn test_sdiv_z_p_zz_combo_10_0_04140000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68374,7 +70749,9 @@ fn test_sdiv_z_p_zz_combo_11_0_04140001() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68393,7 +70770,9 @@ fn test_sdiv_z_p_zz_combo_12_0_0414000f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68412,7 +70791,9 @@ fn test_sdiv_z_p_zz_combo_13_0_0414001f() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68431,7 +70812,9 @@ fn test_sdiv_z_p_zz_special_size_0_size_variant_0_0_04140000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68450,7 +70833,9 @@ fn test_sdiv_z_p_zz_special_size_1_size_variant_1_0_04540000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -68471,7 +70856,8 @@ fn test_sdiv_z_p_zz_special_size_2_size_variant_2_0_04940000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -68492,7 +70878,8 @@ fn test_sdiv_z_p_zz_special_size_3_size_variant_3_0_04d40000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69208,7 +71595,8 @@ fn test_cpy_z_p_r_field_size_0_min_a000_0528a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69229,7 +71617,8 @@ fn test_cpy_z_p_r_field_size_1_poweroftwo_a000_0568a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69250,7 +71639,8 @@ fn test_cpy_z_p_r_field_size_2_poweroftwo_a000_05a8a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69271,7 +71661,8 @@ fn test_cpy_z_p_r_field_size_3_max_a000_05e8a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69292,7 +71683,8 @@ fn test_cpy_z_p_r_field_pg_0_min_a000_0528a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69313,7 +71705,8 @@ fn test_cpy_z_p_r_field_pg_1_poweroftwo_a000_0528a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69334,7 +71727,8 @@ fn test_cpy_z_p_r_field_rn_0_min_a000_0528a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69355,7 +71749,8 @@ fn test_cpy_z_p_r_field_rn_1_poweroftwo_a000_0528a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69376,7 +71771,8 @@ fn test_cpy_z_p_r_field_rn_30_poweroftwominusone_a000_0528a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69397,7 +71793,8 @@ fn test_cpy_z_p_r_field_rn_31_max_a000_0528a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69418,7 +71815,8 @@ fn test_cpy_z_p_r_field_zd_0_min_a000_0528a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69439,7 +71837,8 @@ fn test_cpy_z_p_r_field_zd_1_poweroftwo_a000_0528a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69460,7 +71859,8 @@ fn test_cpy_z_p_r_field_zd_30_poweroftwominusone_a000_0528a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69481,7 +71881,8 @@ fn test_cpy_z_p_r_field_zd_31_max_a000_0528a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69502,7 +71903,8 @@ fn test_cpy_z_p_r_combo_0_a000_0528a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69523,7 +71925,8 @@ fn test_cpy_z_p_r_combo_1_a000_0568a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69544,7 +71947,8 @@ fn test_cpy_z_p_r_combo_2_a000_05a8a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69565,7 +71969,8 @@ fn test_cpy_z_p_r_combo_3_a000_05e8a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69586,7 +71991,8 @@ fn test_cpy_z_p_r_combo_4_a000_0528a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69607,7 +72013,8 @@ fn test_cpy_z_p_r_combo_5_a000_0528a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69628,7 +72035,8 @@ fn test_cpy_z_p_r_combo_6_a000_0528a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69649,7 +72057,8 @@ fn test_cpy_z_p_r_combo_7_a000_0528a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69670,7 +72079,8 @@ fn test_cpy_z_p_r_combo_8_a000_0528a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69691,7 +72101,8 @@ fn test_cpy_z_p_r_combo_9_a000_0528a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69712,7 +72123,8 @@ fn test_cpy_z_p_r_combo_10_a000_0528a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69733,7 +72145,8 @@ fn test_cpy_z_p_r_combo_11_a000_0528a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69754,7 +72167,8 @@ fn test_cpy_z_p_r_combo_12_a000_0528a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69775,7 +72189,8 @@ fn test_cpy_z_p_r_combo_13_a000_0528a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69796,7 +72211,8 @@ fn test_cpy_z_p_r_combo_14_a000_0528a420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69817,7 +72233,8 @@ fn test_cpy_z_p_r_combo_15_a000_0528bfe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69838,7 +72255,8 @@ fn test_cpy_z_p_r_special_size_0_size_variant_0_40960_0528a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69859,7 +72277,8 @@ fn test_cpy_z_p_r_special_size_1_size_variant_1_40960_0568a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69880,7 +72299,8 @@ fn test_cpy_z_p_r_special_size_2_size_variant_2_40960_05a8a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69901,7 +72321,8 @@ fn test_cpy_z_p_r_special_size_3_size_variant_3_40960_05e8a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69922,7 +72343,8 @@ fn test_cpy_z_p_r_special_rn_31_stack_pointer_sp_may_require_alignment_40960_056
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69947,7 +72369,8 @@ fn test_lsl_z_p_zz_field_size_0_min_8000_04138000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69968,7 +72391,8 @@ fn test_lsl_z_p_zz_field_size_1_poweroftwo_8000_04538000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -69989,7 +72413,8 @@ fn test_lsl_z_p_zz_field_size_2_poweroftwo_8000_04938000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70010,7 +72435,8 @@ fn test_lsl_z_p_zz_field_size_3_max_8000_04d38000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70031,7 +72457,8 @@ fn test_lsl_z_p_zz_field_pg_0_min_8000_04138000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70052,7 +72479,8 @@ fn test_lsl_z_p_zz_field_pg_1_poweroftwo_8000_04138400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70073,7 +72501,8 @@ fn test_lsl_z_p_zz_field_zm_0_min_8000_04138000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70094,7 +72523,8 @@ fn test_lsl_z_p_zz_field_zm_1_poweroftwo_8000_04138020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70115,7 +72545,8 @@ fn test_lsl_z_p_zz_field_zm_30_poweroftwominusone_8000_041383c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70136,7 +72567,8 @@ fn test_lsl_z_p_zz_field_zm_31_max_8000_041383e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70157,7 +72589,8 @@ fn test_lsl_z_p_zz_field_zdn_0_min_8000_04138000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70178,7 +72611,8 @@ fn test_lsl_z_p_zz_field_zdn_1_poweroftwo_8000_04138001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70199,7 +72633,8 @@ fn test_lsl_z_p_zz_field_zdn_15_poweroftwominusone_8000_0413800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70220,7 +72655,8 @@ fn test_lsl_z_p_zz_field_zdn_31_max_8000_0413801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70241,7 +72677,8 @@ fn test_lsl_z_p_zz_combo_0_8000_04138000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70262,7 +72699,8 @@ fn test_lsl_z_p_zz_combo_1_8000_04538000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70283,7 +72721,8 @@ fn test_lsl_z_p_zz_combo_2_8000_04938000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70304,7 +72743,8 @@ fn test_lsl_z_p_zz_combo_3_8000_04d38000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70325,7 +72765,8 @@ fn test_lsl_z_p_zz_combo_4_8000_04138000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70346,7 +72787,8 @@ fn test_lsl_z_p_zz_combo_5_8000_04138400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70367,7 +72809,8 @@ fn test_lsl_z_p_zz_combo_6_8000_04138000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70388,7 +72831,8 @@ fn test_lsl_z_p_zz_combo_7_8000_04138020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70409,7 +72853,8 @@ fn test_lsl_z_p_zz_combo_8_8000_041383c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70430,7 +72875,8 @@ fn test_lsl_z_p_zz_combo_9_8000_041383e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70451,7 +72897,8 @@ fn test_lsl_z_p_zz_combo_10_8000_04138000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70472,7 +72919,8 @@ fn test_lsl_z_p_zz_combo_11_8000_04138001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70493,7 +72941,8 @@ fn test_lsl_z_p_zz_combo_12_8000_0413800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70514,7 +72963,8 @@ fn test_lsl_z_p_zz_combo_13_8000_0413801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70535,7 +72985,8 @@ fn test_lsl_z_p_zz_special_size_0_size_variant_0_32768_04138000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70556,7 +73007,8 @@ fn test_lsl_z_p_zz_special_size_1_size_variant_1_32768_04538000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70577,7 +73029,8 @@ fn test_lsl_z_p_zz_special_size_2_size_variant_2_32768_04938000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -70598,7 +73051,8 @@ fn test_lsl_z_p_zz_special_size_3_size_variant_3_32768_04d38000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -71917,7 +74371,8 @@ fn test_sel_z_p_zz_field_size_0_min_c000_0520c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -71938,7 +74393,8 @@ fn test_sel_z_p_zz_field_size_1_poweroftwo_c000_0560c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -71959,7 +74415,8 @@ fn test_sel_z_p_zz_field_size_2_poweroftwo_c000_05a0c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -71980,7 +74437,8 @@ fn test_sel_z_p_zz_field_size_3_max_c000_05e0c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72001,7 +74459,8 @@ fn test_sel_z_p_zz_field_zm_0_min_c000_0520c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72022,7 +74481,8 @@ fn test_sel_z_p_zz_field_zm_1_poweroftwo_c000_0521c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72043,7 +74503,8 @@ fn test_sel_z_p_zz_field_zm_30_poweroftwominusone_c000_053ec000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72064,7 +74525,8 @@ fn test_sel_z_p_zz_field_zm_31_max_c000_053fc000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72085,7 +74547,8 @@ fn test_sel_z_p_zz_field_pg_0_min_c000_0520c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72106,7 +74569,8 @@ fn test_sel_z_p_zz_field_pg_1_poweroftwo_c000_0520c400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72127,7 +74591,8 @@ fn test_sel_z_p_zz_field_zn_0_min_c000_0520c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72148,7 +74613,8 @@ fn test_sel_z_p_zz_field_zn_1_poweroftwo_c000_0520c020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72169,7 +74635,8 @@ fn test_sel_z_p_zz_field_zn_30_poweroftwominusone_c000_0520c3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72190,7 +74657,8 @@ fn test_sel_z_p_zz_field_zn_31_max_c000_0520c3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72211,7 +74679,8 @@ fn test_sel_z_p_zz_field_zd_0_min_c000_0520c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72232,7 +74701,8 @@ fn test_sel_z_p_zz_field_zd_1_poweroftwo_c000_0520c001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72253,7 +74723,8 @@ fn test_sel_z_p_zz_field_zd_30_poweroftwominusone_c000_0520c01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72274,7 +74745,8 @@ fn test_sel_z_p_zz_field_zd_31_max_c000_0520c01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72295,7 +74767,8 @@ fn test_sel_z_p_zz_combo_0_c000_0520c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72316,7 +74789,8 @@ fn test_sel_z_p_zz_combo_1_c000_0560c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72337,7 +74811,8 @@ fn test_sel_z_p_zz_combo_2_c000_05a0c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72358,7 +74833,8 @@ fn test_sel_z_p_zz_combo_3_c000_05e0c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72379,7 +74855,8 @@ fn test_sel_z_p_zz_combo_4_c000_0520c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72400,7 +74877,8 @@ fn test_sel_z_p_zz_combo_5_c000_0521c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72421,7 +74899,8 @@ fn test_sel_z_p_zz_combo_6_c000_053ec000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72442,7 +74921,8 @@ fn test_sel_z_p_zz_combo_7_c000_053fc000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72463,7 +74943,8 @@ fn test_sel_z_p_zz_combo_8_c000_0520c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72484,7 +74965,8 @@ fn test_sel_z_p_zz_combo_9_c000_0520c400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72505,7 +74987,8 @@ fn test_sel_z_p_zz_combo_10_c000_0520c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72526,7 +75009,8 @@ fn test_sel_z_p_zz_combo_11_c000_0520c020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72547,7 +75031,8 @@ fn test_sel_z_p_zz_combo_12_c000_0520c3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72568,7 +75053,8 @@ fn test_sel_z_p_zz_combo_13_c000_0520c3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72589,7 +75075,8 @@ fn test_sel_z_p_zz_combo_14_c000_0520c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72610,7 +75097,8 @@ fn test_sel_z_p_zz_combo_15_c000_0520c001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72631,7 +75119,8 @@ fn test_sel_z_p_zz_combo_16_c000_0520c01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72652,7 +75141,8 @@ fn test_sel_z_p_zz_combo_17_c000_0520c01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72673,7 +75163,8 @@ fn test_sel_z_p_zz_special_size_0_size_variant_0_49152_0520c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72694,7 +75185,8 @@ fn test_sel_z_p_zz_special_size_1_size_variant_1_49152_0560c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72715,7 +75207,8 @@ fn test_sel_z_p_zz_special_size_2_size_variant_2_49152_05a0c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72736,7 +75229,8 @@ fn test_sel_z_p_zz_special_size_3_size_variant_3_49152_05e0c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72761,7 +75255,8 @@ fn test_lsr_z_p_zz_field_size_0_min_8000_04118000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72782,7 +75277,8 @@ fn test_lsr_z_p_zz_field_size_1_poweroftwo_8000_04518000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72803,7 +75299,8 @@ fn test_lsr_z_p_zz_field_size_2_poweroftwo_8000_04918000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72824,7 +75321,8 @@ fn test_lsr_z_p_zz_field_size_3_max_8000_04d18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72845,7 +75343,8 @@ fn test_lsr_z_p_zz_field_pg_0_min_8000_04118000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72866,7 +75365,8 @@ fn test_lsr_z_p_zz_field_pg_1_poweroftwo_8000_04118400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72887,7 +75387,8 @@ fn test_lsr_z_p_zz_field_zm_0_min_8000_04118000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72908,7 +75409,8 @@ fn test_lsr_z_p_zz_field_zm_1_poweroftwo_8000_04118020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72929,7 +75431,8 @@ fn test_lsr_z_p_zz_field_zm_30_poweroftwominusone_8000_041183c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72950,7 +75453,8 @@ fn test_lsr_z_p_zz_field_zm_31_max_8000_041183e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72971,7 +75475,8 @@ fn test_lsr_z_p_zz_field_zdn_0_min_8000_04118000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -72992,7 +75497,8 @@ fn test_lsr_z_p_zz_field_zdn_1_poweroftwo_8000_04118001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73013,7 +75519,8 @@ fn test_lsr_z_p_zz_field_zdn_15_poweroftwominusone_8000_0411800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73034,7 +75541,8 @@ fn test_lsr_z_p_zz_field_zdn_31_max_8000_0411801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73055,7 +75563,8 @@ fn test_lsr_z_p_zz_combo_0_8000_04118000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73076,7 +75585,8 @@ fn test_lsr_z_p_zz_combo_1_8000_04518000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73097,7 +75607,8 @@ fn test_lsr_z_p_zz_combo_2_8000_04918000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73118,7 +75629,8 @@ fn test_lsr_z_p_zz_combo_3_8000_04d18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73139,7 +75651,8 @@ fn test_lsr_z_p_zz_combo_4_8000_04118000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73160,7 +75673,8 @@ fn test_lsr_z_p_zz_combo_5_8000_04118400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73181,7 +75695,8 @@ fn test_lsr_z_p_zz_combo_6_8000_04118000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73202,7 +75717,8 @@ fn test_lsr_z_p_zz_combo_7_8000_04118020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73223,7 +75739,8 @@ fn test_lsr_z_p_zz_combo_8_8000_041183c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73244,7 +75761,8 @@ fn test_lsr_z_p_zz_combo_9_8000_041183e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73265,7 +75783,8 @@ fn test_lsr_z_p_zz_combo_10_8000_04118000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73286,7 +75805,8 @@ fn test_lsr_z_p_zz_combo_11_8000_04118001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73307,7 +75827,8 @@ fn test_lsr_z_p_zz_combo_12_8000_0411800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73328,7 +75849,8 @@ fn test_lsr_z_p_zz_combo_13_8000_0411801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73349,7 +75871,8 @@ fn test_lsr_z_p_zz_special_size_0_size_variant_0_32768_04118000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73370,7 +75893,8 @@ fn test_lsr_z_p_zz_special_size_1_size_variant_1_32768_04518000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73391,7 +75915,8 @@ fn test_lsr_z_p_zz_special_size_2_size_variant_2_32768_04918000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73412,7 +75937,8 @@ fn test_lsr_z_p_zz_special_size_3_size_variant_3_32768_04d18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73477,7 +76003,8 @@ fn test_asr_z_zi_field_tszh_3_max_9000_04e09000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -73838,7 +76365,8 @@ fn test_asr_z_zi_combo_2_9000_04e09000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74163,7 +76691,8 @@ fn test_mad_z_p_zzz_field_size_0_min_c000_0400c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74184,7 +76713,8 @@ fn test_mad_z_p_zzz_field_size_1_poweroftwo_c000_0440c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74205,7 +76735,8 @@ fn test_mad_z_p_zzz_field_size_2_poweroftwo_c000_0480c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74226,7 +76757,8 @@ fn test_mad_z_p_zzz_field_size_3_max_c000_04c0c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74247,7 +76779,8 @@ fn test_mad_z_p_zzz_field_zm_0_min_c000_0400c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74268,7 +76801,8 @@ fn test_mad_z_p_zzz_field_zm_1_poweroftwo_c000_0401c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74289,7 +76823,8 @@ fn test_mad_z_p_zzz_field_zm_30_poweroftwominusone_c000_041ec000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74310,7 +76845,8 @@ fn test_mad_z_p_zzz_field_zm_31_max_c000_041fc000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74331,7 +76867,8 @@ fn test_mad_z_p_zzz_field_pg_0_min_c000_0400c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74352,7 +76889,8 @@ fn test_mad_z_p_zzz_field_pg_1_poweroftwo_c000_0400c400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74373,7 +76911,8 @@ fn test_mad_z_p_zzz_field_za_0_min_c000_0400c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74394,7 +76933,8 @@ fn test_mad_z_p_zzz_field_za_1_poweroftwo_c000_0400c020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74415,7 +76955,8 @@ fn test_mad_z_p_zzz_field_za_15_poweroftwominusone_c000_0400c1e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74436,7 +76977,8 @@ fn test_mad_z_p_zzz_field_za_31_max_c000_0400c3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74457,7 +76999,8 @@ fn test_mad_z_p_zzz_field_zdn_0_min_c000_0400c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74478,7 +77021,8 @@ fn test_mad_z_p_zzz_field_zdn_1_poweroftwo_c000_0400c001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74499,7 +77043,8 @@ fn test_mad_z_p_zzz_field_zdn_15_poweroftwominusone_c000_0400c00f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74520,7 +77065,8 @@ fn test_mad_z_p_zzz_field_zdn_31_max_c000_0400c01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74541,7 +77087,8 @@ fn test_mad_z_p_zzz_combo_0_c000_0400c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74562,7 +77109,8 @@ fn test_mad_z_p_zzz_combo_1_c000_0440c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74583,7 +77131,8 @@ fn test_mad_z_p_zzz_combo_2_c000_0480c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74604,7 +77153,8 @@ fn test_mad_z_p_zzz_combo_3_c000_04c0c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74625,7 +77175,8 @@ fn test_mad_z_p_zzz_combo_4_c000_0400c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74646,7 +77197,8 @@ fn test_mad_z_p_zzz_combo_5_c000_0401c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74667,7 +77219,8 @@ fn test_mad_z_p_zzz_combo_6_c000_041ec000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74688,7 +77241,8 @@ fn test_mad_z_p_zzz_combo_7_c000_041fc000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74709,7 +77263,8 @@ fn test_mad_z_p_zzz_combo_8_c000_0400c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74730,7 +77285,8 @@ fn test_mad_z_p_zzz_combo_9_c000_0400c400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74751,7 +77307,8 @@ fn test_mad_z_p_zzz_combo_10_c000_0400c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74772,7 +77329,8 @@ fn test_mad_z_p_zzz_combo_11_c000_0400c020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74793,7 +77351,8 @@ fn test_mad_z_p_zzz_combo_12_c000_0400c1e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74814,7 +77373,8 @@ fn test_mad_z_p_zzz_combo_13_c000_0400c3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74835,7 +77395,8 @@ fn test_mad_z_p_zzz_combo_14_c000_0400c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74856,7 +77417,8 @@ fn test_mad_z_p_zzz_combo_15_c000_0400c001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74877,7 +77439,8 @@ fn test_mad_z_p_zzz_combo_16_c000_0400c00f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74898,7 +77461,8 @@ fn test_mad_z_p_zzz_combo_17_c000_0400c01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74919,7 +77483,8 @@ fn test_mad_z_p_zzz_special_size_0_size_variant_0_49152_0400c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74940,7 +77505,8 @@ fn test_mad_z_p_zzz_special_size_1_size_variant_1_49152_0440c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74961,7 +77527,8 @@ fn test_mad_z_p_zzz_special_size_2_size_variant_2_49152_0480c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -74982,7 +77549,8 @@ fn test_mad_z_p_zzz_special_size_3_size_variant_3_49152_04c0c000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -75047,7 +77615,8 @@ fn test_lsr_z_zi_field_tszh_3_max_9400_04e09400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -75408,7 +77977,8 @@ fn test_lsr_z_zi_combo_2_9400_04e09400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -75733,7 +78303,8 @@ fn test_smin_z_p_zz_field_size_0_min_0_040a0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -75754,7 +78325,8 @@ fn test_smin_z_p_zz_field_size_1_poweroftwo_0_044a0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -75775,7 +78347,8 @@ fn test_smin_z_p_zz_field_size_2_poweroftwo_0_048a0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -75796,7 +78369,8 @@ fn test_smin_z_p_zz_field_size_3_max_0_04ca0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -75817,7 +78391,8 @@ fn test_smin_z_p_zz_field_pg_0_min_0_040a0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -75838,7 +78413,8 @@ fn test_smin_z_p_zz_field_pg_1_poweroftwo_0_040a0400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -75859,7 +78435,8 @@ fn test_smin_z_p_zz_field_zm_0_min_0_040a0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -75880,7 +78457,8 @@ fn test_smin_z_p_zz_field_zm_1_poweroftwo_0_040a0020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -75901,7 +78479,8 @@ fn test_smin_z_p_zz_field_zm_30_poweroftwominusone_0_040a03c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -75922,7 +78501,8 @@ fn test_smin_z_p_zz_field_zm_31_max_0_040a03e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -75943,7 +78523,8 @@ fn test_smin_z_p_zz_field_zdn_0_min_0_040a0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -75964,7 +78545,8 @@ fn test_smin_z_p_zz_field_zdn_1_poweroftwo_0_040a0001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -75985,7 +78567,8 @@ fn test_smin_z_p_zz_field_zdn_15_poweroftwominusone_0_040a000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76006,7 +78589,8 @@ fn test_smin_z_p_zz_field_zdn_31_max_0_040a001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76027,7 +78611,8 @@ fn test_smin_z_p_zz_combo_0_0_040a0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76048,7 +78633,8 @@ fn test_smin_z_p_zz_combo_1_0_044a0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76069,7 +78655,8 @@ fn test_smin_z_p_zz_combo_2_0_048a0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76090,7 +78677,8 @@ fn test_smin_z_p_zz_combo_3_0_04ca0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76111,7 +78699,8 @@ fn test_smin_z_p_zz_combo_4_0_040a0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76132,7 +78721,8 @@ fn test_smin_z_p_zz_combo_5_0_040a0400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76153,7 +78743,8 @@ fn test_smin_z_p_zz_combo_6_0_040a0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76174,7 +78765,8 @@ fn test_smin_z_p_zz_combo_7_0_040a0020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76195,7 +78787,8 @@ fn test_smin_z_p_zz_combo_8_0_040a03c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76216,7 +78809,8 @@ fn test_smin_z_p_zz_combo_9_0_040a03e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76237,7 +78831,8 @@ fn test_smin_z_p_zz_combo_10_0_040a0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76258,7 +78853,8 @@ fn test_smin_z_p_zz_combo_11_0_040a0001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76279,7 +78875,8 @@ fn test_smin_z_p_zz_combo_12_0_040a000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76300,7 +78897,8 @@ fn test_smin_z_p_zz_combo_13_0_040a001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76321,7 +78919,8 @@ fn test_smin_z_p_zz_special_size_0_size_variant_0_0_040a0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76342,7 +78941,8 @@ fn test_smin_z_p_zz_special_size_1_size_variant_1_0_044a0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76363,7 +78963,8 @@ fn test_smin_z_p_zz_special_size_2_size_variant_2_0_048a0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -76384,7 +78985,8 @@ fn test_smin_z_p_zz_special_size_3_size_variant_3_0_04ca0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77413,7 +80015,8 @@ fn test_compact_z_p_z_field_sz_0_min_8000_05a18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77434,7 +80037,8 @@ fn test_compact_z_p_z_field_sz_1_max_8000_05e18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77455,7 +80059,8 @@ fn test_compact_z_p_z_field_pg_0_min_8000_05a18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77476,7 +80081,8 @@ fn test_compact_z_p_z_field_pg_1_poweroftwo_8000_05a18400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77497,7 +80103,8 @@ fn test_compact_z_p_z_field_zn_0_min_8000_05a18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77518,7 +80125,8 @@ fn test_compact_z_p_z_field_zn_1_poweroftwo_8000_05a18020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77539,7 +80147,8 @@ fn test_compact_z_p_z_field_zn_30_poweroftwominusone_8000_05a183c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77560,7 +80169,8 @@ fn test_compact_z_p_z_field_zn_31_max_8000_05a183e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77581,7 +80191,8 @@ fn test_compact_z_p_z_field_zd_0_min_8000_05a18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77602,7 +80213,8 @@ fn test_compact_z_p_z_field_zd_1_poweroftwo_8000_05a18001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77623,7 +80235,8 @@ fn test_compact_z_p_z_field_zd_30_poweroftwominusone_8000_05a1801e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77644,7 +80257,8 @@ fn test_compact_z_p_z_field_zd_31_max_8000_05a1801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77665,7 +80279,8 @@ fn test_compact_z_p_z_combo_0_8000_05a18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77686,7 +80301,8 @@ fn test_compact_z_p_z_combo_1_8000_05e18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77707,7 +80323,8 @@ fn test_compact_z_p_z_combo_2_8000_05a18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77728,7 +80345,8 @@ fn test_compact_z_p_z_combo_3_8000_05a18400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77749,7 +80367,8 @@ fn test_compact_z_p_z_combo_4_8000_05a18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77770,7 +80389,8 @@ fn test_compact_z_p_z_combo_5_8000_05a18020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77791,7 +80411,8 @@ fn test_compact_z_p_z_combo_6_8000_05a183c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77812,7 +80433,8 @@ fn test_compact_z_p_z_combo_7_8000_05a183e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77833,7 +80455,8 @@ fn test_compact_z_p_z_combo_8_8000_05a18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77854,7 +80477,8 @@ fn test_compact_z_p_z_combo_9_8000_05a18001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77875,7 +80499,8 @@ fn test_compact_z_p_z_combo_10_8000_05a1801e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77896,7 +80521,8 @@ fn test_compact_z_p_z_combo_11_8000_05a1801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77917,7 +80543,8 @@ fn test_compact_z_p_z_special_sz_0_size_variant_0_32768_05a18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77938,7 +80565,8 @@ fn test_compact_z_p_z_special_sz_1_size_variant_1_32768_05e18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77963,7 +80591,8 @@ fn test_index_z_ri_field_size_0_min_4400_04204400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -77984,7 +80613,8 @@ fn test_index_z_ri_field_size_1_poweroftwo_4400_04604400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78005,7 +80635,8 @@ fn test_index_z_ri_field_size_2_poweroftwo_4400_04a04400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78026,7 +80657,8 @@ fn test_index_z_ri_field_size_3_max_4400_04e04400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78047,7 +80679,8 @@ fn test_index_z_ri_field_imm5_0_zero_4400_04204400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78068,7 +80701,8 @@ fn test_index_z_ri_field_imm5_1_poweroftwo_4400_04214400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78089,7 +80723,8 @@ fn test_index_z_ri_field_imm5_3_poweroftwominusone_4400_04234400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78110,7 +80745,8 @@ fn test_index_z_ri_field_imm5_4_poweroftwo_4400_04244400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78131,7 +80767,8 @@ fn test_index_z_ri_field_imm5_7_poweroftwominusone_4400_04274400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78152,7 +80789,8 @@ fn test_index_z_ri_field_imm5_8_poweroftwo_4400_04284400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78173,7 +80811,8 @@ fn test_index_z_ri_field_imm5_15_poweroftwominusone_4400_042f4400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78194,7 +80833,8 @@ fn test_index_z_ri_field_imm5_16_poweroftwo_4400_04304400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78215,7 +80855,8 @@ fn test_index_z_ri_field_imm5_31_max_4400_043f4400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78236,7 +80877,8 @@ fn test_index_z_ri_field_rn_0_min_4400_04204400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78257,7 +80899,8 @@ fn test_index_z_ri_field_rn_1_poweroftwo_4400_04204420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78278,7 +80921,8 @@ fn test_index_z_ri_field_rn_30_poweroftwominusone_4400_042047c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78299,7 +80943,8 @@ fn test_index_z_ri_field_rn_31_max_4400_042047e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78320,7 +80965,8 @@ fn test_index_z_ri_field_zd_0_min_4400_04204400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78341,7 +80987,8 @@ fn test_index_z_ri_field_zd_1_poweroftwo_4400_04204401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78362,7 +81009,8 @@ fn test_index_z_ri_field_zd_30_poweroftwominusone_4400_0420441e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78383,7 +81031,8 @@ fn test_index_z_ri_field_zd_31_max_4400_0420441f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78404,7 +81053,8 @@ fn test_index_z_ri_combo_0_4400_04204400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78425,7 +81075,8 @@ fn test_index_z_ri_combo_1_4400_04604400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78446,7 +81097,8 @@ fn test_index_z_ri_combo_2_4400_04a04400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78467,7 +81119,8 @@ fn test_index_z_ri_combo_3_4400_04e04400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78488,7 +81141,8 @@ fn test_index_z_ri_combo_4_4400_04204400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78509,7 +81163,8 @@ fn test_index_z_ri_combo_5_4400_04214400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78530,7 +81185,8 @@ fn test_index_z_ri_combo_6_4400_04234400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78551,7 +81207,8 @@ fn test_index_z_ri_combo_7_4400_04244400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78572,7 +81229,8 @@ fn test_index_z_ri_combo_8_4400_04274400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78593,7 +81251,8 @@ fn test_index_z_ri_combo_9_4400_04284400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78614,7 +81273,8 @@ fn test_index_z_ri_combo_10_4400_042f4400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78635,7 +81295,8 @@ fn test_index_z_ri_combo_11_4400_04304400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78656,7 +81317,8 @@ fn test_index_z_ri_combo_12_4400_043f4400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78677,7 +81339,8 @@ fn test_index_z_ri_combo_13_4400_04204400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78698,7 +81361,8 @@ fn test_index_z_ri_combo_14_4400_04204420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78719,7 +81383,8 @@ fn test_index_z_ri_combo_15_4400_042047c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78740,7 +81405,8 @@ fn test_index_z_ri_combo_16_4400_042047e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78761,7 +81427,8 @@ fn test_index_z_ri_combo_17_4400_04204400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78782,7 +81449,8 @@ fn test_index_z_ri_combo_18_4400_04204401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78803,7 +81471,8 @@ fn test_index_z_ri_combo_19_4400_0420441e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78824,7 +81493,8 @@ fn test_index_z_ri_combo_20_4400_0420441f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78845,7 +81515,8 @@ fn test_index_z_ri_special_size_0_size_variant_0_17408_04214400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78866,7 +81537,8 @@ fn test_index_z_ri_special_size_1_size_variant_1_17408_04614400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78887,7 +81559,8 @@ fn test_index_z_ri_special_size_2_size_variant_2_17408_04a14400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78908,7 +81581,8 @@ fn test_index_z_ri_special_size_3_size_variant_3_17408_04e14400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -78929,7 +81603,8 @@ fn test_index_z_ri_special_rn_31_stack_pointer_sp_may_require_alignment_17408_04
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -79685,7 +82360,8 @@ fn test_lsl_z_zi_field_tszh_3_max_9c00_04e09c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80046,7 +82722,8 @@ fn test_lsl_z_zi_combo_2_9c00_04e09c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80371,7 +83048,8 @@ fn test_uabd_z_p_zz_field_size_0_min_0_040d0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80392,7 +83070,8 @@ fn test_uabd_z_p_zz_field_size_1_poweroftwo_0_044d0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80413,7 +83092,8 @@ fn test_uabd_z_p_zz_field_size_2_poweroftwo_0_048d0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80434,7 +83114,8 @@ fn test_uabd_z_p_zz_field_size_3_max_0_04cd0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80455,7 +83136,8 @@ fn test_uabd_z_p_zz_field_pg_0_min_0_040d0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80476,7 +83158,8 @@ fn test_uabd_z_p_zz_field_pg_1_poweroftwo_0_040d0400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80497,7 +83180,8 @@ fn test_uabd_z_p_zz_field_zm_0_min_0_040d0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80518,7 +83202,8 @@ fn test_uabd_z_p_zz_field_zm_1_poweroftwo_0_040d0020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80539,7 +83224,8 @@ fn test_uabd_z_p_zz_field_zm_30_poweroftwominusone_0_040d03c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80560,7 +83246,8 @@ fn test_uabd_z_p_zz_field_zm_31_max_0_040d03e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80581,7 +83268,8 @@ fn test_uabd_z_p_zz_field_zdn_0_min_0_040d0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80602,7 +83290,8 @@ fn test_uabd_z_p_zz_field_zdn_1_poweroftwo_0_040d0001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80623,7 +83312,8 @@ fn test_uabd_z_p_zz_field_zdn_15_poweroftwominusone_0_040d000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80644,7 +83334,8 @@ fn test_uabd_z_p_zz_field_zdn_31_max_0_040d001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80665,7 +83356,8 @@ fn test_uabd_z_p_zz_combo_0_0_040d0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80686,7 +83378,8 @@ fn test_uabd_z_p_zz_combo_1_0_044d0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80707,7 +83400,8 @@ fn test_uabd_z_p_zz_combo_2_0_048d0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80728,7 +83422,8 @@ fn test_uabd_z_p_zz_combo_3_0_04cd0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80749,7 +83444,8 @@ fn test_uabd_z_p_zz_combo_4_0_040d0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80770,7 +83466,8 @@ fn test_uabd_z_p_zz_combo_5_0_040d0400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80791,7 +83488,8 @@ fn test_uabd_z_p_zz_combo_6_0_040d0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80812,7 +83510,8 @@ fn test_uabd_z_p_zz_combo_7_0_040d0020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80833,7 +83532,8 @@ fn test_uabd_z_p_zz_combo_8_0_040d03c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80854,7 +83554,8 @@ fn test_uabd_z_p_zz_combo_9_0_040d03e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80875,7 +83576,8 @@ fn test_uabd_z_p_zz_combo_10_0_040d0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80896,7 +83598,8 @@ fn test_uabd_z_p_zz_combo_11_0_040d0001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80917,7 +83620,8 @@ fn test_uabd_z_p_zz_combo_12_0_040d000f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80938,7 +83642,8 @@ fn test_uabd_z_p_zz_combo_13_0_040d001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80959,7 +83664,8 @@ fn test_uabd_z_p_zz_special_size_0_size_variant_0_0_040d0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -80980,7 +83686,8 @@ fn test_uabd_z_p_zz_special_size_1_size_variant_1_0_044d0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81001,7 +83708,8 @@ fn test_uabd_z_p_zz_special_size_2_size_variant_2_0_048d0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81022,7 +83730,8 @@ fn test_uabd_z_p_zz_special_size_3_size_variant_3_0_04cd0000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81047,7 +83756,8 @@ fn test_lasta_v_p_z_field_size_0_min_8000_05228000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81068,7 +83778,8 @@ fn test_lasta_v_p_z_field_size_1_poweroftwo_8000_05628000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81089,7 +83800,8 @@ fn test_lasta_v_p_z_field_size_2_poweroftwo_8000_05a28000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81110,7 +83822,8 @@ fn test_lasta_v_p_z_field_size_3_max_8000_05e28000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81131,7 +83844,8 @@ fn test_lasta_v_p_z_field_pg_0_min_8000_05228000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81152,7 +83866,8 @@ fn test_lasta_v_p_z_field_pg_1_poweroftwo_8000_05228400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81173,7 +83888,8 @@ fn test_lasta_v_p_z_field_zn_0_min_8000_05228000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81194,7 +83910,8 @@ fn test_lasta_v_p_z_field_zn_1_poweroftwo_8000_05228020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81215,7 +83932,8 @@ fn test_lasta_v_p_z_field_zn_30_poweroftwominusone_8000_052283c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81236,7 +83954,8 @@ fn test_lasta_v_p_z_field_zn_31_max_8000_052283e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81257,7 +83976,8 @@ fn test_lasta_v_p_z_field_vd_0_min_8000_05228000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81278,7 +83998,8 @@ fn test_lasta_v_p_z_field_vd_1_poweroftwo_8000_05228001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81299,7 +84020,8 @@ fn test_lasta_v_p_z_field_vd_30_poweroftwominusone_8000_0522801e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81320,7 +84042,8 @@ fn test_lasta_v_p_z_field_vd_31_max_8000_0522801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81341,7 +84064,8 @@ fn test_lasta_v_p_z_combo_0_8000_05228000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81362,7 +84086,8 @@ fn test_lasta_v_p_z_combo_1_8000_05628000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81383,7 +84108,8 @@ fn test_lasta_v_p_z_combo_2_8000_05a28000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81404,7 +84130,8 @@ fn test_lasta_v_p_z_combo_3_8000_05e28000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81425,7 +84152,8 @@ fn test_lasta_v_p_z_combo_4_8000_05228000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81446,7 +84174,8 @@ fn test_lasta_v_p_z_combo_5_8000_05228400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81467,7 +84196,8 @@ fn test_lasta_v_p_z_combo_6_8000_05228000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81488,7 +84218,8 @@ fn test_lasta_v_p_z_combo_7_8000_05228020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81509,7 +84240,8 @@ fn test_lasta_v_p_z_combo_8_8000_052283c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81530,7 +84262,8 @@ fn test_lasta_v_p_z_combo_9_8000_052283e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81551,7 +84284,8 @@ fn test_lasta_v_p_z_combo_10_8000_05228000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81572,7 +84306,8 @@ fn test_lasta_v_p_z_combo_11_8000_05228001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81593,7 +84328,8 @@ fn test_lasta_v_p_z_combo_12_8000_0522801e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81614,7 +84350,8 @@ fn test_lasta_v_p_z_combo_13_8000_0522801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81635,7 +84372,8 @@ fn test_lasta_v_p_z_special_size_0_size_variant_0_32768_05228000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81656,7 +84394,8 @@ fn test_lasta_v_p_z_special_size_1_size_variant_1_32768_05628000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81677,7 +84416,8 @@ fn test_lasta_v_p_z_special_size_2_size_variant_2_32768_05a28000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81698,7 +84438,8 @@ fn test_lasta_v_p_z_special_size_3_size_variant_3_32768_05e28000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81723,7 +84464,8 @@ fn test_lastb_r_p_z_field_size_0_min_a000_0521a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81744,7 +84486,8 @@ fn test_lastb_r_p_z_field_size_1_poweroftwo_a000_0561a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81765,7 +84508,8 @@ fn test_lastb_r_p_z_field_size_2_poweroftwo_a000_05a1a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81786,7 +84530,8 @@ fn test_lastb_r_p_z_field_size_3_max_a000_05e1a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81807,7 +84552,8 @@ fn test_lastb_r_p_z_field_pg_0_min_a000_0521a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81828,7 +84574,8 @@ fn test_lastb_r_p_z_field_pg_1_poweroftwo_a000_0521a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81849,7 +84596,8 @@ fn test_lastb_r_p_z_field_zn_0_min_a000_0521a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81870,7 +84618,8 @@ fn test_lastb_r_p_z_field_zn_1_poweroftwo_a000_0521a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81891,7 +84640,8 @@ fn test_lastb_r_p_z_field_zn_30_poweroftwominusone_a000_0521a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81912,7 +84662,8 @@ fn test_lastb_r_p_z_field_zn_31_max_a000_0521a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81933,7 +84684,8 @@ fn test_lastb_r_p_z_field_rd_0_min_a000_0521a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81954,7 +84706,8 @@ fn test_lastb_r_p_z_field_rd_1_poweroftwo_a000_0521a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81975,7 +84728,8 @@ fn test_lastb_r_p_z_field_rd_30_poweroftwominusone_a000_0521a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -81996,7 +84750,8 @@ fn test_lastb_r_p_z_field_rd_31_max_a000_0521a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82017,7 +84772,8 @@ fn test_lastb_r_p_z_combo_0_a000_0521a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82038,7 +84794,8 @@ fn test_lastb_r_p_z_combo_1_a000_0561a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82059,7 +84816,8 @@ fn test_lastb_r_p_z_combo_2_a000_05a1a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82080,7 +84838,8 @@ fn test_lastb_r_p_z_combo_3_a000_05e1a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82101,7 +84860,8 @@ fn test_lastb_r_p_z_combo_4_a000_0521a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82122,7 +84882,8 @@ fn test_lastb_r_p_z_combo_5_a000_0521a400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82143,7 +84904,8 @@ fn test_lastb_r_p_z_combo_6_a000_0521a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82164,7 +84926,8 @@ fn test_lastb_r_p_z_combo_7_a000_0521a020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82185,7 +84948,8 @@ fn test_lastb_r_p_z_combo_8_a000_0521a3c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82206,7 +84970,8 @@ fn test_lastb_r_p_z_combo_9_a000_0521a3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82227,7 +84992,8 @@ fn test_lastb_r_p_z_combo_10_a000_0521a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82248,7 +85014,8 @@ fn test_lastb_r_p_z_combo_11_a000_0521a001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82269,7 +85036,8 @@ fn test_lastb_r_p_z_combo_12_a000_0521a01e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82290,7 +85058,8 @@ fn test_lastb_r_p_z_combo_13_a000_0521a01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82311,7 +85080,8 @@ fn test_lastb_r_p_z_combo_14_a000_0521a401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82332,7 +85102,8 @@ fn test_lastb_r_p_z_combo_15_a000_0521bc1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82353,7 +85124,8 @@ fn test_lastb_r_p_z_special_size_0_size_variant_0_40960_0521a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82374,7 +85146,8 @@ fn test_lastb_r_p_z_special_size_1_size_variant_1_40960_0561a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82395,7 +85168,8 @@ fn test_lastb_r_p_z_special_size_2_size_variant_2_40960_05a1a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82416,7 +85190,8 @@ fn test_lastb_r_p_z_special_size_3_size_variant_3_40960_05e1a000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -82438,7 +85213,8 @@ fn test_lastb_r_p_z_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discar
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83154,7 +85930,8 @@ fn test_msb_z_p_zzz_field_size_0_min_e000_0400e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83175,7 +85952,8 @@ fn test_msb_z_p_zzz_field_size_1_poweroftwo_e000_0440e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83196,7 +85974,8 @@ fn test_msb_z_p_zzz_field_size_2_poweroftwo_e000_0480e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83217,7 +85996,8 @@ fn test_msb_z_p_zzz_field_size_3_max_e000_04c0e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83238,7 +86018,8 @@ fn test_msb_z_p_zzz_field_zm_0_min_e000_0400e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83259,7 +86040,8 @@ fn test_msb_z_p_zzz_field_zm_1_poweroftwo_e000_0401e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83280,7 +86062,8 @@ fn test_msb_z_p_zzz_field_zm_30_poweroftwominusone_e000_041ee000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83301,7 +86084,8 @@ fn test_msb_z_p_zzz_field_zm_31_max_e000_041fe000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83322,7 +86106,8 @@ fn test_msb_z_p_zzz_field_pg_0_min_e000_0400e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83343,7 +86128,8 @@ fn test_msb_z_p_zzz_field_pg_1_poweroftwo_e000_0400e400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83364,7 +86150,8 @@ fn test_msb_z_p_zzz_field_za_0_min_e000_0400e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83385,7 +86172,8 @@ fn test_msb_z_p_zzz_field_za_1_poweroftwo_e000_0400e020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83406,7 +86194,8 @@ fn test_msb_z_p_zzz_field_za_15_poweroftwominusone_e000_0400e1e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83427,7 +86216,8 @@ fn test_msb_z_p_zzz_field_za_31_max_e000_0400e3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83448,7 +86238,8 @@ fn test_msb_z_p_zzz_field_zdn_0_min_e000_0400e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83469,7 +86260,8 @@ fn test_msb_z_p_zzz_field_zdn_1_poweroftwo_e000_0400e001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83490,7 +86282,8 @@ fn test_msb_z_p_zzz_field_zdn_15_poweroftwominusone_e000_0400e00f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83511,7 +86304,8 @@ fn test_msb_z_p_zzz_field_zdn_31_max_e000_0400e01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83532,7 +86326,8 @@ fn test_msb_z_p_zzz_combo_0_e000_0400e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83553,7 +86348,8 @@ fn test_msb_z_p_zzz_combo_1_e000_0440e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83574,7 +86370,8 @@ fn test_msb_z_p_zzz_combo_2_e000_0480e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83595,7 +86392,8 @@ fn test_msb_z_p_zzz_combo_3_e000_04c0e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83616,7 +86414,8 @@ fn test_msb_z_p_zzz_combo_4_e000_0400e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83637,7 +86436,8 @@ fn test_msb_z_p_zzz_combo_5_e000_0401e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83658,7 +86458,8 @@ fn test_msb_z_p_zzz_combo_6_e000_041ee000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83679,7 +86480,8 @@ fn test_msb_z_p_zzz_combo_7_e000_041fe000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83700,7 +86502,8 @@ fn test_msb_z_p_zzz_combo_8_e000_0400e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83721,7 +86524,8 @@ fn test_msb_z_p_zzz_combo_9_e000_0400e400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83742,7 +86546,8 @@ fn test_msb_z_p_zzz_combo_10_e000_0400e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83763,7 +86568,8 @@ fn test_msb_z_p_zzz_combo_11_e000_0400e020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83784,7 +86590,8 @@ fn test_msb_z_p_zzz_combo_12_e000_0400e1e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83805,7 +86612,8 @@ fn test_msb_z_p_zzz_combo_13_e000_0400e3e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83826,7 +86634,8 @@ fn test_msb_z_p_zzz_combo_14_e000_0400e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83847,7 +86656,8 @@ fn test_msb_z_p_zzz_combo_15_e000_0400e001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83868,7 +86678,8 @@ fn test_msb_z_p_zzz_combo_16_e000_0400e00f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83889,7 +86700,8 @@ fn test_msb_z_p_zzz_combo_17_e000_0400e01f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83910,7 +86722,8 @@ fn test_msb_z_p_zzz_special_size_0_size_variant_0_57344_0400e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83931,7 +86744,8 @@ fn test_msb_z_p_zzz_special_size_1_size_variant_1_57344_0440e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83952,7 +86766,8 @@ fn test_msb_z_p_zzz_special_size_2_size_variant_2_57344_0480e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -83973,7 +86788,8 @@ fn test_msb_z_p_zzz_special_size_3_size_variant_3_57344_04c0e000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -84709,7 +87525,8 @@ fn test_lsr_z_p_zi_field_tszh_1_poweroftwo_8000_04418000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -84730,7 +87547,8 @@ fn test_lsr_z_p_zi_field_tszh_3_max_8000_04c18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -84811,7 +87629,8 @@ fn test_lsr_z_p_zi_field_tszl_1_poweroftwo_8000_04018100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -84832,7 +87651,8 @@ fn test_lsr_z_p_zi_field_tszl_3_max_8000_04018300() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85033,7 +87853,8 @@ fn test_lsr_z_p_zi_combo_1_8000_04418000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85054,7 +87875,8 @@ fn test_lsr_z_p_zi_combo_2_8000_04c18000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85135,7 +87957,8 @@ fn test_lsr_z_p_zi_combo_6_8000_04018100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85156,7 +87979,8 @@ fn test_lsr_z_p_zi_combo_7_8000_04018300() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85341,7 +88165,8 @@ fn test_lslr_z_p_zz_field_size_0_min_8000_04178000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85362,7 +88187,8 @@ fn test_lslr_z_p_zz_field_size_1_poweroftwo_8000_04578000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85383,7 +88209,8 @@ fn test_lslr_z_p_zz_field_size_2_poweroftwo_8000_04978000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85404,7 +88231,8 @@ fn test_lslr_z_p_zz_field_size_3_max_8000_04d78000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85425,7 +88253,8 @@ fn test_lslr_z_p_zz_field_pg_0_min_8000_04178000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85446,7 +88275,8 @@ fn test_lslr_z_p_zz_field_pg_1_poweroftwo_8000_04178400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85467,7 +88297,8 @@ fn test_lslr_z_p_zz_field_zm_0_min_8000_04178000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85488,7 +88319,8 @@ fn test_lslr_z_p_zz_field_zm_1_poweroftwo_8000_04178020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85509,7 +88341,8 @@ fn test_lslr_z_p_zz_field_zm_30_poweroftwominusone_8000_041783c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85530,7 +88363,8 @@ fn test_lslr_z_p_zz_field_zm_31_max_8000_041783e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85551,7 +88385,8 @@ fn test_lslr_z_p_zz_field_zdn_0_min_8000_04178000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85572,7 +88407,8 @@ fn test_lslr_z_p_zz_field_zdn_1_poweroftwo_8000_04178001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85593,7 +88429,8 @@ fn test_lslr_z_p_zz_field_zdn_15_poweroftwominusone_8000_0417800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85614,7 +88451,8 @@ fn test_lslr_z_p_zz_field_zdn_31_max_8000_0417801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85635,7 +88473,8 @@ fn test_lslr_z_p_zz_combo_0_8000_04178000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85656,7 +88495,8 @@ fn test_lslr_z_p_zz_combo_1_8000_04578000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85677,7 +88517,8 @@ fn test_lslr_z_p_zz_combo_2_8000_04978000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85698,7 +88539,8 @@ fn test_lslr_z_p_zz_combo_3_8000_04d78000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85719,7 +88561,8 @@ fn test_lslr_z_p_zz_combo_4_8000_04178000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85740,7 +88583,8 @@ fn test_lslr_z_p_zz_combo_5_8000_04178400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85761,7 +88605,8 @@ fn test_lslr_z_p_zz_combo_6_8000_04178000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85782,7 +88627,8 @@ fn test_lslr_z_p_zz_combo_7_8000_04178020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85803,7 +88649,8 @@ fn test_lslr_z_p_zz_combo_8_8000_041783c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85824,7 +88671,8 @@ fn test_lslr_z_p_zz_combo_9_8000_041783e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85845,7 +88693,8 @@ fn test_lslr_z_p_zz_combo_10_8000_04178000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85866,7 +88715,8 @@ fn test_lslr_z_p_zz_combo_11_8000_04178001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85887,7 +88737,8 @@ fn test_lslr_z_p_zz_combo_12_8000_0417800f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85908,7 +88759,8 @@ fn test_lslr_z_p_zz_combo_13_8000_0417801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85929,7 +88781,8 @@ fn test_lslr_z_p_zz_special_size_0_size_variant_0_32768_04178000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85950,7 +88803,8 @@ fn test_lslr_z_p_zz_special_size_1_size_variant_1_32768_04578000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85971,7 +88825,8 @@ fn test_lslr_z_p_zz_special_size_2_size_variant_2_32768_04978000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -85992,7 +88847,8 @@ fn test_lslr_z_p_zz_special_size_3_size_variant_3_32768_04d78000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -87712,7 +90568,8 @@ fn test_cpy_z_p_v_field_size_0_min_8000_05208000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -87733,7 +90590,8 @@ fn test_cpy_z_p_v_field_size_1_poweroftwo_8000_05608000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -87754,7 +90612,8 @@ fn test_cpy_z_p_v_field_size_2_poweroftwo_8000_05a08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -87775,7 +90634,8 @@ fn test_cpy_z_p_v_field_size_3_max_8000_05e08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -87796,7 +90656,8 @@ fn test_cpy_z_p_v_field_pg_0_min_8000_05208000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -87817,7 +90678,8 @@ fn test_cpy_z_p_v_field_pg_1_poweroftwo_8000_05208400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -87838,7 +90700,8 @@ fn test_cpy_z_p_v_field_vn_0_min_8000_05208000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -87859,7 +90722,8 @@ fn test_cpy_z_p_v_field_vn_1_poweroftwo_8000_05208020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -87880,7 +90744,8 @@ fn test_cpy_z_p_v_field_vn_30_poweroftwominusone_8000_052083c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -87901,7 +90766,8 @@ fn test_cpy_z_p_v_field_vn_31_max_8000_052083e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -87922,7 +90788,8 @@ fn test_cpy_z_p_v_field_zd_0_min_8000_05208000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -87943,7 +90810,8 @@ fn test_cpy_z_p_v_field_zd_1_poweroftwo_8000_05208001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -87964,7 +90832,8 @@ fn test_cpy_z_p_v_field_zd_30_poweroftwominusone_8000_0520801e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -87985,7 +90854,8 @@ fn test_cpy_z_p_v_field_zd_31_max_8000_0520801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88006,7 +90876,8 @@ fn test_cpy_z_p_v_combo_0_8000_05208000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88027,7 +90898,8 @@ fn test_cpy_z_p_v_combo_1_8000_05608000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88048,7 +90920,8 @@ fn test_cpy_z_p_v_combo_2_8000_05a08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88069,7 +90942,8 @@ fn test_cpy_z_p_v_combo_3_8000_05e08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88090,7 +90964,8 @@ fn test_cpy_z_p_v_combo_4_8000_05208000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88111,7 +90986,8 @@ fn test_cpy_z_p_v_combo_5_8000_05208400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88132,7 +91008,8 @@ fn test_cpy_z_p_v_combo_6_8000_05208000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88153,7 +91030,8 @@ fn test_cpy_z_p_v_combo_7_8000_05208020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88174,7 +91052,8 @@ fn test_cpy_z_p_v_combo_8_8000_052083c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88195,7 +91074,8 @@ fn test_cpy_z_p_v_combo_9_8000_052083e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88216,7 +91096,8 @@ fn test_cpy_z_p_v_combo_10_8000_05208000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88237,7 +91118,8 @@ fn test_cpy_z_p_v_combo_11_8000_05208001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88258,7 +91140,8 @@ fn test_cpy_z_p_v_combo_12_8000_0520801e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88279,7 +91162,8 @@ fn test_cpy_z_p_v_combo_13_8000_0520801f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88300,7 +91184,8 @@ fn test_cpy_z_p_v_special_size_0_size_variant_0_32768_05208000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88321,7 +91206,8 @@ fn test_cpy_z_p_v_special_size_1_size_variant_1_32768_05608000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88342,7 +91228,8 @@ fn test_cpy_z_p_v_special_size_2_size_variant_2_32768_05a08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88363,7 +91250,8 @@ fn test_cpy_z_p_v_special_size_3_size_variant_3_32768_05e08000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88408,7 +91296,8 @@ fn test_lsl_z_p_zi_field_tszh_1_poweroftwo_8000_04438000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88429,7 +91318,8 @@ fn test_lsl_z_p_zi_field_tszh_3_max_8000_04c38000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88510,7 +91400,8 @@ fn test_lsl_z_p_zi_field_tszl_1_poweroftwo_8000_04038100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88531,7 +91422,8 @@ fn test_lsl_z_p_zi_field_tszl_3_max_8000_04038300() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88732,7 +91624,8 @@ fn test_lsl_z_p_zi_combo_1_8000_04438000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88753,7 +91646,8 @@ fn test_lsl_z_p_zi_combo_2_8000_04c38000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88834,7 +91728,8 @@ fn test_lsl_z_p_zi_combo_6_8000_04038100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -88855,7 +91750,8 @@ fn test_lsl_z_p_zi_combo_7_8000_04038300() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89040,7 +91936,8 @@ fn test_index_z_ir_field_size_0_min_4800_04204800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89061,7 +91958,8 @@ fn test_index_z_ir_field_size_1_poweroftwo_4800_04604800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89082,7 +91980,8 @@ fn test_index_z_ir_field_size_2_poweroftwo_4800_04a04800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89103,7 +92002,8 @@ fn test_index_z_ir_field_size_3_max_4800_04e04800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89124,7 +92024,8 @@ fn test_index_z_ir_field_rm_0_min_4800_04204800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89145,7 +92046,8 @@ fn test_index_z_ir_field_rm_1_poweroftwo_4800_04214800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89166,7 +92068,8 @@ fn test_index_z_ir_field_rm_30_poweroftwominusone_4800_043e4800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89187,7 +92090,8 @@ fn test_index_z_ir_field_rm_31_max_4800_043f4800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89208,7 +92112,8 @@ fn test_index_z_ir_field_imm5_0_zero_4800_04204800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89229,7 +92134,8 @@ fn test_index_z_ir_field_imm5_1_poweroftwo_4800_04204820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89250,7 +92156,8 @@ fn test_index_z_ir_field_imm5_3_poweroftwominusone_4800_04204860() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89271,7 +92178,8 @@ fn test_index_z_ir_field_imm5_4_poweroftwo_4800_04204880() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89292,7 +92200,8 @@ fn test_index_z_ir_field_imm5_7_poweroftwominusone_4800_042048e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89313,7 +92222,8 @@ fn test_index_z_ir_field_imm5_8_poweroftwo_4800_04204900() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89334,7 +92244,8 @@ fn test_index_z_ir_field_imm5_15_poweroftwominusone_4800_042049e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89355,7 +92266,8 @@ fn test_index_z_ir_field_imm5_16_poweroftwo_4800_04204a00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89376,7 +92288,8 @@ fn test_index_z_ir_field_imm5_31_max_4800_04204be0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89397,7 +92310,8 @@ fn test_index_z_ir_field_zd_0_min_4800_04204800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89418,7 +92332,8 @@ fn test_index_z_ir_field_zd_1_poweroftwo_4800_04204801() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89439,7 +92354,8 @@ fn test_index_z_ir_field_zd_30_poweroftwominusone_4800_0420481e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89460,7 +92376,8 @@ fn test_index_z_ir_field_zd_31_max_4800_0420481f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89481,7 +92398,8 @@ fn test_index_z_ir_combo_0_4800_04204800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89502,7 +92420,8 @@ fn test_index_z_ir_combo_1_4800_04604800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89523,7 +92442,8 @@ fn test_index_z_ir_combo_2_4800_04a04800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89544,7 +92464,8 @@ fn test_index_z_ir_combo_3_4800_04e04800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89565,7 +92486,8 @@ fn test_index_z_ir_combo_4_4800_04204800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89586,7 +92508,8 @@ fn test_index_z_ir_combo_5_4800_04214800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89607,7 +92530,8 @@ fn test_index_z_ir_combo_6_4800_043e4800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89628,7 +92552,8 @@ fn test_index_z_ir_combo_7_4800_043f4800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89649,7 +92574,8 @@ fn test_index_z_ir_combo_8_4800_04204800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89670,7 +92596,8 @@ fn test_index_z_ir_combo_9_4800_04204820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89691,7 +92618,8 @@ fn test_index_z_ir_combo_10_4800_04204860() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89712,7 +92640,8 @@ fn test_index_z_ir_combo_11_4800_04204880() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89733,7 +92662,8 @@ fn test_index_z_ir_combo_12_4800_042048e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89754,7 +92684,8 @@ fn test_index_z_ir_combo_13_4800_04204900() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89775,7 +92706,8 @@ fn test_index_z_ir_combo_14_4800_042049e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89796,7 +92728,8 @@ fn test_index_z_ir_combo_15_4800_04204a00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89817,7 +92750,8 @@ fn test_index_z_ir_combo_16_4800_04204be0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89838,7 +92772,8 @@ fn test_index_z_ir_combo_17_4800_04204800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89859,7 +92794,8 @@ fn test_index_z_ir_combo_18_4800_04204801() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89880,7 +92816,8 @@ fn test_index_z_ir_combo_19_4800_0420481e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89901,7 +92838,8 @@ fn test_index_z_ir_combo_20_4800_0420481f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89922,7 +92860,8 @@ fn test_index_z_ir_special_size_0_size_variant_0_18432_04204820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89943,7 +92882,8 @@ fn test_index_z_ir_special_size_1_size_variant_1_18432_04604820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89964,7 +92904,8 @@ fn test_index_z_ir_special_size_2_size_variant_2_18432_04a04820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -89985,6 +92926,7 @@ fn test_index_z_ir_special_size_3_size_variant_3_18432_04e04820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }

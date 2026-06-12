@@ -29,7 +29,8 @@ fn test_aarch64_udf_field_imm16_0_zero_0_00000000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50,7 +51,8 @@ fn test_aarch64_udf_field_imm16_1_poweroftwo_0_00000001() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -71,7 +73,8 @@ fn test_aarch64_udf_field_imm16_3_poweroftwominusone_0_00000003() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -92,7 +95,8 @@ fn test_aarch64_udf_field_imm16_4_poweroftwo_0_00000004() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -113,7 +117,8 @@ fn test_aarch64_udf_field_imm16_7_poweroftwominusone_0_00000007() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -134,7 +139,8 @@ fn test_aarch64_udf_field_imm16_8_poweroftwo_0_00000008() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -155,7 +161,8 @@ fn test_aarch64_udf_field_imm16_15_poweroftwominusone_0_0000000f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -176,7 +183,8 @@ fn test_aarch64_udf_field_imm16_16_poweroftwo_0_00000010() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -197,7 +205,8 @@ fn test_aarch64_udf_field_imm16_31_poweroftwominusone_0_0000001f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -218,7 +227,8 @@ fn test_aarch64_udf_field_imm16_32_poweroftwo_0_00000020() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -239,7 +249,8 @@ fn test_aarch64_udf_field_imm16_63_poweroftwominusone_0_0000003f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -260,7 +271,8 @@ fn test_aarch64_udf_field_imm16_64_poweroftwo_0_00000040() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -281,7 +293,8 @@ fn test_aarch64_udf_field_imm16_127_poweroftwominusone_0_0000007f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -302,7 +315,8 @@ fn test_aarch64_udf_field_imm16_128_poweroftwo_0_00000080() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -323,7 +337,8 @@ fn test_aarch64_udf_field_imm16_255_poweroftwominusone_0_000000ff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -344,7 +359,8 @@ fn test_aarch64_udf_field_imm16_256_poweroftwo_0_00000100() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -365,7 +381,8 @@ fn test_aarch64_udf_field_imm16_511_poweroftwominusone_0_000001ff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -386,7 +403,8 @@ fn test_aarch64_udf_field_imm16_512_poweroftwo_0_00000200() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -407,7 +425,8 @@ fn test_aarch64_udf_field_imm16_1023_poweroftwominusone_0_000003ff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -428,7 +447,8 @@ fn test_aarch64_udf_field_imm16_1024_poweroftwo_0_00000400() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -449,7 +469,8 @@ fn test_aarch64_udf_field_imm16_2047_poweroftwominusone_0_000007ff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -470,7 +491,8 @@ fn test_aarch64_udf_field_imm16_2048_poweroftwo_0_00000800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -491,7 +513,8 @@ fn test_aarch64_udf_field_imm16_4095_poweroftwominusone_0_00000fff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -512,7 +535,8 @@ fn test_aarch64_udf_field_imm16_4096_poweroftwo_0_00001000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -533,7 +557,8 @@ fn test_aarch64_udf_field_imm16_8191_poweroftwominusone_0_00001fff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -554,7 +579,8 @@ fn test_aarch64_udf_field_imm16_8192_poweroftwo_0_00002000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -575,7 +601,8 @@ fn test_aarch64_udf_field_imm16_16383_poweroftwominusone_0_00003fff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -596,7 +623,8 @@ fn test_aarch64_udf_field_imm16_16384_poweroftwo_0_00004000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -617,7 +645,8 @@ fn test_aarch64_udf_field_imm16_32767_poweroftwominusone_0_00007fff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -638,7 +667,8 @@ fn test_aarch64_udf_field_imm16_32768_poweroftwo_0_00008000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -659,7 +689,8 @@ fn test_aarch64_udf_field_imm16_65535_max_0_0000ffff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -680,7 +711,8 @@ fn test_aarch64_udf_combo_0_0_00000000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -701,7 +733,8 @@ fn test_aarch64_udf_combo_1_0_00000001() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -722,7 +755,8 @@ fn test_aarch64_udf_combo_2_0_00000003() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -743,7 +777,8 @@ fn test_aarch64_udf_combo_3_0_00000004() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -764,7 +799,8 @@ fn test_aarch64_udf_combo_4_0_00000007() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -785,7 +821,8 @@ fn test_aarch64_udf_combo_5_0_00000008() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -806,7 +843,8 @@ fn test_aarch64_udf_combo_6_0_0000000f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -827,7 +865,8 @@ fn test_aarch64_udf_combo_7_0_00000010() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -848,7 +887,8 @@ fn test_aarch64_udf_combo_8_0_0000001f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -869,7 +909,8 @@ fn test_aarch64_udf_combo_9_0_00000020() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -890,7 +931,8 @@ fn test_aarch64_udf_combo_10_0_0000003f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -911,7 +953,8 @@ fn test_aarch64_udf_combo_11_0_00000040() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -932,7 +975,8 @@ fn test_aarch64_udf_combo_12_0_0000007f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -953,7 +997,8 @@ fn test_aarch64_udf_combo_13_0_00000080() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -974,7 +1019,8 @@ fn test_aarch64_udf_combo_14_0_000000ff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -995,7 +1041,8 @@ fn test_aarch64_udf_combo_15_0_00000100() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1016,7 +1063,8 @@ fn test_aarch64_udf_combo_16_0_000001ff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1037,7 +1085,8 @@ fn test_aarch64_udf_combo_17_0_00000200() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1058,7 +1107,8 @@ fn test_aarch64_udf_combo_18_0_000003ff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1079,7 +1129,8 @@ fn test_aarch64_udf_combo_19_0_00000400() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1100,7 +1151,8 @@ fn test_aarch64_udf_combo_20_0_000007ff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1121,7 +1173,8 @@ fn test_aarch64_udf_combo_21_0_00000800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1142,7 +1195,8 @@ fn test_aarch64_udf_combo_22_0_00000fff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1163,7 +1217,8 @@ fn test_aarch64_udf_combo_23_0_00001000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1184,7 +1239,8 @@ fn test_aarch64_udf_combo_24_0_00001fff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1205,7 +1261,8 @@ fn test_aarch64_udf_combo_25_0_00002000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1226,7 +1283,8 @@ fn test_aarch64_udf_combo_26_0_00003fff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1247,7 +1305,8 @@ fn test_aarch64_udf_combo_27_0_00004000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1268,7 +1327,8 @@ fn test_aarch64_udf_combo_28_0_00007fff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1289,7 +1349,8 @@ fn test_aarch64_udf_combo_29_0_00008000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1310,6 +1371,7 @@ fn test_aarch64_udf_combo_30_0_0000ffff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }

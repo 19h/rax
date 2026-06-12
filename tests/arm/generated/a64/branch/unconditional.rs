@@ -3157,7 +3157,8 @@ fn test_aarch64_branch_unconditional_eret_field_a_1_max_0_d69f0800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3199,7 +3200,8 @@ fn test_aarch64_branch_unconditional_eret_field_m_1_max_0_d69f0400() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3325,7 +3327,8 @@ fn test_aarch64_branch_unconditional_eret_field_op4_1_poweroftwo_0_d69f0001() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3346,7 +3349,8 @@ fn test_aarch64_branch_unconditional_eret_field_op4_15_poweroftwominusone_0_d69f
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3367,7 +3371,8 @@ fn test_aarch64_branch_unconditional_eret_field_op4_31_max_0_d69f001f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3409,7 +3414,8 @@ fn test_aarch64_branch_unconditional_eret_combo_1_0_d69f0800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3451,7 +3457,8 @@ fn test_aarch64_branch_unconditional_eret_combo_3_0_d69f0400() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3577,7 +3584,8 @@ fn test_aarch64_branch_unconditional_eret_combo_9_0_d69f0001() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3598,7 +3606,8 @@ fn test_aarch64_branch_unconditional_eret_combo_10_0_d69f000f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3619,7 +3628,8 @@ fn test_aarch64_branch_unconditional_eret_combo_11_0_d69f001f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3742,7 +3752,9 @@ fn test_aarch64_branch_unconditional_dret_basic_encoding_d6bf03e0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 

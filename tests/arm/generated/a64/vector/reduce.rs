@@ -155,7 +155,8 @@ fn test_aarch64_vector_reduce_add_long_field_size_2_poweroftwo_3800_0eb03800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -176,7 +177,8 @@ fn test_aarch64_vector_reduce_add_long_field_size_3_max_3800_0ef03800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -491,7 +493,8 @@ fn test_aarch64_vector_reduce_add_long_combo_6_3800_0eb03800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -512,7 +515,8 @@ fn test_aarch64_vector_reduce_add_long_combo_7_3800_0ef03800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -827,7 +831,8 @@ fn test_aarch64_vector_reduce_add_long_special_size_2_size_variant_2_14336_0eb03
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -848,7 +853,8 @@ fn test_aarch64_vector_reduce_add_long_special_size_3_size_variant_3_14336_0ef03
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5507,7 +5513,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_field_q_0_min_c800_2e30c800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5549,7 +5556,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_field_o1_0_min_c800_2e30c800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5570,7 +5578,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_field_o1_1_max_c800_2eb0c800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5591,7 +5600,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_field_sz_0_min_c800_2e30c800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5612,7 +5622,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_field_sz_1_max_c800_2e70c800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5633,7 +5644,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_field_rn_0_min_c800_2e30c800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5654,7 +5666,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_field_rn_1_poweroftwo_c800_2e30c820(
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5675,7 +5688,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_field_rn_30_poweroftwominusone_c800_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5696,7 +5710,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_field_rn_31_max_c800_2e30cbe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5717,7 +5732,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_field_rd_0_min_c800_2e30c800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5738,7 +5754,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_field_rd_1_poweroftwo_c800_2e30c801(
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5759,7 +5776,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_field_rd_30_poweroftwominusone_c800_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5780,7 +5798,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_field_rd_31_max_c800_2e30c81f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5801,7 +5820,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_combo_0_c800_2e30c800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5843,7 +5863,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_combo_2_c800_2e30c800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5864,7 +5885,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_combo_3_c800_2eb0c800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5885,7 +5907,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_combo_4_c800_2e30c800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5906,7 +5929,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_combo_5_c800_2e70c800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5927,7 +5951,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_combo_6_c800_2e30c800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5948,7 +5973,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_combo_7_c800_2e30c820() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5969,7 +5995,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_combo_8_c800_2e30cbc0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5990,7 +6017,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_combo_9_c800_2e30cbe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6011,7 +6039,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_combo_10_c800_2e30c800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6032,7 +6061,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_combo_11_c800_2e30c801() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6053,7 +6083,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_combo_12_c800_2e30c81e() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6074,7 +6105,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_combo_13_c800_2e30c81f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6095,7 +6127,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_combo_14_c800_2e30c821() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6116,7 +6149,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_combo_15_c800_2e30cbff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6137,7 +6171,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_special_q_0_size_variant_0_51200_2e7
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6158,7 +6193,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_special_q_1_size_variant_1_51200_6e7
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6179,7 +6215,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_special_sz_0_size_variant_0_51200_2e
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6200,7 +6237,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_special_sz_1_size_variant_1_51200_2e
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6222,7 +6260,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_special_rn_31_stack_pointer_sp_may_r
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6244,7 +6283,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_special_rd_31_zero_register_xzr_wzr_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6310,7 +6350,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_reg_write_0_2e30c800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6330,7 +6371,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_sp_rn_2e30cbe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6350,7 +6392,8 @@ fn test_aarch64_vector_reduce_fp_maxnm_simd_zr_rd_2e30c81f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6501,7 +6544,8 @@ fn test_aarch64_vector_reduce_int_max_field_size_2_poweroftwo_a800_0eb0a800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6522,7 +6566,8 @@ fn test_aarch64_vector_reduce_int_max_field_size_3_max_a800_0ef0a800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6879,7 +6924,8 @@ fn test_aarch64_vector_reduce_int_max_combo_6_a800_0eb0a800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6900,7 +6946,8 @@ fn test_aarch64_vector_reduce_int_max_combo_7_a800_0ef0a800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7257,7 +7304,8 @@ fn test_aarch64_vector_reduce_int_max_special_size_2_size_variant_2_43008_0eb0a8
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7278,7 +7326,8 @@ fn test_aarch64_vector_reduce_int_max_special_size_3_size_variant_3_43008_0ef0a8
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7393,7 +7442,8 @@ fn test_aarch64_vector_reduce_add_sisd_field_size_0_min_b800_5e31b800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7414,7 +7464,8 @@ fn test_aarch64_vector_reduce_add_sisd_field_size_1_poweroftwo_b800_5e71b800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7435,7 +7486,8 @@ fn test_aarch64_vector_reduce_add_sisd_field_size_2_poweroftwo_b800_5eb1b800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7477,7 +7529,8 @@ fn test_aarch64_vector_reduce_add_sisd_field_rn_0_min_b800_5e31b800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7498,7 +7551,8 @@ fn test_aarch64_vector_reduce_add_sisd_field_rn_1_poweroftwo_b800_5e31b820() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7519,7 +7573,8 @@ fn test_aarch64_vector_reduce_add_sisd_field_rn_30_poweroftwominusone_b800_5e31b
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7540,7 +7595,8 @@ fn test_aarch64_vector_reduce_add_sisd_field_rn_31_max_b800_5e31bbe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7561,7 +7617,8 @@ fn test_aarch64_vector_reduce_add_sisd_field_rd_0_min_b800_5e31b800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7582,7 +7639,8 @@ fn test_aarch64_vector_reduce_add_sisd_field_rd_1_poweroftwo_b800_5e31b801() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7603,7 +7661,8 @@ fn test_aarch64_vector_reduce_add_sisd_field_rd_30_poweroftwominusone_b800_5e31b
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7624,7 +7683,8 @@ fn test_aarch64_vector_reduce_add_sisd_field_rd_31_max_b800_5e31b81f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7645,7 +7705,8 @@ fn test_aarch64_vector_reduce_add_sisd_combo_0_b800_5e31b800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7666,7 +7727,8 @@ fn test_aarch64_vector_reduce_add_sisd_combo_1_b800_5e71b800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7687,7 +7749,8 @@ fn test_aarch64_vector_reduce_add_sisd_combo_2_b800_5eb1b800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7729,7 +7792,8 @@ fn test_aarch64_vector_reduce_add_sisd_combo_4_b800_5e31b800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7750,7 +7814,8 @@ fn test_aarch64_vector_reduce_add_sisd_combo_5_b800_5e31b820() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7771,7 +7836,8 @@ fn test_aarch64_vector_reduce_add_sisd_combo_6_b800_5e31bbc0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7792,7 +7858,8 @@ fn test_aarch64_vector_reduce_add_sisd_combo_7_b800_5e31bbe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7813,7 +7880,8 @@ fn test_aarch64_vector_reduce_add_sisd_combo_8_b800_5e31b800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7834,7 +7902,8 @@ fn test_aarch64_vector_reduce_add_sisd_combo_9_b800_5e31b801() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7855,7 +7924,8 @@ fn test_aarch64_vector_reduce_add_sisd_combo_10_b800_5e31b81e() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7876,7 +7946,8 @@ fn test_aarch64_vector_reduce_add_sisd_combo_11_b800_5e31b81f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7897,7 +7968,8 @@ fn test_aarch64_vector_reduce_add_sisd_combo_12_b800_5e31b821() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7918,7 +7990,8 @@ fn test_aarch64_vector_reduce_add_sisd_combo_13_b800_5e31bbff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7939,7 +8012,8 @@ fn test_aarch64_vector_reduce_add_sisd_special_size_0_size_variant_0_47104_5e31b
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7960,7 +8034,8 @@ fn test_aarch64_vector_reduce_add_sisd_special_size_1_size_variant_1_47104_5e71b
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7981,7 +8056,8 @@ fn test_aarch64_vector_reduce_add_sisd_special_size_2_size_variant_2_47104_5eb1b
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8024,7 +8100,8 @@ fn test_aarch64_vector_reduce_add_sisd_special_rn_31_stack_pointer_sp_may_requir
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8046,7 +8123,8 @@ fn test_aarch64_vector_reduce_add_sisd_special_rd_31_zero_register_xzr_wzr_reads
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8066,7 +8144,8 @@ fn test_aarch64_vector_reduce_add_sisd_reg_write_0_5e31b800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8086,7 +8165,8 @@ fn test_aarch64_vector_reduce_add_sisd_sp_rn_5e31bbe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8106,7 +8186,8 @@ fn test_aarch64_vector_reduce_add_sisd_zr_rd_5e31b81f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8763,7 +8844,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_field_q_0_min_f800_2e30f800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8805,7 +8887,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_field_o1_0_min_f800_2e30f800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8826,7 +8909,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_field_o1_1_max_f800_2eb0f800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8847,7 +8931,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_field_sz_0_min_f800_2e30f800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8868,7 +8953,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_field_sz_1_max_f800_2e70f800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8889,7 +8975,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_field_rn_0_min_f800_2e30f800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8910,7 +8997,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_field_rn_1_poweroftwo_f800_2e30f820() 
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8931,7 +9019,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_field_rn_30_poweroftwominusone_f800_2e
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8952,7 +9041,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_field_rn_31_max_f800_2e30fbe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8973,7 +9063,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_field_rd_0_min_f800_2e30f800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8994,7 +9085,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_field_rd_1_poweroftwo_f800_2e30f801() 
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9015,7 +9107,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_field_rd_30_poweroftwominusone_f800_2e
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9036,7 +9129,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_field_rd_31_max_f800_2e30f81f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9057,7 +9151,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_combo_0_f800_2e30f800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9099,7 +9194,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_combo_2_f800_2e30f800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9120,7 +9216,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_combo_3_f800_2eb0f800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9141,7 +9238,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_combo_4_f800_2e30f800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9162,7 +9260,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_combo_5_f800_2e70f800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9183,7 +9282,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_combo_6_f800_2e30f800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9204,7 +9304,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_combo_7_f800_2e30f820() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9225,7 +9326,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_combo_8_f800_2e30fbc0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9246,7 +9348,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_combo_9_f800_2e30fbe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9267,7 +9370,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_combo_10_f800_2e30f800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9288,7 +9392,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_combo_11_f800_2e30f801() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9309,7 +9414,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_combo_12_f800_2e30f81e() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9330,7 +9436,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_combo_13_f800_2e30f81f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9351,7 +9458,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_combo_14_f800_2e30f821() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9372,7 +9480,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_combo_15_f800_2e30fbff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9393,7 +9502,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_special_q_0_size_variant_0_63488_2e70f
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9414,7 +9524,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_special_q_1_size_variant_1_63488_6e70f
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9435,7 +9546,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_special_sz_0_size_variant_0_63488_2e30
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9456,7 +9568,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_special_sz_1_size_variant_1_63488_2e70
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9478,7 +9591,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_special_rn_31_stack_pointer_sp_may_req
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9500,7 +9614,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_special_rd_31_zero_register_xzr_wzr_re
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9566,7 +9681,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_reg_write_0_2e30f800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9586,7 +9702,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_sp_rn_2e30fbe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9606,7 +9723,8 @@ fn test_aarch64_vector_reduce_fp_max_simd_zr_rd_2e30f81f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9715,7 +9833,8 @@ fn test_aarch64_vector_reduce_add_simd_field_size_2_poweroftwo_b800_0eb1b800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -9736,7 +9855,8 @@ fn test_aarch64_vector_reduce_add_simd_field_size_3_max_b800_0ef1b800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -10009,7 +10129,8 @@ fn test_aarch64_vector_reduce_add_simd_combo_4_b800_0eb1b800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -10030,7 +10151,8 @@ fn test_aarch64_vector_reduce_add_simd_combo_5_b800_0ef1b800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -10345,7 +10467,8 @@ fn test_aarch64_vector_reduce_add_simd_special_size_2_size_variant_2_47104_0eb1b
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -10366,7 +10489,8 @@ fn test_aarch64_vector_reduce_add_simd_special_size_3_size_variant_3_47104_0ef1b
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 

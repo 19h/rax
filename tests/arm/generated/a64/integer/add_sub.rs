@@ -218,7 +218,8 @@ fn test_aarch64_integer_arithmetic_add_sub_shiftedreg_field_shift_3_max_0_0bc000
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -514,7 +515,8 @@ fn test_aarch64_integer_arithmetic_add_sub_shiftedreg_field_imm6_32_poweroftwo_0
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -535,7 +537,8 @@ fn test_aarch64_integer_arithmetic_add_sub_shiftedreg_field_imm6_63_max_0_0b00fc
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -913,7 +916,8 @@ fn test_aarch64_integer_arithmetic_add_sub_shiftedreg_combo_9_0_0bc00000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1207,7 +1211,8 @@ fn test_aarch64_integer_arithmetic_add_sub_shiftedreg_combo_23_0_0b008000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1228,7 +1233,8 @@ fn test_aarch64_integer_arithmetic_add_sub_shiftedreg_combo_24_0_0b00fc00() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1690,7 +1696,8 @@ fn test_aarch64_integer_arithmetic_add_sub_shiftedreg_special_shift_3_shift_type
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5897,7 +5904,9 @@ fn test_aarch64_integer_arithmetic_add_sub_extendedreg_flags_zeroresult_1_ab2200
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -6001,7 +6010,9 @@ fn test_aarch64_integer_arithmetic_add_sub_extendedreg_flags_signedoverflow_6_ab
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -9936,7 +9947,9 @@ fn test_aarch64_integer_arithmetic_add_sub_immediate_flags_zeroresult_1_b1000020
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -9977,7 +9990,9 @@ fn test_aarch64_integer_arithmetic_add_sub_immediate_flags_unsignedoverflow_3_b1
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -9997,7 +10012,9 @@ fn test_aarch64_integer_arithmetic_add_sub_immediate_flags_unsignedoverflow_4_b1
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -10017,7 +10034,9 @@ fn test_aarch64_integer_arithmetic_add_sub_immediate_flags_signedoverflow_5_b100
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -10037,7 +10056,9 @@ fn test_aarch64_integer_arithmetic_add_sub_immediate_flags_signedoverflow_6_b100
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 

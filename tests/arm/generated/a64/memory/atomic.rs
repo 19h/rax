@@ -1677,7 +1677,11 @@ fn test_aarch64_memory_atomicops_ld_store_0_38200020() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 // ============================================================================
@@ -2845,7 +2849,11 @@ fn test_aarch64_memory_atomicops_cas_single_store_0_08a07c20() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 // ============================================================================
@@ -4013,7 +4021,11 @@ fn test_aarch64_memory_atomicops_swp_store_0_38208020() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 // ============================================================================
@@ -5361,6 +5373,7 @@ fn test_aarch64_memory_atomicops_cas_pair_store_0_08200020() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }

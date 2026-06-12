@@ -29,7 +29,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_0_zero_3_d4000003() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -50,7 +51,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_1_poweroftwo_3_d400002
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -71,7 +73,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_3_poweroftwominusone_3
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -92,7 +95,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_4_poweroftwo_3_d400008
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -113,7 +117,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_7_poweroftwominusone_3
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -134,7 +139,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_8_poweroftwo_3_d400010
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -155,7 +161,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_15_poweroftwominusone_
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -176,7 +183,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_16_poweroftwo_3_d40002
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -197,7 +205,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_31_poweroftwominusone_
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -218,7 +227,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_32_poweroftwo_3_d40004
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -239,7 +249,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_63_poweroftwominusone_
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -260,7 +271,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_64_poweroftwo_3_d40008
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -281,7 +293,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_127_poweroftwominusone
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -302,7 +315,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_128_poweroftwo_3_d4001
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -323,7 +337,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_255_poweroftwominusone
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -344,7 +359,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_256_poweroftwo_3_d4002
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -365,7 +381,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_511_poweroftwominusone
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -386,7 +403,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_512_poweroftwo_3_d4004
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -407,7 +425,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_1023_poweroftwominuson
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -428,7 +447,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_1024_poweroftwo_3_d400
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -449,7 +469,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_2047_poweroftwominuson
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -470,7 +491,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_2048_poweroftwo_3_d401
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -491,7 +513,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_4095_poweroftwominuson
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -512,7 +535,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_4096_poweroftwo_3_d402
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -533,7 +557,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_8191_poweroftwominuson
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -554,7 +579,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_8192_poweroftwo_3_d404
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -575,7 +601,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_16383_poweroftwominuso
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -596,7 +623,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_16384_poweroftwo_3_d40
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -617,7 +645,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_32767_poweroftwominuso
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -638,7 +667,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_32768_poweroftwo_3_d41
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -659,7 +689,8 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_65535_max_3_d41fffe3()
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -680,7 +711,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_0_3_d4000003() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -701,7 +733,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_1_3_d4000023() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -722,7 +755,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_2_3_d4000063() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -743,7 +777,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_3_3_d4000083() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -764,7 +799,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_4_3_d40000e3() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -785,7 +821,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_5_3_d4000103() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -806,7 +843,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_6_3_d40001e3() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -827,7 +865,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_7_3_d4000203() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -848,7 +887,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_8_3_d40003e3() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -869,7 +909,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_9_3_d4000403() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -890,7 +931,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_10_3_d40007e3() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -911,7 +953,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_11_3_d4000803() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -932,7 +975,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_12_3_d4000fe3() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -953,7 +997,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_13_3_d4001003() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -974,7 +1019,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_14_3_d4001fe3() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -995,7 +1041,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_15_3_d4002003() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1016,7 +1063,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_16_3_d4003fe3() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1037,7 +1085,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_17_3_d4004003() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1058,7 +1107,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_18_3_d4007fe3() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1079,7 +1129,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_19_3_d4008003() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1100,7 +1151,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_20_3_d400ffe3() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1121,7 +1173,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_21_3_d4010003() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1142,7 +1195,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_22_3_d401ffe3() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1163,7 +1217,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_23_3_d4020003() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1184,7 +1239,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_24_3_d403ffe3() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1205,7 +1261,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_25_3_d4040003() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1226,7 +1283,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_26_3_d407ffe3() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1247,7 +1305,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_27_3_d4080003() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1268,7 +1327,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_28_3_d40fffe3() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1289,7 +1349,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_29_3_d4100003() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1310,7 +1371,8 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_30_3_d41fffe3() {
     assert!(
         matches!(exit, CpuExit::Smc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1335,7 +1397,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_0_zero_0_d4400000() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1356,7 +1419,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_1_poweroftwo_0_d4400020
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1377,7 +1441,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_3_poweroftwominusone_0_
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1398,7 +1463,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_4_poweroftwo_0_d4400080
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1419,7 +1485,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_7_poweroftwominusone_0_
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1440,7 +1507,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_8_poweroftwo_0_d4400100
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1461,7 +1529,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_15_poweroftwominusone_0
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1482,7 +1551,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_16_poweroftwo_0_d440020
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1503,7 +1573,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_31_poweroftwominusone_0
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1524,7 +1595,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_32_poweroftwo_0_d440040
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1545,7 +1617,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_63_poweroftwominusone_0
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1566,7 +1639,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_64_poweroftwo_0_d440080
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1587,7 +1661,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_127_poweroftwominusone_
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1608,7 +1683,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_128_poweroftwo_0_d44010
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1629,7 +1705,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_255_poweroftwominusone_
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1650,7 +1727,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_256_poweroftwo_0_d44020
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1671,7 +1749,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_511_poweroftwominusone_
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1692,7 +1771,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_512_poweroftwo_0_d44040
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1713,7 +1793,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_1023_poweroftwominusone
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1734,7 +1815,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_1024_poweroftwo_0_d4408
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1755,7 +1837,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_2047_poweroftwominusone
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1776,7 +1859,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_2048_poweroftwo_0_d4410
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1797,7 +1881,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_4095_poweroftwominusone
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1818,7 +1903,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_4096_poweroftwo_0_d4420
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1839,7 +1925,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_8191_poweroftwominusone
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1860,7 +1947,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_8192_poweroftwo_0_d4440
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1881,7 +1969,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_16383_poweroftwominuson
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1902,7 +1991,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_16384_poweroftwo_0_d448
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1923,7 +2013,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_32767_poweroftwominuson
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1944,7 +2035,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_32768_poweroftwo_0_d450
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1965,7 +2057,8 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_65535_max_0_d45fffe0() 
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1986,7 +2079,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_0_0_d4400000() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2007,7 +2101,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_1_0_d4400020() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2028,7 +2123,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_2_0_d4400060() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2049,7 +2145,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_3_0_d4400080() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2070,7 +2167,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_4_0_d44000e0() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2091,7 +2189,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_5_0_d4400100() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2112,7 +2211,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_6_0_d44001e0() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2133,7 +2233,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_7_0_d4400200() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2154,7 +2255,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_8_0_d44003e0() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2175,7 +2277,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_9_0_d4400400() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2196,7 +2299,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_10_0_d44007e0() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2217,7 +2321,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_11_0_d4400800() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2238,7 +2343,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_12_0_d4400fe0() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2259,7 +2365,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_13_0_d4401000() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2280,7 +2387,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_14_0_d4401fe0() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2301,7 +2409,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_15_0_d4402000() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2322,7 +2431,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_16_0_d4403fe0() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2343,7 +2453,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_17_0_d4404000() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2364,7 +2475,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_18_0_d4407fe0() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2385,7 +2497,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_19_0_d4408000() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2406,7 +2519,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_20_0_d440ffe0() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2427,7 +2541,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_21_0_d4410000() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2448,7 +2563,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_22_0_d441ffe0() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2469,7 +2585,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_23_0_d4420000() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2490,7 +2607,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_24_0_d443ffe0() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2511,7 +2629,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_25_0_d4440000() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2532,7 +2651,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_26_0_d447ffe0() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2553,7 +2673,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_27_0_d4480000() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2574,7 +2695,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_28_0_d44fffe0() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2595,7 +2717,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_29_0_d4500000() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2616,7 +2739,8 @@ fn test_aarch64_system_exceptions_debug_halt_combo_30_0_d45fffe0() {
     assert!(
         matches!(exit, CpuExit::Halt),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2641,7 +2765,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_0_zero_0_d4200000
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2662,7 +2787,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_1_poweroftwo_0_d4
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2683,7 +2809,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_3_poweroftwominus
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2704,7 +2831,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_4_poweroftwo_0_d4
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2725,7 +2853,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_7_poweroftwominus
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2746,7 +2875,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_8_poweroftwo_0_d4
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2767,7 +2897,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_15_poweroftwominu
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2788,7 +2919,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_16_poweroftwo_0_d
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2809,7 +2941,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_31_poweroftwominu
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2830,7 +2963,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_32_poweroftwo_0_d
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2851,7 +2985,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_63_poweroftwominu
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2872,7 +3007,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_64_poweroftwo_0_d
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2893,7 +3029,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_127_poweroftwomin
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2914,7 +3051,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_128_poweroftwo_0_
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2935,7 +3073,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_255_poweroftwomin
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2956,7 +3095,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_256_poweroftwo_0_
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2977,7 +3117,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_511_poweroftwomin
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2998,7 +3139,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_512_poweroftwo_0_
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3020,7 +3162,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_1023_poweroftwomi
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3041,7 +3184,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_1024_poweroftwo_0
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3063,7 +3207,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_2047_poweroftwomi
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3084,7 +3229,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_2048_poweroftwo_0
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3106,7 +3252,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_4095_poweroftwomi
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3127,7 +3274,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_4096_poweroftwo_0
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3149,7 +3297,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_8191_poweroftwomi
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3170,7 +3319,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_8192_poweroftwo_0
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3192,7 +3342,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_16383_poweroftwom
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3213,7 +3364,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_16384_poweroftwo_
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3235,7 +3387,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_32767_poweroftwom
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3256,7 +3409,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_32768_poweroftwo_
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3277,7 +3431,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_65535_max_0_d43ff
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3298,7 +3453,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_0_0_d4200000() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3319,7 +3475,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_1_0_d4200020() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3340,7 +3497,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_2_0_d4200060() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3361,7 +3519,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_3_0_d4200080() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3382,7 +3541,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_4_0_d42000e0() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3403,7 +3563,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_5_0_d4200100() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3424,7 +3585,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_6_0_d42001e0() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3445,7 +3607,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_7_0_d4200200() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3466,7 +3629,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_8_0_d42003e0() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3487,7 +3651,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_9_0_d4200400() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3508,7 +3673,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_10_0_d42007e0() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3529,7 +3695,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_11_0_d4200800() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3550,7 +3717,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_12_0_d4200fe0() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3571,7 +3739,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_13_0_d4201000() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3592,7 +3761,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_14_0_d4201fe0() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3613,7 +3783,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_15_0_d4202000() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3634,7 +3805,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_16_0_d4203fe0() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3655,7 +3827,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_17_0_d4204000() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3676,7 +3849,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_18_0_d4207fe0() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3697,7 +3871,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_19_0_d4208000() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3718,7 +3893,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_20_0_d420ffe0() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3739,7 +3915,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_21_0_d4210000() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3760,7 +3937,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_22_0_d421ffe0() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3781,7 +3959,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_23_0_d4220000() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3802,7 +3981,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_24_0_d423ffe0() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3823,7 +4003,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_25_0_d4240000() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3844,7 +4025,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_26_0_d427ffe0() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3865,7 +4047,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_27_0_d4280000() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3886,7 +4069,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_28_0_d42fffe0() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3907,7 +4091,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_29_0_d4300000() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3928,7 +4113,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_30_0_d43fffe0() {
     assert!(
         matches!(exit, CpuExit::Breakpoint(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3953,7 +4139,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_0_zero_2_d4000002() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3974,7 +4161,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_1_poweroftwo_2_d400002
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3995,7 +4183,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_3_poweroftwominusone_2
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4016,7 +4205,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_4_poweroftwo_2_d400008
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4037,7 +4227,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_7_poweroftwominusone_2
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4058,7 +4249,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_8_poweroftwo_2_d400010
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4079,7 +4271,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_15_poweroftwominusone_
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4100,7 +4293,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_16_poweroftwo_2_d40002
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4121,7 +4315,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_31_poweroftwominusone_
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4142,7 +4337,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_32_poweroftwo_2_d40004
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4163,7 +4359,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_63_poweroftwominusone_
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4184,7 +4381,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_64_poweroftwo_2_d40008
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4205,7 +4403,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_127_poweroftwominusone
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4226,7 +4425,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_128_poweroftwo_2_d4001
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4247,7 +4447,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_255_poweroftwominusone
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4268,7 +4469,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_256_poweroftwo_2_d4002
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4289,7 +4491,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_511_poweroftwominusone
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4310,7 +4513,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_512_poweroftwo_2_d4004
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4331,7 +4535,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_1023_poweroftwominuson
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4352,7 +4557,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_1024_poweroftwo_2_d400
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4373,7 +4579,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_2047_poweroftwominuson
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4394,7 +4601,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_2048_poweroftwo_2_d401
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4415,7 +4623,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_4095_poweroftwominuson
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4436,7 +4645,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_4096_poweroftwo_2_d402
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4457,7 +4667,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_8191_poweroftwominuson
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4478,7 +4689,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_8192_poweroftwo_2_d404
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4499,7 +4711,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_16383_poweroftwominuso
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4520,7 +4733,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_16384_poweroftwo_2_d40
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4541,7 +4755,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_32767_poweroftwominuso
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4562,7 +4777,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_32768_poweroftwo_2_d41
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4583,7 +4799,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_65535_max_2_d41fffe2()
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4604,7 +4821,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_0_2_d4000002() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4625,7 +4843,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_1_2_d4000022() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4646,7 +4865,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_2_2_d4000062() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4667,7 +4887,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_3_2_d4000082() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4688,7 +4909,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_4_2_d40000e2() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4709,7 +4931,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_5_2_d4000102() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4730,7 +4953,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_6_2_d40001e2() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4751,7 +4975,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_7_2_d4000202() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4772,7 +4997,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_8_2_d40003e2() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4793,7 +5019,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_9_2_d4000402() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4814,7 +5041,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_10_2_d40007e2() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4835,7 +5063,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_11_2_d4000802() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4856,7 +5085,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_12_2_d4000fe2() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4877,7 +5107,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_13_2_d4001002() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4898,7 +5129,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_14_2_d4001fe2() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4919,7 +5151,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_15_2_d4002002() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4940,7 +5173,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_16_2_d4003fe2() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4961,7 +5195,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_17_2_d4004002() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4982,7 +5217,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_18_2_d4007fe2() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5003,7 +5239,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_19_2_d4008002() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5024,7 +5261,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_20_2_d400ffe2() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5045,7 +5283,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_21_2_d4010002() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5066,7 +5305,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_22_2_d401ffe2() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5087,7 +5327,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_23_2_d4020002() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5108,7 +5349,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_24_2_d403ffe2() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5129,7 +5371,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_25_2_d4040002() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5150,7 +5393,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_26_2_d407ffe2() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5171,7 +5415,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_27_2_d4080002() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5192,7 +5437,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_28_2_d40fffe2() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5213,7 +5459,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_29_2_d4100002() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5234,7 +5481,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_30_2_d41fffe2() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5254,7 +5502,8 @@ fn test_aarch64_system_exceptions_runtime_hvc_exception_0_d4000002() {
     assert!(
         matches!(exit, CpuExit::Hvc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5279,7 +5528,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_0_zero_1_d4000001() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5300,7 +5550,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_1_poweroftwo_1_d400002
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5321,7 +5572,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_3_poweroftwominusone_1
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5342,7 +5594,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_4_poweroftwo_1_d400008
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5363,7 +5616,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_7_poweroftwominusone_1
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5384,7 +5638,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_8_poweroftwo_1_d400010
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5405,7 +5660,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_15_poweroftwominusone_
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5426,7 +5682,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_16_poweroftwo_1_d40002
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5447,7 +5704,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_31_poweroftwominusone_
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5468,7 +5726,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_32_poweroftwo_1_d40004
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5489,7 +5748,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_63_poweroftwominusone_
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5510,7 +5770,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_64_poweroftwo_1_d40008
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5531,7 +5792,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_127_poweroftwominusone
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5552,7 +5814,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_128_poweroftwo_1_d4001
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5573,7 +5836,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_255_poweroftwominusone
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5594,7 +5858,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_256_poweroftwo_1_d4002
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5615,7 +5880,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_511_poweroftwominusone
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5636,7 +5902,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_512_poweroftwo_1_d4004
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5657,7 +5924,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_1023_poweroftwominuson
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5678,7 +5946,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_1024_poweroftwo_1_d400
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5699,7 +5968,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_2047_poweroftwominuson
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5720,7 +5990,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_2048_poweroftwo_1_d401
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5741,7 +6012,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_4095_poweroftwominuson
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5762,7 +6034,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_4096_poweroftwo_1_d402
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5783,7 +6056,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_8191_poweroftwominuson
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5804,7 +6078,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_8192_poweroftwo_1_d404
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5825,7 +6100,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_16383_poweroftwominuso
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5846,7 +6122,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_16384_poweroftwo_1_d40
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5867,7 +6144,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_32767_poweroftwominuso
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5888,7 +6166,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_32768_poweroftwo_1_d41
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5909,7 +6188,8 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_65535_max_1_d41fffe1()
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5930,7 +6210,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_0_1_d4000001() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5951,7 +6232,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_1_1_d4000021() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5972,7 +6254,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_2_1_d4000061() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5993,7 +6276,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_3_1_d4000081() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6014,7 +6298,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_4_1_d40000e1() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6035,7 +6320,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_5_1_d4000101() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6056,7 +6342,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_6_1_d40001e1() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6077,7 +6364,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_7_1_d4000201() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6098,7 +6386,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_8_1_d40003e1() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6119,7 +6408,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_9_1_d4000401() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6140,7 +6430,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_10_1_d40007e1() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6161,7 +6452,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_11_1_d4000801() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6182,7 +6474,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_12_1_d4000fe1() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6203,7 +6496,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_13_1_d4001001() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6224,7 +6518,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_14_1_d4001fe1() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6245,7 +6540,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_15_1_d4002001() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6266,7 +6562,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_16_1_d4003fe1() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6287,7 +6584,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_17_1_d4004001() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6308,7 +6606,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_18_1_d4007fe1() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6329,7 +6628,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_19_1_d4008001() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6350,7 +6650,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_20_1_d400ffe1() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6371,7 +6672,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_21_1_d4010001() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6392,7 +6694,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_22_1_d401ffe1() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6413,7 +6716,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_23_1_d4020001() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6434,7 +6738,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_24_1_d403ffe1() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6455,7 +6760,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_25_1_d4040001() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6476,7 +6782,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_26_1_d407ffe1() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6497,7 +6804,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_27_1_d4080001() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6518,7 +6826,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_28_1_d40fffe1() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6539,7 +6848,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_29_1_d4100001() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6560,7 +6870,8 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_30_1_d41fffe1() {
     assert!(
         matches!(exit, CpuExit::Svc(_)),
         "expected trap exit for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6585,7 +6896,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_0_zero_0_d4a00000(
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6606,7 +6918,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_1_poweroftwo_0_d4a
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6627,7 +6940,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_3_poweroftwominuso
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6648,7 +6962,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_4_poweroftwo_0_d4a
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6669,7 +6984,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_7_poweroftwominuso
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6690,7 +7006,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_8_poweroftwo_0_d4a
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6711,7 +7028,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_15_poweroftwominus
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6732,7 +7050,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_16_poweroftwo_0_d4
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6753,7 +7072,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_31_poweroftwominus
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6774,7 +7094,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_32_poweroftwo_0_d4
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6795,7 +7116,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_63_poweroftwominus
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6816,7 +7138,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_64_poweroftwo_0_d4
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6837,7 +7160,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_127_poweroftwominu
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6858,7 +7182,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_128_poweroftwo_0_d
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6879,7 +7204,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_255_poweroftwominu
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6900,7 +7226,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_256_poweroftwo_0_d
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6921,7 +7248,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_511_poweroftwominu
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6942,7 +7270,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_512_poweroftwo_0_d
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6963,7 +7292,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_1023_poweroftwomin
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6984,7 +7314,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_1024_poweroftwo_0_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7005,7 +7336,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_2047_poweroftwomin
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7026,7 +7358,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_2048_poweroftwo_0_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7047,7 +7380,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_4095_poweroftwomin
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7068,7 +7402,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_4096_poweroftwo_0_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7089,7 +7424,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_8191_poweroftwomin
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7110,7 +7446,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_8192_poweroftwo_0_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7132,7 +7469,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_16383_poweroftwomi
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7153,7 +7491,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_16384_poweroftwo_0
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7175,7 +7514,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_32767_poweroftwomi
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7196,7 +7536,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_32768_poweroftwo_0
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7217,7 +7558,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_65535_max_0_d4bfff
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7238,7 +7580,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_ll_0_min_0_d4a00000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7255,7 +7598,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_ll_1_poweroftwo_0_d4a000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert!(matches!(exit, CpuExit::Halt), "expected trap for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, CpuExit::Halt),
+        "expected trap for {:#010X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -7271,7 +7619,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_ll_3_max_0_d4a00003() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert!(matches!(exit, CpuExit::Halt), "expected trap for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, CpuExit::Halt),
+        "expected trap for {:#010X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -7291,7 +7644,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_0_0_d4a00000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7312,7 +7666,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_1_0_d4a00020() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7333,7 +7688,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_2_0_d4a00060() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7354,7 +7710,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_3_0_d4a00080() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7375,7 +7732,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_4_0_d4a000e0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7396,7 +7754,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_5_0_d4a00100() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7417,7 +7776,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_6_0_d4a001e0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7438,7 +7798,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_7_0_d4a00200() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7459,7 +7820,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_8_0_d4a003e0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7480,7 +7842,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_9_0_d4a00400() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7501,7 +7864,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_10_0_d4a007e0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7522,7 +7886,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_11_0_d4a00800() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7543,7 +7908,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_12_0_d4a00fe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7564,7 +7930,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_13_0_d4a01000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7585,7 +7952,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_14_0_d4a01fe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7606,7 +7974,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_15_0_d4a02000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7627,7 +7996,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_16_0_d4a03fe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7648,7 +8018,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_17_0_d4a04000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7669,7 +8040,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_18_0_d4a07fe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7690,7 +8062,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_19_0_d4a08000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7711,7 +8084,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_20_0_d4a0ffe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7732,7 +8106,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_21_0_d4a10000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7753,7 +8128,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_22_0_d4a1ffe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7774,7 +8150,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_23_0_d4a20000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7795,7 +8172,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_24_0_d4a3ffe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7816,7 +8194,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_25_0_d4a40000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7837,7 +8216,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_26_0_d4a7ffe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7858,7 +8238,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_27_0_d4a80000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7879,7 +8260,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_28_0_d4afffe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7900,7 +8282,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_29_0_d4b00000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7921,7 +8304,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_30_0_d4bfffe0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7942,7 +8326,8 @@ fn test_aarch64_system_exceptions_debug_exception_combo_31_0_d4a00000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7959,7 +8344,12 @@ fn test_aarch64_system_exceptions_debug_exception_combo_32_0_d4a00001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert!(matches!(exit, CpuExit::Halt), "expected trap for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, CpuExit::Halt),
+        "expected trap for {:#010X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -7975,5 +8365,10 @@ fn test_aarch64_system_exceptions_debug_exception_combo_33_0_d4a00003() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert!(matches!(exit, CpuExit::Halt), "expected trap for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, CpuExit::Halt),
+        "expected trap for {:#010X}: {:?}",
+        encoding,
+        exit
+    );
 }

@@ -1466,7 +1466,11 @@ fn test_aarch64_memory_ordered_store_0_08800020() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 // ============================================================================
@@ -1490,7 +1494,8 @@ fn test_aarch64_memory_ordered_rcpc_field_size_0_min_c000_38a0c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1511,7 +1516,8 @@ fn test_aarch64_memory_ordered_rcpc_field_size_1_poweroftwo_c000_78a0c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1532,7 +1538,8 @@ fn test_aarch64_memory_ordered_rcpc_field_size_2_poweroftwo_c000_b8a0c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1553,7 +1560,8 @@ fn test_aarch64_memory_ordered_rcpc_field_size_3_max_c000_f8a0c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1574,7 +1582,8 @@ fn test_aarch64_memory_ordered_rcpc_field_rs_0_min_c000_38a0c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1595,7 +1604,8 @@ fn test_aarch64_memory_ordered_rcpc_field_rs_1_poweroftwo_c000_38a1c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1616,7 +1626,8 @@ fn test_aarch64_memory_ordered_rcpc_field_rs_30_poweroftwominusone_c000_38bec000
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1635,7 +1646,9 @@ fn test_aarch64_memory_ordered_rcpc_field_rs_31_max_c000_38bfc000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -1656,7 +1669,8 @@ fn test_aarch64_memory_ordered_rcpc_field_rn_0_min_c000_38a0c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1677,7 +1691,8 @@ fn test_aarch64_memory_ordered_rcpc_field_rn_1_poweroftwo_c000_38a0c020() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1698,7 +1713,8 @@ fn test_aarch64_memory_ordered_rcpc_field_rn_30_poweroftwominusone_c000_38a0c3c0
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1719,7 +1735,8 @@ fn test_aarch64_memory_ordered_rcpc_field_rn_31_max_c000_38a0c3e0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1740,7 +1757,8 @@ fn test_aarch64_memory_ordered_rcpc_field_rt_0_min_c000_38a0c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1761,7 +1779,8 @@ fn test_aarch64_memory_ordered_rcpc_field_rt_1_poweroftwo_c000_38a0c001() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1782,7 +1801,8 @@ fn test_aarch64_memory_ordered_rcpc_field_rt_30_poweroftwominusone_c000_38a0c01e
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1803,7 +1823,8 @@ fn test_aarch64_memory_ordered_rcpc_field_rt_31_max_c000_38a0c01f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1824,7 +1845,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_0_c000_38a0c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1845,7 +1867,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_1_c000_78a0c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1866,7 +1889,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_2_c000_b8a0c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1887,7 +1911,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_3_c000_f8a0c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1908,7 +1933,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_4_c000_38a0c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1929,7 +1955,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_5_c000_38a1c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1950,7 +1977,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_6_c000_38bec000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1969,7 +1997,9 @@ fn test_aarch64_memory_ordered_rcpc_combo_7_c000_38bfc000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -1990,7 +2020,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_8_c000_38a0c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2011,7 +2042,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_9_c000_38a0c020() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2032,7 +2064,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_10_c000_38a0c3c0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2053,7 +2086,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_11_c000_38a0c3e0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2074,7 +2108,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_12_c000_38a0c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2095,7 +2130,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_13_c000_38a0c001() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2116,7 +2152,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_14_c000_38a0c01e() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2137,7 +2174,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_15_c000_38a0c01f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2158,7 +2196,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_16_c000_38a1c020() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2177,7 +2216,9 @@ fn test_aarch64_memory_ordered_rcpc_combo_17_c000_38bfc3e0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -2198,7 +2239,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_18_c000_38a1c001() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2217,7 +2259,9 @@ fn test_aarch64_memory_ordered_rcpc_combo_19_c000_38bfc01f() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -2238,7 +2282,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_20_c000_38a0c021() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2259,7 +2304,8 @@ fn test_aarch64_memory_ordered_rcpc_combo_21_c000_38a0c3ff() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2280,7 +2326,8 @@ fn test_aarch64_memory_ordered_rcpc_special_size_0_size_variant_0_49152_38a0c000
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2301,7 +2348,8 @@ fn test_aarch64_memory_ordered_rcpc_special_size_1_size_variant_1_49152_78a0c000
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2322,7 +2370,8 @@ fn test_aarch64_memory_ordered_rcpc_special_size_2_size_variant_2_49152_b8a0c000
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2343,7 +2392,8 @@ fn test_aarch64_memory_ordered_rcpc_special_size_3_size_variant_3_49152_f8a0c000
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2365,7 +2415,8 @@ fn test_aarch64_memory_ordered_rcpc_special_rn_31_stack_pointer_sp_may_require_a
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2387,7 +2438,8 @@ fn test_aarch64_memory_ordered_rcpc_special_rt_31_zero_register_xzr_wzr_reads_as
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2407,7 +2459,8 @@ fn test_aarch64_memory_ordered_rcpc_reg_write_0_38a0c000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2427,7 +2480,8 @@ fn test_aarch64_memory_ordered_rcpc_sp_rn_38a0c3e0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2447,6 +2501,7 @@ fn test_aarch64_memory_ordered_rcpc_zr_rt_38a0c01f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }

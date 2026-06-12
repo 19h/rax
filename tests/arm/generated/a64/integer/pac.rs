@@ -127,7 +127,9 @@ fn test_aarch64_integer_pac_strip_dp_1src_field_rn_31_max_4000_dac143e0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -326,7 +328,9 @@ fn test_aarch64_integer_pac_strip_dp_1src_combo_5_4000_dac143e0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -445,7 +449,9 @@ fn test_aarch64_integer_pac_strip_dp_1src_combo_11_4000_dac143ff() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -465,7 +471,9 @@ fn test_aarch64_integer_pac_strip_dp_1src_special_rn_31_stack_pointer_sp_may_req
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -526,7 +534,8 @@ fn test_aarch64_integer_pac_strip_dp_1src_reg_write_0_dac14000() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -561,7 +570,8 @@ fn test_aarch64_integer_pac_strip_dp_1src_zr_rd_dac1401f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -599,7 +609,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rm_0_min_3000_9ac03000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -618,7 +630,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rm_1_poweroftwo_3000_9ac13000() 
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -637,7 +651,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rm_30_poweroftwominusone_3000_9a
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -656,7 +672,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rm_31_max_3000_9adf3000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -675,7 +693,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rn_0_min_3000_9ac03000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -694,7 +714,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rn_1_poweroftwo_3000_9ac03020() 
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -713,7 +735,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rn_30_poweroftwominusone_3000_9a
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -732,7 +756,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rn_31_max_3000_9ac033e0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -751,7 +777,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rd_0_min_3000_9ac03000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -770,7 +798,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rd_1_poweroftwo_3000_9ac03001() 
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -789,7 +819,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rd_30_poweroftwominusone_3000_9a
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -808,7 +840,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rd_31_max_3000_9ac0301f() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -827,7 +861,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_0_3000_9ac03000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -846,7 +882,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_1_3000_9ac13000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -865,7 +903,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_2_3000_9ade3000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -884,7 +924,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_3_3000_9adf3000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -903,7 +945,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_4_3000_9ac03000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -922,7 +966,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_5_3000_9ac03020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -941,7 +987,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_6_3000_9ac033c0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -960,7 +1008,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_7_3000_9ac033e0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -979,7 +1029,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_8_3000_9ac03000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -998,7 +1050,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_9_3000_9ac03001() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -1017,7 +1071,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_10_3000_9ac0301e() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -1036,7 +1092,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_11_3000_9ac0301f() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -1055,7 +1113,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_12_3000_9ac13020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -1074,7 +1134,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_13_3000_9adf33e0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -1093,7 +1155,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_14_3000_9ac13001() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -1112,7 +1176,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_15_3000_9adf301f() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -1131,7 +1197,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_16_3000_9ac03021() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -1150,7 +1218,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_17_3000_9ac033ff() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -1170,7 +1240,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_special_rn_31_stack_pointer_sp_may_req
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -1190,7 +1262,9 @@ fn test_aarch64_integer_pac_pacga_dp_2src_special_rd_31_zero_register_xzr_wzr_re
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -1374,7 +1448,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_z_0_min_800_dac10800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1415,7 +1490,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rn_0_min_800_dac10800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1436,7 +1512,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rn_1_poweroftwo_800_dac10820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1457,7 +1534,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rn_30_poweroftwominusone_800_dac
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1478,7 +1556,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rn_31_max_800_dac10be0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1499,7 +1578,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rd_0_min_800_dac10800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1520,7 +1600,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rd_1_poweroftwo_800_dac10801() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1541,7 +1622,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rd_30_poweroftwominusone_800_dac
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1562,7 +1644,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rd_31_max_800_dac1081f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1583,7 +1666,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_0_800_dac10800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1624,7 +1708,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_2_800_dac10800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1645,7 +1730,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_3_800_dac10820() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1666,7 +1752,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_4_800_dac10bc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1687,7 +1774,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_5_800_dac10be0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1708,7 +1796,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_6_800_dac10800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1729,7 +1818,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_7_800_dac10801() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1750,7 +1840,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_8_800_dac1081e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1771,7 +1862,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_9_800_dac1081f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1792,7 +1884,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_10_800_dac10821() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1813,7 +1906,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_11_800_dac10bff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1835,7 +1929,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_special_rn_31_stack_pointer_sp_may_req
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1857,7 +1952,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1943,7 +2039,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_z_0_min_1400_dac11400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1984,7 +2081,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rn_0_min_1400_dac11400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2005,7 +2103,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rn_1_poweroftwo_1400_dac11420() 
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2026,7 +2125,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rn_30_poweroftwominusone_1400_da
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2047,7 +2147,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rn_31_max_1400_dac117e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2068,7 +2169,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rd_0_min_1400_dac11400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2089,7 +2191,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rd_1_poweroftwo_1400_dac11401() 
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2110,7 +2213,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rd_30_poweroftwominusone_1400_da
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2131,7 +2235,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rd_31_max_1400_dac1141f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2152,7 +2257,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_0_1400_dac11400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2193,7 +2299,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_2_1400_dac11400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2214,7 +2321,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_3_1400_dac11420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2235,7 +2343,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_4_1400_dac117c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2256,7 +2365,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_5_1400_dac117e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2277,7 +2387,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_6_1400_dac11400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2298,7 +2409,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_7_1400_dac11401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2319,7 +2431,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_8_1400_dac1141e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2340,7 +2453,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_9_1400_dac1141f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2361,7 +2475,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_10_1400_dac11421() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2382,7 +2497,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_11_1400_dac117ff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2404,7 +2520,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_special_rn_31_stack_pointer_sp_may_req
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2426,7 +2543,8 @@ fn test_aarch64_integer_pac_autib_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2447,7 +2565,8 @@ fn test_aarch64_integer_pac_autib_hint_field_crm_0_min_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2468,7 +2587,8 @@ fn test_aarch64_integer_pac_autib_hint_field_crm_1_poweroftwo_201f_d503211f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2489,7 +2609,8 @@ fn test_aarch64_integer_pac_autib_hint_field_crm_7_poweroftwominusone_201f_d5032
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2510,7 +2631,8 @@ fn test_aarch64_integer_pac_autib_hint_field_crm_15_max_201f_d5032f1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2531,7 +2653,8 @@ fn test_aarch64_integer_pac_autib_hint_field_op2_0_min_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2552,7 +2675,8 @@ fn test_aarch64_integer_pac_autib_hint_field_op2_1_poweroftwo_201f_d503203f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2573,7 +2697,8 @@ fn test_aarch64_integer_pac_autib_hint_field_op2_7_max_201f_d50320ff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2594,7 +2719,8 @@ fn test_aarch64_integer_pac_autib_hint_combo_0_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2615,7 +2741,8 @@ fn test_aarch64_integer_pac_autib_hint_combo_1_201f_d503211f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2636,7 +2763,8 @@ fn test_aarch64_integer_pac_autib_hint_combo_2_201f_d503271f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2657,7 +2785,8 @@ fn test_aarch64_integer_pac_autib_hint_combo_3_201f_d5032f1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2678,7 +2807,8 @@ fn test_aarch64_integer_pac_autib_hint_combo_4_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2699,7 +2829,8 @@ fn test_aarch64_integer_pac_autib_hint_combo_5_201f_d503203f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2720,7 +2851,8 @@ fn test_aarch64_integer_pac_autib_hint_combo_6_201f_d50320ff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2836,7 +2968,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_z_0_min_c00_dac10c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2877,7 +3010,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rn_0_min_c00_dac10c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2898,7 +3032,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rn_1_poweroftwo_c00_dac10c20() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2919,7 +3054,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rn_30_poweroftwominusone_c00_dac
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2940,7 +3076,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rn_31_max_c00_dac10fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2961,7 +3098,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_0_min_c00_dac10c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2982,7 +3120,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_1_poweroftwo_c00_dac10c01() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3003,7 +3142,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_30_poweroftwominusone_c00_dac
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3024,7 +3164,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_31_max_c00_dac10c1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3045,7 +3186,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_0_c00_dac10c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3086,7 +3228,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_2_c00_dac10c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3107,7 +3250,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_3_c00_dac10c20() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3128,7 +3272,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_4_c00_dac10fc0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3149,7 +3294,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_5_c00_dac10fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3170,7 +3316,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_6_c00_dac10c00() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3191,7 +3338,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_7_c00_dac10c01() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3212,7 +3360,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_8_c00_dac10c1e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3233,7 +3382,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_9_c00_dac10c1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3254,7 +3404,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_10_c00_dac10c21() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3275,7 +3426,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_11_c00_dac10fff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3297,7 +3449,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_special_rn_31_stack_pointer_sp_may_req
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3319,7 +3472,8 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3405,7 +3559,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_z_0_min_1000_dac11000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3446,7 +3601,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rn_0_min_1000_dac11000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3467,7 +3623,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rn_1_poweroftwo_1000_dac11020() 
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3488,7 +3645,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rn_30_poweroftwominusone_1000_da
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3509,7 +3667,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rn_31_max_1000_dac113e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3530,7 +3689,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rd_0_min_1000_dac11000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3551,7 +3711,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rd_1_poweroftwo_1000_dac11001() 
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3572,7 +3733,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rd_30_poweroftwominusone_1000_da
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3593,7 +3755,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rd_31_max_1000_dac1101f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3614,7 +3777,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_0_1000_dac11000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3655,7 +3819,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_2_1000_dac11000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3676,7 +3841,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_3_1000_dac11020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3697,7 +3863,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_4_1000_dac113c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3718,7 +3885,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_5_1000_dac113e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3739,7 +3907,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_6_1000_dac11000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3760,7 +3929,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_7_1000_dac11001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3781,7 +3951,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_8_1000_dac1101e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3802,7 +3973,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_9_1000_dac1101f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3823,7 +3995,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_10_1000_dac11021() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3844,7 +4017,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_11_1000_dac113ff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3866,7 +4040,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_special_rn_31_stack_pointer_sp_may_req
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3888,7 +4063,8 @@ fn test_aarch64_integer_pac_autia_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3909,7 +4085,8 @@ fn test_aarch64_integer_pac_autia_hint_field_crm_0_min_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3930,7 +4107,8 @@ fn test_aarch64_integer_pac_autia_hint_field_crm_1_poweroftwo_201f_d503211f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3951,7 +4129,8 @@ fn test_aarch64_integer_pac_autia_hint_field_crm_7_poweroftwominusone_201f_d5032
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3972,7 +4151,8 @@ fn test_aarch64_integer_pac_autia_hint_field_crm_15_max_201f_d5032f1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3993,7 +4173,8 @@ fn test_aarch64_integer_pac_autia_hint_field_op2_0_min_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4014,7 +4195,8 @@ fn test_aarch64_integer_pac_autia_hint_field_op2_1_poweroftwo_201f_d503203f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4035,7 +4217,8 @@ fn test_aarch64_integer_pac_autia_hint_field_op2_7_max_201f_d50320ff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4056,7 +4239,8 @@ fn test_aarch64_integer_pac_autia_hint_combo_0_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4077,7 +4261,8 @@ fn test_aarch64_integer_pac_autia_hint_combo_1_201f_d503211f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4098,7 +4283,8 @@ fn test_aarch64_integer_pac_autia_hint_combo_2_201f_d503271f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4119,7 +4305,8 @@ fn test_aarch64_integer_pac_autia_hint_combo_3_201f_d5032f1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4140,7 +4327,8 @@ fn test_aarch64_integer_pac_autia_hint_combo_4_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4161,7 +4349,8 @@ fn test_aarch64_integer_pac_autia_hint_combo_5_201f_d503203f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4182,7 +4371,8 @@ fn test_aarch64_integer_pac_autia_hint_combo_6_201f_d50320ff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4296,7 +4486,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_z_0_min_1c00_dac11c00() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4335,7 +4527,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rn_0_min_1c00_dac11c00() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4354,7 +4548,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rn_1_poweroftwo_1c00_dac11c20() 
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4373,7 +4569,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rn_30_poweroftwominusone_1c00_da
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4392,7 +4590,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rn_31_max_1c00_dac11fe0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4411,7 +4611,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_0_min_1c00_dac11c00() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4430,7 +4632,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_1_poweroftwo_1c00_dac11c01() 
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4449,7 +4653,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_30_poweroftwominusone_1c00_da
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4468,7 +4674,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_31_max_1c00_dac11c1f() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4487,7 +4695,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_0_1c00_dac11c00() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4526,7 +4736,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_2_1c00_dac11c00() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4545,7 +4757,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_3_1c00_dac11c20() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4564,7 +4778,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_4_1c00_dac11fc0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4583,7 +4799,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_5_1c00_dac11fe0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4602,7 +4820,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_6_1c00_dac11c00() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4621,7 +4841,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_7_1c00_dac11c01() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4640,7 +4862,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_8_1c00_dac11c1e() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4659,7 +4883,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_9_1c00_dac11c1f() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4678,7 +4904,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_10_1c00_dac11c21() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4697,7 +4925,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_11_1c00_dac11fff() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4717,7 +4947,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_special_rn_31_stack_pointer_sp_may_req
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4737,7 +4969,9 @@ fn test_aarch64_integer_pac_autdb_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4823,7 +5057,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_z_0_min_0_dac10000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4864,7 +5099,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_0_min_0_dac10000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4885,7 +5121,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_1_poweroftwo_0_dac10020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4906,7 +5143,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_30_poweroftwominusone_0_dac10
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4927,7 +5165,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_31_max_0_dac103e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4948,7 +5187,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_0_min_0_dac10000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4969,7 +5209,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_1_poweroftwo_0_dac10001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4990,7 +5231,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_30_poweroftwominusone_0_dac10
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5011,7 +5253,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_31_max_0_dac1001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5032,7 +5275,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_0_0_dac10000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5073,7 +5317,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_2_0_dac10000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5094,7 +5339,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_3_0_dac10020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5115,7 +5361,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_4_0_dac103c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5136,7 +5383,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_5_0_dac103e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5157,7 +5405,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_6_0_dac10000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5178,7 +5427,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_7_0_dac10001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5199,7 +5449,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_8_0_dac1001e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5220,7 +5471,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_9_0_dac1001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5241,7 +5493,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_10_0_dac10021() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5262,7 +5515,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_11_0_dac103ff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5284,7 +5538,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_special_rn_31_stack_pointer_sp_may_req
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5306,7 +5561,8 @@ fn test_aarch64_integer_pac_pacia_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5327,7 +5583,8 @@ fn test_aarch64_integer_pac_pacia_hint_field_crm_0_min_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5348,7 +5605,8 @@ fn test_aarch64_integer_pac_pacia_hint_field_crm_1_poweroftwo_201f_d503211f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5369,7 +5627,8 @@ fn test_aarch64_integer_pac_pacia_hint_field_crm_7_poweroftwominusone_201f_d5032
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5390,7 +5649,8 @@ fn test_aarch64_integer_pac_pacia_hint_field_crm_15_max_201f_d5032f1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5411,7 +5671,8 @@ fn test_aarch64_integer_pac_pacia_hint_field_op2_0_min_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5432,7 +5693,8 @@ fn test_aarch64_integer_pac_pacia_hint_field_op2_1_poweroftwo_201f_d503203f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5453,7 +5715,8 @@ fn test_aarch64_integer_pac_pacia_hint_field_op2_7_max_201f_d50320ff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5474,7 +5737,8 @@ fn test_aarch64_integer_pac_pacia_hint_combo_0_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5495,7 +5759,8 @@ fn test_aarch64_integer_pac_pacia_hint_combo_1_201f_d503211f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5516,7 +5781,8 @@ fn test_aarch64_integer_pac_pacia_hint_combo_2_201f_d503271f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5537,7 +5803,8 @@ fn test_aarch64_integer_pac_pacia_hint_combo_3_201f_d5032f1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5558,7 +5825,8 @@ fn test_aarch64_integer_pac_pacia_hint_combo_4_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5579,7 +5847,8 @@ fn test_aarch64_integer_pac_pacia_hint_combo_5_201f_d503203f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5600,7 +5869,8 @@ fn test_aarch64_integer_pac_pacia_hint_combo_6_201f_d50320ff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5714,7 +5984,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_z_0_min_1800_dac11800() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -5753,7 +6025,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rn_0_min_1800_dac11800() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -5772,7 +6046,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rn_1_poweroftwo_1800_dac11820() 
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -5791,7 +6067,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rn_30_poweroftwominusone_1800_da
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -5810,7 +6088,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rn_31_max_1800_dac11be0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -5829,7 +6109,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rd_0_min_1800_dac11800() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -5848,7 +6130,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rd_1_poweroftwo_1800_dac11801() 
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -5867,7 +6151,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rd_30_poweroftwominusone_1800_da
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -5886,7 +6172,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rd_31_max_1800_dac1181f() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -5905,7 +6193,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_0_1800_dac11800() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -5944,7 +6234,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_2_1800_dac11800() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -5963,7 +6255,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_3_1800_dac11820() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -5982,7 +6276,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_4_1800_dac11bc0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -6001,7 +6297,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_5_1800_dac11be0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -6020,7 +6318,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_6_1800_dac11800() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -6039,7 +6339,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_7_1800_dac11801() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -6058,7 +6360,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_8_1800_dac1181e() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -6077,7 +6381,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_9_1800_dac1181f() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -6096,7 +6402,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_10_1800_dac11821() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -6115,7 +6423,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_11_1800_dac11bff() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -6135,7 +6445,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_special_rn_31_stack_pointer_sp_may_req
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -6155,7 +6467,9 @@ fn test_aarch64_integer_pac_autda_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -6241,7 +6555,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_z_0_min_400_dac10400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6282,7 +6597,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_0_min_400_dac10400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6303,7 +6619,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_1_poweroftwo_400_dac10420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6324,7 +6641,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_30_poweroftwominusone_400_dac
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6345,7 +6663,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_31_max_400_dac107e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6366,7 +6685,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rd_0_min_400_dac10400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6387,7 +6707,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rd_1_poweroftwo_400_dac10401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6408,7 +6729,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rd_30_poweroftwominusone_400_dac
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6429,7 +6751,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rd_31_max_400_dac1041f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6450,7 +6773,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_0_400_dac10400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6491,7 +6815,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_2_400_dac10400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6512,7 +6837,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_3_400_dac10420() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6533,7 +6859,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_4_400_dac107c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6554,7 +6881,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_5_400_dac107e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6575,7 +6903,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_6_400_dac10400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6596,7 +6925,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_7_400_dac10401() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6617,7 +6947,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_8_400_dac1041e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6638,7 +6969,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_9_400_dac1041f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6659,7 +6991,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_10_400_dac10421() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6680,7 +7013,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_11_400_dac107ff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6702,7 +7036,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_special_rn_31_stack_pointer_sp_may_req
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6724,7 +7059,8 @@ fn test_aarch64_integer_pac_pacib_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6745,7 +7081,8 @@ fn test_aarch64_integer_pac_pacib_hint_field_crm_0_min_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6766,7 +7103,8 @@ fn test_aarch64_integer_pac_pacib_hint_field_crm_1_poweroftwo_201f_d503211f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6787,7 +7125,8 @@ fn test_aarch64_integer_pac_pacib_hint_field_crm_7_poweroftwominusone_201f_d5032
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6808,7 +7147,8 @@ fn test_aarch64_integer_pac_pacib_hint_field_crm_15_max_201f_d5032f1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6829,7 +7169,8 @@ fn test_aarch64_integer_pac_pacib_hint_field_op2_0_min_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6850,7 +7191,8 @@ fn test_aarch64_integer_pac_pacib_hint_field_op2_1_poweroftwo_201f_d503203f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6871,7 +7213,8 @@ fn test_aarch64_integer_pac_pacib_hint_field_op2_7_max_201f_d50320ff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6892,7 +7235,8 @@ fn test_aarch64_integer_pac_pacib_hint_combo_0_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6913,7 +7257,8 @@ fn test_aarch64_integer_pac_pacib_hint_combo_1_201f_d503211f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6934,7 +7279,8 @@ fn test_aarch64_integer_pac_pacib_hint_combo_2_201f_d503271f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6955,7 +7301,8 @@ fn test_aarch64_integer_pac_pacib_hint_combo_3_201f_d5032f1f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6976,7 +7323,8 @@ fn test_aarch64_integer_pac_pacib_hint_combo_4_201f_d503201f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6997,7 +7345,8 @@ fn test_aarch64_integer_pac_pacib_hint_combo_5_201f_d503203f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7018,7 +7367,8 @@ fn test_aarch64_integer_pac_pacib_hint_combo_6_201f_d50320ff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 

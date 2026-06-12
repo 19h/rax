@@ -260,7 +260,8 @@ fn test_aarch64_integer_crc_field_sz_3_max_4000_1ac04c00() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -680,7 +681,8 @@ fn test_aarch64_integer_crc_combo_11_4000_1ac04c00() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1100,7 +1102,8 @@ fn test_aarch64_integer_crc_special_sz_3_size_variant_3_16384_1ac04c00() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1312,7 +1315,8 @@ fn test_aarch64_integer_arithmetic_rev_field_sf_0_min_0_5ac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1333,7 +1337,8 @@ fn test_aarch64_integer_arithmetic_rev_field_sf_1_max_0_dac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1354,7 +1359,8 @@ fn test_aarch64_integer_arithmetic_rev_field_opc_0_min_0_5ac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1375,7 +1381,8 @@ fn test_aarch64_integer_arithmetic_rev_field_opc_1_poweroftwo_0_5ac00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1396,7 +1403,8 @@ fn test_aarch64_integer_arithmetic_rev_field_opc_2_poweroftwo_0_5ac00800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1437,7 +1445,8 @@ fn test_aarch64_integer_arithmetic_rev_field_rn_0_min_0_5ac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1458,7 +1467,8 @@ fn test_aarch64_integer_arithmetic_rev_field_rn_1_poweroftwo_0_5ac00020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1479,7 +1489,8 @@ fn test_aarch64_integer_arithmetic_rev_field_rn_30_poweroftwominusone_0_5ac003c0
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1500,7 +1511,8 @@ fn test_aarch64_integer_arithmetic_rev_field_rn_31_max_0_5ac003e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1521,7 +1533,8 @@ fn test_aarch64_integer_arithmetic_rev_field_rd_0_min_0_5ac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1542,7 +1555,8 @@ fn test_aarch64_integer_arithmetic_rev_field_rd_1_poweroftwo_0_5ac00001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1563,7 +1577,8 @@ fn test_aarch64_integer_arithmetic_rev_field_rd_30_poweroftwominusone_0_5ac0001e
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1584,7 +1599,8 @@ fn test_aarch64_integer_arithmetic_rev_field_rd_31_max_0_5ac0001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1605,7 +1621,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_0_0_5ac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1626,7 +1643,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_1_0_dac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1647,7 +1665,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_2_0_5ac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1668,7 +1687,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_3_0_5ac00400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1689,7 +1709,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_4_0_5ac00800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1730,7 +1751,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_6_0_5ac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1751,7 +1773,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_7_0_5ac00020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1772,7 +1795,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_8_0_5ac003c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1793,7 +1817,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_9_0_5ac003e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1814,7 +1839,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_10_0_5ac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1835,7 +1861,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_11_0_5ac00001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1856,7 +1883,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_12_0_5ac0001e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1877,7 +1905,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_13_0_5ac0001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1898,7 +1927,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_14_0_5ac00021() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1919,7 +1949,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_15_0_5ac003ff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1940,7 +1971,8 @@ fn test_aarch64_integer_arithmetic_rev_special_sf_0_size_variant_0_0_5ac00000() 
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1961,7 +1993,8 @@ fn test_aarch64_integer_arithmetic_rev_special_sf_1_size_variant_1_0_dac00000() 
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1982,7 +2015,8 @@ fn test_aarch64_integer_arithmetic_rev_special_opc_0_size_variant_0_0_5ac00000()
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2003,7 +2037,8 @@ fn test_aarch64_integer_arithmetic_rev_special_opc_1_size_variant_1_0_5ac00400()
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2024,7 +2059,8 @@ fn test_aarch64_integer_arithmetic_rev_special_opc_2_size_variant_2_0_5ac00800()
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2066,7 +2102,8 @@ fn test_aarch64_integer_arithmetic_rev_special_rn_31_stack_pointer_sp_may_requir
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2088,7 +2125,8 @@ fn test_aarch64_integer_arithmetic_rev_special_rd_31_zero_register_xzr_wzr_reads
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2159,7 +2197,8 @@ fn test_aarch64_integer_arithmetic_cnt_field_sf_0_min_1000_5ac01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2180,7 +2219,8 @@ fn test_aarch64_integer_arithmetic_cnt_field_sf_1_max_1000_dac01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2201,7 +2241,8 @@ fn test_aarch64_integer_arithmetic_cnt_field_op_0_min_1000_5ac01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2222,7 +2263,8 @@ fn test_aarch64_integer_arithmetic_cnt_field_op_1_max_1000_5ac01400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2243,7 +2285,8 @@ fn test_aarch64_integer_arithmetic_cnt_field_rn_0_min_1000_5ac01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2264,7 +2307,8 @@ fn test_aarch64_integer_arithmetic_cnt_field_rn_1_poweroftwo_1000_5ac01020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2285,7 +2329,8 @@ fn test_aarch64_integer_arithmetic_cnt_field_rn_30_poweroftwominusone_1000_5ac01
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2306,7 +2351,8 @@ fn test_aarch64_integer_arithmetic_cnt_field_rn_31_max_1000_5ac013e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2327,7 +2373,8 @@ fn test_aarch64_integer_arithmetic_cnt_field_rd_0_min_1000_5ac01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2348,7 +2395,8 @@ fn test_aarch64_integer_arithmetic_cnt_field_rd_1_poweroftwo_1000_5ac01001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2369,7 +2417,8 @@ fn test_aarch64_integer_arithmetic_cnt_field_rd_30_poweroftwominusone_1000_5ac01
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2390,7 +2439,8 @@ fn test_aarch64_integer_arithmetic_cnt_field_rd_31_max_1000_5ac0101f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2411,7 +2461,8 @@ fn test_aarch64_integer_arithmetic_cnt_combo_0_1000_5ac01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2432,7 +2483,8 @@ fn test_aarch64_integer_arithmetic_cnt_combo_1_1000_dac01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2453,7 +2505,8 @@ fn test_aarch64_integer_arithmetic_cnt_combo_2_1000_5ac01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2474,7 +2527,8 @@ fn test_aarch64_integer_arithmetic_cnt_combo_3_1000_5ac01400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2495,7 +2549,8 @@ fn test_aarch64_integer_arithmetic_cnt_combo_4_1000_5ac01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2516,7 +2571,8 @@ fn test_aarch64_integer_arithmetic_cnt_combo_5_1000_5ac01020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2537,7 +2593,8 @@ fn test_aarch64_integer_arithmetic_cnt_combo_6_1000_5ac013c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2558,7 +2615,8 @@ fn test_aarch64_integer_arithmetic_cnt_combo_7_1000_5ac013e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2579,7 +2637,8 @@ fn test_aarch64_integer_arithmetic_cnt_combo_8_1000_5ac01000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2600,7 +2659,8 @@ fn test_aarch64_integer_arithmetic_cnt_combo_9_1000_5ac01001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2621,7 +2681,8 @@ fn test_aarch64_integer_arithmetic_cnt_combo_10_1000_5ac0101e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2642,7 +2703,8 @@ fn test_aarch64_integer_arithmetic_cnt_combo_11_1000_5ac0101f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2663,7 +2725,8 @@ fn test_aarch64_integer_arithmetic_cnt_combo_12_1000_5ac01021() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2684,7 +2747,8 @@ fn test_aarch64_integer_arithmetic_cnt_combo_13_1000_5ac013ff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2705,7 +2769,8 @@ fn test_aarch64_integer_arithmetic_cnt_special_sf_0_size_variant_0_4096_5ac01000
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2726,7 +2791,8 @@ fn test_aarch64_integer_arithmetic_cnt_special_sf_1_size_variant_1_4096_dac01000
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2748,7 +2814,8 @@ fn test_aarch64_integer_arithmetic_cnt_special_rn_31_stack_pointer_sp_may_requir
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2770,7 +2837,8 @@ fn test_aarch64_integer_arithmetic_cnt_special_rd_31_zero_register_xzr_wzr_reads
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2841,7 +2909,8 @@ fn test_aarch64_integer_arithmetic_rbit_field_sf_0_min_0_5ac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2862,7 +2931,8 @@ fn test_aarch64_integer_arithmetic_rbit_field_sf_1_max_0_dac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2883,7 +2953,8 @@ fn test_aarch64_integer_arithmetic_rbit_field_rn_0_min_0_5ac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2904,7 +2975,8 @@ fn test_aarch64_integer_arithmetic_rbit_field_rn_1_poweroftwo_0_5ac00020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2925,7 +2997,8 @@ fn test_aarch64_integer_arithmetic_rbit_field_rn_30_poweroftwominusone_0_5ac003c
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2946,7 +3019,8 @@ fn test_aarch64_integer_arithmetic_rbit_field_rn_31_max_0_5ac003e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2967,7 +3041,8 @@ fn test_aarch64_integer_arithmetic_rbit_field_rd_0_min_0_5ac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2988,7 +3063,8 @@ fn test_aarch64_integer_arithmetic_rbit_field_rd_1_poweroftwo_0_5ac00001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3009,7 +3085,8 @@ fn test_aarch64_integer_arithmetic_rbit_field_rd_30_poweroftwominusone_0_5ac0001
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3030,7 +3107,8 @@ fn test_aarch64_integer_arithmetic_rbit_field_rd_31_max_0_5ac0001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3051,7 +3129,8 @@ fn test_aarch64_integer_arithmetic_rbit_combo_0_0_5ac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3072,7 +3151,8 @@ fn test_aarch64_integer_arithmetic_rbit_combo_1_0_dac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3093,7 +3173,8 @@ fn test_aarch64_integer_arithmetic_rbit_combo_2_0_5ac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3114,7 +3195,8 @@ fn test_aarch64_integer_arithmetic_rbit_combo_3_0_5ac00020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3135,7 +3217,8 @@ fn test_aarch64_integer_arithmetic_rbit_combo_4_0_5ac003c0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3156,7 +3239,8 @@ fn test_aarch64_integer_arithmetic_rbit_combo_5_0_5ac003e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3177,7 +3261,8 @@ fn test_aarch64_integer_arithmetic_rbit_combo_6_0_5ac00000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3198,7 +3283,8 @@ fn test_aarch64_integer_arithmetic_rbit_combo_7_0_5ac00001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3219,7 +3305,8 @@ fn test_aarch64_integer_arithmetic_rbit_combo_8_0_5ac0001e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3240,7 +3327,8 @@ fn test_aarch64_integer_arithmetic_rbit_combo_9_0_5ac0001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3261,7 +3349,8 @@ fn test_aarch64_integer_arithmetic_rbit_combo_10_0_5ac00021() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3282,7 +3371,8 @@ fn test_aarch64_integer_arithmetic_rbit_combo_11_0_5ac003ff() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3303,7 +3393,8 @@ fn test_aarch64_integer_arithmetic_rbit_special_sf_0_size_variant_0_0_5ac00000()
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3324,7 +3415,8 @@ fn test_aarch64_integer_arithmetic_rbit_special_sf_1_size_variant_1_0_dac00000()
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3346,7 +3438,8 @@ fn test_aarch64_integer_arithmetic_rbit_special_rn_31_stack_pointer_sp_may_requi
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3368,7 +3461,8 @@ fn test_aarch64_integer_arithmetic_rbit_special_rd_31_zero_register_xzr_wzr_read
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 

@@ -1024,7 +1024,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_int_bulk_simd_field_size_3_max_8800_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1404,7 +1405,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_int_bulk_simd_combo_7_8800_0ee08800(
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -1788,7 +1790,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_int_bulk_simd_special_size_3_size_va
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2012,7 +2015,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_sisd_field_e_1_max_240
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2140,7 +2144,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_sisd_field_ac_1_max_24
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2396,7 +2401,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_sisd_combo_3_2400_5ec0
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2522,7 +2528,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_sisd_combo_9_2400_5e40
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2944,7 +2951,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_sisd_field_e_1_max_e400_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3113,7 +3121,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_sisd_field_ac_1_max_e400
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3367,7 +3376,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_sisd_combo_3_e400_5ea0e4
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3535,7 +3545,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_sisd_combo_11_e400_5e20e
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4043,7 +4054,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_simd_field_e_1_max_240
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4171,7 +4183,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_simd_field_ac_1_max_24
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4469,7 +4482,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_simd_combo_5_2400_0ec0
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4595,7 +4609,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp16_simd_combo_11_2400_0e4
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5103,7 +5118,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_field_e_1_max_e400_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5145,7 +5161,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_field_sz_1_max_e400
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5568,7 +5585,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_combo_5_e400_0ea0e4
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -5610,7 +5628,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_combo_7_e400_0e60e4
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6052,7 +6071,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_special_q_0_size_va
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6118,7 +6138,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_special_sz_1_size_v
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6140,7 +6161,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_special_rn_31_stack
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6162,7 +6184,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_fp_simd_special_rd_31_zero_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6371,7 +6394,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_u_0_min_3400
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6392,7 +6416,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_u_1_max_3400
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6413,7 +6438,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_size_0_min_3
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6435,7 +6461,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_size_1_power
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6457,7 +6484,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_size_2_power
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6499,7 +6527,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rm_0_min_340
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6521,7 +6550,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rm_1_powerof
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6543,7 +6573,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rm_30_powero
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6564,7 +6595,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rm_31_max_34
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6585,7 +6617,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_eq_0_min_340
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6606,7 +6639,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_eq_1_max_340
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6627,7 +6661,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rn_0_min_340
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6649,7 +6684,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rn_1_powerof
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6671,7 +6707,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rn_30_powero
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6692,7 +6729,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rn_31_max_34
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6713,7 +6751,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rd_0_min_340
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6735,7 +6774,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rd_1_powerof
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6757,7 +6797,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rd_30_powero
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6778,7 +6819,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_field_rd_31_max_34
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6799,7 +6841,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_0_3400_5e203
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6820,7 +6863,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_1_3400_7e203
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6841,7 +6885,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_2_3400_5e203
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6862,7 +6907,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_3_3400_5e603
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6883,7 +6929,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_4_3400_5ea03
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6925,7 +6972,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_6_3400_5e203
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6946,7 +6994,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_7_3400_5e213
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6967,7 +7016,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_8_3400_5e3e3
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -6988,7 +7038,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_9_3400_5e3f3
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7009,7 +7060,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_10_3400_5e20
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7030,7 +7082,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_11_3400_5e20
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7051,7 +7104,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_12_3400_5e20
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7072,7 +7126,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_13_3400_5e20
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7093,7 +7148,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_14_3400_5e20
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7114,7 +7170,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_15_3400_5e20
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7135,7 +7192,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_16_3400_5e20
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7156,7 +7214,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_17_3400_5e20
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7177,7 +7236,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_18_3400_5e20
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7198,7 +7258,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_19_3400_5e20
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7219,7 +7280,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_20_3400_5e21
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7240,7 +7302,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_21_3400_5e3f
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7261,7 +7324,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_22_3400_5e21
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7282,7 +7346,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_23_3400_5e3f
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7303,7 +7368,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_24_3400_5e20
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7324,7 +7390,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_combo_25_3400_5e20
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7346,7 +7413,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_special_size_0_siz
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7368,7 +7436,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_special_size_1_siz
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7390,7 +7459,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_special_size_2_siz
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7434,7 +7504,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_special_rn_31_stac
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7456,7 +7527,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_special_rd_31_zero
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -7626,7 +7698,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_simd_field_size_3_max_3
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8094,7 +8167,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_simd_combo_7_3400_0ee03
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8646,7 +8720,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_simd_special_size_3_siz
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8710,7 +8785,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_reg_write_0_5e2034
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8730,7 +8806,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_sp_rn_5e2037e0() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -8750,7 +8827,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_int_sisd_zr_rd_5e20341f() {
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -10958,7 +11036,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_bulk_simd_field_sz_1_max_c800_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11296,7 +11375,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_bulk_simd_combo_5_c800_0ee0c80
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11570,7 +11650,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_bulk_simd_special_q_0_size_var
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11636,7 +11717,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_bulk_simd_special_sz_1_size_va
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11658,7 +11740,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_bulk_simd_special_rn_31_stack_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -11680,7 +11763,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_bulk_simd_special_rd_31_zero_r
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12680,7 +12764,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_int_lessthan_simd_field_size_3_max_a
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -12978,7 +13063,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_int_lessthan_simd_combo_5_a800_0ee0a
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -13320,7 +13406,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_int_lessthan_simd_special_size_3_siz
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15078,7 +15165,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_lessthan_simd_field_sz_1_max_e
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15334,7 +15422,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_lessthan_simd_combo_3_e800_0ee
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15566,7 +15655,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_lessthan_simd_special_q_0_size
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15632,7 +15722,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_lessthan_simd_special_sz_1_siz
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15654,7 +15745,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_lessthan_simd_special_rn_31_st
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15676,7 +15768,8 @@ fn test_aarch64_vector_arithmetic_unary_cmp_float_lessthan_simd_special_rd_31_ze
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15885,7 +15978,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_u_0_min_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15906,7 +16000,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_u_1_max_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15927,7 +16022,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_size_0_m
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15949,7 +16045,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_size_1_p
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -15971,7 +16068,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_size_2_p
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16013,7 +16111,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rm_0_min
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16035,7 +16134,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rm_1_pow
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16057,7 +16157,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rm_30_po
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16078,7 +16179,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rm_31_ma
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16099,7 +16201,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rn_0_min
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16121,7 +16224,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rn_1_pow
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16143,7 +16247,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rn_30_po
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16164,7 +16269,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rn_31_ma
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16185,7 +16291,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rd_0_min
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16207,7 +16314,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rd_1_pow
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16229,7 +16337,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rd_30_po
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16250,7 +16359,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_field_rd_31_ma
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16271,7 +16381,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_0_8c00_5
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16292,7 +16403,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_1_8c00_7
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16313,7 +16425,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_2_8c00_5
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16334,7 +16447,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_3_8c00_5
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16355,7 +16469,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_4_8c00_5
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16397,7 +16512,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_6_8c00_5
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16418,7 +16534,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_7_8c00_5
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16439,7 +16556,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_8_8c00_5
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16460,7 +16578,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_9_8c00_5
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16481,7 +16600,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_10_8c00_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16502,7 +16622,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_11_8c00_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16523,7 +16644,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_12_8c00_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16544,7 +16666,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_13_8c00_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16565,7 +16688,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_14_8c00_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16586,7 +16710,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_15_8c00_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16607,7 +16732,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_16_8c00_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16628,7 +16754,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_17_8c00_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16649,7 +16776,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_18_8c00_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16670,7 +16798,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_19_8c00_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16691,7 +16820,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_20_8c00_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16712,7 +16842,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_21_8c00_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16733,7 +16864,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_22_8c00_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16754,7 +16886,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_combo_23_8c00_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16776,7 +16909,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_special_size_0
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16798,7 +16932,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_special_size_1
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16820,7 +16955,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_special_size_2
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16864,7 +17000,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_special_rn_31_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -16886,7 +17023,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_special_rd_31_
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17056,7 +17194,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_simd_field_size_3_m
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17482,7 +17621,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_simd_combo_7_8c00_0
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -17992,7 +18132,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_simd_special_size_3
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18056,7 +18197,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_reg_write_0_5e
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18076,7 +18218,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_sp_rn_5e208fe0
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -18096,7 +18239,8 @@ fn test_aarch64_vector_arithmetic_binary_uniform_cmp_bitwise_sisd_zr_rd_5e208c1f
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected unallocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 

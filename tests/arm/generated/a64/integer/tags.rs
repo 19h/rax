@@ -1476,7 +1476,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_256_poweroftw
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
 /// ASL: `field imm9 12 +: 9`
@@ -1497,7 +1502,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_511_max_c00_d
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
 /// ASL: `field Xn 5 +: 5`
@@ -2003,7 +2013,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_combo_15_c00_d9f00c00() 
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
 /// ASL: `field combination 16`
@@ -2024,7 +2039,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_combo_16_c00_d9fffc00() 
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
 /// ASL: `field combination 17`
@@ -2599,7 +2619,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_256_poweroftwo_8
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
 /// ASL: `field imm9 12 +: 9`
@@ -2620,7 +2645,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_511_max_800_d9ff
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
 /// ASL: `field Xn 5 +: 5`
@@ -3124,7 +3154,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_combo_15_800_d9f00800() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
 /// ASL: `field combination 16`
@@ -3145,7 +3180,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_combo_16_800_d9fff800() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
 /// ASL: `field combination 17`
@@ -3444,7 +3484,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_store_0_d9e00400() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
 /// ASL: `Mem[address, 8] = data`
@@ -3466,7 +3511,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_store_1_d9e00400() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
 /// ASL: `Sp write`
@@ -3533,7 +3583,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_store_0_d9e00c00() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
 /// ASL: `Mem[address, 8] = data`
@@ -3555,7 +3610,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_store_1_d9e00c00() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
 /// ASL: `Sp write`
@@ -3622,7 +3682,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_store_0_d9e00800() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
 /// ASL: `Mem[address, 8] = data`
@@ -3644,7 +3709,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_store_1_d9e00800() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 // ============================================================================
 // aarch64_integer_tags_mcsettagandzerodatapost Tests
@@ -5110,7 +5180,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_256_poweroftwo_c0
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
 /// ASL: `field imm9 12 +: 9`
@@ -5131,7 +5206,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_511_max_c00_d97ff
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
 /// ASL: `field Xn 5 +: 5`
@@ -5635,7 +5715,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_combo_15_c00_d9700c00() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
 /// ASL: `field combination 16`
@@ -5656,7 +5741,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_combo_16_c00_d97ffc00() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
 /// ASL: `field combination 17`
@@ -6224,7 +6314,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_256_poweroftwo_800_d
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
 /// ASL: `field imm9 12 +: 9`
@@ -6245,7 +6340,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_511_max_800_d97ff800
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
 /// ASL: `field Xn 5 +: 5`
@@ -6749,7 +6849,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_combo_15_800_d9700800() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
 /// ASL: `field combination 16`
@@ -6770,7 +6875,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_combo_16_800_d97ff800() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
 /// ASL: `field combination 17`
@@ -7232,7 +7342,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_store_0_d9600400() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
 /// ASL: `LDR X0, [X1, #0]`
@@ -7462,7 +7577,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_store_0_d9600c00() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
 /// ASL: `LDR X0, [X1, #0]`
@@ -7692,7 +7812,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_store_0_d9600800() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 // ============================================================================
 // aarch64_integer_tags_mcinsertrandomtag Tests
@@ -15790,7 +15915,9 @@ fn test_aarch64_integer_tags_mcsettagpairpost_ldr_oracle_1_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15811,7 +15938,9 @@ fn test_aarch64_integer_tags_mcsettagpairpost_ldr_oracle_2_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15832,7 +15961,9 @@ fn test_aarch64_integer_tags_mcsettagpairpost_ldr_oracle_3_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15853,7 +15984,9 @@ fn test_aarch64_integer_tags_mcsettagpairpost_ldr_oracle_4_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15874,7 +16007,9 @@ fn test_aarch64_integer_tags_mcsettagpairpost_ldr_oracle_5_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15895,7 +16030,9 @@ fn test_aarch64_integer_tags_mcsettagpairpost_ldr_oracle_6_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -15916,7 +16053,9 @@ fn test_aarch64_integer_tags_mcsettagpairpost_ldr_oracle_7_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -16034,7 +16173,9 @@ fn test_aarch64_integer_tags_mcsettagpairpre_ldr_oracle_1_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -16055,7 +16196,9 @@ fn test_aarch64_integer_tags_mcsettagpairpre_ldr_oracle_2_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -16076,7 +16219,9 @@ fn test_aarch64_integer_tags_mcsettagpairpre_ldr_oracle_3_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -16097,7 +16242,9 @@ fn test_aarch64_integer_tags_mcsettagpairpre_ldr_oracle_4_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -16118,7 +16265,9 @@ fn test_aarch64_integer_tags_mcsettagpairpre_ldr_oracle_5_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -16139,7 +16288,9 @@ fn test_aarch64_integer_tags_mcsettagpairpre_ldr_oracle_6_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -16160,7 +16311,9 @@ fn test_aarch64_integer_tags_mcsettagpairpre_ldr_oracle_7_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -16278,7 +16431,9 @@ fn test_aarch64_integer_tags_mcsettagpair_ldr_oracle_1_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -16299,7 +16454,9 @@ fn test_aarch64_integer_tags_mcsettagpair_ldr_oracle_2_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -16320,7 +16477,9 @@ fn test_aarch64_integer_tags_mcsettagpair_ldr_oracle_3_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -16341,7 +16500,9 @@ fn test_aarch64_integer_tags_mcsettagpair_ldr_oracle_4_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -16362,7 +16523,9 @@ fn test_aarch64_integer_tags_mcsettagpair_ldr_oracle_5_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -16383,7 +16546,9 @@ fn test_aarch64_integer_tags_mcsettagpair_ldr_oracle_6_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -16404,7 +16569,9 @@ fn test_aarch64_integer_tags_mcsettagpair_ldr_oracle_7_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18201,7 +18368,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_simm7_0_min_0_6880000
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18220,7 +18389,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_simm7_1_poweroftwo_0_
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18240,7 +18411,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_simm7_63_poweroftwomi
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18259,7 +18432,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_simm7_127_max_0_68bf8
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18278,7 +18453,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt2_0_min_0_68800000(
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18297,7 +18474,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt2_1_poweroftwo_0_68
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18316,7 +18495,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt2_15_poweroftwominu
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18335,7 +18516,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt2_31_max_0_68807c00
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18354,7 +18537,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xn_0_min_0_68800000()
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18373,7 +18558,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xn_1_poweroftwo_0_688
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18392,7 +18579,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xn_30_poweroftwominus
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18411,7 +18600,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xn_31_max_0_688003e0(
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18430,7 +18621,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt_0_min_0_68800000()
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18449,7 +18642,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt_1_poweroftwo_0_688
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18468,7 +18663,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt_30_poweroftwominus
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18487,7 +18684,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt_31_max_0_6880001f(
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18506,7 +18705,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_0_0_68800000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18525,7 +18726,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_1_0_68808000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18544,7 +18747,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_2_0_689f8000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18563,7 +18768,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_3_0_68bf8000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18582,7 +18789,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_4_0_68800000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18601,7 +18810,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_5_0_68800400() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18620,7 +18831,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_6_0_68803c00() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18639,7 +18852,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_7_0_68807c00() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18658,7 +18873,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_8_0_68800000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18677,7 +18894,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_9_0_68800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18696,7 +18915,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_10_0_688003c0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18715,7 +18936,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_11_0_688003e0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18734,7 +18957,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_12_0_68800000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18753,7 +18978,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_13_0_68800001() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18772,7 +18999,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_14_0_6880001e() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18791,7 +19020,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_15_0_6880001f() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18810,7 +19041,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_16_0_68800021() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18829,7 +19062,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_17_0_688003ff() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18849,7 +19084,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_special_xn_31_stack_pointer
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18868,7 +19105,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_simm7_0_min_0_69800000
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18887,7 +19126,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_simm7_1_poweroftwo_0_6
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18906,7 +19147,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_simm7_63_poweroftwomin
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18930,7 +19173,11 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_simm7_127_max_0_69bf80
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -18948,7 +19195,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt2_0_min_0_69800000()
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18967,7 +19216,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt2_1_poweroftwo_0_698
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -18986,7 +19237,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt2_15_poweroftwominus
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19005,7 +19258,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt2_31_max_0_69807c00(
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19024,7 +19279,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xn_0_min_0_69800000() 
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19043,7 +19300,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xn_1_poweroftwo_0_6980
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19062,7 +19321,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xn_30_poweroftwominuso
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19081,7 +19342,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xn_31_max_0_698003e0()
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19100,7 +19363,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt_0_min_0_69800000() 
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19119,7 +19384,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt_1_poweroftwo_0_6980
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19138,7 +19405,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt_30_poweroftwominuso
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19157,7 +19426,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt_31_max_0_6980001f()
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19176,7 +19447,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_0_0_69800000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19195,7 +19468,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_1_0_69808000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19214,7 +19489,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_2_0_699f8000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19238,7 +19515,11 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_3_0_69bf8000() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -19256,7 +19537,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_4_0_69800000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19275,7 +19558,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_5_0_69800400() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19294,7 +19579,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_6_0_69803c00() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19313,7 +19600,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_7_0_69807c00() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19332,7 +19621,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_8_0_69800000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19351,7 +19642,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_9_0_69800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19370,7 +19663,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_10_0_698003c0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19389,7 +19684,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_11_0_698003e0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19408,7 +19705,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_12_0_69800000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19427,7 +19726,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_13_0_69800001() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19446,7 +19747,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_14_0_6980001e() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19465,7 +19768,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_15_0_6980001f() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19484,7 +19789,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_16_0_69800021() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19503,7 +19810,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_17_0_698003ff() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19523,7 +19832,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_special_xn_31_stack_pointer_
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19542,7 +19853,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_simm7_0_min_0_69000000() 
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19561,7 +19874,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_simm7_1_poweroftwo_0_6900
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19580,7 +19895,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_simm7_63_poweroftwominuso
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19604,7 +19921,11 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_simm7_127_max_0_693f8000(
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -19622,7 +19943,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt2_0_min_0_69000000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19641,7 +19964,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt2_1_poweroftwo_0_690004
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19660,7 +19985,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt2_15_poweroftwominusone
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19679,7 +20006,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt2_31_max_0_69007c00() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19698,7 +20027,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xn_0_min_0_69000000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19717,7 +20048,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xn_1_poweroftwo_0_6900002
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19736,7 +20069,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xn_30_poweroftwominusone_
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19755,7 +20090,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xn_31_max_0_690003e0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19774,7 +20111,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt_0_min_0_69000000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19793,7 +20132,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt_1_poweroftwo_0_6900000
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19812,7 +20153,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt_30_poweroftwominusone_
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19831,7 +20174,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt_31_max_0_6900001f() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19850,7 +20195,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_0_0_69000000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19869,7 +20216,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_1_0_69008000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19888,7 +20237,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_2_0_691f8000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19912,7 +20263,11 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_3_0_693f8000() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -19930,7 +20285,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_4_0_69000000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19949,7 +20306,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_5_0_69000400() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19968,7 +20327,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_6_0_69003c00() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -19987,7 +20348,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_7_0_69007c00() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20006,7 +20369,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_8_0_69000000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20025,7 +20390,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_9_0_69000020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20044,7 +20411,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_10_0_690003c0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20063,7 +20432,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_11_0_690003e0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20082,7 +20453,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_12_0_69000000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20101,7 +20474,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_13_0_69000001() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20120,7 +20495,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_14_0_6900001e() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20139,7 +20516,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_15_0_6900001f() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20158,7 +20537,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_16_0_69000021() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20177,7 +20558,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_17_0_690003ff() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20197,7 +20580,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_special_xn_31_stack_pointer_sp_
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20215,7 +20600,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_reg_write_0_68800000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20233,7 +20620,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_reg_write_1_68800000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20251,7 +20640,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_sp_xn_688003e0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20276,7 +20667,11 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_store_0_68800000() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -20300,7 +20695,11 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_store_1_68800000() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -20477,7 +20876,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_reg_write_0_69800000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20495,7 +20896,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_reg_write_1_69800000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20513,7 +20916,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_sp_xn_698003e0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20538,7 +20943,11 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_store_0_69800000() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -20562,7 +20971,11 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_store_1_69800000() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -20606,7 +21019,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_str_oracle_1_79000020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
     {
         let buf = cpu.read_memory(0x1000, 2).unwrap();
@@ -20634,7 +21049,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_str_oracle_2_79000020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
     {
         let buf = cpu.read_memory(0x1000, 2).unwrap();
@@ -20662,7 +21079,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_str_oracle_3_79000020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
     {
         let buf = cpu.read_memory(0x1000, 2).unwrap();
@@ -20690,7 +21109,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_str_oracle_4_79000020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
     {
         let buf = cpu.read_memory(0x1000, 2).unwrap();
@@ -20716,7 +21137,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_reg_write_0_69000000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20734,7 +21157,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_reg_write_1_69000000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20752,7 +21177,9 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_sp_xn_690003e0() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -20777,7 +21204,11 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_store_0_69000000() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -20801,7 +21232,11 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_store_1_69000000() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 // ============================================================================
@@ -23465,7 +23900,9 @@ fn test_aarch64_integer_tags_mcsettagarray_ldr_oracle_1_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -23486,7 +23923,9 @@ fn test_aarch64_integer_tags_mcsettagarray_ldr_oracle_2_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -23507,7 +23946,9 @@ fn test_aarch64_integer_tags_mcsettagarray_ldr_oracle_3_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -23528,7 +23969,9 @@ fn test_aarch64_integer_tags_mcsettagarray_ldr_oracle_4_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -23549,7 +23992,9 @@ fn test_aarch64_integer_tags_mcsettagarray_ldr_oracle_5_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -23570,7 +24015,9 @@ fn test_aarch64_integer_tags_mcsettagarray_ldr_oracle_6_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -23591,7 +24038,9 @@ fn test_aarch64_integer_tags_mcsettagarray_ldr_oracle_7_f9800020() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 

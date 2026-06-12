@@ -851,7 +851,11 @@ fn test_aarch64_memory_literal_general_field_imm19_262144_poweroftwo_0_18800000(
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_memory_literal_general
@@ -874,7 +878,11 @@ fn test_aarch64_memory_literal_general_field_imm19_524287_max_0_18ffffe0() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_memory_literal_general
@@ -1800,7 +1808,11 @@ fn test_aarch64_memory_literal_general_combo_39_0_18800000() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_memory_literal_general
@@ -1823,7 +1835,11 @@ fn test_aarch64_memory_literal_general_combo_40_0_18ffffe0() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_memory_literal_general
@@ -2083,7 +2099,8 @@ fn test_aarch64_memory_literal_simdfp_field_opc_0_min_0_1c000000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2104,7 +2121,8 @@ fn test_aarch64_memory_literal_simdfp_field_opc_1_poweroftwo_0_5c000000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2125,7 +2143,8 @@ fn test_aarch64_memory_literal_simdfp_field_opc_2_poweroftwo_0_9c000000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2144,7 +2163,9 @@ fn test_aarch64_memory_literal_simdfp_field_opc_3_max_0_dc000000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -2165,7 +2186,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_0_zero_0_1c000000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2186,7 +2208,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_1_poweroftwo_0_1c000020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2207,7 +2230,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_3_poweroftwominusone_0_1c00006
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2228,7 +2252,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_4_poweroftwo_0_1c000080() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2249,7 +2274,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_7_poweroftwominusone_0_1c0000e
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2270,7 +2296,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_8_poweroftwo_0_1c000100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2291,7 +2318,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_15_poweroftwominusone_0_1c0001
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2312,7 +2340,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_16_poweroftwo_0_1c000200() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2333,7 +2362,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_31_poweroftwominusone_0_1c0003
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2354,7 +2384,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_32_poweroftwo_0_1c000400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2375,7 +2406,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_63_poweroftwominusone_0_1c0007
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2396,7 +2428,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_64_poweroftwo_0_1c000800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2417,7 +2450,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_127_poweroftwominusone_0_1c000
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2438,7 +2472,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_128_poweroftwo_0_1c001000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2459,7 +2494,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_255_poweroftwominusone_0_1c001
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2480,7 +2516,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_256_poweroftwo_0_1c002000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2501,7 +2538,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_511_poweroftwominusone_0_1c003
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2522,7 +2560,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_512_poweroftwo_0_1c004000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2543,7 +2582,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_1023_poweroftwominusone_0_1c00
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2564,7 +2604,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_1024_poweroftwo_0_1c008000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2585,7 +2626,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_2047_poweroftwominusone_0_1c00
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2606,7 +2648,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_2048_poweroftwo_0_1c010000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2627,7 +2670,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_4095_poweroftwominusone_0_1c01
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2648,7 +2692,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_4096_poweroftwo_0_1c020000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2669,7 +2714,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_8191_poweroftwominusone_0_1c03
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2690,7 +2736,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_8192_poweroftwo_0_1c040000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2711,7 +2758,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_16383_poweroftwominusone_0_1c0
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2732,7 +2780,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_16384_poweroftwo_0_1c080000() 
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2753,7 +2802,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_32767_poweroftwominusone_0_1c0
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2772,8 +2822,11 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_32768_poweroftwo_0_1c100000() 
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
-    );}
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
+    );
+}
 
 /// Provenance: aarch64_memory_literal_simdfp
 /// ASL: `field imm19 5 +: 19`
@@ -2796,7 +2849,11 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_65535_poweroftwominusone_0_1c1
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_memory_literal_simdfp
@@ -2816,7 +2873,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_65536_poweroftwo_0_1c200000() 
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2841,7 +2899,11 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_131071_poweroftwominusone_0_1c
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_memory_literal_simdfp
@@ -2861,7 +2923,8 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_131072_poweroftwo_0_1c400000()
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2886,7 +2949,11 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_262143_poweroftwominusone_0_1c
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_memory_literal_simdfp
@@ -2908,7 +2975,12 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_262144_poweroftwo_0_1c800000()
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_memory_literal_simdfp
 /// ASL: `field imm19 5 +: 19`
@@ -2931,7 +3003,11 @@ fn test_aarch64_memory_literal_simdfp_field_imm19_524287_max_0_1cffffe0() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_memory_literal_simdfp
@@ -2951,7 +3027,8 @@ fn test_aarch64_memory_literal_simdfp_field_rt_0_min_0_1c000000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2972,7 +3049,8 @@ fn test_aarch64_memory_literal_simdfp_field_rt_1_poweroftwo_0_1c000001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -2993,7 +3071,8 @@ fn test_aarch64_memory_literal_simdfp_field_rt_30_poweroftwominusone_0_1c00001e(
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3014,7 +3093,8 @@ fn test_aarch64_memory_literal_simdfp_field_rt_31_max_0_1c00001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3035,7 +3115,8 @@ fn test_aarch64_memory_literal_simdfp_combo_0_0_1c000000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3056,7 +3137,8 @@ fn test_aarch64_memory_literal_simdfp_combo_1_0_5c000000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3077,7 +3159,8 @@ fn test_aarch64_memory_literal_simdfp_combo_2_0_9c000000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3096,7 +3179,9 @@ fn test_aarch64_memory_literal_simdfp_combo_3_0_dc000000() {
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -3117,7 +3202,8 @@ fn test_aarch64_memory_literal_simdfp_combo_4_0_1c000000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3138,7 +3224,8 @@ fn test_aarch64_memory_literal_simdfp_combo_5_0_1c000020() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3159,7 +3246,8 @@ fn test_aarch64_memory_literal_simdfp_combo_6_0_1c000060() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3180,7 +3268,8 @@ fn test_aarch64_memory_literal_simdfp_combo_7_0_1c000080() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3201,7 +3290,8 @@ fn test_aarch64_memory_literal_simdfp_combo_8_0_1c0000e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3222,7 +3312,8 @@ fn test_aarch64_memory_literal_simdfp_combo_9_0_1c000100() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3243,7 +3334,8 @@ fn test_aarch64_memory_literal_simdfp_combo_10_0_1c0001e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3264,7 +3356,8 @@ fn test_aarch64_memory_literal_simdfp_combo_11_0_1c000200() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3285,7 +3378,8 @@ fn test_aarch64_memory_literal_simdfp_combo_12_0_1c0003e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3306,7 +3400,8 @@ fn test_aarch64_memory_literal_simdfp_combo_13_0_1c000400() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3327,7 +3422,8 @@ fn test_aarch64_memory_literal_simdfp_combo_14_0_1c0007e0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3348,7 +3444,8 @@ fn test_aarch64_memory_literal_simdfp_combo_15_0_1c000800() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3369,7 +3466,8 @@ fn test_aarch64_memory_literal_simdfp_combo_16_0_1c000fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3390,7 +3488,8 @@ fn test_aarch64_memory_literal_simdfp_combo_17_0_1c001000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3411,7 +3510,8 @@ fn test_aarch64_memory_literal_simdfp_combo_18_0_1c001fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3432,7 +3532,8 @@ fn test_aarch64_memory_literal_simdfp_combo_19_0_1c002000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3453,7 +3554,8 @@ fn test_aarch64_memory_literal_simdfp_combo_20_0_1c003fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3474,7 +3576,8 @@ fn test_aarch64_memory_literal_simdfp_combo_21_0_1c004000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3495,7 +3598,8 @@ fn test_aarch64_memory_literal_simdfp_combo_22_0_1c007fe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3516,7 +3620,8 @@ fn test_aarch64_memory_literal_simdfp_combo_23_0_1c008000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3537,7 +3642,8 @@ fn test_aarch64_memory_literal_simdfp_combo_24_0_1c00ffe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3558,7 +3664,8 @@ fn test_aarch64_memory_literal_simdfp_combo_25_0_1c010000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3579,7 +3686,8 @@ fn test_aarch64_memory_literal_simdfp_combo_26_0_1c01ffe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3600,7 +3708,8 @@ fn test_aarch64_memory_literal_simdfp_combo_27_0_1c020000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3621,7 +3730,8 @@ fn test_aarch64_memory_literal_simdfp_combo_28_0_1c03ffe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3642,7 +3752,8 @@ fn test_aarch64_memory_literal_simdfp_combo_29_0_1c040000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3663,7 +3774,8 @@ fn test_aarch64_memory_literal_simdfp_combo_30_0_1c07ffe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3684,7 +3796,8 @@ fn test_aarch64_memory_literal_simdfp_combo_31_0_1c080000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3705,7 +3818,8 @@ fn test_aarch64_memory_literal_simdfp_combo_32_0_1c0fffe0() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3724,8 +3838,11 @@ fn test_aarch64_memory_literal_simdfp_combo_33_0_1c100000() {
     let exit = cpu.step();
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}", encoding, exit
-    );}
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
+    );
+}
 
 /// Provenance: aarch64_memory_literal_simdfp
 /// ASL: `field combination 34`
@@ -3748,7 +3865,11 @@ fn test_aarch64_memory_literal_simdfp_combo_34_0_1c1fffe0() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_memory_literal_simdfp
@@ -3768,7 +3889,8 @@ fn test_aarch64_memory_literal_simdfp_combo_35_0_1c200000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3793,7 +3915,11 @@ fn test_aarch64_memory_literal_simdfp_combo_36_0_1c3fffe0() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_memory_literal_simdfp
@@ -3813,7 +3939,8 @@ fn test_aarch64_memory_literal_simdfp_combo_37_0_1c400000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3838,7 +3965,11 @@ fn test_aarch64_memory_literal_simdfp_combo_38_0_1c7fffe0() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_memory_literal_simdfp
@@ -3860,7 +3991,12 @@ fn test_aarch64_memory_literal_simdfp_combo_39_0_1c800000() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);}
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
+}
 
 /// Provenance: aarch64_memory_literal_simdfp
 /// ASL: `field combination 40`
@@ -3883,7 +4019,11 @@ fn test_aarch64_memory_literal_simdfp_combo_40_0_1cffffe0() {
         Err(e) => format!("{e:?}").starts_with("UndefinedInstruction"),
         _ => false,
     };
-    assert!(!undef, "expected allocated encoding for {:#010X}: {:?}", encoding, exit);
+    assert!(
+        !undef,
+        "expected allocated encoding for {:#010X}: {:?}",
+        encoding, exit
+    );
 }
 
 /// Provenance: aarch64_memory_literal_simdfp
@@ -3903,7 +4043,8 @@ fn test_aarch64_memory_literal_simdfp_combo_41_0_1c000000() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3924,7 +4065,8 @@ fn test_aarch64_memory_literal_simdfp_combo_42_0_1c000001() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3945,7 +4087,8 @@ fn test_aarch64_memory_literal_simdfp_combo_43_0_1c00001e() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3966,7 +4109,8 @@ fn test_aarch64_memory_literal_simdfp_combo_44_0_1c00001f() {
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -3987,7 +4131,8 @@ fn test_aarch64_memory_literal_simdfp_special_opc_0_size_variant_0_0_1c000020() 
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4008,7 +4153,8 @@ fn test_aarch64_memory_literal_simdfp_special_opc_1_size_variant_1_0_5c000020() 
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4029,7 +4175,8 @@ fn test_aarch64_memory_literal_simdfp_special_opc_2_size_variant_2_0_9c000020() 
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
 
@@ -4048,7 +4195,9 @@ fn test_aarch64_memory_literal_simdfp_special_opc_3_size_variant_3_0_dc000020() 
     let exit = cpu.step();
     assert!(
         exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}", encoding, exit
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -4070,6 +4219,7 @@ fn test_aarch64_memory_literal_simdfp_special_rt_31_zero_register_xzr_wzr_reads_
     assert!(
         exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
         "expected allocated encoding for {:#010X}: {:?}",
-        encoding, exit
+        encoding,
+        exit
     );
 }
