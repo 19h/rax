@@ -3,18 +3,20 @@
 //! by [`crate::smir::lower::x86_64::X86_64Lowerer`] and actually runs it on the
 //! host CPU, marshalling guest register state in and out.
 //!
-//! Gated behind the `smir-jit` feature and `target_arch = "x86_64"` — the entry
-//! trampoline is hand-written x86-64 assembly, and execution relies on the
-//! lowerer's 1:1 identity register map (guest GPR `N` ⇒ the same-named host
-//! GPR), so a lowered block reads and writes guest state directly with no
-//! per-instruction marshalling. The only marshalling is once on entry and once
-//! on exit, in [`enter_native`].
+//! Gated behind the `smir-jit` feature. Two host backends are provided:
+//!  * x86-64: entry trampoline `rax_smir_enter_native` (hand-written x86-64
+//!    assembly) marshalling the x86 [`GuestRegs`] file in/out.
+//!  * aarch64: entry trampoline `rax_a64_enter_native` (AArch64 assembly)
+//!    marshalling the [`Aarch64GuestRegs`] file in/out.
+//! Both rely on the lowerer's 1:1 identity register map (guest GPR `N` ⇒ the
+//! same-named host GPR), so a lowered block reads and writes guest state
+//! directly; the only marshalling is once on entry and once on exit.
 //!
-//! Validated bit-exact against KVM by the differential harness in
-//! `tests/diff_fuzz.rs` (`smir_native_*` tests) across ALU, shifts, MUL,
-//! conditional branches, and whole loops (the "dragon" path).
+//! The x86-64 path is validated bit-exact against KVM by the differential
+//! harness in `tests/diff_fuzz.rs` (`smir_native_*` tests). The AArch64 path is
+//! validated against the AArch64 interpreter.
 
-#![cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#![cfg(feature = "smir-jit")]
 
 use super::{
     X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
@@ -22,6 +24,23 @@ use super::{
     X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
     X86_STATE_PTR_AT_RBP,
 };
+
+/// Apple I-cache invalidation (libSystem). Required after writing a `MAP_JIT`
+/// region and before executing it: on AArch64 the instruction cache is not
+/// coherent with the data cache, so freshly written code may otherwise execute
+/// stale bytes (intermittently — only on region reuse / SMC — which x86-hosted
+/// test harnesses can never catch).
+#[cfg(all(target_arch = "aarch64", target_os = "macos"))]
+unsafe extern "C" {
+    fn sys_icache_invalidate(start: *mut core::ffi::c_void, len: usize);
+}
+
+/// compiler-rt instruction-cache flush (Linux/aarch64), same purpose as the
+/// Apple `sys_icache_invalidate` above.
+#[cfg(all(target_arch = "aarch64", target_os = "linux"))]
+unsafe extern "C" {
+    fn __clear_cache(start: *mut core::ffi::c_char, end: *mut core::ffi::c_char);
+}
 
 /// Guest register file marshalled in/out of a lowered native block.
 ///
@@ -149,6 +168,7 @@ impl Aarch64GuestRegs {
 // RSP (gpr[4]) is NOT loaded — the block runs on the host stack (it owns no
 // guest stack). Alignment: 6 callee pushes (48) + `sub rsp,24` (72 total) leaves
 // rsp 16-aligned at the `call`.
+#[cfg(target_arch = "x86_64")]
 core::arch::global_asm!(
     ".text",
     ".p2align 4",
@@ -226,8 +246,105 @@ core::arch::global_asm!(
     "ret",
 );
 
+#[cfg(target_arch = "x86_64")]
 unsafe extern "C" {
     fn rax_smir_enter_native(entry: *const u8, state: *mut GuestRegs);
+}
+
+// rax_a64_enter_native(x0 = entry ptr, x1 = *mut Aarch64GuestRegs):
+//   Identity-mapped AArch64-on-AArch64 entry trampoline. Saves the host
+//   callee-saved GPRs (x19-x30), loads guest X0-X17/X19-X27/X29 + NZCV from the
+//   struct into the identical host registers, runs the block on the HOST stack,
+//   then stores the live host registers back into the struct.
+//
+//   Reserved host registers (NOT mapped to guest, must be left untouched by the
+//   block — the clobber gate enforces this):
+//     x28 = persistent *mut Aarch64GuestRegs (so exit stubs can `str <pc>,[x28,#PC]`)
+//     x30 = link register / return into this trampoline (block ends with `ret`)
+//     x18 = platform register (reserved by the macOS ABI; never clobber)
+//     sp  = host stack (guest SP is not loaded; SP-relative guest code deopts)
+//   Guest x18/x28/x30 round-trip untouched (their struct slots are preserved).
+//
+//   Frame (112 bytes, 16-aligned): [sp+0..88] host x19..x30, [sp+96] entry.
+//   Both `_rax_a64_enter_native` (Mach-O) and `rax_a64_enter_native` (ELF) are
+//   defined so the C symbol resolves on macOS and Linux alike.
+#[cfg(target_arch = "aarch64")]
+core::arch::global_asm!(
+    ".text",
+    ".p2align 2",
+    ".globl _rax_a64_enter_native",
+    ".globl rax_a64_enter_native",
+    "_rax_a64_enter_native:",
+    "rax_a64_enter_native:",
+    "sub sp, sp, #112",
+    "stp x19, x20, [sp, #0]",
+    "stp x21, x22, [sp, #16]",
+    "stp x23, x24, [sp, #32]",
+    "stp x25, x26, [sp, #48]",
+    "stp x27, x28, [sp, #64]",
+    "stp x29, x30, [sp, #80]",
+    "str x0, [sp, #96]", // stash entry (guest x0 is about to overwrite host x0)
+    "mov x28, x1",       // x28 = regs ptr, reserved for the duration of the block
+    "ldr w9, [x28, #264]", // NZCV (offset 33*8); load before guest x9 below
+    "msr nzcv, x9",
+    "ldp x0, x1, [x28, #0]",
+    "ldp x2, x3, [x28, #16]",
+    "ldp x4, x5, [x28, #32]",
+    "ldp x6, x7, [x28, #48]",
+    "ldp x8, x9, [x28, #64]",
+    "ldp x10, x11, [x28, #80]",
+    "ldp x12, x13, [x28, #96]",
+    "ldp x14, x15, [x28, #112]",
+    "ldp x16, x17, [x28, #128]",
+    // skip x18 (offset 144) — reserved platform register
+    "ldr x19, [x28, #152]",
+    "ldr x20, [x28, #160]",
+    "ldr x21, [x28, #168]",
+    "ldr x22, [x28, #176]",
+    "ldr x23, [x28, #184]",
+    "ldr x24, [x28, #192]",
+    "ldr x25, [x28, #200]",
+    "ldr x26, [x28, #208]",
+    "ldr x27, [x28, #216]",
+    // skip x28 (offset 224) — holds the regs ptr
+    "ldr x29, [x28, #232]",
+    // skip x30 (offset 240) — reserved link register
+    "ldr x30, [sp, #96]", // x30 = entry; blr sets x30 = return addr below
+    "blr x30",
+    "stp x0, x1, [x28, #0]",
+    "stp x2, x3, [x28, #16]",
+    "stp x4, x5, [x28, #32]",
+    "stp x6, x7, [x28, #48]",
+    "stp x8, x9, [x28, #64]",
+    "stp x10, x11, [x28, #80]",
+    "stp x12, x13, [x28, #96]",
+    "stp x14, x15, [x28, #112]",
+    "stp x16, x17, [x28, #128]",
+    "str x19, [x28, #152]",
+    "str x20, [x28, #160]",
+    "str x21, [x28, #168]",
+    "str x22, [x28, #176]",
+    "str x23, [x28, #184]",
+    "str x24, [x28, #192]",
+    "str x25, [x28, #200]",
+    "str x26, [x28, #208]",
+    "str x27, [x28, #216]",
+    "str x29, [x28, #232]",
+    "mrs x9, nzcv", // x9 already stored above; reuse as scratch
+    "str x9, [x28, #264]",
+    "ldp x19, x20, [sp, #0]",
+    "ldp x21, x22, [sp, #16]",
+    "ldp x23, x24, [sp, #32]",
+    "ldp x25, x26, [sp, #48]",
+    "ldp x27, x28, [sp, #64]",
+    "ldp x29, x30, [sp, #80]",
+    "add sp, sp, #112",
+    "ret",
+);
+
+#[cfg(target_arch = "aarch64")]
+unsafe extern "C" {
+    fn rax_a64_enter_native(entry: *const u8, regs: *mut Aarch64GuestRegs);
 }
 
 /// Byte offset of `GuestRegs.exit_pc` (after `gpr[32]` + `rflags`). An exit stub
@@ -264,11 +381,23 @@ pub struct ExecMem {
 
 impl ExecMem {
     /// Map `code` into a fresh W^X region and make it executable.
+    ///
+    /// The mechanism is host-specific: x86-64 (and any non-aarch64 unix) map RW,
+    /// copy, then `mprotect` to RX. Apple-Silicon macOS uses a `MAP_JIT` region
+    /// with `pthread_jit_write_protect_np` toggling plus an explicit I-cache
+    /// invalidate. Linux/aarch64 maps RW→RX and flushes via `__clear_cache`.
     pub fn new(code: &[u8]) -> Result<Self, ExecMemError> {
         if code.is_empty() {
             return Err(ExecMemError::Empty);
         }
         let len = (code.len() + 0xFFF) & !0xFFF;
+        let ptr = Self::map_code(code, len)?;
+        Ok(ExecMem { ptr, len })
+    }
+
+    /// RW map → copy → `mprotect` RX. Used on x86-64 and any non-aarch64 unix.
+    #[cfg(not(target_arch = "aarch64"))]
+    fn map_code(code: &[u8], len: usize) -> Result<*mut u8, ExecMemError> {
         let ptr = unsafe {
             libc::mmap(
                 core::ptr::null_mut(),
@@ -295,7 +424,77 @@ impl ExecMem {
             unsafe { libc::munmap(ptr as *mut libc::c_void, len) };
             return Err(ExecMemError::Mprotect);
         }
-        Ok(ExecMem { ptr, len })
+        Ok(ptr)
+    }
+
+    /// Apple-Silicon macOS: a `MAP_JIT` RWX region. Writing it requires the
+    /// calling thread to be in *write* mode (`pthread_jit_write_protect_np(0)`);
+    /// after the copy we flip back to *execute* mode and invalidate the I-cache
+    /// for the written range. The thread is left in execute mode, so even if a
+    /// different thread later runs the block (`ExecMem` is `Send`/`Sync`) it sees
+    /// executable pages. The toggle is thread-local; a thread that never wrote
+    /// JIT memory is already in execute mode by default.
+    #[cfg(all(target_arch = "aarch64", target_os = "macos"))]
+    fn map_code(code: &[u8], len: usize) -> Result<*mut u8, ExecMemError> {
+        let ptr = unsafe {
+            libc::mmap(
+                core::ptr::null_mut(),
+                len,
+                libc::PROT_READ | libc::PROT_WRITE | libc::PROT_EXEC,
+                libc::MAP_PRIVATE | libc::MAP_ANON | libc::MAP_JIT,
+                -1,
+                0,
+            )
+        };
+        if ptr == libc::MAP_FAILED {
+            return Err(ExecMemError::Mmap);
+        }
+        let ptr = ptr as *mut u8;
+        unsafe {
+            libc::pthread_jit_write_protect_np(0);
+            core::ptr::copy_nonoverlapping(code.as_ptr(), ptr, code.len());
+            libc::pthread_jit_write_protect_np(1);
+            sys_icache_invalidate(ptr as *mut core::ffi::c_void, len);
+        }
+        Ok(ptr)
+    }
+
+    /// Linux/aarch64: RW map → copy → `mprotect` RX → `__clear_cache`.
+    #[cfg(all(target_arch = "aarch64", target_os = "linux"))]
+    fn map_code(code: &[u8], len: usize) -> Result<*mut u8, ExecMemError> {
+        let ptr = unsafe {
+            libc::mmap(
+                core::ptr::null_mut(),
+                len,
+                libc::PROT_READ | libc::PROT_WRITE,
+                libc::MAP_PRIVATE | libc::MAP_ANONYMOUS,
+                -1,
+                0,
+            )
+        };
+        if ptr == libc::MAP_FAILED {
+            return Err(ExecMemError::Mmap);
+        }
+        let ptr = ptr as *mut u8;
+        unsafe { core::ptr::copy_nonoverlapping(code.as_ptr(), ptr, code.len()) };
+        if unsafe {
+            libc::mprotect(
+                ptr as *mut libc::c_void,
+                len,
+                libc::PROT_READ | libc::PROT_EXEC,
+            )
+        } != 0
+        {
+            unsafe { libc::munmap(ptr as *mut libc::c_void, len) };
+            return Err(ExecMemError::Mprotect);
+        }
+        unsafe {
+            __clear_cache(
+                ptr as *mut core::ffi::c_char,
+                ptr.add(len) as *mut core::ffi::c_char,
+            )
+        };
+        Ok(ptr)
     }
 
     /// Execute the block at `entry_offset` (the lowerer's `LowerResult.entry_offset`),
@@ -305,6 +504,7 @@ impl ExecMem {
     /// The caller must guarantee that the code was produced by a trusted lowerer
     /// for an identity-register-mapped block that does not require a guest stack
     /// (RSP is not loaded — the block runs on the host stack).
+    #[cfg(target_arch = "x86_64")]
     pub fn run(&self, entry_offset: usize, regs: &mut GuestRegs) {
         let entry = unsafe { self.ptr.add(entry_offset) } as *const u8;
         unsafe { rax_smir_enter_native(entry, regs as *mut GuestRegs) };
@@ -321,6 +521,24 @@ impl ExecMem {
         let entry = unsafe { self.ptr.add(entry_offset) } as *const u8;
         let entry: Entry = unsafe { core::mem::transmute(entry) };
         unsafe { entry(regs as *mut Aarch64GuestRegs) };
+    }
+
+    /// Execute an identity-register-mapped AArch64 block on an AArch64 host.
+    ///
+    /// The block was lowered by `Aarch64Lowerer` under the 1:1 identity map
+    /// (guest `Xn` ⇒ host `Xn`). [`rax_a64_enter_native`] marshals guest GPRs +
+    /// NZCV from `regs` into the identical host registers, runs the block on the
+    /// host stack, then writes the results back. Guest X18/X28/X30/SP are not
+    /// mapped (reserved: platform / state-pointer / link / host-stack), so the
+    /// block must not use them — enforced by the clobber gate.
+    ///
+    /// # Safety
+    /// `entry_offset` must point at a block produced by a trusted AArch64
+    /// identity lowerer that obeys the reserved-register contract above.
+    #[cfg(target_arch = "aarch64")]
+    pub fn run_aarch64_identity(&self, entry_offset: usize, regs: &mut Aarch64GuestRegs) {
+        let entry = unsafe { self.ptr.add(entry_offset) } as *const u8;
+        unsafe { rax_a64_enter_native(entry, regs as *mut Aarch64GuestRegs) };
     }
 }
 
@@ -473,7 +691,7 @@ fn block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) ->
     true
 }
 
-#[cfg(test)]
+#[cfg(all(test, target_arch = "x86_64"))]
 mod tests {
     use super::*;
 
@@ -677,5 +895,82 @@ mod tests {
         b.switch_to_block(f_blk);
         b.set_terminator(Terminator::Return { values: vec![] });
         assert!(is_native_clobber_safe(&b.finish()));
+    }
+}
+
+#[cfg(all(test, target_arch = "aarch64"))]
+mod tests_aarch64 {
+    use super::*;
+
+    // movz x0, #42 ; ret  → proves the MAP_JIT W^X mapping executes and the
+    // identity trampoline marshals a result register back out, independent of
+    // the lowerer. This is the AArch64 analogue of `exec_mem_runs_raw_block`.
+    #[test]
+    fn exec_mem_runs_raw_block_aarch64() {
+        // d2800540 movz x0, #42 ; d65f03c0 ret
+        let code: [u8; 8] = [0x40, 0x05, 0x80, 0xd2, 0xc0, 0x03, 0x5f, 0xd6];
+        let mem = ExecMem::new(&code).expect("ExecMem map");
+        let mut regs = Aarch64GuestRegs::default();
+        mem.run_aarch64_identity(0, &mut regs);
+        assert_eq!(regs.x[0], 42, "X0 should be 42");
+    }
+
+    // add x0, x1, x2 ; ret  → guest GPR marshal IN as well as OUT.
+    #[test]
+    fn exec_mem_marshals_inputs_aarch64() {
+        // 8b020020 add x0, x1, x2 ; d65f03c0 ret
+        let code: [u8; 8] = [0x20, 0x00, 0x02, 0x8b, 0xc0, 0x03, 0x5f, 0xd6];
+        let mem = ExecMem::new(&code).expect("ExecMem map");
+        let mut regs = Aarch64GuestRegs::default();
+        regs.x[1] = 40;
+        regs.x[2] = 2;
+        mem.run_aarch64_identity(0, &mut regs);
+        assert_eq!(regs.x[0], 42, "X0 should be X1+X2");
+    }
+
+    // Exercise the high callee-saved guest registers (x19..x29) round-trip,
+    // since the trampoline loads/stores those via single ldr/str (not the ldp
+    // pairs used for x0..x17).
+    #[test]
+    fn exec_mem_high_regs_roundtrip_aarch64() {
+        // 8b150293 add x19, x20, x21 ; aa1303e0 mov x0, x19 ; d65f03c0 ret
+        let code: [u8; 12] = [
+            0x93, 0x02, 0x15, 0x8b, 0xe0, 0x03, 0x13, 0xaa, 0xc0, 0x03, 0x5f, 0xd6,
+        ];
+        let mem = ExecMem::new(&code).expect("ExecMem map");
+        let mut regs = Aarch64GuestRegs::default();
+        regs.x[20] = 100;
+        regs.x[21] = 23;
+        mem.run_aarch64_identity(0, &mut regs);
+        assert_eq!(regs.x[19], 123, "X19 = X20 + X21");
+        assert_eq!(regs.x[0], 123, "X0 = X19");
+    }
+
+    // subs x0, x1, x1 ; ret  → NZCV marshals out (5-5=0 sets Z and C).
+    #[test]
+    fn exec_mem_nzcv_roundtrip_aarch64() {
+        // eb010020 subs x0, x1, x1 ; d65f03c0 ret
+        let code: [u8; 8] = [0x20, 0x00, 0x01, 0xeb, 0xc0, 0x03, 0x5f, 0xd6];
+        let mem = ExecMem::new(&code).expect("ExecMem map");
+        let mut regs = Aarch64GuestRegs::default();
+        regs.x[1] = 5;
+        mem.run_aarch64_identity(0, &mut regs);
+        assert_eq!(regs.x[0], 0, "5 - 5 = 0");
+        assert_ne!(regs.nzcv & (1 << 30), 0, "Z (bit 30) set on zero result");
+        assert_ne!(regs.nzcv & (1 << 29), 0, "C (bit 29) set: no borrow");
+        assert_eq!(regs.nzcv & (1 << 31), 0, "N (bit 31) clear");
+    }
+
+    // NZCV marshals IN: cset x0 reads the Z flag we seed in the struct.
+    // cseteq x0  ==  csinc x0, xzr, xzr, ne  →  x0 = (Z==1) ? 1 : 0.
+    #[test]
+    fn exec_mem_nzcv_marshals_in_aarch64() {
+        // 9a9f17e0 cset x0, eq ; d65f03c0 ret
+        let code: [u8; 8] = [0xe0, 0x17, 0x9f, 0x9a, 0xc0, 0x03, 0x5f, 0xd6];
+        let mem = ExecMem::new(&code).expect("ExecMem map");
+        let mut regs = Aarch64GuestRegs::default();
+        regs.nzcv = 1 << 30; // Z set
+        mem.run_aarch64_identity(0, &mut regs);
+        assert_eq!(regs.x[0], 1, "cset eq reads the seeded Z flag");
     }
 }

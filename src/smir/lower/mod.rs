@@ -30,9 +30,9 @@ pub mod aarch64;
 pub mod aarch64_x86;
 pub mod avx10;
 pub mod regalloc;
-/// Native execution runtime for lowered blocks (the JIT executor). Only present
-/// with the `smir-jit` feature on an x86-64 host.
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+/// Native execution runtime for lowered blocks (the JIT executor). Present with
+/// the `smir-jit` feature on x86-64 and aarch64 hosts.
+#[cfg(feature = "smir-jit")]
 pub mod runtime;
 #[cfg(test)]
 mod validation;
