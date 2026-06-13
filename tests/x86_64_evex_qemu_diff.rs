@@ -4,8 +4,10 @@
 //! generated from assembly strings, assembled with LLVM for the rax side, and
 //! compiled into a qemu oracle from the same case table.
 
-#![cfg(all(feature = "x86_64-suite", target_os = "linux", target_arch = "x86_64"))]
+#![cfg(feature = "x86_64-suite")]
+#![allow(dead_code)]
 
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -13,6 +15,10 @@ use std::process::{Command, Stdio};
 #[path = "x86_64/common/mod.rs"]
 mod common;
 
+#[path = "x86_64/avx512_inventory_data.rs"]
+mod avx512_inventory_data;
+
+use avx512_inventory_data::RAX_EVEX_SIMD_DIFF_MNEMONICS;
 use common::{Bytes, GuestAddress, Registers, run_until_hlt, setup_vm};
 
 const WIRE_MAGIC: u32 = 0x5845_5645; // 'E','V','E','X'
@@ -54,6 +60,7 @@ enum InputProfile {
 struct CaseSpec {
     label: String,
     asm: String,
+    op: Option<Vec<u8>>,
     profile: InputProfile,
 }
 
@@ -282,8 +289,374 @@ fn spec(
     specs.push(CaseSpec {
         label: label.into(),
         asm: asm.into(),
+        op: None,
         profile,
     });
+}
+
+fn spec_raw(
+    specs: &mut Vec<CaseSpec>,
+    label: impl Into<String>,
+    asm: impl Into<String>,
+    op: Vec<u8>,
+    profile: InputProfile,
+) {
+    specs.push(CaseSpec {
+        label: label.into(),
+        asm: asm.into(),
+        op: Some(op),
+        profile,
+    });
+}
+
+fn asm_mnemonic(asm: &str) -> String {
+    asm.split_whitespace()
+        .next()
+        .expect("generated EVEX asm must have a mnemonic")
+        .to_ascii_lowercase()
+}
+
+fn expected_diff_mnemonics() -> BTreeSet<String> {
+    RAX_EVEX_SIMD_DIFF_MNEMONICS
+        .iter()
+        .map(|mnemonic| (*mnemonic).to_string())
+        .collect()
+}
+
+fn assert_mnemonic_coverage(mnemonics: BTreeSet<String>, context: &str) {
+    let expected = expected_diff_mnemonics();
+    let missing = expected
+        .difference(&mnemonics)
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    let unexpected = mnemonics
+        .difference(&expected)
+        .cloned()
+        .collect::<BTreeSet<_>>();
+
+    assert!(
+        missing.is_empty() && unexpected.is_empty(),
+        "{context} mnemonic coverage mismatch\nmissing:\n{}\nunexpected:\n{}",
+        missing.into_iter().collect::<Vec<_>>().join("\n"),
+        unexpected.into_iter().collect::<Vec<_>>().join("\n")
+    );
+}
+
+fn assert_requested_mnemonic_coverage(specs: &[CaseSpec]) {
+    assert_mnemonic_coverage(
+        specs.iter().map(|spec| asm_mnemonic(&spec.asm)).collect(),
+        "generated EVEX differential specs",
+    );
+}
+
+fn assert_assembled_mnemonic_coverage(cases: &[DiffCase]) {
+    assert_mnemonic_coverage(
+        cases.iter().map(|case| asm_mnemonic(&case.asm)).collect(),
+        "assembled EVEX differential cases",
+    );
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct EvexSelector {
+    map: u8,
+    opcode: u8,
+    pp: u8,
+    w: bool,
+    subop: Option<u8>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum OperandForm {
+    Register,
+    Memory,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum MaskMode {
+    None,
+    Merge,
+    Zero,
+}
+
+#[derive(Clone, Debug)]
+struct EvexCoverage {
+    selector: EvexSelector,
+    form: OperandForm,
+    ll: u8,
+    mask: MaskMode,
+    rm_reg: Option<u8>,
+}
+
+fn sel(map: u8, opcode: u8, pp: u8, w: bool) -> EvexSelector {
+    EvexSelector {
+        map,
+        opcode,
+        pp,
+        w,
+        subop: None,
+    }
+}
+
+fn group_sel(map: u8, opcode: u8, pp: u8, w: bool, subop: u8) -> EvexSelector {
+    EvexSelector {
+        map,
+        opcode,
+        pp,
+        w,
+        subop: Some(subop),
+    }
+}
+
+fn expected_dispatch_selectors() -> BTreeSet<EvexSelector> {
+    let mut selectors = BTreeSet::new();
+
+    for opcode in [0x10, 0x11, 0x28, 0x29] {
+        selectors.insert(sel(1, opcode, 0, false));
+        selectors.insert(sel(1, opcode, 1, true));
+    }
+    for opcode in [0x58, 0x59, 0x5c, 0x5e] {
+        selectors.insert(sel(1, opcode, 0, false));
+        selectors.insert(sel(1, opcode, 1, true));
+    }
+    selectors.insert(sel(1, 0x57, 0, false));
+    selectors.insert(sel(1, 0x57, 1, true));
+
+    for opcode in [0x6f, 0x7f] {
+        for (pp, w) in [
+            (1, false),
+            (1, true),
+            (2, false),
+            (2, true),
+            (3, false),
+            (3, true),
+        ] {
+            selectors.insert(sel(1, opcode, pp, w));
+        }
+    }
+
+    for opcode in [0xdb, 0xdf, 0xeb, 0xef] {
+        selectors.insert(sel(1, opcode, 1, false));
+        selectors.insert(sel(1, opcode, 1, true));
+    }
+    for opcode in [0xfc, 0xfd, 0xfe, 0xf8, 0xf9, 0xfa, 0xd5] {
+        selectors.insert(sel(1, opcode, 1, false));
+    }
+    for opcode in [0xd4, 0xfb] {
+        selectors.insert(sel(1, opcode, 1, true));
+    }
+    for opcode in [0x74, 0x75, 0x76, 0x64, 0x65, 0x66] {
+        selectors.insert(sel(1, opcode, 1, false));
+    }
+
+    selectors.insert(group_sel(1, 0x72, 1, false, 2));
+    selectors.insert(group_sel(1, 0x72, 1, false, 4));
+    selectors.insert(group_sel(1, 0x72, 1, true, 4));
+    selectors.insert(group_sel(1, 0x72, 1, false, 6));
+    selectors.insert(group_sel(1, 0x73, 1, true, 2));
+    selectors.insert(group_sel(1, 0x73, 1, true, 6));
+    selectors.insert(sel(1, 0xd2, 1, false));
+    selectors.insert(sel(1, 0xd3, 1, true));
+    selectors.insert(sel(1, 0xe2, 1, false));
+    selectors.insert(sel(1, 0xe2, 1, true));
+    selectors.insert(sel(1, 0xf2, 1, false));
+    selectors.insert(sel(1, 0xf3, 1, true));
+
+    selectors.insert(sel(2, 0x40, 1, false));
+    selectors.insert(sel(2, 0x40, 1, true));
+    selectors.insert(sel(2, 0x18, 1, false));
+    selectors.insert(sel(2, 0x19, 1, true));
+    selectors.insert(sel(2, 0x58, 1, false));
+    selectors.insert(sel(2, 0x59, 1, true));
+    selectors.insert(sel(2, 0x78, 1, false));
+    selectors.insert(sel(2, 0x79, 1, false));
+    selectors.insert(sel(2, 0x29, 1, true));
+    selectors.insert(sel(2, 0x37, 1, true));
+    for opcode in [0x88, 0x89, 0x8a, 0x8b] {
+        selectors.insert(sel(2, opcode, 1, false));
+        selectors.insert(sel(2, opcode, 1, true));
+    }
+    for opcode in [0x50, 0x51, 0x52, 0x53] {
+        selectors.insert(sel(2, opcode, 1, false));
+    }
+    selectors.insert(sel(2, 0xb4, 1, true));
+    selectors.insert(sel(2, 0xb5, 1, true));
+    for opcode in [0x54, 0x55] {
+        selectors.insert(sel(2, opcode, 1, false));
+        selectors.insert(sel(2, opcode, 1, true));
+    }
+    for opcode in [0x8d, 0x75, 0x7d, 0x8f] {
+        selectors.insert(sel(2, opcode, 1, false));
+    }
+    selectors.insert(sel(2, 0x52, 2, false));
+    selectors.insert(sel(2, 0x72, 2, false));
+    selectors.insert(sel(2, 0x72, 3, false));
+    selectors.insert(sel(5, 0x68, 1, false));
+    selectors.insert(sel(5, 0x6a, 1, false));
+    selectors.insert(sel(5, 0x6d, 1, true));
+    selectors.insert(sel(5, 0x6c, 1, true));
+    selectors.insert(sel(2, 0x50, 3, false));
+    selectors.insert(sel(2, 0x51, 3, false));
+    selectors.insert(sel(2, 0x50, 2, false));
+    selectors.insert(sel(2, 0x51, 2, false));
+    selectors.insert(sel(2, 0x50, 0, false));
+    selectors.insert(sel(2, 0x51, 0, false));
+    for (pp, w) in [(2, false), (1, false), (0, false)] {
+        selectors.insert(sel(2, 0xd2, pp, w));
+        selectors.insert(sel(2, 0xd3, pp, w));
+    }
+
+    for opcode in [0x1e, 0x1f, 0x3e, 0x3f] {
+        selectors.insert(sel(3, opcode, 1, false));
+        selectors.insert(sel(3, opcode, 1, true));
+    }
+    selectors.insert(sel(3, 0x42, 1, false));
+    selectors.insert(sel(3, 0x52, 1, false));
+    selectors.insert(sel(3, 0x52, 1, true));
+    selectors.insert(sel(3, 0x53, 1, false));
+    selectors.insert(sel(3, 0x53, 1, true));
+
+    for opcode in [0x58, 0x59, 0x5c, 0x5e] {
+        selectors.insert(sel(5, opcode, 0, false));
+    }
+
+    selectors
+}
+
+fn decode_evex_coverage(case: &DiffCase) -> EvexCoverage {
+    assert!(
+        case.op.len() >= 6 && case.op[0] == 0x62,
+        "{} assembled outside supported EVEX shape: {:02x?}",
+        case.label,
+        case.op
+    );
+
+    let p0 = case.op[1];
+    let p1 = case.op[2];
+    let p2 = case.op[3];
+    let opcode = case.op[4];
+    let modrm = case.op[5];
+    let form = if (modrm & 0xc0) == 0xc0 {
+        OperandForm::Register
+    } else {
+        OperandForm::Memory
+    };
+    let subop = if (p0 & 0x7) == 1 && matches!(opcode, 0x72 | 0x73) {
+        Some((modrm >> 3) & 0x7)
+    } else {
+        None
+    };
+    let rm_reg = if form == OperandForm::Register {
+        let rm = modrm & 0x7;
+        let b_set = (p0 & 0x20) != 0;
+        let x_set = (p0 & 0x40) != 0;
+        Some(rm + if b_set { 0 } else { 8 } + if x_set { 0 } else { 16 })
+    } else {
+        None
+    };
+    let mask = match (p2 & 0x7, (p2 & 0x80) != 0) {
+        (0, _) => MaskMode::None,
+        (_, false) => MaskMode::Merge,
+        (_, true) => MaskMode::Zero,
+    };
+
+    EvexCoverage {
+        selector: EvexSelector {
+            map: p0 & 0x7,
+            opcode,
+            pp: p1 & 0x3,
+            w: (p1 & 0x80) != 0,
+            subop,
+        },
+        form,
+        ll: (p2 >> 5) & 0x3,
+        mask,
+        rm_reg,
+    }
+}
+
+fn format_debug_set<T: std::fmt::Debug>(set: &BTreeSet<T>) -> String {
+    set.iter()
+        .map(|item| format!("{item:?}"))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn expected_vector_lengths(selector: EvexSelector) -> BTreeSet<u8> {
+    if selector.map == 3 && selector.opcode == 0x53 {
+        return BTreeSet::new();
+    }
+    if selector == sel(2, 0x19, 1, true) {
+        return BTreeSet::from([1, 2]);
+    }
+    BTreeSet::from([0, 1, 2])
+}
+
+fn assert_evex_form_coverage(cases: &[DiffCase]) {
+    let coverage = cases.iter().map(decode_evex_coverage).collect::<Vec<_>>();
+    let actual_selectors = coverage
+        .iter()
+        .map(|coverage| coverage.selector)
+        .collect::<BTreeSet<_>>();
+    let expected_selectors = expected_dispatch_selectors();
+    let missing = expected_selectors
+        .difference(&actual_selectors)
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    let unexpected = actual_selectors
+        .difference(&expected_selectors)
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    assert!(
+        missing.is_empty() && unexpected.is_empty(),
+        "EVEX dispatch selector coverage mismatch\nmissing:\n{}\nunexpected:\n{}",
+        format_debug_set(&missing),
+        format_debug_set(&unexpected)
+    );
+
+    let mut by_selector = BTreeMap::<EvexSelector, Vec<&EvexCoverage>>::new();
+    for item in &coverage {
+        by_selector.entry(item.selector).or_default().push(item);
+    }
+
+    for selector in expected_selectors {
+        let items = by_selector
+            .get(&selector)
+            .unwrap_or_else(|| panic!("missing EVEX selector coverage for {selector:?}"));
+        let forms = items.iter().map(|item| item.form).collect::<BTreeSet<_>>();
+        assert_eq!(
+            forms,
+            BTreeSet::from([OperandForm::Register, OperandForm::Memory]),
+            "{selector:?} must cover register and memory forms"
+        );
+
+        let expected_lls = expected_vector_lengths(selector);
+        if !expected_lls.is_empty() {
+            let lls = items.iter().map(|item| item.ll).collect::<BTreeSet<_>>();
+            assert!(
+                expected_lls.is_subset(&lls),
+                "{selector:?} must cover 128/256/512-bit vector lengths"
+            );
+        }
+
+        let rm_regs = items
+            .iter()
+            .filter_map(|item| item.rm_reg)
+            .collect::<BTreeSet<_>>();
+        let required_rm_regs = BTreeSet::from([0, 8, 16, 24]);
+        assert!(
+            required_rm_regs.is_subset(&rm_regs),
+            "{selector:?} must cover EVEX r/m register extension buckets"
+        );
+    }
+
+    assert!(
+        coverage.iter().any(|item| item.mask == MaskMode::Merge),
+        "EVEX corpus must include merge-masked forms"
+    );
+    assert!(
+        coverage.iter().any(|item| item.mask == MaskMode::Zero),
+        "EVEX corpus must include zero-masked forms"
+    );
 }
 
 fn add_ternary_family(
@@ -439,6 +812,58 @@ fn add_move_family(specs: &mut Vec<CaseSpec>, mnemonic: &str, profile: InputProf
     }
 }
 
+fn raw_evex_reg_store(map: u8, opcode: u8, p1: u8, ll: u8, dst: usize, src: usize) -> Vec<u8> {
+    let mut p0 = map;
+    if src & 0x08 == 0 {
+        p0 |= 0x80;
+    }
+    if dst & 0x10 == 0 {
+        p0 |= 0x40;
+    }
+    if dst & 0x08 == 0 {
+        p0 |= 0x20;
+    }
+    if src & 0x10 == 0 {
+        p0 |= 0x10;
+    }
+
+    vec![
+        0x62,
+        p0,
+        p1,
+        0x08 | (ll << 5),
+        opcode,
+        0xc0 | (((src & 0x7) as u8) << 3) | (dst & 0x7) as u8,
+    ]
+}
+
+fn add_raw_move_store_reg_family(
+    specs: &mut Vec<CaseSpec>,
+    mnemonic: &str,
+    opcode: u8,
+    p1: u8,
+    profile: InputProfile,
+) {
+    for rm in RM_EXT_REGS {
+        spec_raw(
+            specs,
+            format!("{mnemonic}_raw_store_reg_dst_zmm{rm}_src_zmm1"),
+            format!("{mnemonic} %zmm1, %zmm{rm}"),
+            raw_evex_reg_store(1, opcode, p1, 2, rm, 1),
+            profile,
+        );
+    }
+    for (reg_class, ll, dst, src) in [("xmm", 0, 16, 1), ("ymm", 1, 16, 1), ("zmm", 2, 16, 1)] {
+        spec_raw(
+            specs,
+            format!("{mnemonic}_raw_store_reg_{reg_class}_vl"),
+            format!("{mnemonic} %{reg_class}{src}, %{reg_class}{dst}"),
+            raw_evex_reg_store(1, opcode, p1, ll, dst, src),
+            profile,
+        );
+    }
+}
+
 fn add_compare_family(specs: &mut Vec<CaseSpec>, mnemonic: &str) {
     for src1 in SRC1_EXT_REGS {
         for rm in RM_EXT_REGS {
@@ -464,6 +889,18 @@ fn add_compare_family(specs: &mut Vec<CaseSpec>, mnemonic: &str) {
         format!("{mnemonic} %zmm16, %zmm18, %k3 {{%k1}}"),
         InputProfile::Int,
     );
+    for (reg_class, src1, src2) in [
+        ("xmm", "%xmm18", "%xmm16"),
+        ("ymm", "%ymm18", "%ymm16"),
+        ("zmm", "%zmm18", "%zmm16"),
+    ] {
+        spec(
+            specs,
+            format!("{mnemonic}_{reg_class}_vl"),
+            format!("{mnemonic} {src2}, {src1}, %k3"),
+            InputProfile::Int,
+        );
+    }
 }
 
 fn add_vpcmp_imm_family(specs: &mut Vec<CaseSpec>, mnemonic: &str) {
@@ -491,6 +928,18 @@ fn add_vpcmp_imm_family(specs: &mut Vec<CaseSpec>, mnemonic: &str) {
         format!("{mnemonic} $0, %zmm16, %zmm18, %k3 {{%k1}}"),
         InputProfile::Int,
     );
+    for (reg_class, src1, src2) in [
+        ("xmm", "%xmm18", "%xmm16"),
+        ("ymm", "%ymm18", "%ymm16"),
+        ("zmm", "%zmm18", "%zmm16"),
+    ] {
+        spec(
+            specs,
+            format!("{mnemonic}_{reg_class}_vl"),
+            format!("{mnemonic} $4, {src2}, {src1}, %k3"),
+            InputProfile::Int,
+        );
+    }
 }
 
 fn add_broadcast_family(specs: &mut Vec<CaseSpec>, mnemonic: &str, src_reg: &str) {
@@ -518,6 +967,19 @@ fn add_broadcast_family(specs: &mut Vec<CaseSpec>, mnemonic: &str, src_reg: &str
         format!("{mnemonic} %{src_reg}16, %zmm17 {{%k1}}"),
         InputProfile::Int,
     );
+    let widths: &[(&str, &str)] = if mnemonic == "vbroadcastsd" {
+        &[("ymm", "%ymm1"), ("zmm", "%zmm1")]
+    } else {
+        &[("xmm", "%xmm1"), ("ymm", "%ymm1"), ("zmm", "%zmm1")]
+    };
+    for (reg_class, dst) in widths {
+        spec(
+            specs,
+            format!("{mnemonic}_{reg_class}_vl"),
+            format!("{mnemonic} %{src_reg}16, {dst}"),
+            InputProfile::Int,
+        );
+    }
 }
 
 fn generated_specs() -> Vec<CaseSpec> {
@@ -527,9 +989,13 @@ fn generated_specs() -> Vec<CaseSpec> {
     for mnemonic in ["vmovups", "vmovaps"] {
         add_move_family(&mut specs, mnemonic, InputProfile::F32);
     }
+    add_raw_move_store_reg_family(&mut specs, "vmovups", 0x11, 0x7c, InputProfile::F32);
+    add_raw_move_store_reg_family(&mut specs, "vmovaps", 0x29, 0x7c, InputProfile::F32);
     for mnemonic in ["vmovupd", "vmovapd"] {
         add_move_family(&mut specs, mnemonic, InputProfile::F64);
     }
+    add_raw_move_store_reg_family(&mut specs, "vmovupd", 0x11, 0xfd, InputProfile::F64);
+    add_raw_move_store_reg_family(&mut specs, "vmovapd", 0x29, 0xfd, InputProfile::F64);
 
     for mnemonic in ["vaddps", "vmulps", "vsubps", "vdivps", "vxorps"] {
         add_ternary_family(&mut specs, mnemonic, InputProfile::F32, &masked);
@@ -571,6 +1037,16 @@ fn generated_specs() -> Vec<CaseSpec> {
             format!("{mnemonic} %zmm17, (%rax) {{%k1}}"),
             InputProfile::Int,
         );
+    }
+    for (mnemonic, p1) in [
+        ("vmovdqa32", 0x7d),
+        ("vmovdqa64", 0xfd),
+        ("vmovdqu8", 0x7f),
+        ("vmovdqu16", 0xff),
+        ("vmovdqu32", 0x7e),
+        ("vmovdqu64", 0xfe),
+    ] {
+        add_raw_move_store_reg_family(&mut specs, mnemonic, 0x7f, p1, InputProfile::Int);
     }
 
     for mnemonic in [
@@ -616,6 +1092,18 @@ fn generated_specs() -> Vec<CaseSpec> {
             format!("{mnemonic} $3, %zmm16, %zmm17 {{%k1}}"),
             InputProfile::Int,
         );
+        for (reg_class, dst, src) in [
+            ("xmm", "%xmm1", "%xmm16"),
+            ("ymm", "%ymm1", "%ymm16"),
+            ("zmm", "%zmm1", "%zmm16"),
+        ] {
+            spec(
+                &mut specs,
+                format!("{mnemonic}_imm_{reg_class}_vl"),
+                format!("{mnemonic} $3, {src}, {dst}"),
+                InputProfile::Int,
+            );
+        }
     }
     for mnemonic in ["vpsrld", "vpsrad", "vpsraq", "vpslld", "vpsrlq", "vpsllq"] {
         for dst in DST_EXT_REGS {
@@ -635,6 +1123,18 @@ fn generated_specs() -> Vec<CaseSpec> {
                     InputProfile::Int,
                 );
             }
+        }
+        for (reg_class, dst, src1, count) in [
+            ("xmm", "%xmm1", "%xmm2", "%xmm16"),
+            ("ymm", "%ymm1", "%ymm2", "%xmm16"),
+            ("zmm", "%zmm1", "%zmm2", "%xmm16"),
+        ] {
+            spec(
+                &mut specs,
+                format!("{mnemonic}_var_{reg_class}_vl"),
+                format!("{mnemonic} {count}, {src1}, {dst}"),
+                InputProfile::Int,
+            );
         }
     }
 
@@ -669,6 +1169,18 @@ fn generated_specs() -> Vec<CaseSpec> {
                 InputProfile::Int,
             );
         }
+        for (reg_class, dst, src) in [
+            ("xmm", "%xmm1", "%xmm16"),
+            ("ymm", "%ymm1", "%ymm16"),
+            ("zmm", "%zmm1", "%zmm16"),
+        ] {
+            spec(
+                &mut specs,
+                format!("{mnemonic}_{reg_class}_vl"),
+                format!("{mnemonic} {src}, {dst} {{%k1}}"),
+                InputProfile::Int,
+            );
+        }
     }
 
     for mnemonic in [
@@ -682,7 +1194,7 @@ fn generated_specs() -> Vec<CaseSpec> {
         "vpermi2b",
         "vpermt2b",
         "vdpbf16ps",
-        "vmpsadbw",
+        "vdbpsadbw",
         "vpdpbssd",
         "vpdpbssds",
         "vpdpbsud",
@@ -696,7 +1208,7 @@ fn generated_specs() -> Vec<CaseSpec> {
         "vpdpwuud",
         "vpdpwuuds",
     ] {
-        let imm = if mnemonic == "vmpsadbw" { "$3, " } else { "" };
+        let imm = if mnemonic == "vdbpsadbw" { "$3, " } else { "" };
         for dst in DST_EXT_REGS {
             for src1 in SRC1_EXT_REGS {
                 for rm in RM_EXT_REGS {
@@ -714,6 +1226,18 @@ fn generated_specs() -> Vec<CaseSpec> {
                     InputProfile::Int,
                 );
             }
+        }
+        for (reg_class, dst, src1, src2) in [
+            ("xmm", "%xmm1", "%xmm2", "%xmm16"),
+            ("ymm", "%ymm1", "%ymm2", "%ymm16"),
+            ("zmm", "%zmm1", "%zmm2", "%zmm16"),
+        ] {
+            spec(
+                &mut specs,
+                format!("{mnemonic}_{reg_class}_vl"),
+                format!("{mnemonic} {imm}{src2}, {src1}, {dst}"),
+                InputProfile::Int,
+            );
         }
     }
 
@@ -742,6 +1266,18 @@ fn generated_specs() -> Vec<CaseSpec> {
         "vpshufbitqmb %zmm16, %zmm18, %k3 {%k1}",
         InputProfile::Int,
     );
+    for (reg_class, src1, src2) in [
+        ("xmm", "%xmm18", "%xmm16"),
+        ("ymm", "%ymm18", "%ymm16"),
+        ("zmm", "%zmm18", "%zmm16"),
+    ] {
+        spec(
+            &mut specs,
+            format!("vpshufbitqmb_{reg_class}_vl"),
+            format!("vpshufbitqmb {src2}, {src1}, %k3"),
+            InputProfile::Int,
+        );
+    }
 
     for dst in DST_EXT_REGS {
         for rm in RM_EXT_REGS {
@@ -756,6 +1292,18 @@ fn generated_specs() -> Vec<CaseSpec> {
             &mut specs,
             format!("vcvtneps2bf16_dst_ymm{dst}_mem"),
             format!("vcvtneps2bf16 (%rax), %ymm{dst}"),
+            InputProfile::F32,
+        );
+    }
+    for (reg_class, dst, src) in [
+        ("xmm", "%xmm1", "%xmm16"),
+        ("ymm", "%xmm1", "%ymm16"),
+        ("zmm", "%ymm1", "%zmm16"),
+    ] {
+        spec(
+            &mut specs,
+            format!("vcvtneps2bf16_{reg_class}_vl"),
+            format!("vcvtneps2bf16 {src}, {dst}"),
             InputProfile::F32,
         );
     }
@@ -776,6 +1324,18 @@ fn generated_specs() -> Vec<CaseSpec> {
                 InputProfile::F32,
             );
         }
+    }
+    for (reg_class, dst, src1, src2) in [
+        ("xmm", "%xmm1", "%xmm2", "%xmm16"),
+        ("ymm", "%ymm1", "%ymm2", "%ymm16"),
+        ("zmm", "%zmm1", "%zmm2", "%zmm16"),
+    ] {
+        spec(
+            &mut specs,
+            format!("vcvtne2ps2bf16_{reg_class}_vl"),
+            format!("vcvtne2ps2bf16 {src2}, {src1}, {dst}"),
+            InputProfile::F32,
+        );
     }
     for mnemonic in ["vcvttps2ibs", "vcvttps2iubs"] {
         add_unary_rm_family(&mut specs, mnemonic, InputProfile::F32, &[]);
@@ -808,6 +1368,18 @@ fn generated_specs() -> Vec<CaseSpec> {
                 );
             }
         }
+        for (reg_class, dst, src1, src2) in [
+            ("xmm", "%xmm1", "%xmm2", "%xmm16"),
+            ("ymm", "%ymm1", "%ymm2", "%ymm16"),
+            ("zmm", "%zmm1", "%zmm2", "%zmm16"),
+        ] {
+            spec(
+                &mut specs,
+                format!("{mnemonic}_{reg_class}_vl"),
+                format!("{mnemonic} $0, {src2}, {src1}, {dst}"),
+                profile,
+            );
+        }
     }
     for dst in DST_EXT_REGS {
         for src1 in SRC1_EXT_REGS {
@@ -825,6 +1397,18 @@ fn generated_specs() -> Vec<CaseSpec> {
                     InputProfile::F64,
                 );
             }
+            spec(
+                &mut specs,
+                format!("vminmaxss_dst_xmm{dst}_src1_xmm{src1}_mem"),
+                format!("vminmaxss $1, (%rax), %xmm{src1}, %xmm{dst}"),
+                InputProfile::F32,
+            );
+            spec(
+                &mut specs,
+                format!("vminmaxsd_dst_xmm{dst}_src1_xmm{src1}_mem"),
+                format!("vminmaxsd $1, (%rax), %xmm{src1}, %xmm{dst}"),
+                InputProfile::F64,
+            );
         }
     }
 
@@ -881,11 +1465,17 @@ fn assembled_cases(llvm_mc: &Path) -> Vec<DiffCase> {
     let mut cases = Vec::new();
     let mut failures = Vec::new();
     let specs = generated_specs();
+    assert_requested_mnemonic_coverage(&specs);
 
     for spec in specs {
-        let Some(op) = assemble_case(llvm_mc, &spec.asm) else {
-            failures.push(format!("{}: {}", spec.label, spec.asm));
-            continue;
+        let op = if let Some(op) = spec.op {
+            op
+        } else {
+            let Some(op) = assemble_case(llvm_mc, &spec.asm) else {
+                failures.push(format!("{}: {}", spec.label, spec.asm));
+                continue;
+            };
+            op
         };
         assert!(
             op.first() == Some(&0x62),
@@ -908,6 +1498,8 @@ fn assembled_cases(llvm_mc: &Path) -> Vec<DiffCase> {
         "EVEX differential corpus failed to assemble:\n{}",
         failures.join("\n")
     );
+    assert_assembled_mnemonic_coverage(&cases);
+    assert_evex_form_coverage(&cases);
 
     cases
 }
@@ -1043,11 +1635,21 @@ fn assert_same_snapshot(case: &DiffCase, rax: &OutCase, oracle: &OutCase) {
 }
 
 #[test]
-fn qemu_evex_generated_corpus_matches_rax() {
-    let Some(qemu) = qemu_path() else {
-        eprintln!("[skip] qemu-x86_64 unavailable; skipping EVEX differential corpus");
+fn evex_generated_corpus_covers_supported_selectors_and_forms() {
+    let specs = generated_specs();
+    assert_requested_mnemonic_coverage(&specs);
+
+    let Some(llvm_mc) = llvm_mc_path() else {
+        eprintln!("[skip] llvm-mc unavailable; skipping EVEX assembly coverage check");
         return;
     };
+    let cases = assembled_cases(&llvm_mc);
+    assert!(!cases.is_empty(), "EVEX differential corpus is empty");
+}
+
+#[test]
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+fn qemu_evex_generated_corpus_matches_rax() {
     let Some(llvm_mc) = llvm_mc_path() else {
         eprintln!("[skip] llvm-mc unavailable; skipping EVEX differential corpus");
         return;
@@ -1058,6 +1660,11 @@ fn qemu_evex_generated_corpus_matches_rax() {
         eprintln!("[skip] llvm-mc did not assemble any EVEX differential cases");
         return;
     }
+
+    let Some(qemu) = qemu_path() else {
+        eprintln!("[skip] qemu-x86_64 unavailable; skipping EVEX differential corpus");
+        return;
+    };
 
     let Some(oracle) = oracle_path(&cases) else {
         eprintln!("[skip] EVEX oracle build failed or compiler unavailable");

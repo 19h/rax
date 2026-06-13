@@ -827,13 +827,13 @@ impl X86_64Vcpu {
             // ============================================================================
 
             // VPDPBUSD (0x50) - Multiply and Add Unsigned and Signed Bytes
-            0x50 if evex.pp == 1 => self.execute_vpdpbusd(ctx, false),
+            0x50 if evex.pp == 1 && !evex.w => self.execute_vpdpbusd(ctx, false),
             // VPDPBUSDS (0x51) - Multiply and Add Unsigned and Signed Bytes with Saturation
-            0x51 if evex.pp == 1 => self.execute_vpdpbusd(ctx, true),
+            0x51 if evex.pp == 1 && !evex.w => self.execute_vpdpbusd(ctx, true),
             // VPDPWSSD (0x52) - Multiply and Add Signed Word Integers
             0x52 if evex.pp == 1 && !evex.w => self.execute_vpdpwssd(ctx, false),
             // VPDPWSSDS (0x53) - Multiply and Add Signed Word Integers with Saturation
-            0x53 if evex.pp == 1 => self.execute_vpdpwssd(ctx, true),
+            0x53 if evex.pp == 1 && !evex.w => self.execute_vpdpwssd(ctx, true),
 
             // ============================================================================
             // AVX10.1 IFMA Instructions
@@ -895,34 +895,21 @@ impl X86_64Vcpu {
             0x72 if evex.pp == 3 && !evex.w => self.execute_vcvtne2ps2bf16(ctx),
 
             // ============================================================================
-            // AVX10.2 Saturation Conversion Instructions
-            // ============================================================================
-
-            // VCVTTPS2IBS (0x68) - Convert with Truncation Packed Single to Signed Byte with Saturation
-            0x68 if evex.pp == 0 && !evex.w => self.execute_vcvttps2ibs(ctx),
-            // VCVTTPS2IUBS (0x6A) - Convert with Truncation Packed Single to Unsigned Byte with Saturation
-            0x6A if evex.pp == 0 && !evex.w => self.execute_vcvttps2iubs(ctx),
-            // VCVTTPD2QQS (0x6D) - Convert with Truncation Packed Double to Signed Qword with Saturation
-            0x6D if evex.pp == 1 && evex.w => self.execute_vcvttpd2qqs(ctx),
-            // VCVTTPD2UQQS (0x6C) - Convert with Truncation Packed Double to Unsigned Qword with Saturation
-            0x6C if evex.pp == 1 && evex.w => self.execute_vcvttpd2uqqs(ctx),
-
-            // ============================================================================
             // AVX10.2 Media Acceleration Instructions (VPDPB*/VPDPW*)
             // ============================================================================
 
             // VPDPBSSD (0x50) - Multiply and Add Signed Byte Integers
-            0x50 if evex.pp == 2 && !evex.w => self.execute_vpdpbssd(ctx, false),
+            0x50 if evex.pp == 3 && !evex.w => self.execute_vpdpbssd(ctx, false),
             // VPDPBSSDS (0x51) - Multiply and Add Signed Byte Integers with Saturation
-            0x51 if evex.pp == 2 && !evex.w => self.execute_vpdpbssd(ctx, true),
+            0x51 if evex.pp == 3 && !evex.w => self.execute_vpdpbssd(ctx, true),
             // VPDPBSUD (0x50) - Multiply and Add Signed/Unsigned Byte Integers
-            0x50 if evex.pp == 2 && evex.w => self.execute_vpdpbsud(ctx, false),
+            0x50 if evex.pp == 2 && !evex.w => self.execute_vpdpbsud(ctx, false),
             // VPDPBSUDS (0x51) - Multiply and Add Signed/Unsigned Byte Integers with Saturation
-            0x51 if evex.pp == 2 && evex.w => self.execute_vpdpbsud(ctx, true),
+            0x51 if evex.pp == 2 && !evex.w => self.execute_vpdpbsud(ctx, true),
             // VPDPBUUD (0x50) - Multiply and Add Unsigned Byte Integers
-            0x50 if evex.pp == 0 && evex.w => self.execute_vpdpbuud(ctx, false),
+            0x50 if evex.pp == 0 && !evex.w => self.execute_vpdpbuud(ctx, false),
             // VPDPBUUDS (0x51) - Multiply and Add Unsigned Byte Integers with Saturation
-            0x51 if evex.pp == 0 && evex.w => self.execute_vpdpbuud(ctx, true),
+            0x51 if evex.pp == 0 && !evex.w => self.execute_vpdpbuud(ctx, true),
             // VPDPWSUD (0xD2) - Multiply and Add Signed/Unsigned Word Integers
             0xD2 if evex.pp == 2 && !evex.w => self.execute_vpdpwsud(ctx, false),
             // VPDPWSUDS (0xD3) - Multiply and Add Signed/Unsigned Word Integers with Saturation
@@ -976,22 +963,22 @@ impl X86_64Vcpu {
             }
 
             // ============================================================================
-            // AVX10.2 VMPSADBW Instruction
+            // AVX-512 VDBPSADBW Instruction
             // ============================================================================
 
-            // VMPSADBW (0x42) - Compute Multiple Packed Sums of Absolute Difference
-            0x42 if evex.pp == 1 => self.execute_vmpsadbw(ctx),
+            // VDBPSADBW (0x42) - Double Block Packed Sum-Absolute-Differences
+            0x42 if evex.pp == 1 => self.execute_vdbpsadbw(ctx),
 
             // ============================================================================
             // AVX10.2 VMINMAX Instructions
             // ============================================================================
 
             // VMINMAXPS (0x52) - Minimum/Maximum of Packed Single-Precision Floats
-            0x52 if evex.pp == 0 && !evex.w => self.execute_vminmax_ps(ctx),
+            0x52 if evex.pp == 1 && !evex.w => self.execute_vminmax_ps(ctx),
             // VMINMAXPD (0x52) - Minimum/Maximum of Packed Double-Precision Floats
             0x52 if evex.pp == 1 && evex.w => self.execute_vminmax_pd(ctx),
             // VMINMAXSS (0x53) - Minimum/Maximum of Scalar Single-Precision Float
-            0x53 if evex.pp == 0 && !evex.w => self.execute_vminmax_ss(ctx),
+            0x53 if evex.pp == 1 && !evex.w => self.execute_vminmax_ss(ctx),
             // VMINMAXSD (0x53) - Minimum/Maximum of Scalar Double-Precision Float
             0x53 if evex.pp == 1 && evex.w => self.execute_vminmax_sd(ctx),
 
@@ -1011,6 +998,14 @@ impl X86_64Vcpu {
         // MAP5 instructions are FP16 (half-precision) arithmetic
         // pp=0 (NP), W=0 for packed FP16
         match opcode {
+            // VCVTTPS2IBS (0x68) - Convert with Truncation Packed Single to Signed Byte with Saturation
+            0x68 if evex.pp == 1 && !evex.w => self.execute_vcvttps2ibs(ctx),
+            // VCVTTPS2IUBS (0x6A) - Convert with Truncation Packed Single to Unsigned Byte with Saturation
+            0x6A if evex.pp == 1 && !evex.w => self.execute_vcvttps2iubs(ctx),
+            // VCVTTPD2QQS (0x6D) - Convert with Truncation Packed Double to Signed Qword with Saturation
+            0x6D if evex.pp == 1 && evex.w => self.execute_vcvttpd2qqs(ctx),
+            // VCVTTPD2UQQS (0x6C) - Convert with Truncation Packed Double to Unsigned Qword with Saturation
+            0x6C if evex.pp == 1 && evex.w => self.execute_vcvttpd2uqqs(ctx),
             // VADDPH (0x58)
             0x58 if evex.pp == 0 => self.execute_evex_fp16_arith(ctx, |a, b| a + b),
             // VMULPH (0x59)
@@ -1814,11 +1809,11 @@ impl X86_64Vcpu {
     }
 
     // ============================================================================
-    // AVX10.2 VMPSADBW Instruction Implementation
+    // AVX-512 VDBPSADBW Instruction Implementation
     // ============================================================================
 
-    /// VMPSADBW - Compute Multiple Packed Sums of Absolute Difference
-    fn execute_vmpsadbw(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    /// VDBPSADBW - Double Block Packed Sum-Absolute-Differences
+    fn execute_vdbpsadbw(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let imm8 = ctx.consume_u8()?;
