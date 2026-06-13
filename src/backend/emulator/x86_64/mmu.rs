@@ -653,6 +653,19 @@ impl Mmu {
         (sregs.efer & efer::LMA) != 0 && (sregs.efer & efer::LME) != 0
     }
 
+    /// Check whether a linear address is in canonical form.
+    ///
+    /// With 4-level paging the linear address is 48 bits, so bits 63:48 must be
+    /// a sign-extension of bit 47. RAX only implements 4-level paging (see
+    /// `translate_slow`), so the canonical boundary is fixed at bit 47. (Under
+    /// 5-level paging / LA57 it would move to bit 56.)
+    #[inline(always)]
+    fn is_canonical(vaddr: u64) -> bool {
+        // Replicate bit 47 across bits 63:48 via an arithmetic shift; if the
+        // result is unchanged the address was already canonical.
+        ((vaddr as i64) << 16 >> 16) as u64 == vaddr
+    }
+
     /// Compute TLB index from virtual address (uses bits that vary most)
     #[inline(always)]
     fn tlb_index(vaddr: u64) -> usize {
@@ -696,6 +709,16 @@ impl Mmu {
         // If paging is disabled, virtual = physical
         if !self.paging_enabled(sregs) {
             return Ok(vaddr);
+        }
+
+        // In 64-bit (long) mode the CPU validates that a linear address is
+        // canonical *before* consulting the paging structures. A data access to
+        // a non-canonical address raises #GP(0) (or #SS(0) for stack-segment
+        // accesses) — it is never a page fault. Reject it here so the page-table
+        // walk never runs on a bogus address and callers surface the correct
+        // fault. (Intel SDM Vol. 1 §3.3.7.1 "Canonical Addressing".)
+        if self.long_mode(sregs) && !Self::is_canonical(vaddr) {
+            return Err(Error::GeneralProtection { error_code: 0 });
         }
 
         // Check for CR3 change (context switch) - flush TLB

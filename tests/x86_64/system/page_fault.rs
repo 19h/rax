@@ -1740,9 +1740,10 @@ fn test_pf_cmpxchg() {
 /// - Address 0x0000800000000000 has bit 47=1 but bits 48-63=0, so it's non-canonical
 /// - Non-canonical addresses should trigger #GP(0), not #PF
 ///
-/// Currently ignored because the emulator doesn't implement canonical address checking.
+/// The MMU validates canonical form before walking the page tables (see
+/// `Mmu::translate` / `Mmu::is_canonical`); a non-canonical data access yields
+/// #GP(0), which the run loop delivers via vector 13.
 #[test]
-#[ignore = "Emulator doesn't implement canonical address checking - should trigger #GP, not #PF"]
 fn test_noncanonical_address_gp() {
     let mem = setup_paged_memory();
     let mut vcpu = create_paged_vcpu(mem.clone());

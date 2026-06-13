@@ -1224,6 +1224,15 @@ impl X86_64Vcpu {
                 Err(e) => last_err = Some(e),
             }
         }
+        // If not even a single byte was fetchable, the failure is architectural,
+        // not internal. A non-canonical RIP fails every length above with #GP;
+        // surface that fault so the run loop delivers it instead of aborting the
+        // VM with a generic emulator error. (#PF already returned above; the
+        // smaller-length retries handle a short instruction whose 15-byte fetch
+        // window merely spills past a page or canonical boundary.)
+        if let Some(e @ Error::GeneralProtection { .. }) = last_err {
+            return Err(e);
+        }
         // Debug: print the actual error
         if let Some(e) = &last_err {
             eprintln!(
@@ -2620,6 +2629,22 @@ impl VCpu for X86_64Vcpu {
                             return Err(Error::Emulator(format!(
                                 "#PF at vaddr={:#x} (error_code={:#x}, RIP={:#x}): {}",
                                 vaddr, error_code, self.regs.rip, e
+                            )));
+                        }
+                    }
+                }
+                Err(Error::GeneralProtection { error_code }) => {
+                    // Inject #GP (vector 13) into the guest. RIP still points at
+                    // the faulting instruction (it is advanced only after an
+                    // instruction retires), so the pushed frame restarts it.
+                    // Unlike #PF, a #GP does not set CR2.
+                    match self.inject_exception(13, Some(error_code)) {
+                        Ok(()) => continue,
+                        Err(e) => {
+                            publish_instruction_count(self.insn_count);
+                            return Err(Error::Emulator(format!(
+                                "#GP (error_code={:#x}, RIP={:#x}) delivery failed: {}",
+                                error_code, self.regs.rip, e
                             )));
                         }
                     }
