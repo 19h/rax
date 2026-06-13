@@ -156,26 +156,89 @@ const KERNEL_FDISK_TRACE_PCS: &[(u32, &str)] = &[
     (0xC036_A8C8, "iomedia class string ref"),
 ];
 const KERNEL_NANDFTL_TRACE_PCS: &[(u32, &str)] = &[
-    (0xC037_D7C0, "nandftl start provider/super result"),
-    (0xC037_D800, "nandftl init backing object"),
-    (0xC037_D830, "nandftl FIL init returned"),
-    (0xC037_D860, "nandftl after FIL init cleanup"),
-    (0xC037_D880, "nandftl query provider geometry"),
-    (0xC037_D8B0, "nandftl query provider geometry"),
-    (0xC037_D930, "nandftl post FTL init flags"),
-    (0xC037_DA70, "nandftl create workloop"),
-    (0xC037_DA90, "nandftl workloop result"),
-    (0xC037_DB30, "nandftl set capabilities"),
-    (0xC037_DBB0, "nandftl create command gate"),
-    (0xC037_DBD0, "nandftl block device allocation result"),
-    (0xC037_DBF0, "nandftl block device allocation check"),
-    (0xC037_DC20, "nandftl attach block device"),
-    (0xC037_DC50, "nandftl release block device"),
-    (0xC037_DC80, "nandftl success log flag check"),
-    (0xC037_DCA0, "nandftl success path"),
-    (0xC037_DCB8, "nandftl start success return"),
-    (0xC037_DCC0, "nandftl retry/failure loop"),
-    (0xC037_DCD0, "nandftl start cleanup return"),
+    (0xC046_0800, "nandftl FIL init entry"),
+    (0xC046_0824, "nandftl FIL read fallback path"),
+    (0xC046_0860, "nandftl FIL write multiple capability"),
+    (0xC046_08B4, "nandftl FIL init failure branch"),
+    (0xC046_08C0, "nandftl FIL init failure cleanup"),
+    (0xC046_09C0, "nandftl FIL init return path"),
+    (0xC046_2858, "nandftl provider match result"),
+    (0xC046_2890, "nandftl superclass start result"),
+    (0xC046_28B4, "nandftl capabilities lookup result"),
+    (0xC046_28D8, "nandftl call FIL init wrapper"),
+    (0xC046_28E0, "nandftl FIL init wrapper result"),
+    (0xC046_28EC, "nandftl call buffer init"),
+    (0xC046_28F0, "nandftl buffer init result"),
+    (0xC046_29C4, "nandftl AND init result"),
+    (0xC046_29FC, "nandftl AND init success"),
+    (0xC046_2AE4, "nandftl create workloop call"),
+    (0xC046_2AF4, "nandftl workloop result"),
+    (0xC046_2B04, "nandftl command gate result"),
+    (0xC046_2B08, "nandftl workloop/command gate check"),
+    (0xC046_2B24, "nandftl add command gate to workloop call"),
+    (0xC046_2B28, "nandftl add command gate to workloop result"),
+    (0xC046_2B30, "nandftl workloop/command gate failure"),
+    (0xC046_2B4C, "nandftl resolve block device super"),
+    (0xC046_2B5C, "nandftl store block device super"),
+    (0xC046_2B88, "nandftl resolve userclient super"),
+    (0xC046_2B9C, "nandftl register userclient class"),
+    (0xC046_2BA4, "nandftl register userclient class call"),
+    (0xC046_2BC0, "nandftl start workloop hookup"),
+    (0xC046_2BD0, "nandftl start provider hookup"),
+    (0xC046_2C1C, "nandftl start register service"),
+    (0xC046_2C40, "nandftl allocate block device call"),
+    (0xC046_2C48, "nandftl block device allocation result"),
+    (0xC046_2C50, "nandftl block device allocation failure"),
+    (0xC046_2C64, "nandftl attach block device call"),
+    (0xC046_2C68, "nandftl attach block device result"),
+    (0xC046_2C70, "nandftl attach block device failure"),
+    (0xC046_2C94, "nandftl block device attached"),
+    (0xC046_2CE4, "nandftl open block device"),
+    (0xC046_2D04, "nandftl success log flag check"),
+    (0xC046_2D14, "nandftl publish ready status"),
+    (0xC046_2D2C, "nandftl start success return"),
+    (0xC046_2D34, "nandftl inheritance retry decision"),
+    (0xC046_2D44, "nandftl inheritance retry branch"),
+    (0xC046_2D48, "nandftl inheritance unsupported branch"),
+    (0xC046_2D4C, "nandftl start epilogue"),
+];
+const KERNEL_WMR_TRACE_PCS: &[(u32, &str)] = &[
+    (0xC046_3AC8, "wmr init entry"),
+    (0xC046_3B38, "wmr FIL init result"),
+    (0xC046_3B50, "wmr BUF init result"),
+    (0xC046_3B68, "wmr VFL init result"),
+    (0xC046_3B80, "wmr FTL init result"),
+    (0xC046_3B90, "wmr post FTL init ok"),
+    (0xC046_3B98, "wmr function table result"),
+    (0xC046_3BA4, "wmr BUF_Get call"),
+    (0xC046_3BA8, "wmr BUF_Get result"),
+    (0xC046_3BBC, "wmr signature loop enter"),
+    (0xC046_3BC0, "wmr signature read setup"),
+    (0xC046_3BD8, "wmr signature read call"),
+    (0xC046_3BDC, "wmr signature read result"),
+    (0xC046_3C08, "wmr signature fallback read call"),
+    (0xC046_3C0C, "wmr signature fallback read result"),
+    (0xC046_3C10, "wmr signature status check"),
+    (0xC046_3C5C, "wmr unit NAND format info"),
+    (0xC046_3C88, "wmr signature mismatch"),
+    (0xC046_3C9C, "wmr signature loop condition"),
+    (0xC046_3CB8, "wmr BUF_Free call"),
+    (0xC046_3CC4, "wmr signature found check"),
+    (0xC046_3CE8, "wmr epoch update notify call"),
+    (0xC046_3D10, "wmr VFL_Open call"),
+    (0xC046_3D18, "wmr VFL_Open result"),
+    (0xC046_3D54, "wmr invalid format decision"),
+    (0xC046_3D5C, "wmr invalid format log"),
+    (0xC046_3DD4, "wmr reformat notify call"),
+    (0xC046_3E14, "wmr production format call"),
+    (0xC046_3F48, "wmr VFL_Open ok"),
+    (0xC046_3F5C, "wmr FTL_Open call"),
+    (0xC046_3F64, "wmr FTL_Open result"),
+    (0xC046_3FA8, "wmr FTL_Open ok"),
+    (0xC046_3FB0, "wmr success return"),
+    (0xC046_3FB8, "wmr init critical error return"),
+    (0xC046_3FC0, "wmr init unrecoverable return"),
+    (0xC046_3FC4, "wmr init epilogue"),
 ];
 const IBOOT_FSBOOT_TRACE_PCS: &[(u32, &str)] = &[
     (IBOOT_BASE + 0x0000_4224, "image-helper args"),
@@ -993,6 +1056,9 @@ pub struct S5L8900Vcpu {
     fdisk_trace_remaining: u32,
     nandftl_trace_seen: Vec<(u32, u32)>,
     nandftl_trace_remaining: u32,
+    wmr_trace_seen: Vec<(u32, u32)>,
+    wmr_trace_remaining: u32,
+    wmr_init_active: bool,
     partition_trace_remaining: u32,
     iokit_match_follow_remaining: u32,
     kernel_trace_remaining: u32,
@@ -1029,6 +1095,8 @@ pub struct S5L8900Vcpu {
     irq_trace_start_insn: u64,
     irq_trace_budget: u32,
     last_irq_trace: u128,
+    adm_irq_trace_budget: u32,
+    last_adm_irq_trace: u128,
     i2c_irq_trace_budget: u32,
     last_i2c1_irq_trace: u128,
     shutdown: bool,
@@ -1130,6 +1198,12 @@ impl S5L8900Vcpu {
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(0),
+            wmr_trace_seen: Vec::new(),
+            wmr_trace_remaining: std::env::var("RAX_S5L_WMR_TRACE")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(0),
+            wmr_init_active: false,
             partition_trace_remaining: std::env::var("RAX_S5L_PARTITION_TRACE")
                 .ok()
                 .and_then(|v| v.parse().ok())
@@ -1211,6 +1285,11 @@ impl S5L8900Vcpu {
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(512),
             last_irq_trace: u128::MAX,
+            adm_irq_trace_budget: std::env::var("RAX_S5L_ADMIRQ_TRACE")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(0),
+            last_adm_irq_trace: u128::MAX,
             i2c_irq_trace_budget: std::env::var("RAX_S5L_I2CIRQLOG")
                 .ok()
                 .and_then(|v| v.parse().ok())
@@ -1278,6 +1357,59 @@ impl S5L8900Vcpu {
         // VIC1 daisy-chains into VIC0.
         inner.refresh_vic_daisy();
         let daisy = inner.vic0.daisy_input;
+        let cpu_irq = inner.vic0.irq_asserted();
+        if self.adm_irq_trace_budget != 0 && inner.kernel_started {
+            let (v0_cur, v0_high, v0_prio, v0_depth, v0_irq_line, _) =
+                inner.vic0.debug_priority_state();
+            let (v1_cur, v1_high, v1_prio, v1_depth, v1_irq_line, _) =
+                inner.vic1.debug_priority_state();
+            let trace = (adm_lvl as u128)
+                | ((dmac0_lvl as u128) << 1)
+                | ((daisy as u128) << 2)
+                | ((cpu_irq as u128) << 3)
+                | (((inner.vic0.rawintr as u128) & 0xffff) << 8)
+                | (((inner.vic0.intenable as u128) & 0xffff) << 24)
+                | (((inner.vic1.rawintr as u128) & 0xffff) << 40)
+                | (((inner.vic1.intenable as u128) & 0xffff) << 56)
+                | (((v0_cur as u128) & 0x3f) << 72)
+                | (((v0_high as u128) & 0x3f) << 78)
+                | (((v0_prio as u128) & 0x1f) << 84)
+                | (((v1_cur as u128) & 0x3f) << 89)
+                | (((v1_high as u128) & 0x3f) << 95)
+                | (((v1_prio as u128) & 0x1f) << 101);
+            if trace != self.last_adm_irq_trace {
+                self.last_adm_irq_trace = trace;
+                self.adm_irq_trace_budget -= 1;
+                info!(
+                    pc = format!("{:#x}", self.cpu.regs[15]),
+                    cpsr = format!("{:#x}", self.cpu.cpsr.to_u32()),
+                    adm_lvl,
+                    dmac0_lvl,
+                    daisy,
+                    cpu_irq,
+                    v0_raw = format!("{:#x}", inner.vic0.rawintr),
+                    v0_en = format!("{:#x}", inner.vic0.intenable),
+                    v0_irq = format!("{:#x}", inner.vic0.irq_status),
+                    v0_addr = format!("{:#x}", inner.vic0.address),
+                    v0_cur,
+                    v0_high,
+                    v0_prio,
+                    v0_depth,
+                    v0_irq_line,
+                    v1_raw = format!("{:#x}", inner.vic1.rawintr),
+                    v1_en = format!("{:#x}", inner.vic1.intenable),
+                    v1_irq = format!("{:#x}", inner.vic1.irq_status),
+                    v1_addr = format!("{:#x}", inner.vic1.address),
+                    v1_cur,
+                    v1_high,
+                    v1_prio,
+                    v1_depth,
+                    v1_irq_line,
+                    insns = self.insn_count,
+                    "adm irq trace"
+                );
+            }
+        }
         if self.irq_trace
             && inner.kernel_started
             && self.irq_trace_budget != 0
@@ -1340,7 +1472,7 @@ impl S5L8900Vcpu {
                 );
             }
         }
-        inner.vic0.irq_asserted()
+        cpu_irq
     }
 
     fn advance_irq_samples(&mut self) {
@@ -1463,9 +1595,37 @@ impl S5L8900Vcpu {
         // A write without bit1 set acknowledges/clears the completion interrupt
         // (mirrors qemu_irq_lower when (value & 0x2) == 0).
         if value & 0x2 == 0 {
-            self.bridge.inner.borrow_mut().adm_irq = false;
+            let mut inner = self.bridge.inner.borrow_mut();
+            inner.adm_irq = false;
             if std::env::var("RAX_S5L_ADM_TRACE").is_ok() {
                 debug!(value = format!("{value:#x}"), "adm_irq_clear");
+            }
+            if std::env::var_os("RAX_S5L_ADMIRQ_TRACE").is_some() && inner.kernel_started {
+                let (v0_cur, v0_high, v0_prio, v0_depth, v0_irq_line, _) =
+                    inner.vic0.debug_priority_state();
+                let (v1_cur, v1_high, v1_prio, v1_depth, v1_irq_line, _) =
+                    inner.vic1.debug_priority_state();
+                info!(
+                    value = format!("{value:#x}"),
+                    v0_raw = format!("{:#x}", inner.vic0.rawintr),
+                    v0_en = format!("{:#x}", inner.vic0.intenable),
+                    v0_irq = format!("{:#x}", inner.vic0.irq_status),
+                    v0_cur,
+                    v0_high,
+                    v0_prio,
+                    v0_depth,
+                    v0_irq_line,
+                    v1_raw = format!("{:#x}", inner.vic1.rawintr),
+                    v1_en = format!("{:#x}", inner.vic1.intenable),
+                    v1_irq = format!("{:#x}", inner.vic1.irq_status),
+                    v1_cur,
+                    v1_high,
+                    v1_prio,
+                    v1_depth,
+                    v1_irq_line,
+                    insns = self.insn_count,
+                    "adm completion cleared"
+                );
             }
             return;
         }
@@ -1490,7 +1650,7 @@ impl S5L8900Vcpu {
                 let mut bank = (self.phys_r32(data2 + 0x1104 + 0x44) & 0xFF) as u32;
                 let mut page = bswap(self.phys_r32(data2 + 0x1104 + 0x244));
                 let kernel_started = self.bridge.inner.borrow().kernel_started;
-                if kernel_started && bank == 0 && page == 0 {
+                if kernel_started && !self.wmr_init_active && bank == 0 && page == 0 {
                     let remapped_page = std::env::var("RAX_S5L_LOGICAL0_PAGE")
                         .ok()
                         .and_then(|value| value.parse::<u32>().ok());
@@ -1653,7 +1813,38 @@ impl S5L8900Vcpu {
                 "kernel adm stack trace"
             );
         }
-        self.bridge.inner.borrow_mut().adm_irq = true;
+        let mut inner = self.bridge.inner.borrow_mut();
+        inner.adm_irq = true;
+        if std::env::var_os("RAX_S5L_ADMIRQ_TRACE").is_some() && inner.kernel_started {
+            let (v0_cur, v0_high, v0_prio, v0_depth, v0_irq_line, _) =
+                inner.vic0.debug_priority_state();
+            let (v1_cur, v1_high, v1_prio, v1_depth, v1_irq_line, _) =
+                inner.vic1.debug_priority_state();
+            info!(
+                cmd = format!("{cmd:#x}"),
+                num_pages,
+                first_bank,
+                first_page,
+                v0_raw = format!("{:#x}", inner.vic0.rawintr),
+                v0_en = format!("{:#x}", inner.vic0.intenable),
+                v0_irq = format!("{:#x}", inner.vic0.irq_status),
+                v0_cur,
+                v0_high,
+                v0_prio,
+                v0_depth,
+                v0_irq_line,
+                v1_raw = format!("{:#x}", inner.vic1.rawintr),
+                v1_en = format!("{:#x}", inner.vic1.intenable),
+                v1_irq = format!("{:#x}", inner.vic1.irq_status),
+                v1_cur,
+                v1_high,
+                v1_prio,
+                v1_depth,
+                v1_irq_line,
+                insns = self.insn_count,
+                "adm completion raised"
+            );
+        }
     }
 
     fn step(&mut self) -> StepOutcome {
@@ -1850,6 +2041,8 @@ impl S5L8900Vcpu {
             self.trace_root_boot(pc);
             self.trace_admfmc_perform_io(pc);
             self.trace_nandftl_start(pc);
+            self.track_wmr_init(pc);
+            self.trace_wmr_init(pc);
         }
         if pc == KERNEL_SLEH_ABORT {
             self.trace_kernel_sleh_abort_frame();
@@ -2235,6 +2428,125 @@ impl S5L8900Vcpu {
             insns = self.insn_count,
             "nandftl start trace"
         );
+    }
+
+    fn trace_wmr_init(&mut self, pc: u32) {
+        if self.wmr_trace_remaining == 0 {
+            return;
+        }
+
+        let Some((_, reason)) = KERNEL_WMR_TRACE_PCS
+            .iter()
+            .find(|(trace_pc, _)| *trace_pc == pc)
+        else {
+            return;
+        };
+
+        let sp = self.cpu.regs[13];
+        let lr = self.cpu.regs[14];
+        let loop_index = self
+            .bridge
+            .read_word(sp.wrapping_add(0x24))
+            .unwrap_or(self.cpu.regs[4]);
+        let dedup_tag = match pc {
+            0xC046_3BBC..=0xC046_3CB8 => loop_index,
+            _ => lr & !1,
+        };
+        let key = (pc, dedup_tag);
+        if self.wmr_trace_seen.contains(&key) {
+            return;
+        }
+        self.wmr_trace_seen.push(key);
+        self.wmr_trace_remaining -= 1;
+
+        let func_tbl = self.bridge.read_word(sp.wrapping_add(0x14)).unwrap_or(0);
+        let buf_desc = self.bridge.read_word(sp.wrapping_add(0x0c)).unwrap_or(0);
+        let status = self.bridge.read_word(sp.wrapping_add(0x10)).unwrap_or(0);
+        let unit_sig = self.bridge.read_word(sp.wrapping_add(0x18)).unwrap_or(0);
+        let sig_found = self.bridge.read_word(sp.wrapping_add(0x1c)).unwrap_or(0);
+        let blk0_clean = self.bridge.read_word(sp.wrapping_add(0x20)).unwrap_or(0);
+        let func_read = self
+            .bridge
+            .read_word(func_tbl.wrapping_add(0x04))
+            .unwrap_or(0);
+        let func_read_sig = self
+            .bridge
+            .read_word(func_tbl.wrapping_add(0x14))
+            .unwrap_or(0);
+        let func_notify = self
+            .bridge
+            .read_word(func_tbl.wrapping_add(0x28))
+            .unwrap_or(0);
+        let buf_main = self.bridge.read_word(buf_desc).unwrap_or(0);
+        let buf_spare = self
+            .bridge
+            .read_word(buf_desc.wrapping_add(0x04))
+            .unwrap_or(0);
+        let buf_state = self
+            .bridge
+            .read_word(buf_desc.wrapping_add(0x08))
+            .unwrap_or(0);
+        let cs_count = self
+            .bridge
+            .read_halfword(self.cpu.regs[6].wrapping_add(0x0c))
+            .unwrap_or(0);
+
+        info!(
+            pc = format!("{pc:#x}"),
+            reason,
+            r0 = format!("{:#x}", self.cpu.regs[0]),
+            r1 = format!("{:#x}", self.cpu.regs[1]),
+            r2 = format!("{:#x}", self.cpu.regs[2]),
+            r3 = format!("{:#x}", self.cpu.regs[3]),
+            r4 = format!("{:#x}", self.cpu.regs[4]),
+            r5 = format!("{:#x}", self.cpu.regs[5]),
+            r6 = format!("{:#x}", self.cpu.regs[6]),
+            r7 = format!("{:#x}", self.cpu.regs[7]),
+            r8 = format!("{:#x}", self.cpu.regs[8]),
+            r9 = format!("{:#x}", self.cpu.regs[9]),
+            r10 = format!("{:#x}", self.cpu.regs[10]),
+            r11 = format!("{:#x}", self.cpu.regs[11]),
+            r12 = format!("{:#x}", self.cpu.regs[12]),
+            sp = format!("{sp:#x}"),
+            lr = format!("{lr:#x}"),
+            func_tbl = format!("{func_tbl:#x}"),
+            func_read = format!("{func_read:#x}"),
+            func_read_sig = format!("{func_read_sig:#x}"),
+            func_notify = format!("{func_notify:#x}"),
+            buf_desc = format!("{buf_desc:#x}"),
+            buf_main = format!("{buf_main:#x}"),
+            buf_spare = format!("{buf_spare:#x}"),
+            buf_state = format!("{buf_state:#x}"),
+            status = format!("{status:#x}"),
+            unit_sig = format!("{unit_sig:#x}"),
+            sig_found = format!("{sig_found:#x}"),
+            blk0_clean = format!("{blk0_clean:#x}"),
+            loop_index = format!("{loop_index:#x}"),
+            cs_count = cs_count,
+            r0_words = self.guest_word_window(self.cpu.regs[0], 8),
+            r1_words = self.guest_word_window(self.cpu.regs[1], 8),
+            r2_words = self.guest_word_window(self.cpu.regs[2], 8),
+            r3_words = self.guest_word_window(self.cpu.regs[3], 8),
+            wmr_global_words = self.guest_word_window(self.cpu.regs[6], 24),
+            func_tbl_words = self.guest_word_window(func_tbl, 12),
+            buf_desc_words = self.guest_word_window(buf_desc, 6),
+            buf_main_words = self.guest_word_window(buf_main, 8),
+            sp_words = self.guest_word_window(sp, 16),
+            stack_refs = self.stack_code_refs(sp, 96),
+            trail = self.recent_pc_trail(36),
+            insns = self.insn_count,
+            "wmr init trace"
+        );
+    }
+
+    fn track_wmr_init(&mut self, pc: u32) {
+        match pc {
+            0xC046_3AC8 => self.wmr_init_active = true,
+            0xC046_3FB0 | 0xC046_3FB8 | 0xC046_3FC0 | 0xC046_3FC4 => {
+                self.wmr_init_active = false;
+            }
+            _ => {}
+        }
     }
 
     fn trace_partition_scan(&mut self, pc: u32) {

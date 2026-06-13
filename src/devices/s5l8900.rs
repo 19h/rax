@@ -743,8 +743,8 @@ pub struct Pl192 {
     current: u32,
     current_highest: u32,
     priority: u32,
-    priority_stack: [u32; PL192_INT_SOURCES + 2],
-    irq_stack: [u32; PL192_INT_SOURCES + 2],
+    priority_stack: [u32; PL192_PRIO_LEVELS + 1],
+    irq_stack: [u32; PL192_PRIO_LEVELS + 1],
     stack_i: usize,
     priority_mode: bool,
 }
@@ -771,8 +771,8 @@ impl Pl192 {
             current: PL192_NO_IRQ,
             current_highest: PL192_NO_IRQ,
             stack_i: 0,
-            priority_stack: [0x10; PL192_INT_SOURCES + 2],
-            irq_stack: [PL192_NO_IRQ; PL192_INT_SOURCES + 2],
+            priority_stack: [0x10; PL192_PRIO_LEVELS + 1],
+            irq_stack: [PL192_NO_IRQ; PL192_PRIO_LEVELS + 1],
             priority: 0x10,
             priority_mode: false,
         }
@@ -878,9 +878,8 @@ impl Pl192 {
                 _ => self.address,
             };
             if self.current_highest <= PL192_DAISY_IRQ {
-                if self.current_highest != self.current
-                    && self.priority_for(self.current_highest) >= self.priority
-                {
+                if self.priority_for(self.current_highest) >= self.priority {
+                    self.irq_line = false;
                     return;
                 }
                 self.irq_line = true;
@@ -904,6 +903,17 @@ impl Pl192 {
 
     pub fn fiq_asserted(&self) -> bool {
         self.fiq_line
+    }
+
+    pub fn debug_priority_state(&self) -> (u32, u32, u32, usize, bool, bool) {
+        (
+            self.current,
+            self.current_highest,
+            self.priority,
+            self.stack_i,
+            self.irq_line,
+            self.fiq_line,
+        )
     }
 
     pub fn set_line(&mut self, irq: u32, level: bool) {
@@ -1863,9 +1873,10 @@ impl S5lI2c {
                 // compatibility pulse scoped to PMU transfers, which are the
                 // kernel path that relies on that behavior. The explicit
                 // low/high pulse lets the PL192 observe QEMU's lower-then-raise
-                // edge even though this emulator samples device lines.
+                // edge even though this emulator samples device lines. After
+                // the pulse, fall back to the level computed from IICCON/IICSTAT
+                // instead of forcing the IRQ high forever.
                 if pmu_transfer_ack {
-                    self.irq = true;
                     self.irq_pulse = 2;
                 }
                 if self.pmu.is_some() && std::env::var("RAX_S5L_I2CLOG").is_ok() {
