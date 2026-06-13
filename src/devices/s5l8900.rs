@@ -830,9 +830,17 @@ impl Pl192 {
         if !self.priority_mode {
             return (res, false);
         }
+        if self.stack_i != 0
+            && self.current_highest == self.current
+            && self.current <= PL192_DAISY_IRQ
+        {
+            self.irq_line = false;
+            return (res, false);
+        }
         let is_daisy = self.current_highest == PL192_DAISY_IRQ;
         self.current = self.current_highest;
         self.mask_current_priority();
+        self.irq_line = false;
         self.update();
         (res, is_daisy)
     }
@@ -853,6 +861,7 @@ impl Pl192 {
         }
         self.current = self.current_highest;
         self.mask_current_priority();
+        self.irq_line = false;
         self.update();
     }
 
@@ -877,14 +886,15 @@ impl Pl192 {
                 PL192_DAISY_IRQ => self.daisy_vectaddr,
                 _ => self.address,
             };
-            if self.current_highest <= PL192_DAISY_IRQ {
-                if self.priority_for(self.current_highest) >= self.priority {
+            if self.current_highest != self.current {
+                if self.current_highest <= PL192_DAISY_IRQ {
+                    if self.priority_for(self.current_highest) >= self.priority {
+                        return;
+                    }
+                    self.irq_line = true;
+                } else {
                     self.irq_line = false;
-                    return;
                 }
-                self.irq_line = true;
-            } else {
-                self.irq_line = false;
             }
         } else {
             self.current_highest = PL192_NO_IRQ;
@@ -1709,7 +1719,6 @@ impl Default for Lis302dl {
 // =============================================================================
 
 const IICCON_ACKEN: u8 = 1 << 7;
-const IICCON_IRQPEND: u8 = 1 << 4;
 const IICSTAT_START: u8 = 1 << 5;
 const IICSTAT_TXRXEN: u8 = 1 << 4;
 const IICSTAT_LASTBIT: u8 = 1 << 0;
@@ -1728,7 +1737,6 @@ pub struct S5lI2c {
     iicreg20: u32,
     active: bool,
     irq: bool,
-    irq_pulse: u8,
     addressed: u8,
     accel: Option<Lis302dl>,
     /// The PMU slave (present on I2C1; None on buses without one).
@@ -1746,7 +1754,6 @@ impl S5lI2c {
             iicreg20: 0,
             active: false,
             irq: false,
-            irq_pulse: 0,
             addressed: 0,
             accel: accel.then(Lis302dl::new),
             pmu: pmu.then(Pcf50633::new),
@@ -1754,12 +1761,10 @@ impl S5lI2c {
     }
 
     fn update_irq(&mut self) {
-        // The reference model pulses the controller IRQ for transfer progress
-        // even when the guest leaves the nominal IRQ enable bit clear. Keep it
-        // level-like, but key it only off an active master transfer and the
-        // guest's pending-bit clear.
-        let level = (self.status & IICSTAT_START) != 0 && (self.control & IICCON_IRQPEND) == 0;
-        self.irq = level;
+        // The reference QEMU model computes a level from IICCON/IICSTAT but
+        // then unconditionally raises the controller IRQ for transfer progress.
+        // It is lowered only at the start of the next I2C register write.
+        self.irq = true;
     }
 
     fn log_pmu_bus(&self, message: &str) {
@@ -1769,18 +1774,10 @@ impl S5lI2c {
     }
 
     pub fn irq_pending(&self) -> bool {
-        match self.irq_pulse {
-            2 => false,
-            1 => true,
-            _ => self.irq,
-        }
+        self.irq
     }
 
-    pub fn advance_irq_sample(&mut self) {
-        if self.irq_pulse != 0 {
-            self.irq_pulse -= 1;
-        }
-    }
+    pub fn advance_irq_sample(&mut self) {}
 
     fn slave_recv(&mut self) -> u8 {
         match self.addressed {
@@ -1860,7 +1857,6 @@ impl S5lI2c {
                         v, self.control, self.status, self.active, self.addressed
                     );
                 }
-                let pmu_transfer_ack = self.addressed == 0x73;
                 if value & !(IICCON_ACKEN as u32) != 0 {
                     self.iicreg20 |= 0x100;
                 }
@@ -1869,25 +1865,14 @@ impl S5lI2c {
                 }
                 self.control = v;
                 self.update_irq();
-                // QEMU raises the I2C IRQ on every I2CCON write. Keep the
-                // compatibility pulse scoped to PMU transfers, which are the
-                // kernel path that relies on that behavior. The explicit
-                // low/high pulse lets the PL192 observe QEMU's lower-then-raise
-                // edge even though this emulator samples device lines. After
-                // the pulse, fall back to the level computed from IICCON/IICSTAT
-                // instead of forcing the IRQ high forever.
-                if pmu_transfer_ack {
-                    self.irq_pulse = 2;
-                }
                 if self.pmu.is_some() && std::env::var("RAX_S5L_I2CLOG").is_ok() {
                     eprintln!(
-                        "I2C1 after I2CCON status={:#x} control={:#x} iicreg20={:#x} active={} irq={} pulse={}",
+                        "I2C1 after I2CCON status={:#x} control={:#x} iicreg20={:#x} active={} irq={}",
                         self.status,
                         self.control,
                         self.iicreg20,
                         self.active,
-                        self.irq_pending(),
-                        self.irq_pulse
+                        self.irq_pending()
                     );
                 }
             }

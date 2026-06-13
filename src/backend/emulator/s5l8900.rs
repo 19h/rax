@@ -295,6 +295,14 @@ fn timer_speedup() -> u64 {
         .unwrap_or(256)
 }
 
+fn trace_budget_env(name: &str, default_when_present: u32) -> u32 {
+    match std::env::var(name) {
+        Ok(v) if v.is_empty() || v == "1" => default_when_present,
+        Ok(v) => v.parse().unwrap_or(default_when_present),
+        Err(_) => 0,
+    }
+}
+
 /// Parsed-once write-watchpoint range (addr, len) from RAX_S5L_WATCH=hex:hex.
 fn watch_range() -> &'static Option<(u32, u32)> {
     static WATCH: std::sync::OnceLock<Option<(u32, u32)>> = std::sync::OnceLock::new();
@@ -487,6 +495,44 @@ struct BridgeInner {
     openbus_log_budget: u32,
     /// Log all handled device reads too (RAX_S5L_DEVLOG).
     devlog: bool,
+    /// Budget-limited trace for VIC MMIO accesses (RAX_S5L_VIC_TRACE).
+    vic_trace_budget: u32,
+}
+
+#[derive(Clone, Copy)]
+struct VicTraceSnapshot {
+    raw: u32,
+    enabled: u32,
+    irq: u32,
+    fiq: u32,
+    addr: u32,
+    priority_mask: u32,
+    current: u32,
+    highest: u32,
+    priority: u32,
+    depth: usize,
+    irq_line: bool,
+    fiq_line: bool,
+}
+
+impl VicTraceSnapshot {
+    fn capture(vic: &Pl192) -> Self {
+        let (current, highest, priority, depth, irq_line, fiq_line) = vic.debug_priority_state();
+        Self {
+            raw: vic.rawintr,
+            enabled: vic.intenable,
+            irq: vic.irq_status,
+            fiq: vic.fiq_status,
+            addr: vic.address,
+            priority_mask: vic.sw_priority_mask,
+            current,
+            highest,
+            priority,
+            depth,
+            irq_line,
+            fiq_line,
+        }
+    }
 }
 
 /// Memory bridge: VA→PA via the v6 MMU, S5L8900 device windows at their
@@ -529,6 +575,67 @@ impl S5lBridge {
 }
 
 impl BridgeInner {
+    fn should_trace_vic_access(&self, offset: u32) -> bool {
+        self.vic_trace_budget != 0
+            && (self.kernel_started || std::env::var_os("RAX_S5L_VIC_TRACE_EARLY").is_some())
+            && (offset == 0xF00
+                || offset <= 0x2c
+                || offset == 0x30
+                || offset == 0x34
+                || offset == 0x300
+                || (0x100..0x180).contains(&offset)
+                || (0x200..0x280).contains(&offset))
+    }
+
+    fn trace_vic_access(
+        &mut self,
+        vic: &'static str,
+        op: &'static str,
+        offset: u32,
+        value: Option<u32>,
+        result: Option<u32>,
+        before: VicTraceSnapshot,
+        after: VicTraceSnapshot,
+    ) {
+        if self.vic_trace_budget == 0 {
+            return;
+        }
+        self.vic_trace_budget -= 1;
+        info!(
+            pc = format!("{:#x}", self.cur_pc),
+            vic,
+            op,
+            offset = format!("{offset:#x}"),
+            value = value.map(|v| format!("{v:#x}")).unwrap_or_default(),
+            result = result.map(|v| format!("{v:#x}")).unwrap_or_default(),
+            before_raw = format!("{:#x}", before.raw),
+            before_en = format!("{:#x}", before.enabled),
+            before_irq = format!("{:#x}", before.irq),
+            before_fiq = format!("{:#x}", before.fiq),
+            before_addr = format!("{:#x}", before.addr),
+            before_mask = format!("{:#x}", before.priority_mask),
+            before_cur = before.current,
+            before_high = before.highest,
+            before_prio = before.priority,
+            before_depth = before.depth,
+            before_irq_line = before.irq_line,
+            before_fiq_line = before.fiq_line,
+            after_raw = format!("{:#x}", after.raw),
+            after_en = format!("{:#x}", after.enabled),
+            after_irq = format!("{:#x}", after.irq),
+            after_fiq = format!("{:#x}", after.fiq),
+            after_addr = format!("{:#x}", after.addr),
+            after_mask = format!("{:#x}", after.priority_mask),
+            after_cur = after.current,
+            after_high = after.highest,
+            after_prio = after.priority,
+            after_depth = after.depth,
+            after_irq_line = after.irq_line,
+            after_fiq_line = after.fiq_line,
+            "vic_trace"
+        );
+    }
+
     fn refresh_vic_daisy(&mut self) {
         self.vic0.daisy_input = self.vic1.irq_asserted();
         self.vic0.daisy_vectaddr = self.vic1.address;
@@ -548,19 +655,60 @@ impl BridgeInner {
             }
             _ if (VIC0_BASE..VIC0_BASE + 0x1000).contains(&pa) => {
                 let offset = off(VIC0_BASE);
-                if offset == 0xF00 {
+                let trace = self.should_trace_vic_access(offset);
+                let before0 = trace.then(|| VicTraceSnapshot::capture(&self.vic0));
+                let before1 = trace.then(|| VicTraceSnapshot::capture(&self.vic1));
+                let (value, is_daisy) = if offset == 0xF00 {
                     let (value, is_daisy) = self.vic0.acknowledge();
-                    if is_daisy {
-                        self.vic1.acknowledge_daisy_child();
-                        self.refresh_vic_daisy();
-                    }
-                    Some(value)
+                    (value, is_daisy)
                 } else {
-                    Some(self.vic0.read(offset))
+                    (self.vic0.read(offset), false)
+                };
+                if is_daisy {
+                    self.vic1.acknowledge_daisy_child();
+                    self.refresh_vic_daisy();
                 }
+                if let Some(before0) = before0 {
+                    self.trace_vic_access(
+                        "VIC0",
+                        "read",
+                        offset,
+                        None,
+                        Some(value),
+                        before0,
+                        VicTraceSnapshot::capture(&self.vic0),
+                    );
+                    if is_daisy {
+                        self.trace_vic_access(
+                            "VIC1",
+                            "ack_daisy",
+                            0xF00,
+                            None,
+                            None,
+                            before1.expect("VIC1 trace snapshot"),
+                            VicTraceSnapshot::capture(&self.vic1),
+                        );
+                    }
+                }
+                Some(value)
             }
             _ if (VIC1_BASE..VIC1_BASE + 0x1000).contains(&pa) => {
-                Some(self.vic1.read(off(VIC1_BASE)))
+                let offset = off(VIC1_BASE);
+                let trace = self.should_trace_vic_access(offset);
+                let before = trace.then(|| VicTraceSnapshot::capture(&self.vic1));
+                let value = self.vic1.read(offset);
+                if let Some(before) = before {
+                    self.trace_vic_access(
+                        "VIC1",
+                        "read",
+                        offset,
+                        None,
+                        Some(value),
+                        before,
+                        VicTraceSnapshot::capture(&self.vic1),
+                    );
+                }
+                Some(value)
             }
             _ if (SYSIC_BASE..SYSIC_BASE + 0x1000).contains(&pa) => {
                 Some(self.sysic.read(off(SYSIC_BASE)))
@@ -659,8 +807,12 @@ impl BridgeInner {
             }
             _ if (VIC0_BASE..VIC0_BASE + 0x1000).contains(&pa) => {
                 let offset = off(VIC0_BASE);
+                let trace = self.should_trace_vic_access(offset);
+                let before0 = trace.then(|| VicTraceSnapshot::capture(&self.vic0));
+                let before1 = trace.then(|| VicTraceSnapshot::capture(&self.vic1));
+                let mut is_daisy = false;
                 if offset == 0xF00 {
-                    let is_daisy = self.vic0.finish_irq();
+                    is_daisy = self.vic0.finish_irq();
                     if is_daisy {
                         self.vic1.finish_daisy_child();
                         self.refresh_vic_daisy();
@@ -668,10 +820,46 @@ impl BridgeInner {
                 } else {
                     self.vic0.write(offset, value);
                 }
+                if let Some(before0) = before0 {
+                    self.trace_vic_access(
+                        "VIC0",
+                        "write",
+                        offset,
+                        Some(value),
+                        None,
+                        before0,
+                        VicTraceSnapshot::capture(&self.vic0),
+                    );
+                    if is_daisy {
+                        self.trace_vic_access(
+                            "VIC1",
+                            "finish_daisy",
+                            0xF00,
+                            Some(value),
+                            None,
+                            before1.expect("VIC1 trace snapshot"),
+                            VicTraceSnapshot::capture(&self.vic1),
+                        );
+                    }
+                }
                 true
             }
             _ if (VIC1_BASE..VIC1_BASE + 0x1000).contains(&pa) => {
-                self.vic1.write(off(VIC1_BASE), value);
+                let offset = off(VIC1_BASE);
+                let trace = self.should_trace_vic_access(offset);
+                let before = trace.then(|| VicTraceSnapshot::capture(&self.vic1));
+                self.vic1.write(offset, value);
+                if let Some(before) = before {
+                    self.trace_vic_access(
+                        "VIC1",
+                        "write",
+                        offset,
+                        Some(value),
+                        None,
+                        before,
+                        VicTraceSnapshot::capture(&self.vic1),
+                    );
+                }
                 true
             }
             _ if (SYSIC_BASE..SYSIC_BASE + 0x1000).contains(&pa) => {
@@ -1150,6 +1338,7 @@ impl S5L8900Vcpu {
                     .and_then(|v| v.parse().ok())
                     .unwrap_or(256),
                 devlog: std::env::var("RAX_S5L_DEVLOG").is_ok(),
+                vic_trace_budget: trace_budget_env("RAX_S5L_VIC_TRACE", 4096),
             }),
         };
         let mut cpu = Armv7Cpu::new();
@@ -1258,7 +1447,12 @@ impl S5L8900Vcpu {
             security_state_seeded: false,
             sparse_vfl_mask_seeded: [false; 8],
             fsboot_trace: std::env::var("RAX_S5L_FSBOOT_TRACE").is_ok(),
-            lcd_irq: !std::env::var("RAX_S5L_NO_LCD_IRQ").is_ok(),
+            // QEMU raises LCD refresh IRQs from its display timer. RAX does not
+            // currently run a matching display event loop, and the old
+            // instruction-rate synthetic source can livelock early storage
+            // startup. Keep it available only for focused LCD experiments.
+            lcd_irq: std::env::var("RAX_S5L_LCD_IRQ").is_ok()
+                && !std::env::var("RAX_S5L_NO_LCD_IRQ").is_ok(),
             i2c_irq: !std::env::var("RAX_S5L_NO_I2C_IRQ").is_ok(),
             // The system-tick IRQ drives iBoot's cooperative scheduler (it wakes
             // tasks blocked in task_sleep). It self-gates on the timer's `started`
@@ -1495,6 +1689,8 @@ impl S5L8900Vcpu {
         if !interesting {
             return;
         }
+        let (v0_cur, v0_high, v0_prio, v0_depth, v0_irq_line, _) =
+            inner.vic0.debug_priority_state();
         let trace = (i2c1_raw as u128)
             | ((vic_raw as u128) << 1)
             | ((vic_enabled as u128) << 2)
@@ -1506,14 +1702,17 @@ impl S5L8900Vcpu {
             | ((inner.kernel_started as u128) << 8)
             | ((inner.vic0.rawintr as u128) << 16)
             | ((inner.vic0.intenable as u128) << 48)
-            | ((inner.vic0.irq_status as u128) << 80);
+            | ((inner.vic0.irq_status as u128) << 80)
+            | (((v0_cur as u128) & 0x3f) << 112)
+            | (((v0_high as u128) & 0x3f) << 118)
+            | (((v0_prio as u128) & 0x0f) << 124);
         if trace == self.last_i2c1_irq_trace {
             return;
         }
         self.last_i2c1_irq_trace = trace;
         self.i2c_irq_trace_budget -= 1;
         eprintln!(
-            "I2C1 irq handoff pc={:#x} cpsr={:#x} insns={} raw={} vic_raw={} vic_en={} vic_irq={} cpu_irq={} cpsr_i={} vectors_ready={} halted={} kernel_started={} vic0_raw={:#x} vic0_en={:#x} vic0_irq={:#x} vic0_addr={:#x}",
+            "I2C1 irq handoff pc={:#x} cpsr={:#x} insns={} raw={} vic_raw={} vic_en={} vic_irq={} cpu_irq={} cpsr_i={} vectors_ready={} halted={} kernel_started={} vic0_raw={:#x} vic0_en={:#x} vic0_irq={:#x} vic0_addr={:#x} v0_cur={} v0_high={} v0_prio={} v0_depth={} v0_irq_line={}",
             self.cpu.regs[15],
             self.cpu.cpsr.to_u32(),
             self.insn_count,
@@ -1529,7 +1728,12 @@ impl S5L8900Vcpu {
             inner.vic0.rawintr,
             inner.vic0.intenable,
             inner.vic0.irq_status,
-            inner.vic0.address
+            inner.vic0.address,
+            v0_cur,
+            v0_high,
+            v0_prio,
+            v0_depth,
+            v0_irq_line
         );
     }
 
@@ -2103,9 +2307,7 @@ impl S5L8900Vcpu {
             }
         };
 
-        if watch_range().is_some() {
-            self.bridge.inner.borrow_mut().cur_pc = pc;
-        }
+        self.bridge.inner.borrow_mut().cur_pc = pc;
         let vbar = self.cpu.cp15.sctlr.vector_base();
         let mut exec = Executor::with_vbar(&mut self.cpu, &mut self.bridge, vbar);
         exec.exclusive_monitor = self.excl.clone();
