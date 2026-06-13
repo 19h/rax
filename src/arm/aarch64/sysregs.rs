@@ -938,8 +938,9 @@ impl SystemRegisters {
             }
             // CNTP_TVAL_EL0 write: CVAL = count + SignExtend(value<31:0>)
             (3, 3, 14, 2, 0) => {
-                self.cntp_cval_el0 =
-                    self.cntpct_el0.wrapping_add(value as u32 as i32 as i64 as u64);
+                self.cntp_cval_el0 = self
+                    .cntpct_el0
+                    .wrapping_add(value as u32 as i32 as i64 as u64);
                 true
             }
             // CNTV_CTL_EL0: only ENABLE and IMASK are writable
@@ -953,8 +954,9 @@ impl SystemRegisters {
             }
             // CNTV_TVAL_EL0 write: CVAL = count + SignExtend(value<31:0>)
             (3, 3, 14, 3, 0) => {
-                self.cntv_cval_el0 =
-                    self.cntvct_el0.wrapping_add(value as u32 as i32 as i64 as u64);
+                self.cntv_cval_el0 = self
+                    .cntvct_el0
+                    .wrapping_add(value as u32 as i32 as i64 as u64);
                 true
             }
 

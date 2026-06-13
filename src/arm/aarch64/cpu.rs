@@ -845,7 +845,11 @@ impl AArch64Cpu {
         if let Some(ref gic) = self.gic {
             let cpu_id = 0; // Assume single core for now
 
-            if gic.lock().map(|g| g.pending_interrupt(cpu_id)).unwrap_or(false) {
+            if gic
+                .lock()
+                .map(|g| g.pending_interrupt(cpu_id))
+                .unwrap_or(false)
+            {
                 // Check if IRQ is masked
                 let irq_masked = (self.daif & 0x2) != 0;
 
@@ -937,10 +941,7 @@ impl AArch64Cpu {
         // MDCCSR, DBGDTR, ...) are RAZ by architecture; a booting kernel
         // reads the whole block.
         if (encoding.op0 == 3 || encoding.op0 == 2) && encoding.crn == 0 {
-            return Ok(self
-                .sysregs
-                .read(encoding, self.current_el)
-                .unwrap_or(0));
+            return Ok(self.sysregs.read(encoding, self.current_el).unwrap_or(0));
         }
 
         // Read from sysregs
@@ -1272,9 +1273,7 @@ impl AArch64Cpu {
         // (including vector loads in memcpy) trapping.
         if (insn >> 26) & 1 != 0 {
             let fpen = (self.sysregs.el1.cpacr >> 20) & 0x3;
-            if (self.current_el == 0 && fpen != 0x3)
-                || (self.current_el == 1 && (fpen & 1) == 0)
-            {
+            if (self.current_el == 0 && fpen != 0x3) || (self.current_el == 1 && (fpen & 1) == 0) {
                 return self.take_fp_access_trap();
             }
         }
@@ -13579,8 +13578,7 @@ impl AArch64Cpu {
                 Ok(desc) => (desc.pa & 0x000F_FFFF_FFFF_F000) | (0xFFu64 << 56),
                 // F=1, fault status in bits 6:1.
                 Err(fault) => {
-                    let fsc =
-                        fsc_for_fault(translation_fault_type_of(&fault), fault.level) as u64;
+                    let fsc = fsc_for_fault(translation_fault_type_of(&fault), fault.level) as u64;
                     1 | (fsc << 1)
                 }
             };
@@ -14554,8 +14552,7 @@ impl AArch64Cpu {
         let new = if o3 == 1 {
             if opc == 0 {
                 operand // SWP
-            } else if opc == 0b100 && rs == 31 && (insn >> 23) & 1 == 1 && (insn >> 22) & 1 == 0
-            {
+            } else if opc == 0b100 && rs == 31 && (insn >> 23) & 1 == 1 && (insn >> 22) & 1 == 0 {
                 // LDAPR/LDAPRB/LDAPRH (FEAT_LRCPC): load-acquire RCpc. In a
                 // single-threaded model this is a plain load.
                 if size == 3 {
@@ -15371,7 +15368,7 @@ impl AArch64Cpu {
                     // REV16
                     ((operand & 0x00ff_00ff) << 8) | ((operand & 0xff00_ff00) >> 8)
                 }
-                0b000010 => operand.swap_bytes(), // REV
+                0b000010 => operand.swap_bytes(),    // REV
                 0b000100 => operand.leading_zeros(), // CLZ
                 0b000101 => count_leading_sign(u64::from(operand), 32) as u32, // CLS
                 _ => return Err(ArmError::UndefinedInstruction(insn)),
@@ -15932,10 +15929,7 @@ fn translation_fault_type_of(fault: &TranslationFault) -> MemoryFaultType {
 
 /// Map an internal fault type + translation level to the architectural fault
 /// status code.
-fn fsc_for_fault(
-    fault_type: MemoryFaultType,
-    level: u8,
-) -> super::exceptions::FaultStatusCode {
+fn fsc_for_fault(fault_type: MemoryFaultType, level: u8) -> super::exceptions::FaultStatusCode {
     use super::exceptions::FaultStatusCode as F;
     let level = level.min(3);
     match fault_type {

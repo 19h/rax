@@ -152,20 +152,40 @@ impl Aarch32Decoder {
         // load/store-class encodings with Rt=0b1111. Architecturally hints;
         // executed as NOPs.
         if raw & 0x0C10_F000 == 0x0410_F000 {
-            return Ok(DecodedInsn::new(Mnemonic::NOP, ExecutionState::Aarch32, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::NOP,
+                ExecutionState::Aarch32,
+                raw,
+                4,
+            ));
         }
 
         // CPS<effect> {#mode}: 1111 0001 0000 imod M 0 xxxx xxxx AIF 0 mode
         if raw & 0xFFF1_FE20 == 0xF100_0000 {
-            return Ok(DecodedInsn::new(Mnemonic::CPS, ExecutionState::Aarch32, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::CPS,
+                ExecutionState::Aarch32,
+                raw,
+                4,
+            ));
         }
         // SRS{<amode>} sp{!}, #mode: 1111 100P U1W0 1101 0000 0101 000 mode
         if raw & 0xFE5F_FFE0 == 0xF84D_0500 {
-            return Ok(DecodedInsn::new(Mnemonic::SRS, ExecutionState::Aarch32, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::SRS,
+                ExecutionState::Aarch32,
+                raw,
+                4,
+            ));
         }
         // RFE{<amode>} Rn{!}: 1111 100P U0W1 Rn 0000 1010 0000 0000
         if raw & 0xFE50_FFFF == 0xF810_0A00 {
-            return Ok(DecodedInsn::new(Mnemonic::RFE, ExecutionState::Aarch32, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::RFE,
+                ExecutionState::Aarch32,
+                raw,
+                4,
+            ));
         }
 
         if let Some(insn) = Self::decode_neon_vext(raw) {

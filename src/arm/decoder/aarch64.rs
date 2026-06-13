@@ -1953,7 +1953,17 @@ impl Aarch64Decoder {
             return Self::decode_simd_scalar_three(raw, u);
         }
 
-        // Scalar FP data-processing: [31:30]=00, [28:24]=11110
+        // Scalar FP 3-source: [31:30]=00, [28:24]=11111
+        if (raw >> 30) & 0x3 == 0b00 && (raw >> 24) & 0x1F == 0b11111 {
+            return Self::decode_scalar_fp_3source(raw);
+        }
+
+        // Scalar FP 2-source: [31:30]=00, [28:24]=11110, [21]=1
+        if (raw >> 30) & 0x3 == 0b00 && (raw >> 24) & 0x1F == 0b11110 && ((raw >> 21) & 1) == 1 {
+            return Self::decode_scalar_fp_2source(raw);
+        }
+
+        // Scalar FP unary: [31:30]=00, [28:24]=11110, [21]=0
         if (raw >> 30) & 0x3 == 0b00 && (raw >> 24) & 0x1F == 0b11110 {
             return Self::decode_scalar_fp(raw);
         }
@@ -2189,6 +2199,37 @@ impl Aarch64Decoder {
             .with_operand(fp_reg(rn)))
     }
 
+    fn decode_simd_scalar_three(raw: u32, u: u32) -> Result<DecodedInsn, DecodeError> {
+        let size = (raw >> 22) & 0x3;
+        let opcode = (raw >> 11) & 0x1F;
+        let rm = ((raw >> 16) & 0x1F) as u8;
+        let rn = ((raw >> 5) & 0x1F) as u8;
+        let rd = (raw & 0x1F) as u8;
+
+        let fp_size = if size & 1 == 0 {
+            FpRegSize::S
+        } else {
+            FpRegSize::D
+        };
+        let fp_reg = |num| Operand::FpReg(FpRegister { num, size: fp_size });
+
+        let mnemonic = match (u, opcode) {
+            (0, 0b11010) => Mnemonic::FADD,
+            (0, 0b11011) => Mnemonic::FMUL,
+            (0, 0b11110) => Mnemonic::FMAX,
+            (0, 0b11111) => Mnemonic::FMIN,
+            (1, 0b11010) => Mnemonic::FSUB,
+            (1, 0b11101) => Mnemonic::FMUL,
+            (1, 0b11111) => Mnemonic::FDIV,
+            _ => Mnemonic::UNKNOWN,
+        };
+
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            .with_operand(fp_reg(rd))
+            .with_operand(fp_reg(rn))
+            .with_operand(fp_reg(rm)))
+    }
+
     /// Decode SIMD copy instructions (DUP, MOV, INS).
     fn decode_simd_copy(raw: u32, q: u32) -> Result<DecodedInsn, DecodeError> {
         let op = (raw >> 29) & 1;
@@ -2233,12 +2274,14 @@ impl Aarch64Decoder {
     }
 
     /// Decode SIMD scalar three-same instructions.
-    fn decode_simd_scalar_three(raw: u32, u: u32) -> Result<DecodedInsn, DecodeError> {
+    fn decode_scalar_fp_3source(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let size = (raw >> 22) & 0x3;
-        let opcode = (raw >> 11) & 0x1F;
         let rm = ((raw >> 16) & 0x1F) as u8;
+        let ra = ((raw >> 10) & 0x1F) as u8;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
+        let o0 = (raw >> 15) & 1;
+        let o1 = (raw >> 21) & 1;
 
         let fp_size = if size & 1 == 0 {
             FpRegSize::S
@@ -2247,24 +2290,19 @@ impl Aarch64Decoder {
         };
         let fp_reg = |num| Operand::FpReg(FpRegister { num, size: fp_size });
 
-        let mnemonic = match (u, opcode) {
-            // Scalar FP
-            (0, 0b11010) => Mnemonic::FADD,
-            (0, 0b11011) => Mnemonic::FMUL,
-            (0, 0b11110) => Mnemonic::FMAX,
-            (0, 0b11111) => Mnemonic::FMIN,
-
-            (1, 0b11010) => Mnemonic::FSUB,
-            (1, 0b11101) => Mnemonic::FMUL,
-            (1, 0b11111) => Mnemonic::FDIV,
-
+        let mnemonic = match (o1, o0) {
+            (0, 0) => Mnemonic::FMADD,
+            (0, 1) => Mnemonic::FMSUB,
+            (1, 0) => Mnemonic::FNMADD,
+            (1, 1) => Mnemonic::FNMSUB,
             _ => Mnemonic::UNKNOWN,
         };
 
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(fp_reg(rd))
             .with_operand(fp_reg(rn))
-            .with_operand(fp_reg(rm)))
+            .with_operand(fp_reg(rm))
+            .with_operand(fp_reg(ra)))
     }
 
     /// Decode SIMD load/store instructions.
@@ -2303,51 +2341,86 @@ impl Aarch64Decoder {
     }
 
     fn decode_scalar_fp(raw: u32) -> Result<DecodedInsn, DecodeError> {
-        let m = (raw >> 31) & 1;
-        let s = (raw >> 29) & 1;
         let ptype = (raw >> 22) & 0x3;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
+        let rm = ((raw >> 16) & 0x1F) as u8;
 
         let fp_size = match ptype {
             0b00 => FpRegSize::S,
             0b01 => FpRegSize::D,
             0b11 => FpRegSize::H,
-            _ => {
-                return Ok(DecodedInsn::new(
-                    Mnemonic::UNDEFINED,
-                    ExecutionState::Aarch64,
-                    raw,
-                    4,
-                ));
-            }
+            _ => FpRegSize::S,
         };
-
-        // Get opcode bits for determining operation
-        let opcode = (raw >> 10) & 0x3F;
-
-        // Common FP operations
-        let mnemonic = match opcode & 0xF {
-            0b0000 => Mnemonic::FMOV,
-            0b0001 => Mnemonic::FABS,
-            0b0010 => Mnemonic::FNEG,
-            0b0011 => Mnemonic::FSQRT,
-            0b0100 => Mnemonic::FCVT,
-            0b1000 => Mnemonic::FRINTN,
-            0b1001 => Mnemonic::FRINTP,
-            0b1010 => Mnemonic::FRINTM,
-            0b1011 => Mnemonic::FRINTZ,
-            0b1100 => Mnemonic::FRINTA,
-            0b1110 => Mnemonic::FRINTX,
-            0b1111 => Mnemonic::FRINTI,
-            _ => Mnemonic::UNKNOWN,
-        };
-
         let fp_reg = |num, size| Operand::FpReg(FpRegister { num, size });
+
+        let mnemonic = Mnemonic::FMOV;
 
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(fp_reg(rd, fp_size))
             .with_operand(fp_reg(rn, fp_size)))
+    }
+
+    fn decode_scalar_fp_2source(raw: u32) -> Result<DecodedInsn, DecodeError> {
+        let ptype = (raw >> 22) & 0x3;
+        let rm = ((raw >> 16) & 0x1F) as u8;
+        let rn = ((raw >> 5) & 0x1F) as u8;
+        let rd = (raw & 0x1F) as u8;
+        let opcode = (raw >> 10) & 0x3F;
+
+        let fp_size = match ptype {
+            0b00 => FpRegSize::S,
+            0b01 => FpRegSize::D,
+            0b11 => FpRegSize::H,
+            _ => FpRegSize::S,
+        };
+        let fp_reg = |num, size| Operand::FpReg(FpRegister { num, size });
+
+        let mnemonic = match (opcode, ptype, rm) {
+            (0x0A, 0b00, _) => Mnemonic::FADD,
+            (0x06, 0b01, _) => Mnemonic::FADD,
+            (0x16, _, _) => Mnemonic::FSUB,
+            (0x1A, _, _) => Mnemonic::FDIV,
+            (0x1E, _, _) => Mnemonic::FMAX,
+            (0x22, _, _) => Mnemonic::FMIN,
+            (0x02, _, _) => Mnemonic::FNMUL,
+            (0x30, 0b01, _) => Mnemonic::FSQRT,
+            (0x30, 0b00, 0x01) => Mnemonic::FSQRT,
+            (0x10, 0b00, 0x01) => Mnemonic::FABS,
+            (0x10, 0b00, 0x04) => Mnemonic::FNEG,
+            (0x00, 0b00, 0x01) => Mnemonic::FABS,
+            (0x00, 0b00, 0x04) => Mnemonic::FNEG,
+            (0x00, 0b00, _) => Mnemonic::FMOV,
+            (0x10, 0b00, _) => Mnemonic::FMOV,
+            (0x30, 0b00, 0x02) => Mnemonic::FCVT,
+            (0x10, 0b01, _) => Mnemonic::FCVT,
+            (0x07, _, _) => Mnemonic::FCMP,
+            (0x01, _, _) => Mnemonic::FCMP,
+            _ => Mnemonic::UNKNOWN,
+        };
+
+        if mnemonic == Mnemonic::UNKNOWN {
+            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4));
+        }
+
+        if mnemonic == Mnemonic::FCVT {
+            let dst_size = match (opcode, ptype, rm) {
+                (0x30, 0b00, 0x02) => FpRegSize::D,
+                (0x10, 0b01, 0x02) => FpRegSize::S,
+                (0x30, 0b00, 0x03) => FpRegSize::H,
+                (0x10, 0b11, 0x02) => FpRegSize::H,
+                _ => fp_size,
+            };
+            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                .with_operand(fp_reg(rd, dst_size))
+                .with_operand(fp_reg(rn, fp_size))
+                .with_operand(fp_reg(rm, fp_size)));
+        }
+
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            .with_operand(fp_reg(rd, fp_size))
+            .with_operand(fp_reg(rn, fp_size))
+            .with_operand(fp_reg(rm, fp_size)))
     }
 
     // =========================================================================

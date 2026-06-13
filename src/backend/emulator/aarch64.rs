@@ -413,8 +413,9 @@ impl VCpu for Aarch64Vcpu {
                             .iter()
                             .map(|p| format!("{p:#x}"))
                             .collect();
-                        let regs: Vec<String> =
-                            (0..31).map(|i| format!("{:#x}", self.cpu.get_gpr(i))).collect();
+                        let regs: Vec<String> = (0..31)
+                            .map(|i| format!("{:#x}", self.cpu.get_gpr(i)))
+                            .collect();
                         debug!(
                             pc = format!("{:#x}", self.cpu.get_pc()),
                             insns = self.cpu.instruction_count(),
