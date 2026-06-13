@@ -18,8 +18,16 @@ mod common;
 #[path = "x86_64/avx512_inventory_data.rs"]
 mod avx512_inventory_data;
 
+#[path = "x86_64/avx512_spec.rs"]
+mod avx512_spec;
+
 use avx512_inventory_data::RAX_EVEX_SIMD_DIFF_MNEMONICS;
-use common::{Bytes, GuestAddress, Registers, run_until_hlt, setup_vm};
+use avx512_spec::{
+    avx512_spec_evex_rows, evex_case_variants_for_row, evex_rm_register_class,
+    raw_evex_spec_bytes_for_variant, spec_case_variant_id, EvexAsmMode, EvexCaseVariant,
+    EvexOperandForm, EvexRmRegisterClass,
+};
+use common::{run_until_hlt, setup_vm, Bytes, GuestAddress, Registers};
 
 const WIRE_MAGIC: u32 = 0x5845_5645; // 'E','V','E','X'
 const ZMM_REGS: usize = 32;
@@ -28,6 +36,7 @@ const SCRATCH_BYTES: usize = 256;
 const SCRATCH_ADDR: u64 = 0x4000;
 
 const LLVM_MATTR: &str = "+avx512f,+avx512bw,+avx512dq,+avx512vl,+avx512fp16,+avx512vnni,+avx512ifma,+avx512vpopcntdq,+avx512vbmi,+avx512bitalg,+avx512bf16,+avxvnni";
+const UNIMPLEMENTED_AVX512: &str = include_str!("x86_64/avx512_unimplemented_mnemonics.txt");
 
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -253,6 +262,11 @@ fn mov_imm64(code: &mut Vec<u8>, reg: u8, value: u64) {
 }
 
 fn run_rax(case: &DiffCase) -> OutCase {
+    try_run_rax(case)
+        .unwrap_or_else(|error| panic!("{}: rax execution failed: {error}", case.label))
+}
+
+fn try_run_rax(case: &DiffCase) -> Result<OutCase, String> {
     let mut code = Vec::new();
     mov_imm64(&mut code, 0, SCRATCH_ADDR);
     code.extend_from_slice(&case.op);
@@ -261,7 +275,7 @@ fn run_rax(case: &DiffCase) -> OutCase {
     let (mut vcpu, mem) = setup_vm(&code, Some(registers_from_input(&case.input)));
     mem.write_slice(&case.input.scratch, GuestAddress(SCRATCH_ADDR))
         .unwrap();
-    let regs = run_until_hlt(&mut vcpu).unwrap();
+    let regs = run_until_hlt(&mut vcpu).map_err(|error| error.to_string())?;
 
     let mut scratch = [0u8; SCRATCH_BYTES];
     mem.read_slice(&mut scratch, GuestAddress(SCRATCH_ADDR))
@@ -277,7 +291,7 @@ fn run_rax(case: &DiffCase) -> OutCase {
     for reg in 0..ZMM_REGS {
         out.zmm[reg] = get_regs_zmm(&regs, reg);
     }
-    out
+    Ok(out)
 }
 
 fn spec(
@@ -1419,6 +1433,249 @@ fn generated_specs() -> Vec<CaseSpec> {
     specs
 }
 
+fn set_from_manifest(text: &str) -> BTreeSet<String> {
+    text.lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
+        .map(str::to_string)
+        .collect()
+}
+
+fn set_from_slice(items: &[&str]) -> BTreeSet<String> {
+    items.iter().map(|item| (*item).to_string()).collect()
+}
+
+fn profile_for_spec_mnemonic(mnemonic: &str) -> InputProfile {
+    let float_family = [
+        "vadd",
+        "vsub",
+        "vmul",
+        "vdiv",
+        "vmax",
+        "vmin",
+        "vsqrt",
+        "vrcp",
+        "vrsqrt",
+        "vscalef",
+        "vrange",
+        "vreduce",
+        "vrndscale",
+        "vget",
+        "vfixup",
+        "vexp",
+        "vcmp",
+        "vcomi",
+        "vucomi",
+        "vfm",
+        "vfnm",
+        "vfcm",
+        "vfmul",
+        "vcvt",
+        "vmovap",
+        "vmovu",
+        "vmovh",
+        "vmovl",
+        "vmovs",
+        "vunpck",
+        "vshuf",
+    ];
+    if !float_family
+        .iter()
+        .any(|prefix| mnemonic.starts_with(prefix))
+    {
+        return InputProfile::Int;
+    }
+    if mnemonic.contains("ph") || mnemonic.ends_with("sh") {
+        InputProfile::F16
+    } else if mnemonic.contains("pd") || mnemonic.ends_with("sd") {
+        InputProfile::F64
+    } else {
+        InputProfile::F32
+    }
+}
+
+fn evex_diff_cases_from_spec_for_mnemonics(
+    label_prefix: &str,
+    mnemonics: &BTreeSet<String>,
+) -> (Vec<DiffCase>, BTreeSet<String>) {
+    let mut expected = BTreeSet::new();
+    let mut cases = Vec::new();
+
+    for row in avx512_spec_evex_rows() {
+        if !mnemonics.contains(&row.key.mnemonic) {
+            continue;
+        }
+        for variant in evex_case_variants_for_row(&row) {
+            let case_id = spec_case_variant_id(&row, variant);
+            expected.insert(case_id.clone());
+            let id = cases.len() as u32;
+            cases.push(DiffCase {
+                id,
+                label: format!("{label_prefix}::{case_id}"),
+                asm: row.key.mnemonic.clone(),
+                op: raw_evex_spec_bytes_for_variant(&row, variant),
+                input: input_for(id, profile_for_spec_mnemonic(&row.key.mnemonic)),
+            });
+        }
+    }
+
+    (cases, expected)
+}
+
+fn unimplemented_evex_diff_cases_from_spec() -> (Vec<DiffCase>, BTreeSet<String>) {
+    evex_diff_cases_from_spec_for_mnemonics(
+        "unimplemented",
+        &set_from_manifest(UNIMPLEMENTED_AVX512),
+    )
+}
+
+fn classified_avx512_evex_mnemonics() -> BTreeSet<String> {
+    let mut classified = set_from_slice(RAX_EVEX_SIMD_DIFF_MNEMONICS);
+    classified.extend(set_from_manifest(UNIMPLEMENTED_AVX512));
+    classified
+}
+
+fn classified_avx512_evex_diff_cases_from_spec() -> Vec<DiffCase> {
+    evex_diff_cases_from_spec_for_mnemonics("avx512", &classified_avx512_evex_mnemonics()).0
+}
+
+fn avx512_spec_case_variant_ids() -> BTreeSet<String> {
+    avx512_spec_evex_rows()
+        .iter()
+        .flat_map(|row| {
+            evex_case_variants_for_row(row)
+                .into_iter()
+                .map(|variant| spec_case_variant_id(row, variant))
+        })
+        .collect()
+}
+
+fn assert_spec_diff_corpus_shape(
+    cases: &[DiffCase],
+    label_prefix: &str,
+    mnemonics: &BTreeSet<String>,
+    require_full_shape: bool,
+) {
+    let actual = cases
+        .iter()
+        .map(|case| {
+            case.label
+                .strip_prefix(label_prefix)
+                .unwrap_or_else(|| panic!("{} must start with {label_prefix}", case.label))
+                .to_string()
+        })
+        .collect::<BTreeSet<_>>();
+    let mut failures = Vec::new();
+    let mut register_or_memory_rows = 0usize;
+    let mut memory_only_rows = 0usize;
+    let mut vsib_memory_rows = 0usize;
+    let mut vector_register_rows = 0usize;
+    let mut gpr_register_rows = 0usize;
+    let mut mask_register_rows = 0usize;
+    let mut high_vector_bucket_cases = 0usize;
+
+    for row in avx512_spec_evex_rows() {
+        if !mnemonics.contains(&row.key.mnemonic) {
+            continue;
+        }
+
+        let mut expect_memory = false;
+        let mut expect_register = false;
+        match row.key.form {
+            EvexOperandForm::RegisterOnly => expect_register = true,
+            EvexOperandForm::RegisterOrMemory => {
+                expect_register = true;
+                expect_memory = true;
+                register_or_memory_rows += 1;
+            }
+            EvexOperandForm::MemoryOnly => {
+                expect_memory = true;
+                memory_only_rows += 1;
+            }
+            EvexOperandForm::VsibMemory => {
+                expect_memory = true;
+                vsib_memory_rows += 1;
+            }
+        }
+
+        if expect_memory {
+            let id = spec_case_variant_id(
+                &row,
+                EvexCaseVariant {
+                    mode: EvexAsmMode::Memory,
+                    rm_reg: None,
+                },
+            );
+            if !actual.contains(&id) {
+                failures.push(format!("missing memory case: {id}"));
+            }
+        }
+
+        if !expect_register {
+            continue;
+        }
+
+        let rm_buckets: &[u8] = match evex_rm_register_class(&row) {
+            EvexRmRegisterClass::Vector => {
+                vector_register_rows += 1;
+                &[0, 8, 16, 24]
+            }
+            EvexRmRegisterClass::Gpr => {
+                gpr_register_rows += 1;
+                &[0, 8]
+            }
+            EvexRmRegisterClass::Mask => {
+                mask_register_rows += 1;
+                &[0]
+            }
+            EvexRmRegisterClass::Unknown => {
+                failures.push(format!(
+                    "unknown register r/m class: {} {:?} {}",
+                    row.source, row.key, row.cell
+                ));
+                continue;
+            }
+        };
+
+        for rm_reg in rm_buckets {
+            let id = spec_case_variant_id(
+                &row,
+                EvexCaseVariant {
+                    mode: EvexAsmMode::Register,
+                    rm_reg: Some(*rm_reg),
+                },
+            );
+            if !actual.contains(&id) {
+                failures.push(format!("missing register bucket case: {id}"));
+            }
+            if *rm_reg >= 16 {
+                high_vector_bucket_cases += 1;
+            }
+        }
+    }
+
+    assert!(
+        failures.is_empty(),
+        "AVX-512 EVEX differential corpus does not expand every operand form and r/m bucket:\n{}",
+        failures.into_iter().take(80).collect::<Vec<_>>().join("\n")
+    );
+    if require_full_shape {
+        assert!(
+            register_or_memory_rows > 0
+                && memory_only_rows > 0
+                && vsib_memory_rows > 0
+                && vector_register_rows > 0
+                && gpr_register_rows > 0
+                && mask_register_rows > 0
+                && high_vector_bucket_cases > 0,
+            "AVX-512 EVEX differential corpus shape check was unexpectedly degenerate: \
+             r/m={register_or_memory_rows}, mem={memory_only_rows}, vsib={vsib_memory_rows}, \
+             vector={vector_register_rows}, gpr={gpr_register_rows}, mask={mask_register_rows}, \
+             high-vector-buckets={high_vector_bucket_cases}"
+        );
+    }
+}
+
 fn parse_encoding(text: &str) -> Option<Vec<u8>> {
     let start = text.find("encoding: [")? + "encoding: [".len();
     let rest = &text[start..];
@@ -1648,6 +1905,111 @@ fn evex_generated_corpus_covers_supported_selectors_and_forms() {
 }
 
 #[test]
+fn evex_avx512_spec_diff_corpus_covers_every_spec_case_variant() {
+    let cases = classified_avx512_evex_diff_cases_from_spec();
+    let expected = avx512_spec_case_variant_ids();
+    let classified = classified_avx512_evex_mnemonics();
+    let actual = cases
+        .iter()
+        .map(|case| {
+            case.label
+                .strip_prefix("avx512::")
+                .expect("AVX-512 spec case label prefix")
+                .to_string()
+        })
+        .collect::<BTreeSet<_>>();
+
+    let missing = expected
+        .difference(&actual)
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    let unexpected = actual
+        .difference(&expected)
+        .cloned()
+        .collect::<BTreeSet<_>>();
+
+    assert!(
+        missing.is_empty() && unexpected.is_empty(),
+        "AVX-512 EVEX differential corpus coverage mismatch\nmissing:\n{}\nunexpected:\n{}",
+        missing.into_iter().take(80).collect::<Vec<_>>().join("\n"),
+        unexpected
+            .into_iter()
+            .take(80)
+            .collect::<Vec<_>>()
+            .join("\n")
+    );
+
+    let mnemonic_count = avx512_spec_evex_rows()
+        .into_iter()
+        .map(|row| row.key.mnemonic)
+        .collect::<BTreeSet<_>>()
+        .len();
+    assert!(
+        cases.len() > mnemonic_count,
+        "AVX-512 EVEX differential corpus must be case-variant-level, not mnemonic-level"
+    );
+    for case in &cases {
+        assert!(
+            case.op.len() >= 6 && case.op[0] == 0x62,
+            "{} generated outside EVEX encoding: {:02x?}",
+            case.label,
+            case.op
+        );
+    }
+
+    assert_spec_diff_corpus_shape(&cases, "avx512::", &classified, true);
+}
+
+#[test]
+fn evex_unimplemented_avx512_diff_corpus_covers_every_spec_case_variant() {
+    let (cases, expected) = unimplemented_evex_diff_cases_from_spec();
+    let unimplemented = set_from_manifest(UNIMPLEMENTED_AVX512);
+    let actual = cases
+        .iter()
+        .map(|case| {
+            case.label
+                .strip_prefix("unimplemented::")
+                .expect("unimplemented case label prefix")
+                .to_string()
+        })
+        .collect::<BTreeSet<_>>();
+
+    let missing = expected
+        .difference(&actual)
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    let unexpected = actual
+        .difference(&expected)
+        .cloned()
+        .collect::<BTreeSet<_>>();
+
+    assert!(
+        missing.is_empty() && unexpected.is_empty(),
+        "unimplemented EVEX differential corpus coverage mismatch\nmissing:\n{}\nunexpected:\n{}",
+        missing.into_iter().take(80).collect::<Vec<_>>().join("\n"),
+        unexpected
+            .into_iter()
+            .take(80)
+            .collect::<Vec<_>>()
+            .join("\n")
+    );
+    assert!(
+        cases.len() > set_from_manifest(UNIMPLEMENTED_AVX512).len(),
+        "unimplemented EVEX differential corpus must be case-variant-level, not mnemonic-level"
+    );
+    for case in &cases {
+        assert!(
+            case.op.len() >= 6 && case.op[0] == 0x62,
+            "{} generated outside EVEX encoding: {:02x?}",
+            case.label,
+            case.op
+        );
+    }
+
+    assert_spec_diff_corpus_shape(&cases, "unimplemented::", &unimplemented, false);
+}
+
+#[test]
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 fn qemu_evex_generated_corpus_matches_rax() {
     let Some(llvm_mc) = llvm_mc_path() else {
@@ -1696,4 +2058,58 @@ fn qemu_evex_generated_corpus_matches_rax() {
     } else {
         eprintln!("[info] compared {compared} EVEX cases; qemu rejected {qemu_unsupported}");
     }
+}
+
+#[test]
+#[ignore = "semantic audit for AVX-512 instructions intentionally still listed as unimplemented"]
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+fn qemu_evex_unimplemented_avx512_corpus_matches_rax_when_enabled() {
+    let (cases, _) = unimplemented_evex_diff_cases_from_spec();
+    assert!(
+        !cases.is_empty(),
+        "unimplemented AVX-512 EVEX differential corpus is empty"
+    );
+
+    let Some(qemu) = qemu_path() else {
+        eprintln!("[skip] qemu-x86_64 unavailable; skipping unimplemented EVEX differential audit");
+        return;
+    };
+
+    let Some(oracle) = oracle_path(&cases) else {
+        eprintln!("[skip] EVEX oracle build failed or compiler unavailable");
+        return;
+    };
+    let Some(outputs) = run_oracle(&qemu, &oracle, &cases) else {
+        eprintln!("[skip] qemu-x86_64 could not run the unimplemented EVEX oracle");
+        return;
+    };
+
+    let mut compared = 0usize;
+    let mut qemu_unsupported = 0usize;
+    let mut rax_failures = Vec::new();
+    for (case, oracle) in cases.iter().zip(outputs.iter()) {
+        assert_eq!(oracle.id, case.id, "{}: oracle case id", case.label);
+        if oracle.valid == 0 {
+            qemu_unsupported += 1;
+            continue;
+        }
+        match try_run_rax(case) {
+            Ok(rax) => {
+                assert_same_snapshot(case, &rax, oracle);
+                compared += 1;
+            }
+            Err(error) => rax_failures.push(format!("{}: {error}", case.label)),
+        }
+    }
+
+    assert!(
+        compared > 0 || !rax_failures.is_empty(),
+        "qemu rejected all {} unimplemented EVEX cases",
+        qemu_unsupported
+    );
+    assert!(
+        rax_failures.is_empty(),
+        "unimplemented EVEX differential audit found rax execution failures\ncompared: {compared}\nqemu rejected: {qemu_unsupported}\nfailures:\n{}",
+        rax_failures.into_iter().take(80).collect::<Vec<_>>().join("\n")
+    );
 }
