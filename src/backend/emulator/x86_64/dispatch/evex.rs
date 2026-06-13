@@ -248,8 +248,7 @@ impl X86_64Vcpu {
             self.load_zmm_from_mem(zmm_dst, addr, vl)?;
         } else {
             // Register to register move
-            let zmm_src = if !evex.b { rm + 8 } else { rm };
-            let zmm_src = zmm_src as usize; // ZMM16-31 not encoded in rm for reg-reg
+            let zmm_src = Self::evex_rm_vec_reg(&evex, rm);
             self.copy_zmm(zmm_dst, zmm_src, vl);
         }
 
@@ -299,7 +298,7 @@ impl X86_64Vcpu {
             self.store_zmm_to_mem(zmm_src, addr, vl)?;
         } else {
             // Register to register move (destination is rm)
-            let zmm_dst = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_dst = Self::evex_rm_vec_reg(&evex, rm);
             self.copy_zmm(zmm_dst, zmm_src, vl);
 
             // Zero upper bits if not 512-bit
@@ -1061,7 +1060,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -1132,7 +1131,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -1202,7 +1201,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -1272,7 +1271,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -1368,7 +1367,7 @@ impl X86_64Vcpu {
         let src = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src, vl)
         };
 
@@ -1439,7 +1438,7 @@ impl X86_64Vcpu {
         let src = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src, vl)
         };
 
@@ -1485,7 +1484,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -1538,7 +1537,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -1594,7 +1593,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -1649,7 +1648,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -1704,7 +1703,7 @@ impl X86_64Vcpu {
         let src = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src, vl)
         };
 
@@ -1761,7 +1760,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -1839,7 +1838,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -1920,7 +1919,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -1977,7 +1976,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -2044,7 +2043,7 @@ impl X86_64Vcpu {
             let bytes = self.load_zmm_data(addr, 4)?;
             f32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]])
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             let src2 = self.get_zmm_data(zmm_src2, 16);
             f32::from_le_bytes([src2[0], src2[1], src2[2], src2[3]])
         };
@@ -2094,7 +2093,7 @@ impl X86_64Vcpu {
                 bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
             ])
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             let src2 = self.get_zmm_data(zmm_src2, 16);
             f64::from_le_bytes([
                 src2[0], src2[1], src2[2], src2[3], src2[4], src2[5], src2[6], src2[7],
@@ -2153,7 +2152,7 @@ impl X86_64Vcpu {
         let src = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src, vl)
         };
 
@@ -2208,7 +2207,7 @@ impl X86_64Vcpu {
         let src = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src, vl)
         };
 
@@ -2262,7 +2261,7 @@ impl X86_64Vcpu {
         let src = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src, vl)
         };
 
@@ -2326,7 +2325,7 @@ impl X86_64Vcpu {
         let src = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src, vl)
         };
 
@@ -2402,7 +2401,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -2470,7 +2469,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -2538,7 +2537,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -2606,7 +2605,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -2676,7 +2675,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -2746,7 +2745,7 @@ impl X86_64Vcpu {
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 

@@ -4,6 +4,7 @@ mod vaddps_zmm;
 mod vsubps_zmm;
 mod vmulps_zmm;
 mod vdivps_zmm;
+mod evex_rm_reg_ext;
 mod kmov;
 mod kand_kor_kxor;
 mod kadd_mask;

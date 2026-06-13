@@ -812,6 +812,8 @@ mod x86_64_simd_avx2_vptest;
 mod x86_64_simd_avx2_vpunpckhbw_vpunpckhwd_vpunpckhdq_vpunpckhqdq;
 #[path = "x86_64/simd/avx2/vpunpcklbw_vpunpcklwd_vpunpckldq_vpunpcklqdq.rs"]
 mod x86_64_simd_avx2_vpunpcklbw_vpunpcklwd_vpunpckldq_vpunpcklqdq;
+#[path = "x86_64/simd/avx512/evex_rm_reg_ext.rs"]
+mod x86_64_simd_avx512_evex_rm_reg_ext;
 #[path = "x86_64/simd/avx512_extended.rs"]
 mod x86_64_simd_avx512_extended;
 #[path = "x86_64/simd/avx512/kadd_mask.rs"]
