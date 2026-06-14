@@ -116,7 +116,7 @@ use crate::devices::map::{X86_DEBUG_PORT_BASE, X86_DEBUG_PORT_LEN};
 use crate::devices::rtc::{RTC_ADDRESS, RtcStub};
 use crate::devices::sysctl::SystemControl;
 use crate::error::{Error, Result};
-use crate::memory::{PAGE_SIZE, align_down};
+use crate::memory::{align_down, KVM_TSS_IDENTITY_GAP_START, PAGE_SIZE};
 use std::sync::{Arc, Mutex};
 
 /// The primary IDE controller, stashed during device setup so the ISO boot path
@@ -165,6 +165,12 @@ pub struct X86_64Arch;
 impl X86_64Arch {
     pub fn new() -> Self {
         X86_64Arch
+    }
+
+    fn kvm_setup_addresses() -> (u64, u64) {
+        let identity_map_addr = KVM_TSS_IDENTITY_GAP_START;
+        let tss_addr = KVM_TSS_IDENTITY_GAP_START + PAGE_SIZE;
+        (tss_addr, identity_map_addr)
     }
 
     fn build_cmdline(cmdline: &str) -> Result<Cmdline> {
@@ -785,11 +791,12 @@ impl Arch for X86_64Arch {
                 ) {
                     ide.lock().unwrap().attach_cdrom(iso);
                 }
+                let (tss_addr, identity_map_addr) = Self::kvm_setup_addresses();
                 return Ok(BootInfo::X86_64(X86_64BootInfo {
                     entry_point: 0x7C00,
                     boot_params_addr: GuestAddress(0),
-                    tss_addr: 0,
-                    identity_map_addr: 0,
+                    tss_addr,
+                    identity_map_addr,
                 }));
             }
         }
@@ -811,9 +818,7 @@ impl Arch for X86_64Arch {
         // KVM's set_tss_address creates an internal memory slot, which fails
         // with EEXIST if it overlaps user-registered memory.
         // The memory registration leaves a gap at KVM_TSS_IDENTITY_GAP_START for this purpose.
-        use crate::memory::KVM_TSS_IDENTITY_GAP_START;
-        let identity_map_addr = KVM_TSS_IDENTITY_GAP_START;
-        let tss_addr = KVM_TSS_IDENTITY_GAP_START + PAGE_SIZE;
+        let (tss_addr, identity_map_addr) = Self::kvm_setup_addresses();
 
         let (loader_result, is_elf, elf_phys_entry) = Self::load_kernel_image(mem, config)?;
 
@@ -1099,11 +1104,101 @@ fn gdt_entry_64bit(access: u8) -> u64 {
 mod tests {
     use super::*;
 
+    struct TempIso {
+        path: std::path::PathBuf,
+    }
+
+    impl Drop for TempIso {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_file(&self.path);
+        }
+    }
+
+    fn synthetic_iso() -> Vec<u8> {
+        const CD_SECTOR: usize = 2048;
+        let cat_sector = 0x14u32;
+        let image_lba = 0x15u32;
+        let sector_count = 4u16;
+        let mut iso = vec![0u8; (image_lba as usize + 1) * CD_SECTOR];
+
+        let pvd = 16 * CD_SECTOR;
+        iso[pvd] = 1;
+        iso[pvd + 1..pvd + 6].copy_from_slice(b"CD001");
+        iso[pvd + 6] = 1;
+
+        let brvd = 17 * CD_SECTOR;
+        iso[brvd] = 0;
+        iso[brvd + 1..brvd + 6].copy_from_slice(b"CD001");
+        iso[brvd + 6] = 1;
+        iso[brvd + 7..brvd + 7 + 23].copy_from_slice(b"EL TORITO SPECIFICATION");
+        iso[brvd + 0x47..brvd + 0x4B].copy_from_slice(&cat_sector.to_le_bytes());
+
+        let cat = cat_sector as usize * CD_SECTOR;
+        iso[cat] = 0x01;
+        iso[cat + 0x1E] = 0x55;
+        iso[cat + 0x1F] = 0xAA;
+        let entry = cat + 32;
+        iso[entry] = 0x88;
+        iso[entry + 1] = 0x00;
+        iso[entry + 2..entry + 4].copy_from_slice(&0u16.to_le_bytes());
+        iso[entry + 6..entry + 8].copy_from_slice(&sector_count.to_le_bytes());
+        iso[entry + 8..entry + 12].copy_from_slice(&image_lba.to_le_bytes());
+
+        let image = image_lba as usize * CD_SECTOR;
+        iso[image] = 0xFC;
+        iso[image + 1] = 0xB8;
+        iso
+    }
+
+    fn temp_iso_file() -> TempIso {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system time before Unix epoch")
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "rax-iso-boot-test-{}-{unique}.iso",
+            std::process::id()
+        ));
+        std::fs::write(&path, synthetic_iso()).expect("write synthetic ISO");
+        TempIso { path }
+    }
+
     #[test]
     fn build_e820_layout() {
         let entries = X86_64Arch::build_e820(512 * 1024 * 1024, 0x1fffc000);
         assert!(entries.len() >= 3);
         let first_type = unsafe { std::ptr::read_unaligned(std::ptr::addr_of!(entries[0].type_)) };
         assert_eq!(first_type, E820_RAM);
+    }
+
+    #[test]
+    fn iso_boot_uses_kvm_setup_addresses() {
+        let iso = temp_iso_file();
+        let config = crate::config::VmConfig::from_sources(
+            crate::config::CliConfig {
+                arch: Some(crate::config::ArchKind::X86_64),
+                backend: Some(crate::config::BackendKind::Kvm),
+                kernel: Some(iso.path.clone()),
+                ..Default::default()
+            },
+            None,
+        )
+        .expect("test VM config");
+        let mem =
+            GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x20_0000)]).expect("guest mem");
+
+        let boot = X86_64Arch::new()
+            .load_kernel(&mem, &config)
+            .expect("ISO load_kernel");
+        let BootInfo::X86_64(boot) = boot else {
+            panic!("expected x86_64 boot info");
+        };
+
+        assert_eq!(boot.entry_point, 0x7C00);
+        assert_eq!(boot.boot_params_addr, GuestAddress(0));
+        assert_eq!(boot.identity_map_addr, KVM_TSS_IDENTITY_GAP_START);
+        assert_eq!(boot.tss_addr, KVM_TSS_IDENTITY_GAP_START + PAGE_SIZE);
+        assert_ne!(boot.identity_map_addr, 0);
+        assert_ne!(boot.tss_addr, 0);
     }
 }
