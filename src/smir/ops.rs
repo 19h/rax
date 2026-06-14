@@ -3087,6 +3087,13 @@ impl OpKind {
                 | OpKind::SetDF { .. }
                 | OpKind::CmcCF
                 | OpKind::MaterializeFlags
+                // A saturating clamp ORs the Hexagon USR:OVF sticky bit when it
+                // actually clamps and `set_ovf` is set. That update is invisible
+                // to `dests()`, so the op must be treated as side-effecting or DCE
+                // would drop it whenever its data destination is dead and silently
+                // lose the OVF update. `set_ovf == false` SatN has no side effect
+                // and stays removable. (#108)
+                | OpKind::SatN { set_ovf: true, .. }
                 | OpKind::Syscall { .. }
                 | OpKind::Swi { .. }
                 | OpKind::WriteSysReg { .. }

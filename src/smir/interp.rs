@@ -11313,6 +11313,58 @@ mod tests {
         assert_eq!(run_sat_n(-1, 8, false, false), (0, false));
     }
 
+    // Regression for issue #108: SatN's USR:OVF sticky update is a side effect that
+    // dests() does not report, so DCE used to drop a saturating op whose data
+    // result was dead — silently losing the OVF flag. Here the clamp of 0x8000 to
+    // signed 16 bits overflows and must OR USR:OVF, but its result is written to a
+    // virtual temp that is never read. After running the FULL optimizer the op (and
+    // its OVF side effect) must survive end-to-end through the interpreter.
+    #[test]
+    fn issue_108_optimized_satn_keeps_usr_ovf_when_result_dead() {
+        use crate::smir::opt::{optimize_function, OptLevel};
+
+        let mut ctx = SmirContext::new_hexagon();
+        let mut memory = FlatMemory::new(0x1000);
+        ctx.write_arch_reg(ArchReg::Hexagon(HexagonReg::Usr), 0);
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        let tmp = builder.alloc_vreg();
+        let dead = builder.alloc_vreg();
+        builder.push_op(
+            0x1000,
+            OpKind::Mov {
+                dst: tmp,
+                src: SrcOperand::Imm(0x8000),
+                width: OpWidth::W64,
+            },
+        );
+        builder.push_op(
+            0x1004,
+            OpKind::SatN {
+                dst: dead,
+                src: SrcOperand::Reg(tmp),
+                sat_bits: 16,
+                signed: true,
+                set_ovf: true,
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Trap {
+            kind: TrapKind::Halt,
+        });
+        let mut func = builder.finish();
+        optimize_function(&mut func, OptLevel::O2);
+
+        let interp = SmirInterpreter::new();
+        interp.execute_block(&mut ctx, &mut memory, &func.blocks[0]);
+
+        assert_eq!(
+            ctx.read_arch_reg(ArchReg::Hexagon(HexagonReg::Usr)) & 1,
+            1,
+            "optimized SatN must still set USR:OVF even though its data result is dead",
+        );
+    }
+
     /// Execute one `OpKind::ClMul` and return (dst_lo, dst_hi). The `acc`
     /// forms read the existing dst pair, so seed it via `init`.
     fn run_clmul(

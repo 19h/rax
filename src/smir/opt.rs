@@ -3276,6 +3276,63 @@ mod tests {
         );
     }
 
+    // Regression for issue #108: OpKind::SatN ORs the Hexagon USR:OVF sticky bit
+    // as a side effect, but that write is invisible to dests(). DCE must therefore
+    // keep a SatN that can set OVF (set_ovf == true) even when its data result is
+    // dead — yet may still drop one that cannot (set_ovf == false). The SatN
+    // writes a virtual temp that is never read (so its data result is dead and not
+    // kept alive by the frontier), isolating the decision to the side effect.
+    #[test]
+    fn issue_108_dce_keeps_satn_with_ovf_side_effect() {
+        use crate::smir::ir::FunctionBuilder;
+
+        fn satn_count_after_opt(set_ovf: bool) -> usize {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            let tmp = builder.alloc_vreg();
+            let dead = builder.alloc_vreg();
+            builder.push_op(
+                0x1000,
+                OpKind::Mov {
+                    dst: tmp,
+                    src: SrcOperand::Imm(0x8000),
+                    width: OpWidth::W64,
+                },
+            );
+            builder.push_op(
+                0x1004,
+                OpKind::SatN {
+                    dst: dead,
+                    src: SrcOperand::Reg(tmp),
+                    sat_bits: 16,
+                    signed: true,
+                    set_ovf,
+                    width: OpWidth::W64,
+                },
+            );
+            builder.set_terminator(Terminator::Trap {
+                kind: crate::smir::ir::TrapKind::Halt,
+            });
+            let mut func = builder.finish();
+            optimize_function(&mut func, OptLevel::O2);
+            func.blocks[0]
+                .ops
+                .iter()
+                .filter(|op| matches!(op.kind, OpKind::SatN { .. }))
+                .count()
+        }
+
+        assert_eq!(
+            satn_count_after_opt(true),
+            1,
+            "a SatN that can set USR:OVF must survive DCE even with a dead data result",
+        );
+        assert_eq!(
+            satn_count_after_opt(false),
+            0,
+            "a SatN with set_ovf=false and a dead data result has no side effect and is removable",
+        );
+    }
+
     #[test]
     fn test_constant_propagation() {
         let mut block = SmirBlock::new(BlockId(0), 0x1000);
