@@ -143,6 +143,9 @@ impl SmirInterpreter {
                 });
             }
             ctx.insn_count += 1;
+            if let Some(reason) = ctx.exit_reason.take() {
+                return BlockResult::Exit(reason);
+            }
         }
 
         // Execute terminator
@@ -2226,21 +2229,27 @@ impl SmirInterpreter {
                 src2,
                 src3,
                 fcsr_src,
-                op,
+                op: fp_op,
                 rm_field,
             } => {
                 let a = ctx.read_vreg(*src1);
                 let b = ctx.read_vreg(*src2);
                 let c = ctx.read_vreg(*src3);
                 let fcsr = ctx.read_vreg(*fcsr_src) as u32;
-                // Bit-exact against the qemu-verified RISC-V interpreter. `None`
-                // means an illegal rounding-mode field — hardware traps with no
-                // architectural state change, so leave dst/fcsr untouched.
-                if let Some((res, new_fcsr)) =
-                    crate::riscv::float::eval_scalar_fp(*op, *rm_field, fcsr, a, b, c)
-                {
-                    ctx.write_vreg(*dst, res);
-                    ctx.write_vreg(*fcsr_dst, new_fcsr as u64);
+                // Bit-exact against the qemu-verified RISC-V interpreter.
+                match crate::riscv::float::eval_scalar_fp(*fp_op, *rm_field, fcsr, a, b, c) {
+                    Some((res, new_fcsr)) => {
+                        ctx.write_vreg(*dst, res);
+                        ctx.write_vreg(*fcsr_dst, new_fcsr as u64);
+                    }
+                    None => {
+                        // Illegal rounding-mode fields trap with no architectural
+                        // state change.
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                    }
                 }
             }
 
@@ -7737,6 +7746,63 @@ mod tests {
             value[idx] = u64::from_le_bytes(lane);
         }
         value
+    }
+
+    #[test]
+    fn rvfp_invalid_rounding_mode_traps_without_writes() {
+        let dst = VReg::Virtual(VirtualId(1));
+        let fcsr_dst = VReg::Virtual(VirtualId(2));
+        let src1 = VReg::Virtual(VirtualId(3));
+        let src2 = VReg::Virtual(VirtualId(4));
+        let src3 = VReg::Virtual(VirtualId(5));
+        let fcsr_src = VReg::Virtual(VirtualId(6));
+        let mut ctx = SmirContext::new_riscv();
+        ctx.pc = 0x2000;
+        ctx.write_vreg(dst, 0x1111);
+        ctx.write_vreg(fcsr_dst, 0x2222);
+        ctx.write_vreg(src1, 0xffff_ffff_3f80_0000); // boxed 1.0f
+        ctx.write_vreg(src2, 0xffff_ffff_4000_0000); // boxed 2.0f
+        ctx.write_vreg(src3, 0);
+        ctx.write_vreg(fcsr_src, 0);
+
+        let block = SmirBlock {
+            id: BlockId(0),
+            guest_pc: 0x2000,
+            phis: vec![],
+            ops: vec![SmirOp::new(
+                OpId(0),
+                0x2004,
+                OpKind::RvFp {
+                    dst,
+                    fcsr_dst,
+                    src1,
+                    src2,
+                    src3,
+                    fcsr_src,
+                    op: crate::riscv::Op::FaddS,
+                    rm_field: 0b101,
+                },
+            )],
+            terminator: Terminator::Trap {
+                kind: TrapKind::Halt,
+            },
+            exec_count: 0,
+        };
+        let interp = SmirInterpreter::new();
+        let mut memory = FlatMemory::new(0x1000);
+
+        let exit = interp.execute_block(&mut ctx, &mut memory, &block);
+
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::Undefined {
+                addr: 0x2004,
+                opcode: 0
+            })
+        ));
+        assert_eq!(ctx.read_vreg(dst), 0x1111);
+        assert_eq!(ctx.read_vreg(fcsr_dst), 0x2222);
+        assert!(ctx.exit_reason.is_none());
     }
 
     #[test]
