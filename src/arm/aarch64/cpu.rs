@@ -5943,6 +5943,10 @@ impl AArch64Cpu {
                 let size = tsz.trailing_zeros() as usize;
                 let esz = 1usize << size;
                 let index = (tsz >> (size + 1)) as usize;
+                if esz == 16 {
+                    self.v[zd] = if index == 0 { self.v[zn] } else { 0 };
+                    return Ok(CpuExit::Continue);
+                }
                 let nsegelt = 16 / esz;
                 let src = self.v[zn].to_le_bytes();
                 let val = if index < nsegelt {
@@ -20767,6 +20771,18 @@ mod tests {
     /// Helper to write instruction at specific address
     fn write_insn(cpu: &mut AArch64Cpu, addr: u64, insn: u32) {
         cpu.write_memory(addr, &insn.to_le_bytes()).unwrap();
+    }
+
+    #[test]
+    fn test_sve2_dupq_quadword_no_panic() {
+        let mut cpu = create_cpu_with_insn(0x0530_2420); // DUPQ Z0.Q, Z1.Q[0]
+        let src_lo = 0x0123_4567_89ab_cdef;
+        let src_hi = 0xfedc_ba98_7654_3210;
+
+        cpu.set_simd_reg(1, src_lo, src_hi).unwrap();
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.get_simd_reg(0), Some((src_lo, src_hi)));
     }
 
     // -------------------------------------------------------------------------
