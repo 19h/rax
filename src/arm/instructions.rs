@@ -495,7 +495,9 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             }
             Mnemonic::VABS | Mnemonic::VNEG => self.exec_vfp_unop(insn),
             Mnemonic::VSQRT => self.exec_vfp_unop(insn),
-            Mnemonic::VRINTM_F16
+            Mnemonic::VRINTA_F16
+            | Mnemonic::VRINTA_F32
+            | Mnemonic::VRINTM_F16
             | Mnemonic::VRINTM_F32
             | Mnemonic::VRINTN_F16
             | Mnemonic::VRINTN_F32
