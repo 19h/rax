@@ -2273,9 +2273,8 @@ impl OpKind {
                 result.push(*src2);
             }
 
-            OpKind::RvVector { rs1, rs2, .. } => {
-                result.push(*rs1);
-                result.push(*rs2);
+            OpKind::RvVector { src, .. } => {
+                result.extend(src.vregs());
             }
 
             OpKind::FAbs { src, .. }

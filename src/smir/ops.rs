@@ -130,6 +130,40 @@ pub enum X86OpHint {
 // OpKind Enum
 // ============================================================================
 
+/// Scalar-visible RISC-V state carried by the opaque RVV operation.
+///
+/// The vector engine still owns the full 128-bit vector register file through
+/// `ArchRegState::RiscV`, but low-64 vector views and scalar x/f/CSR registers
+/// must flow through SMIR vregs so surrounding scalar ops in the same block see
+/// the current SSA values.
+#[derive(Clone, Debug)]
+pub struct RvVectorVRegState {
+    pub x: [VReg; 32],
+    pub f: [VReg; 32],
+    pub v: [VReg; 32],
+    pub fcsr: VReg,
+    pub vl: VReg,
+    pub vtype: VReg,
+    pub vstart: VReg,
+    pub vcsr: VReg,
+}
+
+impl RvVectorVRegState {
+    pub fn vregs(&self) -> Vec<VReg> {
+        let mut regs = Vec::with_capacity(100);
+        regs.extend(
+            self.x
+                .iter()
+                .copied()
+                .filter(|r| !matches!(r, VReg::Imm(_))),
+        );
+        regs.extend(self.f.iter().copied());
+        regs.extend(self.v.iter().copied());
+        regs.extend([self.fcsr, self.vl, self.vtype, self.vstart, self.vcsr]);
+        regs
+    }
+}
+
 /// All SMIR operation kinds
 #[derive(Clone, Debug)]
 pub enum OpKind {
@@ -2556,10 +2590,15 @@ pub enum OpKind {
     /// (x/f/fcsr + the `RiscVRegState` vector file + vl/vtype/vstart/vcsr) into a
     /// transient `RiscVCpu` over a memory bridge to the SMIR memory, runs this one
     /// decoded instruction, and reads the full result state back. `insn` is the
-    /// raw 32-bit encoding; `rs1`/`rs2` are the x-register address sources kept
-    /// live for the optimizer. Vector/CSR/x/f results are written directly into
-    /// `ctx.arch_regs` (not SSA vregs). Self-contained; NOT JIT-whitelisted.
-    RvVector { insn: u32, rs1: VReg, rs2: VReg },
+    /// raw 32-bit encoding; `src` is the scalar-visible state used to seed the
+    /// transient CPU, and `dst` receives the scalar-visible results so later
+    /// in-block scalar ops observe them through SSA. Self-contained; NOT
+    /// JIT-whitelisted.
+    RvVector {
+        insn: u32,
+        src: Box<RvVectorVRegState>,
+        dst: Box<RvVectorVRegState>,
+    },
 
     // ========================================================================
     // META / DEBUG
@@ -2946,9 +2985,7 @@ impl OpKind {
 
             OpKind::RvIntCrypto { dst, .. } => vec![*dst],
 
-            // RvVector writes its results directly into ctx.arch_regs (vector
-            // file / CSRs / x / f), not SSA vregs.
-            OpKind::RvVector { .. } => vec![],
+            OpKind::RvVector { dst, .. } => dst.vregs(),
 
             OpKind::MulU { dst_lo, dst_hi, .. } | OpKind::MulS { dst_lo, dst_hi, .. } => {
                 let mut v = vec![*dst_lo];

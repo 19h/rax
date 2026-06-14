@@ -10,8 +10,7 @@ use crate::config::{Endianness, HexagonIsa};
 use crate::riscv::decode as rv_decode;
 use crate::riscv::{Isa as RvIsa, Op as RvOp, Xlen};
 use crate::smir::lift::riscv::RiscVExtensions;
-use crate::smir::ops::HexFpOp;
-use crate::smir::ops::HexFpRecipKind;
+use crate::smir::ops::{HexFpOp, HexFpRecipKind, RvVectorVRegState};
 use crate::smir::types::DispSize;
 use crate::smir::{
     Aarch64Lifter, Address, ArchReg, ArmReg, AtomicOp, Avx10FP16Op, BlockId, CallTarget, Condition,
@@ -987,6 +986,12 @@ impl<T: OracleJson + ?Sized> OracleJson for &T {
     }
 }
 
+impl<T: OracleJson + ?Sized> OracleJson for Box<T> {
+    fn oracle_json(&self) -> Value {
+        (**self).oracle_json()
+    }
+}
+
 impl<T: OracleJson> OracleJson for Option<T> {
     fn oracle_json(&self) -> Value {
         self.as_ref()
@@ -1142,6 +1147,21 @@ impl OracleJson for SrcOperand {
                 "shift": shift,
             }),
         }
+    }
+}
+
+impl OracleJson for RvVectorVRegState {
+    fn oracle_json(&self) -> Value {
+        json!({
+            "x": self.x.to_vec().oracle_json(),
+            "f": self.f.to_vec().oracle_json(),
+            "v": self.v.to_vec().oracle_json(),
+            "fcsr": self.fcsr.oracle_json(),
+            "vl": self.vl.oracle_json(),
+            "vtype": self.vtype.oracle_json(),
+            "vstart": self.vstart.oracle_json(),
+            "vcsr": self.vcsr.oracle_json(),
+        })
     }
 }
 
@@ -2657,7 +2677,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::RvIntCrypto {
             dst, src1, src2, ..
         } => op_json!("rv_int_crypto", dst, src1, src2),
-        OpKind::RvVector { rs1, rs2, .. } => op_json!("rv_vector", rs1, rs2),
+        OpKind::RvVector { src, dst, .. } => op_json!("rv_vector", src, dst),
     }
 }
 

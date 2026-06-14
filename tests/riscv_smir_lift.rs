@@ -300,6 +300,171 @@ fn run_smir(insn: &[u8], init: &State) -> Result<Option<State>, String> {
     Ok(Some(out))
 }
 
+/// Run a short 32-bit-instruction program on the golden `RiscVCpu`.
+fn run_ref_words(words: &[u32], init: &State) -> Option<State> {
+    let mem = RvMem::new(0, MEM_SIZE as usize);
+    let mut cpu = RiscVCpu::new(RiscVConfig::rv64gc(), Box::new(mem));
+    for i in 1..32u8 {
+        cpu.set_x(i, init.x[i as usize]);
+    }
+    for i in 0..32u8 {
+        cpu.set_f(i, init.f[i as usize]);
+    }
+    cpu.set_fcsr(init.fcsr);
+    for i in 0..32u8 {
+        cpu.set_vreg(i, &init.v[i as usize]);
+    }
+    cpu.set_vl_vtype(init.vl, init.vtype);
+    cpu.set_vstart(init.vstart);
+    cpu.set_vcsr(init.vcsr);
+    let mut sb = Vec::with_capacity(512);
+    for w in init.scratch.iter() {
+        sb.extend_from_slice(&w.to_le_bytes());
+    }
+    cpu.write_memory(SCRATCH, &sb).ok()?;
+    for (idx, word) in words.iter().enumerate() {
+        cpu.write_memory(CODE_ADDR + (idx as u64) * 4, &word.to_le_bytes())
+            .ok()?;
+    }
+    cpu.set_pc(CODE_ADDR);
+    for _ in words {
+        match cpu.step() {
+            RiscVExit::Continue => {}
+            _ => return None,
+        }
+    }
+
+    let mut out = State {
+        x: [0; 32],
+        f: [0; 32],
+        fcsr: 0,
+        scratch: [0; 64],
+        v: [[0; 16]; 32],
+        vl: 0,
+        vtype: 0,
+        vstart: 0,
+        vcsr: 0,
+    };
+    for i in 1..32u8 {
+        out.x[i as usize] = cpu.x(i);
+    }
+    for i in 0..32u8 {
+        out.f[i as usize] = cpu.f(i);
+    }
+    out.fcsr = cpu.fcsr();
+    for (i, w) in out.scratch.iter_mut().enumerate() {
+        *w = cpu.mem_read_u64(SCRATCH + (i as u64) * 8).ok()?;
+    }
+    for i in 0..32u8 {
+        out.v[i as usize] = cpu.vreg(i);
+    }
+    out.vl = cpu.vl();
+    out.vtype = cpu.vtype();
+    out.vstart = cpu.vstart();
+    out.vcsr = cpu.vcsr();
+    Some(out)
+}
+
+/// Lift a short 32-bit-instruction program with one `LiftContext` and execute
+/// it as a single SMIR block.
+fn run_smir_words(words: &[u32], init: &State) -> Result<Option<State>, String> {
+    let mut lifter = RiscVLifter::rv64gc();
+    let mut lctx = LiftContext::new(SourceArch::RiscV64);
+    let mut ops = Vec::new();
+    for (idx, word) in words.iter().enumerate() {
+        let addr = CODE_ADDR + (idx as u64) * 4;
+        let bytes = word.to_le_bytes();
+        let res = match lifter.lift_insn(addr, &bytes, &mut lctx) {
+            Ok(r) => r,
+            Err(LiftError::Unsupported { .. }) | Err(LiftError::InvalidEncoding { .. }) => {
+                return Ok(None);
+            }
+            Err(e) => return Err(format!("lift error: {e:?}")),
+        };
+        ops.extend(res.ops);
+    }
+    for (i, op) in ops.iter_mut().enumerate() {
+        op.id = OpId(i as u16);
+    }
+    let block = SmirBlock {
+        id: BlockId(0),
+        guest_pc: CODE_ADDR,
+        phis: vec![],
+        ops,
+        terminator: Terminator::Trap {
+            kind: TrapKind::Breakpoint,
+        },
+        exec_count: 0,
+    };
+    let mut ctx = SmirContext::new_riscv();
+    if let ArchRegState::RiscV(rv) = &mut ctx.arch_regs {
+        rv.x[1..32].copy_from_slice(&init.x[1..32]);
+        rv.f.copy_from_slice(&init.f);
+        rv.fcsr = init.fcsr;
+        rv.pc = CODE_ADDR;
+        rv.v = init.v;
+        rv.vl = init.vl;
+        rv.vtype = init.vtype;
+        rv.vstart = init.vstart;
+        rv.vcsr = init.vcsr;
+    }
+    ctx.pc = CODE_ADDR;
+
+    let mut mem = SmirMem::with_base(0, MEM_SIZE as usize);
+    let mut sb = Vec::with_capacity(512);
+    for w in init.scratch.iter() {
+        sb.extend_from_slice(&w.to_le_bytes());
+    }
+    use rax::smir::SmirMemory;
+    mem.write(SCRATCH, &sb)
+        .map_err(|e| format!("mem seed: {e:?}"))?;
+
+    let interp = SmirInterpreter::new();
+    interp.execute_block(&mut ctx, &mut mem, &block);
+
+    let mut out = State {
+        x: [0; 32],
+        f: [0; 32],
+        fcsr: 0,
+        scratch: [0; 64],
+        v: [[0; 16]; 32],
+        vl: 0,
+        vtype: 0,
+        vstart: 0,
+        vcsr: 0,
+    };
+    for n in 0..32u8 {
+        out.x[n as usize] = ctx.read_vreg(lctx.get_arch_reg(ArchReg::RiscV(RiscVReg::X(n))));
+        out.f[n as usize] = ctx.read_vreg(lctx.get_arch_reg(ArchReg::RiscV(RiscVReg::F(n))));
+    }
+    out.x[0] = 0;
+    let fcsr_vreg = lctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x003)));
+    out.fcsr = match fcsr_vreg {
+        rax::smir::types::VReg::Arch(_) => {
+            if let ArchRegState::RiscV(rv) = &ctx.arch_regs {
+                rv.fcsr
+            } else {
+                0
+            }
+        }
+        _ => ctx.read_vreg(fcsr_vreg) as u32,
+    };
+    for i in 0..64u64 {
+        let mut b = [0u8; 8];
+        mem.read(SCRATCH + i * 8, &mut b)
+            .map_err(|e| format!("mem read: {e:?}"))?;
+        out.scratch[i as usize] = u64::from_le_bytes(b);
+    }
+    if let ArchRegState::RiscV(rv) = &ctx.arch_regs {
+        out.v = rv.v;
+        out.vl = rv.vl;
+        out.vtype = rv.vtype;
+        out.vstart = rv.vstart;
+        out.vcsr = rv.vcsr;
+    }
+    Ok(Some(out))
+}
+
 /// Like `run_ref` but also returns the resulting program counter — used to
 /// verify control-flow lift (the next-PC of branches/jumps).
 fn run_ref_cf(insn: &[u8], init: &State) -> Option<(State, u64)> {
@@ -796,6 +961,36 @@ fn lift_cf() {
 /// 0=OPIVV, 1=OPFVV, 2=OPMVV, 3=OPIVI, 4=OPIVX, 5=OPFVF, 6=OPMVX.
 fn vop(funct6: u32, vm: u32, vs2: u32, src: u32, funct3: u32, vd: u32) -> u32 {
     (funct6 << 26) | (vm << 25) | (vs2 << 20) | (src << 15) | (funct3 << 12) | (vd << 7) | 0x57
+}
+
+#[test]
+fn rv_vector_uses_same_block_ssa_state() {
+    const E32_M1: u64 = 0x10;
+    const VLMAX32: u64 = 4;
+
+    let addi_a0_16 = (16 << 20) | (10 << 15) | (10 << 7) | 0x13;
+    let vle32_v1_a0 = (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07;
+    let prog = [addi_a0_16, vle32_v1_a0];
+
+    let mut rng = Rng::new(0x5117_0102);
+    let mut st = rand_state(&mut rng);
+    st.vtype = E32_M1;
+    st.vl = VLMAX32;
+    st.vstart = 0;
+    st.vcsr = 0;
+    st.x[10] = SCRATCH + 0x30;
+    st.scratch[6] = 0x1111_2222_3333_4444;
+    st.scratch[7] = 0x5555_6666_7777_8888;
+    st.scratch[8] = 0xaaaa_bbbb_cccc_dddd;
+    st.scratch[9] = 0xeeee_ffff_1234_5678;
+
+    let ref_out = run_ref_words(&prog, &st).expect("reference should execute");
+    let smir_out = run_smir_words(&prog, &st)
+        .expect("SMIR execution should succeed")
+        .expect("program should lift");
+    if let Some(diff) = ref_out.eq_regs(&smir_out) {
+        panic!("same-block RVV SSA state diverged: {diff}");
+    }
 }
 
 /// RVV lift verification. RVV element width/count are runtime `vtype`/`vl` state

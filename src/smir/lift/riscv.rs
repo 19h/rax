@@ -2356,23 +2356,49 @@ impl RiscVLifter {
         self.emit_rv_vector(insn, &d, addr, ctx)
     }
 
-    /// Emit an opaque [`OpKind::RvVector`] for one RVV instruction. `rs1`/`rs2`
-    /// (x-register address/AVL/stride/index sources) are kept live for the
-    /// optimizer; the interp writes all results (vector file, CSRs, x/f) directly
-    /// into `ctx.arch_regs` by running the verified vector engine.
+    fn rv_vector_src_state(&self, ctx: &mut LiftContext) -> crate::smir::ops::RvVectorVRegState {
+        crate::smir::ops::RvVectorVRegState {
+            x: std::array::from_fn(|i| self.get_x_reg(i as u8, ctx)),
+            f: std::array::from_fn(|i| ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::F(i as u8)))),
+            v: std::array::from_fn(|i| ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::V(i as u8)))),
+            fcsr: ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x003))),
+            vl: ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc20))),
+            vtype: ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc21))),
+            vstart: ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x008))),
+            vcsr: ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x00f))),
+        }
+    }
+
+    fn rv_vector_dst_state(&self, ctx: &mut LiftContext) -> crate::smir::ops::RvVectorVRegState {
+        crate::smir::ops::RvVectorVRegState {
+            x: std::array::from_fn(|i| self.def_x_reg(i as u8, ctx).unwrap_or(VReg::Imm(0))),
+            f: std::array::from_fn(|i| ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::F(i as u8)))),
+            v: std::array::from_fn(|i| ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::V(i as u8)))),
+            fcsr: ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x003))),
+            vl: ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc20))),
+            vtype: ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc21))),
+            vstart: ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x008))),
+            vcsr: ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x00f))),
+        }
+    }
+
+    /// Emit an opaque [`OpKind::RvVector`] for one RVV instruction. The full
+    /// scalar-visible RISC-V state is carried as source/destination vregs so the
+    /// verified vector engine observes earlier scalar writes in the same block,
+    /// and later scalar ops observe RVV x/f/CSR results through SSA.
     fn emit_rv_vector(
         &mut self,
         insn: u32,
-        d: &crate::riscv::Insn,
+        _d: &crate::riscv::Insn,
         addr: GuestAddr,
         ctx: &mut LiftContext,
     ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
-        let rs1 = self.get_x_reg(d.rs1, ctx);
-        let rs2 = self.get_x_reg(d.rs2, ctx);
+        let src = Box::new(self.rv_vector_src_state(ctx));
+        let dst = Box::new(self.rv_vector_dst_state(ctx));
         let ops = vec![SmirOp::new(
             ctx.next_op_id(),
             addr,
-            OpKind::RvVector { insn, rs1, rs2 },
+            OpKind::RvVector { insn, src, dst },
         )];
         Ok((ops, ControlFlow::NextInsn))
     }

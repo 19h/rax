@@ -8,7 +8,7 @@ use crate::smir::context::{ArchRegState, ExitReason, SmirContext, VecValue};
 use crate::smir::flags::{LazyFlagOp, LazyFlags};
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 use crate::smir::memory::{MemoryError, SmirMemory};
-use crate::smir::ops::{HexFpOp, HexFpRecipKind, OpKind, SmirOp};
+use crate::smir::ops::{HexFpOp, HexFpRecipKind, OpKind, RvVectorVRegState, SmirOp};
 use crate::smir::types::*;
 
 // ============================================================================
@@ -2258,8 +2258,8 @@ impl SmirInterpreter {
                 }
             }
 
-            OpKind::RvVector { insn, .. } => {
-                exec_rv_vector(ctx, memory, *insn);
+            OpKind::RvVector { insn, src, dst } => {
+                exec_rv_vector(ctx, memory, *insn, src, dst);
             }
 
             OpKind::IntToFp {
@@ -11716,7 +11716,10 @@ mod tests {
             rax, 0xDEAD_BEEF_0000_0005,
             "RAX upper 32 bits must be preserved on a successful CMPXCHG",
         );
-        assert_eq!(rcx, 0x0000_0000_0000_0099, "ECX takes the source on a match");
+        assert_eq!(
+            rcx, 0x0000_0000_0000_0099,
+            "ECX takes the source on a match"
+        );
     }
 
     #[test]
@@ -11784,14 +11787,30 @@ impl crate::riscv::Memory for RvVecMemBridge {
 /// is the only faithful lift. On a trap (illegal vtype / access fault) the
 /// machine state is left unchanged — matching the reference, which traps and
 /// makes no architectural change.
-fn exec_rv_vector(ctx: &mut SmirContext, memory: &mut dyn SmirMemory, insn: u32) {
+fn exec_rv_vector(
+    ctx: &mut SmirContext,
+    memory: &mut dyn SmirMemory,
+    insn: u32,
+    src: &RvVectorVRegState,
+    dst: &RvVectorVRegState,
+) {
     let pc = ctx.pc;
-    let (x, f, fcsr, v, vl, vtype, vstart, vcsr) = match &ctx.arch_regs {
-        ArchRegState::RiscV(rv) => (
-            rv.x, rv.f, rv.fcsr, rv.v, rv.vl, rv.vtype, rv.vstart, rv.vcsr,
-        ),
+    let (mut x, mut f, mut v) = match &ctx.arch_regs {
+        ArchRegState::RiscV(rv) => (rv.x, rv.f, rv.v),
         _ => return,
     };
+    for i in 1..32usize {
+        x[i] = ctx.read_vreg(src.x[i]);
+    }
+    for i in 0..32usize {
+        f[i] = ctx.read_vreg(src.f[i]);
+        v[i][0..8].copy_from_slice(&ctx.read_vreg(src.v[i]).to_le_bytes());
+    }
+    let fcsr = ctx.read_vreg(src.fcsr) as u32;
+    let vl = ctx.read_vreg(src.vl);
+    let vtype = ctx.read_vreg(src.vtype);
+    let vstart = ctx.read_vreg(src.vstart);
+    let vcsr = ctx.read_vreg(src.vcsr);
 
     // Lifetime-erase the SMIR memory pointer into the 'static bridge; the bridge
     // (and the CPU owning it) is dropped before this function returns, so it
@@ -11820,6 +11839,23 @@ fn exec_rv_vector(ctx: &mut SmirContext, memory: &mut dyn SmirMemory, insn: u32)
     if d.is_illegal() || cpu.execute_insn(&d, pc).is_err() {
         return;
     }
+    let mut new_v = [[0u8; 16]; 32];
+    for i in 1..32u8 {
+        ctx.write_vreg(dst.x[i as usize], cpu.x(i));
+    }
+    for i in 0..32u8 {
+        ctx.write_vreg(dst.f[i as usize], cpu.f(i));
+        new_v[i as usize] = cpu.vreg(i);
+        ctx.write_vreg(
+            dst.v[i as usize],
+            u64::from_le_bytes(new_v[i as usize][0..8].try_into().unwrap()),
+        );
+    }
+    ctx.write_vreg(dst.fcsr, cpu.fcsr() as u64);
+    ctx.write_vreg(dst.vl, cpu.vl());
+    ctx.write_vreg(dst.vtype, cpu.vtype());
+    ctx.write_vreg(dst.vstart, cpu.vstart());
+    ctx.write_vreg(dst.vcsr, cpu.vcsr());
     if let ArchRegState::RiscV(rv) = &mut ctx.arch_regs {
         for i in 1..32u8 {
             rv.x[i as usize] = cpu.x(i);
@@ -11828,9 +11864,7 @@ fn exec_rv_vector(ctx: &mut SmirContext, memory: &mut dyn SmirMemory, insn: u32)
             rv.f[i as usize] = cpu.f(i);
         }
         rv.fcsr = cpu.fcsr();
-        for i in 0..32u8 {
-            rv.v[i as usize] = cpu.vreg(i);
-        }
+        rv.v = new_v;
         rv.vl = cpu.vl();
         rv.vtype = cpu.vtype();
         rv.vstart = cpu.vstart();
