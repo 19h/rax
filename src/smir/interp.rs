@@ -2631,9 +2631,36 @@ impl SmirInterpreter {
                             acc.to_bits()
                         }
                     }
+                    // Widening add: sum sign/zero-extended lanes; result is 2x
+                    // the element width.
+                    VecReduceOp::SAddLong => {
+                        let mut acc = 0i128;
+                        for i in 0..n {
+                            acc += i128::from(sext(lane(i)));
+                        }
+                        acc as u64
+                    }
+                    VecReduceOp::UAddLong => {
+                        let mut acc = 0u128;
+                        for i in 0..n {
+                            acc += u128::from(lane(i));
+                        }
+                        acc as u64
+                    }
+                };
+                // Widening reductions write a result 2x the element width.
+                let result_bits = if matches!(op, VecReduceOp::SAddLong | VecReduceOp::UAddLong) {
+                    (bits * 2).min(64)
+                } else {
+                    bits
+                };
+                let rmask = if result_bits >= 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << result_bits) - 1
                 };
                 let mut result = [0u64; 16];
-                Self::set_lane(&mut result, 0, bits, value);
+                Self::set_lane(&mut result, 0, result_bits, value & rmask);
                 Self::write_vec(ctx, *dst, result);
             }
 

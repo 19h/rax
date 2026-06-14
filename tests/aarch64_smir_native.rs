@@ -1891,3 +1891,53 @@ fn e2e_vector_table_lookup_hot_loop_matches_interpreter() {
         assert_ne!(interp, 0, "op={:#010x} nonzero", op);
     }
 }
+
+// Widening add reductions SADDLV/UADDLV via VReduce (result is 2x element width).
+#[test]
+fn probe_vector_widening_reduce() {
+    // saddlv h0, v1.16b (0x4e303820): signed sum of 16 bytes (all -1) = -16.
+    let r = fp_run(&[0x4e30_3820], |g| {
+        g.v[2] = 0xFFFF_FFFF_FFFF_FFFF;
+        g.v[3] = 0xFFFF_FFFF_FFFF_FFFF;
+    });
+    assert_eq!(r.v[0], 0xFFF0, "saddlv .16b signed sum -16 (16-bit)");
+    assert_eq!(r.v[1], 0, "upper cleared");
+
+    // uaddlv h0, v1.16b (0x6e303820): unsigned sum = 16*255 = 4080.
+    let r = fp_run(&[0x6e30_3820], |g| {
+        g.v[2] = 0xFFFF_FFFF_FFFF_FFFF;
+        g.v[3] = 0xFFFF_FFFF_FFFF_FFFF;
+    });
+    assert_eq!(r.v[0], 4080, "uaddlv .16b unsigned sum 4080");
+
+    // saddlv d0, v1.4s (0x4eb03820): widen 4 i32 [1,2,3,4] to 64-bit -> 10.
+    let pack32 = |a: u32, b: u32| (a as u64) | ((b as u64) << 32);
+    let r = fp_run(&[0x4eb0_3820], |g| {
+        g.v[2] = pack32(1, 2);
+        g.v[3] = pack32(3, 4);
+    });
+    assert_eq!(r.v[0], 10, "saddlv .4s -> 64-bit sum 10");
+}
+
+#[test]
+fn e2e_vector_widening_reduce_hot_loop_matches_interpreter() {
+    let v1: u128 = 0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF; // 16 bytes of -1 / 255
+    let ops: [u32; 2] = [0x4e30_3820 /* saddlv h0,v1.16b */, 0x6e30_3820 /* uaddlv */];
+    for op in ops {
+        let prog: [u32; 4] = [op, 0xf100_0400, 0x54ff_ffc1, 0xd65f_03c0];
+        let run_one = |jit: bool| -> u128 {
+            let mut cpu = fresh_cpu();
+            cpu.set_jit_enabled(jit);
+            load_prog(&mut cpu, &prog);
+            cpu.set_simd(0, 0);
+            cpu.set_simd(1, v1);
+            cpu.set_x(0, 100);
+            drive_to_done(&mut cpu);
+            cpu.get_simd(0)
+        };
+        let interp = run_one(false);
+        let jit = run_one(true);
+        assert_eq!(jit, interp, "JIT matches interp op={:#010x}", op);
+        assert_ne!(interp, 0, "op={:#010x} nonzero", op);
+    }
+}

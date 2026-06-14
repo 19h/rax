@@ -1607,6 +1607,13 @@ impl Aarch64Lifter {
             Mnemonic::UMINV => {
                 self.lift_vector_reduce(insn, pc, &mut ops, VecReduceOp::UMin)?;
             }
+            // SADDLV/UADDLV: widening add reduction (result is 2x the element).
+            Mnemonic::SADDV => {
+                self.lift_vector_reduce(insn, pc, &mut ops, VecReduceOp::SAddLong)?;
+            }
+            Mnemonic::UADDV => {
+                self.lift_vector_reduce(insn, pc, &mut ops, VecReduceOp::UAddLong)?;
+            }
 
             // Vector two-source permutes (ZIP/UZP/TRN).
             Mnemonic::ZIP1 => self.lift_vpermute(insn, pc, &mut ops, VecPermuteKind::Zip1)?,

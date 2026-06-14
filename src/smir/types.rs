@@ -945,6 +945,10 @@ pub enum VecReduceOp {
     FMaxNm,
     /// FP numeric minimum reduction, NaN-quiet (AArch64 FMINNMV).
     FMinNm,
+    /// Signed widening add reduction — result is 2× the element width (SADDLV).
+    SAddLong,
+    /// Unsigned widening add reduction — result is 2× the element width (UADDLV).
+    UAddLong,
 }
 
 /// Vector two-source permute kind (see `OpKind::VPermute2`). Each combines two

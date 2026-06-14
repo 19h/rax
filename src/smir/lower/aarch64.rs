@@ -3065,6 +3065,11 @@ impl Aarch64Lowerer {
             VecReduceOp::UMax => (1, 0b01010),
             VecReduceOp::SMin => (0, 0b11010),
             VecReduceOp::UMin => (1, 0b11010),
+            // SADDLV/UADDLV: widening add (the native op produces a 2x-width
+            // scalar). Source element is B/H/S (never 64-bit), so the size==3
+            // guard above never trips here.
+            VecReduceOp::SAddLong => (0, 0b00011),
+            VecReduceOp::UAddLong => (1, 0b00011),
             // FP forms handled above.
             _ => unreachable!(),
         };
