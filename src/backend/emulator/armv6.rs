@@ -20,6 +20,7 @@ use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
 use crate::arm::execution::{ArmMemory, MemoryError};
 use crate::arm::mmu_v6::{self, V6Access, V6Fault, V6MmuConfig};
+use crate::arm::vfp::Fpscr;
 use crate::arm::{
     Armv7Cpu, Decoder, ExceptionType, ExecResult, ExecutionState, Executor, Mnemonic, ProcessorMode,
 };
@@ -751,6 +752,14 @@ impl VCpu for Armv6Vcpu {
         regs.lr = self.cpu.regs[14];
         regs.pc = self.cpu.regs[15];
         regs.cpsr = self.cpu.cpsr.to_u32();
+        let vfp = &self.cpu.vfp;
+        regs.fpscr = vfp.fpscr.bits();
+        for i in 0..32 {
+            regs.s[i] = vfp.read_s_bits(i as u8);
+        }
+        for i in 0..16 {
+            regs.d_high[i] = vfp.read_d_bits((16 + i) as u8);
+        }
         let sregs = Aarch32SystemRegisters::default();
         Ok(CpuState::Aarch32(Aarch32CpuState { regs, sregs }))
     }
@@ -776,6 +785,15 @@ impl VCpu for Armv6Vcpu {
         self.cpu.regs[13] = state.regs.sp;
         self.cpu.regs[14] = state.regs.lr;
         self.cpu.regs[15] = state.regs.pc;
+        self.cpu.vfp.fpscr = Fpscr::from_bits(state.regs.fpscr);
+        for i in 0..32 {
+            self.cpu.vfp.write_s_bits(i as u8, state.regs.s[i]);
+        }
+        for i in 0..16 {
+            self.cpu
+                .vfp
+                .write_d_bits((16 + i) as u8, state.regs.d_high[i]);
+        }
         self.shutdown = false;
         Ok(())
     }
@@ -792,5 +810,62 @@ impl VCpu for Armv6Vcpu {
 
     fn instruction_count(&self) -> u64 {
         self.insn_count
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use vm_memory::{GuestRegionMmap, MmapRegion};
+
+    fn create_test_memory() -> Arc<GuestMemoryMmap> {
+        let region = GuestRegionMmap::new(
+            MmapRegion::new(0x10000).unwrap(),
+            GuestAddress(S3C_RAM_BASE as u64),
+        )
+        .unwrap();
+        Arc::new(GuestMemoryMmap::from_regions(vec![region]).unwrap())
+    }
+
+    #[test]
+    fn get_state_serializes_live_vfp_state() {
+        let mem = create_test_memory();
+        let mut vcpu = Armv6Vcpu::new(0, mem);
+
+        vcpu.cpu.vfp.fpscr = Fpscr::from_bits(0x8100_0030);
+        vcpu.cpu.vfp.write_s_bits(0, 0x1111_2222);
+        vcpu.cpu.vfp.write_s_bits(31, 0x3333_4444);
+        vcpu.cpu.vfp.write_d_bits(16, 0x5555_6666_7777_8888);
+        vcpu.cpu.vfp.write_d_bits(31, 0x9999_AAAA_BBBB_CCCC);
+
+        let state = vcpu.get_state().unwrap();
+        let state = state.as_aarch32().unwrap();
+
+        assert_eq!(state.regs.fpscr, 0x8100_0030);
+        assert_eq!(state.regs.s[0], 0x1111_2222);
+        assert_eq!(state.regs.s[31], 0x3333_4444);
+        assert_eq!(state.regs.d_high[0], 0x5555_6666_7777_8888);
+        assert_eq!(state.regs.d_high[15], 0x9999_AAAA_BBBB_CCCC);
+    }
+
+    #[test]
+    fn set_state_restores_live_vfp_state() {
+        let mem = create_test_memory();
+        let mut vcpu = Armv6Vcpu::new(0, mem);
+        let mut state = Aarch32CpuState::default();
+
+        state.regs.fpscr = 0x0300_001F;
+        state.regs.s[0] = 0xAAAA_0001;
+        state.regs.s[31] = 0xBBBB_001F;
+        state.regs.d_high[0] = 0xCCCC_0000_DDDD_0000;
+        state.regs.d_high[15] = 0xEEEE_0000_FFFF_0000;
+
+        vcpu.set_state(&CpuState::Aarch32(state)).unwrap();
+
+        assert_eq!(vcpu.cpu.vfp.fpscr.bits(), 0x0300_001F);
+        assert_eq!(vcpu.cpu.vfp.read_s_bits(0), 0xAAAA_0001);
+        assert_eq!(vcpu.cpu.vfp.read_s_bits(31), 0xBBBB_001F);
+        assert_eq!(vcpu.cpu.vfp.read_d_bits(16), 0xCCCC_0000_DDDD_0000);
+        assert_eq!(vcpu.cpu.vfp.read_d_bits(31), 0xEEEE_0000_FFFF_0000);
     }
 }
