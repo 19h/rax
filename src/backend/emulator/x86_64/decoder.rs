@@ -250,6 +250,15 @@ mod tests {
         vcpu
     }
 
+    fn make_vcpu_real() -> X86_64Vcpu {
+        let mem =
+            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+        let mut vcpu = X86_64Vcpu::new(0, mem);
+        vcpu.sregs.cr0 = 0;
+        vcpu.sregs.cs.l = false;
+        vcpu
+    }
+
     /// Compute an effective address the way the decoder does at runtime.
     /// `prefixes` are any legacy prefixes (e.g. 0x67); `modrm` is the ModR/M byte
     /// plus any SIB/displacement bytes. A dummy opcode (0x8B) sits between them, as
@@ -269,7 +278,7 @@ mod tests {
             bytes[len] = b;
             len += 1;
         }
-        let ctx = Decoder::decode_prefixes(bytes, len, false, true).unwrap();
+        let ctx = Decoder::decode_prefixes(bytes, len, false, vcpu.sregs.cs.l).unwrap();
         // After prefixes, cursor points at the opcode; ModR/M starts one byte later.
         assert_eq!(
             ctx.cursor + 1,
@@ -346,6 +355,56 @@ mod tests {
         // rip_after = RIP + modrm_offset(2) + 1 + 4 = RIP + 7; disp32 = 0; masked to 32 bits.
         let with_override = ea(&vcpu, &[0x67], &[0x05, 0x00, 0x00, 0x00, 0x00]);
         assert_eq!(with_override, (0x1_0000_1000u64 + 7) & 0xFFFF_FFFF);
+    }
+
+    #[test]
+    fn real_mode_addr32_ebp_base_defaults_to_ss() {
+        let mut vcpu = make_vcpu_real();
+        vcpu.sregs.ds.base = 0x1000;
+        vcpu.sregs.ss.base = 0x7000;
+        vcpu.regs.rbp = 0x20;
+        vcpu.regs.rbx = 0x20;
+
+        // In real mode, 0x67 selects 32-bit addressing. [EBP + disp8]
+        // defaults to SS.
+        assert_eq!(ea(&vcpu, &[0x67], &[0x45, 0x00]), 0x7020);
+        // Non-stack base registers keep the DS default.
+        assert_eq!(ea(&vcpu, &[0x67], &[0x03]), 0x1020);
+    }
+
+    #[test]
+    fn real_mode_addr32_sib_esp_base_defaults_to_ss() {
+        let mut vcpu = make_vcpu_real();
+        vcpu.sregs.ds.base = 0x2000;
+        vcpu.sregs.ss.base = 0x8000;
+        vcpu.regs.rsp = 0x30;
+
+        // SIB [ESP] also defaults to SS.
+        assert_eq!(ea(&vcpu, &[0x67], &[0x04, 0x24]), 0x8030);
+    }
+
+    #[test]
+    fn real_mode_segment_override_beats_stack_default() {
+        let mut vcpu = make_vcpu_real();
+        vcpu.sregs.ds.base = 0x3000;
+        vcpu.sregs.ss.base = 0x9000;
+        vcpu.regs.rbp = 0x40;
+
+        // DS override on a BP-family base must use DS, not the default SS.
+        assert_eq!(ea(&vcpu, &[0x3E, 0x67], &[0x45, 0x00]), 0x3040);
+    }
+
+    #[test]
+    fn real_mode_sib_no_base_defaults_to_ds() {
+        let mut vcpu = make_vcpu_real();
+        vcpu.sregs.ds.base = 0x4000;
+        vcpu.sregs.ss.base = 0xA000;
+
+        // SIB base=5, mod=0 is disp32 with no base register, so the default is DS.
+        assert_eq!(
+            ea(&vcpu, &[0x67], &[0x04, 0x25, 0x50, 0x00, 0x00, 0x00]),
+            0x4050
+        );
     }
 }
 
@@ -478,6 +537,11 @@ impl X86_64Vcpu {
     /// In 64-bit mode, only FS and GS have non-zero bases.
     #[inline]
     pub(super) fn get_segment_base(&self, segment_override: Option<u8>) -> u64 {
+        self.get_segment_base_with_default(segment_override, false)
+    }
+
+    #[inline]
+    fn get_segment_base_with_default(&self, segment_override: Option<u8>, default_ss: bool) -> u64 {
         match segment_override {
             Some(0x26) => self.sregs.es.base, // ES
             Some(0x2E) => self.sregs.cs.base, // CS
@@ -490,13 +554,17 @@ impl X86_64Vcpu {
             // compatibility mode — 0 for the usual flat model, but non-zero for
             // an OS that runs on based data segments (e.g. TempleOS relocating
             // through ds.base before going flat). Only true 64-bit mode
-            // (CS.L=1) ignores data-segment bases, so it stays flat. (The
-            // architectural SS default for BP/SP-based addressing is not modeled
-            // here; callers needing it pass an explicit override.)
+            // (CS.L=1) ignores data-segment bases, so it stays flat.
             None if self.sregs.cs.l => 0,
+            None if default_ss => self.sregs.ss.base,
             None => self.sregs.ds.base,
             _ => 0,
         }
+    }
+
+    #[inline]
+    fn modrm_base_defaults_to_ss(base_reg: u8) -> bool {
+        matches!(base_reg & 0x07, 4 | 5)
     }
 
     /// Decode ModR/M byte to get effective address.
@@ -507,6 +575,16 @@ impl X86_64Vcpu {
         ctx: &InsnContext,
         modrm_offset: usize,
     ) -> Result<(u64, usize)> {
+        let (addr, extra, _) = self.decode_modrm_addr_with_segment(ctx, modrm_offset)?;
+        Ok((addr, extra))
+    }
+
+    #[inline]
+    fn decode_modrm_addr_with_segment(
+        &self,
+        ctx: &InsnContext,
+        modrm_offset: usize,
+    ) -> Result<(u64, usize, u64)> {
         let bytes = &ctx.bytes[modrm_offset..];
         if bytes.is_empty() {
             return Err(Error::Emulator("ModR/M: no bytes".to_string()));
@@ -552,12 +630,16 @@ impl X86_64Vcpu {
         {
             let base = self.get_reg(rm, 8);
             return match mod_bits {
-                0 => Ok((base, 0)),
+                0 => Ok((base, 0, 0)),
                 1 => {
                     if bytes.len() < 2 {
                         return Err(Error::Emulator("ModR/M: missing disp8".to_string()));
                     }
-                    Ok(((base as i64).wrapping_add(bytes[1] as i8 as i64) as u64, 1))
+                    Ok((
+                        (base as i64).wrapping_add(bytes[1] as i8 as i64) as u64,
+                        1,
+                        0,
+                    ))
                 }
                 _ => {
                     // mod_bits == 2 (mod == 3 rejected above): disp32
@@ -565,7 +647,7 @@ impl X86_64Vcpu {
                         return Err(Error::Emulator("ModR/M: missing disp32".to_string()));
                     }
                     let disp = i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]) as i64;
-                    Ok(((base as i64).wrapping_add(disp) as u64, 4))
+                    Ok(((base as i64).wrapping_add(disp) as u64, 4, 0))
                 }
             };
         }
@@ -587,6 +669,7 @@ impl X86_64Vcpu {
         let reg_size: u8 = if addr_size_32 { 4 } else { 8 };
 
         let mut addr: u64;
+        let mut default_ss = false;
 
         if rm_field == 4 {
             // SIB byte follows
@@ -605,12 +688,14 @@ impl X86_64Vcpu {
             };
             let index = ((sib >> 3) & 0x07) | index_ext;
             let base_reg = (sib & 0x07) | rm_ext;
+            let has_base = !(base_reg == 5 && mod_bits == 0);
 
             // Calculate base
-            addr = if base_reg == 5 && mod_bits == 0 {
+            addr = if !has_base {
                 // No base, disp32 follows
                 0
             } else {
+                default_ss = Self::modrm_base_defaults_to_ss(base_reg);
                 self.get_reg(base_reg, reg_size)
             };
 
@@ -620,7 +705,7 @@ impl X86_64Vcpu {
             }
 
             // Handle displacement for base=5, mod=0 case
-            if base_reg == 5 && mod_bits == 0 {
+            if !has_base {
                 if bytes.len() < 2 + 4 {
                     return Err(Error::Emulator(
                         "ModR/M: missing disp32 for SIB".to_string(),
@@ -660,6 +745,7 @@ impl X86_64Vcpu {
             }
         } else {
             // Regular register indirect
+            default_ss = Self::modrm_base_defaults_to_ss(rm);
             addr = self.get_reg(rm, reg_size);
         }
 
@@ -701,10 +787,10 @@ impl X86_64Vcpu {
         }
 
         // Apply segment override (in 64-bit mode, only FS and GS have non-zero bases)
-        let seg_base = self.get_segment_base(ctx.segment_override);
+        let seg_base = self.get_segment_base_with_default(ctx.segment_override, default_ss);
         let final_addr = addr.wrapping_add(seg_base);
 
-        Ok((final_addr, extra))
+        Ok((final_addr, extra, seg_base))
     }
 
     /// Compute the effective address (segment OFFSET) for a ModR/M memory
@@ -719,8 +805,8 @@ impl X86_64Vcpu {
         ctx: &InsnContext,
         modrm_offset: usize,
     ) -> Result<(u64, usize)> {
-        let (addr, extra) = self.decode_modrm_addr(ctx, modrm_offset)?;
-        let offset = addr.wrapping_sub(self.get_segment_base(ctx.segment_override));
+        let (addr, extra, seg_base) = self.decode_modrm_addr_with_segment(ctx, modrm_offset)?;
+        let offset = addr.wrapping_sub(seg_base);
         Ok((offset, extra))
     }
 
@@ -798,6 +884,7 @@ impl X86_64Vcpu {
         }
 
         let mut addr: u64;
+        let mut default_ss = false;
 
         if rm_field == 4 {
             // SIB byte follows
@@ -810,13 +897,15 @@ impl X86_64Vcpu {
                     ctx.rex.map_or(0, |r| (r & 0x02) << 2)
                 };
             let base_reg = (sib & 0x07) | ctx.any_rex_b();
+            let has_base = !(base_reg == 5 && mod_bits == 0);
 
             // Calculate base
-            addr = if base_reg == 5 && mod_bits == 0 {
+            addr = if !has_base {
                 // No base, disp32 follows
                 let disp = ctx.consume_u32()? as i32 as i64;
                 disp as u64
             } else {
+                default_ss = Self::modrm_base_defaults_to_ss(base_reg);
                 self.get_reg(base_reg, 8)
             };
 
@@ -844,6 +933,7 @@ impl X86_64Vcpu {
             addr = rip_after.wrapping_add(disp) as u64;
         } else {
             // Regular register indirect
+            default_ss = Self::modrm_base_defaults_to_ss(rm);
             addr = self.get_reg(rm, 8);
 
             // Handle displacement
@@ -861,7 +951,7 @@ impl X86_64Vcpu {
         }
 
         // Apply segment override (in 64-bit mode, only FS and GS have non-zero bases)
-        let seg_base = self.get_segment_base(ctx.segment_override);
+        let seg_base = self.get_segment_base_with_default(ctx.segment_override, default_ss);
         addr = addr.wrapping_add(seg_base);
 
         Ok(addr)
