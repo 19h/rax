@@ -8,7 +8,7 @@ use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
 use crate::arm::cp15::Cp15State;
-use crate::arm::vfp::VfpState;
+use crate::arm::vfp::{Fpscr, VfpState};
 use crate::arm::{
     ArmMemory, Armv7Cpu, Decoder, ExceptionType, ExecResult, ExecutionState, Executor, MemoryError,
     ProcessorMode, Psr,
@@ -28,8 +28,6 @@ pub struct ArmVcpu {
     cpu: Armv7Cpu,
     /// CP15 coprocessor state.
     cp15: Cp15State,
-    /// VFP/NEON state.
-    vfp: VfpState,
     /// Instruction decoder.
     decoder: Decoder,
     /// Total instructions executed.
@@ -46,7 +44,6 @@ impl ArmVcpu {
             mem,
             cpu: Armv7Cpu::new(),
             cp15: Cp15State::new(),
-            vfp: VfpState::new(),
             decoder: Decoder::new_aarch32(),
             instructions_executed: 0,
             pending_io: None,
@@ -75,12 +72,12 @@ impl ArmVcpu {
 
     /// Get reference to VFP state.
     pub fn vfp(&self) -> &VfpState {
-        &self.vfp
+        &self.cpu.vfp
     }
 
     /// Get mutable reference to VFP state.
     pub fn vfp_mut(&mut self) -> &mut VfpState {
-        &mut self.vfp
+        &mut self.cpu.vfp
     }
 
     /// Convert internal state to CpuState.
@@ -97,12 +94,13 @@ impl ArmVcpu {
         regs.cpsr = self.cpu.cpsr.to_u32();
 
         // Copy VFP state
-        regs.fpscr = self.vfp.fpscr.bits();
+        let vfp = &self.cpu.vfp;
+        regs.fpscr = vfp.fpscr.bits();
         for i in 0..32 {
-            regs.s[i] = self.vfp.read_s_bits(i as u8);
+            regs.s[i] = vfp.read_s_bits(i as u8);
         }
         for i in 0..16 {
-            regs.d_high[i] = self.vfp.read_d_bits((16 + i) as u8);
+            regs.d_high[i] = vfp.read_d_bits((16 + i) as u8);
         }
 
         let sregs = Aarch32SystemRegisters {
@@ -136,12 +134,13 @@ impl ArmVcpu {
         self.cpu.cpsr = Psr::from_u32(state.regs.cpsr);
 
         // Copy VFP state
-        self.vfp.fpscr = crate::arm::vfp::Fpscr::from_bits(state.regs.fpscr);
+        let vfp = &mut self.cpu.vfp;
+        vfp.fpscr = Fpscr::from_bits(state.regs.fpscr);
         for i in 0..32 {
-            self.vfp.write_s_bits(i as u8, state.regs.s[i]);
+            vfp.write_s_bits(i as u8, state.regs.s[i]);
         }
         for i in 0..16 {
-            self.vfp.write_d_bits((16 + i) as u8, state.regs.d_high[i]);
+            vfp.write_d_bits((16 + i) as u8, state.regs.d_high[i]);
         }
 
         // Copy CP15 state
