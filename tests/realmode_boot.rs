@@ -285,14 +285,11 @@ fn rm_templeos_prologue_relocates_and_far_jumps() {
 
 #[test]
 fn rm_bios_int13_extended_read() {
-    use rax::backend::emulator::x86_64::bios;
-
     // Boot CD image: LBA 2 holds a recognizable ramp pattern.
     let mut cd = vec![0u8; 4 * 2048];
     for (i, b) in cd[2 * 2048..3 * 2048].iter_mut().enumerate() {
         *b = (i & 0xFF) as u8;
     }
-    bios::install_cd(std::sync::Arc::new(cd));
 
     // mov ah,0x42 ; mov si,0x600 ; mov dl,0xE0 ; int 0x13 ; hlt
     let code = [
@@ -303,6 +300,7 @@ fn rm_bios_int13_extended_read() {
         0xF4, // hlt
     ];
     let (mut v, m) = rm_vcpu(&code, 0x7C00, 0);
+    v.attach_x86_64_bios(Some(Arc::new(cd)), MEM);
     // Disk Address Packet: size=0x10, count=1, buffer=0000:2000, LBA=2.
     let dap = [
         0x10, 0x00, // size
@@ -325,4 +323,17 @@ fn rm_bios_int13_extended_read() {
     for (i, b) in buf.iter().enumerate() {
         assert_eq!(*b, (i & 0xFF) as u8, "byte {i} of the read CD sector");
     }
+}
+
+#[test]
+fn rm_bios_cd_activation_is_per_vcpu() {
+    use rax::backend::emulator::x86_64::bios;
+
+    let (mut with_cd, _) = rm_vcpu(&[0xF4], 0x7C00, 0);
+    let (without_cd, _) = rm_vcpu(&[0xF4], 0x7C00, 0);
+
+    with_cd.attach_x86_64_bios(Some(Arc::new(vec![0u8; 2048])), MEM);
+
+    assert!(bios::active(&with_cd));
+    assert!(!bios::active(&without_cd));
 }

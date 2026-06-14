@@ -99,7 +99,7 @@ use native_imports::*;
 use tracing::{debug, info};
 use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestMemoryMmap};
 
-use crate::arch::{Arch, BootInfo, X86_64BootInfo};
+use crate::arch::{Arch, BootInfo, X86_64BootInfo, X86_64RealModeBootInfo};
 #[cfg(all(feature = "kvm", target_os = "linux"))]
 use crate::backend::kvm::KvmVm;
 use crate::config::VmConfig;
@@ -780,16 +780,14 @@ impl Arch for X86_64Arch {
             if looks_iso {
                 info!(path = %config.kernel.display(), "ISO image detected — El-Torito real-mode boot");
                 let data = std::fs::read(&config.kernel)?;
-                bios_boot::arm_real_mode_boot(mem, data, config.memory.bytes())
+                let boot = bios_boot::arm_real_mode_boot(mem, data)
                     .map_err(|e| Error::KernelLoad(format!("El-Torito boot setup: {e}")))?;
+                let cdrom = Arc::new(boot.iso);
                 // Also expose the ISO as an ATAPI CD-ROM on the primary IDE
                 // master, so a guest that probes ATA for its CD/DVD (e.g.
                 // TempleOS) finds and mounts it instead of stalling.
-                if let (Some(ide), Some(iso)) = (
-                    BOOT_IDE_PRIMARY.lock().unwrap().clone(),
-                    crate::backend::emulator::x86_64::bios::installed_cd(),
-                ) {
-                    ide.lock().unwrap().attach_cdrom(iso);
+                if let Some(ide) = BOOT_IDE_PRIMARY.lock().unwrap().clone() {
+                    ide.lock().unwrap().attach_cdrom(cdrom.clone());
                 }
                 let (tss_addr, identity_map_addr) = Self::kvm_setup_addresses();
                 return Ok(BootInfo::X86_64(X86_64BootInfo {
@@ -797,6 +795,12 @@ impl Arch for X86_64Arch {
                     boot_params_addr: GuestAddress(0),
                     tss_addr,
                     identity_map_addr,
+                    real_mode: Some(X86_64RealModeBootInfo {
+                        sregs: boot.sregs,
+                        regs: boot.regs,
+                        cdrom,
+                        mem_bytes: config.memory.bytes(),
+                    }),
                 }));
             }
         }
@@ -1006,6 +1010,7 @@ impl Arch for X86_64Arch {
             boot_params_addr: GuestAddress(BOOT_PARAMS_ADDR),
             tss_addr,
             identity_map_addr,
+            real_mode: None,
         }))
     }
 
@@ -1036,13 +1041,16 @@ impl Arch for X86_64Arch {
         // El-Torito real-mode boot: use the armed 16-bit CPU state (CR0.PE=0,
         // CS:IP=0:0x7C00, boot image already loaded) — skip the long-mode page
         // tables / GDT entirely.
-        if let Some((sregs, regs)) = bios_boot::armed_real_mode_state() {
-            return Ok(CpuState::X86_64(X86_64CpuState { regs, sregs }));
-        }
-
         let boot = boot
             .as_x86_64()
             .ok_or_else(|| Error::InvalidConfig("expected x86_64 boot info".to_string()))?;
+        if let Some(real_mode) = &boot.real_mode {
+            return Ok(CpuState::X86_64(X86_64CpuState {
+                regs: real_mode.regs.clone(),
+                sregs: real_mode.sregs.clone(),
+            }));
+        }
+
         // Setup page tables and GDT in guest memory
         Self::setup_page_tables(mem)?;
         Self::write_gdt(mem)?;

@@ -1,8 +1,8 @@
 //! x86_64 CPU state and core execution loop.
 
-use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use std::sync::atomic::{AtomicU64, AtomicUsize};
+use std::sync::Arc;
 
 #[cfg(feature = "trace")]
 use crate::trace;
@@ -275,6 +275,10 @@ pub struct X86_64Vcpu {
     /// Single-step mode for GDB debugging.
     #[cfg(feature = "debug")]
     single_step: bool,
+    /// Per-vCPU El-Torito boot CD served by the real-mode mini-BIOS.
+    pub(super) bios_cdrom: Option<Arc<Vec<u8>>>,
+    /// Guest RAM size reported by real-mode BIOS memory-detection calls.
+    pub(super) bios_mem_bytes: u64,
     /// SMIR hot-block JIT: compiled native regions keyed by (RIP, mode_tag);
     /// `Some` = runnable, `None` = known-ineligible (don't recompile). Evicted
     /// when the guest writes the corresponding code page (SMC).
@@ -871,6 +875,8 @@ impl X86_64Vcpu {
             lazy_flags: LazyFlags::default(),
             #[cfg(feature = "debug")]
             single_step: false,
+            bios_cdrom: None,
+            bios_mem_bytes: 0,
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
             jit_cache: std::collections::HashMap::new(),
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -2780,6 +2786,11 @@ impl VCpu for X86_64Vcpu {
         ap_end: u64,
     ) {
         self.mmu.set_pci_bridge(bridge, ap_base, ap_end);
+    }
+
+    fn attach_x86_64_bios(&mut self, cdrom: Option<Arc<Vec<u8>>>, mem_bytes: u64) {
+        self.bios_cdrom = cdrom;
+        self.bios_mem_bytes = mem_bytes;
     }
 
     fn complete_io_in(&mut self, data: &[u8]) {

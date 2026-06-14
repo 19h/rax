@@ -6,12 +6,14 @@ pub mod hexagon;
 pub mod riscv;
 pub mod x86_64;
 
+use std::sync::Arc;
+
 use vm_memory::{GuestAddress, GuestMemoryMmap};
 
 #[cfg(all(feature = "kvm", target_os = "linux"))]
 use crate::backend::kvm::KvmVm;
 use crate::config::{ArchKind, VmConfig};
-use crate::cpu::CpuState;
+use crate::cpu::{CpuState, Registers, SystemRegisters};
 use crate::devices::bus::{IoBus, MmioBus};
 use crate::error::Result;
 
@@ -24,6 +26,15 @@ pub struct X86_64BootInfo {
     pub boot_params_addr: GuestAddress,
     pub tss_addr: u64,
     pub identity_map_addr: u64,
+    pub real_mode: Option<X86_64RealModeBootInfo>,
+}
+
+/// Per-VM real-mode BIOS state for x86_64 El-Torito boot.
+pub struct X86_64RealModeBootInfo {
+    pub sregs: SystemRegisters,
+    pub regs: Registers,
+    pub cdrom: Arc<Vec<u8>>,
+    pub mem_bytes: u64,
 }
 
 /// Boot information for Hexagon bare-metal loading.

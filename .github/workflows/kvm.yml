@@ -53,6 +53,9 @@ jobs:
             | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+          # Hosted runners may keep the pre-existing device node at 0660 even
+          # after the udev trigger, so fix the current node explicitly too.
+          sudo chmod 0666 /dev/kvm
           ls -l /dev/kvm
           test -r /dev/kvm && test -w /dev/kvm # fail fast (e.g. if on arm64)
 
@@ -87,6 +90,9 @@ jobs:
             | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+          # Hosted runners may keep the pre-existing device node at 0660 even
+          # after the udev trigger, so fix the current node explicitly too.
+          sudo chmod 0666 /dev/kvm
           test -r /dev/kvm && test -w /dev/kvm
 
       - name: cargo test --test ${{ matrix.test }} (default features incl. kvm + smir-jit)
