@@ -1,5 +1,5 @@
 use crate::common::{
-    Bytes, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+    run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm, Bytes, VM,
 };
 
 // SCAS/SCASB/SCASW/SCASD/SCASQ - Scan String
@@ -23,7 +23,7 @@ fn test_scasb_basic_match() {
     let vm = setup_vm(&code);
     let vm = run_until_hlt(vm);
     assert_eq!(vm.rdi, 0x4001); // RDI incremented
-    // ZF should be 1 (equal)
+                                // ZF should be 1 (equal)
 }
 
 #[test]

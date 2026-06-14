@@ -1,8 +1,8 @@
 // Module path for tests run via x86_64.rs
 use crate::common::{
-    cf_set, of_set, pf_set, read_mem_at_u8, read_mem_at_u16, read_mem_at_u32, read_mem_at_u64,
-    run_until_hlt, setup_vm, sf_set, write_mem_at_u8, write_mem_at_u16, write_mem_at_u32,
-    write_mem_at_u64, zf_set,
+    cf_set, of_set, pf_set, read_mem_at_u16, read_mem_at_u32, read_mem_at_u64, read_mem_at_u8,
+    run_until_hlt, setup_vm, sf_set, write_mem_at_u16, write_mem_at_u32, write_mem_at_u64,
+    write_mem_at_u8, zf_set,
 };
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};

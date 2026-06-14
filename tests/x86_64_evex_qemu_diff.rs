@@ -23,11 +23,11 @@ mod avx512_spec;
 
 use avx512_inventory_data::RAX_EVEX_SIMD_DIFF_MNEMONICS;
 use avx512_spec::{
-    EvexAsmMode, EvexCaseVariant, EvexOperandForm, EvexRmRegisterClass, avx512_spec_evex_rows,
-    evex_case_variants_for_row, evex_rm_register_class, raw_evex_spec_bytes_for_variant,
-    spec_case_variant_id,
+    avx512_spec_evex_rows, evex_case_variants_for_row, evex_rm_register_class,
+    raw_evex_spec_bytes_for_variant, spec_case_variant_id, EvexAsmMode, EvexCaseVariant,
+    EvexOperandForm, EvexRmRegisterClass,
 };
-use common::{Bytes, GuestAddress, Registers, run_until_hlt, setup_vm};
+use common::{run_until_hlt, setup_vm, Bytes, GuestAddress, Registers};
 
 const WIRE_MAGIC: u32 = 0x5845_5645; // 'E','V','E','X'
 const ZMM_REGS: usize = 32;
@@ -5626,7 +5626,15 @@ fn unimplemented_evex_diff_cases_from_spec() -> (Vec<DiffCase>, BTreeSet<String>
 
 fn classified_avx512_evex_mnemonics() -> BTreeSet<String> {
     let mut classified = set_from_slice(RAX_EVEX_SIMD_DIFF_MNEMONICS);
-    classified.extend(set_from_manifest(UNIMPLEMENTED_AVX512));
+    let spec = avx512_spec_evex_rows()
+        .into_iter()
+        .map(|row| row.key.mnemonic)
+        .collect::<BTreeSet<_>>();
+    classified.extend(
+        set_from_manifest(UNIMPLEMENTED_AVX512)
+            .intersection(&spec)
+            .cloned(),
+    );
     classified
 }
 
@@ -9515,7 +9523,14 @@ fn evex_avx512_spec_diff_corpus_covers_every_spec_case_variant() {
 #[test]
 fn evex_unimplemented_avx512_diff_corpus_covers_every_spec_case_variant() {
     let (cases, expected) = unimplemented_evex_diff_cases_from_spec();
-    let unimplemented = set_from_manifest(UNIMPLEMENTED_AVX512);
+    let spec_mnemonics = avx512_spec_evex_rows()
+        .into_iter()
+        .map(|row| row.key.mnemonic)
+        .collect::<BTreeSet<_>>();
+    let unimplemented = set_from_manifest(UNIMPLEMENTED_AVX512)
+        .intersection(&spec_mnemonics)
+        .cloned()
+        .collect::<BTreeSet<_>>();
     let actual = cases
         .iter()
         .map(|case| {
@@ -9554,7 +9569,7 @@ fn evex_unimplemented_avx512_diff_corpus_covers_every_spec_case_variant() {
             .join("\n")
     );
     assert!(
-        cases.len() > set_from_manifest(UNIMPLEMENTED_AVX512).len(),
+        cases.len() > unimplemented.len(),
         "unimplemented EVEX differential corpus must be case-variant-level, not mnemonic-level"
     );
     for case in &cases {

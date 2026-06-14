@@ -1,2 +1,4 @@
-# Sorted lowercase mnemonics for APX instructions intentionally not implemented yet.
+# docs/specifications/x86_64/intel-intrinsics-guide-3-6-9.xml has no APX
+# tech or CPUID entries. Populate this from an APX ISA source, not the
+# intrinsics guide.
 # Blank lines and comments are ignored.

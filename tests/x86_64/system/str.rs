@@ -1,6 +1,6 @@
 use rax::cpu::Registers;
 
-use crate::common::{DATA_ADDR, read_mem_at_u16, run_until_hlt, setup_vm, write_mem_at_u16};
+use crate::common::{read_mem_at_u16, run_until_hlt, setup_vm, write_mem_at_u16, DATA_ADDR};
 
 // STR - Store Task Register
 // Opcode: 0F 00 /1

@@ -1,7 +1,7 @@
 // Module path for tests run via x86_64.rs
 use crate::common::{
-    read_mem_at_u8, read_mem_at_u16, read_mem_at_u32, read_mem_at_u64, run_until_hlt, setup_vm,
-    write_mem_at_u8, write_mem_at_u16, write_mem_at_u32, write_mem_at_u64,
+    read_mem_at_u16, read_mem_at_u32, read_mem_at_u64, read_mem_at_u8, run_until_hlt, setup_vm,
+    write_mem_at_u16, write_mem_at_u32, write_mem_at_u64, write_mem_at_u8,
 };
 use rax::cpu::Registers;
 

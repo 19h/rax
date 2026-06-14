@@ -1,4 +1,4 @@
-use crate::common::{DATA_ADDR, read_mem_u8, run_until_hlt, setup_vm, write_mem_u8};
+use crate::common::{read_mem_u8, run_until_hlt, setup_vm, write_mem_u8, DATA_ADDR};
 use rax::cpu::Registers;
 
 // SETcc - Conditional Set Instructions (0F 9x family)

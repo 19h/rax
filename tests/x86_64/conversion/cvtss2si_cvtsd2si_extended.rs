@@ -265,7 +265,7 @@ fn test_cvttsd2si_64bit_42() {
 #[test]
 fn test_cvtss2si_source_unchanged() {
     let code = [0xf3, 0x0f, 0x2d, 0xc0, 0xf4]; // CVTSS2SI EAX, XMM0
-    // High lane bits set to verify they are preserved.
+                                               // High lane bits set to verify they are preserved.
     let seed: u128 = (0xDEAD_BEEF_CAFE_BABEu128 << 64) | F32_42;
     let regs = run_cvt(&code, seed);
     assert_eq!(regs.rax & 0xFFFF_FFFF, 42, "CVTSS2SI 42.0f -> 42");

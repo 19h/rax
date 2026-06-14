@@ -466,7 +466,7 @@ fn test_shrd_rax_zero_count() {
 
 #[test]
 fn test_shrd_mem16_imm8() {
-    use crate::common::{DATA_ADDR, read_mem_u16, write_mem_u16};
+    use crate::common::{read_mem_u16, write_mem_u16, DATA_ADDR};
     let code = [
         0x66,
         0x0f,
@@ -494,7 +494,7 @@ fn test_shrd_mem16_imm8() {
 
 #[test]
 fn test_shrd_mem32_cl() {
-    use crate::common::{DATA_ADDR, read_mem_u32, write_mem_u32};
+    use crate::common::{read_mem_u32, write_mem_u32, DATA_ADDR};
     let code = [
         0x0f,
         0xad,
@@ -517,7 +517,7 @@ fn test_shrd_mem32_cl() {
 
 #[test]
 fn test_shrd_mem64_imm8() {
-    use crate::common::{DATA_ADDR, read_mem_u64, write_mem_u64};
+    use crate::common::{read_mem_u64, write_mem_u64, DATA_ADDR};
     let code = [
         0x48,
         0x0f,

@@ -415,12 +415,17 @@ pub fn avx512_spec_evex_rows() -> Vec<EvexSpecRow> {
             }
 
             for cell in line.split('|').map(str::trim) {
-                if !cell.starts_with("EVEX") {
+                let cell = if cell.starts_with("EVEX") {
+                    cell
+                } else if let Some(evex_start) = cell.find("EVEX.") {
+                    let candidate = &cell[evex_start..];
+                    if !candidate.contains("MAP") {
+                        continue;
+                    }
+                    candidate
+                } else {
                     continue;
-                }
-                if cell.contains("Instruction") && cell.contains("CPUID") {
-                    continue;
-                }
+                };
                 if evex_cell_parts(cell).is_none() {
                     continue;
                 }

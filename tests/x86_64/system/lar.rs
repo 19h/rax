@@ -1,6 +1,6 @@
 use rax::cpu::Registers;
 
-use crate::common::{DATA_ADDR, run_until_hlt, setup_vm, write_mem_at_u16, zf_set};
+use crate::common::{run_until_hlt, setup_vm, write_mem_at_u16, zf_set, DATA_ADDR};
 
 // LAR - Load Access Rights Byte
 // Opcode: 0F 02 /r

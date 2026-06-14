@@ -1,5 +1,5 @@
 use crate::common::{
-    Bytes, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+    run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm, Bytes, VM,
 };
 
 // LODS/LODSB/LODSW/LODSD/LODSQ - Load String
@@ -139,7 +139,7 @@ fn test_lodsb_clears_high_bytes() {
     let vm = setup_vm(&code);
     let vm = run_until_hlt(vm);
     assert_eq!(vm.rax & 0xFF, 0x42); // AL set
-    // Note: behavior of high bytes depends on implementation
+                                     // Note: behavior of high bytes depends on implementation
 }
 
 #[test]

@@ -760,12 +760,10 @@ fn test_serial_transmit_with_status_check() {
     assert_eq!(result.io_writes[0], (0x3F8, vec![0x48]));
 
     // Both LSR reads should show THRE set (transmitter always empty)
-    assert!(
-        result
-            .io_reads
-            .iter()
-            .all(|(port, val)| { *port != 0x3FD || (*val & LSR_THRE) != 0 })
-    );
+    assert!(result
+        .io_reads
+        .iter()
+        .all(|(port, val)| { *port != 0x3FD || (*val & LSR_THRE) != 0 }));
 }
 
 // ============================================================================

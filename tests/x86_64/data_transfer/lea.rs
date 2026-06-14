@@ -1,4 +1,4 @@
-use crate::common::{VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm};
+use crate::common::{run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm, VM};
 
 // LEA - Load Effective Address
 // Computes address and stores it in destination register (doesn't access memory)

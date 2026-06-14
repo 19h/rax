@@ -619,7 +619,7 @@ fn test_rcr_r15() {
 
 #[test]
 fn test_rcr_mem8() {
-    use crate::common::{DATA_ADDR, read_mem_u8, write_mem_u8};
+    use crate::common::{read_mem_u8, write_mem_u8, DATA_ADDR};
     let code = [
         0xd0,
         0x1c,
@@ -641,7 +641,7 @@ fn test_rcr_mem8() {
 
 #[test]
 fn test_rcr_mem16() {
-    use crate::common::{DATA_ADDR, read_mem_u16, write_mem_u16};
+    use crate::common::{read_mem_u16, write_mem_u16, DATA_ADDR};
     let code = [
         0x66,
         0xc1,
@@ -664,7 +664,7 @@ fn test_rcr_mem16() {
 
 #[test]
 fn test_rcr_mem32() {
-    use crate::common::{DATA_ADDR, read_mem_u32, write_mem_u32};
+    use crate::common::{read_mem_u32, write_mem_u32, DATA_ADDR};
     let code = [
         0xd3,
         0x1c,
@@ -690,7 +690,7 @@ fn test_rcr_mem32() {
 
 #[test]
 fn test_rcr_mem64() {
-    use crate::common::{DATA_ADDR, read_mem_u64, write_mem_u64};
+    use crate::common::{read_mem_u64, write_mem_u64, DATA_ADDR};
     let code = [
         0x48,
         0xc1,

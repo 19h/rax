@@ -1,0 +1,26 @@
+# Derived from docs/specifications/x86_64/intel-intrinsics-guide-3-6-9.xml.
+# Source bucket: tech="AVX-512" or AVX512* CPUID, excluding SVML library
+# intrinsics and entries already covered by RAX_EVEX_SIMD_DIFF_MNEMONICS or
+# implemented VEX opmask handlers.
+# Blank lines and comments are ignored.
+kortestb
+kortestd
+kortestq
+kortestw
+kshiftlb
+kshiftld
+kshiftlq
+kshiftlw
+kshiftrb
+kshiftrd
+kshiftrq
+kshiftrw
+ktestb
+ktestd
+ktestq
+ktestw
+kunpckbw
+kunpckdq
+kunpckwd
+vcomish
+vucomish

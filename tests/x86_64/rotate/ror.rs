@@ -748,7 +748,7 @@ fn test_ror_r15() {
 
 #[test]
 fn test_ror_mem8() {
-    use crate::common::{DATA_ADDR, read_mem_u8, write_mem_u8};
+    use crate::common::{read_mem_u8, write_mem_u8, DATA_ADDR};
 
     // ROR byte [DATA_ADDR], 1
     let code = [
@@ -772,7 +772,7 @@ fn test_ror_mem8() {
 
 #[test]
 fn test_ror_mem16() {
-    use crate::common::{DATA_ADDR, read_mem_u16, write_mem_u16};
+    use crate::common::{read_mem_u16, write_mem_u16, DATA_ADDR};
 
     // ROR word [DATA_ADDR], 4
     let code = [
@@ -797,7 +797,7 @@ fn test_ror_mem16() {
 
 #[test]
 fn test_ror_mem32() {
-    use crate::common::{DATA_ADDR, read_mem_u32, write_mem_u32};
+    use crate::common::{read_mem_u32, write_mem_u32, DATA_ADDR};
 
     // ROR dword [DATA_ADDR], CL
     let code = [
@@ -825,7 +825,7 @@ fn test_ror_mem32() {
 
 #[test]
 fn test_ror_mem64() {
-    use crate::common::{DATA_ADDR, read_mem_u64, write_mem_u64};
+    use crate::common::{read_mem_u64, write_mem_u64, DATA_ADDR};
 
     // ROR qword [DATA_ADDR], 16
     let code = [

@@ -1109,7 +1109,7 @@ fn test_multiprecision_addition_128bit() {
     // First number: 0x0000000000000001_FFFFFFFFFFFFFFFF
     regs.rax = 0xFFFFFFFFFFFFFFFF; // Low
     regs.rdx = 0x0000000000000001; // High
-    // Second number: 0x0000000000000000_0000000000000001
+                                   // Second number: 0x0000000000000000_0000000000000001
     regs.rbx = 0x0000000000000001; // Low
     regs.rcx = 0x0000000000000000; // High
     let (mut vcpu, _) = setup_vm(&code, Some(regs));

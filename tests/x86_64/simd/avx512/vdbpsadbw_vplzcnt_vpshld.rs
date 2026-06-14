@@ -781,7 +781,7 @@ mod evex_cmp_mask {
         // mov eax, 0xFF ; kmovw k2, eax
         code.extend_from_slice(&[0xb8, 0xff, 0x00, 0x00, 0x00]);
         code.extend_from_slice(&[0xc5, 0xf8, 0x92, 0xd0]); // kmovw k2, eax
-        // vpcmpd k1{k2}, zmm1, zmm2, 0   (EQ)   -> aaa=010 (k2)
+                                                           // vpcmpd k1{k2}, zmm1, zmm2, 0   (EQ)   -> aaa=010 (k2)
         code.extend_from_slice(&[0x62, 0xf3, 0x75, 0x4a, 0x1f, 0xca, 0x00]);
         code.push(0xf4);
         let (mut vcpu, mem) = setup_vm(&code, None);

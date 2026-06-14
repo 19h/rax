@@ -1,6 +1,6 @@
 use crate::common::{
-    cf_set, of_set, pf_set, read_mem_u8, read_mem_u16, read_mem_u32, read_mem_u64, run_until_hlt,
-    setup_vm, setup_vm_no_idt, sf_set, write_mem_u8, write_mem_u16, write_mem_u32, write_mem_u64,
+    cf_set, of_set, pf_set, read_mem_u16, read_mem_u32, read_mem_u64, read_mem_u8, run_until_hlt,
+    setup_vm, setup_vm_no_idt, sf_set, write_mem_u16, write_mem_u32, write_mem_u64, write_mem_u8,
     zf_set,
 };
 use rax::cpu::{Registers, VCpu, VcpuExit};

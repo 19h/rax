@@ -1,6 +1,6 @@
 use rax::cpu::Registers;
 
-use crate::common::{VCpu, get_xmm, run_until_hlt, set_xmm, setup_vm};
+use crate::common::{get_xmm, run_until_hlt, set_xmm, setup_vm, VCpu};
 use rax::backend::emulator::x86_64::X86_64Vcpu;
 
 // CVTPI2PS — Convert Packed Dword Integers to Packed Single Precision Floating-Point Values

@@ -228,7 +228,7 @@ fn test_jne_max_backward_offset() {
     code.push(0xf4);
     // Add padding to reach -128 offset
     code.resize(129, 0x90); // NOPs
-    // Setup ZF and jump back
+                            // Setup ZF and jump back
     code.extend_from_slice(&[
         0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
         0x48, 0x85, 0xc0, // TEST RAX, RAX (clears ZF)

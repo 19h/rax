@@ -767,3 +767,53 @@ fn test_vcmppd_ymm_different_regs() {
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+#[test]
+fn test_vcmpss_vex_scalar_result() {
+    let code = [
+        0xc5, 0xea, 0xc2, 0xcb, 0x00, // VCMPEQSS XMM1, XMM2, XMM3
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    let src1 = (0x8877_6655_4433_2211_ffee_ddcc_bbaa_9988u128 & !0xffff_ffffu128)
+        | 1.0f32.to_bits() as u128;
+    let src2 = 1.0f32.to_bits() as u128;
+    set_xmm(&mem, &mut vcpu, 2, src1);
+    set_xmm(&mem, &mut vcpu, 3, src2);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(get_xmm(&regs, 1), (src1 & !0xffff_ffffu128) | 0xffff_ffff);
+    assert_eq!(
+        regs.ymm_high[1],
+        [0, 0],
+        "VEX scalar compare must zero upper YMM bits"
+    );
+}
+
+#[test]
+fn test_vcmpsd_vex_scalar_result() {
+    let code = [
+        0xc5, 0xeb, 0xc2, 0xcb, 0x00, // VCMPEQSD XMM1, XMM2, XMM3
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    let src1 = (0x8877_6655_4433_2211u128 << 64) | 1.0f64.to_bits() as u128;
+    let src2 = 1.0f64.to_bits() as u128;
+    set_xmm(&mem, &mut vcpu, 2, src1);
+    set_xmm(&mem, &mut vcpu, 3, src2);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(
+        get_xmm(&regs, 1),
+        (src1 & (!0u128 << 64)) | u64::MAX as u128
+    );
+    assert_eq!(
+        regs.ymm_high[1],
+        [0, 0],
+        "VEX scalar compare must zero upper YMM bits"
+    );
+}

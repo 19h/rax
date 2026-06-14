@@ -1,4 +1,4 @@
-use crate::common::{VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm};
+use crate::common::{run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm, VM};
 
 // JNP/JPO - Jump if Not Parity / Jump if Parity Odd
 // Jumps when PF=0 (odd number of 1 bits in low byte of result)

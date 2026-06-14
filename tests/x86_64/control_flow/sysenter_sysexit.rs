@@ -1,7 +1,7 @@
 use crate::common::*;
-use rax::backend::emulator::x86_64::X86_64Vcpu;
 use rax::backend::emulator::x86_64::flags;
 use rax::backend::emulator::x86_64::flags::bits;
+use rax::backend::emulator::x86_64::X86_64Vcpu;
 use rax::cpu::Registers;
 
 // Comprehensive tests for SYSENTER/SYSEXIT instructions

@@ -1,2 +1,10 @@
-# Sorted lowercase mnemonics for AVX10 instructions intentionally not implemented yet.
+# Derived from docs/specifications/x86_64/intel-intrinsics-guide-3-6-9.xml.
+# Source buckets: tech="AVX_ALL" plus AVX_IFMA, AVX_VNNI, AVX_VNNI_INT8,
+# AVX_VNNI_INT16, or AVX_NE_CONVERT CPUID.
 # Blank lines and comments are ignored.
+vbcstnebf162ps
+vbcstnesh2ps
+vcvtneebf162ps
+vcvtneeph2ps
+vcvtneobf162ps
+vcvtneoph2ps

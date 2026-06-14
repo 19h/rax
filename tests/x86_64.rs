@@ -1010,6 +1010,8 @@ mod x86_64_simd_avx_vperm2f128;
 mod x86_64_simd_avx_vpermilpd;
 #[path = "x86_64/simd/avx/vpermilps.rs"]
 mod x86_64_simd_avx_vpermilps;
+#[path = "x86_64/simd/avx/vptest_vpxor.rs"]
+mod x86_64_simd_avx_vptest_vpxor;
 #[path = "x86_64/simd/avx/vrcpps.rs"]
 mod x86_64_simd_avx_vrcpps;
 #[path = "x86_64/simd/avx/vroundpd.rs"]

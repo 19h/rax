@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 pub use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
-use rax::backend::emulator::x86_64::{X86_64Vcpu, flags};
+use rax::backend::emulator::x86_64::{flags, X86_64Vcpu};
 pub use rax::cpu::{Registers, SystemRegisters, VCpu, VcpuExit};
 use rax::error::Result;
 

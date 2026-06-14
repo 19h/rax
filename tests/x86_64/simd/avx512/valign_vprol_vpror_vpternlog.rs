@@ -822,9 +822,9 @@ mod evex_broadened {
         mov_addrs(&mut code);
         code.extend_from_slice(&[0xb8, 0xf0, 0x00, 0x00, 0x00]); // mov eax, 0xF0
         code.extend_from_slice(&[0xc5, 0xf8, 0x92, 0xc8]); // kmovw k1, eax
-        // preload zmm0 (dest) from poison
+                                                           // preload zmm0 (dest) from poison
         code.extend_from_slice(&[0x62, 0xf1, 0x7e, 0x48, 0x6f, 0x06]); // vmovdqu32 zmm0,[rsi]
-        // reload rax (clobbered by 32-bit mov)
+                                                                       // reload rax (clobbered by 32-bit mov)
         code.extend_from_slice(&[0x48, 0xc7, 0xc0]);
         code.extend_from_slice(&(A_SRC1 as u32).to_le_bytes());
         code.extend_from_slice(&LD_Z1_RAX);

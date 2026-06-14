@@ -4,7 +4,8 @@
 //! SIMD EVEX coverage lives in `x86_64_evex_qemu_diff.rs`; this harness uses a
 //! scalar oracle because MAP4 mutates GPRs, RFLAGS, scratch memory, and stack.
 
-#![cfg(all(feature = "x86_64-suite", target_os = "linux", target_arch = "x86_64"))]
+#![cfg(feature = "x86_64-suite")]
+#![allow(dead_code)]
 
 use std::collections::BTreeSet;
 use std::io::{Read, Write};
@@ -14,7 +15,7 @@ use std::process::{Command, Stdio};
 #[path = "x86_64/common/mod.rs"]
 mod common;
 
-use common::{Bytes, GuestAddress, Registers, run_until_hlt, setup_vm};
+use common::{run_until_hlt, setup_vm, Bytes, GuestAddress, Registers};
 
 const WIRE_MAGIC: u32 = 0x3458_5041; // 'A','P','X','4'
 const GPR_REGS: usize = 32;
@@ -1192,6 +1193,24 @@ fn assert_same_snapshot(case: &DiffCase, rax: &OutCase, oracle: &OutCase) {
 }
 
 #[test]
+fn apx_map4_generated_corpus_covers_families_and_assembles() {
+    let specs = generated_specs();
+    assert_family_coverage(&specs);
+
+    let Some(llvm_mc) = llvm_mc_path() else {
+        eprintln!("[skip] llvm-mc unavailable; skipping APX MAP4 assembly coverage");
+        return;
+    };
+
+    let cases = assembled_cases(&llvm_mc);
+    assert!(
+        cases.len() > expected_families().len(),
+        "APX MAP4 corpus must be case-level, not family-only"
+    );
+}
+
+#[test]
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 fn qemu_apx_map4_generated_corpus_matches_rax() {
     let Some(qemu) = qemu_path() else {
         eprintln!("[skip] qemu-x86_64 unavailable; skipping APX MAP4 differential corpus");

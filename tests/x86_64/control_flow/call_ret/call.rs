@@ -284,7 +284,7 @@ fn test_call_large_offset() {
     ];
     // Padding to reach offset 128
     code.resize(12 + 128, 0x90); // NOP padding
-    // Target at offset 140:
+                                 // Target at offset 140:
     code.extend_from_slice(&[
         0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1
         0xc3, // RET

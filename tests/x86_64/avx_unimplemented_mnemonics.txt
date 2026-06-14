@@ -1,2 +1,13 @@
-# Sorted lowercase mnemonics for AVX instructions intentionally not implemented yet.
+# Derived from docs/specifications/x86_64/intel-intrinsics-guide-3-6-9.xml.
+# Source bucket: tech="AVX_ALL" plus CPUID AVX.
 # Blank lines and comments are ignored.
+vbroadcastf128
+vlddqu
+vsha512msg1
+vsha512msg2
+vsha512rnds2
+vsm3msg1
+vsm3msg2
+vsm3rnds2
+vsm4key4
+vsm4rnds4

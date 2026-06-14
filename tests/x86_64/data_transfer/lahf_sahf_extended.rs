@@ -215,7 +215,7 @@ fn test_sahf_only_affects_status_flags() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0xFF00; // AH = 0xFF (all bits set)
-    // Set some upper flags that should be preserved
+                       // Set some upper flags that should be preserved
     regs.rflags = 0x0800; // Overflow flag (bit 11)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();

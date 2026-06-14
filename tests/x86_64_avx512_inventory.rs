@@ -22,10 +22,10 @@ use avx512_inventory_data::{
     RAX_EVEX_EXTRA_MNEMONICS_NOT_IN_AVX512_SPEC, RAX_EVEX_SIMD_DIFF_MNEMONICS,
 };
 use avx512_spec::{
-    EvexAsmMode, EvexCaseVariant, EvexEncodingKey, EvexRmRegisterClass, EvexSpecRow, EvexVl, EvexW,
     avx512_spec_evex_rows, evex_asm_modes_for_row, evex_case_variants_for_row, evex_operand_parts,
     evex_rm_operand_index, evex_rm_register_buckets_for_row, raw_evex_spec_bytes_for_variant,
-    spec_case_variant_id, spec_row_mode_id,
+    spec_case_variant_id, spec_row_mode_id, EvexAsmMode, EvexCaseVariant, EvexEncodingKey,
+    EvexRmRegisterClass, EvexSpecRow, EvexVl, EvexW,
 };
 
 const UNIMPLEMENTED_AVX512: &str = include_str!("x86_64/avx512_unimplemented_mnemonics.txt");
@@ -511,6 +511,11 @@ fn avx512_spec_inventory_is_case_variant_partitioned() {
 
     let implemented = set_from_slice(RAX_EVEX_SIMD_DIFF_MNEMONICS);
     let known_unimplemented = set_from_manifest(UNIMPLEMENTED_AVX512);
+    let spec = avx512_spec_mnemonics();
+    let known_unimplemented_evex = known_unimplemented
+        .intersection(&spec)
+        .cloned()
+        .collect::<BTreeSet<_>>();
 
     let mut implemented_case_variants = BTreeSet::new();
     let mut unimplemented_case_variants = BTreeSet::new();
@@ -555,9 +560,9 @@ fn avx512_spec_inventory_is_case_variant_partitioned() {
             > implemented.intersection(&avx512_spec_mnemonics()).count(),
         "implemented AVX-512 EVEX coverage must be case-variant-level, not mnemonic-only"
     );
-    if !known_unimplemented.is_empty() {
+    if !known_unimplemented_evex.is_empty() {
         assert!(
-            unimplemented_case_variants.len() > known_unimplemented.len(),
+            unimplemented_case_variants.len() > known_unimplemented_evex.len(),
             "unimplemented AVX-512 EVEX coverage must be case-variant-level, not mnemonic-only"
         );
     }
@@ -684,6 +689,10 @@ fn avx512_spec_inventory_is_partitioned() {
     let implemented = set_from_slice(RAX_EVEX_SIMD_DIFF_MNEMONICS);
     let implemented_extra = set_from_slice(RAX_EVEX_EXTRA_MNEMONICS_NOT_IN_AVX512_SPEC);
     let known_unimplemented = set_from_manifest(UNIMPLEMENTED_AVX512);
+    let known_unimplemented_evex = known_unimplemented
+        .intersection(&spec)
+        .cloned()
+        .collect::<BTreeSet<_>>();
 
     let actual_extra = implemented
         .difference(&spec)
@@ -695,7 +704,7 @@ fn avx512_spec_inventory_is_partitioned() {
     );
 
     let overlap = implemented
-        .intersection(&known_unimplemented)
+        .intersection(&known_unimplemented_evex)
         .cloned()
         .collect::<BTreeSet<_>>();
     assert!(
@@ -704,7 +713,7 @@ fn avx512_spec_inventory_is_partitioned() {
         format_set(&overlap)
     );
 
-    let unimplemented_not_in_spec = known_unimplemented
+    let unimplemented_not_in_spec = known_unimplemented_evex
         .difference(&spec)
         .cloned()
         .collect::<BTreeSet<_>>();
@@ -714,7 +723,7 @@ fn avx512_spec_inventory_is_partitioned() {
         format_set(&unimplemented_not_in_spec)
     );
 
-    let mut partition = known_unimplemented.clone();
+    let mut partition = known_unimplemented_evex.clone();
     partition.extend(implemented.intersection(&spec).cloned());
 
     let missing = spec

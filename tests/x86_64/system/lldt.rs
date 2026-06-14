@@ -1,6 +1,6 @@
 use rax::cpu::Registers;
 
-use crate::common::{DATA_ADDR, run_until_hlt, setup_vm, write_mem_at_u16};
+use crate::common::{run_until_hlt, setup_vm, write_mem_at_u16, DATA_ADDR};
 
 // LLDT - Load Local Descriptor Table Register
 // Opcode: 0F 00 /2

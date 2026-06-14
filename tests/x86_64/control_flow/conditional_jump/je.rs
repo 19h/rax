@@ -212,7 +212,7 @@ fn test_je_max_backward_offset() {
     code.push(0xf4);
     // Add padding to reach -128 offset
     code.resize(129, 0x90); // NOPs
-    // Setup ZF and jump back
+                            // Setup ZF and jump back
     code.extend_from_slice(&[
         0x48, 0x31, 0xc0, // XOR RAX, RAX (sets ZF)
         0x74, 0x80, // JE -128 (back to HLT)
