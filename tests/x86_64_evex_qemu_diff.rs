@@ -453,6 +453,18 @@ fn selector_uses_gpr_rm_bucket(selector: EvexSelector) -> bool {
         selector,
         EvexSelector {
             map: 1,
+            opcode: 0x2a | 0x7b,
+            pp: 2 | 3,
+            subop: None,
+            ..
+        } | EvexSelector {
+            map: 5,
+            opcode: 0x2a | 0x7b,
+            pp: 2,
+            subop: None,
+            ..
+        } | EvexSelector {
+            map: 1,
             opcode: 0xc4 | 0xc5,
             pp: 1,
             w: false,
@@ -504,6 +516,13 @@ fn expected_dispatch_selectors() -> BTreeSet<EvexSelector> {
         selectors.insert(sel(1, opcode, 0, false));
         selectors.insert(sel(1, opcode, 1, true));
     }
+    for opcode in [0x2a, 0x2c, 0x2d, 0x78, 0x79, 0x7b] {
+        for (pp, w) in [(2, false), (2, true), (3, false), (3, true)] {
+            selectors.insert(sel(1, opcode, pp, w));
+        }
+    }
+    selectors.insert(sel(1, 0x5a, 2, false));
+    selectors.insert(sel(1, 0x5a, 3, true));
     selectors.insert(sel(1, 0xc2, 0, false));
     selectors.insert(sel(1, 0xc2, 1, true));
     selectors.insert(sel(1, 0xc2, 2, false));
@@ -656,6 +675,9 @@ fn expected_dispatch_selectors() -> BTreeSet<EvexSelector> {
         selectors.insert(sel(2, opcode, 1, false));
         selectors.insert(sel(2, opcode, 1, true));
     }
+    for opcode in (0x96..=0x9F).chain(0xA6..=0xAF).chain(0xB6..=0xBF) {
+        selectors.insert(sel(6, opcode, 1, false));
+    }
     for opcode in [0x64, 0x65, 0x66] {
         selectors.insert(sel(2, opcode, 1, false));
         selectors.insert(sel(2, opcode, 1, true));
@@ -744,6 +766,14 @@ fn expected_dispatch_selectors() -> BTreeSet<EvexSelector> {
     selectors.insert(sel(5, 0x11, 2, false));
     selectors.insert(sel(5, 0x6e, 1, false));
     selectors.insert(sel(5, 0x7e, 1, false));
+    for opcode in [0x2a, 0x2c, 0x2d, 0x78, 0x79, 0x7b] {
+        selectors.insert(sel(5, opcode, 2, false));
+        selectors.insert(sel(5, opcode, 2, true));
+    }
+    selectors.insert(sel(5, 0x1d, 0, false));
+    selectors.insert(sel(5, 0x5a, 2, false));
+    selectors.insert(sel(5, 0x5a, 3, true));
+    selectors.insert(sel(6, 0x13, 0, false));
     selectors.insert(sel(2, 0x50, 3, false));
     selectors.insert(sel(2, 0x51, 3, false));
     selectors.insert(sel(2, 0x50, 2, false));
@@ -895,15 +925,41 @@ fn expected_vector_lengths(selector: EvexSelector) -> BTreeSet<u8> {
                 | (0x12, 1, true)
                 | (0x16, 0, false)
                 | (0x16, 1, true)
+                | (0x2a, 2, false)
+                | (0x2a, 2, true)
+                | (0x2a, 3, false)
+                | (0x2a, 3, true)
+                | (0x2c, 2, false)
+                | (0x2c, 2, true)
+                | (0x2c, 3, false)
+                | (0x2c, 3, true)
+                | (0x2d, 2, false)
+                | (0x2d, 2, true)
+                | (0x2d, 3, false)
+                | (0x2d, 3, true)
                 | (0x2e, 0, false)
                 | (0x2e, 1, true)
                 | (0x2f, 0, false)
                 | (0x2f, 1, true)
+                | (0x5a, 2, false)
+                | (0x5a, 3, true)
                 | (0x6e, 1, false)
                 | (0x6e, 1, true)
                 | (0x7e, 1, false)
                 | (0x7e, 1, true)
                 | (0x7e, 2, true)
+                | (0x78, 2, false)
+                | (0x78, 2, true)
+                | (0x78, 3, false)
+                | (0x78, 3, true)
+                | (0x79, 2, false)
+                | (0x79, 2, true)
+                | (0x79, 3, false)
+                | (0x79, 3, true)
+                | (0x7b, 2, false)
+                | (0x7b, 2, true)
+                | (0x7b, 3, false)
+                | (0x7b, 3, true)
                 | (0xd6, 1, true)
                 | (0xc2, 2, false)
                 | (0xc2, 3, true)
@@ -932,8 +988,23 @@ fn expected_vector_lengths(selector: EvexSelector) -> BTreeSet<u8> {
                 (selector.opcode, selector.pp, selector.w),
                 (0x10, 2, false)
                     | (0x11, 2, false)
+                    | (0x1d, 0, false)
+                    | (0x2a, 2, false)
+                    | (0x2a, 2, true)
+                    | (0x2c, 2, false)
+                    | (0x2c, 2, true)
+                    | (0x2d, 2, false)
+                    | (0x2d, 2, true)
+                    | (0x5a, 2, false)
+                    | (0x5a, 3, true)
                     | (0x6e, 1, false)
                     | (0x7e, 1, false)
+                    | (0x78, 2, false)
+                    | (0x78, 2, true)
+                    | (0x79, 2, false)
+                    | (0x79, 2, true)
+                    | (0x7b, 2, false)
+                    | (0x7b, 2, true)
                     | (0x51, 2, false)
                     | (0x58, 2, false)
                     | (0x59, 2, false)
@@ -942,6 +1013,7 @@ fn expected_vector_lengths(selector: EvexSelector) -> BTreeSet<u8> {
                     | (0x5e, 2, false)
                     | (0x5f, 2, false)
             ))
+        || selector == sel(6, 0x13, 0, false)
     {
         return BTreeSet::from([0]);
     }
@@ -957,7 +1029,7 @@ fn expected_vector_lengths(selector: EvexSelector) -> BTreeSet<u8> {
     if selector.map == 3 && selector.opcode == 0x53 {
         return BTreeSet::new();
     }
-    if selector.map == 2
+    if (selector.map == 2 || selector.map == 6)
         && selector.pp == 1
         && is_evex_fma_opcode(selector.opcode)
         && is_evex_scalar_fma_opcode(selector.opcode)
@@ -1063,11 +1135,17 @@ fn required_rm_register_buckets(selector: EvexSelector) -> BTreeSet<u8> {
             (selector.opcode, selector.pp, selector.w),
             (0x6e, 1, false) | (0x6e, 1, true) | (0x7e, 1, false) | (0x7e, 1, true)
         ))
+        || (selector.map == 1
+            && matches!(
+                (selector.opcode, selector.pp),
+                (0x2a, 2 | 3) | (0x7b, 2 | 3)
+            ))
         || (selector.map == 5
             && matches!(
                 (selector.opcode, selector.pp, selector.w),
                 (0x6e, 1, false) | (0x7e, 1, false)
             ))
+        || (selector.map == 5 && matches!((selector.opcode, selector.pp), (0x2a, 2) | (0x7b, 2)))
     {
         return BTreeSet::from([0, 8]);
     }
@@ -2949,6 +3027,108 @@ fn add_insertps_family(specs: &mut Vec<CaseSpec>) {
     );
 }
 
+fn raw_evex_fp_to_gpr_reg(map: u8, opcode: u8, pp: u8, w: bool, rm: usize) -> Vec<u8> {
+    let mut p0 = map | 0x10;
+    if rm & 0x10 == 0 {
+        p0 |= 0x40;
+    }
+    if rm & 0x08 == 0 {
+        p0 |= 0x20;
+    }
+    let p1 = (if w { 0x80 } else { 0 }) | 0x78 | 0x04 | pp;
+    vec![0x62, p0, p1, 0x08, opcode, 0xc0 | (rm & 0x7) as u8]
+}
+
+fn raw_evex_fp_to_gpr_mem(map: u8, opcode: u8, pp: u8, w: bool) -> Vec<u8> {
+    let p0 = map | 0x70;
+    let p1 = (if w { 0x80 } else { 0 }) | 0x78 | 0x04 | pp;
+    vec![0x62, p0, p1, 0x08, opcode, 0x00]
+}
+
+fn raw_evex_gpr_mem_to_fp(map: u8, opcode: u8, pp: u8, w: bool) -> Vec<u8> {
+    let p0 = map | 0xe0;
+    let p1 = (if w { 0x80 } else { 0 }) | (0x0d << 3) | 0x04 | pp;
+    vec![0x62, p0, p1, 0x00, opcode, 0x08]
+}
+
+fn add_fp_to_gpr_convert_family(
+    specs: &mut Vec<CaseSpec>,
+    mnemonic: &str,
+    map: u8,
+    opcode: u8,
+    pp: u8,
+    profile: InputProfile,
+) {
+    for rm in RM_EXT_REGS {
+        spec_raw(
+            specs,
+            format!("{mnemonic}_rm_xmm{rm}_to_r8d"),
+            format!("{mnemonic} %xmm{rm}, %r8d"),
+            raw_evex_fp_to_gpr_reg(map, opcode, pp, false, rm),
+            profile,
+        );
+        spec_raw(
+            specs,
+            format!("{mnemonic}_rm_xmm{rm}_to_r8"),
+            format!("{mnemonic} %xmm{rm}, %r8"),
+            raw_evex_fp_to_gpr_reg(map, opcode, pp, true, rm),
+            profile,
+        );
+    }
+    spec_raw(
+        specs,
+        format!("{mnemonic}_mem_to_r8d"),
+        format!("{mnemonic} (%rax), %r8d"),
+        raw_evex_fp_to_gpr_mem(map, opcode, pp, false),
+        profile,
+    );
+    spec_raw(
+        specs,
+        format!("{mnemonic}_mem_to_r8"),
+        format!("{mnemonic} (%rax), %r8"),
+        raw_evex_fp_to_gpr_mem(map, opcode, pp, true),
+        profile,
+    );
+}
+
+fn add_gpr_to_fp_convert_family(
+    specs: &mut Vec<CaseSpec>,
+    mnemonic: &str,
+    map: u8,
+    opcode: u8,
+    pp: u8,
+    profile: InputProfile,
+) {
+    for (label, src32, src64) in [("rax", "%eax", "%rax"), ("r8", "%r8d", "%r8")] {
+        spec(
+            specs,
+            format!("{mnemonic}_{label}d_to_xmm17"),
+            format!("{mnemonic} {src32}, %xmm18, %xmm17"),
+            profile,
+        );
+        spec(
+            specs,
+            format!("{mnemonic}_{label}_to_xmm17"),
+            format!("{mnemonic} {src64}, %xmm18, %xmm17"),
+            profile,
+        );
+    }
+    spec_raw(
+        specs,
+        format!("{mnemonic}_mem32_to_xmm17"),
+        format!("{mnemonic} (%rax), %xmm18, %xmm17"),
+        raw_evex_gpr_mem_to_fp(map, opcode, pp, false),
+        profile,
+    );
+    spec_raw(
+        specs,
+        format!("{mnemonic}_mem64_to_xmm17"),
+        format!("{mnemonic} (%rax), %xmm18, %xmm17"),
+        raw_evex_gpr_mem_to_fp(map, opcode, pp, true),
+        profile,
+    );
+}
+
 fn generated_specs() -> Vec<CaseSpec> {
     let mut specs = Vec::new();
     let masked = ["{%k1}", "{%k2} {z}"];
@@ -3096,6 +3276,42 @@ fn generated_specs() -> Vec<CaseSpec> {
     ] {
         add_scalar_fp_family(&mut specs, mnemonic, InputProfile::F64, &masked);
     }
+    for mnemonic in ["vcvtss2si", "vcvttss2si"] {
+        let opcode = if mnemonic == "vcvtss2si" { 0x2d } else { 0x2c };
+        add_fp_to_gpr_convert_family(&mut specs, mnemonic, 1, opcode, 2, InputProfile::F32);
+    }
+    for mnemonic in ["vcvtsd2si", "vcvttsd2si"] {
+        let opcode = if mnemonic == "vcvtsd2si" { 0x2d } else { 0x2c };
+        add_fp_to_gpr_convert_family(&mut specs, mnemonic, 1, opcode, 3, InputProfile::F64);
+    }
+    for mnemonic in ["vcvtss2usi", "vcvttss2usi"] {
+        let opcode = if mnemonic == "vcvtss2usi" { 0x79 } else { 0x78 };
+        add_fp_to_gpr_convert_family(&mut specs, mnemonic, 1, opcode, 2, InputProfile::F32);
+    }
+    for mnemonic in ["vcvtsd2usi", "vcvttsd2usi"] {
+        let opcode = if mnemonic == "vcvtsd2usi" { 0x79 } else { 0x78 };
+        add_fp_to_gpr_convert_family(&mut specs, mnemonic, 1, opcode, 3, InputProfile::F64);
+    }
+    add_gpr_to_fp_convert_family(&mut specs, "vcvtsi2ss", 1, 0x2a, 2, InputProfile::Int);
+    add_gpr_to_fp_convert_family(&mut specs, "vcvtsi2sd", 1, 0x2a, 3, InputProfile::Int);
+    add_gpr_to_fp_convert_family(&mut specs, "vcvtusi2ss", 1, 0x7b, 2, InputProfile::Int);
+    add_gpr_to_fp_convert_family(&mut specs, "vcvtusi2sd", 1, 0x7b, 3, InputProfile::Int);
+    add_scalar_fp_family(&mut specs, "vcvtss2sd", InputProfile::F32, &masked);
+    add_scalar_fp_family(&mut specs, "vcvtsd2ss", InputProfile::F64, &masked);
+    for mnemonic in ["vcvtsh2si", "vcvttsh2si"] {
+        let opcode = if mnemonic == "vcvtsh2si" { 0x2d } else { 0x2c };
+        add_fp_to_gpr_convert_family(&mut specs, mnemonic, 5, opcode, 2, InputProfile::F16);
+    }
+    for mnemonic in ["vcvtsh2usi", "vcvttsh2usi"] {
+        let opcode = if mnemonic == "vcvtsh2usi" { 0x79 } else { 0x78 };
+        add_fp_to_gpr_convert_family(&mut specs, mnemonic, 5, opcode, 2, InputProfile::F16);
+    }
+    add_gpr_to_fp_convert_family(&mut specs, "vcvtsi2sh", 5, 0x2a, 2, InputProfile::Int);
+    add_gpr_to_fp_convert_family(&mut specs, "vcvtusi2sh", 5, 0x7b, 2, InputProfile::Int);
+    add_scalar_fp_family(&mut specs, "vcvtss2sh", InputProfile::F32, &masked);
+    add_scalar_fp_family(&mut specs, "vcvtsh2ss", InputProfile::F16, &masked);
+    add_scalar_fp_family(&mut specs, "vcvtsd2sh", InputProfile::F64, &masked);
+    add_scalar_fp_family(&mut specs, "vcvtsh2sd", InputProfile::F16, &masked);
     for mnemonic in [
         "vfmadd132ps",
         "vfmadd213ps",
@@ -3141,6 +3357,28 @@ fn generated_specs() -> Vec<CaseSpec> {
         add_fma_packed_family(&mut specs, mnemonic, InputProfile::F64, "1to8", &masked);
     }
     for mnemonic in [
+        "vfmadd132ph",
+        "vfmadd213ph",
+        "vfmadd231ph",
+        "vfmsub132ph",
+        "vfmsub213ph",
+        "vfmsub231ph",
+        "vfnmadd132ph",
+        "vfnmadd213ph",
+        "vfnmadd231ph",
+        "vfnmsub132ph",
+        "vfnmsub213ph",
+        "vfnmsub231ph",
+        "vfmaddsub132ph",
+        "vfmaddsub213ph",
+        "vfmaddsub231ph",
+        "vfmsubadd132ph",
+        "vfmsubadd213ph",
+        "vfmsubadd231ph",
+    ] {
+        add_fma_packed_family(&mut specs, mnemonic, InputProfile::F16, "1to32", &masked);
+    }
+    for mnemonic in [
         "vfmadd132ss",
         "vfmadd213ss",
         "vfmadd231ss",
@@ -3171,6 +3409,22 @@ fn generated_specs() -> Vec<CaseSpec> {
         "vfnmsub231sd",
     ] {
         add_scalar_fp_family(&mut specs, mnemonic, InputProfile::F64, &masked);
+    }
+    for mnemonic in [
+        "vfmadd132sh",
+        "vfmadd213sh",
+        "vfmadd231sh",
+        "vfmsub132sh",
+        "vfmsub213sh",
+        "vfmsub231sh",
+        "vfnmadd132sh",
+        "vfnmadd213sh",
+        "vfnmadd231sh",
+        "vfnmsub132sh",
+        "vfnmsub213sh",
+        "vfnmsub231sh",
+    ] {
+        add_scalar_fp_family(&mut specs, mnemonic, InputProfile::F16, &masked);
     }
     add_shufp_family(&mut specs, "vshufps", InputProfile::F32, "1to16");
     add_shufp_family(&mut specs, "vshufpd", InputProfile::F64, "1to8");

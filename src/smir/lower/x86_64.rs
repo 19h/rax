@@ -5422,6 +5422,17 @@ impl X86_64Lowerer {
                 });
             }
 
+            OpKind::VUnary {
+                elem, lanes, op, ..
+            } => {
+                // Vector per-lane unary (FABS/FNEG/FSQRT/NEG/ABS) is currently
+                // emitted only by the AArch64 lifter; the x86 struct-lowerer
+                // does not implement it yet, so bail rather than mis-lower.
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("VUnary {:?} {:?}x{} (x86)", op, elem, lanes),
+                });
+            }
+
             OpKind::VMul {
                 dst,
                 src1,

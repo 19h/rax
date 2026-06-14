@@ -1385,6 +1385,72 @@ pub fn evex_fma(
     Ok(None)
 }
 
+/// EVEX MAP6 FP16 FMA family, including packed PH and scalar SH forms.
+pub fn evex_fma_fp16(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    opcode: u8,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx
+        .evex
+        .ok_or_else(|| Error::Emulator("EVEX FP16 FMA requires EVEX prefix".to_string()))?;
+    if evex.w {
+        return Err(Error::Emulator(
+            "EVEX FP16 FMA requires W0 encoding".to_string(),
+        ));
+    }
+    let (kind, order, scalar) = decode_fma_opcode(opcode).ok_or_else(|| {
+        Error::Emulator(format!("unimplemented EVEX FP16 FMA opcode {:#x}", opcode))
+    })?;
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let (dest, src2, src3_reg) = evex_three_op(&evex, reg, rm);
+    let elem_size = 2;
+    let vl_bytes = if scalar { 16 } else { vl_bytes_of(evex.ll) };
+    let num_elems = if scalar { 1 } else { vl_bytes / elem_size };
+
+    let src1_bytes = read_reg_bytes(vcpu, dest, vl_bytes);
+    let src2_bytes = read_reg_bytes(vcpu, src2, vl_bytes);
+    let src3_bytes = read_fma_src3(
+        vcpu, &evex, src3_reg, is_memory, addr, vl_bytes, elem_size, scalar,
+    )?;
+
+    let mut raw = if scalar { src1_bytes } else { [0u8; 64] };
+    for lane in 0..num_elems {
+        let base = lane * elem_size;
+        let src1 = f16_to_f32(u16::from_le_bytes(
+            src1_bytes[base..base + 2].try_into().unwrap(),
+        ));
+        let src2 = f16_to_f32(u16::from_le_bytes(
+            src2_bytes[base..base + 2].try_into().unwrap(),
+        ));
+        let src3 = f16_to_f32(u16::from_le_bytes(
+            src3_bytes[base..base + 2].try_into().unwrap(),
+        ));
+        let (a, b, c) = fma_operands_f32(order, src1, src2, src3);
+        raw[base..base + 2]
+            .copy_from_slice(&f32_to_f16(fma_result_f32(kind, lane, a, b, c)).to_le_bytes());
+    }
+
+    let result = if scalar {
+        let mut result = src1_bytes;
+        let active = evex.aaa == 0 || (vcpu.regs.k[evex.aaa as usize] & 1) != 0;
+        if active {
+            result[..elem_size].copy_from_slice(&raw[..elem_size]);
+        } else if evex.z {
+            result[..elem_size].fill(0);
+        }
+        result
+    } else {
+        apply_evex_mask(vcpu, &evex, dest, vl_bytes, elem_size, &raw)
+    };
+
+    write_vec_vl(vcpu, dest, vl_bytes, &result);
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
 /// Generic EVEX integer arithmetic / logical instruction with per-element
 /// k-masking (merge/zero), VL handling and (for D/Q forms) embedded broadcast.
 pub fn evex_int_arith(
@@ -1656,6 +1722,11 @@ fn evex_reg_vec(evex: &super::super::super::cpu::EvexPrefix, reg: u8) -> u8 {
 }
 
 #[inline]
+fn evex_reg_gpr(evex: &super::super::super::cpu::EvexPrefix, reg: u8) -> u8 {
+    (reg & 0x07) | if evex.r { 0 } else { 8 }
+}
+
+#[inline]
 fn evex_rm_vec(evex: &super::super::super::cpu::EvexPrefix, rm: u8) -> u8 {
     (rm & 0x07) | if evex.b { 0 } else { 8 } | if evex.x { 0 } else { 16 }
 }
@@ -1711,6 +1782,103 @@ fn f16_to_f32(bits: u16) -> f32 {
     };
 
     f32::from_bits(out)
+}
+
+fn f32_to_f16(value: f32) -> u16 {
+    let bits = value.to_bits();
+    let sign = (bits >> 16) & 0x8000;
+    let abs = bits & 0x7fff_ffff;
+    let exp = (abs >> 23) as i32;
+    let mant = abs & 0x007f_ffff;
+
+    if exp == 0xff {
+        if mant == 0 {
+            return (sign | 0x7c00) as u16;
+        }
+        let payload = (mant >> 13).max(1);
+        return (sign | 0x7c00 | payload) as u16;
+    }
+
+    if abs < 0x3300_0000 {
+        return sign as u16;
+    }
+
+    if abs < 0x3880_0000 {
+        let mant24 = mant | 0x0080_0000;
+        let shift = (126 - exp) as u32;
+        let round = 1u32 << (shift - 1);
+        let half_mant = (mant24 + round - 1 + ((mant24 >> shift) & 1)) >> shift;
+        return (sign | half_mant) as u16;
+    }
+
+    let mut half = (abs - 0x3800_0000) >> 13;
+    let remainder = abs & 0x1fff;
+    if remainder > 0x1000 || (remainder == 0x1000 && (half & 1) != 0) {
+        half += 1;
+    }
+
+    if half >= 0x7c00 {
+        (sign | 0x7c00) as u16
+    } else {
+        (sign | half) as u16
+    }
+}
+
+fn fp_bits_to_f64(bits: u64, elem_size: usize) -> f64 {
+    match elem_size {
+        2 => f16_to_f32(bits as u16) as f64,
+        4 => f32::from_bits(bits as u32) as f64,
+        8 => f64::from_bits(bits),
+        _ => 0.0,
+    }
+}
+
+fn f64_to_fp_bits(value: f64, elem_size: usize) -> u64 {
+    match elem_size {
+        2 => f32_to_f16(value as f32) as u64,
+        4 => (value as f32).to_bits() as u64,
+        8 => value.to_bits(),
+        _ => 0,
+    }
+}
+
+fn fp_to_int_bits(value: f64, dst_size: u8, unsigned: bool, truncate: bool) -> u64 {
+    let rounded = if truncate {
+        value.trunc()
+    } else {
+        value.round_ties_even()
+    };
+
+    if unsigned {
+        if !rounded.is_finite() || rounded < 0.0 {
+            return if dst_size == 8 {
+                u64::MAX
+            } else {
+                u32::MAX as u64
+            };
+        }
+        if dst_size == 8 {
+            if rounded > u64::MAX as f64 {
+                u64::MAX
+            } else {
+                rounded as u64
+            }
+        } else if rounded > u32::MAX as f64 {
+            u32::MAX as u64
+        } else {
+            rounded as u32 as u64
+        }
+    } else if dst_size == 8 {
+        if !rounded.is_finite() || rounded > i64::MAX as f64 || rounded < i64::MIN as f64 {
+            i64::MIN as u64
+        } else {
+            (rounded as i64) as u64
+        }
+    } else if !rounded.is_finite() || rounded > i32::MAX as f64 || rounded < i32::MIN as f64 {
+        i32::MIN as u32 as u64
+    } else {
+        rounded as i32 as u32 as u64
+    }
 }
 
 fn fpclass_match_u16(bits: u16, imm: u8) -> bool {
@@ -2001,6 +2169,129 @@ pub fn evex_fpclass(
     }
 
     vcpu.regs.k[k_dst] = result;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// EVEX scalar FP-to-GPR conversions: VCVT*/VCVTT*SS/SD/SH2SI/USI.
+pub fn evex_fp_to_gpr(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    elem_size: usize,
+    unsigned: bool,
+    truncate: bool,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx.evex.ok_or_else(|| {
+        Error::Emulator("EVEX scalar FP-to-GPR conversion requires EVEX prefix".to_string())
+    })?;
+
+    if evex.aaa != 0 || evex.z || evex.vvvv != 0xF || !evex.v_prime {
+        return Err(Error::Emulator(
+            "EVEX scalar FP-to-GPR conversion has invalid EVEX modifiers".to_string(),
+        ));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let src_bits = if is_memory {
+        vcpu.read_mem(addr, elem_size as u8)?
+    } else {
+        let src = evex_rm_vec(&evex, rm);
+        read_vec_scalar(vcpu, src, elem_size)
+    };
+    let value = fp_bits_to_f64(src_bits, elem_size);
+    let dst_size = if evex.w { 8 } else { 4 };
+    let result = fp_to_int_bits(value, dst_size, unsigned, truncate);
+    let dest = evex_reg_gpr(&evex, reg);
+
+    vcpu.set_reg(dest, result, dst_size);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// EVEX scalar GPR/memory-to-FP conversions: VCVT(U)SI2SS/SD/SH.
+pub fn evex_gpr_to_fp(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    elem_size: usize,
+    unsigned: bool,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx.evex.ok_or_else(|| {
+        Error::Emulator("EVEX scalar GPR-to-FP conversion requires EVEX prefix".to_string())
+    })?;
+
+    if evex.aaa != 0 || evex.z {
+        return Err(Error::Emulator(
+            "EVEX scalar GPR-to-FP conversion has invalid EVEX modifiers".to_string(),
+        ));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let src_size = if evex.w { 8 } else { 4 };
+    let int_bits = if is_memory {
+        vcpu.read_mem(addr, src_size)?
+    } else {
+        let src = evex_rm_gpr(&evex, rm);
+        vcpu.get_reg(src, src_size)
+    };
+    let value = if unsigned {
+        if src_size == 8 {
+            int_bits as f64
+        } else {
+            (int_bits as u32) as f64
+        }
+    } else if src_size == 8 {
+        (int_bits as i64) as f64
+    } else {
+        (int_bits as i32) as f64
+    };
+
+    let dest = evex_reg_vec(&evex, reg);
+    let src1 = ctx.evex_vvvv();
+    let mut result = read_reg_bytes(vcpu, src1, 16);
+    let fp_bits = f64_to_fp_bits(value, elem_size);
+    result[..elem_size].copy_from_slice(&scalar_low_bytes(fp_bits, elem_size)[..elem_size]);
+
+    write_vec_vl(vcpu, dest, 16, &result);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// EVEX scalar FP width conversions: VCVTSS2SD, VCVTSD2SS, and FP16 SH forms.
+pub fn evex_fp_scalar_convert(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    src_elem_size: usize,
+    dst_elem_size: usize,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx.evex.ok_or_else(|| {
+        Error::Emulator("EVEX scalar FP width conversion requires EVEX prefix".to_string())
+    })?;
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let dest = evex_reg_vec(&evex, reg);
+    let src1 = ctx.evex_vvvv();
+    let src2 = evex_rm_vec(&evex, rm);
+    let src_bits = if is_memory {
+        vcpu.read_mem(addr, src_elem_size as u8)?
+    } else {
+        read_vec_scalar(vcpu, src2, src_elem_size)
+    };
+
+    let converted = f64_to_fp_bits(fp_bits_to_f64(src_bits, src_elem_size), dst_elem_size);
+    let mut result = read_reg_bytes(vcpu, src1, 16);
+    let dest_old = read_reg_bytes(vcpu, dest, 16);
+    let active = (evex_mask(vcpu, evex.aaa, 1) & 1) != 0;
+
+    if active {
+        result[..dst_elem_size]
+            .copy_from_slice(&scalar_low_bytes(converted, dst_elem_size)[..dst_elem_size]);
+    } else if evex.z {
+        result[..dst_elem_size].fill(0);
+    } else {
+        result[..dst_elem_size].copy_from_slice(&dest_old[..dst_elem_size]);
+    }
+
+    write_vec_vl(vcpu, dest, 16, &result);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

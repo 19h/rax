@@ -41,6 +41,7 @@ impl X86_64Vcpu {
             3 => self.execute_evex_0f3a(ctx, opcode),
             4 => self.execute_evex_map4_apx(ctx, opcode), // APX GPR instructions
             5 => self.execute_evex_map5(ctx, opcode),
+            6 => self.execute_evex_map6(ctx, opcode),
             _ => Err(Error::Emulator(format!(
                 "Invalid EVEX mm field {} at RIP={:#x}",
                 mm, self.regs.rip
@@ -114,6 +115,21 @@ impl X86_64Vcpu {
             0x2E if evex.pp == 1 && evex.w => insn::simd::evex_comi(self, ctx, 8, false),
             0x2F if evex.pp == 0 && !evex.w => insn::simd::evex_comi(self, ctx, 4, true),
             0x2F if evex.pp == 1 && evex.w => insn::simd::evex_comi(self, ctx, 8, true),
+            // Scalar FP/integer conversions.
+            0x2A if evex.pp == 2 => insn::simd::evex_gpr_to_fp(self, ctx, 4, false),
+            0x2A if evex.pp == 3 => insn::simd::evex_gpr_to_fp(self, ctx, 8, false),
+            0x2C if evex.pp == 2 => insn::simd::evex_fp_to_gpr(self, ctx, 4, false, true),
+            0x2C if evex.pp == 3 => insn::simd::evex_fp_to_gpr(self, ctx, 8, false, true),
+            0x2D if evex.pp == 2 => insn::simd::evex_fp_to_gpr(self, ctx, 4, false, false),
+            0x2D if evex.pp == 3 => insn::simd::evex_fp_to_gpr(self, ctx, 8, false, false),
+            0x5A if evex.pp == 2 && !evex.w => insn::simd::evex_fp_scalar_convert(self, ctx, 4, 8),
+            0x5A if evex.pp == 3 && evex.w => insn::simd::evex_fp_scalar_convert(self, ctx, 8, 4),
+            0x78 if evex.pp == 2 => insn::simd::evex_fp_to_gpr(self, ctx, 4, true, true),
+            0x78 if evex.pp == 3 => insn::simd::evex_fp_to_gpr(self, ctx, 8, true, true),
+            0x79 if evex.pp == 2 => insn::simd::evex_fp_to_gpr(self, ctx, 4, true, false),
+            0x79 if evex.pp == 3 => insn::simd::evex_fp_to_gpr(self, ctx, 8, true, false),
+            0x7B if evex.pp == 2 => insn::simd::evex_gpr_to_fp(self, ctx, 4, true),
+            0x7B if evex.pp == 3 => insn::simd::evex_gpr_to_fp(self, ctx, 8, true),
             // VADDSS/VADDSD scalar forms. These must be matched before packed PS/PD.
             0x58 if evex.pp == 2 && !evex.w => {
                 self.execute_evex_fp_scalar_arith_f32(ctx, |a, b| a + b)
@@ -2098,6 +2114,16 @@ impl X86_64Vcpu {
             // VMOVW GPR/memory to XMM and XMM to GPR/memory.
             0x6E if evex.pp == 1 && !evex.w => insn::simd::evex_gpr_or_mem_to_xmm(self, ctx, 2),
             0x7E if evex.pp == 1 && !evex.w => insn::simd::evex_xmm_to_gpr_or_mem(self, ctx, 2),
+            // Scalar FP16/integer and FP16 width conversions.
+            0x1D if evex.pp == 0 && !evex.w => insn::simd::evex_fp_scalar_convert(self, ctx, 4, 2),
+            0x2A if evex.pp == 2 => insn::simd::evex_gpr_to_fp(self, ctx, 2, false),
+            0x2C if evex.pp == 2 => insn::simd::evex_fp_to_gpr(self, ctx, 2, false, true),
+            0x2D if evex.pp == 2 => insn::simd::evex_fp_to_gpr(self, ctx, 2, false, false),
+            0x5A if evex.pp == 2 && !evex.w => insn::simd::evex_fp_scalar_convert(self, ctx, 2, 8),
+            0x5A if evex.pp == 3 && evex.w => insn::simd::evex_fp_scalar_convert(self, ctx, 8, 2),
+            0x78 if evex.pp == 2 => insn::simd::evex_fp_to_gpr(self, ctx, 2, true, true),
+            0x79 if evex.pp == 2 => insn::simd::evex_fp_to_gpr(self, ctx, 2, true, false),
+            0x7B if evex.pp == 2 => insn::simd::evex_gpr_to_fp(self, ctx, 2, true),
             // VCVTTPS2IBS (0x68) - Convert with Truncation Packed Single to Signed Byte with Saturation
             0x68 if evex.pp == 1 && !evex.w => self.execute_vcvttps2ibs(ctx),
             // VCVTTPS2IUBS (0x6A) - Convert with Truncation Packed Single to Unsigned Byte with Saturation
@@ -2143,6 +2169,26 @@ impl X86_64Vcpu {
             }
             _ => Err(Error::Emulator(format!(
                 "Unimplemented EVEX.MAP5 opcode {:#04x} (pp={}) at RIP={:#x}",
+                opcode, evex.pp, self.regs.rip
+            ))),
+        }
+    }
+
+    /// EVEX MAP6 opcode map - AVX-512 FP16 FMA instructions.
+    fn execute_evex_map6(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+        let evex = ctx
+            .evex
+            .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
+
+        match opcode {
+            // VCVTSH2SS scalar FP16-to-FP32 conversion.
+            0x13 if evex.pp == 0 && !evex.w => insn::simd::evex_fp_scalar_convert(self, ctx, 2, 4),
+            // VFM*PH/VFM*SH FP16 FMA 132/213/231 packed and scalar families.
+            0x96..=0x9F | 0xA6..=0xAF | 0xB6..=0xBF if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_fma_fp16(self, ctx, opcode)
+            }
+            _ => Err(Error::Emulator(format!(
+                "Unimplemented EVEX.MAP6 opcode {:#04x} (pp={}) at RIP={:#x}",
                 opcode, evex.pp, self.regs.rip
             ))),
         }
