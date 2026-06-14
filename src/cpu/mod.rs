@@ -122,6 +122,10 @@ pub trait VCpu: Send {
     ) {
     }
 
+    /// Attach x86_64 real-mode BIOS state for El-Torito boot. Default no-op —
+    /// only the x86_64 emulator backend services BIOS interrupts directly.
+    fn attach_x86_64_bios(&mut self, _cdrom: Option<std::sync::Arc<Vec<u8>>>, _mem_bytes: u64) {}
+
     /// Enable or disable single-step mode for debugging.
     #[cfg(feature = "debug")]
     fn set_single_step(&mut self, enabled: bool) {

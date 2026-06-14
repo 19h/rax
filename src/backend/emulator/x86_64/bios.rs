@@ -6,14 +6,9 @@
 //! (video/teletype) and INT 13h (extended LBA disk read from the boot CD) —
 //! natively, reading sectors out of the retained ISO image. It is consulted
 //! from the `INT imm8` handler only when running in real mode with a boot CD
-//! installed via [`install_cd`].
-//!
-//! The CD image is held in a module-level static because legacy boot is
-//! inherently single-vCPU (the bootloader runs before any SMP bring-up).
+//! attached to the current vCPU.
 
 use std::io::Write;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex};
 
 use crate::error::Result;
 
@@ -21,23 +16,6 @@ use super::cpu::X86_64Vcpu;
 
 /// CD-ROM logical sector size used by INT 13h extended reads.
 const CD_SECTOR: usize = 2048;
-
-static BIOS_CD: Mutex<Option<Arc<Vec<u8>>>> = Mutex::new(None);
-
-/// Total guest RAM in bytes, reported via the INT 15h memory-detection calls
-/// (E820/E801/88h). Set by [`install_mem`] at boot. 0 means "unknown".
-static BIOS_MEM_BYTES: AtomicU64 = AtomicU64::new(0);
-
-/// Install the boot CD image (the El-Torito ISO) so INT 13h reads can serve it.
-/// Passing this enables the real-mode mini-BIOS.
-pub fn install_cd(iso: Arc<Vec<u8>>) {
-    *BIOS_CD.lock().unwrap() = Some(iso);
-}
-
-/// Record the total guest RAM size so INT 15h memory detection can report it.
-pub fn install_mem(bytes: u64) {
-    BIOS_MEM_BYTES.store(bytes, Ordering::Relaxed);
-}
 
 /// The E820 memory map for `total` bytes of RAM: standard low-memory layout
 /// (conventional + EBDA/ROM holes) plus one usable extended region. Each entry
@@ -55,18 +33,8 @@ fn e820_map(total: u64) -> Vec<(u64, u64, u32)> {
 }
 
 /// Whether a boot CD (and thus the mini-BIOS) is installed.
-pub fn active() -> bool {
-    BIOS_CD.lock().unwrap().is_some()
-}
-
-fn cd() -> Option<Arc<Vec<u8>>> {
-    BIOS_CD.lock().unwrap().clone()
-}
-
-/// The installed boot CD image, if any (shared with the IDE/ATAPI controller so
-/// the same ISO that INT 13h serves is also the CD-ROM medium).
-pub fn installed_cd() -> Option<Arc<Vec<u8>>> {
-    BIOS_CD.lock().unwrap().clone()
+pub fn active(vcpu: &X86_64Vcpu) -> bool {
+    vcpu.bios_cdrom.is_some()
 }
 
 #[inline]
@@ -218,7 +186,7 @@ fn int13(vcpu: &mut X86_64Vcpu) -> Result<()> {
             let lba = vcpu.mmu.read_u64(dap + 8, &vcpu.sregs)?;
             let buf_lin = (buf_seg << 4).wrapping_add(buf_off);
 
-            let cd = match cd() {
+            let cd = match vcpu.bios_cdrom.clone() {
                 Some(c) => c,
                 None => {
                     set_ah(vcpu, 0x01);
@@ -271,7 +239,7 @@ fn int15(vcpu: &mut X86_64Vcpu) {
             vcpu.regs.rdi as u16
         );
     }
-    let total = BIOS_MEM_BYTES.load(Ordering::Relaxed);
+    let total = vcpu.bios_mem_bytes;
     let eax = vcpu.regs.rax as u32;
     match eax {
         // EAX=0xE820: query system address map (one E820 entry per call). EBX is
@@ -344,5 +312,29 @@ fn int16(vcpu: &mut X86_64Vcpu) {
         _ => {
             vcpu.regs.rax &= !0xFFFF;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use vm_memory::{GuestAddress, GuestMemoryMmap};
+
+    use crate::cpu::VCpu;
+
+    use super::*;
+
+    #[test]
+    fn cd_activation_is_per_vcpu() {
+        let mem =
+            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+        let mut with_cd = X86_64Vcpu::new(0, mem.clone());
+        let without_cd = X86_64Vcpu::new(1, mem);
+
+        with_cd.attach_x86_64_bios(Some(Arc::new(vec![0u8; CD_SECTOR])), 0x20_0000);
+
+        assert!(active(&with_cd));
+        assert!(!active(&without_cd));
     }
 }

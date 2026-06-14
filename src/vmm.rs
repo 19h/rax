@@ -93,6 +93,7 @@ fn null_boot_info(arch: ArchKind) -> BootInfo {
             boot_params_addr: vm_memory::GuestAddress(0),
             tss_addr: 0,
             identity_map_addr: 0,
+            real_mode: None,
         }),
     }
 }
@@ -568,6 +569,14 @@ impl Vmm {
             if cpu_id == 0 && !resume {
                 let initial_state = arch.initial_cpu_state(guest_mem.memory(), &boot_info)?;
                 vcpu.set_state(&initial_state)?;
+            }
+            if cpu_id == 0 {
+                if let Some(real_mode) = boot_info
+                    .as_x86_64()
+                    .and_then(|boot| boot.real_mode.as_ref())
+                {
+                    vcpu.attach_x86_64_bios(Some(real_mode.cdrom.clone()), real_mode.mem_bytes);
+                }
             }
 
             // Share the PL011 console device with the vCPU so its memory
