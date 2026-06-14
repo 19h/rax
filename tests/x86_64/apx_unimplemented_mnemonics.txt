@@ -1,0 +1,2 @@
+# Sorted lowercase mnemonics for APX instructions intentionally not implemented yet.
+# Blank lines and comments are ignored.

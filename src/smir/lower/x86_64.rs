@@ -5433,6 +5433,24 @@ impl X86_64Lowerer {
                 });
             }
 
+            OpKind::VReduce {
+                elem, lanes, op, ..
+            } => {
+                // Vector across-lanes reduction (ADDV/SMAXV/…) is emitted only
+                // by the AArch64 lifter; not implemented in the x86 lowerer.
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("VReduce {:?} {:?}x{} (x86)", op, elem, lanes),
+                });
+            }
+
+            OpKind::VFMinMaxNm { elem, lanes, .. } => {
+                // FP numeric min/max (FMAXNM/FMINNM) is emitted only by the
+                // AArch64 lifter; not implemented in the x86 lowerer.
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("VFMinMaxNm {:?}x{} (x86)", elem, lanes),
+                });
+            }
+
             OpKind::VMul {
                 dst,
                 src1,
