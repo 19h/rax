@@ -21,12 +21,12 @@ use crate::arm::{
 use crate::cpu::{
     Aarch32CpuState, Aarch32Registers, Aarch32SystemRegisters, CpuState, VCpu, VcpuExit,
 };
-use crate::devices::crypto::{aes_cbc_decrypt, sha1, AesKey};
+use crate::devices::crypto::{AesKey, aes_cbc_decrypt, sha1};
 use crate::devices::s3c64xx::S3cUart;
 use crate::devices::s5l8900::{
-    AesKeyType, Pl192, S5lAes, S5lChipId, S5lClock, S5lDmac, S5lGpio, S5lI2c, S5lLcd, S5lNand,
-    S5lNandEcc, S5lSpi, S5lSysic, S5lTimer, S5lUsb, AES_UID_KEY, GPIO_NUMINTGROUPS,
-    NAND_BYTES_PER_SPARE,
+    AES_UID_KEY, AesKeyType, GPIO_NUMINTGROUPS, NAND_BYTES_PER_SPARE, Pl192, S5lAes, S5lChipId,
+    S5lClock, S5lDmac, S5lGpio, S5lI2c, S5lLcd, S5lNand, S5lNandEcc, S5lSdio, S5lSpi, S5lSysic,
+    S5lTimer, S5lUsb,
 };
 use crate::error::{Error, Result};
 
@@ -48,6 +48,7 @@ const SPI2_BASE: u32 = 0x3D20_0000;
 const LCD_BASE: u32 = 0x3890_0000;
 const NAND_BASE: u32 = 0x38A0_0000;
 const NAND_ECC_BASE: u32 = 0x38F0_0000;
+const SDIO_BASE: u32 = 0x38D0_0000;
 const ADM_BASE: u32 = 0x3880_0000;
 const DMAC0_BASE: u32 = 0x3820_0000;
 const DMAC1_BASE: u32 = 0x3990_0000;
@@ -70,6 +71,8 @@ const NOR_BASE: u32 = 0x2400_0000;
 const NOR_SIZE: u32 = 1024 * 1024;
 const NOR_MANUFACTURER_ID: u16 = 0x00bf;
 const NOR_DEVICE_ID: u16 = 0x273f;
+const ARM_LDR_PC_PC_0X18: u32 = 0xe59f_f018;
+const ARM_MOV_PC_R9: u32 = 0xe1a0_f009;
 
 const IBOOT_BASE: u32 = 0x1800_0000;
 const LLB_BASE: u32 = 0x2200_0000;
@@ -86,6 +89,7 @@ const IBOOT_SECURITY_IMG2_LOAD_OK: u32 = 1 << 4;
 const IBOOT_VFL_MASK_TEST: u32 = IBOOT_BASE + 0x0001_5b14;
 const IBOOT_IMAGE_LIMIT: u32 = IBOOT_BASE + 0x0003_0000;
 const KERNEL_PANIC: u32 = 0xC001_9790;
+const KERNEL_IOPANIC: u32 = 0xC012_D734;
 const KERNEL_SLEH_ABORT: u32 = 0xC006_3620;
 const KERNEL_USB_WRANGLER_PHY_REGISTERED_NOTIFIER: u32 = 0xC04B_84DC;
 const KERNEL_USB_WRANGLER_PHY_REGISTERED_AFTER_NOTIFIER: u32 = 0xC04B_84EC;
@@ -307,16 +311,77 @@ fn trace_budget_env(name: &str, default_when_present: u32) -> u32 {
     }
 }
 
-/// Parsed-once write-watchpoint range (addr, len) from RAX_S5L_WATCH=hex:hex.
+fn u32_env(name: &str) -> Option<u32> {
+    let value = std::env::var(name).ok()?;
+    let value = value.trim();
+    if let Some(hex) = value
+        .strip_prefix("0x")
+        .or_else(|| value.strip_prefix("0X"))
+    {
+        u32::from_str_radix(hex, 16).ok()
+    } else {
+        value
+            .parse()
+            .ok()
+            .or_else(|| u32::from_str_radix(value, 16).ok())
+    }
+}
+
+fn parse_watch_range_env(name: &str) -> Option<(u32, u32)> {
+    let v = std::env::var(name).ok()?;
+    let (a, l) = v.split_once(':')?;
+    let addr = u32::from_str_radix(a.trim_start_matches("0x"), 16).ok()?;
+    let len = u32::from_str_radix(l.trim_start_matches("0x"), 16).ok()?;
+    Some((addr, len))
+}
+
+/// Parsed-once physical write-watchpoint range from RAX_S5L_WATCH=hex:hex.
 fn watch_range() -> &'static Option<(u32, u32)> {
     static WATCH: std::sync::OnceLock<Option<(u32, u32)>> = std::sync::OnceLock::new();
-    WATCH.get_or_init(|| {
-        let v = std::env::var("RAX_S5L_WATCH").ok()?;
-        let (a, l) = v.split_once(':')?;
-        let addr = u32::from_str_radix(a.trim_start_matches("0x"), 16).ok()?;
-        let len = u32::from_str_radix(l.trim_start_matches("0x"), 16).ok()?;
-        Some((addr, len))
-    })
+    WATCH.get_or_init(|| parse_watch_range_env("RAX_S5L_WATCH"))
+}
+
+/// Parsed-once virtual write-watchpoint range from RAX_S5L_VWATCH=hex:hex.
+fn vwatch_range() -> &'static Option<(u32, u32)> {
+    static WATCH: std::sync::OnceLock<Option<(u32, u32)>> = std::sync::OnceLock::new();
+    WATCH.get_or_init(|| parse_watch_range_env("RAX_S5L_VWATCH"))
+}
+
+fn range_overlaps(addr: u32, len: usize, watch_addr: u32, watch_len: u32) -> bool {
+    if len == 0 || watch_len == 0 {
+        return false;
+    }
+    let start = addr as u64;
+    let end = start + len as u64;
+    let watch_start = watch_addr as u64;
+    let watch_end = watch_start + watch_len as u64;
+    start < watch_end && watch_start < end
+}
+
+fn bytes_hex(data: &[u8]) -> String {
+    data.iter()
+        .take(32)
+        .map(|byte| format!("{byte:02x}"))
+        .collect::<Vec<_>>()
+        .join("")
+}
+
+fn phys_bytes_hex(mem: &GuestMemoryMmap, pa: u32, len: usize) -> Option<String> {
+    let len = len.min(32);
+    if len == 0 {
+        return Some(String::new());
+    }
+    let mut bytes = vec![0u8; len];
+    mem.read_slice(&mut bytes, GuestAddress(pa as u64))
+        .ok()
+        .map(|()| bytes_hex(&bytes))
+}
+
+fn watch_offset(addr: u32, len: usize, watch_addr: u32) -> Option<u32> {
+    let start = addr as u64;
+    let end = start + len as u64;
+    let watch = watch_addr as u64;
+    (start <= watch && watch < end).then_some((watch - start) as u32)
 }
 
 /// The directory holding the NAND `bank<n>/<page>.page` dumps. From
@@ -463,6 +528,8 @@ struct BridgeInner {
     privileged: bool,
     /// PC of the instruction currently executing, for the write-watchpoint log.
     cur_pc: u32,
+    /// Instruction count of the instruction currently executing.
+    cur_insn: u64,
     kernel_started: bool,
     last_fault: LastFault,
     clock0: S5lClock,
@@ -480,6 +547,7 @@ struct BridgeInner {
     lcd: S5lLcd,
     nand: S5lNand,
     nand_ecc: S5lNandEcc,
+    sdio: S5lSdio,
     aes: S5lAes,
     dmac0: S5lDmac,
     dmac1: S5lDmac,
@@ -502,6 +570,7 @@ struct BridgeInner {
     devlog: bool,
     /// Budget-limited trace for VIC MMIO accesses (RAX_S5L_VIC_TRACE).
     vic_trace_budget: u32,
+    vic_trace_start_insn: u64,
 }
 
 #[derive(Clone, Copy)]
@@ -582,6 +651,7 @@ impl S5lBridge {
 impl BridgeInner {
     fn should_trace_vic_access(&self, offset: u32) -> bool {
         self.vic_trace_budget != 0
+            && self.cur_insn >= self.vic_trace_start_insn
             && (self.kernel_started || std::env::var_os("RAX_S5L_VIC_TRACE_EARLY").is_some())
             && (offset == 0xF00
                 || offset <= 0x2c
@@ -608,6 +678,7 @@ impl BridgeInner {
         self.vic_trace_budget -= 1;
         info!(
             pc = format!("{:#x}", self.cur_pc),
+            insns = self.cur_insn,
             vic,
             op,
             offset = format!("{offset:#x}"),
@@ -749,6 +820,9 @@ impl BridgeInner {
             }
             _ if (NAND_ECC_BASE..NAND_ECC_BASE + 0x1000).contains(&pa) => {
                 Some(self.nand_ecc.read(off(NAND_ECC_BASE)))
+            }
+            _ if (SDIO_BASE..SDIO_BASE + 0x1000).contains(&pa) => {
+                Some(self.sdio.read(off(SDIO_BASE)))
             }
             _ if (DMAC0_BASE..DMAC0_BASE + 0x1000).contains(&pa) => {
                 Some(self.dmac0.read(off(DMAC0_BASE)))
@@ -915,6 +989,10 @@ impl BridgeInner {
                 self.nand_ecc.write(off(NAND_ECC_BASE), value);
                 true
             }
+            _ if (SDIO_BASE..SDIO_BASE + 0x1000).contains(&pa) => {
+                self.sdio.write(off(SDIO_BASE), value);
+                true
+            }
             _ if (DMAC0_BASE..DMAC0_BASE + 0x1000).contains(&pa) => {
                 self.dmac0.write(off(DMAC0_BASE), value);
                 true
@@ -1007,16 +1085,13 @@ impl BridgeInner {
         }
 
         if buf.len() <= 4 && !is_memory(pa) {
-            if let Some(v) = self.dev_read(pa & !0x3) {
+            if let Some(v) = self.dev_read(pa) {
                 if self.openbus_log_budget > 0 && self.devlog {
                     self.openbus_log_budget -= 1;
                     debug!(pa = format!("{pa:#x}"), val = format!("{v:#x}"), "dev read");
                 }
-                let lane = (pa & 0x3) as usize;
                 let bytes = v.to_le_bytes();
-                for (i, b) in buf.iter_mut().enumerate() {
-                    *b = *bytes.get(lane + i).unwrap_or(&0);
-                }
+                buf.copy_from_slice(&bytes[..buf.len()]);
                 return Ok(());
             }
         }
@@ -1034,14 +1109,17 @@ impl BridgeInner {
         // that land in [addr, addr+len) so heap/free-list corruption can be
         // traced to the offending store.
         if let Some((wa, wl)) = *watch_range() {
-            if pa >= wa && pa < wa.wrapping_add(wl) {
-                let mut v = [0u8; 4];
-                v[..data.len().min(4)].copy_from_slice(&data[..data.len().min(4)]);
-                debug!(
+            if range_overlaps(pa, data.len(), wa, wl) {
+                info!(
                     pa = format!("{pa:#x}"),
-                    val = format!("{:#x}", u32::from_le_bytes(v)),
+                    len = data.len(),
+                    watch = format!("{wa:#x}:{wl:#x}"),
+                    watch_offset = ?watch_offset(pa, data.len(), wa),
+                    data = bytes_hex(data),
+                    before = ?phys_bytes_hex(mem, pa, data.len()),
                     pc = format!("{:#x}", self.cur_pc),
-                    "watch write"
+                    insns = self.cur_insn,
+                    "physical watch write"
                 );
             }
         }
@@ -1051,15 +1129,13 @@ impl BridgeInner {
         }
 
         if data.len() <= 4 && !is_memory(pa) {
-            let reg = pa & !0x3;
-            let lane = (pa & 0x3) as usize;
-            let mut cur = self.dev_read(reg).unwrap_or(0).to_le_bytes();
-            for (i, b) in data.iter().enumerate() {
-                if lane + i < 4 {
-                    cur[lane + i] = *b;
-                }
-            }
-            if self.dev_write(reg, u32::from_le_bytes(cur)) {
+            // QEMU dispatches MMIO subword accesses with the guest's exact
+            // offset and the unshifted access value. This matters for SYSIC's
+            // halfword status offsets (0x7a/0x7c), and it avoids synthetic
+            // read-modify-write cycles on registers whose reads have effects.
+            let mut bytes = [0u8; 4];
+            bytes[..data.len()].copy_from_slice(data);
+            if self.dev_write(pa, u32::from_le_bytes(bytes)) {
                 // A channel-enable write to a DMAC schedules a transfer; run it
                 // now (here we have the guest-memory handle the transfer needs).
                 if let Some(ch) = self.dmac0.take_pending() {
@@ -1149,7 +1225,7 @@ impl BridgeInner {
                     let end = (n + dwidth as usize).min(buf.len());
                     let _ = self.write_pa(mem, dst.wrapping_add(n as u32), &buf[n..end]);
                     if d_inc {
-                        dst = dst.wrapping_add(swidth);
+                        dst = dst.wrapping_add(dwidth);
                     }
                     n += dwidth as usize;
                 }
@@ -1303,7 +1379,28 @@ impl S5lBridge {
         if let Some(buf) = out {
             inner.read_pa(&self.mem, pa, buf)
         } else if let Some(d) = data {
-            inner.write_pa(&self.mem, pa, d)
+            let vwatch = vwatch_range()
+                .and_then(|(wa, wl)| range_overlaps(addr, d.len(), wa, wl).then_some((wa, wl)));
+            let before = vwatch.and_then(|_| phys_bytes_hex(&self.mem, pa, d.len()));
+            let result = inner.write_pa(&self.mem, pa, d);
+            if let Some((wa, wl)) = vwatch {
+                info!(
+                    va = format!("{addr:#x}"),
+                    pa = format!("{pa:#x}"),
+                    len = d.len(),
+                    access = ?access,
+                    watch = format!("{wa:#x}:{wl:#x}"),
+                    watch_offset = ?watch_offset(addr, d.len(), wa),
+                    data = bytes_hex(d),
+                    before = ?before,
+                    after = ?phys_bytes_hex(&self.mem, pa, d.len()),
+                    pc = format!("{:#x}", inner.cur_pc),
+                    insns = inner.cur_insn,
+                    ok = result.is_ok(),
+                    "virtual watch write"
+                );
+            }
+            result
         } else {
             Ok(())
         }
@@ -1357,8 +1454,13 @@ pub struct S5L8900Vcpu {
     trace_pcs: Vec<u32>,
     trace_log_budget: u32,
     trace_start_insn: u64,
+    pc_sample_interval: u64,
+    pc_sample_next_insn: u64,
+    pc_sample_remaining: u32,
+    trace_all: bool,
     storage_call_trace_seen: Vec<(u32, u32)>,
     storage_call_trace_remaining: u32,
+    storage_call_trace_start_insn: u64,
     fdisk_trace_seen: Vec<(u32, u32)>,
     fdisk_trace_remaining: u32,
     nandftl_trace_seen: Vec<(u32, u32)>,
@@ -1373,6 +1475,15 @@ pub struct S5L8900Vcpu {
     root_trace_start_insn: u64,
     root_boot_trace_remaining: u32,
     root_boot_trace_start_insn: u64,
+    apple_arm_function_trace_remaining: u32,
+    iokit_lifetime_trace_remaining: u32,
+    iokit_retain_trace: bool,
+    ioreg_free_trace_remaining: u32,
+    iokit_watch_object: Option<u32>,
+    iokit_watch_trace_remaining: u32,
+    sdio_power_trace_remaining: u32,
+    iokit_message_trace_remaining: u32,
+    pmqueue_trace_remaining: u32,
     admfmc_trace_remaining: u32,
     kernel_entry_logged: bool,
     kernel_fault_log_remaining: u32,
@@ -1391,6 +1502,13 @@ pub struct S5L8900Vcpu {
     timer_mul: u64,
     input_seeded: bool,
     security_state_seeded: bool,
+    input_payload: Option<Vec<u8>>,
+    printf_trace: bool,
+    vfl_scan_trace: bool,
+    derail_trace: bool,
+    no_usb_wrangler_race_fix: bool,
+    force_iobsd: bool,
+    force_iobsd_all: bool,
     sparse_vfl_mask_seeded: [bool; 8],
     fsboot_trace: bool,
     lcd_irq: bool,
@@ -1407,10 +1525,14 @@ pub struct S5L8900Vcpu {
     irq_trace_start_insn: u64,
     irq_trace_budget: u32,
     last_irq_trace: u128,
+    fiq_trace_budget: u32,
+    fiq_trace_start_insn: u64,
+    last_fiq_trace: u128,
     idle_trace: bool,
     idle_trace_start_insn: u64,
     last_idle_trace_insn: u64,
     adm_irq_trace_budget: u32,
+    adm_irq_trace_start_insn: u64,
     last_adm_irq_trace: u128,
     i2c_irq_trace_budget: u32,
     last_i2c1_irq_trace: u128,
@@ -1433,6 +1555,7 @@ impl S5L8900Vcpu {
                 mmu: V6MmuConfig::default(),
                 privileged: true,
                 cur_pc: 0,
+                cur_insn: 0,
                 kernel_started: false,
                 last_fault: LastFault::default(),
                 clock0: S5lClock::new(),
@@ -1450,6 +1573,7 @@ impl S5L8900Vcpu {
                 lcd: S5lLcd::new(),
                 nand: S5lNand::new(nand_dir()),
                 nand_ecc: S5lNandEcc::new(),
+                sdio: S5lSdio::new(),
                 aes: S5lAes::new(),
                 dmac0: S5lDmac::new(),
                 dmac1: S5lDmac::new(),
@@ -1467,12 +1591,34 @@ impl S5L8900Vcpu {
                     .unwrap_or(256),
                 devlog: std::env::var("RAX_S5L_DEVLOG").is_ok(),
                 vic_trace_budget: trace_budget_env("RAX_S5L_VIC_TRACE", 4096),
+                vic_trace_start_insn: std::env::var("RAX_S5L_VIC_TRACE_START")
+                    .ok()
+                    .and_then(|v| v.parse().ok())
+                    .unwrap_or(0),
             }),
         };
         let mut cpu = Armv7Cpu::new();
         // ARM1176JZF-S (ARMv6K), the S5L8900 core.
         cpu.cp15.midr = 0x410F_B767;
         cpu.cp15.ctr = 0x1D15_2152;
+        let lcd_irq_requested = !std::env::var("RAX_S5L_NO_LCD_IRQ").is_ok()
+            && (std::env::var("RAX_S5L_LCD_IRQ").is_ok()
+                || std::env::var("RAX_S5L_LCD_IRQ_EARLY").is_ok()
+                || std::env::var("RAX_S5L_LCD_IRQ_AFTER_ROOTDEV").is_ok());
+        let pc_sample_interval = std::env::var("RAX_S5L_PC_SAMPLE")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(0);
+        let pc_sample_start_insn = std::env::var("RAX_S5L_PC_SAMPLE_START")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(0);
+        let input_payload = std::env::var("RAX_S5L_INPUT").ok().map(|s| {
+            let mut bytes = s.replace("\\r", "\r").replace("\\n", "\n").into_bytes();
+            bytes.push(b'\r');
+            bytes
+        });
+        let input_seeded = input_payload.is_none();
         S5L8900Vcpu {
             id,
             cpu,
@@ -1500,8 +1646,19 @@ impl S5L8900Vcpu {
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(0),
+            pc_sample_interval,
+            pc_sample_next_insn: pc_sample_start_insn,
+            pc_sample_remaining: std::env::var("RAX_S5L_PC_SAMPLE_BUDGET")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(0),
+            trace_all: std::env::var_os("RAX_S5L_TRACE").is_some(),
             storage_call_trace_seen: Vec::new(),
             storage_call_trace_remaining: std::env::var("RAX_S5L_STORAGE_CALL_TRACE")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(0),
+            storage_call_trace_start_insn: std::env::var("RAX_S5L_STORAGE_CALL_TRACE_START")
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(0),
@@ -1546,6 +1703,15 @@ impl S5L8900Vcpu {
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(0),
+            apple_arm_function_trace_remaining: trace_budget_env("RAX_S5L_ARM_FUNCTION_TRACE", 128),
+            iokit_lifetime_trace_remaining: trace_budget_env("RAX_S5L_IOKIT_LIFETIME_TRACE", 256),
+            iokit_retain_trace: std::env::var_os("RAX_S5L_IOKIT_RETAIN_TRACE").is_some(),
+            ioreg_free_trace_remaining: trace_budget_env("RAX_S5L_IOREG_FREE_TRACE", 64),
+            iokit_watch_object: u32_env("RAX_S5L_IOKIT_OBJECT"),
+            iokit_watch_trace_remaining: trace_budget_env("RAX_S5L_IOKIT_OBJECT_TRACE", 512),
+            sdio_power_trace_remaining: trace_budget_env("RAX_S5L_SDIO_POWER_TRACE", 256),
+            iokit_message_trace_remaining: trace_budget_env("RAX_S5L_MESSAGE_TRACE", 256),
+            pmqueue_trace_remaining: trace_budget_env("RAX_S5L_PMQUEUE_TRACE", 256),
             admfmc_trace_remaining: std::env::var("RAX_S5L_ADMFMC_TRACE")
                 .ok()
                 .and_then(|v| v.parse().ok())
@@ -1575,16 +1741,23 @@ impl S5L8900Vcpu {
                 .ok()
                 .map(|v| v.parse().ok().filter(|&n| n > 0).unwrap_or(32))
                 .unwrap_or(0),
-            input_seeded: false,
+            input_seeded,
             security_state_seeded: false,
+            input_payload,
+            printf_trace: std::env::var_os("RAX_S5L_PRINTF").is_some(),
+            vfl_scan_trace: std::env::var_os("RAX_S5L_VFL_SCAN").is_some(),
+            derail_trace: std::env::var_os("RAX_S5L_DERAIL").is_some(),
+            no_usb_wrangler_race_fix: std::env::var_os("RAX_S5L_NO_USB_WRANGLER_RACE_FIX")
+                .is_some(),
+            force_iobsd: std::env::var_os("RAX_S5L_FORCE_IOBSD").is_some(),
+            force_iobsd_all: std::env::var_os("RAX_S5L_FORCE_IOBSD_ALL").is_some(),
             sparse_vfl_mask_seeded: [false; 8],
             fsboot_trace: std::env::var("RAX_S5L_FSBOOT_TRACE").is_ok(),
             // QEMU raises LCD refresh IRQs from its display timer. RAX's
-            // synthetic source can starve the root-device IOKit settle path if
-            // it fires while vfs_mountroot is still inside IOService::waitQuiet,
-            // so default auto-arming waits until bsd_init returns from
-            // vfs_mountroot. Early/rootdev modes remain for LCD experiments.
-            lcd_irq: !std::env::var("RAX_S5L_NO_LCD_IRQ").is_ok(),
+            // synthetic source is instruction-paced and can starve the guest
+            // after root selection, so keep it opt-in until it is paced like
+            // the reference display timer.
+            lcd_irq: lcd_irq_requested,
             lcd_irq_armed: std::env::var("RAX_S5L_LCD_IRQ").is_ok()
                 || std::env::var("RAX_S5L_LCD_IRQ_EARLY").is_ok(),
             lcd_irq_budget: std::env::var("RAX_S5L_LCD_IRQ_BUDGET")
@@ -1619,6 +1792,15 @@ impl S5L8900Vcpu {
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(512),
             last_irq_trace: u128::MAX,
+            fiq_trace_budget: std::env::var("RAX_S5L_FIQ_TRACE")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(0),
+            fiq_trace_start_insn: std::env::var("RAX_S5L_FIQ_TRACE_START")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(0),
+            last_fiq_trace: u128::MAX,
             idle_trace: std::env::var("RAX_S5L_IDLE_TRACE").is_ok(),
             idle_trace_start_insn: std::env::var("RAX_S5L_IDLE_TRACE_START")
                 .ok()
@@ -1626,6 +1808,10 @@ impl S5L8900Vcpu {
                 .unwrap_or(0),
             last_idle_trace_insn: u64::MAX,
             adm_irq_trace_budget: std::env::var("RAX_S5L_ADMIRQ_TRACE")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(0),
+            adm_irq_trace_start_insn: std::env::var("RAX_S5L_ADMIRQ_TRACE_START")
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(0),
@@ -1653,8 +1839,8 @@ impl S5L8900Vcpu {
         inner.privileged = self.cpu.cpsr.mode != ProcessorMode::User as u8;
     }
 
-    /// Recompute VIC line levels from device state; return CPU IRQ assertion.
-    fn sync_irqs(&mut self) -> bool {
+    /// Recompute VIC line levels from device state; return CPU IRQ/FIQ assertions.
+    fn sync_irqs(&mut self) -> (bool, bool) {
         let uart_lvl = self
             .uart
             .get()
@@ -1711,7 +1897,11 @@ impl S5L8900Vcpu {
         inner.refresh_vic_daisy();
         let daisy = inner.vic0.daisy_input;
         let cpu_irq = inner.vic0.irq_asserted();
-        if self.adm_irq_trace_budget != 0 && inner.kernel_started {
+        let cpu_fiq = inner.vic0.fiq_asserted();
+        if self.adm_irq_trace_budget != 0
+            && inner.kernel_started
+            && self.insn_count >= self.adm_irq_trace_start_insn
+        {
             let (v0_cur, v0_high, v0_prio, v0_depth, v0_irq_line, _) =
                 inner.vic0.debug_priority_state();
             let (v1_cur, v1_high, v1_prio, v1_depth, v1_irq_line, _) =
@@ -1720,6 +1910,7 @@ impl S5L8900Vcpu {
                 | ((dmac0_lvl as u128) << 1)
                 | ((daisy as u128) << 2)
                 | ((cpu_irq as u128) << 3)
+                | ((cpu_fiq as u128) << 4)
                 | (((inner.vic0.rawintr as u128) & 0xffff) << 8)
                 | (((inner.vic0.intenable as u128) & 0xffff) << 24)
                 | (((inner.vic1.rawintr as u128) & 0xffff) << 40)
@@ -1740,6 +1931,7 @@ impl S5L8900Vcpu {
                     dmac0_lvl,
                     daisy,
                     cpu_irq,
+                    cpu_fiq,
                     v0_raw = format!("{:#x}", inner.vic0.rawintr),
                     v0_en = format!("{:#x}", inner.vic0.intenable),
                     v0_irq = format!("{:#x}", inner.vic0.irq_status),
@@ -1792,13 +1984,30 @@ impl S5L8900Vcpu {
                 | ((usb_lvl as u128) << 11)
                 | ((uart_lvl as u128) << 12)
                 | ((daisy as u128) << 13)
+                | ((cpu_irq as u128) << 14)
+                | ((cpu_fiq as u128) << 15)
                 | ((vic0_raw_trace as u128) << 16)
                 | ((inner.vic0.intenable as u128) << 48)
                 | ((inner.vic1.rawintr as u128) << 80);
             if trace != self.last_irq_trace {
                 self.last_irq_trace = trace;
                 self.irq_trace_budget -= 1;
-                debug!(
+                let (
+                    timer_micros,
+                    timer_status,
+                    timer_config,
+                    timer_bcount1,
+                    timer_bcount2,
+                    timer_irq,
+                    timer_started,
+                    timer_next_irq_micros,
+                    timer_next_irq_insn,
+                ) = inner.timer.debug_state();
+                info!(
+                    pc = format!("{:#x}", self.cpu.regs[15]),
+                    lr = format!("{:#x}", self.cpu.regs[14]),
+                    cpsr = format!("{:#x}", self.cpu.cpsr.to_u32()),
+                    insns = self.insn_count,
                     timer_lvl,
                     lcd_lvl,
                     spi0_lvl,
@@ -1815,6 +2024,8 @@ impl S5L8900Vcpu {
                     usb_lvl,
                     uart_lvl,
                     daisy,
+                    cpu_irq,
+                    cpu_fiq,
                     vic0_raw = format!("{:#x}", inner.vic0.rawintr),
                     vic0_en = format!("{:#x}", inner.vic0.intenable),
                     vic0_irq = format!("{:#x}", inner.vic0.irq_status),
@@ -1823,11 +2034,20 @@ impl S5L8900Vcpu {
                     vic1_en = format!("{:#x}", inner.vic1.intenable),
                     vic1_irq = format!("{:#x}", inner.vic1.irq_status),
                     vic1_addr = format!("{:#x}", inner.vic1.address),
+                    timer_micros,
+                    timer_status = format!("{timer_status:#x}"),
+                    timer_config = format!("{timer_config:#x}"),
+                    timer_bcount1 = format!("{timer_bcount1:#x}"),
+                    timer_bcount2 = format!("{timer_bcount2:#x}"),
+                    timer_irq,
+                    timer_started,
+                    timer_next_irq_micros,
+                    timer_next_irq_insn,
                     "irq_trace"
                 );
             }
         }
-        cpu_irq
+        (cpu_irq, cpu_fiq)
     }
 
     fn advance_irq_samples(&mut self) {
@@ -1898,10 +2118,134 @@ impl S5L8900Vcpu {
         );
     }
 
+    fn fiq_vector_ready(&self, irq_vector_ready: bool) -> bool {
+        let vbar = self.cpu.cp15.sctlr.vector_base();
+        match self.bridge.read_word(vbar.wrapping_add(0x1c)) {
+            Ok(ARM_LDR_PC_PC_0X18) => true,
+            Ok(ARM_MOV_PC_R9) => irq_vector_ready && self.fiq_r9_target_ready(self.cpu.regs_fiq[1]),
+            _ => false,
+        }
+    }
+
+    fn fiq_r9_target_ready(&self, target: u32) -> bool {
+        let target = target & !1;
+        (0xC000_0000..0xC080_0000).contains(&target) && self.bridge.read_word(target & !3).is_ok()
+    }
+
+    fn trace_fiq_gate(&mut self, fiq_pending: bool, irq_ready: bool, fiq_ready: bool) {
+        if self.fiq_trace_budget == 0 || self.insn_count < self.fiq_trace_start_insn || !fiq_pending
+        {
+            return;
+        }
+
+        let pc = self.cpu.regs[15];
+        let lr = self.cpu.regs[14];
+        let sp = self.cpu.regs[13];
+        let cpsr = self.cpu.cpsr.to_u32();
+        let vbar = self.cpu.cp15.sctlr.vector_base();
+        let irq_word = self.bridge.read_word(vbar.wrapping_add(0x18)).unwrap_or(0);
+        let fiq_word = self.bridge.read_word(vbar.wrapping_add(0x1c)).unwrap_or(0);
+        let vector_words = self.guest_word_window(vbar, 8);
+        let fiq_r9_target_ready = self.fiq_r9_target_ready(self.cpu.regs_fiq[1]);
+        let fiq_regs_banked = self
+            .cpu
+            .regs_fiq
+            .iter()
+            .enumerate()
+            .map(|(i, value)| format!("r{}={:#x}", i + 8, *value))
+            .collect::<Vec<_>>()
+            .join(" ");
+        let fiq_sp_banked = self.cpu.regs_fiq[5];
+        let fiq_lr_banked = self.cpu.regs_fiq[6];
+        let (
+            kernel_started,
+            v0_raw,
+            v0_en,
+            v0_intselect,
+            v0_irq,
+            v0_fiq,
+            v0_addr,
+            v0_cur,
+            v0_high,
+            v0_prio,
+            v0_depth,
+            v0_irq_line,
+            v0_fiq_line,
+        ) = {
+            let inner = self.bridge.inner.borrow();
+            let (v0_cur, v0_high, v0_prio, v0_depth, v0_irq_line, v0_fiq_line) =
+                inner.vic0.debug_priority_state();
+            (
+                inner.kernel_started,
+                inner.vic0.rawintr,
+                inner.vic0.intenable,
+                inner.vic0.intselect,
+                inner.vic0.irq_status,
+                inner.vic0.fiq_status,
+                inner.vic0.address,
+                v0_cur,
+                v0_high,
+                v0_prio,
+                v0_depth,
+                v0_irq_line,
+                v0_fiq_line,
+            )
+        };
+
+        let trace = (fiq_pending as u128)
+            | ((self.cpu.cpsr.f as u128) << 1)
+            | ((irq_ready as u128) << 2)
+            | ((fiq_ready as u128) << 3)
+            | (((fiq_word as u128) & 0xffff_ffff) << 16)
+            | (((v0_raw as u128) & 0xffff_ffff) << 48)
+            | (((v0_en as u128) & 0xffff_ffff) << 80)
+            | (((pc as u128) & 0xffff) << 112);
+        if trace == self.last_fiq_trace {
+            return;
+        }
+        self.last_fiq_trace = trace;
+        self.fiq_trace_budget -= 1;
+
+        info!(
+            pc = format!("{pc:#x}"),
+            lr = format!("{lr:#x}"),
+            sp = format!("{sp:#x}"),
+            cpsr = format!("{cpsr:#x}"),
+            insns = self.insn_count,
+            kernel_started,
+            irq_ready,
+            fiq_ready,
+            vbar = format!("{vbar:#x}"),
+            irq_word = format!("{irq_word:#x}"),
+            fiq_word = format!("{fiq_word:#x}"),
+            vectors = vector_words,
+            fiq_r9_target_ready,
+            fiq_regs_banked,
+            fiq_sp_banked = format!("{fiq_sp_banked:#x}"),
+            fiq_lr_banked = format!("{fiq_lr_banked:#x}"),
+            v0_raw = format!("{v0_raw:#x}"),
+            v0_en = format!("{v0_en:#x}"),
+            v0_intselect = format!("{v0_intselect:#x}"),
+            v0_irq = format!("{v0_irq:#x}"),
+            v0_fiq = format!("{v0_fiq:#x}"),
+            v0_addr = format!("{v0_addr:#x}"),
+            v0_cur,
+            v0_high,
+            v0_prio,
+            v0_depth,
+            v0_irq_line,
+            v0_fiq_line,
+            trail = self.recent_pc_trail(24),
+            "fiq gate trace"
+        );
+    }
+
     fn take_exception(&mut self, exc: ExceptionType) {
         let vbar = self.cpu.cp15.sctlr.vector_base();
         let mut exec = Executor::with_vbar(&mut self.cpu, &mut self.bridge, vbar);
+        exec.exclusive_monitor = self.excl.clone();
         exec.take_exception(exc);
+        self.excl = exec.exclusive_monitor.clone();
     }
 
     /// Service a pending 8900-engine decryption request, if any.
@@ -1965,7 +2309,10 @@ impl S5L8900Vcpu {
             if std::env::var("RAX_S5L_ADM_TRACE").is_ok() {
                 debug!(value = format!("{value:#x}"), "adm_irq_clear");
             }
-            if std::env::var_os("RAX_S5L_ADMIRQ_TRACE").is_some() && inner.kernel_started {
+            if std::env::var_os("RAX_S5L_ADMIRQ_TRACE").is_some()
+                && inner.kernel_started
+                && self.insn_count >= self.adm_irq_trace_start_insn
+            {
                 let (v0_cur, v0_high, v0_prio, v0_depth, v0_irq_line, _) =
                     inner.vic0.debug_priority_state();
                 let (v1_cur, v1_high, v1_prio, v1_depth, v1_irq_line, _) =
@@ -2097,6 +2444,18 @@ impl S5L8900Vcpu {
                     self.phys_w(data3 + i as u32 * 0xC, &sbuf);
                 }
             }
+            0x500 => {
+                // Page write. QEMU arms the NAND FIFO here; the follow-up PL080
+                // transfer writes page words into FMFIFO.
+                let bank = (self.phys_r32(data2 + 0x1104 + 0x44) & 0xFF) as u32;
+                let page = bswap(self.phys_r32(data2 + 0x1104 + 0x244));
+                first_bank = Some(bank);
+                first_page = Some(page);
+                let mut inner = self.bridge.inner.borrow_mut();
+                let kernel_started = inner.kernel_started;
+                inner.nand.set_kernel_started(kernel_started);
+                inner.nand.begin_page_write(bank, page);
+            }
             _ => {}
         }
         if let Some((dump_bank, dump_page, page_data, spare_data)) = adm_page_dump {
@@ -2180,7 +2539,10 @@ impl S5L8900Vcpu {
         }
         let mut inner = self.bridge.inner.borrow_mut();
         inner.adm_irq = true;
-        if std::env::var_os("RAX_S5L_ADMIRQ_TRACE").is_some() && inner.kernel_started {
+        if std::env::var_os("RAX_S5L_ADMIRQ_TRACE").is_some()
+            && inner.kernel_started
+            && self.insn_count >= self.adm_irq_trace_start_insn
+        {
             let (v0_cur, v0_high, v0_prio, v0_depth, v0_irq_line, _) =
                 inner.vic0.debug_priority_state();
             let (v1_cur, v1_high, v1_prio, v1_depth, v1_irq_line, _) =
@@ -2254,13 +2616,6 @@ impl S5L8900Vcpu {
             // scheduler. tick_irq self-gates on the timer's `started` flag, so
             // it only fires once iBoot has armed TIMER_4 (i.e. the scheduler is
             // up). This is what wakes tasks blocked in task_sleep.
-            if self.timer_irq {
-                inner.timer.tick_irq(
-                    self.timer_irq_clock,
-                    self.timer_irq_ready,
-                    self.timer_irq_interval,
-                );
-            }
             // Update the µs timer from the host clock periodically (not every
             // instruction) so it tracks real time but stays stable across a
             // guest atomic counter read. The speedup factor makes firmware
@@ -2275,29 +2630,60 @@ impl S5L8900Vcpu {
                     .timer
                     .set_micros(us.wrapping_mul(self.timer_speedup) * self.timer_mul);
             }
+            if self.timer_irq {
+                inner.timer.tick_irq(
+                    self.timer_irq_ready,
+                    self.timer_irq_interval,
+                    self.insn_count,
+                    self.timer_irq_interval,
+                );
+            }
         }
 
-        let irq_pending = self.sync_irqs();
-        if irq_pending {
+        let (irq_pending, fiq_pending) = self.sync_irqs();
+        if irq_pending || fiq_pending {
             self.cpu.is_halted = false;
         }
-        // Only deliver an IRQ once the guest has actually installed its
-        // exception vectors at the active vector base. iBoot runs from
+        // Only deliver external exceptions once the guest has actually
+        // installed its vectors at the active vector base. iBoot runs from
         // 0x18000000 and maps virtual 0 -> its in-place vector table only after
-        // early init; before that the IRQ vector reads back as zeros and the
-        // CPU would walk off into low memory. The real IRQ instruction is
+        // early init; before that the vectors read back as zeros and the CPU
+        // would walk off into low memory. The real vector instruction is
         // `LDR pc, [pc, #0x18]` (0xe59ff018), so gate on seeing it. This
         // replaces the fragile fixed-instruction-count readiness heuristic.
-        let vectors_ready = {
+        let irq_vector_ready = {
             let vbar = self.cpu.cp15.sctlr.vector_base();
             matches!(
                 self.bridge.read_word(vbar.wrapping_add(0x18)),
-                Ok(0xe59f_f018)
+                Ok(ARM_LDR_PC_PC_0X18)
             )
         };
-        self.trace_i2c1_irq_handoff(irq_pending, vectors_ready);
+        let fiq_vector_ready = self.fiq_vector_ready(irq_vector_ready);
+        self.trace_i2c1_irq_handoff(irq_pending, irq_vector_ready);
+        self.trace_fiq_gate(fiq_pending, irq_vector_ready, fiq_vector_ready);
         self.advance_irq_samples();
-        if irq_pending && !self.cpu.cpsr.i && vectors_ready {
+        if fiq_pending && !self.cpu.cpsr.f && fiq_vector_ready {
+            let from = self.cpu.regs[15];
+            let from_cpsr = self.cpu.cpsr.to_u32();
+            let vbar = self.cpu.cp15.sctlr.vector_base();
+            self.take_exception(ExceptionType::Fiq);
+            if self.fault_log_budget > 0 {
+                self.fault_log_budget -= 1;
+                debug!(
+                    from = format!("{from:#x}"),
+                    from_cpsr = format!("{from_cpsr:#x}"),
+                    spsr_fiq = format!("{:#x}", self.cpu.spsr_fiq.to_u32()),
+                    vbar = format!("{vbar:#x}"),
+                    to = format!("{:#x}", self.cpu.regs[15]),
+                    fiq_sp = format!("{:#x}", self.cpu.regs[13]),
+                    insns = self.insn_count,
+                    "fiq delivered"
+                );
+            }
+            return StepOutcome::Progress;
+        }
+
+        if irq_pending && !self.cpu.cpsr.i && irq_vector_ready {
             let from = self.cpu.regs[15];
             let from_cpsr = self.cpu.cpsr.to_u32();
             let vbar = self.cpu.cp15.sctlr.vector_base();
@@ -2333,8 +2719,9 @@ impl S5L8900Vcpu {
                 inner.timer.set_micros(micros);
                 if self.timer_irq {
                     inner.timer.tick_irq(
-                        self.timer_irq_clock,
                         self.timer_irq_ready,
+                        self.timer_irq_interval,
+                        self.timer_irq_clock,
                         self.timer_irq_interval,
                     );
                 }
@@ -2351,6 +2738,7 @@ impl S5L8900Vcpu {
                         bcount2,
                         timer_irq,
                         timer_started,
+                        next_irq_micros,
                         next_irq_insn,
                     ) = inner.timer.debug_state();
                     info!(
@@ -2366,6 +2754,7 @@ impl S5L8900Vcpu {
                         bcount2 = format!("{bcount2:#x}"),
                         timer_irq,
                         timer_started,
+                        next_irq_micros,
                         next_irq_insn,
                         vic0_raw = format!("{:#x}", inner.vic0.rawintr),
                         vic0_en = format!("{:#x}", inner.vic0.intenable),
@@ -2388,12 +2777,10 @@ impl S5L8900Vcpu {
         // input (RAX_S5L_INPUT) into the UART RX so its recovery console can be
         // driven (e.g. a boot command). Seeded once.
         if !self.input_seeded && self.insn_count > 50_000_000 {
-            if let Ok(s) = std::env::var("RAX_S5L_INPUT") {
+            if let Some(bytes) = self.input_payload.as_ref() {
                 if let Some(u) = self.uart.get() {
                     if let Ok(mut u) = u.lock() {
-                        let mut bytes = s.replace("\\r", "\r").replace("\\n", "\n").into_bytes();
-                        bytes.push(b'\r');
-                        u.queue_input(&bytes);
+                        u.queue_input(bytes);
                     }
                 }
                 self.input_seeded = true;
@@ -2406,7 +2793,7 @@ impl S5L8900Vcpu {
         if self.force_iomedia_bsd_resource_check(pc) {
             return StepOutcome::Progress;
         }
-        if std::env::var("RAX_S5L_PRINTF").is_ok() && pc == IBOOT_PRINTF {
+        if self.printf_trace && pc == IBOOT_PRINTF {
             self.trace_iboot_printf();
         }
         if pc == IBOOT_SECURITY_STATE_CHECK {
@@ -2414,7 +2801,7 @@ impl S5L8900Vcpu {
         }
         if pc == IBOOT_VFL_MASK_TEST {
             self.seed_sparse_vfl_mask();
-            if std::env::var("RAX_S5L_VFL_SCAN").is_ok() {
+            if self.vfl_scan_trace {
                 self.trace_vfl_scan();
             }
         }
@@ -2461,7 +2848,7 @@ impl S5L8900Vcpu {
         // the bad branch can be located, then stop.
         if raw == 0 && pc < 0x1800_0000 {
             self.zero_slide += 1;
-            if self.zero_slide == 48 && std::env::var("RAX_S5L_DERAIL").is_ok() {
+            if self.zero_slide == 48 && self.derail_trace {
                 let mut trail = Vec::new();
                 for i in 0..self.pc_ring.len() {
                     let idx = (self.pc_ring_idx + i) % self.pc_ring.len();
@@ -2485,10 +2872,18 @@ impl S5L8900Vcpu {
         if pc >= 0xC000_0000 {
             self.bridge.inner.borrow_mut().kernel_started = true;
             self.trace_kernel_pc(pc, raw);
+            self.trace_pc_sample(pc, raw);
             self.trace_storage_call(pc);
             self.trace_partition_scan(pc);
             self.trace_fdisk_partition(pc);
             self.trace_root_boot(pc);
+            self.trace_apple_arm_function(pc, raw);
+            self.trace_iokit_message_path(pc, raw);
+            self.trace_pmqueue(pc, raw);
+            self.trace_sdio_power(pc, raw);
+            self.trace_iokit_object_watch(pc, raw);
+            self.trace_ioreg_free(pc, raw);
+            self.trace_iokit_lifetime(pc, raw);
             self.trace_admfmc_perform_io(pc);
             self.trace_nandftl_start(pc);
             self.track_wmr_init(pc);
@@ -2496,16 +2891,15 @@ impl S5L8900Vcpu {
         }
         if pc == KERNEL_SLEH_ABORT {
             self.trace_kernel_sleh_abort_frame();
+        } else if pc == KERNEL_IOPANIC {
+            self.trace_kernel_iopanic();
         } else if pc == KERNEL_PANIC {
             self.trace_kernel_panic();
         }
 
-        if std::env::var("RAX_S5L_TRACE").is_ok()
-            && self.insn_count >= self.trace_start_insn
-            && self.trace_log_budget > 0
-        {
+        if self.trace_all && self.insn_count >= self.trace_start_insn && self.trace_log_budget > 0 {
             self.trace_log_budget -= 1;
-            debug!(
+            info!(
                 pc = format!("{pc:#x}"),
                 raw = format!("{raw:#010x}"),
                 lr = format!("{:#x}", self.cpu.regs[14]),
@@ -2523,7 +2917,7 @@ impl S5L8900Vcpu {
             let regs: Vec<String> = (0..16)
                 .map(|i| format!("r{i}={:#x}", self.cpu.regs[i]))
                 .collect();
-            debug!(
+            info!(
                 pc = format!("{pc:#x}"),
                 raw = format!("{raw:#010x}"),
                 regs = regs.join(" "),
@@ -2553,8 +2947,13 @@ impl S5L8900Vcpu {
             }
         };
 
-        self.bridge.inner.borrow_mut().cur_pc = pc;
+        {
+            let mut inner = self.bridge.inner.borrow_mut();
+            inner.cur_pc = pc;
+            inner.cur_insn = self.insn_count;
+        }
         let vbar = self.cpu.cp15.sctlr.vector_base();
+        let advance_it = is_thumb && self.cpu.cpsr.in_it_block();
         let mut exec = Executor::with_vbar(&mut self.cpu, &mut self.bridge, vbar);
         exec.exclusive_monitor = self.excl.clone();
         let result = exec.execute(&insn);
@@ -2577,7 +2976,7 @@ impl S5L8900Vcpu {
         match result {
             ExecResult::Continue => {
                 self.cpu.regs[15] = self.cpu.regs[15].wrapping_add(insn_len);
-                if self.cpu.cpsr.in_it_block() {
+                if advance_it {
                     self.cpu.cpsr.advance_it_state();
                 }
                 StepOutcome::Progress
@@ -2591,6 +2990,9 @@ impl S5L8900Vcpu {
                     self.cpu.regs[15] = target & !1;
                 } else {
                     self.cpu.regs[15] = target;
+                }
+                if advance_it {
+                    self.cpu.cpsr.advance_it_state();
                 }
                 StepOutcome::Progress
             }
@@ -2699,7 +3101,9 @@ impl S5L8900Vcpu {
     }
 
     fn trace_storage_call(&mut self, pc: u32) {
-        if self.storage_call_trace_remaining == 0 {
+        if self.storage_call_trace_remaining == 0
+            || self.insn_count < self.storage_call_trace_start_insn
+        {
             return;
         }
 
@@ -3367,6 +3771,837 @@ impl S5L8900Vcpu {
         trail[start..].join(" ")
     }
 
+    fn trace_sdio_power(&mut self, pc: u32, raw: u32) {
+        if self.sdio_power_trace_remaining == 0 || self.insn_count < self.trace_start_insn {
+            return;
+        }
+
+        let Some(reason) = (match pc {
+            0xc04d_44d0 => Some("SDIO power/message window prologue"),
+            0xc04d_44d4 => Some("SDIO load fifth argument"),
+            0xc04d_44d8 => Some("SDIO load command constant"),
+            0xc04d_44e0 => Some("SDIO compare command"),
+            0xc04d_44e4 => Some("SDIO save this"),
+            0xc04d_44e8 => Some("SDIO zero fifth-argument status"),
+            0xc04d_44ec => Some("SDIO command branch"),
+            0xc04d_4500 => Some("SDIO provider virtual call setup"),
+            0xc04d_4508 => Some("SDIO provider virtual call"),
+            0xc04d_450c => Some("SDIO provider call returned"),
+            0xc04d_4540 => Some("SDIO copy fifth-argument value"),
+            0xc04d_4548 => Some("SDIO store copied argument"),
+            0xc04d_4554 => Some("SDIO second virtual call"),
+            0xc04d_455c => Some("SDIO load failure return"),
+            0xc04d_4564 => Some("SDIO write fifth-argument status"),
+            _ => None,
+        }) else {
+            return;
+        };
+
+        self.sdio_power_trace_remaining -= 1;
+        let regs = (0..16)
+            .map(|i| format!("r{i}={:#x}", self.cpu.regs[i]))
+            .collect::<Vec<_>>()
+            .join(" ");
+        let sp = self.cpu.regs[13];
+        let stack_arg0 = self.bridge.read_word(sp.wrapping_add(0x14)).unwrap_or(0);
+        let stack_arg1 = self.bridge.read_word(sp.wrapping_add(0x18)).unwrap_or(0);
+        let stack_arg2 = self.bridge.read_word(sp.wrapping_add(0x1c)).unwrap_or(0);
+
+        info!(
+            pc = format!("{pc:#x}"),
+            raw = format!("{raw:#010x}"),
+            reason,
+            regs,
+            cpsr = format!("{:#x}", self.cpu.cpsr.to_u32()),
+            stack_arg0 = format!("{stack_arg0:#x}"),
+            stack_arg1 = format!("{stack_arg1:#x}"),
+            stack_arg2 = format!("{stack_arg2:#x}"),
+            stack_arg0_obj = self.iokit_object_summary(stack_arg0),
+            stack_arg1_obj = self.iokit_object_summary(stack_arg1),
+            stack_arg2_obj = self.iokit_object_summary(stack_arg2),
+            r0_obj = self.iokit_object_summary(self.cpu.regs[0]),
+            r1_obj = self.iokit_object_summary(self.cpu.regs[1]),
+            r2_obj = self.iokit_object_summary(self.cpu.regs[2]),
+            r3_obj = self.iokit_object_summary(self.cpu.regs[3]),
+            r4_obj = self.iokit_object_summary(self.cpu.regs[4]),
+            r5_obj = self.iokit_object_summary(self.cpu.regs[5]),
+            r6_obj = self.iokit_object_summary(self.cpu.regs[6]),
+            r7_obj = self.iokit_object_summary(self.cpu.regs[7]),
+            r0_str = ?self.guest_cstr(self.cpu.regs[0], 192),
+            r1_str = ?self.guest_cstr(self.cpu.regs[1], 192),
+            r2_str = ?self.guest_cstr(self.cpu.regs[2], 192),
+            r3_str = ?self.guest_cstr(self.cpu.regs[3], 192),
+            r4_str = ?self.guest_cstr(self.cpu.regs[4], 192),
+            r5_str = ?self.guest_cstr(self.cpu.regs[5], 192),
+            r0_words = self.guest_word_window(self.cpu.regs[0], 24),
+            r1_words = self.guest_word_window(self.cpu.regs[1], 16),
+            r2_words = self.guest_word_window(self.cpu.regs[2], 16),
+            r3_words = self.guest_word_window(self.cpu.regs[3], 16),
+            r4_words = self.guest_word_window(self.cpu.regs[4], 24),
+            r5_words = self.guest_word_window(self.cpu.regs[5], 24),
+            r6_words = self.guest_word_window(self.cpu.regs[6], 16),
+            r7_words = self.guest_word_window(self.cpu.regs[7], 16),
+            stack_arg0_words = self.guest_word_window(stack_arg0, 24),
+            sp_words = self.guest_word_window(sp, 32),
+            stack_refs = self.stack_code_refs(sp, 160),
+            trail = self.recent_pc_trail(96),
+            insns = self.insn_count,
+            "sdio power trace"
+        );
+    }
+
+    fn trace_iokit_message_path(&mut self, pc: u32, raw: u32) {
+        if self.iokit_message_trace_remaining == 0 || self.insn_count < self.trace_start_insn {
+            return;
+        }
+
+        let Some(reason) = (match pc {
+            0xc013_3c38 => Some("IOService::messageClient entry"),
+            0xc013_3c54 => Some("IOService::messageClient service cast call"),
+            0xc013_3c58 => Some("IOService::messageClient service cast returned"),
+            0xc013_3c6a => Some("IOService::messageClient direct message call"),
+            0xc013_3c6c => Some("IOService::messageClient direct message returned"),
+            0xc013_3c7c => Some("IOService::messageClient interest cast setup"),
+            0xc013_3c82 => Some("IOService::messageClient interest cast call"),
+            0xc013_3c86 => Some("IOService::messageClient interest cast returned"),
+            0xc013_3ccc => Some("IOService::messageClient load arg size"),
+            0xc013_3cd2 => Some("IOService::messageClient store arg size"),
+            0xc013_3cd4 => Some("IOService::messageClient store argument"),
+            0xc013_3cdc => Some("IOService::messageClient interest callback call"),
+            0xc013_3cde => Some("IOService::messageClient interest callback returned"),
+            0xc013_3e28 => Some("messageClients callback entry"),
+            0xc013_3e4a => Some("messageClients callback store arg size"),
+            0xc013_3e50 => Some("messageClients callback call messageClient"),
+            0xc013_3e52 => Some("messageClients callback returned"),
+            0xc013_3e60 => Some("IOService::messageClients entry"),
+            0xc013_3e72 => Some("IOService::messageClients context initialized"),
+            0xc013_3e82 => Some("IOService::messageClients applyToInterested call"),
+            0xc013_3e84 => Some("IOService::messageClients applyToInterested returned"),
+            _ => None,
+        }) else {
+            return;
+        };
+
+        self.iokit_message_trace_remaining -= 1;
+        let regs = (0..16)
+            .map(|i| format!("r{i}={:#x}", self.cpu.regs[i]))
+            .collect::<Vec<_>>()
+            .join(" ");
+        let sp = self.cpu.regs[13];
+        let context = match pc {
+            0xc013_3e28..=0xc013_3e52 => self.cpu.regs[1],
+            0xc013_3e60..=0xc013_3e84 => sp,
+            _ => 0,
+        };
+        let context0 = self.bridge.read_word(context).unwrap_or(0);
+        let context1 = self.bridge.read_word(context.wrapping_add(4)).unwrap_or(0);
+        let context2 = self.bridge.read_word(context.wrapping_add(8)).unwrap_or(0);
+        let context3 = self.bridge.read_word(context.wrapping_add(12)).unwrap_or(0);
+        let context4 = self.bridge.read_word(context.wrapping_add(16)).unwrap_or(0);
+        let stack_arg0 = self.bridge.read_word(sp).unwrap_or(0);
+        let stack_arg1 = self.bridge.read_word(sp.wrapping_add(4)).unwrap_or(0);
+        let message_client_arg_size = self.bridge.read_word(sp.wrapping_add(0x34)).unwrap_or(0);
+
+        info!(
+            pc = format!("{pc:#x}"),
+            raw = format!("{raw:#010x}"),
+            reason,
+            regs,
+            cpsr = format!("{:#x}", self.cpu.cpsr.to_u32()),
+            context = format!("{context:#x}"),
+            context0 = format!("{context0:#x}"),
+            context1 = format!("{context1:#x}"),
+            context2 = format!("{context2:#x}"),
+            context3 = format!("{context3:#x}"),
+            context4 = format!("{context4:#x}"),
+            context0_obj = self.iokit_object_summary(context0),
+            context1_obj = self.iokit_object_summary(context1),
+            context2_obj = self.iokit_object_summary(context2),
+            context3_obj = self.iokit_object_summary(context3),
+            context4_obj = self.iokit_object_summary(context4),
+            stack_arg0 = format!("{stack_arg0:#x}"),
+            stack_arg1 = format!("{stack_arg1:#x}"),
+            stack_arg0_obj = self.iokit_object_summary(stack_arg0),
+            stack_arg1_obj = self.iokit_object_summary(stack_arg1),
+            message_client_arg_size = format!("{message_client_arg_size:#x}"),
+            r0_obj = self.iokit_object_summary(self.cpu.regs[0]),
+            r1_obj = self.iokit_object_summary(self.cpu.regs[1]),
+            r2_obj = self.iokit_object_summary(self.cpu.regs[2]),
+            r3_obj = self.iokit_object_summary(self.cpu.regs[3]),
+            r4_obj = self.iokit_object_summary(self.cpu.regs[4]),
+            r5_obj = self.iokit_object_summary(self.cpu.regs[5]),
+            r6_obj = self.iokit_object_summary(self.cpu.regs[6]),
+            r8_obj = self.iokit_object_summary(self.cpu.regs[8]),
+            r10_obj = self.iokit_object_summary(self.cpu.regs[10]),
+            r11_obj = self.iokit_object_summary(self.cpu.regs[11]),
+            r0_words = self.guest_word_window(self.cpu.regs[0], 16),
+            r1_words = self.guest_word_window(self.cpu.regs[1], 16),
+            r2_words = self.guest_word_window(self.cpu.regs[2], 16),
+            r3_words = self.guest_word_window(self.cpu.regs[3], 16),
+            r4_words = self.guest_word_window(self.cpu.regs[4], 16),
+            r5_words = self.guest_word_window(self.cpu.regs[5], 16),
+            r10_words = self.guest_word_window(self.cpu.regs[10], 16),
+            context_words = self.guest_word_window(context, 16),
+            sp_words = self.guest_word_window(sp, 40),
+            stack_refs = self.stack_code_refs(sp, 192),
+            trail = self.recent_pc_trail(96),
+            insns = self.insn_count,
+            "iokit message trace"
+        );
+    }
+
+    fn trace_pmqueue(&mut self, pc: u32, raw: u32) {
+        if self.pmqueue_trace_remaining == 0 || self.insn_count < self.trace_start_insn {
+            return;
+        }
+
+        let Some(reason) = (match pc {
+            0xc013_d618 => Some("IOPMPowerStateQueue::featureChangeOccurred entry"),
+            0xc013_d624 => Some("featureChangeOccurred before IOMalloc"),
+            0xc013_d628 => Some("featureChangeOccurred after IOMalloc"),
+            0xc013_d62c => Some("featureChangeOccurred allocated item"),
+            0xc013_d630 => Some("featureChangeOccurred store item kind"),
+            0xc013_d632 => Some("featureChangeOccurred store item message"),
+            0xc013_d634 => Some("featureChangeOccurred store item service"),
+            0xc013_d636 => Some("featureChangeOccurred item populated"),
+            0xc013_d63a => Some("featureChangeOccurred enqueue item"),
+            0xc013_d640 => Some("featureChangeOccurred signal work"),
+            0xc013_d6d0 => Some("IOPMPowerStateQueue::unIdleOccurred entry"),
+            0xc013_d6e4 => Some("unIdleOccurred after IOMalloc"),
+            0xc013_d6ea => Some("unIdleOccurred store item kind"),
+            0xc013_d6ee => Some("unIdleOccurred store item service"),
+            0xc013_d6f0 => Some("unIdleOccurred store item arg"),
+            0xc013_d700 => Some("unIdleOccurred enqueue item"),
+            0xc013_d71c => Some("IOPMPowerStateQueue::checkForWork entry"),
+            0xc013_d734 => Some("checkForWork load queue head"),
+            0xc013_d738 => Some("checkForWork queue head loaded"),
+            0xc013_d752 => Some("checkForWork selected item"),
+            0xc013_d754 => Some("checkForWork item loaded"),
+            0xc013_d760 => Some("checkForWork load item kind"),
+            0xc013_d762 => Some("checkForWork load item message"),
+            0xc013_d76a => Some("checkForWork load item service"),
+            0xc013_d770 => Some("checkForWork branch on kind zero"),
+            0xc013_d774 => Some("checkForWork branch on kind one"),
+            0xc013_d7ae => Some("checkForWork feature-change dispatch"),
+            0xc013_d7ba => Some("checkForWork feature-change message loaded"),
+            0xc013_d7c0 => Some("checkForWork feature-change call"),
+            _ => None,
+        }) else {
+            return;
+        };
+
+        let sp = self.cpu.regs[13];
+        let item = match pc {
+            0xc013_d628 => self.cpu.regs[0],
+            0xc013_d62c..=0xc013_d640 => self.cpu.regs[1],
+            0xc013_d6e4 => self.cpu.regs[0],
+            0xc013_d6ea..=0xc013_d700 => self.cpu.regs[4],
+            0xc013_d738 | 0xc013_d752 => self.bridge.read_word(sp.wrapping_add(8)).unwrap_or(0),
+            0xc013_d754..=0xc013_d7c0 => self.cpu.regs[4],
+            _ => 0,
+        };
+        let queue = match pc {
+            0xc013_d618..=0xc013_d640 => self.cpu.regs[6],
+            0xc013_d6d0..=0xc013_d700 => self.cpu.regs[5],
+            0xc013_d71c => self.cpu.regs[0],
+            0xc013_d734..=0xc013_d7c0 => self.cpu.regs[8],
+            _ => 0,
+        };
+        let queue_head = if pc == 0xc013_d734 {
+            self.bridge.read_word(self.cpu.regs[4]).unwrap_or(0)
+        } else {
+            self.bridge.read_word(queue.wrapping_add(0x24)).unwrap_or(0)
+        };
+        if matches!(pc, 0xc013_d71c..=0xc013_d7c0)
+            && item == 0
+            && queue_head == 0
+            && std::env::var_os("RAX_S5L_PMQUEUE_TRACE_EMPTY").is_none()
+        {
+            return;
+        }
+
+        self.pmqueue_trace_remaining -= 1;
+
+        let regs = (0..16)
+            .map(|i| format!("r{i}={:#x}", self.cpu.regs[i]))
+            .collect::<Vec<_>>()
+            .join(" ");
+        let item_next = self.bridge.read_word(item).unwrap_or(0);
+        let item_kind = self.bridge.read_halfword(item.wrapping_add(4)).unwrap_or(0);
+        let item_message = self.bridge.read_word(item.wrapping_add(8)).unwrap_or(0);
+        let item_service = self.bridge.read_word(item.wrapping_add(12)).unwrap_or(0);
+        let queue_lock = self.bridge.read_word(queue.wrapping_add(0x28)).unwrap_or(0);
+
+        info!(
+            pc = format!("{pc:#x}"),
+            raw = format!("{raw:#010x}"),
+            reason,
+            regs,
+            cpsr = format!("{:#x}", self.cpu.cpsr.to_u32()),
+            item = format!("{item:#x}"),
+            item_next = format!("{item_next:#x}"),
+            item_kind = format!("{item_kind:#x}"),
+            item_message = format!("{item_message:#x}"),
+            item_service = format!("{item_service:#x}"),
+            queue = format!("{queue:#x}"),
+            queue_head = format!("{queue_head:#x}"),
+            queue_lock = format!("{queue_lock:#x}"),
+            item_service_obj = self.iokit_object_summary(item_service),
+            r0_obj = self.iokit_object_summary(self.cpu.regs[0]),
+            r1_obj = self.iokit_object_summary(self.cpu.regs[1]),
+            r2_obj = self.iokit_object_summary(self.cpu.regs[2]),
+            r3_obj = self.iokit_object_summary(self.cpu.regs[3]),
+            r4_obj = self.iokit_object_summary(self.cpu.regs[4]),
+            r5_obj = self.iokit_object_summary(self.cpu.regs[5]),
+            r6_obj = self.iokit_object_summary(self.cpu.regs[6]),
+            r8_obj = self.iokit_object_summary(self.cpu.regs[8]),
+            r10_obj = self.iokit_object_summary(self.cpu.regs[10]),
+            item_words = self.guest_word_window(item, 8),
+            queue_words = self.guest_word_window(queue, 16),
+            r0_words = self.guest_word_window(self.cpu.regs[0], 8),
+            r1_words = self.guest_word_window(self.cpu.regs[1], 8),
+            r2_words = self.guest_word_window(self.cpu.regs[2], 8),
+            r3_words = self.guest_word_window(self.cpu.regs[3], 8),
+            r4_words = self.guest_word_window(self.cpu.regs[4], 8),
+            r5_words = self.guest_word_window(self.cpu.regs[5], 8),
+            r6_words = self.guest_word_window(self.cpu.regs[6], 8),
+            r8_words = self.guest_word_window(self.cpu.regs[8], 8),
+            r10_words = self.guest_word_window(self.cpu.regs[10], 8),
+            sp_words = self.guest_word_window(sp, 32),
+            stack_refs = self.stack_code_refs(sp, 160),
+            trail = self.recent_pc_trail(96),
+            insns = self.insn_count,
+            "iopm queue trace"
+        );
+    }
+
+    fn trace_apple_arm_function(&mut self, pc: u32, raw: u32) {
+        if self.apple_arm_function_trace_remaining == 0 || self.insn_count < self.trace_start_insn {
+            return;
+        }
+
+        let Some(reason) = (match pc {
+            0xc015_7f04 => Some("AppleARMFunction::withProvider(char*) entry"),
+            0xc015_7f0c => Some("AppleARMFunction::withProvider(char*) make symbol"),
+            0xc015_7f18 => Some("AppleARMFunction::withProvider(char*) symbol overload returned"),
+            0xc015_7f1c => Some("AppleARMFunction::withProvider(char*) release symbol"),
+            0xc015_7e1c => Some("AppleARMFunction::withProvider(symbol) entry"),
+            0xc015_7e40 => Some("AppleARMFunction provider getProperty call"),
+            0xc015_7e46 => Some("AppleARMFunction provider getProperty returned"),
+            0xc015_7e4c => Some("AppleARMFunction OSData safeMetaCast"),
+            0xc015_7e54 => Some("AppleARMFunction OSData length call"),
+            0xc015_7e5a => Some("AppleARMFunction OSData length returned"),
+            0xc015_7e60 => Some("AppleARMFunction parent symbol"),
+            0xc015_7e6c => Some("AppleARMFunction empty data"),
+            0xc015_7e78 => Some("AppleARMFunction propertyMatching call"),
+            0xc015_7e7c => Some("AppleARMFunction waitForService call"),
+            0xc015_7e82 => Some("AppleARMFunction waitForService returned"),
+            0xc015_7e84 => Some("AppleARMFunction function object load"),
+            KERNEL_IO_SERVICE_WAIT_FOR_SERVICE => Some("IOService::waitForService entry"),
+            KERNEL_IO_SERVICE_WAIT_FOR_SERVICE_AFTER_SEM => {
+                Some("IOService::waitForService after semaphore")
+            }
+            _ => None,
+        }) else {
+            return;
+        };
+
+        self.apple_arm_function_trace_remaining -= 1;
+        let regs = (0..16)
+            .map(|i| format!("r{i}={:#x}", self.cpu.regs[i]))
+            .collect::<Vec<_>>()
+            .join(" ");
+        let sp = self.cpu.regs[13];
+
+        info!(
+            pc = format!("{pc:#x}"),
+            raw = format!("{raw:#010x}"),
+            reason,
+            regs,
+            cpsr = format!("{:#x}", self.cpu.cpsr.to_u32()),
+            r0_str = ?self.guest_cstr(self.cpu.regs[0], 128),
+            r1_str = ?self.guest_cstr(self.cpu.regs[1], 128),
+            r2_str = ?self.guest_cstr(self.cpu.regs[2], 128),
+            r5_str = ?self.guest_cstr(self.cpu.regs[5], 128),
+            r10_str = ?self.guest_cstr(self.cpu.regs[10], 128),
+            r0_words = self.guest_word_window(self.cpu.regs[0], 12),
+            r1_words = self.guest_word_window(self.cpu.regs[1], 12),
+            r2_words = self.guest_word_window(self.cpu.regs[2], 12),
+            r3_words = self.guest_word_window(self.cpu.regs[3], 12),
+            r4_words = self.guest_word_window(self.cpu.regs[4], 16),
+            r5_words = self.guest_word_window(self.cpu.regs[5], 16),
+            r6_words = self.guest_word_window(self.cpu.regs[6], 16),
+            r8_words = self.guest_word_window(self.cpu.regs[8], 16),
+            r9_words = self.guest_word_window(self.cpu.regs[9], 16),
+            r10_words = self.guest_word_window(self.cpu.regs[10], 16),
+            r11_words = self.guest_word_window(self.cpu.regs[11], 16),
+            sp_words = self.guest_word_window(sp, 24),
+            stack_refs = self.stack_code_refs(sp, 96),
+            trail = self.recent_pc_trail(48),
+            insns = self.insn_count,
+            "apple arm function trace"
+        );
+    }
+
+    fn trace_ioreg_free(&mut self, pc: u32, raw: u32) {
+        if self.ioreg_free_trace_remaining == 0 || self.insn_count < self.trace_start_insn {
+            return;
+        }
+
+        let Some(reason) = (match pc {
+            0xc012_2c48 => Some("OSObject::taggedRelease free object"),
+            0xc012_2c53 => Some("OSObject::taggedRelease free returned"),
+            0xc013_07d4 => Some("IORegistryEntry::free entry"),
+            0xc013_07f8 => Some("IORegistryEntry::free check registered"),
+            0xc013_0814 => Some("IORegistryEntry::free parent check returned"),
+            0xc013_083e => Some("IORegistryEntry::free IOPanic call"),
+            0xc013_0840 => Some("IORegistryEntry::free IOPanic"),
+            KERNEL_IOPANIC => Some("_IOPanic entry"),
+            _ => None,
+        }) else {
+            return;
+        };
+
+        self.ioreg_free_trace_remaining -= 1;
+
+        let sp = self.cpu.regs[13];
+        let tagged_release_obj = self.bridge.read_word(sp).unwrap_or(0);
+        let free_obj = match pc {
+            0xc012_2c48 | 0xc012_2c53 => tagged_release_obj,
+            0xc013_07d4 => self.cpu.regs[0],
+            0xc013_07f8 | 0xc013_0814 | 0xc013_083e | 0xc013_0840 => self.cpu.regs[4],
+            _ => 0,
+        };
+        let regs = (0..16)
+            .map(|i| format!("r{i}={:#x}", self.cpu.regs[i]))
+            .collect::<Vec<_>>()
+            .join(" ");
+
+        info!(
+            pc = format!("{pc:#x}"),
+            raw = format!("{raw:#010x}"),
+            reason,
+            regs,
+            cpsr = format!("{:#x}", self.cpu.cpsr.to_u32()),
+            free_obj = self.iokit_object_summary(free_obj),
+            tagged_release_obj = self.iokit_object_summary(tagged_release_obj),
+            r0_obj = self.iokit_object_summary(self.cpu.regs[0]),
+            r1_obj = self.iokit_object_summary(self.cpu.regs[1]),
+            r2_obj = self.iokit_object_summary(self.cpu.regs[2]),
+            r3_obj = self.iokit_object_summary(self.cpu.regs[3]),
+            r4_obj = self.iokit_object_summary(self.cpu.regs[4]),
+            r5_obj = self.iokit_object_summary(self.cpu.regs[5]),
+            r0_str = ?self.guest_cstr(self.cpu.regs[0], 192),
+            r1_str = ?self.guest_cstr(self.cpu.regs[1], 192),
+            r2_str = ?self.guest_cstr(self.cpu.regs[2], 192),
+            r3_str = ?self.guest_cstr(self.cpu.regs[3], 192),
+            r4_str = ?self.guest_cstr(self.cpu.regs[4], 192),
+            r5_str = ?self.guest_cstr(self.cpu.regs[5], 192),
+            r4_words = self.guest_word_window(self.cpu.regs[4], 24),
+            r5_words = self.guest_word_window(self.cpu.regs[5], 24),
+            sp_words = self.guest_word_window(sp, 32),
+            stack_refs = self.stack_code_refs(sp, 128),
+            trail = self.recent_pc_trail(64),
+            insns = self.insn_count,
+            "iokit final free trace"
+        );
+    }
+
+    fn trace_iokit_object_watch(&mut self, pc: u32, raw: u32) {
+        if self.iokit_watch_trace_remaining == 0 || self.insn_count < self.trace_start_insn {
+            return;
+        }
+        let Some(watch) = self.iokit_watch_object else {
+            return;
+        };
+
+        let Some(reason) = (match pc {
+            0xc005_c630 => Some("_hw_compare_and_store entry"),
+            0xc005_c634 => Some("_hw_compare_and_store ldrex"),
+            0xc005_c63a => Some("_hw_compare_and_store compare"),
+            0xc005_c63e => Some("_hw_compare_and_store strex"),
+            0xc005_c642 => Some("_hw_compare_and_store result"),
+            0xc012_2b5e => Some("OSObject::taggedRetain entry"),
+            0xc012_2b96 => Some("OSObject::taggedRetain compare/store"),
+            0xc012_2b9e => Some("OSObject::taggedRetain return"),
+            0xc012_2bb8 => Some("OSObject::taggedRelease entry"),
+            0xc012_2bc6 => Some("OSObject::taggedRelease(count) entry"),
+            0xc012_2bf0 => Some("OSObject::taggedRelease loaded count"),
+            0xc012_2c1c => Some("OSObject::taggedRelease compare/store"),
+            0xc012_2c24 => Some("OSObject::taggedRelease retry"),
+            0xc012_2c48 => Some("OSObject::taggedRelease free object"),
+            0xc012_2c53 => Some("OSObject::taggedRelease free returned"),
+            0xc012_2c68 => Some("OSObject::release entry"),
+            0xc012_2c76 => Some("OSObject::retain entry"),
+            0xc012_5c66 => Some("OSOrderedSet::flushCollection item load"),
+            0xc012_5c70 => Some("OSOrderedSet::flushCollection release item"),
+            0xc012_5c76 => Some("OSOrderedSet::flushCollection item released"),
+            0xc012_5ce8 => Some("OSOrderedSet::setObject retain item"),
+            0xc013_07d4 => Some("IORegistryEntry::free entry"),
+            0xc013_07f8 => Some("IORegistryEntry::free check registered"),
+            0xc013_0814 => Some("IORegistryEntry::free parent check returned"),
+            0xc013_083e => Some("IORegistryEntry::free IOPanic call"),
+            0xc013_0840 => Some("IORegistryEntry::free IOPanic"),
+            0xc013_20ba => Some("IORegistryIterator::reset store visited set"),
+            0xc013_20dc => Some("IORegistryIterator::free reset returned"),
+            0xc013_2116 => Some("IORegistryIterator::getNextObjectFlat release current"),
+            0xc013_2136 => Some("IORegistryIterator::getNextObjectFlat retain next"),
+            0xc013_213a => Some("IORegistryIterator::getNextObjectFlat store current"),
+            0xc013_4b7a => Some("IOService::getExistingServices got next service"),
+            0xc013_4ba0 => Some("IOService::getExistingServices passiveMatch returned"),
+            0xc013_4bd6 => Some("IOService::getExistingServices release iterator"),
+            0xc013_4bde => Some("IOService::getExistingServices iterator released"),
+            KERNEL_IOPANIC => Some("_IOPanic entry"),
+            _ => None,
+        }) else {
+            return;
+        };
+
+        let retain_word = watch.wrapping_add(4);
+        let sp = self.cpu.regs[13];
+        let tagged_release_obj = self.bridge.read_word(sp).unwrap_or(0);
+        let mut hits = Vec::new();
+        let mut operand_hit = false;
+
+        let mut push_hit = |hit: &'static str| {
+            operand_hit = true;
+            hits.push(hit.to_string());
+        };
+
+        if matches!(
+            pc,
+            0xc005_c630
+                | 0xc005_c634
+                | 0xc005_c63a
+                | 0xc005_c63e
+                | 0xc005_c642
+                | 0xc012_2b96
+                | 0xc012_2b9e
+                | 0xc012_2bf0
+                | 0xc012_2c1c
+                | 0xc012_2c24
+        ) && self.cpu.regs[2] == retain_word
+        {
+            push_hit("retain_word_operand");
+        }
+        if matches!(pc, 0xc012_2b96 | 0xc012_2b9e) && self.cpu.regs[5] == retain_word {
+            push_hit("retain_word_saved");
+        }
+        if matches!(
+            pc,
+            0xc012_2b5e | 0xc012_2bb8 | 0xc012_2bc6 | 0xc012_2c68 | 0xc012_2c76
+        ) && self.cpu.regs[0] == watch
+        {
+            push_hit("object_operand");
+        }
+        if matches!(pc, 0xc012_2c48 | 0xc012_2c53) && tagged_release_obj == watch {
+            push_hit("free_stack_object");
+        }
+
+        if matches!(pc, 0xc012_5c66 | 0xc012_5c70 | 0xc012_5c76) {
+            if let Some(item) = self.collection_item(self.cpu.regs[4], self.cpu.regs[5]) {
+                if item == watch {
+                    push_hit("ordered_set_current_item");
+                }
+            }
+        }
+        if matches!(pc, 0xc012_5c70 | 0xc012_5c76) && self.cpu.regs[0] == watch {
+            push_hit("ordered_set_release_operand");
+        }
+        if pc == 0xc012_5ce8
+            && (self.cpu.regs[0] == watch || self.cpu.regs[1] == watch || self.cpu.regs[2] == watch)
+        {
+            push_hit("ordered_set_set_object_operand");
+        }
+        if matches!(pc, 0xc013_07d4) && self.cpu.regs[0] == watch {
+            push_hit("ioreg_free_entry_object");
+        }
+        if matches!(pc, 0xc013_07f8 | 0xc013_0814 | 0xc013_083e | 0xc013_0840)
+            && self.cpu.regs[4] == watch
+        {
+            push_hit("ioreg_free_this");
+        }
+        if matches!(pc, 0xc013_2116 | 0xc013_2136 | 0xc013_213a)
+            && (self.cpu.regs[0] == watch || self.cpu.regs[4] == watch)
+        {
+            push_hit("registry_iterator_object");
+        }
+        if matches!(pc, 0xc013_4b7a | 0xc013_4ba0) && self.cpu.regs[0] == watch {
+            push_hit("get_existing_services_candidate");
+        }
+        if matches!(pc, 0xc013_4bd6 | 0xc013_4bde)
+            && self.bridge.read_word(sp).is_ok_and(|value| value == watch)
+        {
+            push_hit("get_existing_services_stack_result");
+        }
+        if pc == KERNEL_IOPANIC && (self.cpu.regs[0] == watch || self.cpu.regs[4] == watch) {
+            push_hit("panic_object");
+        }
+
+        if !operand_hit {
+            return;
+        }
+
+        if std::env::var_os("RAX_S5L_IOKIT_OBJECT_STACK_HITS").is_some() {
+            for i in 0..16 {
+                let value = self.cpu.regs[i];
+                if value == watch {
+                    hits.push(format!("r{i}=object"));
+                } else if value == retain_word {
+                    hits.push(format!("r{i}=retain_word"));
+                }
+            }
+
+            let stack_words = 64;
+            for i in 0..stack_words {
+                let addr = sp.wrapping_add(i * 4);
+                if let Ok(value) = self.bridge.read_word(addr) {
+                    if value == watch {
+                        hits.push(format!("sp+{:#x}=object", i * 4));
+                    } else if value == retain_word {
+                        hits.push(format!("sp+{:#x}=retain_word", i * 4));
+                    }
+                }
+            }
+            if tagged_release_obj == watch {
+                hits.push("tagged_release_stack_object".to_string());
+            }
+
+            for &(name, reg) in &[
+                ("r0_collection", 0usize),
+                ("r1_collection", 1),
+                ("r2_collection", 2),
+                ("r3_collection", 3),
+                ("r4_collection", 4),
+                ("r5_collection", 5),
+                ("r8_collection", 8),
+                ("r10_collection", 10),
+                ("r11_collection", 11),
+            ] {
+                if self.collection_contains_object(self.cpu.regs[reg], watch) {
+                    hits.push(name.to_string());
+                }
+            }
+        }
+
+        self.iokit_watch_trace_remaining -= 1;
+        let regs = (0..16)
+            .map(|i| format!("r{i}={:#x}", self.cpu.regs[i]))
+            .collect::<Vec<_>>()
+            .join(" ");
+
+        info!(
+            pc = format!("{pc:#x}"),
+            raw = format!("{raw:#010x}"),
+            reason,
+            hits = hits.join(" "),
+            watch = self.iokit_object_summary(watch),
+            watch_rc = format!("{:#x}", self.bridge.read_word(retain_word).unwrap_or(0)),
+            regs,
+            cpsr = format!("{:#x}", self.cpu.cpsr.to_u32()),
+            r0_obj = self.iokit_object_summary(self.cpu.regs[0]),
+            r1_obj = self.iokit_object_summary(self.cpu.regs[1]),
+            r2_obj = self.iokit_object_summary(self.cpu.regs[2]),
+            r3_obj = self.iokit_object_summary(self.cpu.regs[3]),
+            r4_obj = self.iokit_object_summary(self.cpu.regs[4]),
+            r5_obj = self.iokit_object_summary(self.cpu.regs[5]),
+            r8_obj = self.iokit_object_summary(self.cpu.regs[8]),
+            r10_obj = self.iokit_object_summary(self.cpu.regs[10]),
+            r11_obj = self.iokit_object_summary(self.cpu.regs[11]),
+            r4_iter = self.iokit_iterator_summary(self.cpu.regs[4]),
+            r4_set = self.iokit_collection_summary(self.cpu.regs[4]),
+            r8_set = self.iokit_collection_summary(self.cpu.regs[8]),
+            tagged_release_obj = self.iokit_object_summary(tagged_release_obj),
+            sp_words = self.guest_word_window(sp, 32),
+            stack_refs = self.stack_code_refs(sp, 128),
+            trail = self.recent_pc_trail(64),
+            insns = self.insn_count,
+            "iokit object watch"
+        );
+    }
+
+    fn trace_iokit_lifetime(&mut self, pc: u32, raw: u32) {
+        if self.iokit_lifetime_trace_remaining == 0 || self.insn_count < self.trace_start_insn {
+            return;
+        }
+
+        let Some(reason) = (match pc {
+            0xc013_4b1c => Some("IOService::getExistingServices entry"),
+            0xc013_4b58 => Some("IOService::getExistingServices make iterator"),
+            0xc013_4b6a => Some("IOService::getExistingServices reset iterator"),
+            0xc013_4b7a => Some("IOService::getExistingServices got next service"),
+            0xc013_4b80 => Some("IOService::getExistingServices service state filter"),
+            0xc013_4b92 => Some("IOService::getExistingServices passiveMatch call"),
+            0xc013_4ba0 => Some("IOService::getExistingServices passiveMatch returned"),
+            0xc013_4ba4 => Some("IOService::getExistingServices matched service"),
+            0xc013_4bd6 => Some("IOService::getExistingServices release iterator"),
+            0xc013_4bde => Some("IOService::getExistingServices iterator released"),
+            0xc013_4bec => Some("IOService::getExistingServices return"),
+            0xc013_4c5e => Some("IOService::getExistingServices direct result"),
+            0xc012_3d58 => Some("OSCollectionIterator::free entry"),
+            0xc012_3d64 => Some("OSCollectionIterator::free release snapshot"),
+            0xc012_3d88 => Some("OSCollectionIterator::free release collection"),
+            0xc012_3d92 => Some("OSCollectionIterator::free collection release call"),
+            0xc012_5b76 => Some("OSOrderedSet::free entry"),
+            0xc012_5b88 => Some("OSOrderedSet::free after flush"),
+            0xc012_5c4c => Some("OSOrderedSet::flushCollection entry"),
+            0xc012_5c66 => Some("OSOrderedSet::flushCollection item load"),
+            0xc012_5c70 => Some("OSOrderedSet::flushCollection release item"),
+            0xc012_5c76 => Some("OSOrderedSet::flushCollection item released"),
+            0xc012_2b5e if self.iokit_retain_trace => Some("OSObject::taggedRetain entry"),
+            0xc012_2b9e if self.iokit_retain_trace => Some("OSObject::taggedRetain return"),
+            0xc012_2bb8 if self.iokit_retain_trace => Some("OSObject::taggedRelease entry"),
+            0xc012_2bc6 if self.iokit_retain_trace => Some("OSObject::taggedRelease(count) entry"),
+            0xc012_2c48 if self.iokit_retain_trace => Some("OSObject::taggedRelease free object"),
+            0xc012_2c53 if self.iokit_retain_trace => Some("OSObject::taggedRelease free returned"),
+            0xc012_2c68 if self.iokit_retain_trace => Some("OSObject::release entry"),
+            0xc012_2c76 if self.iokit_retain_trace => Some("OSObject::retain entry"),
+            0xc013_07d4 => Some("IORegistryEntry::free entry"),
+            0xc013_07f8 => Some("IORegistryEntry::free check registered"),
+            0xc013_0814 => Some("IORegistryEntry::free parent check returned"),
+            0xc013_083e => Some("IORegistryEntry::free IOPanic call"),
+            0xc013_0840 => Some("IORegistryEntry::free IOPanic"),
+            KERNEL_IOPANIC => Some("_IOPanic entry"),
+            _ => None,
+        }) else {
+            return;
+        };
+
+        self.iokit_lifetime_trace_remaining -= 1;
+        let regs = (0..16)
+            .map(|i| format!("r{i}={:#x}", self.cpu.regs[i]))
+            .collect::<Vec<_>>()
+            .join(" ");
+        let sp = self.cpu.regs[13];
+        let stack_service = self.bridge.read_word(sp).unwrap_or(0);
+
+        info!(
+            pc = format!("{pc:#x}"),
+            raw = format!("{raw:#010x}"),
+            reason,
+            regs,
+            cpsr = format!("{:#x}", self.cpu.cpsr.to_u32()),
+            r0_obj = self.iokit_object_summary(self.cpu.regs[0]),
+            r1_obj = self.iokit_object_summary(self.cpu.regs[1]),
+            r2_obj = self.iokit_object_summary(self.cpu.regs[2]),
+            r3_obj = self.iokit_object_summary(self.cpu.regs[3]),
+            r4_obj = self.iokit_object_summary(self.cpu.regs[4]),
+            r4_iter = self.iokit_iterator_summary(self.cpu.regs[4]),
+            r4_set = self.iokit_collection_summary(self.cpu.regs[4]),
+            r5_obj = self.iokit_object_summary(self.cpu.regs[5]),
+            r8_obj = self.iokit_object_summary(self.cpu.regs[8]),
+            r8_set = self.iokit_collection_summary(self.cpu.regs[8]),
+            r10_obj = self.iokit_object_summary(self.cpu.regs[10]),
+            r11_obj = self.iokit_object_summary(self.cpu.regs[11]),
+            stack0_obj = self.iokit_object_summary(stack_service),
+            sp_words = self.guest_word_window(sp, 20),
+            stack_refs = self.stack_code_refs(sp, 96),
+            trail = self.recent_pc_trail(48),
+            insns = self.insn_count,
+            "iokit lifetime trace"
+        );
+    }
+
+    fn iokit_object_summary(&self, addr: u32) -> String {
+        if addr == 0 {
+            return String::from("<null>");
+        }
+
+        let word = |off: u32| self.bridge.read_word(addr.wrapping_add(off)).unwrap_or(0);
+        format!(
+            "obj={addr:#x} vt={:#x} rc={:#x} off8={:#x} plane={:#x} props={:#x} state={:#x} words=[{}]",
+            word(0),
+            word(4),
+            word(8),
+            word(0xc),
+            word(0x10),
+            word(0x24),
+            self.guest_word_window(addr, 10)
+        )
+    }
+
+    fn iokit_iterator_summary(&self, addr: u32) -> String {
+        if addr == 0 {
+            return String::from("<null>");
+        }
+
+        let word = |off: u32| self.bridge.read_word(addr.wrapping_add(off)).unwrap_or(0);
+        let collection = word(0x8);
+        let snapshot = word(0xc);
+        let cursor = word(0x10);
+        let valid = self.bridge.read_byte(addr.wrapping_add(0x14)).unwrap_or(0);
+        format!(
+            "iter={addr:#x} vt={:#x} rc={:#x} collection={collection:#x} snapshot={snapshot:#x} cursor={cursor:#x} valid={valid:#x} words=[{}] collection=[{}]",
+            word(0),
+            word(4),
+            self.guest_word_window(addr, 8),
+            self.iokit_collection_summary(collection)
+        )
+    }
+
+    fn collection_item(&self, addr: u32, index: u32) -> Option<u32> {
+        let items = self.bridge.read_word(addr.wrapping_add(0x10)).ok()?;
+        let count = self.bridge.read_word(addr.wrapping_add(0x1c)).ok()?;
+        if index >= count {
+            return None;
+        }
+        self.bridge.read_word(items.wrapping_add(index * 4)).ok()
+    }
+
+    fn collection_contains_object(&self, addr: u32, needle: u32) -> bool {
+        if addr == 0 || needle == 0 {
+            return false;
+        }
+        let Ok(items) = self.bridge.read_word(addr.wrapping_add(0x10)) else {
+            return false;
+        };
+        let Ok(count) = self.bridge.read_word(addr.wrapping_add(0x1c)) else {
+            return false;
+        };
+        for i in 0..count.min(64) {
+            if self
+                .bridge
+                .read_word(items.wrapping_add(i * 4))
+                .is_ok_and(|item| item == needle)
+            {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn iokit_collection_summary(&self, addr: u32) -> String {
+        if addr == 0 {
+            return String::from("<null>");
+        }
+
+        let word = |off: u32| self.bridge.read_word(addr.wrapping_add(off)).unwrap_or(0);
+        let items = word(0x10);
+        let count = word(0x1c);
+        let capacity = word(0x20);
+        let shown = count.min(8);
+        let mut entries = Vec::new();
+        for i in 0..shown {
+            let item = self
+                .bridge
+                .read_word(items.wrapping_add(i * 4))
+                .unwrap_or(0);
+            let retain = if item == 0 {
+                0
+            } else {
+                self.bridge.read_word(item.wrapping_add(4)).unwrap_or(0)
+            };
+            entries.push(format!("{i}:{item:#x}/rc={retain:#x}"));
+        }
+        format!(
+            "collection={addr:#x} vt={:#x} rc={:#x} items={items:#x} count={count:#x} cap={capacity:#x} entries=[{}] words=[{}]",
+            word(0),
+            word(4),
+            entries.join(","),
+            self.guest_word_window(addr, 10)
+        )
+    }
+
     fn log_undefined_instruction(
         &self,
         reason: &'static str,
@@ -3613,9 +4848,7 @@ impl S5L8900Vcpu {
     }
 
     fn fix_usb_wrangler_phy_registered_race(&mut self, pc: u32) -> bool {
-        if pc != KERNEL_USB_WRANGLER_PHY_REGISTERED_NOTIFIER
-            || std::env::var("RAX_S5L_NO_USB_WRANGLER_RACE_FIX").is_ok()
-        {
+        if pc != KERNEL_USB_WRANGLER_PHY_REGISTERED_NOTIFIER || self.no_usb_wrangler_race_fix {
             return false;
         }
 
@@ -3639,15 +4872,13 @@ impl S5L8900Vcpu {
     }
 
     fn force_iomedia_bsd_resource_check(&mut self, pc: u32) -> bool {
-        if pc != KERNEL_IO_SERVICE_CHECK_RESOURCES
-            || std::env::var_os("RAX_S5L_FORCE_IOBSD").is_none()
-        {
+        if pc != KERNEL_IO_SERVICE_CHECK_RESOURCES || !self.force_iobsd {
             return false;
         }
 
         let service = self.cpu.regs[0];
         let vtable = self.bridge.read_word(service).unwrap_or(0);
-        let force_all = std::env::var_os("RAX_S5L_FORCE_IOBSD_ALL").is_some()
+        let force_all = self.force_iobsd_all
             && self.cpu.regs[14] == KERNEL_IO_SERVICE_START_CANDIDATE_AFTER_CHECK_RESOURCES;
         if !force_all && vtable != KERNEL_IOMEDIA_BSD_CLIENT_VTABLE {
             return false;
@@ -3877,6 +5108,35 @@ impl S5L8900Vcpu {
         );
     }
 
+    fn trace_pc_sample(&mut self, pc: u32, raw: u32) {
+        if self.pc_sample_interval == 0
+            || self.pc_sample_remaining == 0
+            || self.insn_count < self.pc_sample_next_insn
+        {
+            return;
+        }
+
+        self.pc_sample_remaining -= 1;
+        self.pc_sample_next_insn = self.insn_count.saturating_add(self.pc_sample_interval);
+        let regs: Vec<String> = (0..16)
+            .map(|i| format!("r{i}={:#x}", self.cpu.regs[i]))
+            .collect();
+        info!(
+            pc = format!("{pc:#x}"),
+            raw = format!("{raw:#010x}"),
+            regs = regs.join(" "),
+            cpsr = format!("{:#x}", self.cpu.cpsr.to_u32()),
+            spsr_irq = format!("{:#x}", self.cpu.spsr_irq.to_u32()),
+            spsr_abt = format!("{:#x}", self.cpu.spsr_abt.to_u32()),
+            sp_usr = format!("{:#x}", self.cpu.regs_usr[0]),
+            sp_irq = format!("{:#x}", self.cpu.regs_irq[0]),
+            sp_svc = format!("{:#x}", self.cpu.regs_svc[0]),
+            trail = self.recent_pc_trail(48),
+            insns = self.insn_count,
+            "pc sample"
+        );
+    }
+
     fn stack_code_refs(&self, sp: u32, words: u32) -> String {
         let mut refs = Vec::new();
         for i in 0..words {
@@ -3943,6 +5203,36 @@ impl S5L8900Vcpu {
             .join(" ")
     }
 
+    fn trace_kernel_iopanic(&mut self) {
+        if self.kernel_exception_log_remaining == 0 {
+            return;
+        }
+        self.kernel_exception_log_remaining -= 1;
+
+        info!(
+            fmt = format!("{:#x}", self.cpu.regs[0]),
+            fmt_str = ?self.guest_cstr(self.cpu.regs[0], 256),
+            r1 = format!("{:#x}", self.cpu.regs[1]),
+            r1_str = ?self.guest_cstr(self.cpu.regs[1], 256),
+            r2 = format!("{:#x}", self.cpu.regs[2]),
+            r2_str = ?self.guest_cstr(self.cpu.regs[2], 256),
+            r3 = format!("{:#x}", self.cpu.regs[3]),
+            r3_str = ?self.guest_cstr(self.cpu.regs[3], 256),
+            r0_obj = self.iokit_object_summary(self.cpu.regs[0]),
+            r1_obj = self.iokit_object_summary(self.cpu.regs[1]),
+            r2_obj = self.iokit_object_summary(self.cpu.regs[2]),
+            r3_obj = self.iokit_object_summary(self.cpu.regs[3]),
+            sp = format!("{:#x}", self.cpu.regs[13]),
+            lr = format!("{:#x}", self.cpu.regs[14]),
+            cpsr = format!("{:#x}", self.cpu.cpsr.to_u32()),
+            sp_words = self.guest_word_window(self.cpu.regs[13], 32),
+            stack_refs = self.stack_code_refs(self.cpu.regs[13], 128),
+            trail = self.recent_pc_trail(64),
+            insns = self.insn_count,
+            "kernel iopanic"
+        );
+    }
+
     fn trace_kernel_panic(&mut self) {
         if self.kernel_exception_log_remaining == 0 {
             return;
@@ -3953,11 +5243,17 @@ impl S5L8900Vcpu {
             fmt = format!("{:#x}", self.cpu.regs[0]),
             fmt_str = ?self.guest_cstr(self.cpu.regs[0], 256),
             r1 = format!("{:#x}", self.cpu.regs[1]),
+            r1_str = ?self.guest_cstr(self.cpu.regs[1], 256),
             r2 = format!("{:#x}", self.cpu.regs[2]),
+            r2_str = ?self.guest_cstr(self.cpu.regs[2], 256),
             r3 = format!("{:#x}", self.cpu.regs[3]),
+            r3_str = ?self.guest_cstr(self.cpu.regs[3], 256),
             sp = format!("{:#x}", self.cpu.regs[13]),
             lr = format!("{:#x}", self.cpu.regs[14]),
             cpsr = format!("{:#x}", self.cpu.cpsr.to_u32()),
+            sp_words = self.guest_word_window(self.cpu.regs[13], 32),
+            stack_refs = self.stack_code_refs(self.cpu.regs[13], 128),
+            trail = self.recent_pc_trail(64),
             insns = self.insn_count,
             "kernel panic"
         );

@@ -114,7 +114,9 @@ pub struct S5lTimer {
     irq: bool,
     /// Whether the periodic timer (timer 4) is running.
     started: bool,
-    /// Virtual timer-clock value at which to next assert the periodic IRQ.
+    /// Guest timer value (in the same units as `micros`) for the next periodic IRQ.
+    next_irq_micros: u64,
+    /// Guest instruction count before another periodic IRQ may be raised.
     next_irq_insn: u64,
 }
 
@@ -129,6 +131,7 @@ impl S5lTimer {
             irqstat: 0,
             irq: false,
             started: false,
+            next_irq_micros: 0,
             next_irq_insn: 0,
         }
     }
@@ -142,15 +145,38 @@ impl S5lTimer {
         }
     }
 
-    /// Raise the periodic system-tick IRQ, paced by the vCPU's virtual timer
-    /// clock and held off until the guest has created its scheduler tasks.
-    pub fn tick_irq(&mut self, timer_clock: u64, ready: u64, interval: u64) {
-        if !self.started || timer_clock < ready {
+    /// Raise the periodic system-tick IRQ, paced by the timer count programmed
+    /// by the guest. QEMU uses a 10 MHz output clock for this timer and clamps
+    /// very small reloads to 1000 ticks, so `bcount1 / 10` gives microseconds.
+    pub fn tick_irq(
+        &mut self,
+        ready: u64,
+        fallback_interval: u64,
+        now_insn: u64,
+        min_insn_interval: u64,
+    ) {
+        if !self.started || self.micros < ready {
             return;
         }
-        if timer_clock >= self.next_irq_insn {
+        let interval = self.programmed_interval_micros(fallback_interval);
+        if self.next_irq_micros == 0 {
+            self.next_irq_micros = self.micros.saturating_add(interval);
+            self.next_irq_insn = now_insn.saturating_add(min_insn_interval);
+            return;
+        }
+        if self.micros >= self.next_irq_micros && now_insn >= self.next_irq_insn {
             self.irq = true;
-            self.next_irq_insn = timer_clock.max(ready) + interval;
+            let base = self.micros.max(ready);
+            self.next_irq_micros = base.saturating_add(interval);
+            self.next_irq_insn = now_insn.saturating_add(min_insn_interval);
+        }
+    }
+
+    fn programmed_interval_micros(&self, fallback_interval: u64) -> u64 {
+        if self.bcount1 != 0 {
+            (u64::from(self.bcount1).max(1000) / 10).max(1)
+        } else {
+            fallback_interval.max(1)
         }
     }
 
@@ -158,7 +184,7 @@ impl S5lTimer {
         self.irq
     }
 
-    pub fn debug_state(&self) -> (u64, u32, u32, u32, u32, bool, bool, u64) {
+    pub fn debug_state(&self) -> (u64, u32, u32, u32, u32, bool, bool, u64, u64) {
         (
             self.micros,
             self.status,
@@ -167,6 +193,7 @@ impl S5lTimer {
             self.bcount2,
             self.irq,
             self.started,
+            self.next_irq_micros,
             self.next_irq_insn,
         )
     }
@@ -192,6 +219,11 @@ impl S5lTimer {
                 // STATE: bit0 = start. Arm/disarm the periodic IRQ.
                 self.status = value;
                 self.started = value & 1 != 0;
+                self.next_irq_micros = 0;
+                self.next_irq_insn = 0;
+                if !self.started {
+                    self.irq = false;
+                }
             }
             0xA8 => self.bcount1 = value, // COUNT_BUFFER
             0xAC => self.bcount2 = value, // COUNT_BUFFER2
@@ -845,13 +877,6 @@ impl Pl192 {
         if !self.priority_mode {
             return (res, false);
         }
-        if self.stack_i != 0
-            && self.current_highest == self.current
-            && self.current <= PL192_DAISY_IRQ
-        {
-            self.irq_line = false;
-            return (res, false);
-        }
         let is_daisy = self.current_highest == PL192_DAISY_IRQ;
         self.current = self.current_highest;
         self.mask_current_priority();
@@ -1050,6 +1075,7 @@ pub struct S5lNand {
     pub spare_buffer: Vec<u8>,
     buffered_bank: i64,
     buffered_page: i64,
+    is_writing: bool,
     pub reading_multiple_pages: bool,
     pub cur_bank_reading: i64,
     pub banks_to_read: Vec<u32>,
@@ -1075,6 +1101,7 @@ impl S5lNand {
             spare_buffer: vec![0u8; NAND_BYTES_PER_SPARE],
             buffered_bank: -1,
             buffered_page: -1,
+            is_writing: false,
             reading_multiple_pages: false,
             cur_bank_reading: -1,
             banks_to_read: vec![0u32; 512],
@@ -1340,6 +1367,25 @@ impl S5lNand {
         }
     }
 
+    fn write_page_word(&mut self, val: u32) {
+        if !self.is_writing {
+            return;
+        }
+        if self.fmdnum == 0 {
+            self.is_writing = false;
+            return;
+        }
+
+        let offset = NAND_BYTES_PER_PAGE.saturating_sub(self.fmdnum as usize);
+        if offset + 4 <= self.page_buffer.len() {
+            self.page_buffer[offset..offset + 4].copy_from_slice(&val.to_le_bytes());
+        }
+        self.fmdnum = self.fmdnum.saturating_sub(4);
+        if self.fmdnum == 0 {
+            self.is_writing = false;
+        }
+    }
+
     pub fn read(&mut self, offset: u32) -> u32 {
         match offset {
             0x0 => self.fmctrl0,
@@ -1401,6 +1447,14 @@ impl S5lNand {
         }
     }
 
+    pub fn begin_page_write(&mut self, bank: u32, page: u32) {
+        self.reading_multiple_pages = false;
+        self.set_bank(bank);
+        self.set_buffered_page(page);
+        self.fmdnum = NAND_BYTES_PER_PAGE as u32;
+        self.is_writing = true;
+    }
+
     pub fn write(&mut self, offset: u32, val: u32) {
         match offset {
             0x0 => self.fmctrl0 = val,
@@ -1413,6 +1467,7 @@ impl S5lNand {
                 self.reading_spare = val == NAND_BYTES_PER_SPARE as u32 - 1;
                 self.fmdnum = val;
             }
+            0x80 => self.write_page_word(val),
             0x100 => self.rsctrl = val,
             _ => {}
         }
@@ -1974,6 +2029,63 @@ impl S5lI2c {
 impl Default for S5lI2c {
     fn default() -> Self {
         Self::new(false, false)
+    }
+}
+
+// =============================================================================
+// SDIO controller (minimal register file)
+// =============================================================================
+
+/// S5L8900 SDIO register block. The reference machine only needs enough state
+/// for the AppleS5L8900XSDIO driver to see command-ready/complete status.
+pub struct S5lSdio {
+    cmd: u32,
+    arg: u32,
+    csr: u32,
+    resp: [u32; 4],
+    irq_mask: u32,
+}
+
+impl S5lSdio {
+    pub fn new() -> Self {
+        Self {
+            cmd: 0,
+            arg: 0,
+            csr: 0,
+            resp: [0; 4],
+            irq_mask: 0,
+        }
+    }
+
+    pub fn read(&self, offset: u32) -> u32 {
+        match offset {
+            0x08 => self.cmd,
+            0x0c => self.arg,
+            0x18 => (1 << 0) | (1 << 4), // ready for command, command complete
+            0x20 => self.resp[0],
+            0x24 => self.resp[1],
+            0x28 => self.resp[2],
+            0x2c => self.resp[3],
+            0x34 => self.csr,
+            0x3c => self.irq_mask,
+            _ => 0,
+        }
+    }
+
+    pub fn write(&mut self, offset: u32, value: u32) {
+        match offset {
+            0x08 => self.cmd = value,
+            0x0c => self.arg = value,
+            0x34 => self.csr = value,
+            0x3c => self.irq_mask = value,
+            _ => {}
+        }
+    }
+}
+
+impl Default for S5lSdio {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -2560,9 +2672,157 @@ impl Default for S5lUart {
 }
 
 #[cfg(test)]
+mod timer_tests {
+    use super::*;
+
+    #[test]
+    fn timer_uses_programmed_count_without_immediate_irq() {
+        let mut timer = S5lTimer::new();
+
+        timer.write(0xA8, 100_000);
+        timer.write(0xA4, 1);
+
+        timer.tick_irq(0, 50_000, 0, 0);
+        assert!(!timer.irq_pending());
+
+        timer.set_micros(9_999);
+        timer.tick_irq(0, 50_000, 9_999, 0);
+        assert!(!timer.irq_pending());
+
+        timer.set_micros(10_000);
+        timer.tick_irq(0, 50_000, 10_000, 0);
+        assert!(timer.irq_pending());
+
+        timer.write(0xF8, 1);
+        timer.set_micros(19_999);
+        timer.tick_irq(0, 50_000, 19_999, 0);
+        assert!(!timer.irq_pending());
+
+        timer.set_micros(20_000);
+        timer.tick_irq(0, 50_000, 20_000, 0);
+        assert!(timer.irq_pending());
+    }
+
+    #[test]
+    fn timer_clamps_tiny_programmed_count_like_qemu() {
+        let mut timer = S5lTimer::new();
+
+        timer.write(0xA8, 1);
+        timer.write(0xA4, 1);
+
+        timer.tick_irq(0, 50_000, 0, 0);
+        timer.set_micros(99);
+        timer.tick_irq(0, 50_000, 99, 0);
+        assert!(!timer.irq_pending());
+
+        timer.set_micros(100);
+        timer.tick_irq(0, 50_000, 100, 0);
+        assert!(timer.irq_pending());
+    }
+
+    #[test]
+    fn timer_respects_minimum_instruction_spacing() {
+        let mut timer = S5lTimer::new();
+
+        timer.write(0xA8, 1);
+        timer.write(0xA4, 1);
+
+        timer.tick_irq(0, 50_000, 0, 50_000);
+        timer.set_micros(100);
+        timer.tick_irq(0, 50_000, 100, 50_000);
+        assert!(!timer.irq_pending());
+
+        timer.tick_irq(0, 50_000, 49_999, 50_000);
+        assert!(!timer.irq_pending());
+
+        timer.tick_irq(0, 50_000, 50_000, 50_000);
+        assert!(timer.irq_pending());
+    }
+}
+
+#[cfg(test)]
+mod pl192_tests {
+    use super::*;
+
+    fn enable_irq(vic: &mut Pl192, irq: u32, priority: u32, vector: u32) {
+        vic.set_priority_mode(true);
+        vic.write(0x100 + irq * 4, vector);
+        vic.write(0x200 + irq * 4, priority);
+        vic.write(0x10, 1u32 << irq);
+    }
+
+    fn refresh_parent_daisy(parent: &mut Pl192, child: &Pl192) {
+        parent.daisy_input = child.irq_asserted();
+        parent.daisy_vectaddr = child.address;
+        parent.update();
+    }
+
+    #[test]
+    fn pl192_repeated_acknowledge_pushes_priority_stack_like_qemu() {
+        let mut vic = Pl192::new();
+        enable_irq(&mut vic, 16, 0xf, 0x1234_5678);
+        vic.set_line(16, true);
+
+        let (addr, is_daisy) = vic.acknowledge();
+        assert_eq!(addr, 0x1234_5678);
+        assert!(!is_daisy);
+        assert_eq!(vic.stack_i, 1);
+
+        let (addr, is_daisy) = vic.acknowledge();
+        assert_eq!(addr, 0x1234_5678);
+        assert!(!is_daisy);
+        assert_eq!(vic.stack_i, 2);
+        assert_eq!(vic.current, 16);
+    }
+
+    #[test]
+    fn pl192_daisy_irq_surfaces_after_same_priority_direct_irq_finishes() {
+        let mut parent = Pl192::new();
+        let mut child = Pl192::new();
+        parent.set_priority_mode(true);
+        child.set_priority_mode(true);
+        enable_irq(&mut parent, 16, 0xf, 0x1111_0000);
+        parent.write(0x28, 0xf);
+        enable_irq(&mut child, 5, 0xf, 0x2222_0000);
+
+        parent.set_line(16, true);
+        child.set_line(5, true);
+        refresh_parent_daisy(&mut parent, &child);
+
+        let (addr, is_daisy) = parent.acknowledge();
+        assert_eq!(addr, 0x1111_0000);
+        assert!(!is_daisy);
+
+        parent.set_line(16, false);
+        refresh_parent_daisy(&mut parent, &child);
+        assert!(!parent.irq_asserted());
+
+        assert!(!parent.finish_irq());
+        refresh_parent_daisy(&mut parent, &child);
+        assert!(parent.irq_asserted());
+
+        let (addr, is_daisy) = parent.acknowledge();
+        assert_eq!(addr, 0x2222_0000);
+        assert!(is_daisy);
+        child.acknowledge_daisy_child();
+        refresh_parent_daisy(&mut parent, &child);
+        assert!(!parent.irq_asserted());
+
+        child.set_line(5, false);
+        refresh_parent_daisy(&mut parent, &child);
+        assert!(parent.finish_irq());
+        child.finish_daisy_child();
+        refresh_parent_daisy(&mut parent, &child);
+        assert_eq!(parent.stack_i, 0);
+        assert_eq!(child.stack_i, 0);
+        assert!(!parent.irq_asserted());
+    }
+}
+
+#[cfg(test)]
 mod aes_engine_tests {
     use super::*;
-    use crate::devices::crypto::{aes_cbc_decrypt, AesKey};
+    use crate::devices::crypto::{AesKey, aes_cbc_decrypt};
 
     fn hex(s: &str) -> Vec<u8> {
         (0..s.len())
