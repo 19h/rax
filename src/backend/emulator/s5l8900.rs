@@ -536,6 +536,8 @@ struct BridgeInner {
     clock1: S5lClock,
     vic0: Pl192,
     vic1: Pl192,
+    vic1_adm_daisy_latched: bool,
+    vic1_adm_daisy_in_service: bool,
     sysic: S5lSysic,
     gpio: S5lGpio,
     timer: S5lTimer,
@@ -571,15 +573,19 @@ struct BridgeInner {
     /// Budget-limited trace for VIC MMIO accesses (RAX_S5L_VIC_TRACE).
     vic_trace_budget: u32,
     vic_trace_start_insn: u64,
+    vic_trace_adm: bool,
 }
 
 #[derive(Clone, Copy)]
 struct VicTraceSnapshot {
     raw: u32,
     enabled: u32,
+    selected: u32,
     irq: u32,
     fiq: u32,
     addr: u32,
+    daisy_input: bool,
+    daisy_vectaddr: u32,
     priority_mask: u32,
     current: u32,
     highest: u32,
@@ -595,9 +601,12 @@ impl VicTraceSnapshot {
         Self {
             raw: vic.rawintr,
             enabled: vic.intenable,
+            selected: vic.intselect,
             irq: vic.irq_status,
             fiq: vic.fiq_status,
             addr: vic.address,
+            daisy_input: vic.daisy_input,
+            daisy_vectaddr: vic.daisy_vectaddr,
             priority_mask: vic.sw_priority_mask,
             current,
             highest,
@@ -650,16 +659,36 @@ impl S5lBridge {
 
 impl BridgeInner {
     fn should_trace_vic_access(&self, offset: u32) -> bool {
-        self.vic_trace_budget != 0
-            && self.cur_insn >= self.vic_trace_start_insn
-            && (self.kernel_started || std::env::var_os("RAX_S5L_VIC_TRACE_EARLY").is_some())
-            && (offset == 0xF00
-                || offset <= 0x2c
-                || offset == 0x30
-                || offset == 0x34
-                || offset == 0x300
-                || (0x100..0x180).contains(&offset)
-                || (0x200..0x280).contains(&offset))
+        if self.vic_trace_budget == 0 {
+            return false;
+        }
+        if !(self.kernel_started || std::env::var_os("RAX_S5L_VIC_TRACE_EARLY").is_some()) {
+            return false;
+        }
+        let interesting_offset = offset == 0xF00
+            || offset <= 0x2c
+            || offset == 0x30
+            || offset == 0x34
+            || offset == 0x300
+            || (0x100..0x180).contains(&offset)
+            || (0x200..0x280).contains(&offset);
+        if !interesting_offset {
+            return false;
+        }
+        if self.cur_insn >= self.vic_trace_start_insn {
+            return true;
+        }
+        if self.vic_trace_adm {
+            let adm_mask = 1 << ADM_VIC1_LINE;
+            let (v0_current, v0_highest, _, _, _, _) = self.vic0.debug_priority_state();
+            return self.adm_irq
+                || self.vic1_adm_daisy_latched
+                || self.vic1_adm_daisy_in_service
+                || (self.vic1.rawintr & adm_mask) != 0
+                || v0_current == 32
+                || v0_highest == 32;
+        }
+        false
     }
 
     fn trace_vic_access(
@@ -686,9 +715,12 @@ impl BridgeInner {
             result = result.map(|v| format!("{v:#x}")).unwrap_or_default(),
             before_raw = format!("{:#x}", before.raw),
             before_en = format!("{:#x}", before.enabled),
+            before_sel = format!("{:#x}", before.selected),
             before_irq = format!("{:#x}", before.irq),
             before_fiq = format!("{:#x}", before.fiq),
             before_addr = format!("{:#x}", before.addr),
+            before_daisy = before.daisy_input,
+            before_daisy_addr = format!("{:#x}", before.daisy_vectaddr),
             before_mask = format!("{:#x}", before.priority_mask),
             before_cur = before.current,
             before_high = before.highest,
@@ -698,9 +730,12 @@ impl BridgeInner {
             before_fiq_line = before.fiq_line,
             after_raw = format!("{:#x}", after.raw),
             after_en = format!("{:#x}", after.enabled),
+            after_sel = format!("{:#x}", after.selected),
             after_irq = format!("{:#x}", after.irq),
             after_fiq = format!("{:#x}", after.fiq),
             after_addr = format!("{:#x}", after.addr),
+            after_daisy = after.daisy_input,
+            after_daisy_addr = format!("{:#x}", after.daisy_vectaddr),
             after_mask = format!("{:#x}", after.priority_mask),
             after_cur = after.current,
             after_high = after.highest,
@@ -708,13 +743,20 @@ impl BridgeInner {
             after_depth = after.depth,
             after_irq_line = after.irq_line,
             after_fiq_line = after.fiq_line,
+            adm_irq = self.adm_irq,
+            adm_latched = self.vic1_adm_daisy_latched,
+            adm_in_service = self.vic1_adm_daisy_in_service,
             "vic_trace"
         );
     }
 
     fn refresh_vic_daisy(&mut self) {
-        self.vic0.daisy_input = self.vic1.irq_asserted();
-        self.vic0.daisy_vectaddr = self.vic1.address;
+        self.vic0.daisy_input = self.vic1.irq_asserted() || self.vic1_adm_daisy_latched;
+        self.vic0.daisy_vectaddr = if self.vic1_adm_daisy_latched && !self.vic1.irq_asserted() {
+            self.vic1.vect_addr[ADM_VIC1_LINE as usize]
+        } else {
+            self.vic1.address
+        };
         self.vic0.update();
     }
 
@@ -741,6 +783,9 @@ impl BridgeInner {
                     (self.vic0.read(offset), false)
                 };
                 if is_daisy {
+                    if self.vic1_adm_daisy_latched {
+                        self.vic1_adm_daisy_in_service = true;
+                    }
                     self.vic1.acknowledge_daisy_child();
                     self.refresh_vic_daisy();
                 }
@@ -897,6 +942,10 @@ impl BridgeInner {
                     is_daisy = self.vic0.finish_irq();
                     if is_daisy {
                         self.vic1.finish_daisy_child();
+                        if self.vic1_adm_daisy_in_service {
+                            self.vic1_adm_daisy_latched = false;
+                            self.vic1_adm_daisy_in_service = false;
+                        }
                         self.refresh_vic_daisy();
                     }
                 } else {
@@ -931,6 +980,11 @@ impl BridgeInner {
                 let trace = self.should_trace_vic_access(offset);
                 let before = trace.then(|| VicTraceSnapshot::capture(&self.vic1));
                 self.vic1.write(offset, value);
+                if offset == 0xF00 && self.vic1_adm_daisy_in_service {
+                    self.vic1_adm_daisy_latched = false;
+                    self.vic1_adm_daisy_in_service = false;
+                    self.refresh_vic_daisy();
+                }
                 if let Some(before) = before {
                     self.trace_vic_access(
                         "VIC1",
@@ -1562,6 +1616,8 @@ impl S5L8900Vcpu {
                 clock1: S5lClock::new(),
                 vic0: Pl192::new(),
                 vic1: Pl192::new(),
+                vic1_adm_daisy_latched: false,
+                vic1_adm_daisy_in_service: false,
                 sysic: S5lSysic::new(),
                 gpio: S5lGpio::new(),
                 timer: S5lTimer::new(),
@@ -1595,6 +1651,7 @@ impl S5L8900Vcpu {
                     .ok()
                     .and_then(|v| v.parse().ok())
                     .unwrap_or(0),
+                vic_trace_adm: std::env::var("RAX_S5L_VIC_TRACE_ADM").is_ok(),
             }),
         };
         let mut cpu = Armv7Cpu::new();
@@ -1881,7 +1938,15 @@ impl S5L8900Vcpu {
         inner.vic0.set_line(I2C0_IRQ, i2c0_lvl);
         inner.vic0.set_line(I2C1_IRQ, i2c1_lvl);
         inner.vic1.set_line(NAND_ECC_VIC1_LINE, nand_ecc_lvl);
+        let adm_was_raw = (inner.vic1.rawintr & (1 << ADM_VIC1_LINE)) != 0;
         inner.vic1.set_line(ADM_VIC1_LINE, adm_lvl);
+        if adm_lvl && !adm_was_raw {
+            inner.vic1_adm_daisy_latched = true;
+            inner.vic1_adm_daisy_in_service = false;
+        } else if !adm_lvl {
+            inner.vic1_adm_daisy_latched = false;
+            inner.vic1_adm_daisy_in_service = false;
+        }
         for (group, &global_irq) in GPIO_GROUP_IRQS.iter().enumerate() {
             // The QEMU reference raises a SYSIC GPIO group line whenever a
             // device sets that group's status bit, and lowers it on the
@@ -2306,6 +2371,9 @@ impl S5L8900Vcpu {
         if value & 0x2 == 0 {
             let mut inner = self.bridge.inner.borrow_mut();
             inner.adm_irq = false;
+            inner.vic1_adm_daisy_latched = false;
+            inner.vic1_adm_daisy_in_service = false;
+            inner.refresh_vic_daisy();
             if std::env::var("RAX_S5L_ADM_TRACE").is_ok() {
                 debug!(value = format!("{value:#x}"), "adm_irq_clear");
             }
