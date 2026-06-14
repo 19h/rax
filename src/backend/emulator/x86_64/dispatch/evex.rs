@@ -5228,6 +5228,9 @@ impl X86_64Vcpu {
         let is_shrd = matches!(opcode, 0x2C | 0xAD);
         let count_mask = if op_size == 8 { 0x3F } else { 0x1F };
 
+        if matches!(opcode, 0x24 | 0x2C) {
+            ctx.rip_relative_offset = 1;
+        }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let src1_reg = rm | ctx.evex_rm_reg();
         let src2_reg = reg | ctx.evex_dest_reg();
@@ -6111,9 +6114,24 @@ mod tests {
         vcpu.mmu.write_u64(addr, value, &sregs).unwrap();
     }
 
+    fn write_u32(vcpu: &mut X86_64Vcpu, addr: u64, value: u32) {
+        let sregs = vcpu.sregs.clone();
+        vcpu.mmu.write_u32(addr, value, &sregs).unwrap();
+    }
+
     fn read_u64(vcpu: &mut X86_64Vcpu, addr: u64) -> u64 {
         let sregs = vcpu.sregs.clone();
         vcpu.mmu.read_u64(addr, &sregs).unwrap()
+    }
+
+    fn read_u32(vcpu: &mut X86_64Vcpu, addr: u64) -> u32 {
+        let sregs = vcpu.sregs.clone();
+        vcpu.mmu.read_u32(addr, &sregs).unwrap()
+    }
+
+    fn read_u8(vcpu: &mut X86_64Vcpu, addr: u64) -> u8 {
+        let sregs = vcpu.sregs.clone();
+        vcpu.mmu.read_u8(addr, &sregs).unwrap()
     }
 
     #[test]
@@ -6231,6 +6249,40 @@ mod tests {
         vcpu.regs.rflags = 0x2 | flags::bits::CF;
         step_ok(&mut vcpu);
         assert_eq!(read_u64(&mut vcpu, DATA), 0xDEAD_BEEF_CAFE_BABE);
+    }
+
+    #[test]
+    fn apx_shld_imm_rip_relative_includes_imm8_in_target() {
+        // LLVM 23: `{evex} shldl $1, %eax, 0x20(%rip)`
+        let code = [
+            0x62, 0xF4, 0x7C, 0x08, 0x24, 0x05, 0x20, 0x00, 0x00, 0x00, 0x01,
+        ];
+        let target = CODE + code.len() as u64 + 0x20;
+        let mut vcpu = long_mode_vcpu(&code);
+        vcpu.regs.rax = 0x8000_0000;
+        write_u32(&mut vcpu, target, 0x4000_0000);
+
+        step_ok(&mut vcpu);
+
+        assert_eq!(read_u32(&mut vcpu, target), 0x8000_0001);
+        assert_eq!(read_u8(&mut vcpu, target - 1), 0);
+    }
+
+    #[test]
+    fn apx_shrd_imm_rip_relative_includes_imm8_in_target() {
+        // LLVM 23: `{evex} shrdl $1, %eax, 0x20(%rip)`
+        let code = [
+            0x62, 0xF4, 0x7C, 0x08, 0x2C, 0x05, 0x20, 0x00, 0x00, 0x00, 0x01,
+        ];
+        let target = CODE + code.len() as u64 + 0x20;
+        let mut vcpu = long_mode_vcpu(&code);
+        vcpu.regs.rax = 1;
+        write_u32(&mut vcpu, target, 2);
+
+        step_ok(&mut vcpu);
+
+        assert_eq!(read_u32(&mut vcpu, target), 0x8000_0001);
+        assert_eq!(read_u8(&mut vcpu, target - 1), 0);
     }
 
     #[test]
