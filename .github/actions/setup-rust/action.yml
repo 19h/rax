@@ -30,7 +30,7 @@ runs:
   using: composite
   steps:
     - name: Install Rust toolchain (${{ inputs.toolchain }})
-      uses: dtolnay/rust-toolchain@master
+      uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
       with:
         toolchain: ${{ inputs.toolchain }}
         components: ${{ inputs.components }}
@@ -38,7 +38,7 @@ runs:
 
     - name: Restore cargo + target cache
       if: inputs.cache == 'true'
-      uses: Swatinem/rust-cache@v2
+      uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
       with:
         # Key on toolchain + an opt-in discriminator (feature set / shard) so the
         # huge generated-test object files are not thrashed between unrelated jobs.

@@ -70,7 +70,7 @@ jobs:
           # runs per platform.
           - { name: smir-host, tests: "--test smir_jit_vcpu --test aarch64_smir_native" }
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: stable
@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: stable
