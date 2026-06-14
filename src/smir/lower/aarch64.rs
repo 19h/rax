@@ -13,7 +13,7 @@ use crate::smir::ops::{OpKind, SmirOp};
 use crate::smir::types::{
     Address, ArchReg, ArmReg, AtomicOp, Avx10FP16Op, BlockId, Condition, ExtendOp, FenceKind,
     FpPrecision, FpRoundMode, MemWidth, MemoryOrder, OpWidth, ShiftOp, SignExtend, SrcOperand,
-    VLaneOp, VReg, VecElementType, VecUnaryOp, VecWidth,
+    VLaneOp, VReg, VecElementType, VecReduceOp, VecUnaryOp, VecWidth,
 };
 
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
@@ -3022,6 +3022,72 @@ impl Aarch64Lowerer {
         };
         self.emit_simd_two_reg_misc(rd, rn, q, u, size, opcode);
         Ok(())
+    }
+
+    /// Lower a vector across-lanes integer reduction (ADDV/SMAXV/UMAXV/SMINV/
+    /// UMINV) to the native AArch64 "advanced SIMD across lanes" form. The
+    /// result is a scalar in lane 0 of the destination.
+    fn lower_vreduce(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        op: VecReduceOp,
+    ) -> Result<(), LowerError> {
+        let rd = Self::fp_reg(dst)?;
+        let rn = Self::fp_reg(src)?;
+        let (q, size) = Self::simd_integer_shape(elem, lanes)?;
+        // No 64-bit-element reductions (ADDV/SxxxV do not allow a 2D source).
+        if size == 3 {
+            return Err(LowerError::UnsupportedOp {
+                op: format!("AArch64 vector reduction {op:?} I64"),
+            });
+        }
+        let (u, opcode) = match op {
+            VecReduceOp::Add => (0, 0b11011),
+            VecReduceOp::SMax => (0, 0b01010),
+            VecReduceOp::UMax => (1, 0b01010),
+            VecReduceOp::SMin => (0, 0b11010),
+            VecReduceOp::UMin => (1, 0b11010),
+        };
+        self.emit_simd_across_lanes(rd, rn, q, u, size, opcode);
+        Ok(())
+    }
+
+    /// Lower a vector FP numeric min/max (FMAXNM/FMINNM): three-same FP, U=0,
+    /// opcode 11000, with a = size<1> selecting max (0) vs min (1) and sz the
+    /// single/double element width.
+    fn lower_vfminmaxnm(
+        &mut self,
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        min: bool,
+    ) -> Result<(), LowerError> {
+        let rd = Self::fp_reg(dst)?;
+        let rn = Self::fp_reg(src1)?;
+        let rm = Self::fp_reg(src2)?;
+        let (q, sz) = Self::simd_float_shape(elem, lanes)?;
+        let size = if min { 0b10 | sz } else { sz };
+        self.emit_simd_three_same(rd, rn, rm, q, 0, size, 0b11000);
+        Ok(())
+    }
+
+    /// Emit an "advanced SIMD across lanes" instruction:
+    /// `0 Q U 01110 size 11000 opcode 10 Rn Rd`.
+    fn emit_simd_across_lanes(&mut self, rd: u8, rn: u8, q: u32, u: u32, size: u32, opcode: u32) {
+        self.emit(
+            0x0e30_0800
+                | (q << 30)
+                | (u << 29)
+                | (size << 22)
+                | (opcode << 12)
+                | ((rn as u32) << 5)
+                | (rd as u32),
+        );
     }
 
     fn lower_vfp16_arith(
@@ -14578,6 +14644,21 @@ impl Aarch64Lowerer {
                 lanes,
                 op,
             } => self.lower_vunary(*dst, *src, *elem, *lanes, *op),
+            OpKind::VReduce {
+                dst,
+                src,
+                elem,
+                lanes,
+                op,
+            } => self.lower_vreduce(*dst, *src, *elem, *lanes, *op),
+            OpKind::VFMinMaxNm {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                min,
+            } => self.lower_vfminmaxnm(*dst, *src1, *src2, *elem, *lanes, *min),
             OpKind::VMax {
                 dst,
                 src1,

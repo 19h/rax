@@ -1591,6 +1591,23 @@ impl Aarch64Lifter {
                 self.lift_vector_unary(insn, pc, &mut ops, VecUnaryOp::Rev64, false)?;
             }
 
+            // Vector across-lanes integer reductions (scalar dst, vector src).
+            Mnemonic::ADDV => {
+                self.lift_vector_reduce(insn, pc, &mut ops, VecReduceOp::Add)?;
+            }
+            Mnemonic::SMAXV => {
+                self.lift_vector_reduce(insn, pc, &mut ops, VecReduceOp::SMax)?;
+            }
+            Mnemonic::UMAXV => {
+                self.lift_vector_reduce(insn, pc, &mut ops, VecReduceOp::UMax)?;
+            }
+            Mnemonic::SMINV => {
+                self.lift_vector_reduce(insn, pc, &mut ops, VecReduceOp::SMin)?;
+            }
+            Mnemonic::UMINV => {
+                self.lift_vector_reduce(insn, pc, &mut ops, VecReduceOp::UMin)?;
+            }
+
             // =================================================================
             // Load/Store
             // =================================================================
@@ -2141,6 +2158,24 @@ impl Aarch64Lifter {
                             elem,
                             lanes,
                             signed: true,
+                        },
+                        // FMAXNM/FMINNM are IEEE maxNum/minNum (NaN-quiet),
+                        // distinct from FMAX/FMIN (NaN-propagating).
+                        Mnemonic::FMAXNM => OpKind::VFMinMaxNm {
+                            dst,
+                            src1,
+                            src2,
+                            elem,
+                            lanes,
+                            min: false,
+                        },
+                        Mnemonic::FMINNM => OpKind::VFMinMaxNm {
+                            dst,
+                            src1,
+                            src2,
+                            elem,
+                            lanes,
+                            min: true,
                         },
                         _ => {
                             return Err(LiftError::Unsupported {
@@ -3003,6 +3038,48 @@ impl Aarch64Lifter {
             OpId(ops.len() as u16),
             pc,
             OpKind::VUnary {
+                dst: Self::fp_vreg(rd),
+                src: Self::fp_vreg(rn),
+                elem,
+                lanes,
+                op,
+            },
+        ));
+        Ok(())
+    }
+
+    /// Emit a vector across-lanes reduction (advanced SIMD across lanes) as an
+    /// `OpKind::VReduce`. Operand 0 is the scalar destination, operand 1 the
+    /// vector source; the source element width comes from size = bits[23:22]
+    /// and the lane count from Q.
+    fn lift_vector_reduce(
+        &self,
+        insn: &DecodedInsn,
+        pc: u64,
+        ops: &mut Vec<SmirOp>,
+        op: VecReduceOp,
+    ) -> Result<(), LiftError> {
+        let (rd, rn) = match (insn.operands.get(0), insn.operands.get(1)) {
+            (Some(Operand::FpReg(rd)), Some(Operand::FpReg(rn))) => (rd, rn),
+            _ => {
+                return Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("{:?}", insn.mnemonic),
+                });
+            }
+        };
+        let q = (insn.raw >> 30) & 1;
+        let (elem, lane_bytes) = match (insn.raw >> 22) & 0x3 {
+            0 => (VecElementType::I8, 1u8),
+            1 => (VecElementType::I16, 2),
+            2 => (VecElementType::I32, 4),
+            _ => (VecElementType::I64, 8),
+        };
+        let lanes = (if q == 1 { 16u8 } else { 8 }) / lane_bytes;
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::VReduce {
                 dst: Self::fp_vreg(rd),
                 src: Self::fp_vreg(rn),
                 elem,

@@ -732,7 +732,7 @@ impl ThumbDecoder {
                 let op_a = (raw >> 4) & 0xF;
                 let op_b = raw & 0xF;
 
-                if op_a != 0 {
+                if op_b != 0 {
                     // IT instruction
                     return Ok(DecodedInsn::new(
                         Mnemonic::IT,

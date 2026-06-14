@@ -2290,12 +2290,13 @@ impl OpKind {
             | OpKind::VAnd { src1, src2, .. }
             | OpKind::VOr { src1, src2, .. }
             | OpKind::VXor { src1, src2, .. }
+            | OpKind::VFMinMaxNm { src1, src2, .. }
             | OpKind::VCmp { src1, src2, .. } => {
                 result.push(*src1);
                 result.push(*src2);
             }
 
-            OpKind::VUnary { src, .. } => {
+            OpKind::VUnary { src, .. } | OpKind::VReduce { src, .. } => {
                 result.push(*src);
             }
 

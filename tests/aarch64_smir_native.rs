@@ -1579,3 +1579,139 @@ fn e2e_vector_rev_hot_loop_matches_interpreter() {
         assert_ne!(interp, 0, "op={:#010x} produced a nonzero result", op);
     }
 }
+
+// Vector across-lanes integer reductions (ADDV/SMAXV/UMAXV/SMINV/UMINV) via
+// OpKind::VReduce, lift→lower→exec. Result is a scalar in lane 0.
+#[test]
+fn probe_vector_reduce() {
+    let pack32 = |a: u32, b: u32| (a as u64) | ((b as u64) << 32);
+
+    // addv s0, v1.4s (0x4eb1b820): sum of 4 i32 lanes = 1+2+3+4 = 10.
+    let r = fp_run(&[0x4eb1_b820], |g| {
+        g.v[2] = pack32(1, 2);
+        g.v[3] = pack32(3, 4);
+    });
+    assert_eq!(r.v[0], 10, "addv .4s sum");
+    assert_eq!(r.v[1], 0, "addv clears upper");
+
+    // smaxv s0, v1.4s (0x4eb0a820): signed max of [-5,3,10,-2] = 10.
+    let r = fp_run(&[0x4eb0_a820], |g| {
+        g.v[2] = pack32((-5i32) as u32, 3);
+        g.v[3] = pack32(10, (-2i32) as u32);
+    });
+    assert_eq!(r.v[0] as u32, 10, "smaxv .4s");
+
+    // sminv s0, v1.4s (0x4eb1a820): signed min of [-5,3,10,-2] = -5.
+    let r = fp_run(&[0x4eb1_a820], |g| {
+        g.v[2] = pack32((-5i32) as u32, 3);
+        g.v[3] = pack32(10, (-2i32) as u32);
+    });
+    assert_eq!(r.v[0] as u32, (-5i32) as u32, "sminv .4s");
+
+    // umaxv s0, v1.4s (0x6eb0a820): unsigned max = 0xFFFFFFFF.
+    let r = fp_run(&[0x6eb0_a820], |g| {
+        g.v[2] = pack32(1, 0xFFFF_FFFF);
+        g.v[3] = pack32(3, 4);
+    });
+    assert_eq!(r.v[0] as u32, 0xFFFF_FFFF, "umaxv .4s");
+
+    // uminv b0, v1.16b (0x6e31a820): unsigned min byte = 0x01.
+    let r = fp_run(&[0x6e31_a820], |g| {
+        g.v[2] = 0x0807_0605_0403_0201;
+        g.v[3] = 0x100F_0E0D_0C0B_0A09;
+    });
+    assert_eq!(r.v[0], 0x01, "uminv .16b");
+}
+
+// End-to-end: vector reductions run as a hot loop through the emulator JIT vs
+// the interpreter (which reduces via its own exec_simd_across_lanes path).
+#[test]
+fn e2e_vector_reduce_hot_loop_matches_interpreter() {
+    let p = |a: u32, b: u32, c: u32, d: u32| {
+        (a as u128) | (b as u128) << 32 | (c as u128) << 64 | (d as u128) << 96
+    };
+    let v1 = p(7, 3, 11, 5);
+    let ops: [u32; 4] = [
+        0x4eb1_b820, // addv  s0, v1.4s  -> 26
+        0x4eb0_a820, // smaxv s0, v1.4s  -> 11
+        0x4eb1_a820, // sminv s0, v1.4s  -> 3
+        0x6eb0_a820, // umaxv s0, v1.4s  -> 11
+    ];
+    for op in ops {
+        let prog: [u32; 4] = [op, 0xf100_0400, 0x54ff_ffc1, 0xd65f_03c0];
+        let run_one = |jit: bool| -> u128 {
+            let mut cpu = fresh_cpu();
+            cpu.set_jit_enabled(jit);
+            load_prog(&mut cpu, &prog);
+            cpu.set_simd(0, 0);
+            cpu.set_simd(1, v1);
+            cpu.set_x(0, 100);
+            drive_to_done(&mut cpu);
+            cpu.get_simd(0)
+        };
+        let interp = run_one(false);
+        let jit = run_one(true);
+        assert_eq!(jit, interp, "JIT matches interp op={:#010x}", op);
+        assert_ne!(interp, 0, "op={:#010x} produced a nonzero result", op);
+    }
+}
+
+// Vector FP numeric min/max FMAXNM/FMINNM (three-same) via OpKind::VFMinMaxNm.
+// These are NaN-quiet (return the numeric operand), unlike FMAX/FMIN.
+#[test]
+fn probe_vector_fp_minmax_nm_4s() {
+    let f = |x: f32| x.to_bits() as u64;
+    let pack = |a: f32, b: f32| f(a) | f(b) << 32;
+    let nan = f32::NAN;
+
+    // fmaxnm v0.4s, v1.4s, v2.4s (0x4e22c420). v1=[1,NaN,3,8], v2=[4,2,7,6].
+    let r = fp_run(&[0x4e22_c420], |g| {
+        g.v[2] = pack(1.0, nan);
+        g.v[3] = pack(3.0, 8.0);
+        g.v[4] = pack(4.0, 2.0);
+        g.v[5] = pack(7.0, 6.0);
+    });
+    assert_eq!(r.v[0], pack(4.0, 2.0), "fmaxnm 0,1 (max(NaN,2)=2 numeric)");
+    assert_eq!(r.v[1], pack(7.0, 8.0), "fmaxnm 2,3");
+
+    // fminnm v0.4s, v1.4s, v2.4s (0x4ea2c420).
+    let r = fp_run(&[0x4ea2_c420], |g| {
+        g.v[2] = pack(1.0, nan);
+        g.v[3] = pack(3.0, 8.0);
+        g.v[4] = pack(4.0, 2.0);
+        g.v[5] = pack(7.0, 6.0);
+    });
+    assert_eq!(r.v[0], pack(1.0, 2.0), "fminnm 0,1 (min(NaN,2)=2 numeric)");
+    assert_eq!(r.v[1], pack(3.0, 6.0), "fminnm 2,3");
+}
+
+// End-to-end: FMAXNM/FMINNM hot loop through the emulator JIT vs interpreter.
+#[test]
+fn e2e_vector_fp_minmax_nm_matches_interpreter() {
+    let f = |x: f32| x.to_bits() as u128;
+    let p = |a: f32, b: f32, c: f32, d: f32| f(a) | f(b) << 32 | f(c) << 64 | f(d) << 96;
+    let v1 = p(1.0, 5.0, 3.0, 8.0);
+    let v2 = p(4.0, 2.0, 7.0, 6.0);
+    let cases: [(u32, u128); 2] = [
+        (0x4e22_c420, p(4.0, 5.0, 7.0, 8.0)), // fmaxnm
+        (0x4ea2_c420, p(1.0, 2.0, 3.0, 6.0)), // fminnm
+    ];
+    for (op, expected) in cases {
+        let prog: [u32; 4] = [op, 0xf100_0400, 0x54ff_ffc1, 0xd65f_03c0];
+        let run_one = |jit: bool| -> u128 {
+            let mut cpu = fresh_cpu();
+            cpu.set_jit_enabled(jit);
+            load_prog(&mut cpu, &prog);
+            cpu.set_simd(0, 0);
+            cpu.set_simd(1, v1);
+            cpu.set_simd(2, v2);
+            cpu.set_x(0, 100);
+            drive_to_done(&mut cpu);
+            cpu.get_simd(0)
+        };
+        let interp = run_one(false);
+        let jit = run_one(true);
+        assert_eq!(interp, expected, "interp op={:#010x}", op);
+        assert_eq!(jit, interp, "JIT matches interp op={:#010x}", op);
+    }
+}

@@ -22,6 +22,7 @@
 //! 4. Write destination (handling branch for R15)
 //! 5. Optionally update flags if S bit is set
 
+use crate::arm::ExecutionState;
 use crate::arm::decoder::{Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
 use crate::arm::execution::{
     ArmMemory, Armv7Cpu, MemoryError, ProcessorMode, Psr, add_with_carry, compute_n_flag,
@@ -244,8 +245,19 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
 
     /// Execute a single decoded instruction.
     pub fn execute(&mut self, insn: &DecodedInsn) -> ExecResult {
-        // Check condition code
-        if let Some(cond) = insn.cond {
+        // Thumb IT state predicates the following instruction(s); the IT
+        // instruction itself is unconditional and installs the state.
+        let cond = if insn.state.is_thumb()
+            && self.cpu.cpsr.in_it_block()
+            && insn.mnemonic != Mnemonic::IT
+        {
+            Some(Condition::from_bits(self.cpu.cpsr.it_condition()))
+        } else {
+            insn.cond
+        };
+
+        // Check condition code.
+        if let Some(cond) = cond {
             if !self.condition_passed(cond) {
                 return ExecResult::Continue;
             }
@@ -648,6 +660,11 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
 
     /// Take an exception and switch to the appropriate mode.
     pub fn take_exception(&mut self, exception: ExceptionType) {
+        // Exception entry clears the local exclusive monitor. Without this,
+        // a LDREX/STREX pair interrupted by IRQ/FIQ can incorrectly complete
+        // against stale state after the handler has run.
+        self.exclusive_monitor.clear();
+
         let target_mode = exception.target_mode();
         let vector_offset = exception.vector_offset();
 
@@ -746,6 +763,37 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         } else {
             self.cpu.regs[r] = value;
             ExecResult::Continue
+        }
+    }
+
+    fn is_a32_state(state: ExecutionState) -> bool {
+        matches!(state, ExecutionState::Arm | ExecutionState::Aarch32)
+    }
+
+    fn a32_s_bit(insn: &DecodedInsn) -> bool {
+        Self::is_a32_state(insn.state) && (insn.raw >> 22) & 1 == 1
+    }
+
+    fn read_user_bank_reg(&self, r: usize) -> u32 {
+        match r {
+            8..=12 if ProcessorMode::from_bits(self.cpu.cpsr.mode) == Some(ProcessorMode::Fiq) => {
+                self.cpu.regs_usr_high[r - 8]
+            }
+            13 => self.cpu.regs_usr[0],
+            14 => self.cpu.regs_usr[1],
+            15 => self.cpu.get_pc(),
+            _ => self.cpu.regs[r],
+        }
+    }
+
+    fn write_user_bank_reg(&mut self, r: usize, value: u32) {
+        match r {
+            8..=12 if ProcessorMode::from_bits(self.cpu.cpsr.mode) == Some(ProcessorMode::Fiq) => {
+                self.cpu.regs_usr_high[r - 8] = value;
+            }
+            13 => self.cpu.regs_usr[0] = value,
+            14 => self.cpu.regs_usr[1] = value,
+            _ => self.cpu.regs[r] = value,
         }
     }
 
@@ -1715,7 +1763,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         // A32 S bit (the `^` forms): without PC in an LDM list it selects the
         // USER bank for the transfer; an LDM with PC additionally restores
         // CPSR from the current SPSR (exception return).
-        let s_bit = insn.state == crate::arm::ExecutionState::Aarch32 && (insn.raw >> 22) & 1 == 1;
+        let s_bit = Self::a32_s_bit(insn);
         let exception_return = s_bit && is_load && reglist & 0x8000 != 0;
         let user_bank = s_bit && !exception_return && !self.cpu.is_user_or_system();
 
@@ -1730,8 +1778,8 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                     Ok(d) => {
                         if i == 15 {
                             branch_target = Some(d);
-                        } else if user_bank && (i == 13 || i == 14) {
-                            self.cpu.regs_usr[i - 13] = d;
+                        } else if user_bank {
+                            self.write_user_bank_reg(i, d);
                         } else {
                             self.cpu.regs[i] = d;
                         }
@@ -1741,8 +1789,8 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             } else {
                 let val = if i == 15 {
                     self.cpu.get_pc()
-                } else if user_bank && (i == 13 || i == 14) {
-                    self.cpu.regs_usr[i - 13]
+                } else if user_bank {
+                    self.read_user_bank_reg(i)
                 } else {
                     self.reg(i)
                 };
@@ -1916,10 +1964,16 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         let count = reglist.count_ones();
         let mut address = self.cpu.regs[13].wrapping_sub(count * 4);
         let start_address = address;
+        let user_bank = Self::a32_s_bit(insn) && !self.cpu.is_user_or_system();
 
         for i in 0..16 {
             if (reglist & (1 << i)) != 0 {
-                match self.mem.write_word(address, self.reg(i)) {
+                let val = if user_bank {
+                    self.read_user_bank_reg(i)
+                } else {
+                    self.reg(i)
+                };
+                match self.mem.write_word(address, val) {
                     Ok(()) => {
                         address = address.wrapping_add(4);
                     }
@@ -1940,6 +1994,9 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
 
         let mut address = self.cpu.regs[13];
         let mut branch_target = None;
+        let s_bit = Self::a32_s_bit(insn);
+        let exception_return = s_bit && (reglist & 0x8000) != 0 && !self.cpu.is_user_or_system();
+        let user_bank = s_bit && !exception_return && !self.cpu.is_user_or_system();
 
         for i in 0..16 {
             if (reglist & (1 << i)) != 0 {
@@ -1947,6 +2004,8 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                     Ok(data) => {
                         if i == 15 {
                             branch_target = Some(data);
+                        } else if user_bank {
+                            self.write_user_bank_reg(i, data);
                         } else {
                             self.cpu.regs[i] = data;
                         }
@@ -1964,9 +2023,6 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         // list and the S bit set, it additionally restores CPSR from the
         // current mode's SPSR — without this the CPU stays in the handler's
         // mode (e.g. IRQ) on return, corrupting the resumed context.
-        let s_bit = insn.state == crate::arm::ExecutionState::Aarch32 && (insn.raw >> 22) & 1 == 1;
-        let exception_return = s_bit && (reglist & 0x8000) != 0 && !self.cpu.is_user_or_system();
-
         if let Some(target) = branch_target {
             if exception_return {
                 // CPSR (including the T bit) is restored from SPSR; PC is the
@@ -9921,6 +9977,7 @@ pub fn run_emulator<M: ArmMemory>(
         let insn = decoder.decode(&bytes[..insn_size as usize])?;
 
         // Execute instruction
+        let advance_it = executor.cpu.cpsr.t && executor.cpu.cpsr.in_it_block();
         let result = executor.execute(&insn);
         instructions_executed += 1;
 
@@ -9928,9 +9985,15 @@ pub fn run_emulator<M: ArmMemory>(
             ExecResult::Continue => {
                 // Advance PC
                 executor.cpu.regs[15] = executor.cpu.regs[15].wrapping_add(insn.size as u32);
+                if advance_it {
+                    executor.cpu.cpsr.advance_it_state();
+                }
             }
             ExecResult::Branch(target) => {
                 executor.cpu.regs[15] = target;
+                if advance_it {
+                    executor.cpu.cpsr.advance_it_state();
+                }
             }
             ExecResult::Halt
             | ExecResult::Exception(_)
@@ -10124,6 +10187,99 @@ mod tests {
         assert!(cpu.cpsr.f);
         assert!(!cpu.cpsr.t);
         assert_eq!(cpu.regs[13], 0x3000);
+    }
+
+    #[test]
+    fn test_fiq_stm_user_bank_stores_shared_high_registers() {
+        let mut cpu = make_cpu();
+        let mut mem = make_mem();
+
+        cpu.cpsr.mode = ProcessorMode::Fiq as u8;
+        cpu.regs[8] = 0xf100_0008;
+        cpu.regs[9] = 0xc006_163c;
+        cpu.regs_usr_high[0] = 0x1111_2222;
+        cpu.regs_usr_high[1] = 0x3333_4444;
+        cpu.regs[13] = 0x200;
+
+        // A32 STMDB sp!, {r8,r9}^, decoded as a PUSH alias.
+        let insn = DecodedInsn::new(Mnemonic::PUSH, ExecutionState::Aarch32, 0xe96d_0300, 4);
+        let mut exec = Executor::new(&mut cpu, &mut mem);
+        let result = exec.execute(&insn);
+
+        assert!(matches!(result, ExecResult::Continue));
+        assert_eq!(cpu.regs[13], 0x1f8);
+        assert_eq!(mem.read_word(0x1f8).unwrap(), 0x1111_2222);
+        assert_eq!(mem.read_word(0x1fc).unwrap(), 0x3333_4444);
+        assert_eq!(cpu.regs[8], 0xf100_0008);
+        assert_eq!(cpu.regs[9], 0xc006_163c);
+    }
+
+    #[test]
+    fn test_fiq_ldm_user_bank_restores_shared_high_registers() {
+        let mut cpu = make_cpu();
+        let mut mem = make_mem();
+
+        cpu.cpsr.mode = ProcessorMode::Fiq as u8;
+        cpu.regs[8] = 0xf100_0008;
+        cpu.regs[9] = 0xc006_163c;
+        cpu.regs_usr_high[0] = 0xaaaa_bbbb;
+        cpu.regs_usr_high[1] = 0xcccc_dddd;
+        cpu.regs[13] = 0x200;
+        mem.write_word(0x200, 0x1111_2222).unwrap();
+        mem.write_word(0x204, 0x3333_4444).unwrap();
+
+        // A32 LDMIA sp!, {r8,r9}^, decoded as a POP alias.
+        let insn = DecodedInsn::new(Mnemonic::POP, ExecutionState::Aarch32, 0xe8fd_0300, 4);
+        let mut exec = Executor::new(&mut cpu, &mut mem);
+        let result = exec.execute(&insn);
+
+        assert!(matches!(result, ExecResult::Continue));
+        assert_eq!(cpu.regs[13], 0x208);
+        assert_eq!(cpu.regs_usr_high[0], 0x1111_2222);
+        assert_eq!(cpu.regs_usr_high[1], 0x3333_4444);
+        assert_eq!(cpu.regs[8], 0xf100_0008);
+        assert_eq!(cpu.regs[9], 0xc006_163c);
+    }
+
+    #[test]
+    fn test_thumb_it_instruction_does_not_retire_its_own_state() {
+        let mut cpu = make_cpu();
+        let mut mem = make_mem();
+        let decoder = crate::arm::decoder::Decoder::new_thumb();
+        let insn = decoder.decode(&0xbf08u16.to_le_bytes()).unwrap(); // it eq
+
+        cpu.cpsr.t = true;
+        let advance_it = cpu.cpsr.t && cpu.cpsr.in_it_block();
+        let mut exec = Executor::new(&mut cpu, &mut mem);
+        let result = exec.execute(&insn);
+
+        assert!(matches!(result, ExecResult::Continue));
+        assert!(!advance_it);
+        assert!(cpu.cpsr.in_it_block());
+        assert_eq!(cpu.cpsr.it_condition(), Condition::EQ as u8);
+    }
+
+    #[test]
+    fn test_thumb_it_false_predicate_skips_following_instruction() {
+        let mut cpu = make_cpu();
+        let mut mem = make_mem();
+        let decoder = crate::arm::decoder::Decoder::new_thumb();
+        let insn = decoder.decode(&0x2001u16.to_le_bytes()).unwrap(); // movs r0, #1
+
+        cpu.cpsr.t = true;
+        cpu.cpsr.z = false;
+        cpu.cpsr.set_it_state(Condition::EQ as u8, 0b1000);
+        cpu.regs[0] = 0x55;
+
+        let advance_it = cpu.cpsr.t && cpu.cpsr.in_it_block();
+        let mut exec = Executor::new(&mut cpu, &mut mem);
+        let result = exec.execute(&insn);
+
+        assert!(matches!(result, ExecResult::Continue));
+        assert_eq!(cpu.regs[0], 0x55);
+        assert!(advance_it);
+        cpu.cpsr.advance_it_state();
+        assert!(!cpu.cpsr.in_it_block());
     }
 
     #[test]

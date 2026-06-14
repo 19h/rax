@@ -2528,6 +2528,91 @@ impl SmirInterpreter {
                 }
             },
 
+            OpKind::VReduce {
+                dst,
+                src,
+                elem,
+                lanes,
+                op,
+            } => {
+                let a = Self::read_vec(ctx, *src);
+                let bits = elem.bytes() * 8;
+                let mask = if bits >= 64 { u64::MAX } else { (1u64 << bits) - 1 };
+                let lane = |i: u8| Self::get_lane(&a, i, bits) & mask;
+                let sext = |v: u64| {
+                    let shift = 64 - bits;
+                    ((v << shift) as i64) >> shift
+                };
+                let n = *lanes;
+                let value = match op {
+                    VecReduceOp::Add => {
+                        let mut acc = 0u64;
+                        for i in 0..n {
+                            acc = acc.wrapping_add(lane(i));
+                        }
+                        acc & mask
+                    }
+                    VecReduceOp::SMax => {
+                        let mut acc = sext(lane(0));
+                        for i in 1..n {
+                            acc = acc.max(sext(lane(i)));
+                        }
+                        acc as u64 & mask
+                    }
+                    VecReduceOp::SMin => {
+                        let mut acc = sext(lane(0));
+                        for i in 1..n {
+                            acc = acc.min(sext(lane(i)));
+                        }
+                        acc as u64 & mask
+                    }
+                    VecReduceOp::UMax => {
+                        let mut acc = lane(0);
+                        for i in 1..n {
+                            acc = acc.max(lane(i));
+                        }
+                        acc
+                    }
+                    VecReduceOp::UMin => {
+                        let mut acc = lane(0);
+                        for i in 1..n {
+                            acc = acc.min(lane(i));
+                        }
+                        acc
+                    }
+                };
+                let mut result = [0u64; 16];
+                Self::set_lane(&mut result, 0, bits, value);
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VFMinMaxNm {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                min,
+            } => {
+                // IEEE maxNum/minNum: Rust f32/f64 max/min return the numeric
+                // operand when one is NaN, matching FMAXNM/FMINNM.
+                match elem {
+                    VecElementType::F32 => {
+                        self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| {
+                            if *min { a.min(b) } else { a.max(b) }
+                        });
+                    }
+                    VecElementType::F64 => {
+                        self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| {
+                            if *min { a.min(b) } else { a.max(b) }
+                        });
+                    }
+                    _ => {
+                        // FMAXNM/FMINNM are FP-only; ignore otherwise.
+                    }
+                }
+            }
+
             OpKind::VAnd {
                 dst,
                 src1,

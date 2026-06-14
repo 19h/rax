@@ -386,7 +386,9 @@ impl Armv6Vcpu {
     fn take_exception(&mut self, exc: ExceptionType) {
         let vbar = self.cpu.cp15.sctlr.vector_base();
         let mut exec = Executor::with_vbar(&mut self.cpu, &mut self.bridge, vbar);
+        exec.exclusive_monitor = self.excl.clone();
         exec.take_exception(exc);
+        self.excl = exec.exclusive_monitor.clone();
     }
 
     /// Execute one instruction with full system semantics.
@@ -507,6 +509,7 @@ impl Armv6Vcpu {
         };
 
         let vbar = self.cpu.cp15.sctlr.vector_base();
+        let advance_it = is_thumb && self.cpu.cpsr.in_it_block();
         let mut exec = Executor::with_vbar(&mut self.cpu, &mut self.bridge, vbar);
         // Exclusive monitor state must survive across instructions (the
         // executor is rebuilt per step).
@@ -540,7 +543,7 @@ impl Armv6Vcpu {
         match result {
             ExecResult::Continue => {
                 self.cpu.regs[15] = self.cpu.regs[15].wrapping_add(insn_len);
-                if self.cpu.cpsr.in_it_block() {
+                if advance_it {
                     self.cpu.cpsr.advance_it_state();
                 }
                 StepOutcome::Progress
@@ -558,6 +561,9 @@ impl Armv6Vcpu {
                     // word-aligned targets stay in the current state unless
                     // the instruction switched it.
                     self.cpu.regs[15] = target;
+                }
+                if advance_it {
+                    self.cpu.cpsr.advance_it_state();
                 }
                 StepOutcome::Progress
             }

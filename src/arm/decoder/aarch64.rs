@@ -2190,7 +2190,7 @@ impl Aarch64Decoder {
             (0, 0b00011) => Mnemonic::SADDV, // SADDLV
             (0, 0b01010) => Mnemonic::SMAXV, // SMAXV
             (0, 0b11010) => Mnemonic::SMINV, // SMINV
-            (0, 0b11011) => Mnemonic::VADD,  // ADDV
+            (0, 0b11011) => Mnemonic::ADDV,  // ADDV
 
             (1, 0b00011) => Mnemonic::UADDV, // UADDLV
             (1, 0b01010) => Mnemonic::UMAXV, // UMAXV

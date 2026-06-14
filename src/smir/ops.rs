@@ -1045,6 +1045,27 @@ pub enum OpKind {
         op: VecUnaryOp,
     },
 
+    /// Vector across-lanes reduction: combine all `lanes` elements of `src`
+    /// into a single scalar written to lane 0 of `dst` (other lanes zeroed).
+    VReduce {
+        dst: VReg,
+        src: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        op: VecReduceOp,
+    },
+
+    /// Vector FP numeric min/max (AArch64 FMAXNM/FMINNM): IEEE maxNum/minNum,
+    /// NaN-quiet (returns the numeric operand), unlike FMAX/FMIN.
+    VFMinMaxNm {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        min: bool,
+    },
+
     /// Vector bitwise AND
     VAnd {
         dst: VReg,
@@ -2745,6 +2766,8 @@ impl OpKind {
             | OpKind::VMul { dst, .. }
             | OpKind::VDiv { dst, .. }
             | OpKind::VUnary { dst, .. }
+            | OpKind::VReduce { dst, .. }
+            | OpKind::VFMinMaxNm { dst, .. }
             | OpKind::VLane { dst, .. }
             | OpKind::VAnd { dst, .. }
             | OpKind::VOr { dst, .. }

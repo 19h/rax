@@ -438,6 +438,7 @@ pub enum Mnemonic {
     // =========================================================================
     CLZ,
     CLS,
+    CNT,
     RBIT,
     REV,
     REV16,
@@ -877,6 +878,7 @@ pub enum Mnemonic {
     UADDV,
     UMAXV,
     UMINV,
+    ADDV,
     VLD1,
     VLD2,
     VLD3,
@@ -1243,6 +1245,7 @@ impl Mnemonic {
             // Count/Reverse
             Mnemonic::CLZ => "clz",
             Mnemonic::CLS => "cls",
+            Mnemonic::CNT => "cnt",
             Mnemonic::RBIT => "rbit",
             Mnemonic::REV => "rev",
             Mnemonic::REV16 => "rev16",
@@ -1648,6 +1651,7 @@ impl Mnemonic {
             Mnemonic::UADDV => "uaddv",
             Mnemonic::UMAXV => "umaxv",
             Mnemonic::UMINV => "uminv",
+            Mnemonic::ADDV => "addv",
             Mnemonic::VLD1 => "vld1",
             Mnemonic::VLD2 => "vld2",
             Mnemonic::VLD3 => "vld3",

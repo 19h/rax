@@ -923,6 +923,22 @@ pub enum VecUnaryOp {
     Rev64,
 }
 
+/// Vector across-lanes reduction kind (see `OpKind::VReduce`). Combines all
+/// lanes of the source into a single scalar.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum VecReduceOp {
+    /// Integer add reduction (AArch64 ADDV).
+    Add,
+    /// Signed integer maximum reduction (AArch64 SMAXV).
+    SMax,
+    /// Unsigned integer maximum reduction (AArch64 UMAXV).
+    UMax,
+    /// Signed integer minimum reduction (AArch64 SMINV).
+    SMin,
+    /// Unsigned integer minimum reduction (AArch64 UMINV).
+    UMin,
+}
+
 /// Vector register width
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum VecWidth {
