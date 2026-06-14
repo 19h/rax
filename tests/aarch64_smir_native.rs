@@ -1849,7 +1849,10 @@ fn probe_vector_table_lookup() {
         g.v[5] = 0x1716_1514_1312_1110;
     });
     assert_eq!(r.v[0], 0x1716_1514_1312_1110, "tbx in-range -> v1[idx]");
-    assert_eq!(r.v[1], 0xAAAA_AAAA_AAAA_AAAA, "tbx out-of-range -> keeps dst");
+    assert_eq!(
+        r.v[1], 0xAAAA_AAAA_AAAA_AAAA,
+        "tbx out-of-range -> keeps dst"
+    );
 
     // tbl v0.16b, {v1.16b, v2.16b}, v3.16b (0x4e032020): two-table (consecutive
     // regs). v1 = 0x10..0x1f, v2 = 0x20..0x2f, index = [16..31] -> table[16..32]
@@ -1922,7 +1925,10 @@ fn probe_vector_widening_reduce() {
 #[test]
 fn e2e_vector_widening_reduce_hot_loop_matches_interpreter() {
     let v1: u128 = 0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF; // 16 bytes of -1 / 255
-    let ops: [u32; 2] = [0x4e30_3820 /* saddlv h0,v1.16b */, 0x6e30_3820 /* uaddlv */];
+    let ops: [u32; 2] = [
+        0x4e30_3820, /* saddlv h0,v1.16b */
+        0x6e30_3820, /* uaddlv */
+    ];
     for op in ops {
         let prog: [u32; 4] = [op, 0xf100_0400, 0x54ff_ffc1, 0xd65f_03c0];
         let run_one = |jit: bool| -> u128 {

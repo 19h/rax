@@ -2267,7 +2267,11 @@ impl Aarch64Decoder {
         let op = (raw >> 12) & 1;
 
         let vec_size = if q == 1 { FpRegSize::Q } else { FpRegSize::D };
-        let mnemonic = if op == 1 { Mnemonic::TBX } else { Mnemonic::TBL };
+        let mnemonic = if op == 1 {
+            Mnemonic::TBX
+        } else {
+            Mnemonic::TBL
+        };
 
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             // dst (Vd.Ta)
