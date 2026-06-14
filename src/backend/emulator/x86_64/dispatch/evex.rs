@@ -4612,6 +4612,10 @@ impl X86_64Vcpu {
             (r_val, rm_val)
         };
 
+        if matches!(alu_op, ApxAluOp::Adc | ApxAluOp::Sbb) {
+            self.materialize_flags();
+        }
+
         // Perform ALU operation
         let cf_in = (self.regs.rflags & 0x001) != 0;
         let cf_val = u64::from(cf_in);
@@ -4654,6 +4658,7 @@ impl X86_64Vcpu {
                         result,
                         op_size,
                     );
+                    self.clear_lazy_flags();
                 }
                 ApxAluOp::Sbb => {
                     flags::update_flags_sbb(
@@ -4664,6 +4669,7 @@ impl X86_64Vcpu {
                         result,
                         op_size,
                     );
+                    self.clear_lazy_flags();
                 }
                 _ => self.update_flags_alu(result, src1, src2, op_size, alu_op),
             }
@@ -4697,6 +4703,7 @@ impl X86_64Vcpu {
             flags |= 0x800; // OF
         }
         self.regs.rflags = flags;
+        self.clear_lazy_flags();
     }
 
     /// APX CCMP operation.
@@ -5168,6 +5175,7 @@ impl X86_64Vcpu {
             };
             let flags = self.regs.rflags & !(0x801); // Clear OF, CF
             self.regs.rflags = if sign_extended { flags } else { flags | 0x801 };
+            self.clear_lazy_flags();
         }
 
         self.regs.rip += ctx.cursor as u64;
@@ -5209,6 +5217,7 @@ impl X86_64Vcpu {
         if !nf {
             let flags = self.regs.rflags & !0x801; // Clear OF, CF
             self.regs.rflags = if overflow { flags | 0x801 } else { flags };
+            self.clear_lazy_flags();
         }
 
         self.regs.rip += ctx.cursor as u64;
@@ -5311,6 +5320,9 @@ impl X86_64Vcpu {
             _ => unreachable!(),
         };
 
+        if matches!(op, 2 | 3) {
+            self.materialize_flags();
+        }
         let cf_in = (self.regs.rflags & 0x001) != 0;
         let result = match op {
             0 => src.wrapping_add(imm),
@@ -5757,6 +5769,7 @@ impl X86_64Vcpu {
 
         if !nf {
             // INC/DEC don't affect CF
+            self.resolve_lazy_cf();
             let old_cf = self.regs.rflags & 0x001;
             self.update_flags_alu(
                 result,
@@ -5766,6 +5779,7 @@ impl X86_64Vcpu {
                 if is_dec { ApxAluOp::Sub } else { ApxAluOp::Add },
             );
             self.regs.rflags = (self.regs.rflags & !0x001) | old_cf;
+            self.clear_lazy_flags();
         }
 
         self.regs.rip += ctx.cursor as u64;
@@ -5925,6 +5939,7 @@ impl X86_64Vcpu {
             flags |= 0x800;
         }
         self.regs.rflags = flags;
+        self.clear_lazy_flags();
     }
 
     /// Update flags for shift operations
@@ -6047,6 +6062,7 @@ impl X86_64Vcpu {
             flags |= 0x800;
         }
         self.regs.rflags = flags;
+        self.clear_lazy_flags();
     }
 
     fn update_apx_double_shift_flags(
@@ -6143,6 +6159,78 @@ mod tests {
     fn apx_pair_second_stack_slot_address_wraps() {
         assert_eq!(apx_pair_second_stack_slot_addr(u64::MAX - 7), 0);
         assert_eq!(apx_pair_second_stack_slot_addr(0x1000), 0x1008);
+    }
+
+    #[test]
+    fn apx_ctest_default_flags_clear_stale_lazy_flags() {
+        let code = [
+            0x83, 0xC1, 0x01, // addl $1, %ecx
+            0x62, 0xF4, 0xE4, 0x00, 0x85, 0xC3, // ctesto {dfv=of,sf} %rax, %rbx
+            0x0F, 0x94, 0xC2, // setz %dl
+        ];
+        let mut vcpu = long_mode_vcpu(&code);
+        vcpu.regs.rcx = u32::MAX as u64;
+        vcpu.regs.rax = 1;
+        vcpu.regs.rbx = 1;
+
+        step_ok(&mut vcpu);
+        step_ok(&mut vcpu);
+        step_ok(&mut vcpu);
+
+        assert_eq!(vcpu.regs.rdx & 0xFF, 0);
+    }
+
+    #[test]
+    fn apx_imul_clears_stale_lazy_flags_for_following_condition() {
+        let code = [
+            0x83, 0xC1, 0x01, // addl $1, %ecx
+            0x62, 0xF4, 0xFC, 0x08, 0xAF, 0xC3, // {evex} imulq %rbx, %rax
+            0x0F, 0x94, 0xC2, // setz %dl
+        ];
+        let mut vcpu = long_mode_vcpu(&code);
+        vcpu.regs.rcx = u32::MAX as u64;
+        vcpu.regs.rax = 2;
+        vcpu.regs.rbx = 3;
+
+        step_ok(&mut vcpu);
+        step_ok(&mut vcpu);
+        assert_eq!(vcpu.regs.rax, 6);
+        step_ok(&mut vcpu);
+
+        assert_eq!(vcpu.regs.rdx & 0xFF, 0);
+    }
+
+    #[test]
+    fn apx_adc_reg_materializes_lazy_cf() {
+        let code = [
+            0x83, 0xC1, 0x01, // addl $1, %ecx
+            0x62, 0xF4, 0x7C, 0x08, 0x11, 0xD8, // {evex} adcl %ebx, %eax
+        ];
+        let mut vcpu = long_mode_vcpu(&code);
+        vcpu.regs.rcx = u32::MAX as u64;
+        vcpu.regs.rax = 1;
+        vcpu.regs.rbx = 0;
+
+        step_ok(&mut vcpu);
+        step_ok(&mut vcpu);
+
+        assert_eq!(vcpu.regs.rax, 2);
+    }
+
+    #[test]
+    fn apx_sbb_imm_materializes_lazy_cf() {
+        let code = [
+            0x83, 0xC1, 0x01, // addl $1, %ecx
+            0x62, 0xF4, 0x7C, 0x08, 0x83, 0xD8, 0x00, // {evex} sbbl $0, %eax
+        ];
+        let mut vcpu = long_mode_vcpu(&code);
+        vcpu.regs.rcx = u32::MAX as u64;
+        vcpu.regs.rax = 1;
+
+        step_ok(&mut vcpu);
+        step_ok(&mut vcpu);
+
+        assert_eq!(vcpu.regs.rax, 0);
     }
 
     #[test]
