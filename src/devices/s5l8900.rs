@@ -2333,6 +2333,14 @@ const STATUS_RXFIFO_SHIFT: u32 = 8;
 const STATUS_TXFIFO_MASK: u32 = 31 << STATUS_TXFIFO_SHIFT;
 const STATUS_RXFIFO_MASK: u32 = 31 << STATUS_RXFIFO_SHIFT;
 
+/// Hard cap on buffered receive bytes. RXCNT is a guest-controlled 32-bit MMIO
+/// register, and `run()` pushes one byte into the host `rx` VecDeque per count;
+/// without a bound a single `CFG_AGD`/RUN write with RXCNT near `u32::MAX` would
+/// force billions of iterations and multi-GB host allocation (DoS). The guest
+/// drains received bytes through RXDATA, which re-triggers `run()` to refill, so
+/// any real transfer still completes — just in FIFO-sized chunks. (issue #47)
+const SPI_RX_FIFO_MAX: usize = 0x10000;
+
 /// Apple/S5L SPI master. iBoot drives it in polled mode: reset FIFOs, push TX
 /// bytes, set RXCNT, RUN, then poll STATUS for COMPLETE and drain RXDATA.
 pub struct S5lSpi {
@@ -2381,14 +2389,21 @@ impl S5lSpi {
             if self.tx.is_empty() {
                 self.regs[status_i] |= STATUS_TXEMPTY;
             }
-            if self.regs[rxcnt_i] > 0 {
+            // Stop receiving once the host FIFO is full (see SPI_RX_FIFO_MAX); the
+            // guest must drain RXDATA to make room, which re-triggers run().
+            if self.regs[rxcnt_i] > 0 && self.rx.len() < SPI_RX_FIFO_MAX {
                 self.rx.push_back(rx);
                 self.regs[rxcnt_i] -= 1;
                 self.regs[status_i] |= STATUS_RXREADY;
             }
         }
-        // Auto-get-data: fetch the remaining receive bytes with sentinels.
-        while self.regs[rxcnt_i] > 0 && self.regs[cfg_i] & CFG_AGD != 0 {
+        // Auto-get-data: fetch the remaining receive bytes with sentinels, but
+        // never grow the host rx FIFO past SPI_RX_FIFO_MAX in a single run so a
+        // guest-controlled RXCNT cannot drive an unbounded loop/allocation.
+        while self.regs[rxcnt_i] > 0
+            && self.regs[cfg_i] & CFG_AGD != 0
+            && self.rx.len() < SPI_RX_FIFO_MAX
+        {
             let rx = self.peripheral.transfer(0xff);
             self.rx.push_back(rx);
             self.regs[rxcnt_i] -= 1;
@@ -2668,6 +2683,30 @@ impl S5lUart {
 impl Default for S5lUart {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod spi_dos_tests {
+    use super::*;
+
+    // Regression for issue #47: a guest can set a huge RXCNT and enable
+    // CFG_AGD + RUN. `run()` must never push more than SPI_RX_FIFO_MAX bytes into
+    // the host rx FIFO, otherwise an RXCNT near u32::MAX forces billions of
+    // iterations and multi-GB host allocation (DoS). Requesting slightly more
+    // than the cap makes the bound observable without allocating gigabytes.
+    #[test]
+    fn spi_rxcnt_does_not_overrun_rx_fifo() {
+        let mut spi = S5lSpi::new(0);
+        spi.write(SPI_CFG, CFG_AGD); // auto-get-data
+        spi.write(SPI_RXCNT, (SPI_RX_FIFO_MAX + 1000) as u32);
+        spi.write(SPI_TXDATA, 0xAA); // a TX byte so CTRL_RUN starts the engine
+        spi.write(SPI_CTRL, CTRL_RUN); // triggers run()
+        assert!(
+            spi.rx.len() <= SPI_RX_FIFO_MAX,
+            "rx FIFO must stay bounded by SPI_RX_FIFO_MAX; got {}",
+            spi.rx.len(),
+        );
     }
 }
 
