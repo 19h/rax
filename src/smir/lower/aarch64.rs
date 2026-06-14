@@ -10480,17 +10480,23 @@ impl Aarch64Lowerer {
                     let rn = Self::gpr(src1)?;
                     let shift = divisor.trailing_zeros();
                     if quot == rn {
+                        let scratches = Self::scratch_regs(&[quot, rn], 1)?;
+                        let sign = scratches[0];
+                        self.emit_scratch_save(&scratches);
+                        self.emit_bitfield(sign, rn, 0b00, bits - 1, bits - 1, emit_width)?;
                         self.emit_addsub_shifted(
                             quot,
                             rn,
-                            rn,
+                            sign,
                             false,
                             false,
                             1,
                             bits - shift,
                             emit_width,
                         )?;
-                        return self.emit_bitfield(quot, quot, 0b00, shift, bits - 1, emit_width);
+                        self.emit_bitfield(quot, quot, 0b00, shift, bits - 1, emit_width)?;
+                        self.emit_scratch_restore(&scratches);
+                        return Ok(());
                     }
                     self.emit_bitfield(quot, rn, 0b00, bits - 1, bits - 1, emit_width)?;
                     self.emit_addsub_shifted(
@@ -24824,8 +24830,11 @@ mod tests {
         let code = lowerer.finalize().unwrap();
 
         let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_addsub_shift_regs(1, 0, 0, 1, 61, 1, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&enc_ldst_simm_regs(3, 0b00, 0b11, -16, 16, 31).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(1, 0b00, 63, 63, 1, 16).to_le_bytes());
+        expected.extend_from_slice(&enc_addsub_shift_regs(1, 0, 0, 1, 61, 1, 1, 16).to_le_bytes());
         expected.extend_from_slice(&enc_bitfield_regs(1, 0b00, 3, 63, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&enc_ldst_simm_regs(3, 0b01, 0b01, 16, 16, 31).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
@@ -24852,10 +24861,29 @@ mod tests {
         let code = lowerer.finalize().unwrap();
 
         let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_addsub_shift_regs(0, 0, 0, 1, 28, 1, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&enc_ldst_simm_regs(3, 0b00, 0b11, -16, 16, 31).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b00, 31, 31, 1, 16).to_le_bytes());
+        expected.extend_from_slice(&enc_addsub_shift_regs(0, 0, 0, 1, 28, 1, 1, 16).to_le_bytes());
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b00, 4, 31, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&enc_ldst_simm_regs(3, 0b01, 0b01, 16, 16, 31).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn executes_divs_w_imm_power_of_two_in_place_positive_high_bit() {
+        assert_div_runtime_lowering(
+            "divs_w_imm_power_of_two_in_place_positive_high_bit",
+            true,
+            1,
+            None,
+            1,
+            SrcOperand::Imm(16),
+            None,
+            0x7fff_ffff,
+            16,
+            OpWidth::W32,
+        );
     }
 
     #[test]
