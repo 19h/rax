@@ -2073,21 +2073,29 @@ impl Aarch64Decoder {
             (1, 0b00011) if size == 0b10 => Mnemonic::VORR, // BIT
             (1, 0b00011) if size == 0b11 => Mnemonic::VORR, // BIF
 
-            // FP operations (size bit 0 = single, bit 1 = double when Q=1)
-            (0, 0b11000) => Mnemonic::FADD, // FMAXNM
-            (0, 0b11001) => Mnemonic::FMLA, // FMLA
-            (0, 0b11010) => Mnemonic::FADD, // FADD
-            (0, 0b11011) => Mnemonic::FMUL, // FMULX
-            (0, 0b11100) => Mnemonic::FCMP, // FCMEQ
-            (0, 0b11110) => Mnemonic::FMAX, // FMAX
-            (0, 0b11111) => Mnemonic::FADD, // FRECPS
+            // FP three-same (opcode = bits[15:11]); sz (bit22) selects
+            // single/double. The opcodes here are now mapped to their REAL
+            // mnemonics (the previous table mislabeled almost all of them — e.g.
+            // FMAXNM/FRECPS as FADD, FACGE as FMUL — which mis-executed vector FP
+            // in the interpreter and blocked vector-FP JIT). Forms RAX does not
+            // model (FMULX/FRECPS/FRSQRTS/FCM*/FACG*) decode to UNKNOWN so they
+            // bail cleanly rather than silently doing the wrong arithmetic.
+            (0, 0b11000) => Mnemonic::FMAXNM,
+            (0, 0b11001) => Mnemonic::FMLA,
+            (0, 0b11010) => Mnemonic::FADD,
+            (0, 0b11011) => Mnemonic::UNKNOWN, // FMULX
+            (0, 0b11100) => Mnemonic::UNKNOWN, // FCMEQ
+            (0, 0b11110) => Mnemonic::FMAX,
+            (0, 0b11111) => Mnemonic::UNKNOWN, // FRECPS / FRSQRTS
 
-            (1, 0b11000) => Mnemonic::FSUB, // FMINNM
-            (1, 0b11001) => Mnemonic::FMLS, // FMLS
-            (1, 0b11010) => Mnemonic::FSUB, // FSUB
-            (1, 0b11101) => Mnemonic::FMUL, // FMUL
-            (1, 0b11110) => Mnemonic::FMIN, // FMIN
-            (1, 0b11111) => Mnemonic::FDIV, // FDIV (or FRSQRTS)
+            (1, 0b11000) => Mnemonic::FMINNM,
+            (1, 0b11001) => Mnemonic::FMLS,
+            (1, 0b11010) => Mnemonic::FSUB,
+            (1, 0b11011) => Mnemonic::FMUL,
+            (1, 0b11100) => Mnemonic::UNKNOWN, // FCMGE
+            (1, 0b11101) => Mnemonic::UNKNOWN, // FACGE
+            (1, 0b11110) => Mnemonic::FMIN,
+            (1, 0b11111) => Mnemonic::FDIV,
 
             _ => Mnemonic::UNKNOWN,
         };

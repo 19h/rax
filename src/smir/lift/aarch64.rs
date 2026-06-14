@@ -2055,6 +2055,36 @@ impl Aarch64Lifter {
                     Some(Operand::FpReg(r)) => r,
                     _ => return Err(LiftError::Internal("missing fp rm".to_string())),
                 };
+                // Vector FP three-same (bit 28 == 0) processes all lanes; the
+                // scalar FP 2-source form (bit 28 == 1) takes the path below.
+                // Only the unambiguous IEEE arithmetic ops are vectorized here;
+                // vector FMAX/FMIN/FMAXNM/FMINNM (NaN semantics) and FDIV (no
+                // vector-divide op) bail to the interpreter.
+                if (insn.raw >> 28) & 1 == 0 {
+                    let q = (insn.raw >> 30) & 1;
+                    let sz = (insn.raw >> 22) & 1;
+                    let (elem, lanes) = if sz == 0 {
+                        (VecElementType::F32, if q == 1 { 4u8 } else { 2 })
+                    } else {
+                        (VecElementType::F64, 2)
+                    };
+                    let dst = Self::fp_vreg(rd);
+                    let src1 = Self::fp_vreg(rn);
+                    let src2 = Self::fp_vreg(rm);
+                    let vkind = match insn.mnemonic {
+                        Mnemonic::FADD => OpKind::VAdd { dst, src1, src2, elem, lanes },
+                        Mnemonic::FSUB => OpKind::VSub { dst, src1, src2, elem, lanes },
+                        Mnemonic::FMUL => OpKind::VMul { dst, src1, src2, elem, lanes },
+                        _ => {
+                            return Err(LiftError::Unsupported {
+                                addr: pc,
+                                mnemonic: format!("vector {:?}", insn.mnemonic),
+                            });
+                        }
+                    };
+                    ops.push(SmirOp::new(OpId(ops.len() as u16), pc, vkind));
+                    return Ok((ops, control));
+                }
                 let precision = Self::fp_precision(&rd.size);
                 let kind = match insn.mnemonic {
                     Mnemonic::FADD => OpKind::FAdd {

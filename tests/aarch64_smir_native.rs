@@ -1084,3 +1084,61 @@ fn e2e_vector_loadstore_loop_matches_interpreter() {
     }
     assert_eq!(jit, interp, "vector load/store loop: JIT matches interpreter");
 }
+
+// Vector FP arithmetic (fadd/fmul v.4s), newly routed from the cleaned-up
+// decoder + lifter bit-28 vector/scalar split, lowered to native vector fadd/fmul.
+#[test]
+fn probe_vector_fp_arith_4s() {
+    let f = |x: f32| x.to_bits() as u64;
+    let pack = |a: f32, b: f32| f(a) | f(b) << 32;
+
+    // fadd v0.4s, v1.4s, v2.4s (0x4e22d420): [1,2,3,4] + [10,20,30,40]
+    let r = fp_run(&[0x4e22_d420], |g| {
+        g.v[2] = pack(1.0, 2.0);
+        g.v[3] = pack(3.0, 4.0);
+        g.v[4] = pack(10.0, 20.0);
+        g.v[5] = pack(30.0, 40.0);
+    });
+    assert_eq!(r.v[0], pack(11.0, 22.0), "fadd v.4s lanes 0,1");
+    assert_eq!(r.v[1], pack(33.0, 44.0), "fadd v.4s lanes 2,3");
+
+    // fmul v0.4s, v1.4s, v2.4s (0x6e22dc20): [2,2,2,2] * [3,4,5,6]
+    let r = fp_run(&[0x6e22_dc20], |g| {
+        g.v[2] = pack(2.0, 2.0);
+        g.v[3] = pack(2.0, 2.0);
+        g.v[4] = pack(3.0, 4.0);
+        g.v[5] = pack(5.0, 6.0);
+    });
+    assert_eq!(r.v[0], pack(6.0, 8.0), "fmul v.4s lanes 0,1");
+    assert_eq!(r.v[1], pack(10.0, 12.0), "fmul v.4s lanes 2,3");
+}
+
+// End-to-end vector FP accumulation loop JIT'd in the emulator vs interpreter:
+// v0.4s += v1.4s each iteration. Validates vector FP arithmetic through the full
+// emulator JIT path (gate admission + FP/V trampoline).
+#[test]
+fn e2e_vector_fp_hot_loop_matches_interpreter() {
+    // loop: fadd v0.4s,v0.4s,v1.4s ; subs x0,x0,#1 ; b.ne loop ; ret
+    let prog: [u32; 4] = [0x4e21_d400, 0xf100_0400, 0x54ff_ffc1, 0xd65f_03c0];
+    let f = |x: f32| x.to_bits() as u128;
+    let v1 = f(1.0) | f(2.0) << 32 | f(3.0) << 64 | f(4.0) << 96;
+    const N: u64 = 100;
+
+    let run_one = |jit: bool| -> u128 {
+        let mut cpu = fresh_cpu();
+        cpu.set_jit_enabled(jit);
+        load_prog(&mut cpu, &prog);
+        cpu.set_simd(0, 0);
+        cpu.set_simd(1, v1);
+        cpu.set_x(0, N);
+        drive_to_done(&mut cpu);
+        cpu.get_simd(0)
+    };
+
+    let interp = run_one(false);
+    let jit = run_one(true);
+    let nf = N as f32;
+    let expected = f(nf) | f(2.0 * nf) << 32 | f(3.0 * nf) << 64 | f(4.0 * nf) << 96;
+    assert_eq!(interp, expected, "interp: v0 = N*v1 per lane");
+    assert_eq!(jit, interp, "JIT vector FP loop matches interpreter");
+}
