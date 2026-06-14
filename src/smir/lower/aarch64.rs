@@ -9680,6 +9680,15 @@ impl Aarch64Lowerer {
         src: VReg,
         to_width: OpWidth,
     ) -> Result<(), LowerError> {
+        if !matches!(
+            to_width,
+            OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+        ) {
+            return Err(LowerError::UnsupportedOp {
+                op: format!("AArch64 native Truncate width {to_width:?}"),
+            });
+        }
+
         if let VReg::Imm(value) = src {
             let emit_width = if to_width == OpWidth::W64 {
                 OpWidth::W64
@@ -50994,22 +51003,22 @@ mod tests {
 
     #[test]
     fn rejects_truncate_w128_lowering() {
-        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
-        builder.push_op(
-            0,
-            OpKind::Truncate {
+        for (name, src, from_width) in [
+            ("register", x(1), OpWidth::W128),
+            ("immediate", VReg::Imm(0x1_0000_0000), OpWidth::W64),
+        ] {
+            let err = try_lower_single_op(OpKind::Truncate {
                 dst: x(0),
-                src: x(1),
-                from_width: OpWidth::W128,
+                src,
+                from_width,
                 to_width: OpWidth::W128,
-            },
-        );
-        builder.set_terminator(Terminator::Return { values: vec![] });
-        let func = builder.finish();
-
-        let mut lowerer = Aarch64Lowerer::new();
-        let err = lowerer.lower_function(&func).unwrap_err();
-        assert!(matches!(err, LowerError::UnsupportedOp { .. }));
+            })
+            .unwrap_err();
+            assert!(
+                matches!(err, LowerError::UnsupportedOp { .. }),
+                "{name}: {err:?}"
+            );
+        }
     }
 
     #[test]
