@@ -11,7 +11,7 @@ use std::cell::RefCell;
 use std::sync::{Arc, Mutex, OnceLock};
 
 use tracing::{debug, info};
-use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
+use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestMemoryMmap};
 
 use crate::arm::execution::{ArmMemory, MemoryError};
 use crate::arm::mmu_v6::{self, V6Access, V6Fault, V6MmuConfig};
@@ -392,6 +392,16 @@ fn nand_dir() -> Option<std::path::PathBuf> {
     }
     let default = std::path::PathBuf::from("docs/hardware/apple/iPodTouch1/nand");
     default.is_dir().then_some(default)
+}
+
+/// True when the guest-physical range `[addr, addr + len)` lies entirely within
+/// guest RAM, where `mem_end` is the first address past the end of RAM
+/// (`mem.last_addr() + 1`). Guest-controlled DMA sizes (AES `insize`, the 8900
+/// header's `data_len`) are validated against this *before* any
+/// `vec![0u8; len]`, so a malicious size cannot drive a multi-GB host
+/// allocation. (issues #43, #50)
+fn dma_range_in_bounds(mem_end: u64, addr: u32, len: usize) -> bool {
+    (addr as u64).saturating_add(len as u64) <= mem_end
 }
 
 /// Last memory fault recorded by the bridge (for DFSR/DFAR reporting).
@@ -5577,6 +5587,15 @@ impl S5L8900Vcpu {
         let Some(body_addr) = addr.checked_add(S5L_8900_HEADER_LEN as u32) else {
             return;
         };
+        // Bound the guest-controlled data_len against actual guest RAM before
+        // allocating. The length comes from the guest-supplied 8900 header, so an
+        // unbounded `vec![0u8; data_len]` could be forced to multi-GB (host
+        // OOM/DoS) before `read_slice` ever rejects an out-of-range body. (issue #50)
+        let mem_end = self.bridge.mem.last_addr().raw_value().saturating_add(1);
+        if !dma_range_in_bounds(mem_end, body_addr, data_len) {
+            debug!(len = data_len, "8900 data length exceeds guest memory");
+            return;
+        }
         let mut body = vec![0u8; data_len];
         if self
             .bridge
@@ -5640,9 +5659,18 @@ impl S5L8900Vcpu {
 
         let len = insize as usize;
         let mut ok = false;
+        // Bound the guest-controlled AES size against actual guest RAM before
+        // allocating. `insize` comes straight from a guest MMIO register, so an
+        // unbounded `vec![0u8; len]` could be forced up to ~4 GiB (host OOM/DoS)
+        // before `read_slice` ever validates the source range. Require both the
+        // source (`inaddr`) and destination (`outaddr`) DMA ranges to fit in
+        // guest memory. (issue #43)
+        let mem_end = self.bridge.mem.last_addr().raw_value().saturating_add(1);
+        let in_bounds = dma_range_in_bounds(mem_end, inaddr, len)
+            && dma_range_in_bounds(mem_end, outaddr, len);
         if let Some(kb) = key_bytes {
             if let Some(key) = AesKey::new(&kb) {
-                if len > 0 && len % 16 == 0 {
+                if len > 0 && len % 16 == 0 && in_bounds {
                     let mut buf = vec![0u8; len];
                     if self
                         .bridge
@@ -5693,5 +5721,77 @@ impl S5L8900Vcpu {
             .read_slice(&mut buf, GuestAddress(addr as u64))
             .ok()?;
         Some(sha1(&buf))
+    }
+}
+
+#[cfg(test)]
+mod dos_bounds_tests {
+    use super::*;
+
+    /// 16 KiB of guest RAM at physical 0.
+    fn small_vcpu() -> (S5L8900Vcpu, Arc<GuestMemoryMmap>) {
+        let mem =
+            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x4000)]).unwrap());
+        let vcpu = S5L8900Vcpu::new(0, mem.clone());
+        (vcpu, mem)
+    }
+
+    // issues #43 / #50: guest-controlled DMA sizes must be validated against
+    // guest RAM before any `vec![0u8; len]`, so a malicious size cannot drive a
+    // multi-GB host allocation.
+    #[test]
+    fn dma_range_in_bounds_rejects_oversized_sizes() {
+        let mem_end = 0x4000; // 16 KiB
+        // Valid ranges within RAM are accepted (the bound must not over-reject).
+        assert!(dma_range_in_bounds(mem_end, 0, 0x1000));
+        assert!(dma_range_in_bounds(mem_end, 0x3000, 0x1000)); // exactly fills RAM
+        assert!(dma_range_in_bounds(mem_end, 0, 0)); // empty
+        // Out-of-range / oversized requests are rejected (no allocation).
+        assert!(!dma_range_in_bounds(mem_end, 0x3001, 0x1000)); // one byte over
+        assert!(!dma_range_in_bounds(mem_end, 0, 0x8000_0000)); // ~2 GiB (issue #43)
+        assert!(!dma_range_in_bounds(mem_end, 0, 0xFFFF_FFF0)); // ~4 GiB (issue #50)
+        assert!(!dma_range_in_bounds(mem_end, u32::MAX, 16)); // base near top, no wrap
+    }
+
+    // issue #50: a crafted 8900 header advertising a huge data_len must be
+    // skipped (no multi-GB allocation, no decryption) rather than aborting.
+    #[test]
+    fn engine_8900_oversized_data_len_is_skipped() {
+        let (mut vcpu, mem) = small_vcpu();
+        let mut header = [0u8; S5L_8900_HEADER_LEN];
+        header[..4].copy_from_slice(b"8900");
+        header[7] = 0x03; // "encrypted" marker the engine requires
+        header[12..16].copy_from_slice(&0x1000_0000u32.to_le_bytes()); // 256 MiB >> 16 KiB
+        mem.write_slice(&header, GuestAddress(0)).unwrap();
+
+        vcpu.decrypt_8900(0); // must return cleanly without a giant allocation
+
+        // Nothing should have been decrypted into the (in-range) body slot.
+        let mut probe = [0u8; 16];
+        mem.read_slice(&mut probe, GuestAddress(S5L_8900_HEADER_LEN as u64))
+            .unwrap();
+        assert_eq!(
+            probe, [0u8; 16],
+            "an oversized 8900 request must not write a decrypted body",
+        );
+    }
+
+    // issue #43: a huge AES insize must be rejected before allocation.
+    #[test]
+    fn aes_oversized_insize_is_skipped() {
+        let (mut vcpu, _mem) = small_vcpu();
+        {
+            let mut inner = vcpu.bridge.inner.borrow_mut();
+            inner.aes.keytype = AesKeyType::Custom; // 32-byte default key (AES-256)
+            inner.aes.inaddr = 0;
+            inner.aes.outaddr = 0;
+            inner.aes.insize = 0x1000_0000; // 256 MiB, multiple of 16, >> 16 KiB
+            inner.aes.pending_go = true;
+        }
+        vcpu.service_aes(); // must return cleanly without a giant allocation
+        assert!(
+            !vcpu.bridge.inner.borrow().aes.pending_go,
+            "service_aes should consume the GO request",
+        );
     }
 }
