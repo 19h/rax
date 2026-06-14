@@ -4,6 +4,7 @@ mod kand_kor_kxor;
 mod kandn_knot_mask;
 mod kmov;
 mod ktest_kunpck_kshift;
+mod opmask_oob_ud;
 mod vaddps_zmm;
 mod vcomish_vucomish;
 mod vdivps_zmm;

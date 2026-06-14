@@ -826,6 +826,8 @@ mod x86_64_simd_avx512_kandn_knot_mask;
 mod x86_64_simd_avx512_kmov;
 #[path = "x86_64/simd/avx512/ktest_kunpck_kshift.rs"]
 mod x86_64_simd_avx512_ktest_kunpck_kshift;
+#[path = "x86_64/simd/avx512/opmask_oob_ud.rs"]
+mod x86_64_simd_avx512_opmask_oob_ud;
 #[path = "x86_64/simd/avx512_mask_ops.rs"]
 mod x86_64_simd_avx512_mask_ops;
 #[path = "x86_64/simd/avx512/vaddph_vsubph_vmulph_vdivph.rs"]
