@@ -95,8 +95,8 @@ impl Default for S5lClock {
 // =============================================================================
 
 /// S5L8900 timer block. iBoot uses the free-running tick counter (TICKSHIGH /
-/// TICKSLOW) for microsecond delay loops. We drive it from a tick value the
-/// vCPU advances with executed instructions, so guest busy-waits terminate.
+/// TICKSLOW) for microsecond delay loops. The vCPU drives it from a virtual
+/// timer clock that advances during execution and while the guest is idle.
 pub struct S5lTimer {
     /// Free-running microsecond counter. iBoot treats the timer as a µs clock
     /// (it divides by 1_000_000 to get seconds). The value is updated coarsely
@@ -114,7 +114,7 @@ pub struct S5lTimer {
     irq: bool,
     /// Whether the periodic timer (timer 4) is running.
     started: bool,
-    /// Instruction count at which to next assert the periodic IRQ.
+    /// Virtual timer-clock value at which to next assert the periodic IRQ.
     next_irq_insn: u64,
 }
 
@@ -142,21 +142,33 @@ impl S5lTimer {
         }
     }
 
-    /// Raise the periodic system-tick IRQ, paced by executed instructions (so
-    /// the rate is independent of the µs-counter speedup) and held off until
-    /// the guest has run long enough to have created its scheduler tasks.
-    pub fn tick_irq(&mut self, insn_count: u64, ready: u64, interval: u64) {
-        if !self.started || insn_count < ready {
+    /// Raise the periodic system-tick IRQ, paced by the vCPU's virtual timer
+    /// clock and held off until the guest has created its scheduler tasks.
+    pub fn tick_irq(&mut self, timer_clock: u64, ready: u64, interval: u64) {
+        if !self.started || timer_clock < ready {
             return;
         }
-        if insn_count >= self.next_irq_insn {
+        if timer_clock >= self.next_irq_insn {
             self.irq = true;
-            self.next_irq_insn = insn_count.max(ready) + interval;
+            self.next_irq_insn = timer_clock.max(ready) + interval;
         }
     }
 
     pub fn irq_pending(&self) -> bool {
         self.irq
+    }
+
+    pub fn debug_state(&self) -> (u64, u32, u32, u32, u32, bool, bool, u64) {
+        (
+            self.micros,
+            self.status,
+            self.config,
+            self.bcount1,
+            self.bcount2,
+            self.irq,
+            self.started,
+            self.next_irq_insn,
+        )
     }
 
     pub fn read(&mut self, offset: u32) -> u32 {
@@ -243,10 +255,13 @@ impl S5lDmac {
     /// Mark channel `ch`'s transfer complete: zero the remaining size, disable
     /// the channel, and raise its terminal-count interrupt status.
     pub fn complete(&mut self, ch: usize) {
+        let tc_irq = self.control[ch] & (1 << 31) != 0;
         self.control[ch] &= !0xFFF;
         self.config[ch] &= !1;
         self.enbld &= !(1 << ch);
-        self.tc_status |= 1 << ch;
+        if tc_irq {
+            self.tc_status |= 1 << ch;
+        }
     }
 
     /// Channel IRQ line level: any terminal-count status whose channel has the
@@ -1972,14 +1987,195 @@ enum SpiPeripheral {
     None,
     /// The LCD panel (on SPI1): responds to ID/info commands.
     LcdPanel { cur_cmd: u8 },
-    /// The multitouch controller (on SPI2): stubbed (returns zero).
-    Multitouch,
+    /// The multitouch controller (on SPI2): enough of the HBPP protocol for boot.
+    Multitouch(MultitouchSpi),
+}
+
+struct MultitouchSpi {
+    cur_cmd: u8,
+    out: Vec<u8>,
+    input: Vec<u8>,
+    pos: usize,
+    hbpp_ack: [u8; 2],
+    trace: bool,
+}
+
+impl MultitouchSpi {
+    fn new() -> Self {
+        Self {
+            cur_cmd: 0,
+            out: Vec::new(),
+            input: Vec::new(),
+            pos: 0,
+            hbpp_ack: [0, 0],
+            trace: std::env::var("RAX_S5L_MT_SPI_LOG").is_ok(),
+        }
+    }
+
+    fn hex_prefix(bytes: &[u8], max_len: usize) -> String {
+        let mut out = String::new();
+        for b in bytes.iter().take(max_len) {
+            out.push_str(&format!("{b:02x}"));
+        }
+        if bytes.len() > max_len {
+            out.push_str("...");
+        }
+        out
+    }
+
+    fn checksum_response(out: &mut [u8]) {
+        if out.len() < 16 {
+            return;
+        }
+        let checksum: u16 = out.iter().take(14).map(|&b| b as u16).sum();
+        out[14] = checksum as u8;
+        out[15] = (checksum >> 8) as u8;
+    }
+
+    fn report_size(report_id: u8) -> u16 {
+        match report_id {
+            0x70 => 0x1,
+            0xd1 => 0x1,
+            0xd3 => 0x5,
+            0xd0 => 0x1,
+            0xa1 => 0x1,
+            0xd9 => 0x8,
+            _ => 0,
+        }
+    }
+
+    fn start_command(&mut self, cmd: u8) {
+        self.cur_cmd = cmd;
+        self.input.clear();
+        self.pos = 0;
+        self.out.clear();
+
+        match cmd {
+            0x18 => self.out = vec![0x18, 0xe1],
+            0x1a => {
+                self.out = if self.hbpp_ack == [0, 0] {
+                    vec![0x4b, 0xc1]
+                } else {
+                    self.hbpp_ack.to_vec()
+                };
+            }
+            0x1c => self.out = vec![0; 8],
+            0x1d => self.out = vec![0; 12],
+            0x1e => self.out = vec![0; 16],
+            0x1f => self.out = vec![0x1f, 0],
+            0x30 => {
+                self.out = vec![0; 20];
+                self.out[0] = 0x30;
+            }
+            0x47 => self.out = vec![0x47, 0],
+            0xe1 => {
+                self.out = vec![0; 16];
+                self.out[0] = 0xe1;
+                Self::checksum_response(&mut self.out);
+            }
+            0xe2 => {
+                self.out = vec![0; 16];
+                self.out[0] = 0xe2;
+                self.out[2] = 0x01; // interface version
+                self.out[3] = 0x94; // max packet size 0x294
+                self.out[4] = 0x02;
+                Self::checksum_response(&mut self.out);
+            }
+            0xe3 | 0xe4 | 0xe6 => {
+                self.out = vec![0; 16];
+                self.out[0] = cmd;
+                Self::checksum_response(&mut self.out);
+            }
+            0xea => self.out = vec![0; 16],
+            _ => self.out = vec![0],
+        }
+        if self.trace {
+            tracing::info!(
+                cmd = format!("{cmd:#x}"),
+                out_len = self.out.len(),
+                "multitouch spi command start"
+            );
+        }
+    }
+
+    fn prepare_report_info(&mut self, report_id: u8) {
+        self.out.fill(0);
+        self.out[0] = 0xe3;
+        self.out[2] = 0;
+        let len = Self::report_size(report_id);
+        self.out[3] = len as u8;
+        self.out[4] = (len >> 8) as u8;
+        Self::checksum_response(&mut self.out);
+    }
+
+    fn prepare_short_control_read(&mut self, report_id: u8) {
+        self.out.fill(0);
+        self.out[0] = 0xe6;
+        match report_id {
+            0xd1 => self.out[3] = 81, // family ID
+            0xd3 => {
+                self.out[3] = 0x01; // little endian
+                self.out[4] = 15; // sensor rows
+                self.out[5] = 10; // sensor columns
+                self.out[6] = 51; // BCD version
+                self.out[7] = 0;
+            }
+            0xd0 | 0xa1 => self.out[3] = 0,
+            0xd9 => {
+                self.out[3..7].copy_from_slice(&5000u32.to_le_bytes());
+                self.out[7..11].copy_from_slice(&7500u32.to_le_bytes());
+            }
+            _ => {}
+        }
+        Self::checksum_response(&mut self.out);
+    }
+
+    fn transfer(&mut self, value: u8) -> u8 {
+        if self.cur_cmd == 0 {
+            self.start_command(value);
+        }
+
+        self.input.push(value);
+        match self.cur_cmd {
+            0x30 if self.input.len() == 10 => {
+                let len = ((self.input[2] as usize) << 10) | (((self.input[3] as usize) << 2) + 5);
+                self.out = vec![0; len.max(1)];
+                self.pos = 0;
+            }
+            0xe3 if self.input.len() == 2 => self.prepare_report_info(self.input[1]),
+            0xe6 if self.input.len() == 2 => self.prepare_short_control_read(self.input[1]),
+            _ => {}
+        }
+
+        let ret = self.out.get(self.pos).copied().unwrap_or(0);
+        self.pos += 1;
+        if self.pos >= self.out.len() {
+            if self.trace {
+                tracing::info!(
+                    cmd = format!("{:#x}", self.cur_cmd),
+                    in_len = self.input.len(),
+                    in_hex = Self::hex_prefix(&self.input, 32),
+                    out_len = self.out.len(),
+                    out_hex = Self::hex_prefix(&self.out, 32),
+                    hbpp_ack = format!("{:02x}{:02x}", self.hbpp_ack[0], self.hbpp_ack[1]),
+                    "multitouch spi command done"
+                );
+            }
+            if self.cur_cmd == 0x1e {
+                self.hbpp_ack = [0x4a, 0xd1];
+            }
+            self.cur_cmd = 0;
+            self.pos = 0;
+        }
+        ret
+    }
 }
 
 impl SpiPeripheral {
     fn transfer(&mut self, value: u8) -> u8 {
         match self {
-            SpiPeripheral::None | SpiPeripheral::Multitouch => 0,
+            SpiPeripheral::None => 0,
+            SpiPeripheral::Multitouch(mt) => mt.transfer(value),
             SpiPeripheral::LcdPanel { cur_cmd } => {
                 if *cur_cmd == 0 && matches!(value, 0x95 | 0xDA | 0xDB | 0xDC) {
                     *cur_cmd = value;
@@ -2040,7 +2236,7 @@ impl S5lSpi {
     pub fn new(index: u8) -> Self {
         let peripheral = match index {
             1 => SpiPeripheral::LcdPanel { cur_cmd: 0 },
-            2 => SpiPeripheral::Multitouch,
+            2 => SpiPeripheral::Multitouch(MultitouchSpi::new()),
             _ => SpiPeripheral::None,
         };
         S5lSpi {
@@ -2217,12 +2413,18 @@ impl S5lLcd {
     }
 
     /// Advance the refresh timer; raise the vsync IRQ roughly periodically.
-    pub fn tick(&mut self, n: u64) {
+    /// Returns true when this call raised a fresh IRQ level.
+    pub fn tick(&mut self, n: u64) -> bool {
+        if self.irq {
+            return false;
+        }
         self.tick_acc = self.tick_acc.wrapping_add(n);
         if self.tick_acc >= 200_000 {
             self.tick_acc = 0;
             self.irq = true;
+            return true;
         }
+        false
     }
 
     pub fn irq_pending(&self) -> bool {
@@ -2360,7 +2562,7 @@ impl Default for S5lUart {
 #[cfg(test)]
 mod aes_engine_tests {
     use super::*;
-    use crate::devices::crypto::{AesKey, aes_cbc_decrypt};
+    use crate::devices::crypto::{aes_cbc_decrypt, AesKey};
 
     fn hex(s: &str) -> Vec<u8> {
         (0..s.len())

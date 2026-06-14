@@ -21,11 +21,12 @@ use crate::arm::{
 use crate::cpu::{
     Aarch32CpuState, Aarch32Registers, Aarch32SystemRegisters, CpuState, VCpu, VcpuExit,
 };
-use crate::devices::crypto::{AesKey, aes_cbc_decrypt, sha1};
+use crate::devices::crypto::{aes_cbc_decrypt, sha1, AesKey};
 use crate::devices::s3c64xx::S3cUart;
 use crate::devices::s5l8900::{
-    AES_UID_KEY, AesKeyType, NAND_BYTES_PER_SPARE, Pl192, S5lAes, S5lChipId, S5lClock, S5lDmac,
-    S5lGpio, S5lI2c, S5lLcd, S5lNand, S5lNandEcc, S5lSpi, S5lSysic, S5lTimer, S5lUsb,
+    AesKeyType, Pl192, S5lAes, S5lChipId, S5lClock, S5lDmac, S5lGpio, S5lI2c, S5lLcd, S5lNand,
+    S5lNandEcc, S5lSpi, S5lSysic, S5lTimer, S5lUsb, AES_UID_KEY, GPIO_NUMINTGROUPS,
+    NAND_BYTES_PER_SPARE,
 };
 use crate::error::{Error, Result};
 
@@ -49,6 +50,7 @@ const NAND_BASE: u32 = 0x38A0_0000;
 const NAND_ECC_BASE: u32 = 0x38F0_0000;
 const ADM_BASE: u32 = 0x3880_0000;
 const DMAC0_BASE: u32 = 0x3820_0000;
+const DMAC1_BASE: u32 = 0x3990_0000;
 const USB_OTG_BASE: u32 = 0x3840_0000;
 const USB_PHYS_BASE: u32 = 0x3C40_0000;
 const MBX_BASE: u32 = 0x3B00_0000;
@@ -270,8 +272,10 @@ const SPI0_IRQ: u32 = 0x9;
 const SPI1_IRQ: u32 = 0xA;
 const SPI2_IRQ: u32 = 0xB;
 const DMAC0_IRQ: u32 = 0x10;
+const DMAC1_IRQ: u32 = 0x11;
 const I2C0_IRQ: u32 = 0x15;
 const I2C1_IRQ: u32 = 0x16;
+const GPIO_GROUP_IRQS: [u32; GPIO_NUMINTGROUPS] = [0x21, 0x20, 0x1F, 0x03, 0x02, 0x01, 0x00];
 /// NAND ECC engine: global IRQ 0x2B, i.e. VIC1 line (0x2B - 32) = 11.
 const NAND_ECC_VIC1_LINE: u32 = 0x2B - 32;
 /// ADM (Apple Data Mover): global IRQ 0x25, i.e. VIC1 line (0x25 - 32) = 5.
@@ -478,6 +482,7 @@ struct BridgeInner {
     nand_ecc: S5lNandEcc,
     aes: S5lAes,
     dmac0: S5lDmac,
+    dmac1: S5lDmac,
     usb: S5lUsb,
     nor: S5lNor,
     /// ADM (Apple Data Mover) DMA data-section addresses.
@@ -748,6 +753,9 @@ impl BridgeInner {
             _ if (DMAC0_BASE..DMAC0_BASE + 0x1000).contains(&pa) => {
                 Some(self.dmac0.read(off(DMAC0_BASE)))
             }
+            _ if (DMAC1_BASE..DMAC1_BASE + 0x1000).contains(&pa) => {
+                Some(self.dmac1.read(off(DMAC1_BASE)))
+            }
             _ if (USB_OTG_BASE..USB_OTG_BASE + 0x10000).contains(&pa) => {
                 Some(self.usb.otg_read(off(USB_OTG_BASE)))
             }
@@ -911,6 +919,10 @@ impl BridgeInner {
                 self.dmac0.write(off(DMAC0_BASE), value);
                 true
             }
+            _ if (DMAC1_BASE..DMAC1_BASE + 0x1000).contains(&pa) => {
+                self.dmac1.write(off(DMAC1_BASE), value);
+                true
+            }
             _ if (USB_OTG_BASE..USB_OTG_BASE + 0x10000).contains(&pa) => {
                 self.usb.otg_write(off(USB_OTG_BASE), value);
                 true
@@ -1048,10 +1060,13 @@ impl BridgeInner {
                 }
             }
             if self.dev_write(reg, u32::from_le_bytes(cur)) {
-                // A channel-enable write to DMAC0 schedules a transfer; run it
+                // A channel-enable write to a DMAC schedules a transfer; run it
                 // now (here we have the guest-memory handle the transfer needs).
                 if let Some(ch) = self.dmac0.take_pending() {
-                    self.dma_run(mem, ch as usize);
+                    self.dma_run(mem, 0, ch as usize);
+                }
+                if let Some(ch) = self.dmac1.take_pending() {
+                    self.dma_run(mem, 1, ch as usize);
                 }
                 return Ok(());
             }
@@ -1060,85 +1075,189 @@ impl BridgeInner {
             .map_err(|_| MemoryError::BusError(pa))
     }
 
-    /// Perform a PL080 channel transfer synchronously. iBoot's use is a
-    /// peripheral-to-memory stream (NAND FIFO at a fixed source address into an
-    /// incrementing RAM buffer); we also handle memory-to-memory. The transfer
-    /// honours the source/destination increment flags and the transfer width.
-    fn dma_run(&mut self, mem: &GuestMemoryMmap, ch: usize) {
-        let src = self.dmac0.src[ch];
-        let dst = self.dmac0.dst[ch];
-        let ctl = self.dmac0.control[ch];
-        let count = ctl & 0xFFF; // number of transfers
-        let swidth = 1u32 << ((ctl >> 18) & 7).min(2); // src transfer width (bytes)
-        let s_inc = (ctl >> 26) & 1 != 0;
-        let d_inc = (ctl >> 27) & 1 != 0;
-        let total = (count * swidth) as usize; // total bytes to move
-        if total == 0 {
-            self.dmac0.complete(ch);
-            return;
-        }
+    /// Perform a PL080 channel transfer synchronously. The reference QEMU
+    /// PL080 model moves one DMA element at a time, using source width for each
+    /// read and destination width for each write, then reloads an optional LLI.
+    /// Mirroring that shape matters for peripherals such as SPI FIFOs: a
+    /// byte-wide peripheral write is a FIFO push, not just a byte in a bulk RAM
+    /// copy.
+    fn dma_run(&mut self, mem: &GuestMemoryMmap, controller: usize, ch: usize) {
+        let trace = match std::env::var("RAX_S5L_DMA_TRACE") {
+            Ok(value) if value.eq_ignore_ascii_case("all") => true,
+            Ok(value) if value.eq_ignore_ascii_case("dmac0") => controller == 0,
+            Ok(value) if value.eq_ignore_ascii_case("dmac1") => controller == 1,
+            Ok(value) => value.parse::<usize>() == Ok(controller),
+            Err(_) => false,
+        };
+        let dump_path = std::env::var("RAX_S5L_DMADUMP").ok();
+        let mut dump = dump_path.as_ref().map(|_| Vec::<u8>::new());
+        let (mut src, mut dst, mut lli, mut ctl, cfg) = self.dma_descriptor(controller, ch);
+        let mut total = 0usize;
+        let mut descriptors = 0usize;
 
-        // Gather the source bytes.
-        let mut buf = vec![0u8; total];
-        if !s_inc && !is_memory(src) {
-            // Peripheral FIFO (e.g. NAND data register): drain it word-by-word.
-            let mut i = 0;
-            while i < total {
-                let mut word = [0u8; 4];
-                let _ = self.read_pa(mem, src, &mut word);
-                let n = (total - i).min(4);
-                buf[i..i + n].copy_from_slice(&word[..n]);
-                i += 4;
+        loop {
+            descriptors += 1;
+            if descriptors > 4096 {
+                info!(
+                    controller,
+                    ch,
+                    lli = format!("{lli:#x}"),
+                    "dma lli chain too long"
+                );
+                break;
             }
-        } else {
-            for (i, b) in buf.iter_mut().enumerate() {
-                let a = if s_inc {
-                    src.wrapping_add(i as u32)
-                } else {
-                    src
-                };
-                let mut byte = [0u8; 1];
-                let _ = self.read_pa(mem, a, &mut byte);
-                *b = byte[0];
-            }
-        }
 
-        // Scatter to the destination.
-        if d_inc && is_memory(dst) {
-            let _ = mem.write_slice(&buf, GuestAddress(dst as u64));
-        } else {
-            for (i, b) in buf.iter().enumerate() {
-                let a = if d_inc {
-                    dst.wrapping_add(i as u32)
-                } else {
-                    dst
-                };
-                let _ = self.write_pa(mem, a, &[*b]);
+            let mut count = ctl & 0xFFF;
+            let swidth = 1u32 << ((ctl >> 18) & 7).min(2);
+            let dwidth = 1u32 << ((ctl >> 21) & 7).min(2);
+            let s_inc = (ctl >> 26) & 1 != 0;
+            let d_inc = (ctl >> 27) & 1 != 0;
+
+            if trace {
+                info!(
+                    controller,
+                    ch,
+                    src = format!("{src:#x}"),
+                    dst = format!("{dst:#x}"),
+                    lli = format!("{lli:#x}"),
+                    ctl = format!("{ctl:#x}"),
+                    cfg = format!("{cfg:#x}"),
+                    count,
+                    swidth,
+                    dwidth,
+                    s_inc,
+                    d_inc,
+                    "dma descriptor"
+                );
             }
+
+            while count != 0 {
+                let mut buf = [0u8; 4];
+                let mut n = 0usize;
+                while n < dwidth as usize {
+                    let end = (n + swidth as usize).min(buf.len());
+                    let _ = self.read_pa(mem, src, &mut buf[n..end]);
+                    if s_inc {
+                        src = src.wrapping_add(swidth);
+                    }
+                    n += swidth as usize;
+                }
+
+                let xsize = dwidth.max(swidth) as usize;
+                let mut n = 0usize;
+                while n < xsize {
+                    let end = (n + dwidth as usize).min(buf.len());
+                    let _ = self.write_pa(mem, dst.wrapping_add(n as u32), &buf[n..end]);
+                    if d_inc {
+                        dst = dst.wrapping_add(swidth);
+                    }
+                    n += dwidth as usize;
+                }
+
+                if let Some(dump) = dump.as_mut() {
+                    dump.extend_from_slice(&buf[..xsize.min(buf.len())]);
+                }
+                count -= 1;
+                total += xsize;
+            }
+
+            ctl &= !0xFFF;
+            self.dma_store_descriptor(controller, ch, src, dst, lli, ctl);
+            if lli == 0 {
+                break;
+            }
+
+            let next_src = self.dma_read_u32(mem, lli);
+            let next_dst = self.dma_read_u32(mem, lli.wrapping_add(4));
+            let next_lli = self.dma_read_u32(mem, lli.wrapping_add(8));
+            let next_ctl = self.dma_read_u32(mem, lli.wrapping_add(12));
+            src = next_src;
+            dst = next_dst;
+            lli = next_lli;
+            ctl = next_ctl;
+            self.dma_store_descriptor(controller, ch, src, dst, lli, ctl);
         }
 
         debug!(
+            controller,
             ch = ch,
             src = format!("{src:#x}"),
             dst = format!("{dst:#x}"),
             bytes = total,
             "dma_run"
         );
-        if std::env::var("RAX_S5L_DMADUMP").is_ok() {
-            if let Ok(path) = std::env::var("RAX_S5L_DMADUMP") {
-                use std::io::Write;
-                if let Ok(mut f) = std::fs::OpenOptions::new()
-                    .create(true)
-                    .append(true)
-                    .open(&path)
-                {
-                    let _ = writeln!(f, "--- ch{ch} src={src:#x} dst={dst:#x} bytes={total}");
-                    let _ = f.write_all(&buf);
-                    let _ = writeln!(f);
+        if let Some(path) = dump_path {
+            use std::io::Write;
+            if let Ok(mut f) = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&path)
+            {
+                let _ = writeln!(
+                    f,
+                    "--- dmac{controller} ch{ch} src={src:#x} dst={dst:#x} bytes={total}"
+                );
+                if let Some(dump) = dump {
+                    let _ = f.write_all(&dump);
                 }
+                let _ = writeln!(f);
             }
         }
-        self.dmac0.complete(ch);
+        self.dma_complete(controller, ch);
+    }
+
+    fn dma_complete(&mut self, controller: usize, ch: usize) {
+        if controller == 0 {
+            self.dmac0.complete(ch);
+        } else {
+            self.dmac1.complete(ch);
+        }
+    }
+
+    fn dma_descriptor(&self, controller: usize, ch: usize) -> (u32, u32, u32, u32, u32) {
+        if controller == 0 {
+            (
+                self.dmac0.src[ch],
+                self.dmac0.dst[ch],
+                self.dmac0.lli[ch],
+                self.dmac0.control[ch],
+                self.dmac0.config[ch],
+            )
+        } else {
+            (
+                self.dmac1.src[ch],
+                self.dmac1.dst[ch],
+                self.dmac1.lli[ch],
+                self.dmac1.control[ch],
+                self.dmac1.config[ch],
+            )
+        }
+    }
+
+    fn dma_store_descriptor(
+        &mut self,
+        controller: usize,
+        ch: usize,
+        src: u32,
+        dst: u32,
+        lli: u32,
+        control: u32,
+    ) {
+        let dmac = if controller == 0 {
+            &mut self.dmac0
+        } else {
+            &mut self.dmac1
+        };
+        dmac.src[ch] = src;
+        dmac.dst[ch] = dst;
+        dmac.lli[ch] = lli;
+        dmac.control[ch] = control;
+    }
+
+    fn dma_read_u32(&mut self, mem: &GuestMemoryMmap, pa: u32) -> u32 {
+        let mut bytes = [0u8; 4];
+        let _ = self.read_pa(mem, pa, &mut bytes);
+        u32::from_le_bytes(bytes)
     }
 }
 
@@ -1251,6 +1370,7 @@ pub struct S5L8900Vcpu {
     iokit_match_follow_remaining: u32,
     kernel_trace_remaining: u32,
     root_trace_remaining: u32,
+    root_trace_start_insn: u64,
     root_boot_trace_remaining: u32,
     root_boot_trace_start_insn: u64,
     admfmc_trace_remaining: u32,
@@ -1274,15 +1394,22 @@ pub struct S5L8900Vcpu {
     sparse_vfl_mask_seeded: [bool; 8],
     fsboot_trace: bool,
     lcd_irq: bool,
+    lcd_irq_armed: bool,
+    lcd_irq_budget: u32,
+    lcd_irq_arm_after_rootdev: bool,
     i2c_irq: bool,
     timer_irq: bool,
     timer_irq_ready: u64,
     timer_irq_interval: u64,
+    timer_irq_clock: u64,
     irq_trace: bool,
     irq_trace_timer: bool,
     irq_trace_start_insn: u64,
     irq_trace_budget: u32,
     last_irq_trace: u128,
+    idle_trace: bool,
+    idle_trace_start_insn: u64,
+    last_idle_trace_insn: u64,
     adm_irq_trace_budget: u32,
     last_adm_irq_trace: u128,
     i2c_irq_trace_budget: u32,
@@ -1325,6 +1452,7 @@ impl S5L8900Vcpu {
                 nand_ecc: S5lNandEcc::new(),
                 aes: S5lAes::new(),
                 dmac0: S5lDmac::new(),
+                dmac1: S5lDmac::new(),
                 usb: S5lUsb::new(),
                 nor: S5lNor::default(),
                 adm_data2: 0,
@@ -1406,6 +1534,10 @@ impl S5L8900Vcpu {
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(0),
+            root_trace_start_insn: std::env::var("RAX_S5L_ROOT_TRACE_START")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(0),
             root_boot_trace_remaining: std::env::var("RAX_S5L_ROOT_BOOT_TRACE")
                 .ok()
                 .and_then(|v| v.parse().ok())
@@ -1447,12 +1579,19 @@ impl S5L8900Vcpu {
             security_state_seeded: false,
             sparse_vfl_mask_seeded: [false; 8],
             fsboot_trace: std::env::var("RAX_S5L_FSBOOT_TRACE").is_ok(),
-            // QEMU raises LCD refresh IRQs from its display timer. RAX does not
-            // currently run a matching display event loop, and the old
-            // instruction-rate synthetic source can livelock early storage
-            // startup. Keep it available only for focused LCD experiments.
-            lcd_irq: std::env::var("RAX_S5L_LCD_IRQ").is_ok()
-                && !std::env::var("RAX_S5L_NO_LCD_IRQ").is_ok(),
+            // QEMU raises LCD refresh IRQs from its display timer. RAX's
+            // synthetic source can starve the root-device IOKit settle path if
+            // it fires while vfs_mountroot is still inside IOService::waitQuiet,
+            // so default auto-arming waits until bsd_init returns from
+            // vfs_mountroot. Early/rootdev modes remain for LCD experiments.
+            lcd_irq: !std::env::var("RAX_S5L_NO_LCD_IRQ").is_ok(),
+            lcd_irq_armed: std::env::var("RAX_S5L_LCD_IRQ").is_ok()
+                || std::env::var("RAX_S5L_LCD_IRQ_EARLY").is_ok(),
+            lcd_irq_budget: std::env::var("RAX_S5L_LCD_IRQ_BUDGET")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(u32::MAX),
+            lcd_irq_arm_after_rootdev: std::env::var("RAX_S5L_LCD_IRQ_AFTER_ROOTDEV").is_ok(),
             i2c_irq: !std::env::var("RAX_S5L_NO_I2C_IRQ").is_ok(),
             // The system-tick IRQ drives iBoot's cooperative scheduler (it wakes
             // tasks blocked in task_sleep). It self-gates on the timer's `started`
@@ -1468,6 +1607,7 @@ impl S5L8900Vcpu {
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(50_000),
+            timer_irq_clock: 0,
             irq_trace: std::env::var("RAX_S5L_IRQ_TRACE").is_ok(),
             irq_trace_timer: std::env::var("RAX_S5L_IRQ_TRACE_TIMER").is_ok(),
             irq_trace_start_insn: std::env::var("RAX_S5L_IRQ_TRACE_START")
@@ -1479,6 +1619,12 @@ impl S5L8900Vcpu {
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(512),
             last_irq_trace: u128::MAX,
+            idle_trace: std::env::var("RAX_S5L_IDLE_TRACE").is_ok(),
+            idle_trace_start_insn: std::env::var("RAX_S5L_IDLE_TRACE_START")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(0),
+            last_idle_trace_insn: u64::MAX,
             adm_irq_trace_budget: std::env::var("RAX_S5L_ADMIRQ_TRACE")
                 .ok()
                 .and_then(|v| v.parse().ok())
@@ -1521,6 +1667,7 @@ impl S5L8900Vcpu {
         let spi1_lvl = inner.spi1.irq_pending();
         let spi2_lvl = inner.spi2.irq_pending();
         let dmac0_lvl = inner.dmac0.irq_pending();
+        let dmac1_lvl = inner.dmac1.irq_pending();
         let i2c0_raw = inner.i2c0.irq_pending();
         let i2c1_raw = inner.i2c1.irq_pending();
         let i2c_irq_enabled = self.i2c_irq || !inner.kernel_started;
@@ -1544,10 +1691,22 @@ impl S5L8900Vcpu {
         inner.vic0.set_line(SPI1_IRQ, spi1_lvl);
         inner.vic0.set_line(SPI2_IRQ, spi2_lvl);
         inner.vic0.set_line(DMAC0_IRQ, dmac0_lvl);
+        inner.vic0.set_line(DMAC1_IRQ, dmac1_lvl);
         inner.vic0.set_line(I2C0_IRQ, i2c0_lvl);
         inner.vic0.set_line(I2C1_IRQ, i2c1_lvl);
         inner.vic1.set_line(NAND_ECC_VIC1_LINE, nand_ecc_lvl);
         inner.vic1.set_line(ADM_VIC1_LINE, adm_lvl);
+        for (group, &global_irq) in GPIO_GROUP_IRQS.iter().enumerate() {
+            // The QEMU reference raises a SYSIC GPIO group line whenever a
+            // device sets that group's status bit, and lowers it on the
+            // guest's write-1-to-clear of GPIO_INTSTAT.
+            let gpio_lvl = inner.sysic.gpio_int_status[group] != 0;
+            if global_irq < 32 {
+                inner.vic0.set_line(global_irq, gpio_lvl);
+            } else {
+                inner.vic1.set_line(global_irq - 32, gpio_lvl);
+            }
+        }
         // VIC1 daisy-chains into VIC0.
         inner.refresh_vic_daisy();
         let daisy = inner.vic0.daisy_input;
@@ -1625,13 +1784,14 @@ impl S5L8900Vcpu {
                 | ((spi1_lvl as u128) << 3)
                 | ((spi2_lvl as u128) << 4)
                 | ((dmac0_lvl as u128) << 5)
-                | ((i2c0_lvl as u128) << 6)
-                | ((i2c1_lvl as u128) << 7)
-                | ((nand_ecc_lvl as u128) << 8)
-                | ((adm_lvl as u128) << 9)
-                | ((usb_lvl as u128) << 10)
-                | ((uart_lvl as u128) << 11)
-                | ((daisy as u128) << 12)
+                | ((dmac1_lvl as u128) << 6)
+                | ((i2c0_lvl as u128) << 7)
+                | ((i2c1_lvl as u128) << 8)
+                | ((nand_ecc_lvl as u128) << 9)
+                | ((adm_lvl as u128) << 10)
+                | ((usb_lvl as u128) << 11)
+                | ((uart_lvl as u128) << 12)
+                | ((daisy as u128) << 13)
                 | ((vic0_raw_trace as u128) << 16)
                 | ((inner.vic0.intenable as u128) << 48)
                 | ((inner.vic1.rawintr as u128) << 80);
@@ -1645,6 +1805,7 @@ impl S5L8900Vcpu {
                     spi1_lvl,
                     spi2_lvl,
                     dmac0_lvl,
+                    dmac1_lvl,
                     i2c0_lvl,
                     i2c1_lvl,
                     i2c0_raw,
@@ -2051,20 +2212,51 @@ impl S5L8900Vcpu {
         }
     }
 
+    fn tick_lcd_refresh(&mut self, ticks: u64) {
+        if !self.lcd_irq || !self.lcd_irq_armed || self.lcd_irq_budget == 0 {
+            return;
+        }
+        let raised = {
+            let mut inner = self.bridge.inner.borrow_mut();
+            inner.lcd.tick(ticks)
+        };
+        if raised {
+            self.lcd_irq_budget = self.lcd_irq_budget.saturating_sub(1);
+            if self.lcd_irq_budget == 0 {
+                info!(insns = self.insn_count, "LCD refresh IRQ budget exhausted");
+            }
+        }
+    }
+
+    fn arm_lcd_refresh(&mut self, reason: &'static str) {
+        self.lcd_irq_armed = true;
+        info!(insns = self.insn_count, reason, "armed LCD refresh IRQ");
+    }
+
     fn step(&mut self) -> StepOutcome {
         self.sync_mmu();
+        let pc = self.cpu.regs[15];
+        if self.lcd_irq && !self.lcd_irq_armed && pc == KERNEL_BSD_INIT_AFTER_VFS_MOUNTROOT {
+            self.arm_lcd_refresh("vfs_mountroot returned");
+        } else if self.lcd_irq
+            && !self.lcd_irq_armed
+            && self.lcd_irq_arm_after_rootdev
+            && self.insn_count & 0xFFFF == 0
+            && self.bridge.read_word(KERNEL_ROOTDEV_GLOBAL).unwrap_or(0) != 0
         {
+            self.arm_lcd_refresh("root device selected");
+        }
+        self.tick_lcd_refresh(1);
+        {
+            self.timer_irq_clock = self.timer_irq_clock.saturating_add(1);
             let mut inner = self.bridge.inner.borrow_mut();
-            if self.lcd_irq {
-                inner.lcd.tick(1);
-            }
             // The synthesized system-tick IRQ drives iBoot's cooperative
             // scheduler. tick_irq self-gates on the timer's `started` flag, so
             // it only fires once iBoot has armed TIMER_4 (i.e. the scheduler is
             // up). This is what wakes tasks blocked in task_sleep.
             if self.timer_irq {
                 inner.timer.tick_irq(
-                    self.insn_count,
+                    self.timer_irq_clock,
                     self.timer_irq_ready,
                     self.timer_irq_interval,
                 );
@@ -2076,7 +2268,7 @@ impl S5L8900Vcpu {
             if self.det_timer != 0 {
                 inner
                     .timer
-                    .set_micros(self.insn_count / self.det_timer * self.timer_mul);
+                    .set_micros(self.timer_irq_clock / self.det_timer * self.timer_mul);
             } else if self.insn_count & 0xFF == 0 {
                 let us = self.boot_instant.elapsed().as_micros() as u64;
                 inner
@@ -2127,13 +2319,68 @@ impl S5L8900Vcpu {
         }
 
         if self.cpu.is_halted {
+            self.timer_irq_clock = self
+                .timer_irq_clock
+                .saturating_add(self.timer_irq_interval.max(1));
             let micros = if self.det_timer != 0 {
-                self.insn_count / self.det_timer * self.timer_mul
+                self.timer_irq_clock / self.det_timer * self.timer_mul
             } else {
                 let us = self.boot_instant.elapsed().as_micros() as u64;
-                us.wrapping_mul(self.timer_speedup)
+                us.wrapping_mul(self.timer_speedup) * self.timer_mul
             };
-            self.bridge.inner.borrow_mut().timer.set_micros(micros);
+            {
+                let mut inner = self.bridge.inner.borrow_mut();
+                inner.timer.set_micros(micros);
+                if self.timer_irq {
+                    inner.timer.tick_irq(
+                        self.timer_irq_clock,
+                        self.timer_irq_ready,
+                        self.timer_irq_interval,
+                    );
+                }
+                if self.idle_trace
+                    && self.insn_count >= self.idle_trace_start_insn
+                    && self.last_idle_trace_insn != self.timer_irq_clock
+                {
+                    self.last_idle_trace_insn = self.timer_irq_clock;
+                    let (
+                        timer_micros,
+                        timer_status,
+                        timer_config,
+                        bcount1,
+                        bcount2,
+                        timer_irq,
+                        timer_started,
+                        next_irq_insn,
+                    ) = inner.timer.debug_state();
+                    info!(
+                        pc = format!("{:#x}", self.cpu.regs[15]),
+                        lr = format!("{:#x}", self.cpu.regs[14]),
+                        cpsr = format!("{:#x}", self.cpu.cpsr.to_u32()),
+                        insns = self.insn_count,
+                        timer_irq_clock = self.timer_irq_clock,
+                        timer_micros,
+                        timer_status = format!("{timer_status:#x}"),
+                        timer_config = format!("{timer_config:#x}"),
+                        bcount1 = format!("{bcount1:#x}"),
+                        bcount2 = format!("{bcount2:#x}"),
+                        timer_irq,
+                        timer_started,
+                        next_irq_insn,
+                        vic0_raw = format!("{:#x}", inner.vic0.rawintr),
+                        vic0_en = format!("{:#x}", inner.vic0.intenable),
+                        vic0_irq = format!("{:#x}", inner.vic0.irq_status),
+                        vic1_raw = format!("{:#x}", inner.vic1.rawintr),
+                        vic1_en = format!("{:#x}", inner.vic1.intenable),
+                        vic1_irq = format!("{:#x}", inner.vic1.irq_status),
+                        "s5l idle trace"
+                    );
+                }
+            }
+            // QEMU's LCD refresh is a display timer, not CPU-instruction
+            // progress. Keep it able to wake the guest once the kernel blocks
+            // waiting for post-root work.
+            self.tick_lcd_refresh(200_000);
             return StepOutcome::Idle;
         }
 
@@ -2153,7 +2400,6 @@ impl S5L8900Vcpu {
             }
         }
 
-        let pc = self.cpu.regs[15];
         if self.fix_usb_wrangler_phy_registered_race(pc) {
             return StepOutcome::Progress;
         }
@@ -2976,9 +3222,11 @@ impl S5L8900Vcpu {
     }
 
     fn trace_root_boot(&mut self, pc: u32) {
+        let root_trace_allowed =
+            self.root_trace_remaining > 0 && self.insn_count >= self.root_trace_start_insn;
         let root_boot_allowed = self.root_boot_trace_remaining > 0
             && self.insn_count >= self.root_boot_trace_start_insn;
-        if self.root_trace_remaining == 0 && !root_boot_allowed {
+        if !root_trace_allowed && !root_boot_allowed {
             return;
         }
 
@@ -3060,7 +3308,7 @@ impl S5L8900Vcpu {
         };
         if boot_event && root_boot_allowed {
             self.root_boot_trace_remaining -= 1;
-        } else if self.root_trace_remaining > 0 {
+        } else if root_trace_allowed {
             self.root_trace_remaining -= 1;
         } else {
             return;
