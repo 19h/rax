@@ -2190,39 +2190,50 @@ impl X86_64Lifter {
                     width: mem_width,
                 },
             ));
+            // On a mismatch the accumulator takes the old destination value; on a
+            // match it must be left UNCHANGED. The previous unconditional Select
+            // wrote `saved_acc` back on the match path, and for a 32-bit CMPXCHG a
+            // W32 write zero-extends — clearing RAX's upper half. A predicated
+            // CMove only writes on the mismatch path (ZF=0 → Ne), preserving the
+            // high bits on the no-op (match) path. The flags were set by the Cmp
+            // above. (#21)
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
                 pc,
-                OpKind::Select {
+                OpKind::CMove {
                     dst: acc,
-                    cond: matched,
-                    src_true: saved_acc,
-                    src_false: old_dst,
+                    src: old_dst,
+                    cond: Condition::Ne,
                     width,
                 },
             ));
         } else if let Some(dst) = dst_reg {
+            // On a match the destination register takes the source; on a mismatch
+            // it must be UNCHANGED. CMove writes only on the match path (Eq),
+            // preserving the high bits on the no-op (mismatch) path — the old
+            // Select's W32 write zero-extended and cleared the destination's upper
+            // half. (#21)
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
                 pc,
-                OpKind::Select {
+                OpKind::CMove {
                     dst,
-                    cond: matched,
-                    src_true: saved_src,
-                    src_false: old_dst,
+                    src: saved_src,
+                    cond: Condition::Eq,
                     width,
                 },
             ));
 
             if dst != acc {
+                // On a mismatch the accumulator takes the old destination; on a
+                // match it is UNCHANGED (see the memory path above). (#21)
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
-                    OpKind::Select {
+                    OpKind::CMove {
                         dst: acc,
-                        cond: matched,
-                        src_true: saved_acc,
-                        src_false: old_dst,
+                        src: old_dst,
+                        cond: Condition::Ne,
                         width,
                     },
                 ));
@@ -12080,43 +12091,40 @@ mod tests {
             }
             other => panic!("expected CMPXCHG compare, got {other:?}"),
         }
-        let matched = match &result.ops[4].kind {
+        match &result.ops[4].kind {
             OpKind::SetCC {
-                dst,
                 cond: Condition::Eq,
                 width: OpWidth::W8,
-            } => *dst,
+                ..
+            } => {}
             other => panic!("expected CMPXCHG equality condition, got {other:?}"),
-        };
+        }
+        // The destination/accumulator writes use CMove, which preserves the
+        // register on the no-op path instead of an unconditional Select that would
+        // zero-extend a sub-64-bit write and clear the upper bits. (#21)
         match &result.ops[5].kind {
-            OpKind::Select {
+            OpKind::CMove {
                 dst,
-                cond,
-                src_true,
-                src_false,
+                src,
+                cond: Condition::Eq,
                 width: OpWidth::W64,
             } => {
                 assert_eq!(*dst, x86_gpr(16));
-                assert_eq!(*cond, matched);
-                assert_eq!(*src_true, saved_src);
-                assert_eq!(*src_false, old_dst);
+                assert_eq!(*src, saved_src);
             }
-            other => panic!("expected CMPXCHG destination select, got {other:?}"),
+            other => panic!("expected CMPXCHG destination cmove, got {other:?}"),
         }
         match &result.ops[6].kind {
-            OpKind::Select {
+            OpKind::CMove {
                 dst,
-                cond,
-                src_true,
-                src_false,
+                src,
+                cond: Condition::Ne,
                 width: OpWidth::W64,
             } => {
                 assert_eq!(*dst, x86_gpr(0));
-                assert_eq!(*cond, matched);
-                assert_eq!(*src_true, saved_acc);
-                assert_eq!(*src_false, old_dst);
+                assert_eq!(*src, old_dst);
             }
-            other => panic!("expected CMPXCHG accumulator select, got {other:?}"),
+            other => panic!("expected CMPXCHG accumulator cmove, got {other:?}"),
         }
     }
 
@@ -12229,20 +12237,19 @@ mod tests {
             }
             other => panic!("expected CMPXCHG predicated memory store, got {other:?}"),
         }
+        // The accumulator write uses CMove so a successful compare leaves RAX
+        // unchanged rather than zero-extending a sub-64-bit Select write. (#21)
         match &result.ops[7].kind {
-            OpKind::Select {
+            OpKind::CMove {
                 dst,
-                cond,
-                src_true,
-                src_false,
+                src,
+                cond: Condition::Ne,
                 width: OpWidth::W64,
             } => {
                 assert_eq!(*dst, x86_gpr(0));
-                assert_eq!(*cond, matched);
-                assert_eq!(*src_true, saved_acc);
-                assert_eq!(*src_false, old_dst);
+                assert_eq!(*src, old_dst);
             }
-            other => panic!("expected CMPXCHG memory accumulator select, got {other:?}"),
+            other => panic!("expected CMPXCHG memory accumulator cmove, got {other:?}"),
         }
     }
 
@@ -12269,39 +12276,38 @@ mod tests {
             }
             other => panic!("expected alias CMPXCHG source snapshot, got {other:?}"),
         };
-        let old_dst = match &result.ops[2].kind {
+        match &result.ops[2].kind {
             OpKind::Mov {
-                dst,
                 src: SrcOperand::Reg(src),
                 width: OpWidth::W64,
+                ..
             } => {
                 assert_eq!(*src, x86_gpr(0));
-                *dst
             }
             other => panic!("expected alias CMPXCHG destination snapshot, got {other:?}"),
-        };
-        let matched = match &result.ops[4].kind {
+        }
+        match &result.ops[4].kind {
             OpKind::SetCC {
-                dst,
                 cond: Condition::Eq,
                 width: OpWidth::W8,
-            } => *dst,
+                ..
+            } => {}
             other => panic!("expected alias CMPXCHG equality condition, got {other:?}"),
-        };
+        }
+        // When the destination aliases the accumulator (CMPXCHG RAX, r) the compare
+        // always matches, so a single CMove writes the source; on a (here
+        // impossible) mismatch the register would be preserved. (#21)
         match &result.ops[5].kind {
-            OpKind::Select {
+            OpKind::CMove {
                 dst,
-                cond,
-                src_true,
-                src_false,
+                src,
+                cond: Condition::Eq,
                 width: OpWidth::W64,
             } => {
                 assert_eq!(*dst, x86_gpr(0));
-                assert_eq!(*cond, matched);
-                assert_eq!(*src_true, saved_src);
-                assert_eq!(*src_false, old_dst);
+                assert_eq!(*src, saved_src);
             }
-            other => panic!("expected one final alias CMPXCHG write, got {other:?}"),
+            other => panic!("expected one final alias CMPXCHG cmove, got {other:?}"),
         }
     }
 

@@ -11664,6 +11664,74 @@ mod tests {
             0x2222_2222
         );
     }
+
+    // Regression for issue #21: a 32-bit CMPXCHG must not clear the upper 32 bits
+    // of a register on its no-op path (a successful compare leaves RAX unchanged;
+    // a failed compare leaves the destination unchanged). Lifts a real CMPXCHG and
+    // runs the emitted ops through the interpreter.
+    fn run_cmpxchg32(rax: u64, rcx: u64, rdx: u64) -> (u64, u64) {
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+        use crate::smir::types::SourceArch;
+
+        // CMPXCHG ECX, EDX (0F B1 D1): compare EAX with r/m=ECX; source = EDX.
+        let bytes = [0x0F, 0xB1, 0xD1];
+        let mut lifter = X86_64Lifter::new();
+        let mut lctx = LiftContext::new(SourceArch::X86_64);
+        let result = lifter.lift_insn(0x1000, &bytes, &mut lctx).unwrap();
+
+        let rax_r = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx_r = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rdx_r = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.write_vreg(rax_r, rax);
+        ctx.write_vreg(rcx_r, rcx);
+        ctx.write_vreg(rdx_r, rdx);
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        for op in result.ops {
+            builder.push_op(op.guest_pc, op.kind);
+        }
+        builder.set_terminator(Terminator::Trap {
+            kind: TrapKind::Halt,
+        });
+        let func = builder.finish();
+
+        let interp = SmirInterpreter::new();
+        let mut memory = FlatMemory::new(0x1000);
+        interp.execute_block(&mut ctx, &mut memory, &func.blocks[0]);
+
+        (ctx.read_vreg(rax_r), ctx.read_vreg(rcx_r))
+    }
+
+    #[test]
+    fn issue_21_cmpxchg32_match_preserves_rax_high() {
+        // EAX(5) == ECX(5) → match: ECX takes EDX (zero-extended), EAX UNCHANGED.
+        let (rax, rcx) = run_cmpxchg32(
+            0xDEAD_BEEF_0000_0005,
+            0xAAAA_0000_0000_0005,
+            0xBBBB_0000_0000_0099,
+        );
+        assert_eq!(
+            rax, 0xDEAD_BEEF_0000_0005,
+            "RAX upper 32 bits must be preserved on a successful CMPXCHG",
+        );
+        assert_eq!(rcx, 0x0000_0000_0000_0099, "ECX takes the source on a match");
+    }
+
+    #[test]
+    fn issue_21_cmpxchg32_mismatch_preserves_dst_high() {
+        // EAX(5) != ECX(7) → mismatch: EAX takes ECX (zero-extended), ECX UNCHANGED.
+        let (rax, rcx) = run_cmpxchg32(0x1111_0000_0000_0005, 0xDEAD_BEEF_0000_0007, 0);
+        assert_eq!(
+            rcx, 0xDEAD_BEEF_0000_0007,
+            "destination upper 32 bits must be preserved on a failed CMPXCHG",
+        );
+        assert_eq!(
+            rax, 0x0000_0000_0000_0007,
+            "EAX takes the old destination on a mismatch",
+        );
+    }
 }
 
 // ===========================================================================
