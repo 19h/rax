@@ -258,7 +258,14 @@ impl Aarch64Decoder {
         };
 
         // Decode bitmask immediate
-        let imm = Self::decode_bitmask_imm(n as u8, imms, immr, is_64bit);
+        let Some(imm) = Self::decode_bitmask_imm(n as u8, imms, immr, is_64bit) else {
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
+        };
 
         // Check for aliases
         // TST is ANDS with Rd = XZR/WZR
@@ -295,29 +302,39 @@ impl Aarch64Decoder {
         Ok(insn)
     }
 
-    fn decode_bitmask_imm(n: u8, imms: u8, immr: u8, is_64bit: bool) -> u64 {
+    fn decode_bitmask_imm(n: u8, imms: u8, immr: u8, is_64bit: bool) -> Option<u64> {
         // Decode the bitmask immediate encoding
-        let len = if n == 1 {
+        let len = if n != 0 {
             6
         } else {
             // Find highest bit set in ~imms
             let not_imms = !imms & 0x3F;
-            (0..6)
-                .rev()
-                .find(|&i| (not_imms >> i) & 1 == 1)
-                .unwrap_or(0)
+            if not_imms == 0 {
+                return None;
+            }
+            (0..6).rev().find(|&i| (not_imms >> i) & 1 == 1)?
         };
+
+        if len < 1 {
+            return None;
+        }
 
         let levels = (1u64 << len) - 1;
         let s = (imms as u64) & levels;
         let r = (immr as u64) & levels;
         let esize = 1u64 << len;
 
+        if s == levels {
+            return None;
+        }
+
         // Create the basic pattern
         let welem = (1u64 << (s + 1)) - 1;
 
         // Rotate right
-        let pattern = if r == 0 {
+        let pattern = if esize == 64 {
+            welem.rotate_right(r as u32)
+        } else if r == 0 {
             welem
         } else {
             let mask = (1u64 << esize) - 1;
@@ -336,7 +353,7 @@ impl Aarch64Decoder {
             result &= 0xFFFFFFFF;
         }
 
-        result
+        Some(result)
     }
 
     fn decode_move_wide_imm(raw: u32) -> Result<DecodedInsn, DecodeError> {
@@ -3042,6 +3059,17 @@ mod tests {
         Aarch64Decoder::decode(raw)
     }
 
+    fn logical_imm_raw(sf: u32, opc: u32, n: u32, immr: u32, imms: u32, rn: u32, rd: u32) -> u32 {
+        (sf << 31)
+            | (opc << 29)
+            | (0b100100 << 23)
+            | (n << 22)
+            | (immr << 16)
+            | (imms << 10)
+            | (rn << 5)
+            | rd
+    }
+
     #[test]
     fn test_nop() {
         // NOP: d503201f
@@ -3071,6 +3099,35 @@ mod tests {
         let insn = decode_bytes(&[0x20, 0x40, 0x00, 0x91]).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::ADD);
         assert_eq!(insn.operands.len(), 3);
+    }
+
+    #[test]
+    fn test_logical_imm_64bit_rotation_decode() {
+        // AND X0, X1, #0x8000_0000_0000_0000. This uses N=1, so the
+        // bitmask element size is 64 bits and the rotate path must not build
+        // a 1<<64 mask.
+        let insn = Aarch64Decoder::decode(logical_imm_raw(1, 0b00, 1, 1, 0, 1, 0)).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::AND);
+        assert_eq!(
+            insn.operands[2],
+            Operand::Imm(Immediate::new(0x8000_0000_0000_0000u64 as i64))
+        );
+
+        // Rotate the single-bit mask the other way across the 64-bit boundary.
+        let insn = Aarch64Decoder::decode(logical_imm_raw(1, 0b00, 1, 63, 0, 1, 0)).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::AND);
+        assert_eq!(insn.operands[2], Operand::Imm(Immediate::new(2)));
+    }
+
+    #[test]
+    fn test_logical_imm_reserved_all_ones_mask_is_undefined() {
+        // N=1, imms=0x3f is the reserved all-ones logical-immediate encoding.
+        // The decoder used to compute 1u64 << 64 here.
+        let insn = Aarch64Decoder::decode(logical_imm_raw(1, 0b00, 1, 0, 0x3f, 1, 0)).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::UNDEFINED);
+
+        let insn = Aarch64Decoder::decode(logical_imm_raw(1, 0b00, 1, 7, 0x3f, 1, 0)).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::UNDEFINED);
     }
 
     #[test]
