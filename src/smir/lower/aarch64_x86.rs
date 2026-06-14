@@ -678,7 +678,9 @@ impl Aarch64X86_64Lowerer {
         self.emit_mem_helper_call(B3);
         {
             let mut e = X86Emitter::new(&mut self.code);
-            e.emit_xor_rr(ACC, ACC, OpWidth::W64);
+            e.emit_test_rr(ACC, ACC, OpWidth::W64);
+            e.emit_setcc(X86Cond::E, ACC);
+            e.emit_movzx(ACC, ACC, OpWidth::W8, OpWidth::W64);
         }
         let done = self.emit_jmp_placeholder();
 
@@ -2006,6 +2008,49 @@ fn fallthrough_pc(block: &SmirBlock) -> Option<u64> {
         .or(Some(block.guest_pc))
 }
 
+#[cfg(test)]
+mod codegen_tests {
+    use super::*;
+    use crate::smir::ir::{FunctionBuilder, Terminator};
+    use crate::smir::types::FunctionId;
+
+    fn x(n: u8) -> VReg {
+        VReg::Arch(ArchReg::Arm(ArmReg::X(n)))
+    }
+
+    #[test]
+    fn store_exclusive_translates_helper_ok_to_status() {
+        let mut b = FunctionBuilder::new(FunctionId(0), 0x2fa0);
+        b.push_op(
+            0x2fa0,
+            OpKind::StoreExclusive {
+                status: x(2),
+                src: x(0),
+                addr: Address::Direct(x(1)),
+                width: MemWidth::B4,
+            },
+        );
+        b.set_terminator(Terminator::Return { values: vec![] });
+
+        let mut lowerer = Aarch64X86_64Lowerer::new();
+        lowerer
+            .lower_function(&b.finish())
+            .expect("lower store-exclusive");
+        let code = lowerer.finalize().expect("finalize");
+
+        // test rax, rax; sete al; movzx rax, al
+        //
+        // The helper returns non-zero on store success. STXR status is the
+        // inverse: 0 on success and 1 on failure.
+        let helper_ok_to_status = [0x48, 0x85, 0xc0, 0x0f, 0x94, 0xc0, 0x48, 0x0f, 0xb6, 0xc0];
+        assert!(
+            code.windows(helper_ok_to_status.len())
+                .any(|window| window == helper_ok_to_status),
+            "missing helper-ok to STXR-status conversion in generated code: {code:02x?}"
+        );
+    }
+}
+
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 mod tests {
     use super::*;
@@ -2029,6 +2074,12 @@ mod tests {
     #[repr(C)]
     struct TestMem {
         bytes: [u8; 64],
+    }
+
+    #[repr(C)]
+    struct RejectingStoreMem {
+        bytes: [u8; 64],
+        calls: u64,
     }
 
     unsafe extern "C" fn test_load(ctx: u64, addr: u64, size: u64, signed: u64) -> u64 {
@@ -2056,6 +2107,12 @@ mod tests {
             mem.bytes[off + i] = (value >> (i * 8)) as u8;
         }
         1
+    }
+
+    unsafe extern "C" fn rejecting_store(ctx: u64, _addr: u64, _value: u64, _size: u64) -> u64 {
+        let mem = unsafe { &mut *(ctx as *mut RejectingStoreMem) };
+        mem.calls += 1;
+        0
     }
 
     fn install_test_mem(regs: &mut Aarch64GuestRegs, mem: &mut TestMem) {
@@ -2287,6 +2344,75 @@ mod tests {
         assert_eq!(&mem.bytes[16..20], &[0x88, 0x77, 0x66, 0x55]);
         assert_eq!(regs.x[0], 0x1122_3344_5566_7788);
         assert_eq!(regs.pc, 0x2f84);
+    }
+
+    #[test]
+    fn store_exclusive_reports_helper_failure() {
+        let mut b = FunctionBuilder::new(FunctionId(0), 0x2fa0);
+        b.push_op(
+            0x2fa0,
+            OpKind::StoreExclusive {
+                status: x(2),
+                src: x(0),
+                addr: Address::Direct(x(1)),
+                width: MemWidth::B4,
+            },
+        );
+        b.set_terminator(Terminator::Return { values: vec![] });
+
+        let mut mem = RejectingStoreMem {
+            bytes: [0xaa; 64],
+            calls: 0,
+        };
+        let mut regs = Aarch64GuestRegs::default();
+        regs.ctx = &mut mem as *mut RejectingStoreMem as usize as u64;
+        regs.store_fn = rejecting_store as *const () as usize as u64;
+        regs.x[0] = 0x1122_3344_5566_7788;
+        regs.x[1] = 16;
+        regs.x[2] = 0;
+        regs.exclusive_addr = 16;
+        regs.exclusive_size = 4;
+        regs.exclusive_valid = 1;
+
+        run_func(&b.finish(), &mut regs);
+
+        assert_eq!(mem.calls, 1);
+        assert_eq!(&mem.bytes[16..20], &[0xaa; 4]);
+        assert_eq!(regs.x[2], 1);
+        assert_eq!(regs.exclusive_valid, 0);
+        assert_eq!(regs.pc, 0x2fa4);
+    }
+
+    #[test]
+    fn store_exclusive_reports_helper_success() {
+        let mut b = FunctionBuilder::new(FunctionId(0), 0x2fb0);
+        b.push_op(
+            0x2fb0,
+            OpKind::StoreExclusive {
+                status: x(2),
+                src: x(0),
+                addr: Address::Direct(x(1)),
+                width: MemWidth::B4,
+            },
+        );
+        b.set_terminator(Terminator::Return { values: vec![] });
+
+        let mut mem = TestMem { bytes: [0; 64] };
+        let mut regs = Aarch64GuestRegs::default();
+        install_test_mem(&mut regs, &mut mem);
+        regs.x[0] = 0x1122_3344_5566_7788;
+        regs.x[1] = 16;
+        regs.x[2] = 1;
+        regs.exclusive_addr = 16;
+        regs.exclusive_size = 4;
+        regs.exclusive_valid = 1;
+
+        run_func(&b.finish(), &mut regs);
+
+        assert_eq!(&mem.bytes[16..20], &[0x88, 0x77, 0x66, 0x55]);
+        assert_eq!(regs.x[2], 0);
+        assert_eq!(regs.exclusive_valid, 0);
+        assert_eq!(regs.pc, 0x2fb4);
     }
 
     #[test]
