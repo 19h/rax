@@ -5451,6 +5451,16 @@ impl X86_64Lowerer {
                 });
             }
 
+            OpKind::VPermute2 {
+                elem, lanes, kind, ..
+            } => {
+                // Vector permute (ZIP/UZP/TRN) is emitted only by the AArch64
+                // lifter; not implemented in the x86 lowerer.
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("VPermute2 {:?} {:?}x{} (x86)", kind, elem, lanes),
+                });
+            }
+
             OpKind::VMul {
                 dst,
                 src1,

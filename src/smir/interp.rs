@@ -2580,6 +2580,45 @@ impl SmirInterpreter {
                         }
                         acc
                     }
+                    // FP reductions. NaN-quiet (FMaxNm/FMinNm) use Rust min/max
+                    // (maxNum/minNum); NaN-propagating (FMax/FMin) yield NaN if
+                    // any lane is NaN.
+                    VecReduceOp::FMax
+                    | VecReduceOp::FMin
+                    | VecReduceOp::FMaxNm
+                    | VecReduceOp::FMinNm => {
+                        let nm = matches!(op, VecReduceOp::FMaxNm | VecReduceOp::FMinNm);
+                        let is_min = matches!(op, VecReduceOp::FMin | VecReduceOp::FMinNm);
+                        if bits == 32 {
+                            let lf = |i: u8| f32::from_bits(Self::get_lane(&a, i, 32) as u32);
+                            let mut acc = lf(0);
+                            for i in 1..n {
+                                let x = lf(i);
+                                acc = if !nm && (acc.is_nan() || x.is_nan()) {
+                                    f32::NAN
+                                } else if is_min {
+                                    acc.min(x)
+                                } else {
+                                    acc.max(x)
+                                };
+                            }
+                            acc.to_bits() as u64
+                        } else {
+                            let lf = |i: u8| f64::from_bits(Self::get_lane(&a, i, 64));
+                            let mut acc = lf(0);
+                            for i in 1..n {
+                                let x = lf(i);
+                                acc = if !nm && (acc.is_nan() || x.is_nan()) {
+                                    f64::NAN
+                                } else if is_min {
+                                    acc.min(x)
+                                } else {
+                                    acc.max(x)
+                                };
+                            }
+                            acc.to_bits()
+                        }
+                    }
                 };
                 let mut result = [0u64; 16];
                 Self::set_lane(&mut result, 0, bits, value);
@@ -2611,6 +2650,54 @@ impl SmirInterpreter {
                         // FMAXNM/FMINNM are FP-only; ignore otherwise.
                     }
                 }
+            }
+
+            OpKind::VPermute2 {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                kind,
+            } => {
+                let a = Self::read_vec(ctx, *src1);
+                let b = Self::read_vec(ctx, *src2);
+                let bits = elem.bytes() * 8;
+                let n = *lanes as usize;
+                let half = n / 2;
+                let geta = |i: usize| Self::get_lane(&a, i as u8, bits);
+                let getb = |i: usize| Self::get_lane(&b, i as u8, bits);
+                let mut result = [0u64; 16];
+                for d in 0..n {
+                    let v = match kind {
+                        VecPermuteKind::Zip1 => {
+                            if d % 2 == 0 { geta(d / 2) } else { getb(d / 2) }
+                        }
+                        VecPermuteKind::Zip2 => {
+                            if d % 2 == 0 {
+                                geta(half + d / 2)
+                            } else {
+                                getb(half + d / 2)
+                            }
+                        }
+                        VecPermuteKind::Uzp1 => {
+                            let idx = 2 * d;
+                            if idx < n { geta(idx) } else { getb(idx - n) }
+                        }
+                        VecPermuteKind::Uzp2 => {
+                            let idx = 2 * d + 1;
+                            if idx < n { geta(idx) } else { getb(idx - n) }
+                        }
+                        VecPermuteKind::Trn1 => {
+                            if d % 2 == 0 { geta(d) } else { getb(d - 1) }
+                        }
+                        VecPermuteKind::Trn2 => {
+                            if d % 2 == 0 { geta(d + 1) } else { getb(d) }
+                        }
+                    };
+                    Self::set_lane(&mut result, d as u8, bits, v);
+                }
+                Self::write_vec(ctx, *dst, result);
             }
 
             OpKind::VAnd {

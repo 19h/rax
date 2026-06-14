@@ -13,7 +13,7 @@ use crate::smir::ops::{OpKind, SmirOp};
 use crate::smir::types::{
     Address, ArchReg, ArmReg, AtomicOp, Avx10FP16Op, BlockId, Condition, ExtendOp, FenceKind,
     FpPrecision, FpRoundMode, MemWidth, MemoryOrder, OpWidth, ShiftOp, SignExtend, SrcOperand,
-    VLaneOp, VReg, VecElementType, VecReduceOp, VecUnaryOp, VecWidth,
+    VLaneOp, VReg, VecElementType, VecPermuteKind, VecReduceOp, VecUnaryOp, VecWidth,
 };
 
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
@@ -3037,6 +3037,21 @@ impl Aarch64Lowerer {
     ) -> Result<(), LowerError> {
         let rd = Self::fp_reg(dst)?;
         let rn = Self::fp_reg(src)?;
+        // FP reductions: across-lanes, U=1 (the f32 .4S form), opcode 01100 (NM)
+        // / 01111, with a = size<1> selecting max (0) vs min (1). For f32 the
+        // sz bit (size<0>) is 0.
+        if let Some((opcode, min)) = match op {
+            VecReduceOp::FMax => Some((0b01111, false)),
+            VecReduceOp::FMin => Some((0b01111, true)),
+            VecReduceOp::FMaxNm => Some((0b01100, false)),
+            VecReduceOp::FMinNm => Some((0b01100, true)),
+            _ => None,
+        } {
+            let (q, _sz) = Self::simd_float_shape(elem, lanes)?;
+            let size = if min { 0b10 } else { 0b00 };
+            self.emit_simd_across_lanes(rd, rn, q, 1, size, opcode);
+            return Ok(());
+        }
         let (q, size) = Self::simd_integer_shape(elem, lanes)?;
         // No 64-bit-element reductions (ADDV/SxxxV do not allow a 2D source).
         if size == 3 {
@@ -3050,6 +3065,8 @@ impl Aarch64Lowerer {
             VecReduceOp::UMax => (1, 0b01010),
             VecReduceOp::SMin => (0, 0b11010),
             VecReduceOp::UMin => (1, 0b11010),
+            // FP forms handled above.
+            _ => unreachable!(),
         };
         self.emit_simd_across_lanes(rd, rn, q, u, size, opcode);
         Ok(())
@@ -3084,6 +3101,47 @@ impl Aarch64Lowerer {
                 | (q << 30)
                 | (u << 29)
                 | (size << 22)
+                | (opcode << 12)
+                | ((rn as u32) << 5)
+                | (rd as u32),
+        );
+    }
+
+    /// Lower a vector two-source permute (ZIP/UZP/TRN) to the native AArch64
+    /// "advanced SIMD permute" form.
+    fn lower_vpermute2(
+        &mut self,
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        kind: VecPermuteKind,
+    ) -> Result<(), LowerError> {
+        let rd = Self::fp_reg(dst)?;
+        let rn = Self::fp_reg(src1)?;
+        let rm = Self::fp_reg(src2)?;
+        let (q, size) = Self::simd_integer_shape(elem, lanes)?;
+        let opcode = match kind {
+            VecPermuteKind::Uzp1 => 0b001,
+            VecPermuteKind::Trn1 => 0b010,
+            VecPermuteKind::Zip1 => 0b011,
+            VecPermuteKind::Uzp2 => 0b101,
+            VecPermuteKind::Trn2 => 0b110,
+            VecPermuteKind::Zip2 => 0b111,
+        };
+        self.emit_simd_permute(rd, rn, rm, q, size, opcode);
+        Ok(())
+    }
+
+    /// Emit an "advanced SIMD permute" instruction:
+    /// `0 Q 0 01110 size 0 Rm 0 opcode 10 Rn Rd` (opcode = bits[14:12]).
+    fn emit_simd_permute(&mut self, rd: u8, rn: u8, rm: u8, q: u32, size: u32, opcode: u32) {
+        self.emit(
+            0x0e00_0800
+                | (q << 30)
+                | (size << 22)
+                | ((rm as u32) << 16)
                 | (opcode << 12)
                 | ((rn as u32) << 5)
                 | (rd as u32),
@@ -14659,6 +14717,14 @@ impl Aarch64Lowerer {
                 lanes,
                 min,
             } => self.lower_vfminmaxnm(*dst, *src1, *src2, *elem, *lanes, *min),
+            OpKind::VPermute2 {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                kind,
+            } => self.lower_vpermute2(*dst, *src1, *src2, *elem, *lanes, *kind),
             OpKind::VMax {
                 dst,
                 src1,

@@ -1984,6 +1984,16 @@ impl Aarch64Decoder {
             return Self::decode_simd_scalar_pairwise(raw);
         }
 
+        // SIMD permute (ZIP/UZP/TRN): [28:24]=01110, [21]=0, [15]=0, [11:10]=10.
+        // Must precede SIMD copy (also [21]=0) — copy has bit10=1.
+        if (raw >> 24) & 0x1F == 0b01110
+            && (raw >> 21) & 1 == 0
+            && (raw >> 15) & 1 == 0
+            && (raw >> 10) & 0x3 == 0b10
+        {
+            return Self::decode_simd_permute(raw, q);
+        }
+
         // SIMD copy (DUP, MOV, INS): [31:30]=0x, [28:24]=01110, [21]=0
         if (raw >> 24) & 0x1F == 0b01110 && (raw >> 21) & 1 == 0 {
             return Self::decode_simd_copy(raw, q);
@@ -2186,6 +2196,31 @@ impl Aarch64Decoder {
             _ => FpRegSize::S,
         };
 
+        // FP across-lanes reductions (opcode 01100 = FMAXNMV/FMINNMV, 01111 =
+        // FMAXV/FMINV) discriminate max vs min via a = bit23 (NOT U — the prior
+        // table keyed min on U=1, which is wrong). The U bit selects the element
+        // type: U=1 → f32 (.4S, scalar S), U=0 → FP16 (.4H/.8H, scalar H).
+        if opcode == 0b01100 || opcode == 0b01111 {
+            let a = (raw >> 23) & 1;
+            let mnemonic = match (a, opcode) {
+                (0, 0b01100) => Mnemonic::FMAXNM,
+                (1, 0b01100) => Mnemonic::FMINNM,
+                (0, 0b01111) => Mnemonic::FMAX,
+                (1, 0b01111) => Mnemonic::FMIN,
+                _ => Mnemonic::UNKNOWN,
+            };
+            let fp_dst = if u == 1 { FpRegSize::S } else { FpRegSize::H };
+            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                .with_operand(Operand::FpReg(FpRegister {
+                    num: rd,
+                    size: fp_dst,
+                }))
+                .with_operand(Operand::FpReg(FpRegister {
+                    num: rn,
+                    size: vec_size,
+                })));
+        }
+
         let mnemonic = match (u, opcode) {
             (0, 0b00011) => Mnemonic::SADDV, // SADDLV
             (0, 0b01010) => Mnemonic::SMAXV, // SMAXV
@@ -2195,12 +2230,6 @@ impl Aarch64Decoder {
             (1, 0b00011) => Mnemonic::UADDV, // UADDLV
             (1, 0b01010) => Mnemonic::UMAXV, // UMAXV
             (1, 0b11010) => Mnemonic::UMINV, // UMINV
-
-            // FP across lanes
-            (0, 0b01100) => Mnemonic::FMAXNM, // FMAXNMV
-            (0, 0b01111) => Mnemonic::FMAX,   // FMAXV
-            (1, 0b01100) => Mnemonic::FMINNM, // FMINNMV
-            (1, 0b01111) => Mnemonic::FMIN,   // FMINV
 
             _ => Mnemonic::UNKNOWN,
         };
@@ -2214,6 +2243,38 @@ impl Aarch64Decoder {
                 num: rn,
                 size: vec_size,
             })))
+    }
+
+    /// Decode SIMD permute instructions (ZIP1/ZIP2/UZP1/UZP2/TRN1/TRN2).
+    /// Encoding: `0 Q 0 01110 size 0 Rm 0 opcode 10 Rn Rd` (opcode = bits[14:12]).
+    fn decode_simd_permute(raw: u32, q: u32) -> Result<DecodedInsn, DecodeError> {
+        let rm = ((raw >> 16) & 0x1F) as u8;
+        let opcode = (raw >> 12) & 0x7;
+        let rn = ((raw >> 5) & 0x1F) as u8;
+        let rd = (raw & 0x1F) as u8;
+
+        let vec_size = if q == 1 { FpRegSize::Q } else { FpRegSize::D };
+        let fp_reg = |num| {
+            Operand::FpReg(FpRegister {
+                num,
+                size: vec_size,
+            })
+        };
+
+        let mnemonic = match opcode {
+            0b001 => Mnemonic::UZP1,
+            0b010 => Mnemonic::TRN1,
+            0b011 => Mnemonic::ZIP1,
+            0b101 => Mnemonic::UZP2,
+            0b110 => Mnemonic::TRN2,
+            0b111 => Mnemonic::ZIP2,
+            _ => Mnemonic::UNKNOWN,
+        };
+
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            .with_operand(fp_reg(rd))
+            .with_operand(fp_reg(rn))
+            .with_operand(fp_reg(rm)))
     }
 
     /// Decode SIMD scalar pairwise instructions.

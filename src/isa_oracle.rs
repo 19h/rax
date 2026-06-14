@@ -19,8 +19,8 @@ use crate::smir::{
     HexagonLifter, HexagonReg, LiftContext, MemWidth, MemoryOrder, OpId, OpKind, OpWidth,
     RiscVLifter, RiscVReg, ShiftOp, SignExtend, SmirBlock, SmirContext, SmirInterpreter,
     SmirLifter, SmirMemory, SmirOp, SourceArch, SrcOperand, Terminator, TrapKind, VLaneOp, VReg,
-    VShiftVKind, VecCmpCond, VecElementType, VecReduceOp, VecUnaryOp, VecWidth, X86_64Lifter,
-    X86Reg,
+    VShiftVKind, VecCmpCond, VecElementType, VecPermuteKind, VecReduceOp, VecUnaryOp, VecWidth,
+    X86_64Lifter, X86Reg,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1052,6 +1052,7 @@ debug_name_json!(
     VLaneOp,
     VecUnaryOp,
     VecReduceOp,
+    VecPermuteKind,
     Avx10FP16Op,
     Condition,
     HexFpOp,
@@ -1817,6 +1818,14 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             lanes,
             min,
         } => op_json!("vfminmaxnm", dst, src1, src2, elem, lanes, min),
+        OpKind::VPermute2 {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            kind,
+        } => op_json!("vpermute2", dst, src1, src2, elem, lanes, kind),
         OpKind::VAnd {
             dst,
             src1,

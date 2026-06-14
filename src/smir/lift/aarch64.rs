@@ -1608,6 +1608,14 @@ impl Aarch64Lifter {
                 self.lift_vector_reduce(insn, pc, &mut ops, VecReduceOp::UMin)?;
             }
 
+            // Vector two-source permutes (ZIP/UZP/TRN).
+            Mnemonic::ZIP1 => self.lift_vpermute(insn, pc, &mut ops, VecPermuteKind::Zip1)?,
+            Mnemonic::ZIP2 => self.lift_vpermute(insn, pc, &mut ops, VecPermuteKind::Zip2)?,
+            Mnemonic::UZP1 => self.lift_vpermute(insn, pc, &mut ops, VecPermuteKind::Uzp1)?,
+            Mnemonic::UZP2 => self.lift_vpermute(insn, pc, &mut ops, VecPermuteKind::Uzp2)?,
+            Mnemonic::TRN1 => self.lift_vpermute(insn, pc, &mut ops, VecPermuteKind::Trn1)?,
+            Mnemonic::TRN2 => self.lift_vpermute(insn, pc, &mut ops, VecPermuteKind::Trn2)?,
+
             // =================================================================
             // Load/Store
             // =================================================================
@@ -2085,6 +2093,44 @@ impl Aarch64Lifter {
             | Mnemonic::FMIN
             | Mnemonic::FMAXNM
             | Mnemonic::FMINNM => {
+                // Across-lanes FP reductions FMAXV/FMINV/FMAXNMV/FMINNMV (across-
+                // lanes marker bits[21:17]==11000, scalar dst + vector src, so 2
+                // operands). Only the U=1 f32 (.4S) form is JIT'd here; the U=0
+                // FP16 form bails. The 3-operand three-same and scalar 2-source
+                // forms continue below.
+                if insn.operands.get(2).is_none()
+                    && (insn.raw >> 17) & 0x1F == 0b11000
+                    && (insn.raw >> 29) & 1 == 1
+                    && matches!(
+                        insn.mnemonic,
+                        Mnemonic::FMAX | Mnemonic::FMIN | Mnemonic::FMAXNM | Mnemonic::FMINNM
+                    )
+                {
+                    let rop = match insn.mnemonic {
+                        Mnemonic::FMAX => VecReduceOp::FMax,
+                        Mnemonic::FMIN => VecReduceOp::FMin,
+                        Mnemonic::FMAXNM => VecReduceOp::FMaxNm,
+                        _ => VecReduceOp::FMinNm,
+                    };
+                    let (rd, rn) = match (insn.operands.get(0), insn.operands.get(1)) {
+                        (Some(Operand::FpReg(rd)), Some(Operand::FpReg(rn))) => (rd, rn),
+                        _ => {
+                            return Err(LiftError::Internal("fp reduce operands".to_string()));
+                        }
+                    };
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VReduce {
+                            dst: Self::fp_vreg(rd),
+                            src: Self::fp_vreg(rn),
+                            elem: VecElementType::F32,
+                            lanes: 4,
+                            op: rop,
+                        },
+                    ));
+                    return Ok((ops, control));
+                }
                 let rd = match insn.operands.get(0) {
                     Some(Operand::FpReg(r)) => r,
                     _ => return Err(LiftError::Internal("missing fp rd".to_string())),
@@ -3085,6 +3131,56 @@ impl Aarch64Lifter {
                 elem,
                 lanes,
                 op,
+            },
+        ));
+        Ok(())
+    }
+
+    /// Emit a vector two-source permute (ZIP/UZP/TRN) as an `OpKind::VPermute2`.
+    /// Three vector operands; element width from size = bits[23:22], lane count
+    /// from Q.
+    fn lift_vpermute(
+        &self,
+        insn: &DecodedInsn,
+        pc: u64,
+        ops: &mut Vec<SmirOp>,
+        kind: VecPermuteKind,
+    ) -> Result<(), LiftError> {
+        let (rd, rn, rm) = match (
+            insn.operands.get(0),
+            insn.operands.get(1),
+            insn.operands.get(2),
+        ) {
+            (
+                Some(Operand::FpReg(rd)),
+                Some(Operand::FpReg(rn)),
+                Some(Operand::FpReg(rm)),
+            ) => (rd, rn, rm),
+            _ => {
+                return Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("{:?}", insn.mnemonic),
+                });
+            }
+        };
+        let q = (insn.raw >> 30) & 1;
+        let (elem, lane_bytes) = match (insn.raw >> 22) & 0x3 {
+            0 => (VecElementType::I8, 1u8),
+            1 => (VecElementType::I16, 2),
+            2 => (VecElementType::I32, 4),
+            _ => (VecElementType::I64, 8),
+        };
+        let lanes = (if q == 1 { 16u8 } else { 8 }) / lane_bytes;
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::VPermute2 {
+                dst: Self::fp_vreg(rd),
+                src1: Self::fp_vreg(rn),
+                src2: Self::fp_vreg(rm),
+                elem,
+                lanes,
+                kind,
             },
         ));
         Ok(())

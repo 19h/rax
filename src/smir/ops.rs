@@ -1066,6 +1066,17 @@ pub enum OpKind {
         min: bool,
     },
 
+    /// Vector two-source permute (AArch64 ZIP/UZP/TRN): combine `src1` and
+    /// `src2` element-wise per `kind` into `dst`.
+    VPermute2 {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        kind: VecPermuteKind,
+    },
+
     /// Vector bitwise AND
     VAnd {
         dst: VReg,
@@ -2768,6 +2779,7 @@ impl OpKind {
             | OpKind::VUnary { dst, .. }
             | OpKind::VReduce { dst, .. }
             | OpKind::VFMinMaxNm { dst, .. }
+            | OpKind::VPermute2 { dst, .. }
             | OpKind::VLane { dst, .. }
             | OpKind::VAnd { dst, .. }
             | OpKind::VOr { dst, .. }

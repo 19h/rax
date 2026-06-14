@@ -1715,3 +1715,108 @@ fn e2e_vector_fp_minmax_nm_matches_interpreter() {
         assert_eq!(jit, interp, "JIT matches interp op={:#010x}", op);
     }
 }
+
+// Vector FP across-lanes reductions FMAXV/FMINV/FMAXNMV/FMINNMV via VReduce.
+#[test]
+fn probe_vector_fp_reduce() {
+    let f = |x: f32| x.to_bits() as u64;
+    let pack = |a: f32, b: f32| f(a) | f(b) << 32;
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.v[2] = pack(1.0, 5.0); // v1 = [1, 5, 3, 8]
+        g.v[3] = pack(3.0, 8.0);
+    };
+    // fmaxv s0, v1.4s (0x4e30f820) -> 8
+    let r = fp_run(&[0x6e30_f820], setup);
+    assert_eq!(r.v[0], f(8.0) as u64, "fmaxv");
+    // fminv s0, v1.4s (0x4eb0f820) -> 1
+    let r = fp_run(&[0x6eb0_f820], setup);
+    assert_eq!(r.v[0], f(1.0) as u64, "fminv");
+    // fmaxnmv s0, v1.4s (0x4e30c820) -> 8
+    let r = fp_run(&[0x6e30_c820], setup);
+    assert_eq!(r.v[0], f(8.0) as u64, "fmaxnmv");
+    // fminnmv s0, v1.4s (0x4eb0c820) -> 1
+    let r = fp_run(&[0x6eb0_c820], setup);
+    assert_eq!(r.v[0], f(1.0) as u64, "fminnmv");
+}
+
+#[test]
+fn e2e_vector_fp_reduce_hot_loop_matches_interpreter() {
+    let f = |x: f32| x.to_bits() as u128;
+    let v1 = f(2.0) | f(9.0) << 32 | f(4.0) << 64 | f(7.0) << 96;
+    let ops: [u32; 4] = [0x6e30_f820, 0x6eb0_f820, 0x6e30_c820, 0x6eb0_c820];
+    for op in ops {
+        let prog: [u32; 4] = [op, 0xf100_0400, 0x54ff_ffc1, 0xd65f_03c0];
+        let run_one = |jit: bool| -> u128 {
+            let mut cpu = fresh_cpu();
+            cpu.set_jit_enabled(jit);
+            load_prog(&mut cpu, &prog);
+            cpu.set_simd(0, 0);
+            cpu.set_simd(1, v1);
+            cpu.set_x(0, 100);
+            drive_to_done(&mut cpu);
+            cpu.get_simd(0)
+        };
+        let interp = run_one(false);
+        let jit = run_one(true);
+        assert_eq!(jit, interp, "JIT matches interp op={:#010x}", op);
+        assert_ne!(interp, 0, "op={:#010x} nonzero", op);
+    }
+}
+
+// Vector two-source permutes ZIP/UZP/TRN via OpKind::VPermute2, lift→lower→exec.
+// v1 = [1,2,3,4], v2 = [5,6,7,8] (.4s lanes).
+#[test]
+fn probe_vector_permute() {
+    let p = |a: u32, b: u32| (a as u64) | ((b as u64) << 32);
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.v[2] = 0x0000_0002_0000_0001; // v1 lanes 0,1 = 1,2
+        g.v[3] = 0x0000_0004_0000_0003; // v1 lanes 2,3 = 3,4
+        g.v[4] = 0x0000_0006_0000_0005; // v2 lanes 0,1 = 5,6
+        g.v[5] = 0x0000_0008_0000_0007; // v2 lanes 2,3 = 7,8
+    };
+    // zip1 v0.4s,v1.4s,v2.4s (0x4ea23820) -> [1,5,2,6]
+    let r = fp_run(&[0x4e82_3820], setup);
+    assert_eq!((r.v[0], r.v[1]), (p(1, 5), p(2, 6)), "zip1");
+    // zip2 (0x4ea27820) -> [3,7,4,8]
+    let r = fp_run(&[0x4e82_7820], setup);
+    assert_eq!((r.v[0], r.v[1]), (p(3, 7), p(4, 8)), "zip2");
+    // uzp1 (0x4ea21820) -> [1,3,5,7]
+    let r = fp_run(&[0x4e82_1820], setup);
+    assert_eq!((r.v[0], r.v[1]), (p(1, 3), p(5, 7)), "uzp1");
+    // uzp2 (0x4ea25820) -> [2,4,6,8]
+    let r = fp_run(&[0x4e82_5820], setup);
+    assert_eq!((r.v[0], r.v[1]), (p(2, 4), p(6, 8)), "uzp2");
+    // trn1 (0x4ea22820) -> [1,5,3,7]
+    let r = fp_run(&[0x4e82_2820], setup);
+    assert_eq!((r.v[0], r.v[1]), (p(1, 5), p(3, 7)), "trn1");
+    // trn2 (0x4ea26820) -> [2,6,4,8]
+    let r = fp_run(&[0x4e82_6820], setup);
+    assert_eq!((r.v[0], r.v[1]), (p(2, 6), p(4, 8)), "trn2");
+}
+
+#[test]
+fn e2e_vector_permute_hot_loop_matches_interpreter() {
+    let v1: u128 = 0x0000_0004_0000_0003_0000_0002_0000_0001;
+    let v2: u128 = 0x0000_0008_0000_0007_0000_0006_0000_0005;
+    let ops: [u32; 6] = [
+        0x4e82_3820, 0x4e82_7820, 0x4e82_1820, 0x4e82_5820, 0x4e82_2820, 0x4e82_6820,
+    ];
+    for op in ops {
+        let prog: [u32; 4] = [op, 0xf100_0400, 0x54ff_ffc1, 0xd65f_03c0];
+        let run_one = |jit: bool| -> u128 {
+            let mut cpu = fresh_cpu();
+            cpu.set_jit_enabled(jit);
+            load_prog(&mut cpu, &prog);
+            cpu.set_simd(0, 0);
+            cpu.set_simd(1, v1);
+            cpu.set_simd(2, v2);
+            cpu.set_x(0, 100);
+            drive_to_done(&mut cpu);
+            cpu.get_simd(0)
+        };
+        let interp = run_one(false);
+        let jit = run_one(true);
+        assert_eq!(jit, interp, "JIT matches interp op={:#010x}", op);
+        assert_ne!(interp, 0, "op={:#010x} nonzero", op);
+    }
+}

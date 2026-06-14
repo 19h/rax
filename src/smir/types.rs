@@ -937,6 +937,32 @@ pub enum VecReduceOp {
     SMin,
     /// Unsigned integer minimum reduction (AArch64 UMINV).
     UMin,
+    /// FP maximum reduction, NaN-propagating (AArch64 FMAXV).
+    FMax,
+    /// FP minimum reduction, NaN-propagating (AArch64 FMINV).
+    FMin,
+    /// FP numeric maximum reduction, NaN-quiet (AArch64 FMAXNMV).
+    FMaxNm,
+    /// FP numeric minimum reduction, NaN-quiet (AArch64 FMINNMV).
+    FMinNm,
+}
+
+/// Vector two-source permute kind (see `OpKind::VPermute2`). Each combines two
+/// source vectors into one by interleaving / deinterleaving / transposing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum VecPermuteKind {
+    /// Interleave the lower halves (AArch64 ZIP1).
+    Zip1,
+    /// Interleave the upper halves (AArch64 ZIP2).
+    Zip2,
+    /// Deinterleave even-indexed elements (AArch64 UZP1).
+    Uzp1,
+    /// Deinterleave odd-indexed elements (AArch64 UZP2).
+    Uzp2,
+    /// Transpose even-indexed elements (AArch64 TRN1).
+    Trn1,
+    /// Transpose odd-indexed elements (AArch64 TRN2).
+    Trn2,
 }
 
 /// Vector register width
