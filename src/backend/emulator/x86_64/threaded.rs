@@ -92,13 +92,16 @@ impl X86_64Vcpu {
                 segment_override: cached.segment_override,
                 evex: None,
                 opcode: cached.opcode,
+                // Boundary-truncated instructions are never cached, so a hit
+                // always carries the full instruction.
+                boundary_gp: false,
             };
             return self.dispatch_threaded(cached.opcode, &mut ctx);
         }
 
         // Cache miss - full decode
-        let (bytes, bytes_len) = self.fetch()?;
-        let mut ctx = Decoder::decode_prefixes(bytes, bytes_len, self.sregs.cs.l)?;
+        let (bytes, bytes_len, boundary_gp) = self.fetch()?;
+        let mut ctx = Decoder::decode_prefixes(bytes, bytes_len, boundary_gp, self.sregs.cs.l)?;
 
         // Determine operand size
         ctx.op_size = if self.sregs.cs.l {
@@ -130,24 +133,28 @@ impl X86_64Vcpu {
         // Cache the LOCK-present verdict so a later `step()` hit can skip the scan.
         let has_lock = ctx.bytes[..opcode_cursor.min(ctx.bytes_len)].contains(&0xF0);
 
-        // Update cache
-        self.decode_cache[cache_idx] = super::cpu::DecodeCacheEntry {
-            rip,
-            mode_tag,
-            opcode,
-            op_size: ctx.op_size,
-            cursor: opcode_cursor,
-            rex: ctx.rex,
-            rex2: ctx.rex2,
-            operand_size_override: ctx.operand_size_override,
-            address_size_override: ctx.address_size_override,
-            rep_prefix: ctx.rep_prefix,
-            segment_override: ctx.segment_override,
-            bytes: ctx.bytes,
-            bytes_len: ctx.bytes_len,
-            has_lock,
-            handler,
-        };
+        // Update cache. Never cache a boundary-truncated fetch (its short byte
+        // window would lose the boundary_gp flag on a later hit and turn the
+        // architectural #GP back into a fatal error).
+        if !boundary_gp {
+            self.decode_cache[cache_idx] = super::cpu::DecodeCacheEntry {
+                rip,
+                mode_tag,
+                opcode,
+                op_size: ctx.op_size,
+                cursor: opcode_cursor,
+                rex: ctx.rex,
+                rex2: ctx.rex2,
+                operand_size_override: ctx.operand_size_override,
+                address_size_override: ctx.address_size_override,
+                rep_prefix: ctx.rep_prefix,
+                segment_override: ctx.segment_override,
+                bytes: ctx.bytes,
+                bytes_len: ctx.bytes_len,
+                has_lock,
+                handler,
+            };
+        }
 
         self.dispatch_threaded(opcode, &mut ctx)
     }

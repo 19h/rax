@@ -58,9 +58,16 @@ impl Decoder {
     pub fn decode_prefixes(
         bytes: [u8; super::cpu::MAX_INSN_LEN],
         bytes_len: usize,
+        boundary_gp: bool,
         is_long_mode: bool,
     ) -> Result<InsnContext> {
         if bytes_len == 0 {
+            // A zero-length fetch only reaches here defensively; a non-canonical
+            // RIP is already surfaced as #GP by fetch(). Preserve boundary_gp so
+            // the fault, if any, is the architectural #GP rather than a fatal error.
+            if boundary_gp {
+                return Err(Error::GeneralProtection { error_code: 0 });
+            }
             return Err(Error::Emulator("instruction too short".to_string()));
         }
 
@@ -82,6 +89,7 @@ impl Decoder {
                 segment_override: None,
                 evex: None,
                 opcode: 0,
+                boundary_gp,
             });
         }
 
@@ -100,11 +108,12 @@ impl Decoder {
             segment_override: None,
             evex: None,
             opcode: 0,
+            boundary_gp,
         };
 
         loop {
             if ctx.cursor >= ctx.bytes_len {
-                return Err(Error::Emulator("instruction too short".to_string()));
+                return Err(ctx.out_of_bytes());
             }
             let b = ctx.bytes[ctx.cursor];
             match b {
@@ -206,7 +215,7 @@ mod tests {
         // 0x7F = 0b0111_1111.
         bytes[1] = 0x7F;
         bytes[2] = 0x90; // NOP opcode
-        let ctx = Decoder::decode_prefixes(bytes, 3, true).unwrap();
+        let ctx = Decoder::decode_prefixes(bytes, 3, false, true).unwrap();
         assert!(ctx.rex2.is_some());
         let rex2 = ctx.rex2.unwrap();
         assert!(!rex2.m); // M=0 (legacy map)
@@ -218,7 +227,7 @@ mod tests {
         // REX2 with M=1 (0F map), W=0, all extension bits cleared.
         // 0xD5 0x80 = REX2 with M=1
         bytes[1] = 0x80;
-        let ctx = Decoder::decode_prefixes(bytes, 3, true).unwrap();
+        let ctx = Decoder::decode_prefixes(bytes, 3, false, true).unwrap();
         let rex2 = ctx.rex2.unwrap();
         assert!(rex2.m); // M=1 (0F map)
         assert!(!rex2.w); // W=0
@@ -260,7 +269,7 @@ mod tests {
             bytes[len] = b;
             len += 1;
         }
-        let ctx = Decoder::decode_prefixes(bytes, len, true).unwrap();
+        let ctx = Decoder::decode_prefixes(bytes, len, false, true).unwrap();
         // After prefixes, cursor points at the opcode; ModR/M starts one byte later.
         assert_eq!(
             ctx.cursor + 1,
