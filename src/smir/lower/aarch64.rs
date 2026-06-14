@@ -40,9 +40,12 @@ const A64_STATE_REG: u8 = 28;
 const A64_GUEST_SP_OFFSET: u32 = 248;
 const A64_GUEST_PC_OFFSET: u32 = 256;
 const A64_GUEST_NZCV_OFFSET: u32 = 264;
+const A64_GUEST_V_OFFSET: u32 = 288;
 const A64_GUEST_CTX_OFFSET: u32 = 800;
 const A64_GUEST_LOAD_FN_OFFSET: u32 = 808;
 const A64_GUEST_STORE_FN_OFFSET: u32 = 816;
+const A64_GUEST_VEC_LOAD_FN_OFFSET: u32 = 848;
+const A64_GUEST_VEC_STORE_FN_OFFSET: u32 = 856;
 
 /// Native AArch64 lowerer for identity-mapped AArch64 scalar SMIR.
 pub struct Aarch64Lowerer {
@@ -342,6 +345,119 @@ impl Aarch64Lowerer {
         self.emit(0x1400_0000); // b <done>
         self.patch_compare_branch_to_current(cbz_off, 0, false)?;
         self.emit_mem_helper_reload()?;
+        self.emit_native_exit(guest_pc)?;
+        self.patch_branch_to_current(done_off)?;
+        Ok(())
+    }
+
+    /// Spill all 32 host V registers into the state struct's V slots. A C
+    /// vector-helper `blr` may clobber any caller-saved V register (V0-V7,
+    /// V16-V31) — including the live operands of surrounding vector ops — so the
+    /// full file must be preserved across the call. For a LOAD, the helper then
+    /// overwrites only the destination slot, so the post-call reload yields the
+    /// loaded vector in the dst and every other register restored.
+    fn emit_simd_spill_all(&mut self) {
+        for n in 0..32u32 {
+            let imm12 = (A64_GUEST_V_OFFSET + n * 16) / 16;
+            // str q_n, [x28, #V_OFFSET + n*16]
+            self.emit(0x3d80_0000 | (imm12 << 10) | ((A64_STATE_REG as u32) << 5) | n);
+        }
+    }
+
+    /// Reload all 32 host V registers from the state struct's V slots.
+    fn emit_simd_reload_all(&mut self) {
+        for n in 0..32u32 {
+            let imm12 = (A64_GUEST_V_OFFSET + n * 16) / 16;
+            // ldr q_n, [x28, #V_OFFSET + n*16]
+            self.emit(0x3dc0_0000 | (imm12 << 10) | ((A64_STATE_REG as u32) << 5) | n);
+        }
+    }
+
+    /// Vector access size in bytes for the helper ABI.
+    fn vec_width_bytes(width: VecWidth) -> Result<u32, LowerError> {
+        match width {
+            VecWidth::V64 => Ok(8),
+            VecWidth::V128 => Ok(16),
+            other => Err(LowerError::UnsupportedOp {
+                op: format!("AArch64 vector mem-helper width {other:?}"),
+            }),
+        }
+    }
+
+    /// Lower a `VLoad` (SIMD/vector load) as a runtime helper call-out. The
+    /// helper reads `size` bytes from guest memory and writes them (zero-padded
+    /// to 16) into the destination V register's slot in the state struct; the
+    /// lowered code then reloads that V register with `ldr q`. Same spill / LR /
+    /// fault-bail discipline as the scalar mem helpers. The helper takes the
+    /// STATE pointer (x28) as arg0 so it can reach both the vcpu and the V slots.
+    fn emit_jit_vload_op(
+        &mut self,
+        guest_pc: u64,
+        dst: VReg,
+        addr: &Address,
+        width: VecWidth,
+    ) -> Result<(), LowerError> {
+        let dst_idx = Self::fp_reg(dst)?;
+        let size = Self::vec_width_bytes(width)?;
+
+        self.emit_mem_helper_spill()?;
+        self.emit_simd_spill_all(); // V regs survive the call; helper overwrites dst slot
+        self.emit_push_scratch(30);
+        self.emit_mem_helper_addr(addr)?; // x1 = addr
+        self.emit_mov_reg(0, A64_STATE_REG, OpWidth::W64)?; // x0 = state ptr
+        self.emit_mov_imm(2, dst_idx as i64, OpWidth::W32)?; // w2 = dst V index
+        self.emit_mov_imm(3, size as i64, OpWidth::W32)?; // w3 = size
+        self.emit_ldst_unsigned(9, A64_STATE_REG, 3, 0b01, A64_GUEST_VEC_LOAD_FN_OFFSET / 8);
+        self.emit_blr_reg(9); // -> x0 = ok; helper wrote struct.v[dst]
+        self.emit_pop_scratch(30);
+
+        let cbz_off = self.code.position();
+        self.emit(0xb400_0000); // cbz x0, <fault>
+        self.emit_mem_helper_reload()?;
+        self.emit_simd_reload_all(); // dst = loaded vector; all others restored
+        let done_off = self.code.position();
+        self.emit(0x1400_0000); // b <done>
+        self.patch_compare_branch_to_current(cbz_off, 0, false)?;
+        self.emit_mem_helper_reload()?;
+        self.emit_simd_reload_all();
+        self.emit_native_exit(guest_pc)?;
+        self.patch_branch_to_current(done_off)?;
+        Ok(())
+    }
+
+    /// Lower a `VStore` (SIMD/vector store) as a runtime helper call-out: publish
+    /// the source V register into its state-struct slot (`str q`), then call the
+    /// helper to store `size` bytes to guest memory.
+    fn emit_jit_vstore_op(
+        &mut self,
+        guest_pc: u64,
+        src: VReg,
+        addr: &Address,
+        width: VecWidth,
+    ) -> Result<(), LowerError> {
+        let src_idx = Self::fp_reg(src)?;
+        let size = Self::vec_width_bytes(width)?;
+
+        self.emit_mem_helper_spill()?;
+        self.emit_simd_spill_all(); // publishes V_src to its slot + preserves all V
+        self.emit_push_scratch(30);
+        self.emit_mem_helper_addr(addr)?; // x1 = addr
+        self.emit_mov_reg(0, A64_STATE_REG, OpWidth::W64)?; // x0 = state ptr
+        self.emit_mov_imm(2, src_idx as i64, OpWidth::W32)?; // w2 = src V index
+        self.emit_mov_imm(3, size as i64, OpWidth::W32)?; // w3 = size
+        self.emit_ldst_unsigned(9, A64_STATE_REG, 3, 0b01, A64_GUEST_VEC_STORE_FN_OFFSET / 8);
+        self.emit_blr_reg(9); // -> x0 = ok
+        self.emit_pop_scratch(30);
+
+        let cbz_off = self.code.position();
+        self.emit(0xb400_0000); // cbz x0, <fault>
+        self.emit_mem_helper_reload()?;
+        self.emit_simd_reload_all();
+        let done_off = self.code.position();
+        self.emit(0x1400_0000); // b <done>
+        self.patch_compare_branch_to_current(cbz_off, 0, false)?;
+        self.emit_mem_helper_reload()?;
+        self.emit_simd_reload_all();
         self.emit_native_exit(guest_pc)?;
         self.patch_branch_to_current(done_off)?;
         Ok(())
@@ -14603,8 +14719,20 @@ impl Aarch64Lowerer {
                 src2,
                 width,
             } => self.lower_vlogic(*dst, *src1, *src2, *width, SimdLogicOp::Xor),
-            OpKind::VLoad { dst, addr, width } => self.lower_vload(*dst, addr, *width),
-            OpKind::VStore { src, addr, width } => self.lower_vstore(*src, addr, *width),
+            OpKind::VLoad { dst, addr, width } => {
+                if self.mem_helpers {
+                    self.emit_jit_vload_op(op.guest_pc, *dst, addr, *width)
+                } else {
+                    self.lower_vload(*dst, addr, *width)
+                }
+            }
+            OpKind::VStore { src, addr, width } => {
+                if self.mem_helpers {
+                    self.emit_jit_vstore_op(op.guest_pc, *src, addr, *width)
+                } else {
+                    self.lower_vstore(*src, addr, *width)
+                }
+            }
             OpKind::Load {
                 dst,
                 addr,

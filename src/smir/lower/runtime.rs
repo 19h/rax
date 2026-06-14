@@ -131,6 +131,18 @@ pub struct Aarch64GuestRegs {
     pub exclusive_size: u64,
     /// Non-zero when the exclusive monitor is armed.
     pub exclusive_valid: u64,
+    /// Address of the vector-load helper
+    /// `extern "C" fn(state: *mut Aarch64GuestRegs, addr, dst_idx, size) -> ok`.
+    /// It reads `size` bytes from guest memory (via `state.ctx`), zero-pads to 16
+    /// bytes, and writes them into `state.v[2*dst_idx..]`; the lowered code then
+    /// reloads the destination V register from that slot. Reusing `v[]` as the
+    /// transfer scratch avoids a separate buffer.
+    pub vec_load_fn: u64,
+    /// Address of the vector-store helper
+    /// `extern "C" fn(state, addr, src_idx, size) -> ok`: reads `state.v[2*src_idx..]`
+    /// (which the lowered code has just written from the source V register) and
+    /// stores `size` bytes to guest memory.
+    pub vec_store_fn: u64,
 }
 
 impl Default for Aarch64GuestRegs {
@@ -149,6 +161,8 @@ impl Default for Aarch64GuestRegs {
             exclusive_addr: 0,
             exclusive_size: 0,
             exclusive_valid: 0,
+            vec_load_fn: 0,
+            vec_store_fn: 0,
         }
     }
 }
@@ -167,6 +181,8 @@ impl Aarch64GuestRegs {
     pub const EXCLUSIVE_ADDR_OFFSET: i32 = Self::STORE_FN_OFFSET + 8;
     pub const EXCLUSIVE_SIZE_OFFSET: i32 = Self::EXCLUSIVE_ADDR_OFFSET + 8;
     pub const EXCLUSIVE_VALID_OFFSET: i32 = Self::EXCLUSIVE_SIZE_OFFSET + 8;
+    pub const VEC_LOAD_FN_OFFSET: i32 = Self::EXCLUSIVE_VALID_OFFSET + 8;
+    pub const VEC_STORE_FN_OFFSET: i32 = Self::VEC_LOAD_FN_OFFSET + 8;
 }
 
 // enter_native(rdi = entry ptr, rsi = *mut GuestRegs):
@@ -910,7 +926,14 @@ fn aarch64_block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: 
                 }
             }
         }
-        let mem_ok = allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. });
+        let mem_ok = allow_mem
+            && matches!(
+                op.kind,
+                OpKind::Load { .. }
+                    | OpKind::Store { .. }
+                    | OpKind::VLoad { .. }
+                    | OpKind::VStore { .. }
+            );
         // AArch64-clean register-only ops that the x86-tuned `is_jit_safe`
         // whitelist omits: UDIV/SDIV never trap on AArch64 (no x86 `#DE`), and
         // CLZ/RBIT/REV(Bswap)/bitfield insert+extract are pure ALU ops the
@@ -938,6 +961,18 @@ fn aarch64_block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: 
                 | OpKind::FSqrt { .. }
                 | OpKind::FAbs { .. }
                 | OpKind::FNeg { .. }
+                // NEON three-same vector arithmetic/logic the lowerer emits
+                // natively (run via the V-register FP trampoline). Element-type/
+                // arrangement forms the lowerer can't handle bail at lower time.
+                | OpKind::VAdd { .. }
+                | OpKind::VSub { .. }
+                | OpKind::VMul { .. }
+                | OpKind::VMax { .. }
+                | OpKind::VMin { .. }
+                | OpKind::VAnd { .. }
+                | OpKind::VOr { .. }
+                | OpKind::VXor { .. }
+                | OpKind::VFma { .. }
         );
         if !op.kind.is_jit_safe() && !a64_ok && !mem_ok {
             return false;

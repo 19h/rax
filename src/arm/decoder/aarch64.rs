@@ -1180,10 +1180,44 @@ impl Aarch64Decoder {
             _ => (Mnemonic::UNKNOWN, false),
         };
 
+        // SIMD&FP load/store (V=1): the access size is `opc[1]:size` (B/H/S/D/Q),
+        // and Rt names an FP/vector register, not a GPR. (Previously these
+        // decoded as GPR LDR/STR with the wrong size — the "SIMD load as GPR"
+        // bug that mis-executed vector loads in the interpreter and blocked
+        // vector-memory JIT.)
+        let simd_fp_size = if v == 1 {
+            match ((opc >> 1) & 1, size) {
+                (0, 0b00) => Some(FpRegSize::B),
+                (0, 0b01) => Some(FpRegSize::H),
+                (0, 0b10) => Some(FpRegSize::S),
+                (0, 0b11) => Some(FpRegSize::D),
+                (1, 0b00) => Some(FpRegSize::Q),
+                _ => {
+                    return Ok(DecodedInsn::new(
+                        Mnemonic::UNKNOWN,
+                        ExecutionState::Aarch64,
+                        raw,
+                        4,
+                    ));
+                }
+            }
+        } else {
+            None
+        };
+        // Offset scale = log2(access bytes). For GPR this is `size`; for SIMD it
+        // is derived from the FP size (size==00 for Q would otherwise scale by 0).
+        let mem_scale = match simd_fp_size {
+            Some(FpRegSize::B) => 0,
+            Some(FpRegSize::H) => 1,
+            Some(FpRegSize::S) => 2,
+            Some(FpRegSize::D) => 3,
+            Some(FpRegSize::Q) => 4,
+            _ => size as i64,
+        };
+
         let mem = if is_unsigned_imm {
             let imm12 = ((raw >> 10) & 0xFFF) as i64;
-            let scale = size as i64;
-            let offset = imm12 << scale;
+            let offset = imm12 << mem_scale;
             MemOperand::imm_offset(Register::with_sp(rn, true), offset)
         } else if is_register_offset {
             let rm = ((raw >> 16) & 0x1F) as u8;
@@ -1197,7 +1231,7 @@ impl Aarch64Decoder {
                 ));
             }
             let shift = if ((raw >> 12) & 1) != 0 {
-                size as u8
+                mem_scale as u8
             } else {
                 0
             };
@@ -1227,8 +1261,13 @@ impl Aarch64Decoder {
             }
         };
 
+        let rt_operand = match simd_fp_size {
+            Some(fp_size) => Operand::FpReg(FpRegister { num: rt, size: fp_size }),
+            None => Operand::Reg(Register::with_zr(rt, is_64bit)),
+        };
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
-            .with_operand(Operand::Reg(Register::with_zr(rt, is_64bit)))
+            .with_operand(rt_operand)
             .with_operand(Operand::Mem(mem)))
     }
 

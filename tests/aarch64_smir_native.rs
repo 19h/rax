@@ -999,3 +999,88 @@ fn e2e_vector_fmla_hot_loop_matches_interpreter() {
     assert_eq!(interp, splat(N as f32 * 6.0), "interp: v0 = N*(2*3) per lane");
     assert_eq!(jit, interp, "JIT FMLA loop matches interpreter");
 }
+
+// Interpreter must load a 128-bit vector correctly after the C1 decoder fix
+// (ldr q0,[x1] now decodes to an FP-register load, not a GPR load).
+#[test]
+fn interp_vector_ldr_q() {
+    const ADDR: u64 = 0x4000;
+    let val: u128 = 0x1122_3344_5566_7788_99aa_bbcc_ddee_ff00;
+    let mut cpu = fresh_cpu();
+    cpu.set_jit_enabled(false);
+    // ldr q0, [x1] ; ret
+    load_prog(&mut cpu, &[0x3dc0_0020, 0xd65f_03c0]);
+    cpu.write_memory(ADDR, &val.to_le_bytes()).unwrap();
+    cpu.set_x(1, ADDR);
+    cpu.set_x(30, DONE_PC);
+    cpu.set_pc(PROG_BASE);
+    for _ in 0..100 {
+        if cpu.get_pc() == DONE_PC {
+            break;
+        }
+        cpu.step_system().unwrap();
+    }
+    assert_eq!(cpu.get_simd(0), val, "interpreter loaded the 128-bit vector");
+}
+
+// End-to-end vector load/compute/store loop over guest memory, JIT'd vs the
+// interpreter. Each iteration: q0 = load array[i]; q0 += v2 (per 32-bit lane);
+// store array[i]; advance pointer. Exercises the full vector-memory JIT path
+// (C1 decoder fix -> VLoad/VStore lift -> vec mem-helper lowering -> emulator
+// 128-bit helpers) plus the FP/V trampoline.
+#[test]
+fn e2e_vector_loadstore_loop_matches_interpreter() {
+    const ADDR: u64 = 0x4000;
+    const N: u64 = 200; // > JIT hot threshold so the region actually compiles
+    // loop: ldr q0,[x1]; add v0.4s,v0.4s,v2.4s; str q0,[x1]; add x1,x1,#16;
+    //       subs x0,x0,#1; b.ne loop; ret
+    let prog: [u32; 7] = [
+        0x3dc0_0020,
+        0x4ea2_8400,
+        0x3d80_0020,
+        0x9100_4021,
+        0xf100_0400,
+        0x54ff_ff61,
+        0xd65f_03c0,
+    ];
+    let v2: u128 = 1 | 2u128 << 32 | 3u128 << 64 | 4u128 << 96; // lanes [1,2,3,4]
+
+    let run_one = |jit: bool| -> Vec<u32> {
+        let mut cpu = fresh_cpu();
+        cpu.set_jit_enabled(jit);
+        cpu.set_jit_mem(true); // vector memory needs the helper path
+        load_prog(&mut cpu, &prog);
+        for i in 0..N {
+            for lane in 0..4u64 {
+                let v = (10 * i) as u32;
+                cpu.write_memory(ADDR + i * 16 + lane * 4, &v.to_le_bytes())
+                    .unwrap();
+            }
+        }
+        cpu.set_simd(2, v2);
+        cpu.set_x(1, ADDR);
+        cpu.set_x(0, N);
+        drive_to_done(&mut cpu);
+        let mut out = Vec::new();
+        for i in 0..N {
+            for lane in 0..4u64 {
+                out.push(cpu.mem_read_u32(ADDR + i * 16 + lane * 4).unwrap());
+            }
+        }
+        out
+    };
+
+    let interp = run_one(false);
+    let jit = run_one(true);
+    // Sanity: array[i].lane == 10*i + (lane+1).
+    for i in 0..N {
+        for lane in 0..4u64 {
+            assert_eq!(
+                interp[(i * 4 + lane) as usize],
+                10 * i as u32 + lane as u32 + 1,
+                "interp array[{i}].{lane}"
+            );
+        }
+    }
+    assert_eq!(jit, interp, "vector load/store loop: JIT matches interpreter");
+}

@@ -1570,11 +1570,15 @@ impl Aarch64Lifter {
             // Load/Store
             // =================================================================
             Mnemonic::LDR => {
-                let width = match insn.operands.first() {
-                    Some(Operand::Reg(r)) if !r.is_64bit => MemWidth::B4,
-                    _ => MemWidth::B8,
-                };
-                self.lift_load(insn, width, SignExtend::Zero, pc, &mut ops, ctx)?;
+                if matches!(insn.operands.first(), Some(Operand::FpReg(_))) {
+                    self.lift_vector_mem(insn, true, pc, &mut ops, ctx)?;
+                } else {
+                    let width = match insn.operands.first() {
+                        Some(Operand::Reg(r)) if !r.is_64bit => MemWidth::B4,
+                        _ => MemWidth::B8,
+                    };
+                    self.lift_load(insn, width, SignExtend::Zero, pc, &mut ops, ctx)?;
+                }
             }
 
             Mnemonic::LDRB => {
@@ -1646,11 +1650,15 @@ impl Aarch64Lifter {
             }
 
             Mnemonic::STR => {
-                let width = match insn.operands.first() {
-                    Some(Operand::Reg(r)) if !r.is_64bit => MemWidth::B4,
-                    _ => MemWidth::B8,
-                };
-                self.lift_store(insn, width, pc, &mut ops, ctx)?;
+                if matches!(insn.operands.first(), Some(Operand::FpReg(_))) {
+                    self.lift_vector_mem(insn, false, pc, &mut ops, ctx)?;
+                } else {
+                    let width = match insn.operands.first() {
+                        Some(Operand::Reg(r)) if !r.is_64bit => MemWidth::B4,
+                        _ => MemWidth::B8,
+                    };
+                    self.lift_store(insn, width, pc, &mut ops, ctx)?;
+                }
             }
 
             Mnemonic::STRB => {
@@ -4021,6 +4029,64 @@ impl Aarch64Lifter {
             self.handle_writeback(mem, pc, ops, ctx);
         }
 
+        Ok(())
+    }
+
+    /// Lift a SIMD/FP register load/store (LDR/STR whose Rt the decoder resolved
+    /// to an FP register) into a VLoad/VStore. Only Q (128-bit) and D (64-bit)
+    /// map to a VecWidth; smaller scalar-FP widths bail so the region deopts.
+    fn lift_vector_mem(
+        &self,
+        insn: &DecodedInsn,
+        is_load: bool,
+        pc: u64,
+        ops: &mut Vec<SmirOp>,
+        ctx: &mut LiftContext,
+    ) -> Result<(), LiftError> {
+        let (rt, mem) = match (insn.operands.get(0), insn.operands.get(1)) {
+            (Some(Operand::FpReg(r)), Some(Operand::Mem(m))) => (r, m),
+            _ => return Err(LiftError::Internal("invalid vector mem operands".to_string())),
+        };
+        let width = match rt.size {
+            FpRegSize::Q => VecWidth::V128,
+            FpRegSize::D => VecWidth::V64,
+            other => {
+                return Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("SIMD {other:?} load/store"),
+                });
+            }
+        };
+        let vreg = Self::fp_vreg(rt);
+        let (addr, pre_ops) = self.mem_to_addr(mem, ctx);
+        for mut op in pre_ops {
+            op.id = OpId(ops.len() as u16);
+            ops.push(op);
+        }
+        if mem.mode == AddressingMode::PreIndex {
+            self.handle_writeback(mem, pc, ops, ctx);
+        }
+        let access_addr = self.indexed_access_addr(mem, addr);
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            if is_load {
+                OpKind::VLoad {
+                    dst: vreg,
+                    addr: access_addr,
+                    width,
+                }
+            } else {
+                OpKind::VStore {
+                    src: vreg,
+                    addr: access_addr,
+                    width,
+                }
+            },
+        ));
+        if mem.mode == AddressingMode::PostIndex {
+            self.handle_writeback(mem, pc, ops, ctx);
+        }
         Ok(())
     }
 

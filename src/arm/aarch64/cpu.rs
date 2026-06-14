@@ -16197,6 +16197,67 @@ unsafe extern "C" fn rax_a64_mem_store(
     if res.is_ok() { 1 } else { 0 }
 }
 
+/// JIT vector-load helper. Reads `size` bytes (8 or 16) from guest memory and
+/// writes them (zero-extended to 128 bits) into the destination V register's
+/// slot in the state struct (`state.v[2*dst_idx..]`); the lowered code then
+/// reloads that V register. `state` is `*mut Aarch64GuestRegs`; the vcpu is
+/// reached via `state.ctx`. Returns 0 on a fault (region bails).
+///
+/// # Safety
+/// `state` must be the live state struct the JIT installed for this run, with a
+/// valid `ctx`.
+#[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+unsafe extern "C" fn rax_a64_vec_load(
+    state: *mut crate::smir::lower::runtime::Aarch64GuestRegs,
+    addr: u64,
+    dst_idx: u32,
+    size: u32,
+) -> u64 {
+    let st = unsafe { &mut *state };
+    let cpu = unsafe { &*(st.ctx as *const AArch64Cpu) };
+    let lo = match cpu.mem_read_u64(addr) {
+        Ok(v) => v,
+        Err(_) => return 0,
+    };
+    let hi = if size > 8 {
+        match cpu.mem_read_u64(addr.wrapping_add(8)) {
+            Ok(v) => v,
+            Err(_) => return 0,
+        }
+    } else {
+        0 // D-register load zeroes the upper 64 bits
+    };
+    let i = (dst_idx as usize) * 2;
+    st.v[i] = lo;
+    st.v[i + 1] = hi;
+    1
+}
+
+/// JIT vector-store helper. Reads the source V register from its state slot
+/// (`state.v[2*src_idx..]`, which the lowered code has just published) and stores
+/// `size` bytes to guest memory. Returns 0 on a fault.
+///
+/// # Safety
+/// As [`rax_a64_vec_load`].
+#[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+unsafe extern "C" fn rax_a64_vec_store(
+    state: *mut crate::smir::lower::runtime::Aarch64GuestRegs,
+    addr: u64,
+    src_idx: u32,
+    size: u32,
+) -> u64 {
+    let st = unsafe { &*state };
+    let cpu = unsafe { &mut *(st.ctx as *mut AArch64Cpu) };
+    let i = (src_idx as usize) * 2;
+    if cpu.mem_write_u64(addr, st.v[i]).is_err() {
+        return 0;
+    }
+    if size > 8 && cpu.mem_write_u64(addr.wrapping_add(8), st.v[i + 1]).is_err() {
+        return 0;
+    }
+    1
+}
+
 #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
 impl AArch64Cpu {
     /// Enable/disable JIT of memory-touching regions (Load/Store via helpers).
@@ -16266,6 +16327,8 @@ impl AArch64Cpu {
         let mut gr = crate::smir::lower::runtime::Aarch64GuestRegs::default();
         gr.load_fn = rax_a64_mem_load as usize as u64;
         gr.store_fn = rax_a64_mem_store as usize as u64;
+        gr.vec_load_fn = rax_a64_vec_load as usize as u64;
+        gr.vec_store_fn = rax_a64_vec_store as usize as u64;
         for i in 0..NUM_GPRS {
             gr.x[i] = self.x[i];
         }
