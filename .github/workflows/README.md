@@ -17,23 +17,27 @@ build sweep over many more ISAs via cross-compilation.
 
 ## Platform coverage
 
-Native run/build (GA runners, pinned — `macos-latest`/`windows-latest` are mid-migration in 2026):
+> **Scope:** rax is **unix + 64-bit only**. Its `vm-memory` dependency is
+> `compile_error!`-gated to 64-bit targets and has no Windows rawfd/mmap backend,
+> so Windows and all 32-bit triples cannot build. Those matrix entries are left
+> **commented out** (not deleted) in `ci.yml` / `cross.yml` so they can be
+> re-enabled the day upstream support lands.
+
+Native run/build (GA runners, pinned — `macos-latest` is mid-migration in 2026):
 
 | OS | x64 | arm64 |
 |---|---|---|
 | Linux | `ubuntu-24.04` | `ubuntu-24.04-arm` |
-| Windows | `windows-2025` | `windows-11-arm` |
 | macOS | `macos-15-intel` | `macos-15` |
 
-Cross-compiled (build-only): aarch64 (gnu/musl), armv7, armv6 (`arm`), riscv64gc,
-ppc64, ppc64le, s390x, i686, x86_64-musl, x86_64-pc-windows-gnu, and best-effort
-tier-3 (loongarch64, powerpc, sparc64, mips64/mips64el/mipsel, wasm32).
+Cross-compiled (build-only, all 64-bit): aarch64 (gnu/musl), riscv64gc, ppc64,
+ppc64le, s390x, x86_64-musl, and best-effort tier-3 (sparc64, mips64/mips64el).
 
 ## Design notes
 
 - **Feature gating is per-platform and deliberate.** `kvm` is Linux/x86-only and
-  needs `/dev/kvm`; `smir-jit` pulls a `libc`-backed W^X runtime so it is enabled
-  on Linux/macOS but **not Windows**; `x86_64-suite` is always on so the gated
+  needs `/dev/kvm`; `smir-jit` pulls a `libc`-backed W^X runtime with x86_64 and
+  aarch64 host backends (every native runner here); `x86_64-suite` is always on so the gated
   x86_64 test binaries compile. The portable lanes use
   `--no-default-features --features x86_64-suite[,smir-jit]`.
 - **Why `cargo test`, not `cargo nextest`.** nextest runs each test in its own

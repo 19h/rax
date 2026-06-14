@@ -1,12 +1,18 @@
 # Many-ISA portability sweep: cross-compile the rax core to as broad a range of
-# CPU architectures as tooling allows. This proves the emulator/IR stays portable
-# (no accidental host-arch assumptions) far beyond what we can run natively.
+# 64-bit CPU architectures as tooling allows. This proves the emulator/IR stays
+# portable (no accidental host-arch assumptions) far beyond what we can run
+# natively.
 #
 # Build-only with `--no-default-features`: the `kvm` backend is Linux/x86-only and
 # `smir-jit` only has host backends for x86-64 and aarch64, so the pure
 # interpreter core is what must compile everywhere. The `zstd` C dependency is
 # built by `cross`'s per-target toolchain images, so no manual gcc setup is
 # needed.
+#
+# Scope note: rax's `vm-memory` dependency is `compile_error!`-gated to 64-bit
+# targets and unsupported on Windows, so 32-bit triples (i686/arm/armv7/mipsel/
+# powerpc/wasm32) and *-pc-windows-* are intentionally excluded — they cannot
+# build regardless of CI config.
 name: Cross-build
 
 on:
@@ -39,15 +45,17 @@ jobs:
         target:
           - aarch64-unknown-linux-gnu
           - aarch64-unknown-linux-musl
-          - armv7-unknown-linux-gnueabihf
-          - arm-unknown-linux-gnueabihf
           - riscv64gc-unknown-linux-gnu
           - powerpc64-unknown-linux-gnu
           - powerpc64le-unknown-linux-gnu
           - s390x-unknown-linux-gnu
           - x86_64-unknown-linux-musl
-          - i686-unknown-linux-gnu
-          - x86_64-pc-windows-gnu
+          # Blocked upstream by `vm-memory` (64-bit only; no Windows backend).
+          # Re-enable when rax builds on 32-bit / Windows:
+          # - armv7-unknown-linux-gnueabihf   # 32-bit
+          # - arm-unknown-linux-gnueabihf     # 32-bit
+          # - i686-unknown-linux-gnu          # 32-bit
+          # - x86_64-pc-windows-gnu           # Windows: no vm-memory rawfd backend
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-rust
@@ -61,14 +69,10 @@ jobs:
       - name: cross build (core, no default features)
         run: cross build --locked --target ${{ matrix.target }} --no-default-features
 
-  # Bleeding-edge / Tier-3 targets. Informational — failures do not gate:
-  #   * loongarch64: Tier-2 with prebuilt std, but the pinned cross v0.2.5 ships no
-  #     Docker image for it yet (only `main`/`edge`), so it cannot build on the
-  #     gating lane.
-  #   * mips*: genuinely Tier-3 (no prebuilt std) — need nightly + -Z build-std.
-  #   * powerpc (32-bit) / sparc64: have cross images + std, but kept here as
-  #     lower-traffic targets; the build-std flag below is harmless (it falls
-  #     through to a plain build when std already exists).
+  # 64-bit Tier-3 targets that build via nightly + -Z build-std. Informational —
+  # failures do not gate. (32-bit mips/powerpc and loongarch are commented out
+  # below: the mips/powerpc 32-bit ones are blocked by vm-memory's 64-bit gate,
+  # and loongarch64 has no `cross` v0.2.5 Docker image yet.)
   cross-experimental:
     name: cross ${{ matrix.target }} (experimental)
     runs-on: ubuntu-24.04
@@ -78,12 +82,12 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - loongarch64-unknown-linux-gnu
-          - powerpc-unknown-linux-gnu
           - sparc64-unknown-linux-gnu
           - mips64-unknown-linux-gnuabi64
           - mips64el-unknown-linux-gnuabi64
-          - mipsel-unknown-linux-gnu
+          # - loongarch64-unknown-linux-gnu   # no cross v0.2.5 image yet
+          # - powerpc-unknown-linux-gnu       # 32-bit (vm-memory 64-bit only)
+          # - mipsel-unknown-linux-gnu        # 32-bit (vm-memory 64-bit only)
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-rust
@@ -116,8 +120,10 @@ jobs:
         include:
           - { os: macos-15,       target: aarch64-apple-darwin,  experimental: false }
           - { os: macos-15-intel, target: x86_64-apple-darwin,   experimental: false }
-          - { os: ubuntu-24.04,   target: wasm32-wasip1,         experimental: true }
-          - { os: ubuntu-24.04,   target: wasm32-unknown-unknown, experimental: true }
+          # wasm is blocked twice over: 32-bit (vm-memory) and the hard `zstd` C
+          # dep has no wasm toolchain. Re-enable if both are resolved.
+          # - { os: ubuntu-24.04, target: wasm32-wasip1,          experimental: true }
+          # - { os: ubuntu-24.04, target: wasm32-unknown-unknown, experimental: true }
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-rust
