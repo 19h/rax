@@ -5529,6 +5529,34 @@ mod tests {
     }
 
     #[test]
+    fn test_rv_vector_uses_prior_scalar_result_as_source() {
+        let mut lifter = RiscVLifter::rv64gc();
+        let mut ctx = test_ctx();
+
+        // addi a0,a0,16
+        let addi: u32 = (16 << 20) | (10 << 15) | (10 << 7) | 0x13;
+        lifter
+            .lift_insn(0x1000, &addi.to_le_bytes(), &mut ctx)
+            .unwrap();
+        let a0_after_addi = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::X(10)));
+        assert!(a0_after_addi.is_virtual());
+
+        // vle32.v v1,(a0)
+        let vle32_v1_a0: u32 = (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07;
+        let vector = lifter
+            .lift_insn(0x1004, &vle32_v1_a0.to_le_bytes(), &mut ctx)
+            .unwrap();
+
+        match &vector.ops[0].kind {
+            OpKind::RvVector { rs1, state, .. } => {
+                assert_eq!(*rs1, a0_after_addi);
+                assert_eq!(state.x_srcs[10], a0_after_addi);
+            }
+            other => panic!("expected RvVector, got {other:?}"),
+        }
+    }
+
+    #[test]
     fn test_riscv_lifter_jal() {
         let mut lifter = RiscVLifter::rv64gc();
         let mut ctx = test_ctx();
