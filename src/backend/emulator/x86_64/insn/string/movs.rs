@@ -24,6 +24,28 @@ fn paddr_is_mmio(paddr: u64) -> bool {
     paddr >= LAPIC_BASE && paddr < LAPIC_BASE + LAPIC_SIZE
 }
 
+#[inline(always)]
+fn movs_source_segment_base(vcpu: &X86_64Vcpu, segment_override: Option<u8>) -> u64 {
+    if !vcpu.sregs.cs.l {
+        return vcpu.get_segment_base(segment_override);
+    }
+
+    match segment_override {
+        Some(0x64) => vcpu.sregs.fs.base,
+        Some(0x65) => vcpu.sregs.gs.base,
+        _ => 0,
+    }
+}
+
+#[inline(always)]
+fn movs_destination_segment_base(vcpu: &X86_64Vcpu) -> u64 {
+    if vcpu.sregs.cs.l {
+        0
+    } else {
+        vcpu.sregs.es.base
+    }
+}
+
 /// MOVSB (0xA4)
 pub fn movsb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     movs_common(vcpu, ctx, 1)
@@ -56,14 +78,13 @@ fn movs_common(
     // Source segment base. ES:[RDI] is NOT overridable; only the DS:[RSI] source
     // honors a segment-override prefix (FS/GS produce a non-zero base in 64-bit
     // mode).
-    let src_base = vcpu.get_segment_base(ctx.segment_override);
+    let src_base = movs_source_segment_base(vcpu, ctx.segment_override);
 
     // Fast path: REP-prefixed, forward (DF==0), count > 1. Only usable when there
     // is no source segment base and no 32-bit address-size override, since the
     // bulk path translates RSI/RDI directly as full 64-bit linear addresses.
-    // Destination is always ES:[RDI] (not overridable). ES.base is 0 in long
-    // mode (flat) and selector<<4 in real mode.
-    let dst_base = vcpu.sregs.es.base;
+    // Destination is always ES:[RDI] (not overridable); long mode ignores ES.base.
+    let dst_base = movs_destination_segment_base(vcpu);
     if is_rep
         && src_base == 0
         && dst_base == 0
@@ -175,4 +196,130 @@ fn movs_fast_path(vcpu: &mut X86_64Vcpu, op_size: u8) -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+    use vm_memory::{GuestAddress, GuestMemoryMmap};
+
+    use crate::backend::emulator::x86_64::cpu::MAX_INSN_LEN;
+
+    const EFER_LMA: u64 = 1 << 10;
+
+    fn test_vcpu() -> X86_64Vcpu {
+        let mem =
+            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+        X86_64Vcpu::new(0, mem)
+    }
+
+    fn context(opcode: u8) -> InsnContext {
+        let mut bytes = [0; MAX_INSN_LEN];
+        bytes[0] = opcode;
+        InsnContext {
+            bytes,
+            bytes_len: 1,
+            cursor: 1,
+            rex: None,
+            rex2: None,
+            operand_size_override: false,
+            address_size_override: false,
+            rep_prefix: None,
+            op_size: 1,
+            rip_relative_offset: 0,
+            segment_override: None,
+            evex: None,
+            opcode,
+            boundary_gp: false,
+        }
+    }
+
+    fn enable_long_mode(vcpu: &mut X86_64Vcpu) {
+        vcpu.sregs.efer = EFER_LMA;
+        vcpu.sregs.cs.l = true;
+    }
+
+    fn read_byte(vcpu: &mut X86_64Vcpu, addr: u64) -> u8 {
+        let sregs = vcpu.sregs.clone();
+        let mut buf = [0];
+        vcpu.mmu.read(addr, &mut buf, &sregs).unwrap();
+        buf[0]
+    }
+
+    fn write_byte(vcpu: &mut X86_64Vcpu, addr: u64, value: u8) {
+        let sregs = vcpu.sregs.clone();
+        vcpu.mmu.write(addr, &[value], &sregs).unwrap();
+    }
+
+    #[test]
+    fn long_mode_movsb_ignores_es_destination_base() {
+        let mut vcpu = test_vcpu();
+        enable_long_mode(&mut vcpu);
+        vcpu.sregs.es.base = 0x1000;
+        vcpu.regs.rflags = 0x2;
+        vcpu.regs.rsi = 0x2000;
+        vcpu.regs.rdi = 0x4000;
+        write_byte(&mut vcpu, 0x2000, 0x5a);
+        let mut ctx = context(0xa4);
+
+        movsb(&mut vcpu, &mut ctx).unwrap();
+
+        assert_eq!(read_byte(&mut vcpu, 0x4000), 0x5a);
+        assert_eq!(read_byte(&mut vcpu, 0x5000), 0);
+        assert_eq!(vcpu.regs.rsi, 0x2001);
+        assert_eq!(vcpu.regs.rdi, 0x4001);
+    }
+
+    #[test]
+    fn long_mode_movsb_ignores_ds_source_override_base() {
+        let mut vcpu = test_vcpu();
+        enable_long_mode(&mut vcpu);
+        vcpu.sregs.ds.base = 0x1000;
+        vcpu.regs.rflags = 0x2;
+        vcpu.regs.rsi = 0x2000;
+        vcpu.regs.rdi = 0x4000;
+        write_byte(&mut vcpu, 0x2000, 0x5a);
+        write_byte(&mut vcpu, 0x3000, 0xa5);
+        let mut ctx = context(0xa4);
+        ctx.segment_override = Some(0x3e);
+
+        movsb(&mut vcpu, &mut ctx).unwrap();
+
+        assert_eq!(read_byte(&mut vcpu, 0x4000), 0x5a);
+    }
+
+    #[test]
+    fn long_mode_movsb_honors_fs_source_override_base() {
+        let mut vcpu = test_vcpu();
+        enable_long_mode(&mut vcpu);
+        vcpu.sregs.fs.base = 0x1000;
+        vcpu.regs.rflags = 0x2;
+        vcpu.regs.rsi = 0x2000;
+        vcpu.regs.rdi = 0x4000;
+        write_byte(&mut vcpu, 0x2000, 0x5a);
+        write_byte(&mut vcpu, 0x3000, 0xa5);
+        let mut ctx = context(0xa4);
+        ctx.segment_override = Some(0x64);
+
+        movsb(&mut vcpu, &mut ctx).unwrap();
+
+        assert_eq!(read_byte(&mut vcpu, 0x4000), 0xa5);
+    }
+
+    #[test]
+    fn non_long_mode_movsb_uses_es_destination_base() {
+        let mut vcpu = test_vcpu();
+        vcpu.sregs.es.base = 0x1000;
+        vcpu.regs.rflags = 0x2;
+        vcpu.regs.rsi = 0x2000;
+        vcpu.regs.rdi = 0x4000;
+        write_byte(&mut vcpu, 0x2000, 0x5a);
+        let mut ctx = context(0xa4);
+
+        movsb(&mut vcpu, &mut ctx).unwrap();
+
+        assert_eq!(read_byte(&mut vcpu, 0x4000), 0);
+        assert_eq!(read_byte(&mut vcpu, 0x5000), 0x5a);
+    }
 }

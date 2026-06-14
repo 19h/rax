@@ -1,8 +1,8 @@
 //! x86_64 CPU state and core execution loop.
 
+use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use std::sync::atomic::{AtomicU64, AtomicUsize};
-use std::sync::Arc;
 
 #[cfg(feature = "trace")]
 use crate::trace;
@@ -1250,7 +1250,11 @@ impl X86_64Vcpu {
         // transfer that adopts a based 64-bit segment still fetches flat. In
         // every other mode (IA-32e compatibility, legacy protected, real) the
         // base IS applied (selector<<4 in real mode, descriptor base otherwise).
-        let cs_base = if self.sregs.cs.l { 0 } else { self.sregs.cs.base };
+        let cs_base = if self.sregs.cs.l {
+            0
+        } else {
+            self.sregs.cs.base
+        };
         let rip = cs_base.wrapping_add(self.regs.rip);
         // Mark this page as containing code for self-modifying code detection
         self.mmu.mark_code_page(rip);
@@ -1957,10 +1961,22 @@ impl X86_64Vcpu {
     // Stack helpers
     // NOTE: These must NOT modify RSP if the write fails, otherwise page fault
     // handling will corrupt the stack (RSP gets decremented twice on retry).
+    #[inline(always)]
+    fn stack_segment_base(&self) -> u64 {
+        if self.sregs.cs.l {
+            0
+        } else {
+            self.sregs.ss.base
+        }
+    }
+
     pub(super) fn push64(&mut self, value: u64) -> Result<()> {
         let new_rsp = self.regs.rsp.wrapping_sub(8);
-        self.mmu
-            .write_u64(self.sregs.ss.base.wrapping_add(new_rsp), value, &self.sregs)?;
+        self.mmu.write_u64(
+            self.stack_segment_base().wrapping_add(new_rsp),
+            value,
+            &self.sregs,
+        )?;
         self.regs.rsp = new_rsp;
         Ok(())
     }
@@ -1976,41 +1992,50 @@ impl X86_64Vcpu {
     }
 
     pub(super) fn pop64(&mut self) -> Result<u64> {
-        let value = self
-            .mmu
-            .read_u64(self.sregs.ss.base.wrapping_add(self.regs.rsp), &self.sregs)?;
+        let value = self.mmu.read_u64(
+            self.stack_segment_base().wrapping_add(self.regs.rsp),
+            &self.sregs,
+        )?;
         self.regs.rsp = self.regs.rsp.wrapping_add(8);
         Ok(value)
     }
 
     pub(super) fn push32(&mut self, value: u32) -> Result<()> {
         let new_rsp = self.regs.rsp.wrapping_sub(4);
-        self.mmu
-            .write_u32(self.sregs.ss.base.wrapping_add(new_rsp), value, &self.sregs)?;
+        self.mmu.write_u32(
+            self.stack_segment_base().wrapping_add(new_rsp),
+            value,
+            &self.sregs,
+        )?;
         self.regs.rsp = new_rsp;
         Ok(())
     }
 
     pub(super) fn pop32(&mut self) -> Result<u32> {
-        let value = self
-            .mmu
-            .read_u32(self.sregs.ss.base.wrapping_add(self.regs.rsp), &self.sregs)?;
+        let value = self.mmu.read_u32(
+            self.stack_segment_base().wrapping_add(self.regs.rsp),
+            &self.sregs,
+        )?;
         self.regs.rsp = self.regs.rsp.wrapping_add(4);
         Ok(value)
     }
 
     pub(super) fn push16(&mut self, value: u16) -> Result<()> {
         let new_rsp = self.regs.rsp.wrapping_sub(2);
-        self.mmu
-            .write_u16(self.sregs.ss.base.wrapping_add(new_rsp), value, &self.sregs)?;
+        self.mmu.write_u16(
+            self.stack_segment_base().wrapping_add(new_rsp),
+            value,
+            &self.sregs,
+        )?;
         self.regs.rsp = new_rsp;
         Ok(())
     }
 
     pub(super) fn pop16(&mut self) -> Result<u16> {
-        let value = self
-            .mmu
-            .read_u16(self.sregs.ss.base.wrapping_add(self.regs.rsp), &self.sregs)?;
+        let value = self.mmu.read_u16(
+            self.stack_segment_base().wrapping_add(self.regs.rsp),
+            &self.sregs,
+        )?;
         self.regs.rsp = self.regs.rsp.wrapping_add(2);
         Ok(value)
     }
@@ -4261,6 +4286,83 @@ impl X86_64Vcpu {
     /// calls). For tests; production seeds this from `RAX_JIT_MEM`.
     pub fn set_jit_mem(&mut self, on: bool) {
         self.jit_mem = on;
+    }
+}
+
+#[cfg(test)]
+mod stack_segment_tests {
+    use super::*;
+    use std::sync::Arc;
+    use vm_memory::{GuestAddress, GuestMemoryMmap};
+
+    const EFER_LMA: u64 = 1 << 10;
+
+    fn test_vcpu() -> X86_64Vcpu {
+        let mem =
+            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+        X86_64Vcpu::new(0, mem)
+    }
+
+    fn enable_long_mode(vcpu: &mut X86_64Vcpu) {
+        vcpu.sregs.efer = EFER_LMA;
+        vcpu.sregs.cs.l = true;
+    }
+
+    #[test]
+    fn long_mode_stack_helpers_ignore_ss_base() {
+        let mut vcpu = test_vcpu();
+        enable_long_mode(&mut vcpu);
+        vcpu.sregs.ss.base = 0x1000;
+
+        vcpu.regs.rsp = 0x2000;
+        vcpu.push64(0x1122_3344_5566_7788).unwrap();
+        assert_eq!(vcpu.regs.rsp, 0x1ff8);
+        assert_eq!(
+            vcpu.mmu.read_u64(0x1ff8, &vcpu.sregs).unwrap(),
+            0x1122_3344_5566_7788
+        );
+        assert_eq!(vcpu.mmu.read_u64(0x2ff8, &vcpu.sregs).unwrap(), 0);
+        vcpu.mmu
+            .write_u64(0x2ff8, 0x8877_6655_4433_2211, &vcpu.sregs)
+            .unwrap();
+        assert_eq!(vcpu.pop64().unwrap(), 0x1122_3344_5566_7788);
+        assert_eq!(vcpu.regs.rsp, 0x2000);
+
+        vcpu.regs.rsp = 0x2100;
+        vcpu.push32(0xaabb_ccdd).unwrap();
+        assert_eq!(vcpu.regs.rsp, 0x20fc);
+        assert_eq!(vcpu.mmu.read_u32(0x20fc, &vcpu.sregs).unwrap(), 0xaabb_ccdd);
+        assert_eq!(vcpu.mmu.read_u32(0x30fc, &vcpu.sregs).unwrap(), 0);
+        vcpu.mmu
+            .write_u32(0x30fc, 0xddcc_bbaa, &vcpu.sregs)
+            .unwrap();
+        assert_eq!(vcpu.pop32().unwrap(), 0xaabb_ccdd);
+        assert_eq!(vcpu.regs.rsp, 0x2100);
+
+        vcpu.regs.rsp = 0x2200;
+        vcpu.push16(0xeeff).unwrap();
+        assert_eq!(vcpu.regs.rsp, 0x21fe);
+        assert_eq!(vcpu.mmu.read_u16(0x21fe, &vcpu.sregs).unwrap(), 0xeeff);
+        assert_eq!(vcpu.mmu.read_u16(0x31fe, &vcpu.sregs).unwrap(), 0);
+        vcpu.mmu.write_u16(0x31fe, 0xffee, &vcpu.sregs).unwrap();
+        assert_eq!(vcpu.pop16().unwrap(), 0xeeff);
+        assert_eq!(vcpu.regs.rsp, 0x2200);
+    }
+
+    #[test]
+    fn non_long_mode_stack_helpers_use_ss_base() {
+        let mut vcpu = test_vcpu();
+        vcpu.sregs.ss.base = 0x1000;
+
+        vcpu.regs.rsp = 0x2000;
+        vcpu.push64(0x0102_0304_0506_0708).unwrap();
+
+        assert_eq!(vcpu.regs.rsp, 0x1ff8);
+        assert_eq!(vcpu.mmu.read_u64(0x1ff8, &vcpu.sregs).unwrap(), 0);
+        assert_eq!(
+            vcpu.mmu.read_u64(0x2ff8, &vcpu.sregs).unwrap(),
+            0x0102_0304_0506_0708
+        );
     }
 }
 
