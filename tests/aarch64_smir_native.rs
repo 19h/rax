@@ -900,3 +900,102 @@ fn fp_scalar_arith_lift_lower_exec() {
     });
     assert_eq!(f64::from_bits(r.v[0]), 6.5, "fsqrt d0,d1");
 }
+
+// ---- NEON vector ops through the JIT (lift -> lower -> V-trampoline -> exec) --
+#[test]
+fn probe_vector_add_4s() {
+    // add v0.4s, v1.4s, v2.4s  (0x4ea28420)
+    // V_n.4s lanes: [lane0,lane1] in v[2n], [lane2,lane3] in v[2n+1] (each u32).
+    let pack = |l0: u32, l1: u32| (l1 as u64) << 32 | l0 as u64;
+    let r = fp_run(&[0x4ea2_8420], |g| {
+        g.v[2] = pack(1, 2);
+        g.v[3] = pack(3, 4); // V1 = [1,2,3,4]
+        g.v[4] = pack(10, 20);
+        g.v[5] = pack(40 - 10, 40); // V2 = [10,20,30,40]
+    });
+    assert_eq!(r.v[0], pack(11, 22), "V0 lanes 0,1");
+    assert_eq!(r.v[1], pack(33, 44), "V0 lanes 2,3");
+}
+
+// End-to-end: a NEON vector hot loop JIT'd inside the emulator vs the
+// interpreter. Each iteration accumulates v1 into v0 (per 32-bit lane); after N
+// iterations v0.lane == N*v1.lane. Proves the clobber gate now admits vector
+// ops, the emulator routes the region through the FP/V trampoline, and the
+// 128-bit vector result matches the interpreter.
+#[test]
+fn e2e_vector_hot_loop_matches_interpreter() {
+    // loop: add v0.4s, v0.4s, v1.4s ; subs x0,x0,#1 ; b.ne loop ; ret
+    let prog: [u32; 4] = [0x4ea1_8400, 0xf100_0400, 0x54ff_ffc1, 0xd65f_03c0];
+    let pack = |l0: u32, l1: u32, l2: u32, l3: u32| -> u128 {
+        (l0 as u128) | (l1 as u128) << 32 | (l2 as u128) << 64 | (l3 as u128) << 96
+    };
+    let v1 = pack(1, 2, 3, 4);
+    const N: u64 = 300;
+
+    let mut interp = fresh_cpu();
+    interp.set_jit_enabled(false);
+    load_prog(&mut interp, &prog);
+    interp.set_simd(1, v1);
+    interp.set_x(0, N);
+    drive_to_done(&mut interp);
+
+    let mut jit = fresh_cpu();
+    jit.set_jit_enabled(true);
+    load_prog(&mut jit, &prog);
+    jit.set_simd(1, v1);
+    jit.set_x(0, N);
+    drive_to_done(&mut jit);
+
+    let expected = pack(N as u32, 2 * N as u32, 3 * N as u32, 4 * N as u32);
+    assert_eq!(interp.get_simd(0), expected, "interpreter accumulates the vector");
+    assert_eq!(jit.get_simd(0), interp.get_simd(0), "JIT vector result matches interp");
+    assert_eq!(jit.get_x(0), 0);
+}
+
+// Vector fused multiply-add (FMLA), newly emitted by the lifter -> VFma ->
+// native vector fmla. v0.4s += v1.4s * v2.4s, per f32 lane.
+#[test]
+fn probe_vector_fmla_4s() {
+    let f = |x: f32| x.to_bits() as u64;
+    let pack = |a: f32, b: f32| f(a) | f(b) << 32;
+    // fmla v0.4s, v1.4s, v2.4s  (0x4e22cc20)
+    let r = fp_run(&[0x4e22_cc20], |g| {
+        g.v[0] = pack(1.0, 2.0);
+        g.v[1] = pack(3.0, 4.0); // v0 acc = [1,2,3,4]
+        g.v[2] = pack(2.0, 2.0);
+        g.v[3] = pack(2.0, 2.0); // v1 = [2,2,2,2]
+        g.v[4] = pack(3.0, 3.0);
+        g.v[5] = pack(3.0, 3.0); // v2 = [3,3,3,3]
+    });
+    // v0.lane += v1.lane*v2.lane = [1+6, 2+6, 3+6, 4+6]
+    assert_eq!(r.v[0], pack(7.0, 8.0), "fmla lanes 0,1");
+    assert_eq!(r.v[1], pack(9.0, 10.0), "fmla lanes 2,3");
+}
+
+// End-to-end FMLA accumulation hot loop (v0 += v1*v2 each iteration) JIT'd in
+// the emulator vs the interpreter — the canonical vectorized dot-product kernel.
+#[test]
+fn e2e_vector_fmla_hot_loop_matches_interpreter() {
+    // loop: fmla v0.4s,v1.4s,v2.4s ; subs x0,x0,#1 ; b.ne loop ; ret
+    let prog: [u32; 4] = [0x4e22_cc20, 0xf100_0400, 0x54ff_ffc1, 0xd65f_03c0];
+    let f = |x: f32| x.to_bits() as u128;
+    let splat = |x: f32| f(x) | f(x) << 32 | f(x) << 64 | f(x) << 96;
+    const N: u64 = 100;
+
+    let run_one = |jit: bool| -> u128 {
+        let mut cpu = fresh_cpu();
+        cpu.set_jit_enabled(jit);
+        load_prog(&mut cpu, &prog);
+        cpu.set_simd(0, 0); // accumulator
+        cpu.set_simd(1, splat(2.0));
+        cpu.set_simd(2, splat(3.0));
+        cpu.set_x(0, N);
+        drive_to_done(&mut cpu);
+        cpu.get_simd(0)
+    };
+
+    let interp = run_one(false);
+    let jit = run_one(true);
+    assert_eq!(interp, splat(N as f32 * 6.0), "interp: v0 = N*(2*3) per lane");
+    assert_eq!(jit, interp, "JIT FMLA loop matches interpreter");
+}

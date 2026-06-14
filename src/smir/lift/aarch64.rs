@@ -2671,6 +2671,44 @@ impl Aarch64Lifter {
             }
 
             // =================================================================
+            // NEON vector fused multiply-add (FMLA / FMLS)
+            // =================================================================
+            Mnemonic::FMLA | Mnemonic::FMLS => {
+                let rd = match insn.operands.first() {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing vfma rd".to_string())),
+                };
+                let rn = match insn.operands.get(1) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing vfma rn".to_string())),
+                };
+                let rm = match insn.operands.get(2) {
+                    Some(Operand::FpReg(r)) => r,
+                    _ => return Err(LiftError::Internal("missing vfma rm".to_string())),
+                };
+                // FP three-same: sz (bit22) selects F32/F64, Q (bit30) the width.
+                let q = (insn.raw >> 30) & 1;
+                let sz = (insn.raw >> 22) & 1;
+                let (elem, lanes) = if sz == 0 {
+                    (VecElementType::F32, if q == 1 { 4u8 } else { 2 })
+                } else {
+                    (VecElementType::F64, 2) // 2D (Q=1); 1D is reserved
+                };
+                push_op!(OpKind::VFma {
+                    dst: Self::fp_vreg(rd),
+                    src1: Self::fp_vreg(rn),
+                    src2: Self::fp_vreg(rm),
+                    // FMLA/FMLS are destructive: the destination is the accumulator
+                    // (vd = vd ± vn*vm), matching the native vector FMLA encoding.
+                    acc: Self::fp_vreg(rd),
+                    elem,
+                    lanes,
+                    negate_product: insn.mnemonic == Mnemonic::FMLS,
+                    negate_acc: false,
+                });
+            }
+
+            // =================================================================
             // Unhandled
             // =================================================================
             _ => {

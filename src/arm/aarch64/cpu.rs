@@ -364,6 +364,16 @@ impl AArch64Cpu {
         }
     }
 
+    /// Get the full 128 bits of a V (SIMD/FP) register V0-V31.
+    pub fn get_simd(&self, n: u8) -> u128 {
+        self.v[(n & 31) as usize]
+    }
+
+    /// Set the full 128 bits of a V (SIMD/FP) register V0-V31.
+    pub fn set_simd(&mut self, n: u8, value: u128) {
+        self.v[(n & 31) as usize] = value;
+    }
+
     /// Set X register (X0-X30, write to XZR is ignored).
     pub fn set_x(&mut self, reg: u8, value: u64) {
         if reg < 31 {
