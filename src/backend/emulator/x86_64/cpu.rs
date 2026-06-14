@@ -1841,7 +1841,10 @@ impl X86_64Vcpu {
     fn invalidate_code_page(&mut self, page_base: u64) {
         for idx in 0..DECODE_CACHE_SIZE {
             let entry = &mut self.decode_cache[idx];
-            if entry.rip != 0 && (entry.rip & !0xFFF) == page_base {
+            // Use bytes_len (not rip) as the validity sentinel — matching the
+            // cache-hit guard — so a legitimately-cached instruction at RIP 0 is
+            // still invalidated when its page is written. (#77)
+            if entry.bytes_len != 0 && (entry.rip & !0xFFF) == page_base {
                 entry.rip = 0; // Invalidate
                 entry.bytes_len = 0; // mark empty so a real rip==0 can't false-hit
             }
@@ -2934,7 +2937,10 @@ impl VCpu for X86_64Vcpu {
         let page_base = addr & !0xFFF;
         for idx in 0..DECODE_CACHE_SIZE {
             let entry = &mut self.decode_cache[idx];
-            if entry.rip != 0 && (entry.rip & !0xFFF) == page_base {
+            // Use bytes_len (not rip) as the validity sentinel — matching the
+            // cache-hit guard — so a legitimately-cached instruction at RIP 0 is
+            // still invalidated when its page is written. (#77)
+            if entry.bytes_len != 0 && (entry.rip & !0xFFF) == page_base {
                 entry.rip = 0; // Invalidate
                 entry.bytes_len = 0; // mark empty so a real rip==0 can't false-hit
             }
@@ -4362,6 +4368,56 @@ mod stack_segment_tests {
         assert_eq!(
             vcpu.mmu.read_u64(0x2ff8, &vcpu.sregs).unwrap(),
             0x0102_0304_0506_0708
+        );
+    }
+}
+
+#[cfg(test)]
+mod decode_cache_invalidation_tests {
+    use super::*;
+    use std::sync::Arc;
+    use vm_memory::{GuestAddress, GuestMemoryMmap};
+
+    fn test_vcpu() -> X86_64Vcpu {
+        let mem =
+            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+        X86_64Vcpu::new(0, mem)
+    }
+
+    // Regression for issue #77: the decode-cache validity sentinel is bytes_len
+    // (a real-mode instruction may legitimately be cached at RIP 0), but the
+    // self-modifying-code / breakpoint invalidation paths used to require
+    // entry.rip != 0 — so a cached decode for RIP 0 was never cleared when its
+    // page was written, letting stale bytes keep executing at offset 0.
+    #[test]
+    fn invalidate_code_page_clears_rip0_entry() {
+        let mut vcpu = test_vcpu();
+
+        // Seed a valid (bytes_len != 0) cached decode for RIP 0 on page 0.
+        let idx = X86_64Vcpu::decode_cache_index(0);
+        vcpu.decode_cache[idx].rip = 0;
+        vcpu.decode_cache[idx].bytes_len = 4;
+        vcpu.decode_cache[idx].mode_tag = 0;
+
+        // Also seed a valid entry on a different page AND a different cache index
+        // (0x2000 & 0xFFF == 0 would collide with index 0) that must survive a
+        // page-0 invalidation.
+        let other_idx = X86_64Vcpu::decode_cache_index(0x5100);
+        assert_ne!(other_idx, idx, "test addresses must use distinct cache indices");
+        vcpu.decode_cache[other_idx].rip = 0x5100;
+        vcpu.decode_cache[other_idx].bytes_len = 4;
+        vcpu.decode_cache[other_idx].mode_tag = 0;
+
+        // A write anywhere on page 0 must invalidate the RIP-0 entry.
+        vcpu.invalidate_code_page(0);
+
+        assert_eq!(
+            vcpu.decode_cache[idx].bytes_len, 0,
+            "a cached decode for RIP 0 must be invalidated when its page is written",
+        );
+        assert_eq!(
+            vcpu.decode_cache[other_idx].bytes_len, 4,
+            "an entry on a different page must survive a page-0 invalidation",
         );
     }
 }
