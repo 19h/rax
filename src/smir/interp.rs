@@ -8,7 +8,7 @@ use crate::smir::context::{ArchRegState, ExitReason, SmirContext, VecValue};
 use crate::smir::flags::{LazyFlagOp, LazyFlags};
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 use crate::smir::memory::{MemoryError, SmirMemory};
-use crate::smir::ops::{HexFpOp, HexFpRecipKind, OpKind, SmirOp};
+use crate::smir::ops::{HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp};
 use crate::smir::types::*;
 
 // ============================================================================
@@ -2258,8 +2258,8 @@ impl SmirInterpreter {
                 }
             }
 
-            OpKind::RvVector { insn, .. } => {
-                exec_rv_vector(ctx, memory, *insn);
+            OpKind::RvVector { insn, state, .. } => {
+                exec_rv_vector(ctx, memory, *insn, state);
             }
 
             OpKind::IntToFp {
@@ -11716,7 +11716,10 @@ mod tests {
             rax, 0xDEAD_BEEF_0000_0005,
             "RAX upper 32 bits must be preserved on a successful CMPXCHG",
         );
-        assert_eq!(rcx, 0x0000_0000_0000_0099, "ECX takes the source on a match");
+        assert_eq!(
+            rcx, 0x0000_0000_0000_0099,
+            "ECX takes the source on a match"
+        );
     }
 
     #[test]
@@ -11731,6 +11734,68 @@ mod tests {
             rax, 0x0000_0000_0000_0007,
             "EAX takes the old destination on a mismatch",
         );
+    }
+
+    fn rv_vector_test_state(x10_src: VReg) -> RvVectorState {
+        RvVectorState {
+            x_srcs: std::array::from_fn(|i| {
+                if i == 0 {
+                    VReg::Imm(0)
+                } else if i == 10 {
+                    x10_src
+                } else {
+                    VReg::Arch(ArchReg::RiscV(RiscVReg::X(i as u8)))
+                }
+            }),
+            x_dsts: std::array::from_fn(|i| {
+                if i == 0 {
+                    VReg::Imm(0)
+                } else {
+                    VReg::Arch(ArchReg::RiscV(RiscVReg::X(i as u8)))
+                }
+            }),
+            f_srcs: std::array::from_fn(|i| VReg::Arch(ArchReg::RiscV(RiscVReg::F(i as u8)))),
+            f_dsts: std::array::from_fn(|i| VReg::Arch(ArchReg::RiscV(RiscVReg::F(i as u8)))),
+            fcsr_src: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x003))),
+            fcsr_dst: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x003))),
+            vl_src: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc20))),
+            vl_dst: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc20))),
+            vtype_src: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc21))),
+            vtype_dst: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc21))),
+            vstart_src: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x008))),
+            vstart_dst: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x008))),
+            vcsr_src: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x00f))),
+            vcsr_dst: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x00f))),
+        }
+    }
+
+    #[test]
+    fn rv_vector_load_uses_current_scalar_vreg_address() {
+        let current_x10 = VReg::Virtual(VirtualId(7));
+        let mut ctx = SmirContext::new_riscv();
+        let mut memory = FlatMemory::new(0x1000);
+        let stale_addr = 0x100;
+        let current_addr = 0x200;
+        let stale_lane = 0x1111_2222u32.to_le_bytes();
+        let current_lane = 0xAABB_CCDDu32.to_le_bytes();
+
+        ctx.write_arch_reg(ArchReg::RiscV(RiscVReg::X(10)), stale_addr);
+        ctx.write_vreg(current_x10, current_addr);
+        ctx.write_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc20)), 1); // vl
+        ctx.write_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc21)), 0x10); // e32,m1
+        memory.write(stale_addr, &stale_lane).unwrap();
+        memory.write(current_addr, &current_lane).unwrap();
+
+        // vle32.v v1,(a0)
+        let insn = (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07;
+        let state = rv_vector_test_state(current_x10);
+        exec_rv_vector(&mut ctx, &mut memory, insn, &state);
+
+        let ArchRegState::RiscV(rv) = &ctx.arch_regs else {
+            panic!("expected RISC-V context");
+        };
+        assert_eq!(&rv.v[1][0..4], &current_lane);
+        assert_ne!(&rv.v[1][0..4], &stale_lane);
     }
 }
 
@@ -11777,6 +11842,28 @@ impl crate::riscv::Memory for RvVecMemBridge {
     }
 }
 
+fn forward_rv_vector_scalar_state(ctx: &mut SmirContext, state: &RvVectorState) {
+    let x: [u64; 32] = std::array::from_fn(|i| ctx.read_vreg(state.x_srcs[i]));
+    let f: [u64; 32] = std::array::from_fn(|i| ctx.read_vreg(state.f_srcs[i]));
+    let fcsr = ctx.read_vreg(state.fcsr_src);
+    let vl = ctx.read_vreg(state.vl_src);
+    let vtype = ctx.read_vreg(state.vtype_src);
+    let vstart = ctx.read_vreg(state.vstart_src);
+    let vcsr = ctx.read_vreg(state.vcsr_src);
+
+    for i in 1..32usize {
+        ctx.write_vreg(state.x_dsts[i], x[i]);
+    }
+    for i in 0..32usize {
+        ctx.write_vreg(state.f_dsts[i], f[i]);
+    }
+    ctx.write_vreg(state.fcsr_dst, fcsr);
+    ctx.write_vreg(state.vl_dst, vl);
+    ctx.write_vreg(state.vtype_dst, vtype);
+    ctx.write_vreg(state.vstart_dst, vstart);
+    ctx.write_vreg(state.vcsr_dst, vcsr);
+}
+
 /// Execute one RVV instruction bit-exactly by loading the SMIR machine state
 /// into a transient `RiscVCpu` (over a bridge to the SMIR memory), running the
 /// qemu-verified vector engine, and reading the full result state back. RVV
@@ -11784,12 +11871,15 @@ impl crate::riscv::Memory for RvVecMemBridge {
 /// is the only faithful lift. On a trap (illegal vtype / access fault) the
 /// machine state is left unchanged — matching the reference, which traps and
 /// makes no architectural change.
-fn exec_rv_vector(ctx: &mut SmirContext, memory: &mut dyn SmirMemory, insn: u32) {
+fn exec_rv_vector(
+    ctx: &mut SmirContext,
+    memory: &mut dyn SmirMemory,
+    insn: u32,
+    state: &RvVectorState,
+) {
     let pc = ctx.pc;
-    let (x, f, fcsr, v, vl, vtype, vstart, vcsr) = match &ctx.arch_regs {
-        ArchRegState::RiscV(rv) => (
-            rv.x, rv.f, rv.fcsr, rv.v, rv.vl, rv.vtype, rv.vstart, rv.vcsr,
-        ),
+    let v = match &ctx.arch_regs {
+        ArchRegState::RiscV(rv) => rv.v,
         _ => return,
     };
 
@@ -11802,38 +11892,68 @@ fn exec_rv_vector(ctx: &mut SmirContext, memory: &mut dyn SmirMemory, insn: u32)
     let mut cpu =
         crate::riscv::RiscVCpu::new(crate::riscv::RiscVConfig::rv64gc(), Box::new(bridge));
     for i in 1..32u8 {
-        cpu.set_x(i, x[i as usize]);
+        cpu.set_x(i, ctx.read_vreg(state.x_srcs[i as usize]));
     }
     for i in 0..32u8 {
-        cpu.set_f(i, f[i as usize]);
+        cpu.set_f(i, ctx.read_vreg(state.f_srcs[i as usize]));
     }
-    cpu.set_fcsr(fcsr);
+    cpu.set_fcsr(ctx.read_vreg(state.fcsr_src) as u32);
     for i in 0..32u8 {
         cpu.set_vreg(i, &v[i as usize]);
     }
-    cpu.set_vl_vtype(vl, vtype);
-    cpu.set_vstart(vstart);
-    cpu.set_vcsr(vcsr);
+    cpu.set_vl_vtype(ctx.read_vreg(state.vl_src), ctx.read_vreg(state.vtype_src));
+    cpu.set_vstart(ctx.read_vreg(state.vstart_src));
+    cpu.set_vcsr(ctx.read_vreg(state.vcsr_src));
 
     let isa = crate::riscv::Isa::rv64gc();
     let d = crate::riscv::decode(insn, crate::riscv::Xlen::Rv64, &isa);
     if d.is_illegal() || cpu.execute_insn(&d, pc).is_err() {
+        forward_rv_vector_scalar_state(ctx, state);
         return;
     }
+
+    let mut x_out = [0u64; 32];
+    let mut f_out = [0u64; 32];
+    let mut v_out = [[0u8; 16]; 32];
+    for i in 1..32u8 {
+        x_out[i as usize] = cpu.x(i);
+    }
+    for i in 0..32u8 {
+        f_out[i as usize] = cpu.f(i);
+        v_out[i as usize] = cpu.vreg(i);
+    }
+    let fcsr_out = cpu.fcsr();
+    let vl_out = cpu.vl();
+    let vtype_out = cpu.vtype();
+    let vstart_out = cpu.vstart();
+    let vcsr_out = cpu.vcsr();
+
+    for i in 1..32usize {
+        ctx.write_vreg(state.x_dsts[i], x_out[i]);
+    }
+    for i in 0..32usize {
+        ctx.write_vreg(state.f_dsts[i], f_out[i]);
+    }
+    ctx.write_vreg(state.fcsr_dst, fcsr_out as u64);
+    ctx.write_vreg(state.vl_dst, vl_out);
+    ctx.write_vreg(state.vtype_dst, vtype_out);
+    ctx.write_vreg(state.vstart_dst, vstart_out);
+    ctx.write_vreg(state.vcsr_dst, vcsr_out);
+
     if let ArchRegState::RiscV(rv) = &mut ctx.arch_regs {
         for i in 1..32u8 {
-            rv.x[i as usize] = cpu.x(i);
+            rv.x[i as usize] = x_out[i as usize];
         }
         for i in 0..32u8 {
-            rv.f[i as usize] = cpu.f(i);
+            rv.f[i as usize] = f_out[i as usize];
         }
-        rv.fcsr = cpu.fcsr();
+        rv.fcsr = fcsr_out;
         for i in 0..32u8 {
-            rv.v[i as usize] = cpu.vreg(i);
+            rv.v[i as usize] = v_out[i as usize];
         }
-        rv.vl = cpu.vl();
-        rv.vtype = cpu.vtype();
-        rv.vstart = cpu.vstart();
-        rv.vcsr = cpu.vcsr();
+        rv.vl = vl_out;
+        rv.vtype = vtype_out;
+        rv.vstart = vstart_out;
+        rv.vcsr = vcsr_out;
     }
 }

@@ -130,6 +130,26 @@ pub enum X86OpHint {
 // OpKind Enum
 // ============================================================================
 
+/// Scalar and CSR SMIR operands used to bridge one opaque RISC-V Vector
+/// instruction to the transient `RiscVCpu` vector engine.
+#[derive(Clone, Debug)]
+pub struct RvVectorState {
+    pub x_srcs: [VReg; 32],
+    pub x_dsts: [VReg; 32],
+    pub f_srcs: [VReg; 32],
+    pub f_dsts: [VReg; 32],
+    pub fcsr_src: VReg,
+    pub fcsr_dst: VReg,
+    pub vl_src: VReg,
+    pub vl_dst: VReg,
+    pub vtype_src: VReg,
+    pub vtype_dst: VReg,
+    pub vstart_src: VReg,
+    pub vstart_dst: VReg,
+    pub vcsr_src: VReg,
+    pub vcsr_dst: VReg,
+}
+
 /// All SMIR operation kinds
 #[derive(Clone, Debug)]
 pub enum OpKind {
@@ -2556,10 +2576,16 @@ pub enum OpKind {
     /// (x/f/fcsr + the `RiscVRegState` vector file + vl/vtype/vstart/vcsr) into a
     /// transient `RiscVCpu` over a memory bridge to the SMIR memory, runs this one
     /// decoded instruction, and reads the full result state back. `insn` is the
-    /// raw 32-bit encoding; `rs1`/`rs2` are the x-register address sources kept
-    /// live for the optimizer. Vector/CSR/x/f results are written directly into
-    /// `ctx.arch_regs` (not SSA vregs). Self-contained; NOT JIT-whitelisted.
-    RvVector { insn: u32, rs1: VReg, rs2: VReg },
+    /// raw 32-bit encoding; `rs1`/`rs2` are retained for compact oracle/debug
+    /// output, while `state` carries the full scalar/CSR SSA snapshot. Vector
+    /// results still live in `ctx.arch_regs`; scalar/CSR results are also written
+    /// through the recorded destination VRegs. Self-contained; NOT JIT-whitelisted.
+    RvVector {
+        insn: u32,
+        rs1: VReg,
+        rs2: VReg,
+        state: Box<RvVectorState>,
+    },
 
     // ========================================================================
     // META / DEBUG
@@ -2946,9 +2972,23 @@ impl OpKind {
 
             OpKind::RvIntCrypto { dst, .. } => vec![*dst],
 
-            // RvVector writes its results directly into ctx.arch_regs (vector
-            // file / CSRs / x / f), not SSA vregs.
-            OpKind::RvVector { .. } => vec![],
+            OpKind::RvVector { state, .. } => {
+                let mut v = Vec::with_capacity(68);
+                v.extend(state.x_dsts.iter().copied().filter(|r| !r.is_imm()));
+                v.extend(state.f_dsts.iter().copied().filter(|r| !r.is_imm()));
+                v.extend(
+                    [
+                        state.fcsr_dst,
+                        state.vl_dst,
+                        state.vtype_dst,
+                        state.vstart_dst,
+                        state.vcsr_dst,
+                    ]
+                    .into_iter()
+                    .filter(|r| !r.is_imm()),
+                );
+                v
+            }
 
             OpKind::MulU { dst_lo, dst_hi, .. } | OpKind::MulS { dst_lo, dst_hi, .. } => {
                 let mut v = vec![*dst_lo];

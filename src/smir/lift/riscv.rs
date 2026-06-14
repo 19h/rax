@@ -6,7 +6,7 @@
 use crate::riscv::{Isa as RvIsa, Op as RvOp, Xlen as RvXlen, decode as rv_decode};
 use crate::smir::flags::FlagUpdate;
 use crate::smir::ir::{SmirBlock, SmirFunction, Terminator};
-use crate::smir::ops::{OpKind, SmirOp};
+use crate::smir::ops::{OpKind, RvVectorState, SmirOp};
 use crate::smir::types::*;
 
 use super::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter};
@@ -2356,10 +2356,9 @@ impl RiscVLifter {
         self.emit_rv_vector(insn, &d, addr, ctx)
     }
 
-    /// Emit an opaque [`OpKind::RvVector`] for one RVV instruction. `rs1`/`rs2`
-    /// (x-register address/AVL/stride/index sources) are kept live for the
-    /// optimizer; the interp writes all results (vector file, CSRs, x/f) directly
-    /// into `ctx.arch_regs` by running the verified vector engine.
+    /// Emit an opaque [`OpKind::RvVector`] for one RVV instruction. The vector
+    /// engine is opaque to SMIR, so scalar x/f/CSR state is snapshotted through
+    /// the current SSA mapping before the op and freshly defined after the op.
     fn emit_rv_vector(
         &mut self,
         insn: u32,
@@ -2367,12 +2366,51 @@ impl RiscVLifter {
         addr: GuestAddr,
         ctx: &mut LiftContext,
     ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
-        let rs1 = self.get_x_reg(d.rs1, ctx);
-        let rs2 = self.get_x_reg(d.rs2, ctx);
+        let x_srcs: [VReg; 32] = std::array::from_fn(|i| self.get_x_reg(i as u8, ctx));
+        let f_srcs: [VReg; 32] =
+            std::array::from_fn(|i| ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::F(i as u8))));
+        let fcsr_src = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x003)));
+        let vl_src = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc20)));
+        let vtype_src = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc21)));
+        let vstart_src = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x008)));
+        let vcsr_src = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x00f)));
+        let rs1 = x_srcs[d.rs1 as usize];
+        let rs2 = x_srcs[d.rs2 as usize];
+
+        let x_dsts: [VReg; 32] = std::array::from_fn(|i| {
+            if i == 0 {
+                VReg::Imm(0)
+            } else {
+                ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::X(i as u8)))
+            }
+        });
+        let f_dsts: [VReg; 32] =
+            std::array::from_fn(|i| ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::F(i as u8))));
+        let state = Box::new(RvVectorState {
+            x_srcs,
+            x_dsts,
+            f_srcs,
+            f_dsts,
+            fcsr_src,
+            fcsr_dst: ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x003))),
+            vl_src,
+            vl_dst: ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc20))),
+            vtype_src,
+            vtype_dst: ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc21))),
+            vstart_src,
+            vstart_dst: ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x008))),
+            vcsr_src,
+            vcsr_dst: ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x00f))),
+        });
         let ops = vec![SmirOp::new(
             ctx.next_op_id(),
             addr,
-            OpKind::RvVector { insn, rs1, rs2 },
+            OpKind::RvVector {
+                insn,
+                rs1,
+                rs2,
+                state,
+            },
         )];
         Ok((ops, ControlFlow::NextInsn))
     }
@@ -5452,6 +5490,42 @@ mod tests {
                 result.ops[0].kind
             );
         }
+    }
+
+    #[test]
+    fn test_rv_vector_defines_scalar_results_for_following_ops() {
+        let mut lifter = RiscVLifter::rv64gc();
+        let mut ctx = test_ctx();
+
+        // vmv.x.s a1,v2
+        let vmv_x_s: u32 = (0b010000 << 26) | (1 << 25) | (2 << 20) | (2 << 12) | (11 << 7) | 0x57;
+        let vector = lifter
+            .lift_insn(0x1000, &vmv_x_s.to_le_bytes(), &mut ctx)
+            .unwrap();
+        let x11_after_vector = match &vector.ops[0].kind {
+            OpKind::RvVector { state, .. } => state.x_dsts[11],
+            other => panic!("expected RvVector, got {other:?}"),
+        };
+        assert!(x11_after_vector.is_virtual());
+
+        // addi a2,a1,1
+        let addi: u32 = (1 << 20) | (11 << 15) | (12 << 7) | 0x13;
+        let scalar = lifter
+            .lift_insn(0x1004, &addi.to_le_bytes(), &mut ctx)
+            .unwrap();
+
+        assert!(
+            scalar.ops.iter().any(|op| matches!(
+                &op.kind,
+                OpKind::Add {
+                    src1,
+                    src2: SrcOperand::Imm(1),
+                    ..
+                } if *src1 == x11_after_vector
+            )),
+            "following scalar op did not read the RVV-produced a1 value: {:?}",
+            scalar.ops
+        );
     }
 
     #[test]

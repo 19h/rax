@@ -2273,9 +2273,24 @@ impl OpKind {
                 result.push(*src2);
             }
 
-            OpKind::RvVector { rs1, rs2, .. } => {
+            OpKind::RvVector {
+                rs1, rs2, state, ..
+            } => {
                 result.push(*rs1);
                 result.push(*rs2);
+                result.extend(state.x_srcs.iter().copied().filter(|r| !r.is_imm()));
+                result.extend(state.f_srcs.iter().copied().filter(|r| !r.is_imm()));
+                result.extend(
+                    [
+                        state.fcsr_src,
+                        state.vl_src,
+                        state.vtype_src,
+                        state.vstart_src,
+                        state.vcsr_src,
+                    ]
+                    .into_iter()
+                    .filter(|r| !r.is_imm()),
+                );
             }
 
             OpKind::FAbs { src, .. }
