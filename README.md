@@ -5,21 +5,14 @@
 
 <h5 align="center">
 rax is a CPU emulator that checks its own work. It implements four instruction sets in software<br/>
-(x86-64, AArch64, Hexagon, and RISC-V) and validates each one, instruction by instruction,<br/>
-against an authoritative reference: real silicon (KVM) for x86-64, and QEMU for the rest.<br/>
-<br/>
-The x86-64 core is a complete machine. It boots a real Linux kernel two ways: through hardware<br/>
-virtualization (KVM on Linux, Hypervisor.framework on macOS) at near-native speed, or through a<br/>
-software interpreter that can trace, single-step, snapshot, and profile every instruction it runs,<br/>
-up to a BusyBox shell. It covers the ISA out to AVX-512, AVX10.2, and Intel APX, and behind<br/>
-it sits SMIR, a shared multi-architecture IR whose hot-block JIT lifts hot loops to native code.<br/>
-<br/>
-Three more CPUs run alongside: an AArch64 that also boots Linux (near-native on Apple Silicon via<br/>
-HVF, or fully emulated at EL0/EL1) with complete SVE, an oracle-verified Hexagon (every opcode,<br/>
-scalar and HVX), and a correctly-rounded RV64GC. Hexagon and RISC-V boot bare-metal programs too.
+(x86-64, AArch64, Hexagon, and RISC-V) and validates each instruction against an authoritative<br/>
+reference: real silicon (KVM) for x86-64, and QEMU for the rest. The x86-64 core boots Linux, and<br/>
+a shared IR (SMIR) JITs hot loops to native code.
 </h5>
 
 <div align="center"><code>Rust</code> • <code>x86-64 · AArch64+SVE · Hexagon+HVX · RV64GC</code> • <code>boots Linux</code> • <code>hot-block JIT</code> • <code>oracle-verified</code></div>
+
+<br/>
 
 rax is a research project, not an official Hex-Rays product. It is already useful in practice: point
 IDA Pro's GDB debugger at rax's built-in GDB stub (the `--gdb` option) and you can debug a full kernel
