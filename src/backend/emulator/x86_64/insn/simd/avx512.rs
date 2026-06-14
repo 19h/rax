@@ -1451,6 +1451,445 @@ pub fn evex_fma_fp16(
     Ok(None)
 }
 
+fn fixup_token_f32(bits: u32) -> usize {
+    let exp = (bits >> 23) & 0xff;
+    let frac = bits & 0x007f_ffff;
+    let sign = (bits >> 31) != 0;
+
+    if exp == 0xff && frac != 0 {
+        if (frac & 0x0040_0000) != 0 { 0 } else { 1 }
+    } else if exp == 0 && frac == 0 {
+        2
+    } else if bits == 0x3f80_0000 {
+        3
+    } else if bits == 0xff80_0000 {
+        4
+    } else if bits == 0x7f80_0000 {
+        5
+    } else if sign {
+        6
+    } else {
+        7
+    }
+}
+
+fn fixup_token_f64(bits: u64) -> usize {
+    let exp = (bits >> 52) & 0x7ff;
+    let frac = bits & 0x000f_ffff_ffff_ffff;
+    let sign = (bits >> 63) != 0;
+
+    if exp == 0x7ff && frac != 0 {
+        if (frac & 0x0008_0000_0000_0000) != 0 {
+            0
+        } else {
+            1
+        }
+    } else if exp == 0 && frac == 0 {
+        2
+    } else if bits == 0x3ff0_0000_0000_0000 {
+        3
+    } else if bits == 0xfff0_0000_0000_0000 {
+        4
+    } else if bits == 0x7ff0_0000_0000_0000 {
+        5
+    } else if sign {
+        6
+    } else {
+        7
+    }
+}
+
+fn fixup_response_f32(dest_bits: u32, src_bits: u32, table: u64) -> u32 {
+    let token = fixup_token_f32(src_bits);
+    let response = ((table >> (token * 4)) & 0x0f) as u8;
+    match response {
+        0x0 => dest_bits,
+        0x1 => src_bits,
+        0x2 => {
+            let exp = (src_bits >> 23) & 0xff;
+            let frac = src_bits & 0x007f_ffff;
+            if exp == 0xff && frac != 0 {
+                src_bits | 0x0040_0000
+            } else {
+                0x7fc0_0000
+            }
+        }
+        0x3 => 0xffc0_0000,
+        0x4 => f32::NEG_INFINITY.to_bits(),
+        0x5 => f32::INFINITY.to_bits(),
+        0x6 => {
+            if (src_bits >> 31) != 0 {
+                f32::NEG_INFINITY.to_bits()
+            } else {
+                f32::INFINITY.to_bits()
+            }
+        }
+        0x7 => (-0.0f32).to_bits(),
+        0x8 => 0.0f32.to_bits(),
+        0x9 => (-1.0f32).to_bits(),
+        0xa => 1.0f32.to_bits(),
+        0xb => 0.5f32.to_bits(),
+        0xc => 90.0f32.to_bits(),
+        0xd => std::f32::consts::FRAC_PI_2.to_bits(),
+        0xe => f32::MAX.to_bits(),
+        0xf => (-f32::MAX).to_bits(),
+        _ => dest_bits,
+    }
+}
+
+fn fixup_response_f64(dest_bits: u64, src_bits: u64, table: u64) -> u64 {
+    let token = fixup_token_f64(src_bits);
+    let response = ((table >> (token * 4)) & 0x0f) as u8;
+    match response {
+        0x0 => dest_bits,
+        0x1 => src_bits,
+        0x2 => {
+            let exp = (src_bits >> 52) & 0x7ff;
+            let frac = src_bits & 0x000f_ffff_ffff_ffff;
+            if exp == 0x7ff && frac != 0 {
+                src_bits | 0x0008_0000_0000_0000
+            } else {
+                0x7ff8_0000_0000_0000
+            }
+        }
+        0x3 => 0xfff8_0000_0000_0000,
+        0x4 => f64::NEG_INFINITY.to_bits(),
+        0x5 => f64::INFINITY.to_bits(),
+        0x6 => {
+            if (src_bits >> 63) != 0 {
+                f64::NEG_INFINITY.to_bits()
+            } else {
+                f64::INFINITY.to_bits()
+            }
+        }
+        0x7 => (-0.0f64).to_bits(),
+        0x8 => 0.0f64.to_bits(),
+        0x9 => (-1.0f64).to_bits(),
+        0xa => 1.0f64.to_bits(),
+        0xb => 0.5f64.to_bits(),
+        0xc => 90.0f64.to_bits(),
+        0xd => std::f64::consts::FRAC_PI_2.to_bits(),
+        0xe => f64::MAX.to_bits(),
+        0xf => (-f64::MAX).to_bits(),
+        _ => dest_bits,
+    }
+}
+
+/// EVEX VFIXUPIMMPS/PD/SS/SD: table-driven fixup of special FP values.
+pub fn evex_fixupimm(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    elem_size: usize,
+    scalar: bool,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx
+        .evex
+        .ok_or_else(|| Error::Emulator("EVEX FIXUPIMM requires EVEX prefix".to_string()))?;
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let imm = ctx.consume_u8()?;
+    let _ = imm;
+
+    let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
+    let vl_bytes = if scalar { 16 } else { vl_bytes_of(evex.ll) };
+    let num_elems = if scalar { 1 } else { vl_bytes / elem_size };
+
+    let src1_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
+    let src2_bytes = if is_memory {
+        if evex.broadcast && !scalar {
+            let elem = vcpu.read_mem(addr, elem_size as u8)?;
+            let elem_le = elem.to_le_bytes();
+            let mut data = [0u8; 64];
+            for lane in 0..num_elems {
+                let base = lane * elem_size;
+                data[base..base + elem_size].copy_from_slice(&elem_le[..elem_size]);
+            }
+            data
+        } else {
+            load_mem_bytes(vcpu, addr, elem_size, num_elems)?
+        }
+    } else {
+        read_reg_bytes(vcpu, src2_reg, vl_bytes)
+    };
+
+    let dest_old = read_reg_bytes(vcpu, dest, vl_bytes);
+    let mut raw = dest_old;
+    for lane in 0..num_elems {
+        let dest_bits = read_fp_elem(&dest_old, lane, elem_size);
+        let src_bits = read_fp_elem(&src1_bytes, lane, elem_size);
+        let table = read_fp_elem(&src2_bytes, lane, elem_size);
+        let fixed = match elem_size {
+            4 => fixup_response_f32(dest_bits as u32, src_bits as u32, table) as u64,
+            8 => fixup_response_f64(dest_bits, src_bits, table),
+            _ => {
+                return Err(Error::Emulator(format!(
+                    "EVEX FIXUPIMM invalid element size {elem_size}"
+                )));
+            }
+        };
+        write_lane_bits(&mut raw, lane, elem_size, fixed);
+    }
+
+    let result = if scalar {
+        let mut result = [0u8; 64];
+        result[elem_size..16].copy_from_slice(&src1_bytes[elem_size..16]);
+        let active = evex.aaa == 0 || (vcpu.regs.k[evex.aaa as usize] & 1) != 0;
+        if active {
+            result[..elem_size].copy_from_slice(&raw[..elem_size]);
+        } else if !evex.z {
+            result[..elem_size].copy_from_slice(&dest_old[..elem_size]);
+        }
+        result
+    } else {
+        apply_evex_mask(vcpu, &evex, dest, vl_bytes, elem_size, &raw)
+    };
+
+    write_vec_vl(vcpu, dest, vl_bytes, &result);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+#[inline]
+fn round_f16_value(value: f32) -> f32 {
+    f16_to_f32(f32_to_f16(value))
+}
+
+fn read_fp16_pair(bytes: &[u8; 64], pair: usize) -> (f32, f32) {
+    let base = pair * 4;
+    let real = u16::from_le_bytes([bytes[base], bytes[base + 1]]);
+    let imag = u16::from_le_bytes([bytes[base + 2], bytes[base + 3]]);
+    (f16_to_f32(real), f16_to_f32(imag))
+}
+
+fn write_fp16_pair(bytes: &mut [u8; 64], pair: usize, real: f32, imag: f32) {
+    let base = pair * 4;
+    bytes[base..base + 2].copy_from_slice(&f32_to_f16(real).to_le_bytes());
+    bytes[base + 2..base + 4].copy_from_slice(&f32_to_f16(imag).to_le_bytes());
+}
+
+/// EVEX V[FC]MULCPH/SH and V[FC]MADDCPH/SH complex FP16 arithmetic.
+pub fn evex_fp16_complex(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    accumulate: bool,
+    conjugate: bool,
+    scalar: bool,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx
+        .evex
+        .ok_or_else(|| Error::Emulator("EVEX FP16 complex requires EVEX prefix".to_string()))?;
+    if evex.w {
+        return Err(Error::Emulator(
+            "EVEX FP16 complex requires W0 encoding".to_string(),
+        ));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
+    if dest == src1 || (!is_memory && dest == src2_reg) {
+        return Err(Error::Emulator(
+            "EVEX FP16 complex destination aliases a source".to_string(),
+        ));
+    }
+
+    let vl_bytes = if scalar { 16 } else { vl_bytes_of(evex.ll) };
+    let num_pairs = if scalar { 1 } else { vl_bytes / 4 };
+    let src1_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
+    let src2_bytes = if is_memory {
+        if evex.broadcast && !scalar {
+            let pair = vcpu.read_mem(addr, 4)?.to_le_bytes();
+            let mut data = [0u8; 64];
+            for lane in 0..num_pairs {
+                let base = lane * 4;
+                data[base..base + 4].copy_from_slice(&pair[..4]);
+            }
+            data
+        } else {
+            load_mem_bytes(vcpu, addr, 4, num_pairs)?
+        }
+    } else {
+        read_reg_bytes(vcpu, src2_reg, vl_bytes)
+    };
+
+    let dest_old = read_reg_bytes(vcpu, dest, vl_bytes);
+    let mut raw = if scalar { src1_bytes } else { [0u8; 64] };
+
+    for pair in 0..num_pairs {
+        let (a_re, a_im) = read_fp16_pair(&src1_bytes, pair);
+        let (b_re, b_im) = read_fp16_pair(&src2_bytes, pair);
+        let (acc_re, acc_im) = if accumulate {
+            read_fp16_pair(&dest_old, pair)
+        } else {
+            (0.0, 0.0)
+        };
+
+        let tmp_re = round_f16_value(a_re.mul_add(b_re, acc_re));
+        let tmp_im = round_f16_value(a_im.mul_add(b_re, acc_im));
+        let (real, imag) = if conjugate {
+            (
+                round_f16_value(a_im.mul_add(b_im, tmp_re)),
+                round_f16_value((-a_re).mul_add(b_im, tmp_im)),
+            )
+        } else {
+            (
+                round_f16_value((-a_im).mul_add(b_im, tmp_re)),
+                round_f16_value(a_re.mul_add(b_im, tmp_im)),
+            )
+        };
+        write_fp16_pair(&mut raw, pair, real, imag);
+    }
+
+    let result = if scalar {
+        let mut result = [0u8; 64];
+        result[4..16].copy_from_slice(&src1_bytes[4..16]);
+        let active = evex.aaa == 0 || (vcpu.regs.k[evex.aaa as usize] & 1) != 0;
+        if active {
+            result[..4].copy_from_slice(&raw[..4]);
+        } else if !evex.z {
+            result[..4].copy_from_slice(&dest_old[..4]);
+        }
+        result
+    } else {
+        apply_evex_mask(vcpu, &evex, dest, vl_bytes, 4, &raw)
+    };
+
+    write_vec_vl(vcpu, dest, vl_bytes, &result);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// EVEX V4FMADDPS/SS and V4FNMADDPS/SS source-block memory forms.
+pub fn evex_4fmaddps(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    scalar: bool,
+    negative: bool,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx
+        .evex
+        .ok_or_else(|| Error::Emulator("EVEX 4FMAPS requires EVEX prefix".to_string()))?;
+    if evex.w || evex.broadcast {
+        return Err(Error::Emulator(
+            "EVEX 4FMAPS requires W0 and no broadcast".to_string(),
+        ));
+    }
+
+    let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    if !is_memory {
+        return Err(Error::Emulator(
+            "EVEX 4FMAPS requires a memory operand".to_string(),
+        ));
+    }
+
+    let dest = evex_reg_vec(&evex, reg);
+    let src_base = ((evex.vvvv ^ 0x0f) | if evex.v_prime { 0 } else { 16 }) & !0x03;
+    let vl_bytes = if scalar { 16 } else { 64 };
+    let num_lanes = if scalar { 1 } else { 16 };
+    let msrc = load_mem_bytes(vcpu, addr, 4, 4)?;
+    let dest_old = read_reg_bytes(vcpu, dest, vl_bytes);
+    let mut raw = dest_old;
+
+    for lane in 0..num_lanes {
+        let mut acc = f32::from_bits(read_fp_elem(&dest_old, lane, 4) as u32);
+        for block in 0..4 {
+            let src = read_reg_bytes(vcpu, src_base + block as u8, 64);
+            let a = f32::from_bits(read_fp_elem(&src, lane, 4) as u32);
+            let b = f32::from_bits(read_fp_elem(&msrc, block, 4) as u32);
+            acc = if negative {
+                (-a).mul_add(b, acc)
+            } else {
+                a.mul_add(b, acc)
+            };
+        }
+        write_lane_bits(&mut raw, lane, 4, acc.to_bits() as u64);
+    }
+
+    let result = if scalar {
+        let mut result = dest_old;
+        let active = evex.aaa == 0 || (vcpu.regs.k[evex.aaa as usize] & 1) != 0;
+        if active {
+            result[..4].copy_from_slice(&raw[..4]);
+        } else if evex.z {
+            result[..4].fill(0);
+        }
+        result
+    } else {
+        apply_evex_mask(vcpu, &evex, dest, vl_bytes, 4, &raw)
+    };
+    write_vec_vl(vcpu, dest, vl_bytes, &result);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn signed_saturate_i32(value: i64) -> i32 {
+    value.clamp(i32::MIN as i64, i32::MAX as i64) as i32
+}
+
+fn read_i16_lane(bytes: &[u8; 64], lane: usize) -> i16 {
+    let base = lane * 2;
+    i16::from_le_bytes([bytes[base], bytes[base + 1]])
+}
+
+/// EVEX VP4DPWSSD/VP4DPWSSDS source-block memory forms.
+pub fn evex_4dpwssd(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    saturating: bool,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx
+        .evex
+        .ok_or_else(|| Error::Emulator("EVEX 4VNNIW requires EVEX prefix".to_string()))?;
+    if evex.w || evex.broadcast {
+        return Err(Error::Emulator(
+            "EVEX 4VNNIW requires W0 and no broadcast".to_string(),
+        ));
+    }
+
+    let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    if !is_memory {
+        return Err(Error::Emulator(
+            "EVEX 4VNNIW requires a memory operand".to_string(),
+        ));
+    }
+
+    let dest = evex_reg_vec(&evex, reg);
+    let src_base = ((evex.vvvv ^ 0x0f) | if evex.v_prime { 0 } else { 16 }) & !0x03;
+    let msrc = load_mem_bytes(vcpu, addr, 4, 4)?;
+    let dest_old = read_reg_bytes(vcpu, dest, 64);
+    let mask = evex_mask(vcpu, evex.aaa, 16);
+    let mut result = [0u8; 64];
+
+    for lane in 0..16 {
+        let base = lane * 4;
+        if (mask >> lane) & 1 == 0 {
+            if !evex.z {
+                result[base..base + 4].copy_from_slice(&dest_old[base..base + 4]);
+            }
+            continue;
+        }
+
+        let mut acc = read_fp_elem(&dest_old, lane, 4) as u32 as i32;
+        for block in 0..4 {
+            let src = read_reg_bytes(vcpu, src_base + block as u8, 64);
+            let mem_lo = read_i16_lane(&msrc, block * 2) as i32;
+            let mem_hi = read_i16_lane(&msrc, block * 2 + 1) as i32;
+            let reg_lo = read_i16_lane(&src, lane * 2) as i32;
+            let reg_hi = read_i16_lane(&src, lane * 2 + 1) as i32;
+            let sum = acc as i64 + (reg_lo * mem_lo) as i64 + (reg_hi * mem_hi) as i64;
+            acc = if saturating {
+                signed_saturate_i32(sum)
+            } else {
+                sum as i32
+            };
+        }
+        write_lane_bits(&mut result, lane, 4, acc as u32 as u64);
+    }
+
+    write_vec_vl(vcpu, dest, 64, &result);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
 /// Generic EVEX integer arithmetic / logical instruction with per-element
 /// k-masking (merge/zero), VL handling and (for D/Q forms) embedded broadcast.
 pub fn evex_int_arith(
@@ -1853,6 +2292,8 @@ fn fp_to_int_bits(value: f64, dst_size: u8, unsigned: bool, truncate: bool) -> u
         if !rounded.is_finite() || rounded < 0.0 {
             return if dst_size == 8 {
                 u64::MAX
+            } else if dst_size == 2 {
+                u16::MAX as u64
             } else {
                 u32::MAX as u64
             };
@@ -1862,6 +2303,12 @@ fn fp_to_int_bits(value: f64, dst_size: u8, unsigned: bool, truncate: bool) -> u
                 u64::MAX
             } else {
                 rounded as u64
+            }
+        } else if dst_size == 2 {
+            if rounded > u16::MAX as f64 {
+                u16::MAX as u64
+            } else {
+                rounded as u16 as u64
             }
         } else if rounded > u32::MAX as f64 {
             u32::MAX as u64
@@ -1874,11 +2321,118 @@ fn fp_to_int_bits(value: f64, dst_size: u8, unsigned: bool, truncate: bool) -> u
         } else {
             (rounded as i64) as u64
         }
+    } else if dst_size == 2 {
+        if !rounded.is_finite() || rounded > i16::MAX as f64 || rounded < i16::MIN as f64 {
+            i16::MIN as u16 as u64
+        } else {
+            rounded as i16 as u16 as u64
+        }
     } else if !rounded.is_finite() || rounded > i32::MAX as f64 || rounded < i32::MIN as f64 {
         i32::MIN as u32 as u64
     } else {
         rounded as i32 as u32 as u64
     }
+}
+
+#[inline]
+fn reg_vl_for_bytes(bytes: usize) -> usize {
+    if bytes <= 16 {
+        16
+    } else if bytes <= 32 {
+        32
+    } else {
+        64
+    }
+}
+
+#[inline]
+fn packed_conversion_layout(
+    ll: u8,
+    src_elem_size: usize,
+    dst_elem_size: usize,
+) -> (usize, usize, usize) {
+    let operation_vl = vl_bytes_of(ll);
+    if dst_elem_size >= src_elem_size {
+        let num_elems = operation_vl / dst_elem_size;
+        let src_bytes = num_elems * src_elem_size;
+        (src_bytes, operation_vl, num_elems)
+    } else {
+        let num_elems = operation_vl / src_elem_size;
+        let dst_bytes = num_elems * dst_elem_size;
+        (operation_vl, reg_vl_for_bytes(dst_bytes), num_elems)
+    }
+}
+
+fn read_packed_conversion_src(
+    vcpu: &mut X86_64Vcpu,
+    evex: &super::super::super::cpu::EvexPrefix,
+    src_reg: u8,
+    is_memory: bool,
+    addr: u64,
+    src_elem_size: usize,
+    src_bytes: usize,
+    num_elems: usize,
+) -> Result<[u8; 64]> {
+    if is_memory {
+        if evex.broadcast {
+            let elem = vcpu.read_mem(addr, src_elem_size as u8)?;
+            let elem_le = elem.to_le_bytes();
+            let mut data = [0u8; 64];
+            for lane in 0..num_elems {
+                let base = lane * src_elem_size;
+                data[base..base + src_elem_size].copy_from_slice(&elem_le[..src_elem_size]);
+            }
+            Ok(data)
+        } else {
+            load_mem_bytes(vcpu, addr, src_elem_size, num_elems)
+        }
+    } else {
+        Ok(read_reg_bytes(vcpu, src_reg, reg_vl_for_bytes(src_bytes)))
+    }
+}
+
+#[inline]
+fn write_lane_bits(data: &mut [u8; 64], lane: usize, elem_size: usize, value: u64) {
+    let base = lane * elem_size;
+    data[base..base + elem_size].copy_from_slice(&value.to_le_bytes()[..elem_size]);
+}
+
+#[inline]
+fn int_elem_to_f64(bits: u64, elem_size: usize, signed: bool) -> f64 {
+    match (elem_size, signed) {
+        (2, true) => (bits as u16 as i16) as f64,
+        (2, false) => (bits as u16) as f64,
+        (4, true) => (bits as u32 as i32) as f64,
+        (4, false) => (bits as u32) as f64,
+        (8, true) => (bits as i64) as f64,
+        (8, false) => bits as f64,
+        _ => 0.0,
+    }
+}
+
+fn write_masked_conversion_result(
+    vcpu: &mut X86_64Vcpu,
+    evex: &super::super::super::cpu::EvexPrefix,
+    dest: u8,
+    dst_elem_size: usize,
+    dst_vl_bytes: usize,
+    num_elems: usize,
+    raw: &[u8; 64],
+) {
+    let old = read_reg_bytes(vcpu, dest, dst_vl_bytes);
+    let mask = evex_mask(vcpu, evex.aaa, num_elems);
+    let mut result = [0u8; 64];
+    for lane in 0..num_elems {
+        let base = lane * dst_elem_size;
+        if (mask >> lane) & 1 != 0 {
+            result[base..base + dst_elem_size].copy_from_slice(&raw[base..base + dst_elem_size]);
+        } else if evex.z {
+            // Zeroing: leave as 0.
+        } else {
+            result[base..base + dst_elem_size].copy_from_slice(&old[base..base + dst_elem_size]);
+        }
+    }
+    write_vec_vl(vcpu, dest, dst_vl_bytes, &result);
 }
 
 fn fpclass_match_u16(bits: u16, imm: u8) -> bool {
@@ -2292,6 +2846,743 @@ pub fn evex_fp_scalar_convert(
     }
 
     write_vec_vl(vcpu, dest, 16, &result);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// EVEX packed FP width conversions, including FP16 widening/narrowing forms.
+pub fn evex_packed_fp_convert(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    src_elem_size: usize,
+    dst_elem_size: usize,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx.evex.ok_or_else(|| {
+        Error::Emulator("EVEX packed FP conversion requires EVEX prefix".to_string())
+    })?;
+
+    if evex.vvvv != 0xF
+        || !matches!(src_elem_size, 2 | 4 | 8)
+        || !matches!(dst_elem_size, 2 | 4 | 8)
+    {
+        return Err(Error::Emulator(
+            "EVEX packed FP conversion has invalid operands".to_string(),
+        ));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let dest = evex_reg_vec(&evex, reg);
+    let src = evex_rm_vec(&evex, rm);
+    let (src_bytes, dst_vl_bytes, num_elems) =
+        packed_conversion_layout(evex.ll, src_elem_size, dst_elem_size);
+    let src_data = read_packed_conversion_src(
+        vcpu,
+        &evex,
+        src,
+        is_memory,
+        addr,
+        src_elem_size,
+        src_bytes,
+        num_elems,
+    )?;
+
+    let mut raw = [0u8; 64];
+    for lane in 0..num_elems {
+        let value = fp_bits_to_f64(read_lane_u64(&src_data, lane, src_elem_size), src_elem_size);
+        write_lane_bits(
+            &mut raw,
+            lane,
+            dst_elem_size,
+            f64_to_fp_bits(value, dst_elem_size),
+        );
+    }
+
+    write_masked_conversion_result(
+        vcpu,
+        &evex,
+        dest,
+        dst_elem_size,
+        dst_vl_bytes,
+        num_elems,
+        &raw,
+    );
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// EVEX packed integer-to-FP conversions.
+pub fn evex_packed_int_to_fp(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    src_elem_size: usize,
+    dst_elem_size: usize,
+    signed: bool,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx.evex.ok_or_else(|| {
+        Error::Emulator("EVEX packed integer-to-FP conversion requires EVEX prefix".to_string())
+    })?;
+
+    if evex.vvvv != 0xF
+        || !matches!(src_elem_size, 2 | 4 | 8)
+        || !matches!(dst_elem_size, 2 | 4 | 8)
+    {
+        return Err(Error::Emulator(
+            "EVEX packed integer-to-FP conversion has invalid operands".to_string(),
+        ));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let dest = evex_reg_vec(&evex, reg);
+    let src = evex_rm_vec(&evex, rm);
+    let (src_bytes, dst_vl_bytes, num_elems) =
+        packed_conversion_layout(evex.ll, src_elem_size, dst_elem_size);
+    let src_data = read_packed_conversion_src(
+        vcpu,
+        &evex,
+        src,
+        is_memory,
+        addr,
+        src_elem_size,
+        src_bytes,
+        num_elems,
+    )?;
+
+    let mut raw = [0u8; 64];
+    for lane in 0..num_elems {
+        let value = int_elem_to_f64(
+            read_lane_u64(&src_data, lane, src_elem_size),
+            src_elem_size,
+            signed,
+        );
+        write_lane_bits(
+            &mut raw,
+            lane,
+            dst_elem_size,
+            f64_to_fp_bits(value, dst_elem_size),
+        );
+    }
+
+    write_masked_conversion_result(
+        vcpu,
+        &evex,
+        dest,
+        dst_elem_size,
+        dst_vl_bytes,
+        num_elems,
+        &raw,
+    );
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// EVEX packed FP-to-integer conversions.
+pub fn evex_packed_fp_to_int(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    src_elem_size: usize,
+    dst_elem_size: usize,
+    unsigned: bool,
+    truncate: bool,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx.evex.ok_or_else(|| {
+        Error::Emulator("EVEX packed FP-to-integer conversion requires EVEX prefix".to_string())
+    })?;
+
+    if evex.vvvv != 0xF
+        || !matches!(src_elem_size, 2 | 4 | 8)
+        || !matches!(dst_elem_size, 2 | 4 | 8)
+    {
+        return Err(Error::Emulator(
+            "EVEX packed FP-to-integer conversion has invalid operands".to_string(),
+        ));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let dest = evex_reg_vec(&evex, reg);
+    let src = evex_rm_vec(&evex, rm);
+    let (src_bytes, dst_vl_bytes, num_elems) =
+        packed_conversion_layout(evex.ll, src_elem_size, dst_elem_size);
+    let src_data = read_packed_conversion_src(
+        vcpu,
+        &evex,
+        src,
+        is_memory,
+        addr,
+        src_elem_size,
+        src_bytes,
+        num_elems,
+    )?;
+
+    let mut raw = [0u8; 64];
+    for lane in 0..num_elems {
+        let value = fp_bits_to_f64(read_lane_u64(&src_data, lane, src_elem_size), src_elem_size);
+        write_lane_bits(
+            &mut raw,
+            lane,
+            dst_elem_size,
+            fp_to_int_bits(value, dst_elem_size as u8, unsigned, truncate),
+        );
+    }
+
+    write_masked_conversion_result(
+        vcpu,
+        &evex,
+        dest,
+        dst_elem_size,
+        dst_vl_bytes,
+        num_elems,
+        &raw,
+    );
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// VCVTPS2PH store-style EVEX form: destination is ModRM r/m and source is ModRM.reg.
+pub fn evex_packed_fp_convert_store(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    src_elem_size: usize,
+    dst_elem_size: usize,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx.evex.ok_or_else(|| {
+        Error::Emulator("EVEX packed FP conversion store requires EVEX prefix".to_string())
+    })?;
+
+    if evex.vvvv != 0xF
+        || !matches!(src_elem_size, 2 | 4 | 8)
+        || !matches!(dst_elem_size, 2 | 4 | 8)
+    {
+        return Err(Error::Emulator(
+            "EVEX packed FP conversion store has invalid operands".to_string(),
+        ));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let _imm = ctx.consume_u8()?;
+    let src = evex_reg_vec(&evex, reg);
+    let dest = evex_rm_vec(&evex, rm);
+    let src_vl_bytes = vl_bytes_of(evex.ll);
+    let num_elems = src_vl_bytes / src_elem_size;
+    let dst_bytes = num_elems * dst_elem_size;
+    let dst_vl_bytes = reg_vl_for_bytes(dst_bytes);
+    let src_data = read_reg_bytes(vcpu, src, src_vl_bytes);
+
+    let mut raw = [0u8; 64];
+    for lane in 0..num_elems {
+        let value = fp_bits_to_f64(read_lane_u64(&src_data, lane, src_elem_size), src_elem_size);
+        write_lane_bits(
+            &mut raw,
+            lane,
+            dst_elem_size,
+            f64_to_fp_bits(value, dst_elem_size),
+        );
+    }
+
+    let mask = evex_mask(vcpu, evex.aaa, num_elems);
+    if is_memory {
+        if evex.z {
+            return Err(Error::Emulator(
+                "EVEX packed FP conversion memory store does not allow zeroing".to_string(),
+            ));
+        }
+        for lane in 0..num_elems {
+            if (mask >> lane) & 1 != 0 {
+                let base = lane * dst_elem_size;
+                let mut bytes = [0u8; 8];
+                bytes[..dst_elem_size].copy_from_slice(&raw[base..base + dst_elem_size]);
+                vcpu.write_mem(
+                    addr + base as u64,
+                    u64::from_le_bytes(bytes),
+                    dst_elem_size as u8,
+                )?;
+            }
+        }
+    } else {
+        write_masked_conversion_result(
+            vcpu,
+            &evex,
+            dest,
+            dst_elem_size,
+            dst_vl_bytes,
+            num_elems,
+            &raw,
+        );
+    }
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+#[derive(Clone, Copy)]
+pub enum FpUnaryMathOp {
+    GetExp,
+    Rcp,
+    Rsqrt,
+    Exp2,
+    RndScale,
+    Reduce,
+    GetMant,
+}
+
+#[derive(Clone, Copy)]
+pub enum FpTernaryMathOp {
+    ScaleF,
+    Range,
+}
+
+fn fp_round_by_imm(value: f64, imm: u8) -> f64 {
+    match imm & 0x03 {
+        0 => value.round_ties_even(),
+        1 => value.floor(),
+        2 => value.ceil(),
+        _ => value.trunc(),
+    }
+}
+
+fn fp_getexp(value: f64) -> f64 {
+    if value.is_nan() {
+        f64::NAN
+    } else if value.is_infinite() {
+        f64::INFINITY
+    } else if value == 0.0 {
+        f64::NEG_INFINITY
+    } else {
+        value.abs().log2().floor()
+    }
+}
+
+fn fp_getmant(value: f64, imm: u8) -> f64 {
+    if !value.is_finite() || value == 0.0 {
+        return value;
+    }
+
+    let sign = if value.is_sign_negative() { -1.0 } else { 1.0 };
+    let mut mantissa = value.abs() / 2.0f64.powf(value.abs().log2().floor());
+
+    match imm & 0x03 {
+        0 => {}
+        1 => {
+            if mantissa >= 1.0 {
+                mantissa *= 0.5;
+            }
+        }
+        2 => {
+            if mantissa >= 1.0 {
+                mantissa *= 0.5;
+            }
+        }
+        _ => {
+            if mantissa >= 1.5 {
+                mantissa *= 0.5;
+            } else if mantissa < 0.75 {
+                mantissa *= 2.0;
+            }
+        }
+    }
+
+    if (imm >> 2) & 0x03 == 0 {
+        sign * mantissa
+    } else {
+        mantissa
+    }
+}
+
+fn fp_unary_math_result(op: FpUnaryMathOp, value: f64, imm: u8) -> f64 {
+    match op {
+        FpUnaryMathOp::GetExp => fp_getexp(value),
+        FpUnaryMathOp::Rcp => 1.0 / value,
+        FpUnaryMathOp::Rsqrt => 1.0 / value.sqrt(),
+        FpUnaryMathOp::Exp2 => value.exp2(),
+        FpUnaryMathOp::RndScale => {
+            let scale = 2.0f64.powi(((imm >> 4) & 0x0f) as i32);
+            fp_round_by_imm(value * scale, imm) / scale
+        }
+        FpUnaryMathOp::Reduce => {
+            let scale = 2.0f64.powi(((imm >> 4) & 0x0f) as i32);
+            value - fp_round_by_imm(value / scale, imm) * scale
+        }
+        FpUnaryMathOp::GetMant => fp_getmant(value, imm),
+    }
+}
+
+fn fp_range_result(a: f64, b: f64, imm: u8) -> f64 {
+    let result = match imm & 0x03 {
+        0 => {
+            if a.is_nan() {
+                b
+            } else if b.is_nan() {
+                a
+            } else {
+                a.min(b)
+            }
+        }
+        1 => {
+            if a.is_nan() {
+                b
+            } else if b.is_nan() {
+                a
+            } else {
+                a.max(b)
+            }
+        }
+        2 => {
+            if a.abs() <= b.abs() {
+                a
+            } else {
+                b
+            }
+        }
+        _ => {
+            if a.abs() >= b.abs() {
+                a
+            } else {
+                b
+            }
+        }
+    };
+
+    match (imm >> 2) & 0x03 {
+        1 => result.abs(),
+        2 => -result.abs(),
+        _ => result,
+    }
+}
+
+fn fp_ternary_math_result(op: FpTernaryMathOp, a: f64, b: f64, imm: u8) -> f64 {
+    match op {
+        FpTernaryMathOp::ScaleF => a * 2.0f64.powf(b.floor()),
+        FpTernaryMathOp::Range => fp_range_result(a, b, imm),
+    }
+}
+
+/// EVEX FP unary/transcendental helper for VGETEXP, VRCP*, VRSQRT*, VEXP2,
+/// VRNDSCALE, VREDUCE, and VGETMANT packed/scalar forms.
+pub fn evex_fp_unary_math(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    elem_size: usize,
+    op: FpUnaryMathOp,
+    scalar: bool,
+    has_imm: bool,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx
+        .evex
+        .ok_or_else(|| Error::Emulator("EVEX FP unary math requires EVEX prefix".to_string()))?;
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let imm = if has_imm { ctx.consume_u8()? } else { 0 };
+
+    let dest = evex_reg_vec(&evex, reg);
+    let src = evex_rm_vec(&evex, rm);
+    let vl_bytes = if scalar { 16 } else { vl_bytes_of(evex.ll) };
+    let num_elems = if scalar { 1 } else { vl_bytes / elem_size };
+
+    let src_bytes = if is_memory {
+        if evex.broadcast && !scalar {
+            let elem = vcpu.read_mem(addr, elem_size as u8)?;
+            let elem_le = elem.to_le_bytes();
+            let mut data = [0u8; 64];
+            for lane in 0..num_elems {
+                let base = lane * elem_size;
+                data[base..base + elem_size].copy_from_slice(&elem_le[..elem_size]);
+            }
+            data
+        } else {
+            load_mem_bytes(vcpu, addr, elem_size, num_elems)?
+        }
+    } else {
+        read_reg_bytes(vcpu, src, vl_bytes)
+    };
+
+    let mut raw = if scalar {
+        read_reg_bytes(vcpu, ctx.evex_vvvv(), 16)
+    } else {
+        [0u8; 64]
+    };
+    for lane in 0..num_elems {
+        let value = fp_bits_to_f64(read_lane_u64(&src_bytes, lane, elem_size), elem_size);
+        write_lane_bits(
+            &mut raw,
+            lane,
+            elem_size,
+            f64_to_fp_bits(fp_unary_math_result(op, value, imm), elem_size),
+        );
+    }
+
+    let result = if scalar {
+        let mut result = raw;
+        let dest_old = read_reg_bytes(vcpu, dest, 16);
+        let active = (evex_mask(vcpu, evex.aaa, 1) & 1) != 0;
+        if !active {
+            if evex.z {
+                result[..elem_size].fill(0);
+            } else {
+                result[..elem_size].copy_from_slice(&dest_old[..elem_size]);
+            }
+        }
+        result
+    } else {
+        apply_evex_mask(vcpu, &evex, dest, vl_bytes, elem_size, &raw)
+    };
+
+    write_vec_vl(vcpu, dest, vl_bytes, &result);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// EVEX FP ternary math helper for VSCALEF and VRANGE packed/scalar forms.
+pub fn evex_fp_ternary_math(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    elem_size: usize,
+    op: FpTernaryMathOp,
+    scalar: bool,
+    has_imm: bool,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx
+        .evex
+        .ok_or_else(|| Error::Emulator("EVEX FP ternary math requires EVEX prefix".to_string()))?;
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let imm = if has_imm { ctx.consume_u8()? } else { 0 };
+
+    let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
+    let vl_bytes = if scalar { 16 } else { vl_bytes_of(evex.ll) };
+    let num_elems = if scalar { 1 } else { vl_bytes / elem_size };
+
+    let src1_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
+    let src2_bytes = read_fma_src3(
+        vcpu, &evex, src2_reg, is_memory, addr, vl_bytes, elem_size, scalar,
+    )?;
+
+    let mut raw = if scalar { src1_bytes } else { [0u8; 64] };
+    for lane in 0..num_elems {
+        let a = fp_bits_to_f64(read_lane_u64(&src1_bytes, lane, elem_size), elem_size);
+        let b = fp_bits_to_f64(read_lane_u64(&src2_bytes, lane, elem_size), elem_size);
+        write_lane_bits(
+            &mut raw,
+            lane,
+            elem_size,
+            f64_to_fp_bits(fp_ternary_math_result(op, a, b, imm), elem_size),
+        );
+    }
+
+    let result = if scalar {
+        let mut result = raw;
+        let dest_old = read_reg_bytes(vcpu, dest, 16);
+        let active = (evex_mask(vcpu, evex.aaa, 1) & 1) != 0;
+        if !active {
+            if evex.z {
+                result[..elem_size].fill(0);
+            } else {
+                result[..elem_size].copy_from_slice(&dest_old[..elem_size]);
+            }
+        }
+        result
+    } else {
+        apply_evex_mask(vcpu, &evex, dest, vl_bytes, elem_size, &raw)
+    };
+
+    write_vec_vl(vcpu, dest, vl_bytes, &result);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+struct EvexVsib {
+    reg: u8,
+    subop: u8,
+    index: u8,
+    base: u64,
+    scale: i64,
+}
+
+fn decode_evex_vsib(
+    vcpu: &X86_64Vcpu,
+    ctx: &mut InsnContext,
+    evex: &super::super::super::cpu::EvexPrefix,
+) -> Result<EvexVsib> {
+    let modrm = ctx.consume_u8()?;
+    let mod_bits = modrm >> 6;
+    if mod_bits == 3 {
+        return Err(Error::Emulator(
+            "EVEX VSIB requires memory operand".to_string(),
+        ));
+    }
+
+    let rm_field = modrm & 0x07;
+    if rm_field != 4 {
+        return Err(Error::Emulator("EVEX VSIB requires SIB byte".to_string()));
+    }
+
+    let sib = ctx.consume_u8()?;
+    let scale = 1i64 << (sib >> 6);
+    let index =
+        ((sib >> 3) & 0x07) | if evex.x { 0 } else { 8 } | if evex.v_prime { 0 } else { 16 };
+    let base_reg = (sib & 0x07) | if evex.b { 0 } else { 8 };
+    let reg_size = if ctx.address_size_override { 4 } else { 8 };
+
+    let mut base = if base_reg == 5 && mod_bits == 0 {
+        0
+    } else {
+        vcpu.get_reg(base_reg, reg_size)
+    };
+
+    match mod_bits {
+        0 => {
+            if base_reg == 5 {
+                let disp = ctx.consume_u32()? as i32 as i64;
+                base = (base as i64).wrapping_add(disp) as u64;
+            }
+        }
+        1 => {
+            let disp = ctx.consume_u8()? as i8 as i64;
+            base = (base as i64).wrapping_add(disp) as u64;
+        }
+        2 => {
+            let disp = ctx.consume_u32()? as i32 as i64;
+            base = (base as i64).wrapping_add(disp) as u64;
+        }
+        _ => {}
+    }
+
+    if ctx.address_size_override {
+        base &= 0xffff_ffff;
+    }
+    base = base.wrapping_add(vcpu.get_segment_base(ctx.segment_override));
+
+    Ok(EvexVsib {
+        reg: evex_reg_vec(evex, (modrm >> 3) & 0x07),
+        subop: (modrm >> 3) & 0x07,
+        index,
+        base,
+        scale,
+    })
+}
+
+fn evex_vsib_layout(opcode: u8, evex_w: bool, ll: u8) -> (usize, usize, usize, usize, usize) {
+    let vl_bytes = vl_bytes_of(ll);
+    let index_size = if opcode & 1 == 0 { 4 } else { 8 };
+    let data_size = if evex_w { 8 } else { 4 };
+    let num_elems = vl_bytes / index_size.max(data_size);
+    let data_bytes = num_elems * data_size;
+    let index_bytes = num_elems * index_size;
+    let reg_bytes = data_bytes.max(16);
+    (index_size, data_size, num_elems, index_bytes, reg_bytes)
+}
+
+fn evex_vsib_lane_addr(
+    vsib: &EvexVsib,
+    index_bytes: &[u8; 64],
+    lane: usize,
+    index_size: usize,
+) -> u64 {
+    let index = if index_size == 4 {
+        read_lane_u64(index_bytes, lane, 4) as u32 as i32 as i64
+    } else {
+        read_lane_u64(index_bytes, lane, 8) as i64
+    };
+    let offset = (index as i128).wrapping_mul(vsib.scale as i128) as i64;
+    (vsib.base as i64).wrapping_add(offset) as u64
+}
+
+/// EVEX VGATHER*/VPGATHER*: masked VSIB gather into a vector destination.
+pub fn evex_gather(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    opcode: u8,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx
+        .evex
+        .ok_or_else(|| Error::Emulator("EVEX gather requires EVEX prefix".to_string()))?;
+    if evex.aaa == 0 || evex.z || evex.broadcast {
+        return Err(Error::Emulator(
+            "EVEX gather requires a nonzero merge mask and no broadcast/zeroing".to_string(),
+        ));
+    }
+
+    let vsib = decode_evex_vsib(vcpu, ctx, &evex)?;
+    let (index_size, data_size, num_elems, index_bytes_len, reg_bytes) =
+        evex_vsib_layout(opcode, evex.w, evex.ll);
+    let index_bytes = read_reg_bytes(vcpu, vsib.index, index_bytes_len.max(16));
+    let dest = vsib.reg;
+    let mut result = read_reg_bytes(vcpu, dest, reg_bytes);
+    let mask = evex_mask(vcpu, evex.aaa, num_elems);
+
+    for lane in 0..num_elems {
+        if (mask >> lane) & 1 == 0 {
+            continue;
+        }
+        let addr = evex_vsib_lane_addr(&vsib, &index_bytes, lane, index_size);
+        let value = vcpu.read_mem(addr, data_size as u8)?;
+        write_lane_bits(&mut result, lane, data_size, value);
+    }
+
+    vcpu.regs.k[evex.aaa as usize] = 0;
+    write_vec_vl(vcpu, dest, reg_bytes, &result);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// EVEX VSCATTER*/VPSCATTER*: masked VSIB scatter from a vector source.
+pub fn evex_scatter(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    opcode: u8,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx
+        .evex
+        .ok_or_else(|| Error::Emulator("EVEX scatter requires EVEX prefix".to_string()))?;
+    if evex.aaa == 0 || evex.z || evex.broadcast {
+        return Err(Error::Emulator(
+            "EVEX scatter requires a nonzero merge mask and no broadcast/zeroing".to_string(),
+        ));
+    }
+
+    let vsib = decode_evex_vsib(vcpu, ctx, &evex)?;
+    let (index_size, data_size, num_elems, index_bytes_len, reg_bytes) =
+        evex_vsib_layout(opcode, evex.w, evex.ll);
+    let index_bytes = read_reg_bytes(vcpu, vsib.index, index_bytes_len.max(16));
+    let src_bytes = read_reg_bytes(vcpu, vsib.reg, reg_bytes);
+    let mask = evex_mask(vcpu, evex.aaa, num_elems);
+
+    for lane in 0..num_elems {
+        if (mask >> lane) & 1 == 0 {
+            continue;
+        }
+        let addr = evex_vsib_lane_addr(&vsib, &index_bytes, lane, index_size);
+        let value = read_lane_u64(&src_bytes, lane, data_size);
+        vcpu.write_mem(addr, value, data_size as u8)?;
+    }
+
+    vcpu.regs.k[evex.aaa as usize] = 0;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// EVEX gather/scatter prefetch forms: decode VSIB and clear the mask, but do
+/// not perform a data access. Prefetch is architecturally non-faulting here.
+pub fn evex_vsib_prefetch(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    opcode: u8,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx
+        .evex
+        .ok_or_else(|| Error::Emulator("EVEX VSIB prefetch requires EVEX prefix".to_string()))?;
+    if evex.aaa == 0 || evex.z || evex.broadcast {
+        return Err(Error::Emulator(
+            "EVEX VSIB prefetch requires a nonzero merge mask and no broadcast/zeroing".to_string(),
+        ));
+    }
+
+    let vsib = decode_evex_vsib(vcpu, ctx, &evex)?;
+    if !matches!(vsib.subop, 1 | 2 | 5 | 6) {
+        return Err(Error::Emulator(format!(
+            "Unsupported EVEX VSIB prefetch /{}",
+            vsib.subop
+        )));
+    }
+    let _ = evex_vsib_layout(opcode, evex.w, evex.ll);
+
+    vcpu.regs.k[evex.aaa as usize] = 0;
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

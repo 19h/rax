@@ -122,14 +122,88 @@ impl X86_64Vcpu {
             0x2C if evex.pp == 3 => insn::simd::evex_fp_to_gpr(self, ctx, 8, false, true),
             0x2D if evex.pp == 2 => insn::simd::evex_fp_to_gpr(self, ctx, 4, false, false),
             0x2D if evex.pp == 3 => insn::simd::evex_fp_to_gpr(self, ctx, 8, false, false),
+            0x5A if evex.pp == 0 && !evex.w => insn::simd::evex_packed_fp_convert(self, ctx, 4, 8),
+            0x5A if evex.pp == 1 && evex.w => insn::simd::evex_packed_fp_convert(self, ctx, 8, 4),
+            0x5B if evex.pp == 0 && !evex.w => {
+                insn::simd::evex_packed_int_to_fp(self, ctx, 4, 4, true)
+            }
+            0x5B if evex.pp == 0 && evex.w => {
+                insn::simd::evex_packed_int_to_fp(self, ctx, 8, 4, true)
+            }
+            0x5B if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 4, 4, false, false)
+            }
+            0x5B if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 4, 4, false, true)
+            }
             0x5A if evex.pp == 2 && !evex.w => insn::simd::evex_fp_scalar_convert(self, ctx, 4, 8),
             0x5A if evex.pp == 3 && evex.w => insn::simd::evex_fp_scalar_convert(self, ctx, 8, 4),
+            0x78 if evex.pp == 0 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 4, 4, true, true)
+            }
+            0x78 if evex.pp == 0 && evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 8, 4, true, true)
+            }
+            0x78 if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 4, 8, true, true)
+            }
+            0x78 if evex.pp == 1 && evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 8, 8, true, true)
+            }
             0x78 if evex.pp == 2 => insn::simd::evex_fp_to_gpr(self, ctx, 4, true, true),
             0x78 if evex.pp == 3 => insn::simd::evex_fp_to_gpr(self, ctx, 8, true, true),
+            0x79 if evex.pp == 0 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 4, 4, true, false)
+            }
+            0x79 if evex.pp == 0 && evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 8, 4, true, false)
+            }
+            0x79 if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 4, 8, true, false)
+            }
+            0x79 if evex.pp == 1 && evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 8, 8, true, false)
+            }
             0x79 if evex.pp == 2 => insn::simd::evex_fp_to_gpr(self, ctx, 4, true, false),
             0x79 if evex.pp == 3 => insn::simd::evex_fp_to_gpr(self, ctx, 8, true, false),
+            0x7A if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 4, 8, false, true)
+            }
+            0x7A if evex.pp == 1 && evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 8, 8, false, true)
+            }
+            0x7A if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_packed_int_to_fp(self, ctx, 4, 4, false)
+            }
+            0x7A if evex.pp == 2 && evex.w => {
+                insn::simd::evex_packed_int_to_fp(self, ctx, 8, 4, false)
+            }
+            0x7A if evex.pp == 3 && !evex.w => {
+                insn::simd::evex_packed_int_to_fp(self, ctx, 4, 8, false)
+            }
+            0x7A if evex.pp == 3 && evex.w => {
+                insn::simd::evex_packed_int_to_fp(self, ctx, 8, 8, false)
+            }
+            0x7B if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 4, 8, false, false)
+            }
+            0x7B if evex.pp == 1 && evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 8, 8, false, false)
+            }
             0x7B if evex.pp == 2 => insn::simd::evex_gpr_to_fp(self, ctx, 4, true),
             0x7B if evex.pp == 3 => insn::simd::evex_gpr_to_fp(self, ctx, 8, true),
+            0xE6 if evex.pp == 1 && evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 8, 4, false, true)
+            }
+            0xE6 if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_packed_int_to_fp(self, ctx, 4, 8, true)
+            }
+            0xE6 if evex.pp == 2 && evex.w => {
+                insn::simd::evex_packed_int_to_fp(self, ctx, 8, 8, true)
+            }
+            0xE6 if evex.pp == 3 && evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 8, 4, false, false)
+            }
             // VADDSS/VADDSD scalar forms. These must be matched before packed PS/PD.
             0x58 if evex.pp == 2 && !evex.w => {
                 self.execute_evex_fp_scalar_arith_f32(ctx, |a, b| a + b)
@@ -1366,8 +1440,101 @@ impl X86_64Vcpu {
             0x0B if evex.pp == 1 && !evex.w => {
                 insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MulHighRoundSW)
             }
+            // VCVTPH2PS.
+            0x13 if evex.pp == 1 && !evex.w => insn::simd::evex_packed_fp_convert(self, ctx, 2, 4),
             // VMOVNTDQA (66.0F38.2A) memory load.
             0x2A if evex.pp == 1 && !evex.w => insn::simd::evex_nt_load(self, ctx),
+            // VSCALEFPS/PD and scalar VSCALEFSS/SD.
+            0x2C if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fp_ternary_math(
+                    self,
+                    ctx,
+                    es,
+                    insn::simd::FpTernaryMathOp::ScaleF,
+                    false,
+                    false,
+                )
+            }
+            0x2D if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fp_ternary_math(
+                    self,
+                    ctx,
+                    es,
+                    insn::simd::FpTernaryMathOp::ScaleF,
+                    true,
+                    false,
+                )
+            }
+            // VGETEXPPS/PD and scalar VGETEXPSS/SD.
+            0x42 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fp_unary_math(
+                    self,
+                    ctx,
+                    es,
+                    insn::simd::FpUnaryMathOp::GetExp,
+                    false,
+                    false,
+                )
+            }
+            0x43 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fp_unary_math(
+                    self,
+                    ctx,
+                    es,
+                    insn::simd::FpUnaryMathOp::GetExp,
+                    true,
+                    false,
+                )
+            }
+            // VRCP14PS/PD, VRSQRT14PS/PD, and scalar SS/SD forms.
+            0x4C if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fp_unary_math(
+                    self,
+                    ctx,
+                    es,
+                    insn::simd::FpUnaryMathOp::Rcp,
+                    false,
+                    false,
+                )
+            }
+            0x4D if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fp_unary_math(
+                    self,
+                    ctx,
+                    es,
+                    insn::simd::FpUnaryMathOp::Rcp,
+                    true,
+                    false,
+                )
+            }
+            0x4E if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fp_unary_math(
+                    self,
+                    ctx,
+                    es,
+                    insn::simd::FpUnaryMathOp::Rsqrt,
+                    false,
+                    false,
+                )
+            }
+            0x4F if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fp_unary_math(
+                    self,
+                    ctx,
+                    es,
+                    insn::simd::FpUnaryMathOp::Rsqrt,
+                    true,
+                    false,
+                )
+            }
             // VAESENC/VAESENCLAST/VAESDEC/VAESDECLAST (WIG).
             0xDC if evex.pp == 1 => insn::simd::evex_vaes(self, ctx, insn::simd::VaesRound::Enc),
             0xDD if evex.pp == 1 => {
@@ -1639,6 +1806,11 @@ impl X86_64Vcpu {
             0x96..=0x9F | 0xA6..=0xAF | 0xB6..=0xBF if evex.pp == 1 => {
                 insn::simd::evex_fma(self, ctx, opcode)
             }
+            // V4FMADDPS/SS and V4FNMADDPS/SS source-block FMA forms.
+            0x9A if evex.pp == 3 && !evex.w => insn::simd::evex_4fmaddps(self, ctx, false, false),
+            0x9B if evex.pp == 3 && !evex.w => insn::simd::evex_4fmaddps(self, ctx, true, false),
+            0xAA if evex.pp == 3 && !evex.w => insn::simd::evex_4fmaddps(self, ctx, false, true),
+            0xAB if evex.pp == 3 && !evex.w => insn::simd::evex_4fmaddps(self, ctx, true, true),
 
             // VPCMPEQQ (0x29, W1): qword equality compare into mask
             0x29 if evex.pp == 1 && evex.w => {
@@ -1742,6 +1914,13 @@ impl X86_64Vcpu {
                 )
             }
 
+            // VPGATHERD*/Q* and VGATHERD*/Q*.
+            0x90..=0x93 if evex.pp == 1 => insn::simd::evex_gather(self, ctx, opcode),
+            // VPSCATTERD*/Q* and VSCATTERD*/Q*.
+            0xA0..=0xA3 if evex.pp == 1 => insn::simd::evex_scatter(self, ctx, opcode),
+            // VGATHERPF*/VSCATTERPF* opcode-extension forms.
+            0xC6 | 0xC7 if evex.pp == 1 => insn::simd::evex_vsib_prefetch(self, ctx, opcode),
+
             // VEXPANDPS/VEXPANDPD (0x88)
             0x88 if evex.pp == 1 => {
                 if evex.w {
@@ -1787,6 +1966,9 @@ impl X86_64Vcpu {
             0x52 if evex.pp == 1 && !evex.w => self.execute_vpdpwssd(ctx, false),
             // VPDPWSSDS (0x53) - Multiply and Add Signed Word Integers with Saturation
             0x53 if evex.pp == 1 && !evex.w => self.execute_vpdpwssd(ctx, true),
+            // VP4DPWSSD/VP4DPWSSDS source-block dot products.
+            0x52 if evex.pp == 3 && !evex.w => insn::simd::evex_4dpwssd(self, ctx, false),
+            0x53 if evex.pp == 3 && !evex.w => insn::simd::evex_4dpwssd(self, ctx, true),
 
             // ============================================================================
             // AVX10.1 IFMA Instructions
@@ -1815,6 +1997,62 @@ impl X86_64Vcpu {
             0xC4 if evex.pp == 1 => {
                 let es = if evex.w { 8 } else { 4 };
                 insn::simd::evex_conflict(self, ctx, es)
+            }
+            // VEXP2PS/PD, VRCP28PS/PD, VRSQRT28PS/PD, and scalar 28-bit forms.
+            0xC8 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fp_unary_math(
+                    self,
+                    ctx,
+                    es,
+                    insn::simd::FpUnaryMathOp::Exp2,
+                    false,
+                    false,
+                )
+            }
+            0xCA if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fp_unary_math(
+                    self,
+                    ctx,
+                    es,
+                    insn::simd::FpUnaryMathOp::Rcp,
+                    false,
+                    false,
+                )
+            }
+            0xCB if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fp_unary_math(
+                    self,
+                    ctx,
+                    es,
+                    insn::simd::FpUnaryMathOp::Rcp,
+                    true,
+                    false,
+                )
+            }
+            0xCC if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fp_unary_math(
+                    self,
+                    ctx,
+                    es,
+                    insn::simd::FpUnaryMathOp::Rsqrt,
+                    false,
+                    false,
+                )
+            }
+            0xCD if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fp_unary_math(
+                    self,
+                    ctx,
+                    es,
+                    insn::simd::FpUnaryMathOp::Rsqrt,
+                    true,
+                    false,
+                )
             }
             // VGF2P8MULB (0xCF) - byte multiply in GF(2^8).
             0xCF if evex.pp == 1 && !evex.w => {
@@ -1937,12 +2175,66 @@ impl X86_64Vcpu {
             // VPERMILPS/VPERMILPD immediate lane-local permutes.
             0x04 if evex.pp == 1 && !evex.w => insn::simd::evex_permil_imm(self, ctx, 4),
             0x05 if evex.pp == 1 && evex.w => insn::simd::evex_permil_imm(self, ctx, 8),
+            // VRNDSCALEPS/PD/PH and scalar SS/SD/SH.
+            0x08 if evex.pp == 0 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                2,
+                insn::simd::FpUnaryMathOp::RndScale,
+                false,
+                true,
+            ),
+            0x08 if evex.pp == 1 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                4,
+                insn::simd::FpUnaryMathOp::RndScale,
+                false,
+                true,
+            ),
+            0x09 if evex.pp == 1 && evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                8,
+                insn::simd::FpUnaryMathOp::RndScale,
+                false,
+                true,
+            ),
+            0x0A if evex.pp == 0 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                2,
+                insn::simd::FpUnaryMathOp::RndScale,
+                true,
+                true,
+            ),
+            0x0A if evex.pp == 1 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                4,
+                insn::simd::FpUnaryMathOp::RndScale,
+                true,
+                true,
+            ),
+            0x0B if evex.pp == 1 && evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                8,
+                insn::simd::FpUnaryMathOp::RndScale,
+                true,
+                true,
+            ),
             // VGF2P8AFFINEQB/VGF2P8AFFINEINVQB.
             0xCE if evex.pp == 1 && evex.w => insn::simd::evex_gf2p8_affine(self, ctx, false),
             0xCF if evex.pp == 1 && evex.w => insn::simd::evex_gf2p8_affine(self, ctx, true),
 
             // VPALIGNR.
             0x0F if evex.pp == 1 => insn::simd::evex_palignr(self, ctx),
+
+            // VCVTPS2PH: packed FP32-to-FP16 store-style conversion with imm8 rounding control.
+            0x1D if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_packed_fp_convert_store(self, ctx, 4, 2)
+            }
 
             // VPEXTRB/W/D/Q and VEXTRACTPS.
             0x14 if evex.pp == 1 => insn::simd::evex_extract_scalar(self, ctx, 1, 4, true),
@@ -1987,6 +2279,55 @@ impl X86_64Vcpu {
                 let es = if evex.w { 8 } else { 4 };
                 insn::simd::evex_ternlog(self, ctx, es)
             }
+            // VGETMANTPS/PD/PH and scalar SS/SD/SH.
+            0x26 if evex.pp == 0 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                2,
+                insn::simd::FpUnaryMathOp::GetMant,
+                false,
+                true,
+            ),
+            0x26 if evex.pp == 1 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                4,
+                insn::simd::FpUnaryMathOp::GetMant,
+                false,
+                true,
+            ),
+            0x26 if evex.pp == 1 && evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                8,
+                insn::simd::FpUnaryMathOp::GetMant,
+                false,
+                true,
+            ),
+            0x27 if evex.pp == 0 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                2,
+                insn::simd::FpUnaryMathOp::GetMant,
+                true,
+                true,
+            ),
+            0x27 if evex.pp == 1 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                4,
+                insn::simd::FpUnaryMathOp::GetMant,
+                true,
+                true,
+            ),
+            0x27 if evex.pp == 1 && evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                8,
+                insn::simd::FpUnaryMathOp::GetMant,
+                true,
+                true,
+            ),
 
             // VINSERTF32x4/F64x2 and VINSERTI32x4/I64x2.
             0x18 if evex.pp == 1 => {
@@ -2064,6 +2405,87 @@ impl X86_64Vcpu {
             // VCMPPH/SH compare into a k-mask destination.
             0xC2 if evex.pp == 0 && !evex.w => insn::simd::evex_fp_cmp(self, ctx, 2, false),
             0xC2 if evex.pp == 2 && !evex.w => insn::simd::evex_fp_cmp(self, ctx, 2, true),
+            // VRANGEPS/PD and scalar SS/SD.
+            0x50 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fp_ternary_math(
+                    self,
+                    ctx,
+                    es,
+                    insn::simd::FpTernaryMathOp::Range,
+                    false,
+                    true,
+                )
+            }
+            0x51 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fp_ternary_math(
+                    self,
+                    ctx,
+                    es,
+                    insn::simd::FpTernaryMathOp::Range,
+                    true,
+                    true,
+                )
+            }
+            // VFIXUPIMMPS/PD and scalar SS/SD.
+            0x54 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fixupimm(self, ctx, es, false)
+            }
+            0x55 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_fixupimm(self, ctx, es, true)
+            }
+            // VREDUCEPS/PD/PH and scalar SS/SD/SH.
+            0x56 if evex.pp == 0 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                2,
+                insn::simd::FpUnaryMathOp::Reduce,
+                false,
+                true,
+            ),
+            0x56 if evex.pp == 1 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                4,
+                insn::simd::FpUnaryMathOp::Reduce,
+                false,
+                true,
+            ),
+            0x56 if evex.pp == 1 && evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                8,
+                insn::simd::FpUnaryMathOp::Reduce,
+                false,
+                true,
+            ),
+            0x57 if evex.pp == 0 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                2,
+                insn::simd::FpUnaryMathOp::Reduce,
+                true,
+                true,
+            ),
+            0x57 if evex.pp == 1 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                4,
+                insn::simd::FpUnaryMathOp::Reduce,
+                true,
+                true,
+            ),
+            0x57 if evex.pp == 1 && evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                8,
+                insn::simd::FpUnaryMathOp::Reduce,
+                true,
+                true,
+            ),
             // VFPCLASSPS/PD/PH and VFPCLASSSS/SD/SH.
             0x66 if evex.pp == 0 && !evex.w => insn::simd::evex_fpclass(self, ctx, 2, false),
             0x66 if evex.pp == 1 && !evex.w => insn::simd::evex_fpclass(self, ctx, 4, false),
@@ -2116,14 +2538,71 @@ impl X86_64Vcpu {
             0x7E if evex.pp == 1 && !evex.w => insn::simd::evex_xmm_to_gpr_or_mem(self, ctx, 2),
             // Scalar FP16/integer and FP16 width conversions.
             0x1D if evex.pp == 0 && !evex.w => insn::simd::evex_fp_scalar_convert(self, ctx, 4, 2),
+            0x1D if evex.pp == 1 && !evex.w => insn::simd::evex_packed_fp_convert(self, ctx, 4, 2),
             0x2A if evex.pp == 2 => insn::simd::evex_gpr_to_fp(self, ctx, 2, false),
             0x2C if evex.pp == 2 => insn::simd::evex_fp_to_gpr(self, ctx, 2, false, true),
             0x2D if evex.pp == 2 => insn::simd::evex_fp_to_gpr(self, ctx, 2, false, false),
+            0x5A if evex.pp == 0 && !evex.w => insn::simd::evex_packed_fp_convert(self, ctx, 2, 8),
+            0x5A if evex.pp == 1 && evex.w => insn::simd::evex_packed_fp_convert(self, ctx, 8, 2),
             0x5A if evex.pp == 2 && !evex.w => insn::simd::evex_fp_scalar_convert(self, ctx, 2, 8),
             0x5A if evex.pp == 3 && evex.w => insn::simd::evex_fp_scalar_convert(self, ctx, 8, 2),
+            0x5B if evex.pp == 0 && !evex.w => {
+                insn::simd::evex_packed_int_to_fp(self, ctx, 4, 2, true)
+            }
+            0x5B if evex.pp == 0 && evex.w => {
+                insn::simd::evex_packed_int_to_fp(self, ctx, 8, 2, true)
+            }
+            0x5B if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 2, 4, false, false)
+            }
+            0x5B if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 2, 4, false, true)
+            }
+            0x78 if evex.pp == 0 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 2, 4, true, true)
+            }
+            0x78 if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 2, 8, true, true)
+            }
             0x78 if evex.pp == 2 => insn::simd::evex_fp_to_gpr(self, ctx, 2, true, true),
+            0x79 if evex.pp == 0 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 2, 4, true, false)
+            }
+            0x79 if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 2, 8, true, false)
+            }
             0x79 if evex.pp == 2 => insn::simd::evex_fp_to_gpr(self, ctx, 2, true, false),
+            0x7A if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 2, 8, false, true)
+            }
+            0x7A if evex.pp == 3 && !evex.w => {
+                insn::simd::evex_packed_int_to_fp(self, ctx, 4, 2, false)
+            }
+            0x7A if evex.pp == 3 && evex.w => {
+                insn::simd::evex_packed_int_to_fp(self, ctx, 8, 2, false)
+            }
+            0x7B if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 2, 8, false, false)
+            }
             0x7B if evex.pp == 2 => insn::simd::evex_gpr_to_fp(self, ctx, 2, true),
+            0x7C if evex.pp == 0 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 2, 2, true, true)
+            }
+            0x7C if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 2, 2, false, true)
+            }
+            0x7D if evex.pp == 0 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 2, 2, true, false)
+            }
+            0x7D if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_packed_fp_to_int(self, ctx, 2, 2, false, false)
+            }
+            0x7D if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_packed_int_to_fp(self, ctx, 2, 2, true)
+            }
+            0x7D if evex.pp == 3 && !evex.w => {
+                insn::simd::evex_packed_int_to_fp(self, ctx, 2, 2, false)
+            }
             // VCVTTPS2IBS (0x68) - Convert with Truncation Packed Single to Signed Byte with Saturation
             0x68 if evex.pp == 1 && !evex.w => self.execute_vcvttps2ibs(ctx),
             // VCVTTPS2IUBS (0x6A) - Convert with Truncation Packed Single to Unsigned Byte with Saturation
@@ -2183,6 +2662,87 @@ impl X86_64Vcpu {
         match opcode {
             // VCVTSH2SS scalar FP16-to-FP32 conversion.
             0x13 if evex.pp == 0 && !evex.w => insn::simd::evex_fp_scalar_convert(self, ctx, 2, 4),
+            // VCVTPH2PSX packed FP16-to-FP32 conversion.
+            0x13 if evex.pp == 1 && !evex.w => insn::simd::evex_packed_fp_convert(self, ctx, 2, 4),
+            // VSCALEFPH/SH.
+            0x2C if evex.pp == 1 && !evex.w => insn::simd::evex_fp_ternary_math(
+                self,
+                ctx,
+                2,
+                insn::simd::FpTernaryMathOp::ScaleF,
+                false,
+                false,
+            ),
+            0x2D if evex.pp == 1 && !evex.w => insn::simd::evex_fp_ternary_math(
+                self,
+                ctx,
+                2,
+                insn::simd::FpTernaryMathOp::ScaleF,
+                true,
+                false,
+            ),
+            // VGETEXPPH/SH, VRCPPH/SH, and VRSQRTPH/SH.
+            0x42 if evex.pp == 1 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                2,
+                insn::simd::FpUnaryMathOp::GetExp,
+                false,
+                false,
+            ),
+            0x43 if evex.pp == 1 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                2,
+                insn::simd::FpUnaryMathOp::GetExp,
+                true,
+                false,
+            ),
+            0x4C if evex.pp == 1 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                2,
+                insn::simd::FpUnaryMathOp::Rcp,
+                false,
+                false,
+            ),
+            0x4D if evex.pp == 1 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                2,
+                insn::simd::FpUnaryMathOp::Rcp,
+                true,
+                false,
+            ),
+            0x4E if evex.pp == 1 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                2,
+                insn::simd::FpUnaryMathOp::Rsqrt,
+                false,
+                false,
+            ),
+            0x4F if evex.pp == 1 && !evex.w => insn::simd::evex_fp_unary_math(
+                self,
+                ctx,
+                2,
+                insn::simd::FpUnaryMathOp::Rsqrt,
+                true,
+                false,
+            ),
+            // V[FC]MADDCPH/SH and V[FC]MULCPH/SH complex FP16 arithmetic.
+            0x56 if (evex.pp == 2 || evex.pp == 3) && !evex.w => {
+                insn::simd::evex_fp16_complex(self, ctx, true, evex.pp == 3, false)
+            }
+            0x57 if (evex.pp == 2 || evex.pp == 3) && !evex.w => {
+                insn::simd::evex_fp16_complex(self, ctx, true, evex.pp == 3, true)
+            }
+            0xD6 if (evex.pp == 2 || evex.pp == 3) && !evex.w => {
+                insn::simd::evex_fp16_complex(self, ctx, false, evex.pp == 3, false)
+            }
+            0xD7 if (evex.pp == 2 || evex.pp == 3) && !evex.w => {
+                insn::simd::evex_fp16_complex(self, ctx, false, evex.pp == 3, true)
+            }
             // VFM*PH/VFM*SH FP16 FMA 132/213/231 packed and scalar families.
             0x96..=0x9F | 0xA6..=0xAF | 0xB6..=0xBF if evex.pp == 1 && !evex.w => {
                 insn::simd::evex_fma_fp16(self, ctx, opcode)

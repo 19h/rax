@@ -551,18 +551,16 @@ fn avx512_spec_inventory_is_case_variant_partitioned() {
         "no implemented AVX-512 EVEX case variants were classified"
     );
     assert!(
-        !unimplemented_case_variants.is_empty(),
-        "no unimplemented AVX-512 EVEX case variants were classified"
-    );
-    assert!(
         implemented_case_variants.len()
             > implemented.intersection(&avx512_spec_mnemonics()).count(),
         "implemented AVX-512 EVEX coverage must be case-variant-level, not mnemonic-only"
     );
-    assert!(
-        unimplemented_case_variants.len() > known_unimplemented.len(),
-        "unimplemented AVX-512 EVEX coverage must be case-variant-level, not mnemonic-only"
-    );
+    if !known_unimplemented.is_empty() {
+        assert!(
+            unimplemented_case_variants.len() > known_unimplemented.len(),
+            "unimplemented AVX-512 EVEX coverage must be case-variant-level, not mnemonic-only"
+        );
+    }
 }
 
 #[test]
@@ -585,10 +583,13 @@ fn avx512_unimplemented_evex_case_variants_have_generated_byte_coverage() {
         .collect::<BTreeSet<_>>();
     let cases = generated_unimplemented_cases(&rows);
 
-    assert!(
-        !expected_case_variants.is_empty(),
-        "unimplemented AVX-512 EVEX case-variant inventory is empty"
-    );
+    if expected_case_variants.is_empty() {
+        assert!(
+            cases.is_empty(),
+            "unimplemented AVX-512 EVEX byte corpus must be empty when the manifest is empty"
+        );
+        return;
+    }
     assert!(
         cases.len() >= expected_case_variants.len(),
         "unimplemented EVEX byte coverage must include split register/memory and r/m-extension forms"

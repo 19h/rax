@@ -72,6 +72,11 @@ enum InputProfile {
     F32,
     F64,
     F16,
+    F32Pow4,
+    F64Pow4,
+    F16Pow4,
+    Vsib32,
+    Vsib64,
 }
 
 struct CaseSpec {
@@ -185,12 +190,65 @@ fn f16_zmm(reg: usize) -> [u8; 64] {
     bytes
 }
 
+fn f32_pow4_zmm(reg: usize) -> [u8; 64] {
+    const VALUES: [f32; 4] = [1.0, 4.0, 16.0, 64.0];
+    let mut bytes = [0u8; 64];
+    for lane in 0..16 {
+        let value = VALUES[(reg + lane) % VALUES.len()];
+        bytes[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn f64_pow4_zmm(reg: usize) -> [u8; 64] {
+    const VALUES: [f64; 4] = [1.0, 4.0, 16.0, 64.0];
+    let mut bytes = [0u8; 64];
+    for lane in 0..8 {
+        let value = VALUES[(reg + lane) % VALUES.len()];
+        bytes[lane * 8..lane * 8 + 8].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn f16_pow4_zmm(reg: usize) -> [u8; 64] {
+    const VALUES: [u16; 4] = [0x3c00, 0x4400, 0x4c00, 0x5400];
+    let mut bytes = [0u8; 64];
+    for lane in 0..32 {
+        let value = VALUES[(reg + lane) % VALUES.len()];
+        bytes[lane * 2..lane * 2 + 2].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn vsib32_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..16 {
+        let value = ((lane + (reg & 0x3)) * 8) as i32;
+        bytes[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn vsib64_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..8 {
+        let value = ((lane + (reg & 0x3)) * 8) as i64;
+        bytes[lane * 8..lane * 8 + 8].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
 fn profile_zmm(profile: InputProfile, reg: usize) -> [u8; 64] {
     match profile {
         InputProfile::Int => int_zmm(reg),
         InputProfile::F32 => f32_zmm(reg),
         InputProfile::F64 => f64_zmm(reg),
         InputProfile::F16 => f16_zmm(reg),
+        InputProfile::F32Pow4 => f32_pow4_zmm(reg),
+        InputProfile::F64Pow4 => f64_pow4_zmm(reg),
+        InputProfile::F16Pow4 => f16_pow4_zmm(reg),
+        InputProfile::Vsib32 => vsib32_zmm(reg),
+        InputProfile::Vsib64 => vsib64_zmm(reg),
     }
 }
 
@@ -214,6 +272,10 @@ fn input_for(id: u32, profile: InputProfile) -> InCase {
         rflags: INITIAL_RFLAGS,
         scratch: [0; SCRATCH_BYTES],
     };
+
+    if matches!(profile, InputProfile::Vsib32 | InputProfile::Vsib64) {
+        input.k[1] = u64::MAX;
+    }
 
     for reg in 0..ZMM_REGS {
         set_zmm_bytes(&mut input, reg, profile_zmm(profile, reg));
@@ -521,6 +583,36 @@ fn expected_dispatch_selectors() -> BTreeSet<EvexSelector> {
             selectors.insert(sel(1, opcode, pp, w));
         }
     }
+    for (opcode, pp, w) in [
+        (0x5a, 0, false),
+        (0x5a, 1, true),
+        (0x5b, 0, false),
+        (0x5b, 0, true),
+        (0x5b, 1, false),
+        (0x5b, 2, false),
+        (0x78, 0, false),
+        (0x78, 0, true),
+        (0x78, 1, false),
+        (0x78, 1, true),
+        (0x79, 0, false),
+        (0x79, 0, true),
+        (0x79, 1, false),
+        (0x79, 1, true),
+        (0x7a, 1, false),
+        (0x7a, 1, true),
+        (0x7a, 2, false),
+        (0x7a, 2, true),
+        (0x7a, 3, false),
+        (0x7a, 3, true),
+        (0x7b, 1, false),
+        (0x7b, 1, true),
+        (0xe6, 1, true),
+        (0xe6, 2, false),
+        (0xe6, 2, true),
+        (0xe6, 3, true),
+    ] {
+        selectors.insert(sel(1, opcode, pp, w));
+    }
     selectors.insert(sel(1, 0x5a, 2, false));
     selectors.insert(sel(1, 0x5a, 3, true));
     selectors.insert(sel(1, 0xc2, 0, false));
@@ -617,12 +709,21 @@ fn expected_dispatch_selectors() -> BTreeSet<EvexSelector> {
     selectors.insert(sel(2, 0x40, 1, true));
     selectors.insert(sel(2, 0x68, 3, false));
     selectors.insert(sel(2, 0x68, 3, true));
+    for opcode in [0x2c, 0x2d, 0x42, 0x43, 0x4c, 0x4d, 0x4e, 0x4f] {
+        selectors.insert(sel(2, opcode, 1, false));
+        selectors.insert(sel(2, opcode, 1, true));
+    }
+    for opcode in [0xc8, 0xca, 0xcb, 0xcc, 0xcd] {
+        selectors.insert(sel(2, opcode, 1, false));
+        selectors.insert(sel(2, opcode, 1, true));
+    }
     selectors.insert(sel(2, 0x00, 1, false));
     selectors.insert(sel(2, 0x04, 1, false));
     selectors.insert(sel(2, 0x0b, 1, false));
     selectors.insert(sel(2, 0x10, 1, true));
     selectors.insert(sel(2, 0x11, 1, true));
     selectors.insert(sel(2, 0x12, 1, true));
+    selectors.insert(sel(2, 0x13, 1, false));
     selectors.insert(sel(2, 0x70, 1, true));
     selectors.insert(sel(2, 0x71, 1, false));
     selectors.insert(sel(2, 0x71, 1, true));
@@ -674,6 +775,9 @@ fn expected_dispatch_selectors() -> BTreeSet<EvexSelector> {
     for opcode in (0x96..=0x9F).chain(0xA6..=0xAF).chain(0xB6..=0xBF) {
         selectors.insert(sel(2, opcode, 1, false));
         selectors.insert(sel(2, opcode, 1, true));
+    }
+    for opcode in [0x52, 0x53, 0x9a, 0x9b, 0xaa, 0xab] {
+        selectors.insert(sel(2, opcode, 3, false));
     }
     for opcode in (0x96..=0x9F).chain(0xA6..=0xAF).chain(0xB6..=0xBF) {
         selectors.insert(sel(6, opcode, 1, false));
@@ -754,6 +858,16 @@ fn expected_dispatch_selectors() -> BTreeSet<EvexSelector> {
         selectors.insert(sel(2, opcode, 1, false));
         selectors.insert(sel(2, opcode, 1, true));
     }
+    for opcode in [0x90, 0x91, 0x92, 0x93, 0xa0, 0xa1, 0xa2, 0xa3] {
+        selectors.insert(sel(2, opcode, 1, false));
+        selectors.insert(sel(2, opcode, 1, true));
+    }
+    for opcode in [0xc6, 0xc7] {
+        for subop in [1, 2, 5, 6] {
+            selectors.insert(group_sel(2, opcode, 1, false, subop));
+            selectors.insert(group_sel(2, opcode, 1, true, subop));
+        }
+    }
     selectors.insert(sel(2, 0x7d, 1, true));
     selectors.insert(sel(2, 0x52, 2, false));
     selectors.insert(sel(2, 0x72, 2, false));
@@ -771,9 +885,38 @@ fn expected_dispatch_selectors() -> BTreeSet<EvexSelector> {
         selectors.insert(sel(5, opcode, 2, true));
     }
     selectors.insert(sel(5, 0x1d, 0, false));
+    selectors.insert(sel(5, 0x1d, 1, false));
+    for (opcode, pp, w) in [
+        (0x5a, 0, false),
+        (0x5a, 1, true),
+        (0x5b, 0, false),
+        (0x5b, 0, true),
+        (0x5b, 1, false),
+        (0x5b, 2, false),
+        (0x78, 0, false),
+        (0x78, 1, false),
+        (0x79, 0, false),
+        (0x79, 1, false),
+        (0x7a, 1, false),
+        (0x7a, 3, false),
+        (0x7a, 3, true),
+        (0x7b, 1, false),
+        (0x7c, 0, false),
+        (0x7c, 1, false),
+        (0x7d, 0, false),
+        (0x7d, 1, false),
+        (0x7d, 2, false),
+        (0x7d, 3, false),
+    ] {
+        selectors.insert(sel(5, opcode, pp, w));
+    }
     selectors.insert(sel(5, 0x5a, 2, false));
     selectors.insert(sel(5, 0x5a, 3, true));
     selectors.insert(sel(6, 0x13, 0, false));
+    selectors.insert(sel(6, 0x13, 1, false));
+    for opcode in [0x2c, 0x2d, 0x42, 0x43, 0x4c, 0x4d, 0x4e, 0x4f] {
+        selectors.insert(sel(6, opcode, 1, false));
+    }
     selectors.insert(sel(2, 0x50, 3, false));
     selectors.insert(sel(2, 0x51, 3, false));
     selectors.insert(sel(2, 0x50, 2, false));
@@ -789,9 +932,40 @@ fn expected_dispatch_selectors() -> BTreeSet<EvexSelector> {
     selectors.insert(sel(3, 0x03, 1, true));
     selectors.insert(sel(3, 0x00, 1, true));
     selectors.insert(sel(3, 0x01, 1, true));
+    for (opcode, pp, w) in [
+        (0x08, 0, false),
+        (0x08, 1, false),
+        (0x09, 1, true),
+        (0x0a, 0, false),
+        (0x0a, 1, false),
+        (0x0b, 1, true),
+        (0x26, 0, false),
+        (0x26, 1, false),
+        (0x26, 1, true),
+        (0x27, 0, false),
+        (0x27, 1, false),
+        (0x27, 1, true),
+        (0x50, 1, false),
+        (0x50, 1, true),
+        (0x51, 1, false),
+        (0x51, 1, true),
+        (0x54, 1, false),
+        (0x54, 1, true),
+        (0x55, 1, false),
+        (0x55, 1, true),
+        (0x56, 0, false),
+        (0x56, 1, false),
+        (0x56, 1, true),
+        (0x57, 0, false),
+        (0x57, 1, false),
+        (0x57, 1, true),
+    ] {
+        selectors.insert(sel(3, opcode, pp, w));
+    }
     selectors.insert(sel(3, 0x04, 1, false));
     selectors.insert(sel(3, 0x05, 1, true));
     selectors.insert(sel(3, 0x0f, 1, false));
+    selectors.insert(sel(3, 0x1d, 1, false));
     selectors.insert(sel(3, 0x14, 1, false));
     selectors.insert(sel(3, 0x15, 1, false));
     selectors.insert(sel(3, 0x16, 1, false));
@@ -842,6 +1016,10 @@ fn expected_dispatch_selectors() -> BTreeSet<EvexSelector> {
         selectors.insert(sel(5, opcode, 0, false));
         selectors.insert(sel(5, opcode, 2, false));
     }
+    for opcode in [0x56, 0x57, 0xd6, 0xd7] {
+        selectors.insert(sel(6, opcode, 2, false));
+        selectors.insert(sel(6, opcode, 3, false));
+    }
 
     selectors
 }
@@ -864,13 +1042,16 @@ fn decode_evex_coverage(case: &DiffCase) -> EvexCoverage {
     } else {
         OperandForm::Memory
     };
-    let subop = if (p0 & 0x7) == 1 && matches!(opcode, 0x71 | 0x72 | 0x73) {
+    let map = p0 & 0x7;
+    let subop = if (map == 1 && matches!(opcode, 0x71 | 0x72 | 0x73))
+        || (map == 2 && matches!(opcode, 0xc6 | 0xc7))
+    {
         Some((modrm >> 3) & 0x7)
     } else {
         None
     };
     let selector = EvexSelector {
-        map: p0 & 0x7,
+        map,
         opcode,
         pp: p1 & 0x3,
         w: (p1 & 0x80) != 0,
@@ -1029,6 +1210,13 @@ fn expected_vector_lengths(selector: EvexSelector) -> BTreeSet<u8> {
     if selector.map == 3 && selector.opcode == 0x53 {
         return BTreeSet::new();
     }
+    if selector.map == 2 && selector.pp == 3 && matches!(selector.opcode, 0x52 | 0x53 | 0x9a | 0xaa)
+    {
+        return BTreeSet::from([2]);
+    }
+    if selector.map == 2 && selector.pp == 3 && matches!(selector.opcode, 0x9b | 0xab) {
+        return BTreeSet::new();
+    }
     if (selector.map == 2 || selector.map == 6)
         && selector.pp == 1
         && is_evex_fma_opcode(selector.opcode)
@@ -1066,6 +1254,43 @@ fn expected_vector_lengths(selector: EvexSelector) -> BTreeSet<u8> {
     }
     if selector.map == 3 && matches!(selector.opcode, 0x1a | 0x1b | 0x3a | 0x3b) {
         return BTreeSet::from([2]);
+    }
+    if selector.map == 2 && selector.pp == 1 && matches!(selector.opcode, 0xc8 | 0xca | 0xcc) {
+        return BTreeSet::from([2]);
+    }
+    if selector.map == 2
+        && selector.pp == 1
+        && matches!(selector.opcode, 0xc6 | 0xc7)
+        && selector.subop.is_some()
+    {
+        return BTreeSet::from([2]);
+    }
+    if (selector.map == 2
+        && selector.pp == 1
+        && matches!(selector.opcode, 0x2d | 0x43 | 0x4d | 0x4f | 0xcb | 0xcd))
+        || (selector.map == 3
+            && matches!(
+                (selector.opcode, selector.pp, selector.w),
+                (0x0a, 0, false)
+                    | (0x0a, 1, false)
+                    | (0x0b, 1, true)
+                    | (0x27, 0, false)
+                    | (0x27, 1, false)
+                    | (0x27, 1, true)
+                    | (0x51, 1, false)
+                    | (0x51, 1, true)
+                    | (0x55, 1, false)
+                    | (0x55, 1, true)
+                    | (0x57, 0, false)
+                    | (0x57, 1, false)
+                    | (0x57, 1, true)
+            ))
+        || (selector.map == 6
+            && matches!(selector.pp, 1 | 2 | 3)
+            && !selector.w
+            && matches!(selector.opcode, 0x2d | 0x43 | 0x4d | 0x4f | 0x57 | 0xd7))
+    {
+        return BTreeSet::new();
     }
     BTreeSet::from([0, 1, 2])
 }
@@ -1115,6 +1340,17 @@ fn expected_operand_forms(selector: EvexSelector) -> BTreeSet<OperandForm> {
         )
     {
         BTreeSet::from([OperandForm::Register])
+    } else if selector.map == 2
+        && selector.pp == 1
+        && (matches!(selector.opcode, 0x90..=0x93 | 0xa0..=0xa3)
+            || (matches!(selector.opcode, 0xc6 | 0xc7) && selector.subop.is_some()))
+    {
+        BTreeSet::from([OperandForm::Memory])
+    } else if selector.map == 2
+        && selector.pp == 3
+        && matches!(selector.opcode, 0x52 | 0x53 | 0x9a | 0x9b | 0xaa | 0xab)
+    {
+        BTreeSet::from([OperandForm::Memory])
     } else {
         BTreeSet::from([OperandForm::Register, OperandForm::Memory])
     }
@@ -1183,6 +1419,19 @@ fn required_rm_register_buckets(selector: EvexSelector) -> BTreeSet<u8> {
         return BTreeSet::new();
     }
     if selector.map == 2 && selector.pp == 1 && matches!(selector.opcode, 0x1a | 0x1b | 0x5a | 0x5b)
+    {
+        return BTreeSet::new();
+    }
+    if selector.map == 2
+        && selector.pp == 1
+        && (matches!(selector.opcode, 0x90..=0x93 | 0xa0..=0xa3)
+            || (matches!(selector.opcode, 0xc6 | 0xc7) && selector.subop.is_some()))
+    {
+        return BTreeSet::new();
+    }
+    if selector.map == 2
+        && selector.pp == 3
+        && matches!(selector.opcode, 0x52 | 0x53 | 0x9a | 0x9b | 0xaa | 0xab)
     {
         return BTreeSet::new();
     }
@@ -1425,6 +1674,189 @@ fn add_unary_rm_family(
                 suffix.replace(['%', ' ', '{', '}'], "")
             ),
             format!("{mnemonic} %zmm16, %zmm17 {suffix}"),
+            profile,
+        );
+    }
+}
+
+fn add_unary_zmm_family(
+    specs: &mut Vec<CaseSpec>,
+    mnemonic: &str,
+    profile: InputProfile,
+    suffixes: &[&str],
+) {
+    for dst in DST_EXT_REGS {
+        for rm in RM_EXT_REGS {
+            spec(
+                specs,
+                format!("{mnemonic}_dst_zmm{dst}_rm_zmm{rm}"),
+                format!("{mnemonic} %zmm{rm}, %zmm{dst}"),
+                profile,
+            );
+        }
+    }
+    for dst in DST_EXT_REGS {
+        spec(
+            specs,
+            format!("{mnemonic}_dst_zmm{dst}_mem"),
+            format!("{mnemonic} (%rax), %zmm{dst}"),
+            profile,
+        );
+    }
+    for suffix in suffixes {
+        spec(
+            specs,
+            format!(
+                "{mnemonic}_mask_zmm17_zmm16_{}",
+                suffix.replace(['%', ' ', '{', '}'], "")
+            ),
+            format!("{mnemonic} %zmm16, %zmm17 {suffix}"),
+            profile,
+        );
+    }
+}
+
+fn add_unary_imm_family(
+    specs: &mut Vec<CaseSpec>,
+    mnemonic: &str,
+    profile: InputProfile,
+    imm: u8,
+    suffixes: &[&str],
+) {
+    for dst in DST_EXT_REGS {
+        for rm in RM_EXT_REGS {
+            spec(
+                specs,
+                format!("{mnemonic}_dst_zmm{dst}_rm_zmm{rm}"),
+                format!("{mnemonic} ${imm}, %zmm{rm}, %zmm{dst}"),
+                profile,
+            );
+        }
+    }
+    for dst in DST_EXT_REGS {
+        spec(
+            specs,
+            format!("{mnemonic}_dst_zmm{dst}_mem"),
+            format!("{mnemonic} ${imm}, (%rax), %zmm{dst}"),
+            profile,
+        );
+    }
+    for (reg_class, dst, src) in [
+        ("xmm", "%xmm1", "%xmm16"),
+        ("ymm", "%ymm1", "%ymm16"),
+        ("zmm", "%zmm1", "%zmm16"),
+    ] {
+        spec(
+            specs,
+            format!("{mnemonic}_{reg_class}_vl"),
+            format!("{mnemonic} ${imm}, {src}, {dst}"),
+            profile,
+        );
+    }
+    for suffix in suffixes {
+        spec(
+            specs,
+            format!(
+                "{mnemonic}_mask_zmm17_zmm16_{}",
+                suffix.replace(['%', ' ', '{', '}'], "")
+            ),
+            format!("{mnemonic} ${imm}, %zmm16, %zmm17 {suffix}"),
+            profile,
+        );
+    }
+}
+
+fn add_scalar_fp_imm_family(
+    specs: &mut Vec<CaseSpec>,
+    mnemonic: &str,
+    profile: InputProfile,
+    imm: u8,
+    suffixes: &[&str],
+) {
+    for dst in [0u8, 9, 17, 25] {
+        for src1 in [1u8, 10, 18, 26] {
+            for rm in RM_EXT_REGS {
+                spec(
+                    specs,
+                    format!("{mnemonic}_dst_xmm{dst}_src1_xmm{src1}_rm_xmm{rm}"),
+                    format!("{mnemonic} ${imm}, %xmm{rm}, %xmm{src1}, %xmm{dst} {{%k1}}"),
+                    profile,
+                );
+            }
+        }
+    }
+    for dst in [0u8, 17] {
+        for src1 in [1u8, 18] {
+            spec(
+                specs,
+                format!("{mnemonic}_dst_xmm{dst}_src1_xmm{src1}_mem"),
+                format!("{mnemonic} ${imm}, (%rax), %xmm{src1}, %xmm{dst} {{%k1}}"),
+                profile,
+            );
+        }
+    }
+    for suffix in suffixes {
+        spec(
+            specs,
+            format!(
+                "{mnemonic}_mask_xmm17_xmm18_xmm16_{}",
+                suffix.replace(['%', ' ', '{', '}'], "")
+            ),
+            format!("{mnemonic} ${imm}, %xmm16, %xmm18, %xmm17 {suffix}"),
+            profile,
+        );
+    }
+}
+
+fn add_ternary_imm_family(
+    specs: &mut Vec<CaseSpec>,
+    mnemonic: &str,
+    profile: InputProfile,
+    imm: u8,
+    suffixes: &[&str],
+) {
+    for dst in DST_EXT_REGS {
+        for src1 in SRC1_EXT_REGS {
+            for rm in RM_EXT_REGS {
+                spec(
+                    specs,
+                    format!("{mnemonic}_dst_zmm{dst}_src1_zmm{src1}_rm_zmm{rm}"),
+                    format!("{mnemonic} ${imm}, %zmm{rm}, %zmm{src1}, %zmm{dst}"),
+                    profile,
+                );
+            }
+        }
+    }
+    for dst in DST_EXT_REGS {
+        for src1 in SRC1_EXT_REGS {
+            spec(
+                specs,
+                format!("{mnemonic}_dst_zmm{dst}_src1_zmm{src1}_mem"),
+                format!("{mnemonic} ${imm}, (%rax), %zmm{src1}, %zmm{dst}"),
+                profile,
+            );
+        }
+    }
+    for (reg_class, dst, src1, src2) in [
+        ("xmm", "%xmm1", "%xmm2", "%xmm16"),
+        ("ymm", "%ymm1", "%ymm2", "%ymm16"),
+        ("zmm", "%zmm1", "%zmm2", "%zmm16"),
+    ] {
+        spec(
+            specs,
+            format!("{mnemonic}_{reg_class}_vl"),
+            format!("{mnemonic} ${imm}, {src2}, {src1}, {dst}"),
+            profile,
+        );
+    }
+    for suffix in suffixes {
+        spec(
+            specs,
+            format!(
+                "{mnemonic}_mask_zmm17_zmm18_zmm16_{}",
+                suffix.replace(['%', ' ', '{', '}'], "")
+            ),
+            format!("{mnemonic} ${imm}, %zmm16, %zmm18, %zmm17 {suffix}"),
             profile,
         );
     }
@@ -2729,6 +3161,167 @@ fn reg_class_for_bytes(bytes: usize) -> &'static str {
     }
 }
 
+fn vsib_classes(
+    index_size: usize,
+    data_size: usize,
+    vl_bytes: usize,
+) -> (&'static str, &'static str) {
+    let lanes = vl_bytes / index_size.max(data_size);
+    let index_class = reg_class_for_bytes((lanes * index_size).max(16));
+    let data_class = reg_class_for_bytes((lanes * data_size).max(16));
+    (index_class, data_class)
+}
+
+fn add_vsib_gather_family(
+    specs: &mut Vec<CaseSpec>,
+    mnemonic: &str,
+    index_size: usize,
+    data_size: usize,
+) {
+    let profile = if index_size == 4 {
+        InputProfile::Vsib32
+    } else {
+        InputProfile::Vsib64
+    };
+    for vl_bytes in [16, 32, 64] {
+        let (index_class, data_class) = vsib_classes(index_size, data_size, vl_bytes);
+        for index in RM_EXT_REGS {
+            spec(
+                specs,
+                format!("{mnemonic}_{data_class}_idx_{index_class}{index}"),
+                format!("{mnemonic} (%rax,%{index_class}{index}), %{data_class}17 {{%k1}}"),
+                profile,
+            );
+        }
+    }
+}
+
+fn add_vsib_scatter_family(
+    specs: &mut Vec<CaseSpec>,
+    mnemonic: &str,
+    index_size: usize,
+    data_size: usize,
+) {
+    let profile = if index_size == 4 {
+        InputProfile::Vsib32
+    } else {
+        InputProfile::Vsib64
+    };
+    for vl_bytes in [16, 32, 64] {
+        let (index_class, data_class) = vsib_classes(index_size, data_size, vl_bytes);
+        for index in RM_EXT_REGS {
+            spec(
+                specs,
+                format!("{mnemonic}_{data_class}_idx_{index_class}{index}"),
+                format!("{mnemonic} %{data_class}17, (%rax,%{index_class}{index}) {{%k1}}"),
+                profile,
+            );
+        }
+    }
+}
+
+fn add_vsib_prefetch_family(
+    specs: &mut Vec<CaseSpec>,
+    mnemonic: &str,
+    index_size: usize,
+    data_size: usize,
+) {
+    let profile = if index_size == 4 {
+        InputProfile::Vsib32
+    } else {
+        InputProfile::Vsib64
+    };
+    let (index_class, _) = vsib_classes(index_size, data_size, 64);
+    for index in RM_EXT_REGS {
+        spec(
+            specs,
+            format!("{mnemonic}_idx_{index_class}{index}"),
+            format!("{mnemonic} (%rax,%{index_class}{index}) {{%k1}}"),
+            profile,
+        );
+    }
+}
+
+fn add_scalar_fp16_complex_family(specs: &mut Vec<CaseSpec>, mnemonic: &str) {
+    for (dst, src1) in [(1u8, 2u8), (17, 18)] {
+        for rm in RM_EXT_REGS {
+            spec(
+                specs,
+                format!("{mnemonic}_dst_xmm{dst}_src1_xmm{src1}_rm_xmm{rm}"),
+                format!("{mnemonic} %xmm{rm}, %xmm{src1}, %xmm{dst} {{%k1}}"),
+                InputProfile::F16,
+            );
+        }
+        spec(
+            specs,
+            format!("{mnemonic}_dst_xmm{dst}_src1_xmm{src1}_mem"),
+            format!("{mnemonic} (%rax), %xmm{src1}, %xmm{dst} {{%k1}}"),
+            InputProfile::F16,
+        );
+    }
+    for suffix in ["{%k1}", "{%k1} {z}"] {
+        spec(
+            specs,
+            format!(
+                "{mnemonic}_mask_xmm17_xmm18_xmm16_{}",
+                suffix.replace(['%', ' ', '{', '}'], "")
+            ),
+            format!("{mnemonic} %xmm16, %xmm18, %xmm17 {suffix}"),
+            InputProfile::F16,
+        );
+    }
+}
+
+fn add_source_block_f32_family(specs: &mut Vec<CaseSpec>, mnemonic: &str, scalar: bool) {
+    let class = if scalar { "xmm" } else { "zmm" };
+    let suffixes = ["{%k1}", "{%k1} {z}"];
+    for dst in [1u8, 17] {
+        for src1 in [0u8, 20] {
+            spec(
+                specs,
+                format!("{mnemonic}_dst_{class}{dst}_srcblock_{class}{src1}_mem"),
+                format!("{mnemonic} (%rax), %{class}{src1}, %{class}{dst} {{%k1}}"),
+                InputProfile::F32,
+            );
+        }
+    }
+    for suffix in suffixes {
+        spec(
+            specs,
+            format!(
+                "{mnemonic}_mask_{class}17_{class}20_{}",
+                suffix.replace(['%', ' ', '{', '}'], "")
+            ),
+            format!("{mnemonic} (%rax), %{class}20, %{class}17 {suffix}"),
+            InputProfile::F32,
+        );
+    }
+}
+
+fn add_source_block_i32_family(specs: &mut Vec<CaseSpec>, mnemonic: &str) {
+    for dst in [1u8, 17] {
+        for src1 in [0u8, 20] {
+            spec(
+                specs,
+                format!("{mnemonic}_dst_zmm{dst}_srcblock_zmm{src1}_mem"),
+                format!("{mnemonic} (%rax), %zmm{src1}, %zmm{dst} {{%k1}}"),
+                InputProfile::Int,
+            );
+        }
+    }
+    for suffix in ["{%k1}", "{%k1} {z}"] {
+        spec(
+            specs,
+            format!(
+                "{mnemonic}_mask_zmm17_zmm20_{}",
+                suffix.replace(['%', ' ', '{', '}'], "")
+            ),
+            format!("{mnemonic} (%rax), %zmm20, %zmm17 {suffix}"),
+            InputProfile::Int,
+        );
+    }
+}
+
 fn add_int_extend_family(
     specs: &mut Vec<CaseSpec>,
     mnemonic: &str,
@@ -3129,6 +3722,127 @@ fn add_gpr_to_fp_convert_family(
     );
 }
 
+fn packed_convert_classes(
+    src_elem_size: usize,
+    dst_elem_size: usize,
+    operation_vl_bytes: usize,
+) -> (&'static str, &'static str) {
+    if dst_elem_size >= src_elem_size {
+        let lanes = operation_vl_bytes / dst_elem_size;
+        (
+            reg_class_for_bytes(lanes * src_elem_size),
+            reg_class_for_bytes(operation_vl_bytes),
+        )
+    } else {
+        let lanes = operation_vl_bytes / src_elem_size;
+        (
+            reg_class_for_bytes(operation_vl_bytes),
+            reg_class_for_bytes(lanes * dst_elem_size),
+        )
+    }
+}
+
+fn add_packed_convert_family(
+    specs: &mut Vec<CaseSpec>,
+    mnemonic: &str,
+    src_elem_size: usize,
+    dst_elem_size: usize,
+    profile: InputProfile,
+) {
+    let (full_src_class, full_dst_class) = packed_convert_classes(src_elem_size, dst_elem_size, 64);
+    let full_mem_operand = if full_dst_class == "xmm" && src_elem_size > dst_elem_size {
+        format!("(%rax){{1to{}}}", 64 / src_elem_size)
+    } else {
+        "(%rax)".to_string()
+    };
+    for dst in DST_EXT_REGS {
+        for rm in RM_EXT_REGS {
+            spec(
+                specs,
+                format!("{mnemonic}_dst_{full_dst_class}{dst}_rm_{full_src_class}{rm}"),
+                format!("{mnemonic} %{full_src_class}{rm}, %{full_dst_class}{dst}"),
+                profile,
+            );
+        }
+        spec(
+            specs,
+            format!("{mnemonic}_dst_{full_dst_class}{dst}_mem"),
+            format!("{mnemonic} {full_mem_operand}, %{full_dst_class}{dst}"),
+            profile,
+        );
+    }
+    for suffix in ["{%k1}", "{%k2} {z}"] {
+        spec(
+            specs,
+            format!(
+                "{mnemonic}_mask_{full_dst_class}17_{}",
+                suffix.replace(['%', ' ', '{', '}'], "")
+            ),
+            format!("{mnemonic} %{full_src_class}16, %{full_dst_class}17 {suffix}"),
+            profile,
+        );
+    }
+    for vl_bytes in [16, 32, 64] {
+        let (src_class, dst_class) = packed_convert_classes(src_elem_size, dst_elem_size, vl_bytes);
+        spec(
+            specs,
+            format!("{mnemonic}_{dst_class}_vl"),
+            format!("{mnemonic} %{src_class}16, %{dst_class}17"),
+            profile,
+        );
+    }
+}
+
+fn add_packed_fp_convert_store_family(
+    specs: &mut Vec<CaseSpec>,
+    mnemonic: &str,
+    src_elem_size: usize,
+    dst_elem_size: usize,
+    profile: InputProfile,
+) {
+    let (full_src_class, full_dst_class) = packed_convert_classes(src_elem_size, dst_elem_size, 64);
+    for rm in RM_EXT_REGS {
+        spec(
+            specs,
+            format!("{mnemonic}_src_{full_src_class}16_dst_{full_dst_class}{rm}"),
+            format!("{mnemonic} $0, %{full_src_class}16, %{full_dst_class}{rm}"),
+            profile,
+        );
+    }
+    spec(
+        specs,
+        format!("{mnemonic}_src_{full_src_class}16_mem"),
+        format!("{mnemonic} $0, %{full_src_class}16, (%rax)"),
+        profile,
+    );
+    spec(
+        specs,
+        format!("{mnemonic}_src_{full_src_class}16_mem_k1"),
+        format!("{mnemonic} $4, %{full_src_class}16, (%rax) {{%k1}}"),
+        profile,
+    );
+    for suffix in ["{%k1}", "{%k2} {z}"] {
+        spec(
+            specs,
+            format!(
+                "{mnemonic}_mask_{full_dst_class}17_{}",
+                suffix.replace(['%', ' ', '{', '}'], "")
+            ),
+            format!("{mnemonic} $4, %{full_src_class}16, %{full_dst_class}17 {suffix}"),
+            profile,
+        );
+    }
+    for vl_bytes in [16, 32, 64] {
+        let (src_class, dst_class) = packed_convert_classes(src_elem_size, dst_elem_size, vl_bytes);
+        spec(
+            specs,
+            format!("{mnemonic}_{dst_class}_vl"),
+            format!("{mnemonic} $0, %{src_class}16, %{dst_class}17"),
+            profile,
+        );
+    }
+}
+
 fn generated_specs() -> Vec<CaseSpec> {
     let mut specs = Vec::new();
     let masked = ["{%k1}", "{%k2} {z}"];
@@ -3276,6 +3990,91 @@ fn generated_specs() -> Vec<CaseSpec> {
     ] {
         add_scalar_fp_family(&mut specs, mnemonic, InputProfile::F64, &masked);
     }
+
+    for mnemonic in ["vgetexpps", "vrcp14ps", "vrsqrt14ps"] {
+        add_unary_rm_family(&mut specs, mnemonic, InputProfile::F32Pow4, &masked);
+    }
+    for mnemonic in ["vgetexppd", "vrcp14pd", "vrsqrt14pd"] {
+        add_unary_rm_family(&mut specs, mnemonic, InputProfile::F64Pow4, &masked);
+    }
+    for mnemonic in ["vexp2ps", "vrcp28ps", "vrsqrt28ps"] {
+        add_unary_zmm_family(&mut specs, mnemonic, InputProfile::F32Pow4, &masked);
+    }
+    for mnemonic in ["vexp2pd", "vrcp28pd", "vrsqrt28pd"] {
+        add_unary_zmm_family(&mut specs, mnemonic, InputProfile::F64Pow4, &masked);
+    }
+    for mnemonic in [
+        "vgetexpss",
+        "vrcp14ss",
+        "vrsqrt14ss",
+        "vrcp28ss",
+        "vrsqrt28ss",
+    ] {
+        add_scalar_fp_family(&mut specs, mnemonic, InputProfile::F32Pow4, &masked);
+    }
+    for mnemonic in [
+        "vgetexpsd",
+        "vrcp14sd",
+        "vrsqrt14sd",
+        "vrcp28sd",
+        "vrsqrt28sd",
+    ] {
+        add_scalar_fp_family(&mut specs, mnemonic, InputProfile::F64Pow4, &masked);
+    }
+
+    for mnemonic in ["vrndscaleps", "vreduceps", "vgetmantps"] {
+        add_unary_imm_family(&mut specs, mnemonic, InputProfile::F32, 0, &masked);
+    }
+    for mnemonic in ["vrndscalepd", "vreducepd", "vgetmantpd"] {
+        add_unary_imm_family(&mut specs, mnemonic, InputProfile::F64, 0, &masked);
+    }
+    for mnemonic in ["vrndscaless", "vreducess", "vgetmantss"] {
+        add_scalar_fp_imm_family(&mut specs, mnemonic, InputProfile::F32, 0, &masked);
+    }
+    for mnemonic in ["vrndscalesd", "vreducesd", "vgetmantsd"] {
+        add_scalar_fp_imm_family(&mut specs, mnemonic, InputProfile::F64, 0, &masked);
+    }
+
+    add_ternary_family(&mut specs, "vscalefps", InputProfile::F32, &masked);
+    add_ternary_family(&mut specs, "vscalefpd", InputProfile::F64, &masked);
+    add_scalar_fp_family(&mut specs, "vscalefss", InputProfile::F32, &masked);
+    add_scalar_fp_family(&mut specs, "vscalefsd", InputProfile::F64, &masked);
+    add_ternary_imm_family(&mut specs, "vrangeps", InputProfile::F32, 0, &masked);
+    add_ternary_imm_family(&mut specs, "vrangepd", InputProfile::F64, 0, &masked);
+    add_scalar_fp_imm_family(&mut specs, "vrangess", InputProfile::F32, 0, &masked);
+    add_scalar_fp_imm_family(&mut specs, "vrangesd", InputProfile::F64, 0, &masked);
+    add_ternary_imm_family(&mut specs, "vfixupimmps", InputProfile::F32, 0x1b, &masked);
+    add_ternary_imm_family(&mut specs, "vfixupimmpd", InputProfile::F64, 0x1b, &masked);
+    add_scalar_fp_imm_family(&mut specs, "vfixupimmss", InputProfile::F32, 0x1b, &masked);
+    add_scalar_fp_imm_family(&mut specs, "vfixupimmsd", InputProfile::F64, 0x1b, &masked);
+
+    for mnemonic in ["vgetexpph", "vrcpph", "vrsqrtph"] {
+        add_unary_rm_family(&mut specs, mnemonic, InputProfile::F16Pow4, &masked);
+    }
+    for mnemonic in ["vgetexpsh", "vrcpsh", "vrsqrtsh"] {
+        add_scalar_fp_family(&mut specs, mnemonic, InputProfile::F16Pow4, &masked);
+    }
+    for mnemonic in ["vrndscaleph", "vreduceph", "vgetmantph"] {
+        add_unary_imm_family(&mut specs, mnemonic, InputProfile::F16, 0, &masked);
+    }
+    for mnemonic in ["vrndscalesh", "vreducesh", "vgetmantsh"] {
+        add_scalar_fp_imm_family(&mut specs, mnemonic, InputProfile::F16, 0, &masked);
+    }
+    add_ternary_family(&mut specs, "vscalefph", InputProfile::F16, &masked);
+    add_scalar_fp_family(&mut specs, "vscalefsh", InputProfile::F16, &masked);
+    for mnemonic in ["vfmulcph", "vfcmulcph", "vfmaddcph", "vfcmaddcph"] {
+        add_ternary_family(&mut specs, mnemonic, InputProfile::F16, &masked);
+    }
+    for mnemonic in ["vfmulcsh", "vfcmulcsh", "vfmaddcsh", "vfcmaddcsh"] {
+        add_scalar_fp16_complex_family(&mut specs, mnemonic);
+    }
+    add_source_block_f32_family(&mut specs, "v4fmaddps", false);
+    add_source_block_f32_family(&mut specs, "v4fnmaddps", false);
+    add_source_block_f32_family(&mut specs, "v4fmaddss", true);
+    add_source_block_f32_family(&mut specs, "v4fnmaddss", true);
+    add_source_block_i32_family(&mut specs, "vp4dpwssd");
+    add_source_block_i32_family(&mut specs, "vp4dpwssds");
+
     for mnemonic in ["vcvtss2si", "vcvttss2si"] {
         let opcode = if mnemonic == "vcvtss2si" { 0x2d } else { 0x2c };
         add_fp_to_gpr_convert_family(&mut specs, mnemonic, 1, opcode, 2, InputProfile::F32);
@@ -3312,6 +4111,112 @@ fn generated_specs() -> Vec<CaseSpec> {
     add_scalar_fp_family(&mut specs, "vcvtsh2ss", InputProfile::F16, &masked);
     add_scalar_fp_family(&mut specs, "vcvtsd2sh", InputProfile::F64, &masked);
     add_scalar_fp_family(&mut specs, "vcvtsh2sd", InputProfile::F16, &masked);
+    for mnemonic in ["vcvtps2pd", "vcvtpd2ps"] {
+        let (src_elem_size, dst_elem_size, profile) = if mnemonic == "vcvtps2pd" {
+            (4, 8, InputProfile::F32)
+        } else {
+            (8, 4, InputProfile::F64)
+        };
+        add_packed_convert_family(&mut specs, mnemonic, src_elem_size, dst_elem_size, profile);
+    }
+    for mnemonic in ["vcvtdq2ps", "vcvtqq2ps", "vcvtdq2pd", "vcvtqq2pd"] {
+        let (src_elem_size, dst_elem_size) = match mnemonic {
+            "vcvtdq2ps" => (4, 4),
+            "vcvtqq2ps" => (8, 4),
+            "vcvtdq2pd" => (4, 8),
+            "vcvtqq2pd" => (8, 8),
+            _ => unreachable!(),
+        };
+        add_packed_convert_family(
+            &mut specs,
+            mnemonic,
+            src_elem_size,
+            dst_elem_size,
+            InputProfile::Int,
+        );
+    }
+    for mnemonic in ["vcvtudq2ps", "vcvtuqq2ps", "vcvtudq2pd", "vcvtuqq2pd"] {
+        let (src_elem_size, dst_elem_size) = match mnemonic {
+            "vcvtudq2ps" => (4, 4),
+            "vcvtuqq2ps" => (8, 4),
+            "vcvtudq2pd" => (4, 8),
+            "vcvtuqq2pd" => (8, 8),
+            _ => unreachable!(),
+        };
+        add_packed_convert_family(
+            &mut specs,
+            mnemonic,
+            src_elem_size,
+            dst_elem_size,
+            InputProfile::Int,
+        );
+    }
+    for mnemonic in [
+        "vcvtps2dq",
+        "vcvttps2dq",
+        "vcvtps2qq",
+        "vcvttps2qq",
+        "vcvtps2udq",
+        "vcvttps2udq",
+        "vcvtps2uqq",
+        "vcvttps2uqq",
+    ] {
+        let dst_elem_size = if mnemonic.ends_with("qq") || mnemonic.ends_with("uqq") {
+            8
+        } else {
+            4
+        };
+        add_packed_convert_family(&mut specs, mnemonic, 4, dst_elem_size, InputProfile::F32);
+    }
+    for mnemonic in [
+        "vcvtpd2dq",
+        "vcvttpd2dq",
+        "vcvtpd2qq",
+        "vcvttpd2qq",
+        "vcvtpd2udq",
+        "vcvttpd2udq",
+        "vcvtpd2uqq",
+        "vcvttpd2uqq",
+    ] {
+        let dst_elem_size = if mnemonic.ends_with("qq") || mnemonic.ends_with("uqq") {
+            8
+        } else {
+            4
+        };
+        add_packed_convert_family(&mut specs, mnemonic, 8, dst_elem_size, InputProfile::F64);
+    }
+    add_packed_convert_family(&mut specs, "vcvtph2ps", 2, 4, InputProfile::F16);
+    add_packed_convert_family(&mut specs, "vcvtph2psx", 2, 4, InputProfile::F16);
+    add_packed_convert_family(&mut specs, "vcvtph2pd", 2, 8, InputProfile::F16);
+    add_packed_convert_family(&mut specs, "vcvtps2phx", 4, 2, InputProfile::F32);
+    add_packed_fp_convert_store_family(&mut specs, "vcvtps2ph", 4, 2, InputProfile::F32);
+    add_packed_convert_family(&mut specs, "vcvtpd2ph", 8, 2, InputProfile::F64);
+    for mnemonic in ["vcvtph2dq", "vcvttph2dq", "vcvtph2udq", "vcvttph2udq"] {
+        add_packed_convert_family(&mut specs, mnemonic, 2, 4, InputProfile::F16);
+    }
+    for mnemonic in ["vcvtph2qq", "vcvttph2qq", "vcvtph2uqq", "vcvttph2uqq"] {
+        add_packed_convert_family(&mut specs, mnemonic, 2, 8, InputProfile::F16);
+    }
+    for mnemonic in ["vcvtph2w", "vcvttph2w", "vcvtph2uw", "vcvttph2uw"] {
+        add_packed_convert_family(&mut specs, mnemonic, 2, 2, InputProfile::F16);
+    }
+    for mnemonic in [
+        "vcvtdq2ph",
+        "vcvtqq2ph",
+        "vcvtudq2ph",
+        "vcvtuqq2ph",
+        "vcvtw2ph",
+        "vcvtuw2ph",
+    ] {
+        let src_elem_size = if mnemonic.contains("qq") {
+            8
+        } else if mnemonic.contains('w') {
+            2
+        } else {
+            4
+        };
+        add_packed_convert_family(&mut specs, mnemonic, src_elem_size, 2, InputProfile::Int);
+    }
     for mnemonic in [
         "vfmadd132ps",
         "vfmadd213ps",
@@ -4371,6 +5276,64 @@ fn generated_specs() -> Vec<CaseSpec> {
         "vpconflictq (%rax){1to8}, %zmm17 {%k1}",
         InputProfile::Int,
     );
+
+    for mnemonic in ["vpgatherdd", "vgatherdps"] {
+        add_vsib_gather_family(&mut specs, mnemonic, 4, 4);
+    }
+    for mnemonic in ["vpgatherdq", "vgatherdpd"] {
+        add_vsib_gather_family(&mut specs, mnemonic, 4, 8);
+    }
+    for mnemonic in ["vpgatherqd", "vgatherqps"] {
+        add_vsib_gather_family(&mut specs, mnemonic, 8, 4);
+    }
+    for mnemonic in ["vpgatherqq", "vgatherqpd"] {
+        add_vsib_gather_family(&mut specs, mnemonic, 8, 8);
+    }
+    for mnemonic in ["vpscatterdd", "vscatterdps"] {
+        add_vsib_scatter_family(&mut specs, mnemonic, 4, 4);
+    }
+    for mnemonic in ["vpscatterdq", "vscatterdpd"] {
+        add_vsib_scatter_family(&mut specs, mnemonic, 4, 8);
+    }
+    for mnemonic in ["vpscatterqd", "vscatterqps"] {
+        add_vsib_scatter_family(&mut specs, mnemonic, 8, 4);
+    }
+    for mnemonic in ["vpscatterqq", "vscatterqpd"] {
+        add_vsib_scatter_family(&mut specs, mnemonic, 8, 8);
+    }
+    for mnemonic in [
+        "vgatherpf0dps",
+        "vgatherpf1dps",
+        "vscatterpf0dps",
+        "vscatterpf1dps",
+    ] {
+        add_vsib_prefetch_family(&mut specs, mnemonic, 4, 4);
+    }
+    for mnemonic in [
+        "vgatherpf0dpd",
+        "vgatherpf1dpd",
+        "vscatterpf0dpd",
+        "vscatterpf1dpd",
+    ] {
+        add_vsib_prefetch_family(&mut specs, mnemonic, 4, 8);
+    }
+    for mnemonic in [
+        "vgatherpf0qps",
+        "vgatherpf1qps",
+        "vscatterpf0qps",
+        "vscatterpf1qps",
+    ] {
+        add_vsib_prefetch_family(&mut specs, mnemonic, 8, 4);
+    }
+    for mnemonic in [
+        "vgatherpf0qpd",
+        "vgatherpf1qpd",
+        "vscatterpf0qpd",
+        "vscatterpf1qpd",
+    ] {
+        add_vsib_prefetch_family(&mut specs, mnemonic, 8, 8);
+    }
+
     for src1 in SRC1_EXT_REGS {
         for rm in RM_EXT_REGS {
             spec(
@@ -6854,6 +7817,329 @@ fn assert_evex_valign_case(
     assert_eq!(out.zmm[dst], zmm_from_bytes(expected), "{label}");
 }
 
+fn write_f32_lane(bytes: &mut [u8; 64], lane: usize, value: f32) {
+    let base = lane * 4;
+    bytes[base..base + 4].copy_from_slice(&value.to_le_bytes());
+}
+
+fn read_f32_lane(bytes: &[u8; 64], lane: usize) -> f32 {
+    let base = lane * 4;
+    f32::from_le_bytes(bytes[base..base + 4].try_into().unwrap())
+}
+
+fn write_i32_lane(bytes: &mut [u8; 64], lane: usize, value: i32) {
+    let base = lane * 4;
+    bytes[base..base + 4].copy_from_slice(&value.to_le_bytes());
+}
+
+fn write_i16_lane(bytes: &mut [u8; 64], lane: usize, value: i16) {
+    let base = lane * 2;
+    bytes[base..base + 2].copy_from_slice(&value.to_le_bytes());
+}
+
+fn write_f16_lane_bits(bytes: &mut [u8; 64], lane: usize, bits: u16) {
+    let base = lane * 2;
+    bytes[base..base + 2].copy_from_slice(&bits.to_le_bytes());
+}
+
+fn write_f16_pair_bits(bytes: &mut [u8; 64], pair: usize, real: u16, imag: u16) {
+    write_f16_lane_bits(bytes, pair * 2, real);
+    write_f16_lane_bits(bytes, pair * 2 + 1, imag);
+}
+
+fn assert_evex_fixupimm_contracts(llvm_mc: &Path) {
+    let mut packed = assembled_rax_case(
+        llvm_mc,
+        "vfixupimmps_table_contract",
+        "vfixupimmps $0, %zmm16, %zmm18, %zmm17",
+        InputProfile::F32,
+        0x5600,
+    );
+    let mut src1 = [0u8; 64];
+    let mut src2 = [0u8; 64];
+    let mut expected = [0u8; 64];
+    for lane in 0..16 {
+        write_f32_lane(&mut src1, lane, 0.0);
+        write_elem(&mut src2, lane, 4, 0x0a00);
+        write_f32_lane(&mut expected, lane, 1.0);
+    }
+    packed.input.zmm[18] = zmm_from_bytes(src1);
+    packed.input.zmm[16] = zmm_from_bytes(src2);
+    let out = run_rax(&packed);
+    assert_eq!(
+        out.zmm[17],
+        zmm_from_bytes(expected),
+        "vfixupimmps_table_contract"
+    );
+
+    let mut scalar = assembled_rax_case(
+        llvm_mc,
+        "vfixupimmss_scalar_high_source_contract",
+        "vfixupimmss $0, %xmm16, %xmm18, %xmm17 {%k1} {z}",
+        InputProfile::F32,
+        0x5601,
+    );
+    let mut src1 = zmm_to_bytes(scalar.input.zmm[18]);
+    let mut src2 = [0u8; 64];
+    write_f32_lane(&mut src1, 0, f32::INFINITY);
+    write_f32_lane(&mut src1, 1, 7.0);
+    write_f32_lane(&mut src1, 2, 8.0);
+    write_f32_lane(&mut src1, 3, 9.0);
+    write_elem(&mut src2, 0, 4, 0x4 << 20);
+    scalar.input.zmm[18] = zmm_from_bytes(src1);
+    scalar.input.zmm[16] = zmm_from_bytes(src2);
+
+    let out = run_rax(&scalar);
+    let mut expected = [0u8; 64];
+    write_f32_lane(&mut expected, 0, f32::NEG_INFINITY);
+    expected[4..16].copy_from_slice(&src1[4..16]);
+    assert_eq!(
+        out.zmm[17],
+        zmm_from_bytes(expected),
+        "vfixupimmss_scalar_high_source_contract"
+    );
+}
+
+fn assert_evex_fp16_complex_contracts(llvm_mc: &Path) {
+    const H_ZERO: u16 = 0x0000;
+    const H_ONE: u16 = 0x3c00;
+    const H_TWO: u16 = 0x4000;
+    const H_THREE: u16 = 0x4200;
+    const H_NEG_THREE: u16 = 0xc200;
+    const H_SEVEN: u16 = 0x4700;
+
+    let mut packed = assembled_rax_case(
+        llvm_mc,
+        "vfmulcph_packed_contract",
+        "vfmulcph %zmm16, %zmm18, %zmm17",
+        InputProfile::F16,
+        0x5610,
+    );
+    let mut src1 = [0u8; 64];
+    let mut src2 = [0u8; 64];
+    let mut expected = [0u8; 64];
+    for pair in 0..16 {
+        write_f16_pair_bits(&mut src1, pair, H_ONE, H_ZERO);
+        write_f16_pair_bits(&mut src2, pair, H_TWO, H_THREE);
+        write_f16_pair_bits(&mut expected, pair, H_TWO, H_THREE);
+    }
+    packed.input.zmm[18] = zmm_from_bytes(src1);
+    packed.input.zmm[16] = zmm_from_bytes(src2);
+    let out = run_rax(&packed);
+    assert_eq!(
+        out.zmm[17],
+        zmm_from_bytes(expected),
+        "vfmulcph_packed_contract"
+    );
+
+    let mut conjugate = assembled_rax_case(
+        llvm_mc,
+        "vfcmulcph_conjugate_contract",
+        "vfcmulcph %zmm16, %zmm18, %zmm17",
+        InputProfile::F16,
+        0x5611,
+    );
+    conjugate.input.zmm[18] = zmm_from_bytes(src1);
+    conjugate.input.zmm[16] = zmm_from_bytes(src2);
+    let mut expected = [0u8; 64];
+    for pair in 0..16 {
+        write_f16_pair_bits(&mut expected, pair, H_TWO, H_NEG_THREE);
+    }
+    let out = run_rax(&conjugate);
+    assert_eq!(
+        out.zmm[17],
+        zmm_from_bytes(expected),
+        "vfcmulcph_conjugate_contract"
+    );
+
+    let mut scalar = assembled_rax_case(
+        llvm_mc,
+        "vfmaddcsh_scalar_contract",
+        "vfmaddcsh %xmm16, %xmm18, %xmm17",
+        InputProfile::F16,
+        0x5612,
+    );
+    let mut dst = [0u8; 64];
+    let mut src1 = zmm_to_bytes(scalar.input.zmm[18]);
+    let mut src2 = [0u8; 64];
+    write_f16_pair_bits(&mut dst, 0, 0x4500, H_ZERO);
+    write_f16_pair_bits(&mut src1, 0, H_ONE, H_ZERO);
+    write_f16_pair_bits(&mut src2, 0, H_TWO, H_ZERO);
+    scalar.input.zmm[17] = zmm_from_bytes(dst);
+    scalar.input.zmm[18] = zmm_from_bytes(src1);
+    scalar.input.zmm[16] = zmm_from_bytes(src2);
+
+    let out = run_rax(&scalar);
+    let mut expected = [0u8; 64];
+    write_f16_pair_bits(&mut expected, 0, H_SEVEN, H_ZERO);
+    expected[4..16].copy_from_slice(&src1[4..16]);
+    assert_eq!(
+        out.zmm[17],
+        zmm_from_bytes(expected),
+        "vfmaddcsh_scalar_contract"
+    );
+}
+
+fn seed_4fma_case(case: &mut DiffCase) {
+    let mut dst = [0u8; 64];
+    for lane in 0..16 {
+        write_f32_lane(&mut dst, lane, 10.0 + lane as f32);
+    }
+    case.input.zmm[17] = zmm_from_bytes(dst);
+
+    for block in 0..4 {
+        let mut src = [0u8; 64];
+        for lane in 0..16 {
+            write_f32_lane(&mut src, lane, (block + 1) as f32);
+        }
+        case.input.zmm[20 + block] = zmm_from_bytes(src);
+        let base = block * 4;
+        case.input.scratch[base..base + 4].copy_from_slice(&((block + 2) as f32).to_le_bytes());
+    }
+}
+
+fn assert_evex_source_block_fma_contracts(llvm_mc: &Path) {
+    let mut packed = assembled_rax_case(
+        llvm_mc,
+        "v4fmaddps_source_block_contract",
+        "v4fmaddps (%rax), %zmm20, %zmm17",
+        InputProfile::F32,
+        0x5620,
+    );
+    seed_4fma_case(&mut packed);
+    let out = run_rax(&packed);
+    let mut expected = [0u8; 64];
+    for lane in 0..16 {
+        write_f32_lane(&mut expected, lane, 50.0 + lane as f32);
+    }
+    assert_eq!(
+        out.zmm[17],
+        zmm_from_bytes(expected),
+        "v4fmaddps_source_block_contract"
+    );
+
+    let mut negative = assembled_rax_case(
+        llvm_mc,
+        "v4fnmaddps_source_block_contract",
+        "v4fnmaddps (%rax), %zmm20, %zmm17",
+        InputProfile::F32,
+        0x5621,
+    );
+    seed_4fma_case(&mut negative);
+    let out = run_rax(&negative);
+    let mut expected = [0u8; 64];
+    for lane in 0..16 {
+        write_f32_lane(&mut expected, lane, -30.0 + lane as f32);
+    }
+    assert_eq!(
+        out.zmm[17],
+        zmm_from_bytes(expected),
+        "v4fnmaddps_source_block_contract"
+    );
+
+    let mut scalar = assembled_rax_case(
+        llvm_mc,
+        "v4fmaddss_zero_mask_preserves_high_lanes",
+        "v4fmaddss (%rax), %xmm20, %xmm17 {%k1} {z}",
+        InputProfile::F32,
+        0x5622,
+    );
+    seed_4fma_case(&mut scalar);
+    let out = run_rax(&scalar);
+    let dst = zmm_to_bytes(scalar.input.zmm[17]);
+    let mut expected = [0u8; 64];
+    write_f32_lane(&mut expected, 0, 50.0);
+    expected[4..16].copy_from_slice(&dst[4..16]);
+    assert_eq!(
+        out.zmm[17],
+        zmm_from_bytes(expected),
+        "v4fmaddss_zero_mask_preserves_high_lanes"
+    );
+
+    let out_bytes = zmm_to_bytes(out.zmm[17]);
+    assert_eq!(
+        read_f32_lane(&out_bytes, 1),
+        read_f32_lane(&dst, 1),
+        "v4fmaddss lane 1 must not be zeroed by k1 zero-mask"
+    );
+}
+
+fn seed_4vnniw_case(case: &mut DiffCase, saturating: bool) {
+    let dst_value = if saturating { i32::MAX } else { 10 };
+    let source_pairs: [(i16, i16); 4] = if saturating {
+        [(1, 0), (0, 0), (0, 0), (0, 0)]
+    } else {
+        [(1, 2), (5, 6), (1, -1), (2, 3)]
+    };
+    let mem_pairs: [(i16, i16); 4] = if saturating {
+        [(1, 0), (0, 0), (0, 0), (0, 0)]
+    } else {
+        [(3, 4), (7, 8), (10, 11), (4, 5)]
+    };
+
+    let mut dst = [0u8; 64];
+    for lane in 0..16 {
+        write_i32_lane(&mut dst, lane, dst_value);
+    }
+    case.input.zmm[17] = zmm_from_bytes(dst);
+
+    for (block, (lo, hi)) in source_pairs.into_iter().enumerate() {
+        let mut src = [0u8; 64];
+        for lane in 0..16 {
+            write_i16_lane(&mut src, lane * 2, lo);
+            write_i16_lane(&mut src, lane * 2 + 1, hi);
+        }
+        case.input.zmm[20 + block] = zmm_from_bytes(src);
+    }
+
+    case.input.scratch[..16].fill(0);
+    for (block, (lo, hi)) in mem_pairs.into_iter().enumerate() {
+        let base = block * 4;
+        case.input.scratch[base..base + 2].copy_from_slice(&lo.to_le_bytes());
+        case.input.scratch[base + 2..base + 4].copy_from_slice(&hi.to_le_bytes());
+    }
+}
+
+fn assert_evex_4vnniw_contracts(llvm_mc: &Path) {
+    let mut dot = assembled_rax_case(
+        llvm_mc,
+        "vp4dpwssd_source_block_contract",
+        "vp4dpwssd (%rax), %zmm20, %zmm17",
+        InputProfile::Int,
+        0x5630,
+    );
+    seed_4vnniw_case(&mut dot, false);
+    let out = run_rax(&dot);
+    let mut expected = [0u8; 64];
+    for lane in 0..16 {
+        write_i32_lane(&mut expected, lane, 126);
+    }
+    assert_eq!(
+        out.zmm[17],
+        zmm_from_bytes(expected),
+        "vp4dpwssd_source_block_contract"
+    );
+
+    let mut saturating = assembled_rax_case(
+        llvm_mc,
+        "vp4dpwssds_saturating_contract",
+        "vp4dpwssds (%rax), %zmm20, %zmm17",
+        InputProfile::Int,
+        0x5631,
+    );
+    seed_4vnniw_case(&mut saturating, true);
+    let out = run_rax(&saturating);
+    let mut expected = [0u8; 64];
+    for lane in 0..16 {
+        write_i32_lane(&mut expected, lane, i32::MAX);
+    }
+    assert_eq!(
+        out.zmm[17],
+        zmm_from_bytes(expected),
+        "vp4dpwssds_saturating_contract"
+    );
+}
+
 #[test]
 fn evex_generated_corpus_covers_supported_selectors_and_forms() {
     let specs = generated_specs();
@@ -6865,6 +8151,19 @@ fn evex_generated_corpus_covers_supported_selectors_and_forms() {
     };
     let cases = assembled_cases(&llvm_mc);
     assert!(!cases.is_empty(), "EVEX differential corpus is empty");
+}
+
+#[test]
+fn evex_late_avx512_instruction_families_match_contracts() {
+    let Some(llvm_mc) = llvm_mc_path() else {
+        eprintln!("[skip] llvm-mc unavailable; skipping late EVEX AVX-512 semantic checks");
+        return;
+    };
+
+    assert_evex_fixupimm_contracts(&llvm_mc);
+    assert_evex_fp16_complex_contracts(&llvm_mc);
+    assert_evex_source_block_fma_contracts(&llvm_mc);
+    assert_evex_4vnniw_contracts(&llvm_mc);
 }
 
 #[test]
@@ -8226,6 +9525,14 @@ fn evex_unimplemented_avx512_diff_corpus_covers_every_spec_case_variant() {
                 .to_string()
         })
         .collect::<BTreeSet<_>>();
+
+    if unimplemented.is_empty() {
+        assert!(
+            expected.is_empty() && cases.is_empty(),
+            "unimplemented EVEX differential corpus must be empty when the manifest is empty"
+        );
+        return;
+    }
 
     let missing = expected
         .difference(&actual)
