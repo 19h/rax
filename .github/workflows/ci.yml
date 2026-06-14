@@ -13,8 +13,9 @@
 # Feature gating is deliberate and load-bearing:
 #   * `kvm`      is Linux-only (deps + cfg) and needs /dev/kvm at runtime, so the
 #                portable lane drops it; a dedicated job exercises it (kvm.yml).
-#   * `smir-jit` pulls the W^X exec runtime; it has host backends for x86_64 and
-#                aarch64, i.e. every runner in this matrix.
+#   * `smir-jit` pulls the W^X exec runtime; enabled on Linux (x86_64+aarch64)
+#                and Apple-Silicon macOS, but NOT on Intel macOS — its x86_64
+#                trampoline uses GNU-as directives Apple's assembler rejects.
 #   * `x86_64-suite` is always on so the gated x86_64 test binaries compile.
 name: CI
 
@@ -77,7 +78,7 @@ jobs:
         include:
           - { name: linux-x64,   os: ubuntu-24.04,     features: "--no-default-features --features x86_64-suite,smir-jit" }
           - { name: linux-arm64, os: ubuntu-24.04-arm, features: "--no-default-features --features x86_64-suite,smir-jit" }
-          - { name: macos-intel, os: macos-15-intel,   features: "--no-default-features --features x86_64-suite,smir-jit" }
+          - { name: macos-intel, os: macos-15-intel,   features: "--no-default-features --features x86_64-suite" } # no smir-jit: x86_64 trampoline uses GNU-as directives Apple's assembler rejects
           - { name: macos-arm64, os: macos-15,         features: "--no-default-features --features x86_64-suite,smir-jit" }
           # Windows is blocked upstream: `vm-memory`'s rawfd/mmap backend has no
           # Windows support (no std::os::fd). Re-enable when that lands.
@@ -111,7 +112,7 @@ jobs:
         include:
           - { name: linux-x64,   os: ubuntu-24.04,     features: "--no-default-features --features x86_64-suite,smir-jit" }
           - { name: linux-arm64, os: ubuntu-24.04-arm, features: "--no-default-features --features x86_64-suite,smir-jit" }
-          - { name: macos-intel, os: macos-15-intel,   features: "--no-default-features --features x86_64-suite,smir-jit" }
+          - { name: macos-intel, os: macos-15-intel,   features: "--no-default-features --features x86_64-suite" } # no smir-jit: x86_64 trampoline uses GNU-as directives Apple's assembler rejects
           - { name: macos-arm64, os: macos-15,         features: "--no-default-features --features x86_64-suite,smir-jit" }
           # Windows blocked upstream (vm-memory has no Windows rawfd/mmap backend).
           # - { name: windows-x64,   os: windows-2025,   features: "--no-default-features --features x86_64-suite" }

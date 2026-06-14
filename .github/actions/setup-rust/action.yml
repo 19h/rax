@@ -51,6 +51,13 @@ runs:
         # Keep CI builds lean and deterministic. Dropping debuginfo from the
         # test/dev profile is the single biggest win when compiling the ~1 MB
         # generated test tables (less RAM, less disk, faster link).
+        #
+        # rax's canonical suite is `make test` => `cargo test --release`, where
+        # overflow-checks and debug-assertions are OFF. We compile tests in the
+        # fast dev profile but match release run-semantics by disabling both, so
+        # CI pass/fail matches the project baseline (e.g. AArch64 BFM/EXTR shift
+        # math relies on release wrap-around for immr/lsb >= datasize). Build
+        # debug-checked locally to surface those as overflow panics.
         {
           echo "CARGO_TERM_COLOR=always"
           echo "CARGO_INCREMENTAL=0"
@@ -59,4 +66,8 @@ runs:
           echo "RUST_BACKTRACE=1"
           echo "CARGO_PROFILE_DEV_DEBUG=0"
           echo "CARGO_PROFILE_TEST_DEBUG=0"
+          echo "CARGO_PROFILE_DEV_OVERFLOW_CHECKS=false"
+          echo "CARGO_PROFILE_TEST_OVERFLOW_CHECKS=false"
+          echo "CARGO_PROFILE_DEV_DEBUG_ASSERTIONS=false"
+          echo "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=false"
         } >> "$GITHUB_ENV"

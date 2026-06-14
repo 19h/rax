@@ -53,7 +53,8 @@ jobs:
           - { name: linux-x64,   os: ubuntu-24.04,     features: "--no-default-features --features x86_64-suite,smir-jit" }
           - { name: linux-arm64, os: ubuntu-24.04-arm, features: "--no-default-features --features x86_64-suite,smir-jit" }
           - { name: macos-arm64, os: macos-15,         features: "--no-default-features --features x86_64-suite,smir-jit" }
-          - { name: macos-intel, os: macos-15-intel,   features: "--no-default-features --features x86_64-suite,smir-jit" }
+          # macos-intel drops smir-jit: its x86_64 trampoline uses GNU-as directives Apple's assembler rejects.
+          - { name: macos-intel, os: macos-15-intel,   features: "--no-default-features --features x86_64-suite" }
         shard:
           # unit tests + the self-contained boot / roundtrip / oracle binaries.
           - { name: unit,      tests: "--lib --test smir_avx10_roundtrip --test isa_oracle --test hexagon_bare_metal --test riscv_boot --test realmode_boot" }
