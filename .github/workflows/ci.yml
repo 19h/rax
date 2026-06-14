@@ -1,0 +1,146 @@
+# Primary push/PR gate for rax.
+#
+# Breadth over every GitHub-hosted OS x CPU-architecture combination that can run
+# rax natively: x64 + arm64 Linux, x64 + arm64 Windows, Intel + Apple-Silicon
+# macOS. Each platform builds *all* targets (lib, bins, examples, and every one
+# of the ~30 integration-test binaries, including the ~1 MB generated tables) and
+# then runs a fast, representative core slice of the suite. The exhaustive
+# 124k-test run lives in full-suite.yml; the many-ISA build sweep in cross.yml.
+#
+# Per-platform feature gating is deliberate and load-bearing:
+#   * `kvm`      is Linux-only (deps + cfg) and needs /dev/kvm at runtime, so the
+#                portable lane drops it; a dedicated job exercises it (kvm.yml).
+#   * `smir-jit` pulls the W^X exec runtime which uses `libc` (a unix-only dep),
+#                so it is enabled on Linux/macOS but NOT on Windows.
+#   * `x86_64-suite` is always on so the gated x86_64 test binaries compile.
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+# Newer pushes to the same branch/PR cancel older in-flight runs.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Format + lints. Uses the full (default) Linux feature set incl. kvm/smir-jit
+  # so clippy sees the most code paths.
+  # ---------------------------------------------------------------------------
+  lint:
+    name: rustfmt + clippy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+          cache-key: lint
+      # Advisory for now: the repo carries pre-existing rustc warnings and large
+      # generated test tables that are not rustfmt-formatted, so these surface
+      # signal without blocking merges. Flip `continue-on-error` off (and add
+      # `-- -D warnings` back to clippy) once the tree is clean to make it a gate.
+      - name: rustfmt --check
+        continue-on-error: true
+        run: cargo fmt --all --check
+      - name: clippy (all targets, default features)
+        continue-on-error: true
+        run: cargo clippy --all-targets --features x86_64-suite
+
+  # ---------------------------------------------------------------------------
+  # Compile everything on every native platform. This is the breadth guarantee:
+  # the whole crate + all test binaries must *build* on each OS/arch even if the
+  # full suite only *runs* on a subset.
+  # ---------------------------------------------------------------------------
+  build:
+    name: build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x64,     os: ubuntu-24.04,     features: "--no-default-features --features x86_64-suite,smir-jit" }
+          - { name: linux-arm64,   os: ubuntu-24.04-arm, features: "--no-default-features --features x86_64-suite,smir-jit" }
+          - { name: windows-x64,   os: windows-2025,     features: "--no-default-features --features x86_64-suite" }
+          - { name: windows-arm64, os: windows-11-arm,   features: "--no-default-features --features x86_64-suite" }
+          - { name: macos-intel,   os: macos-15-intel,   features: "--no-default-features --features x86_64-suite,smir-jit" }
+          - { name: macos-arm64,   os: macos-15,         features: "--no-default-features --features x86_64-suite,smir-jit" }
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache-key: build-${{ matrix.name }}
+      - name: cargo build --all-targets
+        run: cargo build --all-targets ${{ matrix.features }}
+
+  # ---------------------------------------------------------------------------
+  # Run a fast, cross-cutting core slice on every native platform. Picks small-
+  # to-medium binaries that touch x86_64, ARM, RISC-V, SMIR, and the boot paths,
+  # but skips the multi-hundred-KB generated diff tables (those run in
+  # full-suite.yml). The emulator is host-independent, so e.g. the x86_64 suite
+  # is meaningful even on an arm64 host. (realmode_boot is gated to x86_64 hosts,
+  # so it is an empty no-op on the arm64 lanes; riscv_boot covers a boot path on
+  # every platform.)
+  # ---------------------------------------------------------------------------
+  test-core:
+    name: test-core (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x64,     os: ubuntu-24.04,     features: "--no-default-features --features x86_64-suite,smir-jit" }
+          - { name: linux-arm64,   os: ubuntu-24.04-arm, features: "--no-default-features --features x86_64-suite,smir-jit" }
+          - { name: windows-x64,   os: windows-2025,     features: "--no-default-features --features x86_64-suite" }
+          - { name: windows-arm64, os: windows-11-arm,   features: "--no-default-features --features x86_64-suite" }
+          - { name: macos-intel,   os: macos-15-intel,   features: "--no-default-features --features x86_64-suite,smir-jit" }
+          - { name: macos-arm64,   os: macos-15,         features: "--no-default-features --features x86_64-suite,smir-jit" }
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache-key: test-core-${{ matrix.name }}
+      - name: cargo test (core slice)
+        shell: bash
+        run: |
+          cargo test ${{ matrix.features }} \
+            --lib \
+            --test x86_64 \
+            --test asm_instructions \
+            --test arm \
+            --test realmode_boot \
+            --test riscv_boot \
+            --test smir_avx10_roundtrip \
+            --test isa_oracle \
+            -- --include-ignored
+
+  # Aggregate gate: a single required check that depends on the whole matrix.
+  ci-success:
+    name: CI success
+    if: always()
+    needs: [lint, build, test-core]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Verify all matrix jobs succeeded
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}" = "true" ]; then
+            echo "One or more required jobs failed."
+            exit 1
+          fi
+          echo "All required jobs passed."

@@ -1,0 +1,93 @@
+# Exercise the KVM backend on a real /dev/kvm.
+#
+# `kvm` is a default feature but Linux/x86-only and needs hardware virtualization
+# at runtime, so the portable lanes (ci.yml / full-suite.yml) drop it. KVM is
+# available on GitHub-hosted Linux *x64* runners (not arm64), so these jobs are
+# pinned to ubuntu-24.04 and enable /dev/kvm before use.
+#
+# The KVM-vs-emulator differential tests (`differential.rs`, `diff_fuzz.rs`) are
+# gated `#![cfg(all(feature = "kvm", target_os = "linux"))]` and validate the
+# interpreter + SMIR JIT bit-exactly against real hardware, so this is their only
+# home.
+name: KVM backend
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - "src/backend/kvm/**"
+      - "src/vmm.rs"
+      - "tests/kvm_minimal.rs"
+      - ".github/workflows/kvm.yml"
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: kvm-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Light job: runs on push to the KVM paths + nightly.
+  kvm:
+    name: kvm (linux-x64, default features)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache-key: kvm
+
+      - name: Enable /dev/kvm access for the runner user
+        run: |
+          set -euxo pipefail
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls -l /dev/kvm
+          test -r /dev/kvm && test -w /dev/kvm # fail fast (e.g. if on arm64)
+
+      - name: cargo test (KVM-gated, default features)
+        run: cargo test --features x86_64-suite --test kvm_minimal -- --include-ignored --nocapture
+
+      - name: cargo build --release (default features, fat LTO)
+        run: cargo build --release
+
+  # Heavy job: the KVM differential corpora. Nightly / on demand only — these spin
+  # up KVM VMs across large generated corpora and are far too slow for push.
+  kvm-differential:
+    name: kvm differential (interp + JIT vs hardware)
+    if: github.event_name != 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        test: [differential, diff_fuzz]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache-key: kvm-diff-${{ matrix.test }}
+
+      - name: Enable /dev/kvm access for the runner user
+        run: |
+          set -euxo pipefail
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          test -r /dev/kvm && test -w /dev/kvm
+
+      - name: cargo test --test ${{ matrix.test }} (default features incl. kvm + smir-jit)
+        run: cargo test --features x86_64-suite --test ${{ matrix.test }} -- --include-ignored

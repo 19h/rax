@@ -1,0 +1,100 @@
+# Cross-ISA differential / oracle validation.
+#
+# Many of rax's strongest tests diff the emulator against an independent oracle
+# (QEMU user-mode, plus llvm-mc as an assembler and a cross gcc/clang). Those
+# harnesses *skip gracefully* when the oracle binaries are absent (that is why
+# ci.yml stays green without them) — here we install the oracles so the diffs
+# actually run. One job per guest architecture so they parallelize and a slow
+# QEMU corpus never blocks the others.
+#
+# Scheduled + on demand only: spawning QEMU across the large generated corpora is
+# far too slow for the push gate.
+name: Differential
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: differential-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  FEATURES: "--no-default-features --features x86_64-suite,smir-jit"
+
+jobs:
+  diff:
+    name: diff ${{ matrix.arch }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            tests: "--test x86_64_evex_qemu_diff --test x86_64_apx_map4_qemu_diff --test x86_64_unimplemented_qemu_diff --test x86_64_avx512_inventory"
+          - arch: arm
+            tests: "--test arm_diff --test arm_diff32"
+          - arch: riscv
+            tests: "--test riscv_diff --test riscv_vector --test riscv_smir_lift"
+          - arch: hexagon
+            tests: "--test hexagon_diff --test hexagon_cf_diff --test hexagon_float_diff --test hexagon_mem_diff --test hexagon_hvx_diff --test hexagon_hvx_mem_diff --test hexagon_smir_lift"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache-key: diff-${{ matrix.arch }}
+
+      - name: Install oracle toolchain (qemu-user + llvm + cross gcc)
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          # qemu-user provides qemu-x86_64 / qemu-aarch64 / qemu-arm / qemu-riscv64
+          # (and qemu-hexagon on recent releases). llvm/lld provide llvm-mc,
+          # ld.lld, llvm-nm, llvm-objcopy (version-suffixed). clang/binutils for
+          # the C oracle. gcc-riscv64-linux-gnu satisfies RISCV64_CC.
+          # qemu-user (dynamic) is preferred over qemu-user-static, which has a
+          # known segfault on some ubuntu-24.04 image builds (runner-images
+          # #11662). The harnesses exec the qemu-<arch> binaries directly, so no
+          # binfmt registration is needed.
+          sudo apt-get install -y --no-install-recommends \
+            qemu-user \
+            llvm lld clang \
+            binutils \
+            gcc-riscv64-linux-gnu
+
+      - name: Resolve LLVM tools onto PATH (unsuffixed names)
+        run: |
+          set -euxo pipefail
+          # The harnesses look for unsuffixed `llvm-mc`, `ld.lld`, etc. Ubuntu
+          # ships them version-suffixed under /usr/lib/llvm-*/bin — put the newest
+          # such dir on PATH and pin LLVM_MC explicitly.
+          LLVM_MC_BIN="$(ls /usr/lib/llvm-*/bin/llvm-mc 2>/dev/null | sort -V | tail -1 || true)"
+          if [ -z "$LLVM_MC_BIN" ]; then LLVM_MC_BIN="$(command -v llvm-mc || true)"; fi
+          if [ -n "$LLVM_MC_BIN" ]; then
+            LLVM_DIR="$(dirname "$LLVM_MC_BIN")"
+            echo "$LLVM_DIR" >> "$GITHUB_PATH"
+            echo "LLVM_MC=$LLVM_MC_BIN" >> "$GITHUB_ENV"
+          fi
+          echo "CC=clang" >> "$GITHUB_ENV"
+          echo "QEMU_X86_64=qemu-x86_64" >> "$GITHUB_ENV"
+          echo "QEMU_AARCH64=qemu-aarch64" >> "$GITHUB_ENV"
+          echo "QEMU_RISCV64=qemu-riscv64" >> "$GITHUB_ENV"
+          echo "QEMU_ARM=qemu-arm" >> "$GITHUB_ENV"
+          echo "RISCV64_CC=riscv64-linux-gnu-gcc" >> "$GITHUB_ENV"
+
+      - name: Report available oracles
+        run: |
+          for t in qemu-x86_64 qemu-aarch64 qemu-arm qemu-riscv64 qemu-hexagon \
+                   llvm-mc ld.lld llvm-nm llvm-objcopy clang cc riscv64-linux-gnu-gcc; do
+            printf '%-24s %s\n' "$t" "$(command -v "$t" || echo MISSING)"
+          done
+
+      - name: cargo test (${{ matrix.arch }} differential)
+        run: cargo test $FEATURES ${{ matrix.tests }} -- --include-ignored --nocapture

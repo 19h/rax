@@ -1,0 +1,129 @@
+# Many-ISA portability sweep: cross-compile the rax core to as broad a range of
+# CPU architectures as tooling allows. This proves the emulator/IR stays portable
+# (no accidental host-arch assumptions) far beyond what we can run natively.
+#
+# Build-only with `--no-default-features`: the `kvm` backend is Linux/x86-only and
+# `smir-jit` only has host backends for x86-64 and aarch64, so the pure
+# interpreter core is what must compile everywhere. The `zstd` C dependency is
+# built by `cross`'s per-target toolchain images, so no manual gcc setup is
+# needed.
+name: Cross-build
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  schedule:
+    - cron: "30 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: cross-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Targets with first-class `cross` Docker images + prebuilt std. Expected green.
+  cross:
+    name: cross ${{ matrix.target }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - aarch64-unknown-linux-gnu
+          - aarch64-unknown-linux-musl
+          - armv7-unknown-linux-gnueabihf
+          - arm-unknown-linux-gnueabihf
+          - riscv64gc-unknown-linux-gnu
+          - powerpc64-unknown-linux-gnu
+          - powerpc64le-unknown-linux-gnu
+          - s390x-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - i686-unknown-linux-gnu
+          - x86_64-pc-windows-gnu
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache-key: cross-${{ matrix.target }}
+      - name: Install cross
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cross
+      - name: cross build (core, no default features)
+        run: cross build --locked --target ${{ matrix.target }} --no-default-features
+
+  # Bleeding-edge / Tier-3 targets. Informational — failures do not gate:
+  #   * loongarch64: Tier-2 with prebuilt std, but the pinned cross v0.2.5 ships no
+  #     Docker image for it yet (only `main`/`edge`), so it cannot build on the
+  #     gating lane.
+  #   * mips*: genuinely Tier-3 (no prebuilt std) — need nightly + -Z build-std.
+  #   * powerpc (32-bit) / sparc64: have cross images + std, but kept here as
+  #     lower-traffic targets; the build-std flag below is harmless (it falls
+  #     through to a plain build when std already exists).
+  cross-experimental:
+    name: cross ${{ matrix.target }} (experimental)
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - loongarch64-unknown-linux-gnu
+          - powerpc-unknown-linux-gnu
+          - sparc64-unknown-linux-gnu
+          - mips64-unknown-linux-gnuabi64
+          - mips64el-unknown-linux-gnuabi64
+          - mipsel-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: nightly
+          components: rust-src
+          cache-key: cross-exp-${{ matrix.target }}
+      - name: Install cross
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cross
+      - name: cross build (build-std fallback)
+        env:
+          # cross picks this up to compile std for tier-3 targets that ship none.
+          CROSS_BUILD_STD: "true"
+        run: |
+          cross +nightly build --locked --target ${{ matrix.target }} --no-default-features \
+            -Z build-std=std,panic_abort || \
+          cross +nightly build --locked --target ${{ matrix.target }} --no-default-features
+
+  # rustup-only targets that need no Docker (build on the host toolchain).
+  rustup-targets:
+    name: rustup ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental || false }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-15,       target: aarch64-apple-darwin,  experimental: false }
+          - { os: macos-15-intel, target: x86_64-apple-darwin,   experimental: false }
+          - { os: ubuntu-24.04,   target: wasm32-wasip1,         experimental: true }
+          - { os: ubuntu-24.04,   target: wasm32-unknown-unknown, experimental: true }
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+          cache-key: rustup-${{ matrix.target }}
+      - name: cargo build (core, no default features)
+        run: cargo build --locked --target ${{ matrix.target }} --no-default-features

@@ -1,0 +1,62 @@
+# Composite action: install a Rust toolchain, restore the cargo/target cache,
+# and export CI-friendly defaults. Shared by every rax workflow so the toolchain
+# pinning, caching key strategy, and build-tuning live in exactly one place.
+name: Setup Rust
+description: Install a Rust toolchain + components and restore the shared build cache.
+
+inputs:
+  toolchain:
+    description: Rust toolchain to install (stable, beta, nightly, or a pinned version).
+    required: false
+    default: stable
+  components:
+    description: Space/comma separated rustup components (e.g. "clippy rustfmt").
+    required: false
+    default: ""
+  targets:
+    description: Additional rustup target triples to install (comma separated).
+    required: false
+    default: ""
+  cache-key:
+    description: Extra cache discriminator so jobs with different feature sets do not collide.
+    required: false
+    default: ""
+  cache:
+    description: Whether to enable the Swatinem/rust-cache step.
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Install Rust toolchain (${{ inputs.toolchain }})
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ inputs.toolchain }}
+        components: ${{ inputs.components }}
+        targets: ${{ inputs.targets }}
+
+    - name: Restore cargo + target cache
+      if: inputs.cache == 'true'
+      uses: Swatinem/rust-cache@v2
+      with:
+        # Key on toolchain + an opt-in discriminator (feature set / shard) so the
+        # huge generated-test object files are not thrashed between unrelated jobs.
+        key: ${{ inputs.cache-key }}
+        cache-all-crates: "true"
+
+    - name: Export CI build defaults
+      shell: bash
+      run: |
+        # Keep CI builds lean and deterministic. Dropping debuginfo from the
+        # test/dev profile is the single biggest win when compiling the ~1 MB
+        # generated test tables (less RAM, less disk, faster link).
+        {
+          echo "CARGO_TERM_COLOR=always"
+          echo "CARGO_INCREMENTAL=0"
+          echo "CARGO_NET_RETRY=10"
+          echo "RUSTUP_MAX_RETRIES=10"
+          echo "RUST_BACKTRACE=1"
+          echo "CARGO_PROFILE_DEV_DEBUG=0"
+          echo "CARGO_PROFILE_TEST_DEBUG=0"
+        } >> "$GITHUB_ENV"

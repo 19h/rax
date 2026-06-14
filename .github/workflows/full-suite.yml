@@ -1,0 +1,96 @@
+# Exhaustive validation of every SELF-CONTAINED test (no external oracle needed),
+# sharded by test binary across parallel jobs, on every unix native platform
+# (x64 + arm64 Linux, Intel + Apple-Silicon macOS).
+#
+# Taxonomy (so no job is a silent no-op):
+#   * full-suite.yml (here)   - binaries that run with nothing installed, on all
+#                               native OSes. The bulk of rax's correctness suite.
+#   * differential.yml        - binaries that need QEMU/llvm-mc/clang (or are
+#                               target_os="linux"-gated) -> Linux + toolchain.
+#   * kvm.yml                 - binaries gated on `kvm` + /dev/kvm.
+#
+# Why shard by binary instead of cargo-nextest: nextest runs each test in its own
+# process, and at ~124k tests the per-test spawn overhead dominates. Plain
+# `cargo test` runs tests as in-process threads, so we get parallelism for free
+# and shard coarsely with repeated `--test` flags. (The genuinely heavy compiled
+# test binaries — arm_diff / diff_fuzz / differential / the EVEX diff — live in
+# the differential.yml and kvm.yml lanes; the big neon_gen / sve2_gen / arm32_gen
+# files are data tables `include!`d by arm_diff*.rs, not standalone tests.)
+#
+# Runs nightly and on demand (far too heavy for every push; ci.yml is the gate).
+name: Full suite
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # nightly 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Cargo profile for the test build"
+        type: choice
+        default: dev
+        options: [dev, release]
+
+concurrency:
+  group: full-suite-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  full:
+    name: ${{ matrix.platform.name }} / ${{ matrix.shard.name }}
+    runs-on: ${{ matrix.platform.os }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - { name: linux-x64,   os: ubuntu-24.04,     features: "--no-default-features --features x86_64-suite,smir-jit" }
+          - { name: linux-arm64, os: ubuntu-24.04-arm, features: "--no-default-features --features x86_64-suite,smir-jit" }
+          - { name: macos-arm64, os: macos-15,         features: "--no-default-features --features x86_64-suite,smir-jit" }
+          - { name: macos-intel, os: macos-15-intel,   features: "--no-default-features --features x86_64-suite,smir-jit" }
+        shard:
+          # unit tests + the self-contained boot / roundtrip / oracle binaries.
+          - { name: unit,      tests: "--lib --test smir_avx10_roundtrip --test isa_oracle --test hexagon_bare_metal --test riscv_boot --test realmode_boot" }
+          # x86_64 instruction suite (host-independent: the emulator runs x86 on any host).
+          - { name: x86_64,    tests: "--test x86_64 --test x86_64_unimplemented_manifests" }
+          # AArch32 / generic ARM corpora. NOTE: neon_gen.rs / sve2_gen.rs /
+          # arm32_gen.rs are pure data tables (`pub static ..._SWEEP`) with no
+          # #[test] of their own — they are `include!`d by arm_diff*.rs and so are
+          # exercised in differential.yml, NOT selectable as standalone `--test`s.
+          - { name: arm,       tests: "--test arm --test arm_vfp_a32 --test asm_instructions" }
+          # SMIR native JIT: smir_jit_vcpu runs on x86_64 hosts, aarch64_smir_native
+          # on aarch64 hosts (each is cfg-gated to its host arch), so exactly one
+          # runs per platform.
+          - { name: smir-host, tests: "--test smir_jit_vcpu --test aarch64_smir_native" }
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache-key: full-${{ matrix.platform.name }}-${{ matrix.shard.name }}
+      - name: cargo test (${{ matrix.shard.name }})
+        shell: bash
+        run: |
+          profile_flag=""
+          if [ "${{ inputs.profile }}" = "release" ]; then profile_flag="--release"; fi
+          cargo test $profile_flag ${{ matrix.platform.features }} ${{ matrix.shard.tests }} -- --include-ignored
+
+  # Doctests are not covered by the `--test <binary>` shards above.
+  doctests:
+    name: doctests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache-key: doctests
+      - name: cargo test --doc
+        run: cargo test --doc --no-default-features --features x86_64-suite,smir-jit

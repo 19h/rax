@@ -1,0 +1,78 @@
+# Depth checks: memory/UB sanitizers and a stable/beta/nightly toolchain sweep.
+#
+# rax is a CPU emulator with a lot of `unsafe` (raw guest memory, transmutes,
+# hand-written marshalling), so running a core slice under AddressSanitizer /
+# UndefinedBehaviorSanitizer is high value. Sanitizers run WITHOUT `smir-jit`:
+# the JIT executes freshly-mmap'd machine code, which the sanitizers cannot
+# instrument and would flag spuriously. Sanitizer + nightly results are
+# informational (continue-on-error) — they surface issues without gating merges.
+name: Sanitizers & toolchains
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+  push:
+    branches: [master, main]
+    paths:
+      - ".github/workflows/sanitizers.yml"
+
+concurrency:
+  group: sanitizers-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  # Core slice that is fast to build and dense in unsafe code paths.
+  CORE_TESTS: "--lib --test x86_64 --test asm_instructions --test arm"
+
+jobs:
+  sanitizer:
+    name: ${{ matrix.san }}
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        san: [address, undefined]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: nightly
+          components: rust-src
+          cache-key: san-${{ matrix.san }}
+      - name: cargo test under -Zsanitizer=${{ matrix.san }}
+        env:
+          RUSTFLAGS: "-Zsanitizer=${{ matrix.san }}"
+          RUSTDOCFLAGS: "-Zsanitizer=${{ matrix.san }}"
+          ASAN_OPTIONS: "detect_leaks=0"
+        run: |
+          cargo +nightly test -Z build-std \
+            --target x86_64-unknown-linux-gnu \
+            --no-default-features --features x86_64-suite \
+            $CORE_TESTS -- --include-ignored
+
+  toolchains:
+    name: toolchain ${{ matrix.toolchain }}
+    runs-on: ubuntu-24.04
+    continue-on-error: ${{ matrix.toolchain == 'nightly' }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: [stable, beta, nightly]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          cache-key: toolchain-${{ matrix.toolchain }}
+      - name: build + core tests
+        run: |
+          cargo build --all-targets --no-default-features --features x86_64-suite,smir-jit
+          cargo test --no-default-features --features x86_64-suite,smir-jit $CORE_TESTS -- --include-ignored
