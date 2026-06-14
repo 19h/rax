@@ -82,6 +82,13 @@ pub fn add_with_carry(x: u32, y: u32, carry_in: u32) -> (u32, bool, bool) {
 /// Sign-extend a value from `from_bits` to 32 bits.
 #[inline]
 pub fn sign_extend(value: u32, from_bits: u32) -> u32 {
+    if from_bits == 0 {
+        return 0;
+    }
+    if from_bits >= 32 {
+        return value;
+    }
+
     let sign_bit = 1u32 << (from_bits - 1);
     if (value & sign_bit) != 0 {
         value | !((1u32 << from_bits) - 1)
@@ -1170,6 +1177,8 @@ mod tests {
         assert_eq!(sign_extend(0x80, 8), 0xFFFFFF80);
         assert_eq!(sign_extend(0x7FFF, 16), 0x7FFF);
         assert_eq!(sign_extend(0x8000, 16), 0xFFFF8000);
+        assert_eq!(sign_extend(0x7FFF_FFFF, 32), 0x7FFF_FFFF);
+        assert_eq!(sign_extend(0x8000_0001, 32), 0x8000_0001);
     }
 
     #[test]
