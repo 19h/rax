@@ -132,6 +132,19 @@ pub fn restore_terminal() {
     }
 }
 
+#[cfg(all(test, unix))]
+pub(crate) fn test_mark_raw_for_restore() {
+    unsafe {
+        SAVED_TERMIOS = None;
+    }
+    TTY_RAW.store(true, Ordering::SeqCst);
+}
+
+#[cfg(all(test, unix))]
+pub(crate) fn test_raw_enabled() -> bool {
+    TTY_RAW.load(Ordering::SeqCst)
+}
+
 /// Install the panic hook + signal handlers that restore the terminal on an
 /// abnormal exit. Installed once, when raw mode is first enabled.
 #[cfg(unix)]
@@ -176,6 +189,20 @@ extern "C" fn handle_fatal_signal(sig: libc::c_int) {
     unsafe {
         libc::signal(sig, libc::SIG_DFL);
         libc::raise(sig);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(unix)]
+    #[test]
+    fn restore_terminal_clears_raw_state_for_crash_handlers() {
+        super::test_mark_raw_for_restore();
+        assert!(super::test_raw_enabled());
+
+        super::restore_terminal();
+
+        assert!(!super::test_raw_enabled());
     }
 }
 

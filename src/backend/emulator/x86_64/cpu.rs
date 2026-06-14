@@ -3106,8 +3106,8 @@ struct JitLoadRet {
 static JIT_LAST_ENTRY: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
 /// SIGSEGV/SIGBUS handler: a host fault inside native JIT code prints the guest
-/// region entry + faulting address (async-signal-safe: only `write` + manual hex),
-/// then restores the default disposition and re-raises.
+/// region entry + faulting address, restores any raw terminal state, then
+/// restores the default disposition and re-raises.
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 extern "C" fn jit_crash_handler(
     sig: libc::c_int,
@@ -3156,10 +3156,18 @@ extern "C" fn jit_crash_handler(
     put(b"\n", &mut buf, &mut n);
     unsafe {
         libc::write(2, buf.as_ptr() as *const libc::c_void, n);
+    }
+    jit_crash_cleanup();
+    unsafe {
         // Restore default disposition and re-raise to produce the core dump.
         libc::signal(sig, libc::SIG_DFL);
         libc::raise(sig);
     }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn jit_crash_cleanup() {
+    crate::terminal::restore_terminal();
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -4403,7 +4411,10 @@ mod decode_cache_invalidation_tests {
         // (0x2000 & 0xFFF == 0 would collide with index 0) that must survive a
         // page-0 invalidation.
         let other_idx = X86_64Vcpu::decode_cache_index(0x5100);
-        assert_ne!(other_idx, idx, "test addresses must use distinct cache indices");
+        assert_ne!(
+            other_idx, idx,
+            "test addresses must use distinct cache indices"
+        );
         vcpu.decode_cache[other_idx].rip = 0x5100;
         vcpu.decode_cache[other_idx].bytes_len = 4;
         vcpu.decode_cache[other_idx].mode_tag = 0;
@@ -4444,5 +4455,16 @@ mod tests {
 
         assert!(!vcpu.jit_callout_should_yield(&expired, LAPIC_POLL_STRIDE - 1));
         assert!(vcpu.jit_callout_should_yield(&expired, LAPIC_POLL_STRIDE));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn jit_crash_cleanup_restores_terminal_raw_state() {
+        crate::terminal::test_mark_raw_for_restore();
+        assert!(crate::terminal::test_raw_enabled());
+
+        jit_crash_cleanup();
+
+        assert!(!crate::terminal::test_raw_enabled());
     }
 }
