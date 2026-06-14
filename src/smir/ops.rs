@@ -42,6 +42,15 @@ impl SmirOp {
             x86_hint: Some(hint),
         }
     }
+
+    /// Fail-safe native-JIT eligibility for an operation, including encoding
+    /// hints that affect lowering semantics.
+    pub fn is_jit_safe(&self) -> bool {
+        if matches!(self.x86_hint, Some(X86OpHint::Mulx)) {
+            return false;
+        }
+        self.kind.is_jit_safe()
+    }
 }
 
 // ============================================================================
@@ -93,6 +102,8 @@ pub enum X86OpHint {
     ImulImm8,
     /// IMUL with 32-bit immediate
     ImulImm32,
+    /// BMI2 MULX, which has non-destructive RAX/RDX semantics.
+    Mulx,
     /// SSE mov with explicit prefix/opcode
     SseMov { prefix: X86SsePrefix, opcode: u8 },
     /// SSE opcode with explicit prefix/opcode

@@ -3303,7 +3303,7 @@ fn jit_classify_bail(
                     }
                 }
             }
-            if !op.kind.is_jit_safe() {
+            if !op.is_jit_safe() {
                 return variant(&op.kind);
             }
             if op

@@ -3686,7 +3686,7 @@ impl X86_64Lifter {
                     width,
                 },
             )),
-            "mulx" => ops.push(SmirOp::new(
+            "mulx" => ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
                 OpKind::MulU {
@@ -3697,6 +3697,7 @@ impl X86_64Lifter {
                     width,
                     flags: FlagUpdate::None,
                 },
+                X86OpHint::Mulx,
             )),
             "sarx" | "shrx" | "shlx" => {
                 let count = self.gpr(prefix.vvvv_reg());
@@ -3876,7 +3877,7 @@ impl X86_64Lifter {
             self.gpr(modrm.rm)
         };
 
-        ops.push(SmirOp::new(
+        ops.push(SmirOp::with_hint(
             OpId(ops.len() as u16),
             pc,
             OpKind::MulU {
@@ -3887,6 +3888,7 @@ impl X86_64Lifter {
                 width,
                 flags: FlagUpdate::None,
             },
+            X86OpHint::Mulx,
         ));
 
         Ok(LiftResult::fallthrough(
@@ -10663,6 +10665,7 @@ mod tests {
         src2: VReg,
         width: OpWidth,
     ) {
+        assert_eq!(ops[index].x86_hint, Some(X86OpHint::Mulx));
         match &ops[index].kind {
             OpKind::MulU {
                 dst_lo: got_dst_lo,
@@ -11174,6 +11177,7 @@ mod tests {
 
         let mulx = lift_single(&[0x62, 0xE2, 0xE7, 0x00, 0xF6, 0xE3]).unwrap();
         assert_eq!(mulx.bytes_consumed, 6);
+        assert_eq!(mulx.ops[0].x86_hint, Some(X86OpHint::Mulx));
         match &mulx.ops[..] {
             [
                 SmirOp {
@@ -11296,6 +11300,7 @@ mod tests {
         assert_eq!(mulx.bytes_consumed, 8);
         assert_eq!(mulx.ops.len(), 2);
         let src2 = assert_apx_bmi2_memory_load(&mulx.ops[0], "MULX");
+        assert_eq!(mulx.ops[1].x86_hint, Some(X86OpHint::Mulx));
         match &mulx.ops[1].kind {
             OpKind::MulU {
                 dst_lo,

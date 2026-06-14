@@ -4242,6 +4242,12 @@ impl X86_64Lowerer {
                 width,
                 flags,
             } => {
+                if matches!(op.x86_hint, Some(X86OpHint::Mulx)) {
+                    return Err(LowerError::UnsupportedOp {
+                        op: "MULX requires non-destructive lowering".to_string(),
+                    });
+                }
+
                 let preserve_flags = !flags.updates_any();
                 // Unsigned multiply always uses RAX
                 // MUL r/m -> RDX:RAX = RAX * r/m
@@ -10465,6 +10471,40 @@ mod tests {
             let mut lowerer = X86_64Lowerer::new();
             assert!(lowerer.lower_function(&func).is_err(), "{name}");
         }
+    }
+
+    #[test]
+    fn lower_mulx_hint_rejects_destructive_legacy_mul() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::MulU {
+                dst_lo: rbx,
+                dst_hi: Some(rcx),
+                src1: rdx,
+                src2: SrcOperand::Reg(rax),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+
+        let mut func = builder.finish();
+        func.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+
+        let mut lowerer = X86_64Lowerer::new();
+        let err = lowerer
+            .lower_function(&func)
+            .expect_err("MULX must not lower through legacy MUL");
+        assert!(
+            matches!(err, LowerError::UnsupportedOp { ref op } if op.contains("MULX")),
+            "{err:?}"
+        );
     }
 
     #[test]
