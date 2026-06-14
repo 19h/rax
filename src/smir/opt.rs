@@ -1912,6 +1912,13 @@ impl OpKind {
             // TestCondition reads flags
             OpKind::TestCondition { cond, .. } => FlagState::required_flags(*cond),
 
+            // AArch64 conditional-compare lifting materializes ArmReg::Nzcv
+            // from the immediately preceding flag-producing compare op.
+            OpKind::Mov {
+                src: SrcOperand::Reg(VReg::Arch(ArchReg::Arm(ArmReg::Nzcv))),
+                ..
+            } => FlagSet::NZCV,
+
             // Complement carry reads CF
             OpKind::CmcCF => FlagSet::CF,
 
@@ -3024,7 +3031,7 @@ impl OpKind {
 mod tests {
     use super::*;
     use crate::smir::ops::OpKind;
-    use crate::smir::types::{GuestAddr, OpId};
+    use crate::smir::types::{Condition, FunctionId, OpId};
 
     fn make_op(id: u16, kind: OpKind) -> SmirOp {
         SmirOp::new(OpId(id), 0x1000, kind)
@@ -3075,6 +3082,118 @@ mod tests {
                 assert_eq!(*flags, FlagUpdate::None);
             }
         }
+    }
+
+    #[test]
+    fn mov_from_arm_nzcv_keeps_prior_flag_update_live() {
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        let cmp_result = VReg::virt(0);
+        let src1 = VReg::virt(1);
+        let cmp_nzcv = VReg::virt(2);
+        let nzcv = VReg::Arch(ArchReg::Arm(ArmReg::Nzcv));
+
+        block.push_op(make_op(
+            0,
+            OpKind::Sub {
+                dst: cmp_result,
+                src1,
+                src2: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+        ));
+        block.push_op(make_op(
+            1,
+            OpKind::Mov {
+                dst: cmp_nzcv,
+                src: SrcOperand::Reg(nzcv),
+                width: OpWidth::W32,
+            },
+        ));
+        block.set_terminator(Terminator::Return {
+            values: vec![cmp_nzcv],
+        });
+
+        let eliminated = dead_flag_elimination(&mut block);
+        assert_eq!(eliminated, 0);
+        let OpKind::Sub { flags, .. } = &block.ops[0].kind else {
+            panic!("expected compare op");
+        };
+        assert_eq!(*flags, FlagUpdate::All);
+
+        let removed = dead_code_elimination(&mut block);
+        assert_eq!(removed, 0);
+    }
+
+    #[test]
+    fn optimize_function_preserves_cond_compare_flags_for_nzcv_select() {
+        use crate::smir::ir::FunctionBuilder;
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        let cond = builder.alloc_vreg();
+        let cmp_result = builder.alloc_vreg();
+        let cmp_nzcv = builder.alloc_vreg();
+        let final_nzcv = builder.alloc_vreg();
+        let nzcv = VReg::Arch(ArchReg::Arm(ArmReg::Nzcv));
+
+        builder.push_op(
+            0x1000,
+            OpKind::TestCondition {
+                dst: cond,
+                cond: Condition::Eq,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::Sub {
+                dst: cmp_result,
+                src1: VReg::Arch(ArchReg::Arm(ArmReg::X(1))),
+                src2: SrcOperand::Reg(VReg::Arch(ArchReg::Arm(ArmReg::X(2)))),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::Mov {
+                dst: cmp_nzcv,
+                src: SrcOperand::Reg(nzcv),
+                width: OpWidth::W32,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::Select {
+                dst: final_nzcv,
+                cond,
+                src_true: cmp_nzcv,
+                src_false: VReg::Imm(0x4000_0000),
+                width: OpWidth::W32,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::Mov {
+                dst: nzcv,
+                src: SrcOperand::Reg(final_nzcv),
+                width: OpWidth::W32,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+
+        let mut func = builder.finish();
+        optimize_function(&mut func, OptLevel::O2);
+
+        assert!(
+            func.blocks[0].ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Sub {
+                    flags: FlagUpdate::All,
+                    ..
+                }
+            )),
+            "conditional compare must keep the flag-producing compare op"
+        );
     }
 
     #[test]
@@ -3314,7 +3433,6 @@ mod tests {
     #[test]
     fn test_optimize_function() {
         use crate::smir::ir::FunctionBuilder;
-        use crate::smir::types::FunctionId;
 
         let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
 
