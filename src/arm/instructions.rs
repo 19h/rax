@@ -8752,6 +8752,19 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
     // Bit Field Operations
     // =========================================================================
 
+    fn bitfield_low_mask(width: u32) -> Option<u32> {
+        match width {
+            0 => None,
+            1..=31 => Some((1u32 << width) - 1),
+            32 => Some(u32::MAX),
+            _ => None,
+        }
+    }
+
+    fn bitfield_range_valid(lsb: u32, width: u32) -> bool {
+        lsb < 32 && width != 0 && lsb.checked_add(width).is_some_and(|end| end <= 32)
+    }
+
     /// Bitfield instruction fields (Rd, Rn, lsb, five) where `five` is the
     /// width-minus-1 (SBFX/UBFX) or msb (BFI/BFC) field. Handles A32 and T32.
     fn bitfield_fields(&self, insn: &DecodedInsn) -> (usize, usize, u32, u32) {
@@ -8771,10 +8784,15 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
     fn exec_bfc(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, _, lsb, msb) = self.bitfield_fields(insn);
         if msb < lsb {
-            return ExecResult::Continue;
+            return ExecResult::Undefined;
         }
         let width = msb - lsb + 1;
-        let mask = (((1u64 << width) - 1) as u32) << lsb;
+        if !Self::bitfield_range_valid(lsb, width) {
+            return ExecResult::Undefined;
+        }
+        let Some(mask) = Self::bitfield_low_mask(width).map(|mask| mask << lsb) else {
+            return ExecResult::Undefined;
+        };
         self.cpu.regs[d] &= !mask;
         ExecResult::Continue
     }
@@ -8782,10 +8800,15 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
     fn exec_bfi(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, lsb, msb) = self.bitfield_fields(insn);
         if msb < lsb {
-            return ExecResult::Continue;
+            return ExecResult::Undefined;
         }
         let width = msb - lsb + 1;
-        let mask = (((1u64 << width) - 1) as u32) << lsb;
+        if !Self::bitfield_range_valid(lsb, width) {
+            return ExecResult::Undefined;
+        }
+        let Some(mask) = Self::bitfield_low_mask(width).map(|mask| mask << lsb) else {
+            return ExecResult::Undefined;
+        };
         let src = (self.reg(n) << lsb) & mask;
         self.cpu.regs[d] = (self.cpu.regs[d] & !mask) | src;
         ExecResult::Continue
@@ -8794,7 +8817,12 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
     fn exec_ubfx(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, lsb, w) = self.bitfield_fields(insn);
         let width = w + 1;
-        let mask = ((1u64 << width) - 1) as u32;
+        if !Self::bitfield_range_valid(lsb, width) {
+            return ExecResult::Undefined;
+        }
+        let Some(mask) = Self::bitfield_low_mask(width) else {
+            return ExecResult::Undefined;
+        };
         let result = (self.reg(n) >> lsb) & mask;
         self.set_reg(d, result)
     }
@@ -8802,7 +8830,12 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
     fn exec_sbfx(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, lsb, w) = self.bitfield_fields(insn);
         let width = w + 1;
-        let mask = ((1u64 << width) - 1) as u32;
+        if !Self::bitfield_range_valid(lsb, width) {
+            return ExecResult::Undefined;
+        }
+        let Some(mask) = Self::bitfield_low_mask(width) else {
+            return ExecResult::Undefined;
+        };
         let extracted = (self.reg(n) >> lsb) & mask;
         let result = sign_extend(extracted, width);
         self.set_reg(d, result)
@@ -10033,6 +10066,10 @@ mod tests {
         insn
     }
 
+    fn a32_bitfield_raw(rd: u32, rn: u32, lsb: u32, top: u32) -> u32 {
+        (rd << 12) | (lsb << 7) | (top << 16) | rn
+    }
+
     #[test]
     fn test_add_immediate() {
         let mut cpu = make_cpu();
@@ -10459,5 +10496,54 @@ mod tests {
         let result = exec.execute(&bfc);
         assert!(matches!(result, ExecResult::Continue));
         assert_eq!(cpu.regs[0], 0xFFFFF00F);
+    }
+
+    #[test]
+    fn test_bitfield_full_width_bounds() {
+        let mut cpu = make_cpu();
+        let mut mem = make_mem();
+
+        cpu.regs[0] = 0xFFFF_FFFF;
+        let bfc = make_insn(Mnemonic::BFC, a32_bitfield_raw(0, 15, 0, 31), false);
+        let result = Executor::new(&mut cpu, &mut mem).execute(&bfc);
+        assert!(matches!(result, ExecResult::Continue));
+        assert_eq!(cpu.regs[0], 0);
+
+        cpu.regs[0] = 0;
+        cpu.regs[1] = 0x89AB_CDEF;
+        let bfi = make_insn(Mnemonic::BFI, a32_bitfield_raw(0, 1, 0, 31), false);
+        let result = Executor::new(&mut cpu, &mut mem).execute(&bfi);
+        assert!(matches!(result, ExecResult::Continue));
+        assert_eq!(cpu.regs[0], 0x89AB_CDEF);
+
+        cpu.regs[1] = 0x7654_3210;
+        let ubfx = make_insn(Mnemonic::UBFX, a32_bitfield_raw(2, 1, 0, 31), false);
+        let result = Executor::new(&mut cpu, &mut mem).execute(&ubfx);
+        assert!(matches!(result, ExecResult::Continue));
+        assert_eq!(cpu.regs[2], 0x7654_3210);
+
+        cpu.regs[1] = 0x8000_0001;
+        let sbfx = make_insn(Mnemonic::SBFX, a32_bitfield_raw(3, 1, 0, 31), false);
+        let result = Executor::new(&mut cpu, &mut mem).execute(&sbfx);
+        assert!(matches!(result, ExecResult::Continue));
+        assert_eq!(cpu.regs[3], 0x8000_0001);
+    }
+
+    #[test]
+    fn test_bitfield_invalid_bounds_are_undefined() {
+        let mut cpu = make_cpu();
+        let mut mem = make_mem();
+
+        cpu.regs[0] = 0xDEAD_BEEF;
+        cpu.regs[1] = 0xFFFF_FFFF;
+        let bfi = make_insn(Mnemonic::BFI, a32_bitfield_raw(0, 1, 8, 3), false);
+        let result = Executor::new(&mut cpu, &mut mem).execute(&bfi);
+        assert!(matches!(result, ExecResult::Undefined));
+        assert_eq!(cpu.regs[0], 0xDEAD_BEEF);
+
+        let ubfx = make_insn(Mnemonic::UBFX, a32_bitfield_raw(0, 1, 16, 31), false);
+        let result = Executor::new(&mut cpu, &mut mem).execute(&ubfx);
+        assert!(matches!(result, ExecResult::Undefined));
+        assert_eq!(cpu.regs[0], 0xDEAD_BEEF);
     }
 }
