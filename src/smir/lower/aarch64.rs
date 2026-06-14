@@ -13,7 +13,7 @@ use crate::smir::ops::{OpKind, SmirOp};
 use crate::smir::types::{
     Address, ArchReg, ArmReg, AtomicOp, Avx10FP16Op, BlockId, Condition, ExtendOp, FenceKind,
     FpPrecision, FpRoundMode, MemWidth, MemoryOrder, OpWidth, ShiftOp, SignExtend, SrcOperand,
-    VLaneOp, VReg, VecElementType, VecWidth,
+    VLaneOp, VReg, VecElementType, VecUnaryOp, VecWidth,
 };
 
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
@@ -2939,6 +2939,46 @@ impl Aarch64Lowerer {
             SimdArithmeticOp::Min { .. } => (0, elem_size | 0b10, 0b11110),
         };
         self.emit_simd_three_same(rd, rn, rm, q, u, size, opcode);
+        Ok(())
+    }
+
+    /// Lower a per-lane vector unary op (FP FABS/FNEG/FSQRT or integer NEG/ABS)
+    /// to the native AArch64 "advanced SIMD two-register miscellaneous" form.
+    fn lower_vunary(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        op: VecUnaryOp,
+    ) -> Result<(), LowerError> {
+        let rd = Self::fp_reg(dst)?;
+        let rn = Self::fp_reg(src)?;
+        let (q, u, size, opcode) = match op {
+            // FP forms: a = size<1> is always 1, sz = size<0> selects S/D.
+            VecUnaryOp::FAbs => {
+                let (q, sz) = Self::simd_float_shape(elem, lanes)?;
+                (q, 0, 0b10 | sz, 0b01111)
+            }
+            VecUnaryOp::FNeg => {
+                let (q, sz) = Self::simd_float_shape(elem, lanes)?;
+                (q, 1, 0b10 | sz, 0b01111)
+            }
+            VecUnaryOp::FSqrt => {
+                let (q, sz) = Self::simd_float_shape(elem, lanes)?;
+                (q, 1, 0b10 | sz, 0b11111)
+            }
+            // Integer forms: size = element width, opcode 01011 (NEG: U=1, ABS: U=0).
+            VecUnaryOp::Neg => {
+                let (q, size) = Self::simd_integer_shape(elem, lanes)?;
+                (q, 1, size, 0b01011)
+            }
+            VecUnaryOp::Abs => {
+                let (q, size) = Self::simd_integer_shape(elem, lanes)?;
+                (q, 0, size, 0b01011)
+            }
+        };
+        self.emit_simd_two_reg_misc(rd, rn, q, u, size, opcode);
         Ok(())
     }
 
@@ -14489,6 +14529,13 @@ impl Aarch64Lowerer {
                 elem,
                 lanes,
             } => self.lower_varith(*dst, *src1, *src2, *elem, *lanes, SimdArithmeticOp::Div),
+            OpKind::VUnary {
+                dst,
+                src,
+                elem,
+                lanes,
+                op,
+            } => self.lower_vunary(*dst, *src, *elem, *lanes, *op),
             OpKind::VMax {
                 dst,
                 src1,

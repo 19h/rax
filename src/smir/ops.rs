@@ -1036,6 +1036,15 @@ pub enum OpKind {
         lanes: u8,
     },
 
+    /// Vector per-lane unary op: FP FABS/FNEG/FSQRT or integer NEG/ABS.
+    VUnary {
+        dst: VReg,
+        src: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        op: VecUnaryOp,
+    },
+
     /// Vector bitwise AND
     VAnd {
         dst: VReg,
@@ -2735,6 +2744,7 @@ impl OpKind {
             | OpKind::VMax { dst, .. }
             | OpKind::VMul { dst, .. }
             | OpKind::VDiv { dst, .. }
+            | OpKind::VUnary { dst, .. }
             | OpKind::VLane { dst, .. }
             | OpKind::VAnd { dst, .. }
             | OpKind::VOr { dst, .. }

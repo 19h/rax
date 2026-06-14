@@ -2295,6 +2295,10 @@ impl OpKind {
                 result.push(*src2);
             }
 
+            OpKind::VUnary { src, .. } => {
+                result.push(*src);
+            }
+
             OpKind::VShift { src, amount, .. } => {
                 result.push(*src);
                 if let SrcOperand::Reg(r) = amount {

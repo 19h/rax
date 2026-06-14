@@ -2404,6 +2404,62 @@ impl SmirInterpreter {
                 }
             },
 
+            OpKind::VUnary {
+                dst,
+                src,
+                elem,
+                lanes,
+                op,
+            } => match (op, elem) {
+                (VecUnaryOp::FAbs, VecElementType::F32) => {
+                    self.vec_unary_op_f32(ctx, *dst, *src, *lanes, |a| a.abs());
+                }
+                (VecUnaryOp::FAbs, VecElementType::F64) => {
+                    self.vec_unary_op_f64(ctx, *dst, *src, *lanes, |a| a.abs());
+                }
+                (VecUnaryOp::FNeg, VecElementType::F32) => {
+                    self.vec_unary_op_f32(ctx, *dst, *src, *lanes, |a| -a);
+                }
+                (VecUnaryOp::FNeg, VecElementType::F64) => {
+                    self.vec_unary_op_f64(ctx, *dst, *src, *lanes, |a| -a);
+                }
+                (VecUnaryOp::FSqrt, VecElementType::F32) => {
+                    self.vec_unary_op_f32(ctx, *dst, *src, *lanes, |a| a.sqrt());
+                }
+                (VecUnaryOp::FSqrt, VecElementType::F64) => {
+                    self.vec_unary_op_f64(ctx, *dst, *src, *lanes, |a| a.sqrt());
+                }
+                (VecUnaryOp::Neg, _) => {
+                    let bits = elem.bytes() * 8;
+                    self.vec_unary_op(ctx, *dst, *src, *elem, *lanes, |a| {
+                        let neg = (a as i64).wrapping_neg() as u64;
+                        if bits >= 64 {
+                            neg
+                        } else {
+                            neg & ((1u64 << bits) - 1)
+                        }
+                    });
+                }
+                (VecUnaryOp::Abs, _) => {
+                    let bits = elem.bytes() * 8;
+                    self.vec_unary_op(ctx, *dst, *src, *elem, *lanes, |a| {
+                        // Sign-extend the lane, take abs, re-truncate.
+                        let shift = 64 - bits;
+                        let signed = ((a << shift) as i64) >> shift;
+                        let abs = signed.unsigned_abs();
+                        if bits >= 64 {
+                            abs
+                        } else {
+                            abs & ((1u64 << bits) - 1)
+                        }
+                    });
+                }
+                _ => {
+                    // FP-only ops with an integer element (or vice versa) should
+                    // not be produced; leave dst unchanged defensively.
+                }
+            },
+
             OpKind::VAnd {
                 dst,
                 src1,
@@ -5939,6 +5995,55 @@ impl SmirInterpreter {
             Self::set_lane(&mut result, lane, elem_bits, res_elem);
         }
 
+        Self::write_vec(ctx, dst, result);
+    }
+
+    fn vec_unary_op<F>(
+        &self,
+        ctx: &mut SmirContext,
+        dst: VReg,
+        src: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        op: F,
+    ) where
+        F: Fn(u64) -> u64,
+    {
+        let a = Self::read_vec(ctx, src);
+        let elem_bits = elem.bytes() * 8;
+        let mut result = [0u64; 16];
+        for lane in 0..lanes {
+            let a_elem = Self::get_lane(&a, lane, elem_bits);
+            Self::set_lane(&mut result, lane, elem_bits, op(a_elem));
+        }
+        Self::write_vec(ctx, dst, result);
+    }
+
+    fn vec_unary_op_f32<F>(&self, ctx: &mut SmirContext, dst: VReg, src: VReg, lanes: u8, op: F)
+    where
+        F: Fn(f32) -> f32,
+    {
+        let a = Self::read_vec(ctx, src);
+        let mut result = [0u64; 16];
+        for lane in 0..lanes {
+            let a_bits = Self::get_lane(&a, lane, 32) as u32;
+            let res = op(f32::from_bits(a_bits));
+            Self::set_lane(&mut result, lane, 32, res.to_bits() as u64);
+        }
+        Self::write_vec(ctx, dst, result);
+    }
+
+    fn vec_unary_op_f64<F>(&self, ctx: &mut SmirContext, dst: VReg, src: VReg, lanes: u8, op: F)
+    where
+        F: Fn(f64) -> f64,
+    {
+        let a = Self::read_vec(ctx, src);
+        let mut result = [0u64; 16];
+        for lane in 0..lanes {
+            let a_bits = Self::get_lane(&a, lane, 64);
+            let res = op(f64::from_bits(a_bits));
+            Self::set_lane(&mut result, lane, 64, res.to_bits());
+        }
         Self::write_vec(ctx, dst, result);
     }
 

@@ -892,6 +892,21 @@ impl VecElementType {
     }
 }
 
+/// Vector per-lane unary operation kind (see `OpKind::VUnary`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum VecUnaryOp {
+    /// Floating-point absolute value (AArch64 vector FABS).
+    FAbs,
+    /// Floating-point negate (AArch64 vector FNEG).
+    FNeg,
+    /// Floating-point square root (AArch64 vector FSQRT).
+    FSqrt,
+    /// Integer negate (AArch64 vector NEG).
+    Neg,
+    /// Integer absolute value (AArch64 vector ABS).
+    Abs,
+}
+
 /// Vector register width
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum VecWidth {

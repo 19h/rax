@@ -19,7 +19,7 @@ use crate::smir::{
     HexagonLifter, HexagonReg, LiftContext, MemWidth, MemoryOrder, OpId, OpKind, OpWidth,
     RiscVLifter, RiscVReg, ShiftOp, SignExtend, SmirBlock, SmirContext, SmirInterpreter,
     SmirLifter, SmirMemory, SmirOp, SourceArch, SrcOperand, Terminator, TrapKind, VLaneOp, VReg,
-    VShiftVKind, VecCmpCond, VecElementType, VecWidth, X86_64Lifter, X86Reg,
+    VShiftVKind, VecCmpCond, VecElementType, VecUnaryOp, VecWidth, X86_64Lifter, X86Reg,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1049,6 +1049,7 @@ debug_name_json!(
     VecCmpCond,
     VShiftVKind,
     VLaneOp,
+    VecUnaryOp,
     Avx10FP16Op,
     Condition,
     HexFpOp,
@@ -1792,6 +1793,13 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             elem,
             lanes,
         } => op_json!("vdiv", dst, src1, src2, elem, lanes),
+        OpKind::VUnary {
+            dst,
+            src,
+            elem,
+            lanes,
+            op,
+        } => op_json!("vunary", dst, src, elem, lanes, op),
         OpKind::VAnd {
             dst,
             src1,

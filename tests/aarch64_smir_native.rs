@@ -1255,19 +1255,16 @@ fn e2e_vector_fp_div_max_min_matches_interpreter() {
     }
 }
 
-// Safety regression for the two-register-misc decoder fix: the decoder now
-// produces correct vector FABS/FNEG/FSQRT/CLS/CLZ/RBIT mnemonics, but the
-// lifter has no per-lane vector-unary lowering yet. These MUST deopt (lift
-// returns Unsupported) rather than be grabbed by the scalar FP / GPR handlers
-// and mis-lifted as a single-lane op (which would silently corrupt lanes 1..N).
-// The SCALAR FP 1-source forms (bit 28 == 1) must still lift and execute.
+// Safety regression for the two-register-misc decoder fix. Vector FABS/FNEG/
+// FSQRT/NEG/ABS now JIT (see probe_vector_*_unary_4s); the remaining two-reg-
+// misc forms without a per-lane lowering (CLZ/CLS/RBIT) MUST still deopt (lift
+// returns Unsupported) rather than be grabbed by the scalar GPR handlers and
+// silently emit nothing. The SCALAR FP 1-source forms (bit 28 == 1) must still
+// lift and execute.
 #[test]
 fn vector_two_reg_misc_deopts_but_scalar_fp_still_lifts() {
     for &insn in &[
-        0x4ea0_f820u32, // fabs  v0.4s, v1.4s
-        0x6ea0_f820,    // fneg  v0.4s, v1.4s
-        0x6ea1_f820,    // fsqrt v0.4s, v1.4s
-        0x6ea0_4820,    // clz   v0.4s, v1.4s
+        0x6ea0_4820u32, // clz   v0.4s, v1.4s
         0x4ea0_4820,    // cls   v0.4s, v1.4s
         0x6e60_5820,    // rbit  v0.16b, v1.16b
     ] {
@@ -1296,4 +1293,106 @@ fn vector_two_reg_misc_deopts_but_scalar_fp_still_lifts() {
     regs.v[2] = f(9.0);
     jit_run(&[0x1e21_c020], &mut regs).expect("scalar fsqrt must still lift");
     assert_eq!(regs.v[0] as u32, f(3.0) as u32, "scalar fsqrt s0");
+}
+
+// Per-lane vector FP unary (FABS/FNEG/FSQRT) via OpKind::VUnary, lift→lower→exec.
+#[test]
+fn probe_vector_fp_unary_4s() {
+    let f = |x: f32| x.to_bits() as u64;
+    let pack = |a: f32, b: f32| f(a) | f(b) << 32;
+
+    // fabs v0.4s, v1.4s (0x4ea0f820)
+    let r = fp_run(&[0x4ea0_f820], |g| {
+        g.v[2] = pack(-1.0, 2.0);
+        g.v[3] = pack(-3.0, 4.0);
+    });
+    assert_eq!(r.v[0], pack(1.0, 2.0), "fabs lanes 0,1");
+    assert_eq!(r.v[1], pack(3.0, 4.0), "fabs lanes 2,3");
+
+    // fneg v0.4s, v1.4s (0x6ea0f820)
+    let r = fp_run(&[0x6ea0_f820], |g| {
+        g.v[2] = pack(1.0, -2.0);
+        g.v[3] = pack(3.0, -4.0);
+    });
+    assert_eq!(r.v[0], pack(-1.0, 2.0), "fneg lanes 0,1");
+    assert_eq!(r.v[1], pack(-3.0, 4.0), "fneg lanes 2,3");
+
+    // fsqrt v0.4s, v1.4s (0x6ea1f820)
+    let r = fp_run(&[0x6ea1_f820], |g| {
+        g.v[2] = pack(1.0, 4.0);
+        g.v[3] = pack(9.0, 16.0);
+    });
+    assert_eq!(r.v[0], pack(1.0, 2.0), "fsqrt lanes 0,1");
+    assert_eq!(r.v[1], pack(3.0, 4.0), "fsqrt lanes 2,3");
+}
+
+// Per-lane vector integer unary (NEG/ABS) via OpKind::VUnary, lift→lower→exec.
+#[test]
+fn probe_vector_int_unary_4s() {
+    let packi = |a: i32, b: i32| (a as u32 as u64) | ((b as u32 as u64) << 32);
+
+    // neg v0.4s, v1.4s (0x6ea0b820) — I32 lanes
+    let r = fp_run(&[0x6ea0_b820], |g| {
+        g.v[2] = packi(1, -2);
+        g.v[3] = packi(3, -4);
+    });
+    assert_eq!(r.v[0], packi(-1, 2), "neg lanes 0,1");
+    assert_eq!(r.v[1], packi(-3, 4), "neg lanes 2,3");
+
+    // abs v0.4s, v1.4s (0x4ea0b820)
+    let r = fp_run(&[0x4ea0_b820], |g| {
+        g.v[2] = packi(-5, 6);
+        g.v[3] = packi(-7, 8);
+    });
+    assert_eq!(r.v[0], packi(5, 6), "abs lanes 0,1");
+    assert_eq!(r.v[1], packi(7, 8), "abs lanes 2,3");
+}
+
+// End-to-end: vector unary ops run as a hot loop through the emulator JIT vs
+// the interpreter. Each loop recomputes v0 = unary(v1) (idempotent), so the
+// final v0 == unary(v1) and JIT must match the interpreter.
+#[test]
+fn e2e_vector_unary_hot_loop_matches_interpreter() {
+    let f = |x: f32| x.to_bits() as u128;
+    let pf = |a: f32, b: f32, c: f32, d: f32| f(a) | f(b) << 32 | f(c) << 64 | f(d) << 96;
+    let pi = |a: i32, b: i32, c: i32, d: i32| {
+        (a as u32 as u128)
+            | (b as u32 as u128) << 32
+            | (c as u32 as u128) << 64
+            | (d as u32 as u128) << 96
+    };
+    // (op, v1, expected): <op> v0.4s,v1.4s ; subs x0,x0,#1 ; b.ne -8 ; ret
+    let cases: [(u32, u128, u128); 5] = [
+        (
+            0x4ea0_f820,
+            pf(-1.0, 2.0, -3.0, 4.0),
+            pf(1.0, 2.0, 3.0, 4.0),
+        ), // fabs
+        (
+            0x6ea0_f820,
+            pf(1.0, -2.0, 3.0, -4.0),
+            pf(-1.0, 2.0, -3.0, 4.0),
+        ), // fneg
+        (0x6ea1_f820, pf(1.0, 4.0, 9.0, 16.0), pf(1.0, 2.0, 3.0, 4.0)), // fsqrt
+        (0x6ea0_b820, pi(1, -2, 3, -4), pi(-1, 2, -3, 4)),              // neg
+        (0x4ea0_b820, pi(-5, 6, -7, 8), pi(5, 6, 7, 8)),                // abs
+    ];
+
+    for (op, v1, expected) in cases {
+        let prog: [u32; 4] = [op, 0xf100_0400, 0x54ff_ffc1, 0xd65f_03c0];
+        let run_one = |jit: bool| -> u128 {
+            let mut cpu = fresh_cpu();
+            cpu.set_jit_enabled(jit);
+            load_prog(&mut cpu, &prog);
+            cpu.set_simd(0, 0);
+            cpu.set_simd(1, v1);
+            cpu.set_x(0, 100);
+            drive_to_done(&mut cpu);
+            cpu.get_simd(0)
+        };
+        let interp = run_one(false);
+        let jit = run_one(true);
+        assert_eq!(interp, expected, "interp op={:#010x}", op);
+        assert_eq!(jit, interp, "JIT matches interp op={:#010x}", op);
+    }
 }

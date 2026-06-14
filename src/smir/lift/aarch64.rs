@@ -2346,16 +2346,49 @@ impl Aarch64Lifter {
             // Scalar FP - Unary
             // =================================================================
             Mnemonic::FMOV | Mnemonic::FABS | Mnemonic::FNEG | Mnemonic::FSQRT => {
-                // This handler lifts only the SCALAR FP 1-source forms (bit 28
-                // == 1). The vector two-register-misc FABS/FNEG/FSQRT (bit 28
-                // == 0) share these mnemonics but operate per-lane; lifting them
-                // here would mis-emit a single-lane op, so they deopt until a
-                // dedicated vector FP-unary lowering exists.
+                // The scalar FP 1-source forms (bit 28 == 1) take the path below.
+                // The vector two-register-misc FABS/FNEG/FSQRT (bit 28 == 0)
+                // share these mnemonics but operate per-lane; emit a VUnary.
                 if (insn.raw >> 28) & 1 == 0 {
-                    return Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: format!("vector {:?}", insn.mnemonic),
-                    });
+                    let vop = match insn.mnemonic {
+                        Mnemonic::FABS => VecUnaryOp::FAbs,
+                        Mnemonic::FNEG => VecUnaryOp::FNeg,
+                        Mnemonic::FSQRT => VecUnaryOp::FSqrt,
+                        // Vector FMOV is a different (immediate/dup) form; deopt.
+                        _ => {
+                            return Err(LiftError::Unsupported {
+                                addr: pc,
+                                mnemonic: format!("vector {:?}", insn.mnemonic),
+                            });
+                        }
+                    };
+                    let (rd, rn) = match (insn.operands.get(0), insn.operands.get(1)) {
+                        (Some(Operand::FpReg(rd)), Some(Operand::FpReg(rn))) => (rd, rn),
+                        _ => {
+                            return Err(LiftError::Internal(
+                                "vector FP unary operands".to_string(),
+                            ));
+                        }
+                    };
+                    let q = (insn.raw >> 30) & 1;
+                    let sz = (insn.raw >> 22) & 1;
+                    let (elem, lanes) = if sz == 0 {
+                        (VecElementType::F32, if q == 1 { 4u8 } else { 2 })
+                    } else {
+                        (VecElementType::F64, 2)
+                    };
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VUnary {
+                            dst: Self::fp_vreg(rd),
+                            src: Self::fp_vreg(rn),
+                            elem,
+                            lanes,
+                            op: vop,
+                        },
+                    ));
+                    return Ok((ops, control));
                 }
                 let rd = match insn.operands.get(0) {
                     Some(Operand::FpReg(r)) => r,
@@ -2394,6 +2427,45 @@ impl Aarch64Lifter {
                     _ => unreachable!(),
                 };
                 ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+            }
+
+            // Vector integer NEG/ABS (advanced SIMD two-register miscellaneous).
+            // The decoder only produces these mnemonics for the vector form
+            // (FpReg operands); element width comes from size = bits[23:22].
+            Mnemonic::VNEG | Mnemonic::VABS => {
+                let (rd, rn) = match (insn.operands.get(0), insn.operands.get(1)) {
+                    (Some(Operand::FpReg(rd)), Some(Operand::FpReg(rn))) => (rd, rn),
+                    _ => {
+                        return Err(LiftError::Unsupported {
+                            addr: pc,
+                            mnemonic: format!("{:?}", insn.mnemonic),
+                        });
+                    }
+                };
+                let q = (insn.raw >> 30) & 1;
+                let (elem, lane_bytes) = match (insn.raw >> 22) & 0x3 {
+                    0 => (VecElementType::I8, 1u8),
+                    1 => (VecElementType::I16, 2),
+                    2 => (VecElementType::I32, 4),
+                    _ => (VecElementType::I64, 8),
+                };
+                let lanes = (if q == 1 { 16u8 } else { 8 }) / lane_bytes;
+                let op = if insn.mnemonic == Mnemonic::VNEG {
+                    VecUnaryOp::Neg
+                } else {
+                    VecUnaryOp::Abs
+                };
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VUnary {
+                        dst: Self::fp_vreg(rd),
+                        src: Self::fp_vreg(rn),
+                        elem,
+                        lanes,
+                        op,
+                    },
+                ));
             }
 
             // =================================================================

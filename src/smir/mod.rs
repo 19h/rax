@@ -103,5 +103,5 @@ pub use types::{
     BlockIdAllocator, Condition, Endian, ExtendOp, FenceKind, FpPrecision, FpRoundMode, FunctionId,
     GuestAddr, HexagonReg, LocalId, MemWidth, MemoryOrder, ModuleId, OpId, OpWidth, RiscVReg,
     ShiftOp, SignExtend, SourceArch, SrcOperand, VLaneOp, VReg, VRegAllocator, VShiftVKind,
-    VecCmpCond, VecElementType, VecWidth, VirtualId, X86Reg,
+    VecCmpCond, VecElementType, VecUnaryOp, VecWidth, VirtualId, X86Reg,
 };

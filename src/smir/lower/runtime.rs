@@ -968,6 +968,7 @@ fn aarch64_block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: 
                 | OpKind::VSub { .. }
                 | OpKind::VMul { .. }
                 | OpKind::VDiv { .. }
+                | OpKind::VUnary { .. }
                 | OpKind::VMax { .. }
                 | OpKind::VMin { .. }
                 | OpKind::VAnd { .. }
