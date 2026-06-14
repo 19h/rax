@@ -1657,6 +1657,19 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
+    #[inline(always)]
+    pub(in crate::backend::emulator::x86_64) fn reject_rex2_for_legacy_simd(
+        &mut self,
+        ctx: &InsnContext,
+    ) -> Result<bool> {
+        if ctx.rex2.is_none() {
+            return Ok(false);
+        }
+
+        self.inject_exception(6, None)?;
+        Ok(true)
+    }
+
     /// Dispatch a decode-cache HIT through the pre-resolved handler fn-pointer.
     ///
     /// In the default (non-`trace`) build this is the whole point of the
