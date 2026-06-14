@@ -3211,6 +3211,71 @@ mod tests {
         );
     }
 
+    // Regression for issue #23: a non-LOCK memory XADD lifts to a flag-free,
+    // store-feeding Add, then the Store, then the source writeback, then a
+    // flag-producing Add that commits the arithmetic flags only AFTER the store
+    // has retired. The optimizer must preserve that ordering: it may neither sink
+    // the flag-producing Add before the Store (which would re-expose flags on a
+    // faulting store) nor drop it while its flags are live. This optimizes a real
+    // lifted XADD with all flags live-out (Return frontier) and asserts the
+    // flag-producing Add survives and stays after the Store.
+    #[test]
+    fn issue_23_optimizer_keeps_xadd_flag_add_after_store() {
+        use crate::smir::ir::FunctionBuilder;
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+        use crate::smir::types::SourceArch;
+
+        // xadd dword ptr [rax], ecx (0F C1 08): a non-LOCK memory XADD.
+        let mut lifter = X86_64Lifter::new();
+        let mut lctx = LiftContext::new(SourceArch::X86_64);
+        let result = lifter
+            .lift_insn(0x1000, &[0x0F, 0xC1, 0x08], &mut lctx)
+            .unwrap();
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        for op in result.ops {
+            builder.push_op(op.guest_pc, op.kind);
+        }
+        // A Return frontier exit makes every architectural flag live-out, so the
+        // flag-producing Add must be kept.
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut func = builder.finish();
+
+        optimize_function(&mut func, OptLevel::O2);
+
+        let ops = &func.blocks[0].ops;
+        let store_pos = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::Store { .. }))
+            .expect("memory XADD must keep its store");
+        let flag_add_positions: Vec<usize> = ops
+            .iter()
+            .enumerate()
+            .filter(|(_, op)| {
+                matches!(
+                    op.kind,
+                    OpKind::Add {
+                        flags: FlagUpdate::All,
+                        ..
+                    }
+                )
+            })
+            .map(|(i, _)| i)
+            .collect();
+        assert_eq!(
+            flag_add_positions.len(),
+            1,
+            "exactly one flag-producing Add must survive (not fused/duplicated)"
+        );
+        assert!(
+            flag_add_positions[0] > store_pos,
+            "the flag-producing Add must remain AFTER the store so a faulting \
+             store cannot commit flags (store at {store_pos}, flag add at {})",
+            flag_add_positions[0],
+        );
+    }
+
     #[test]
     fn test_constant_propagation() {
         let mut block = SmirBlock::new(BlockId(0), 0x1000);

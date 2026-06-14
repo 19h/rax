@@ -11797,6 +11797,207 @@ mod tests {
         assert_eq!(&rv.v[1][0..4], &current_lane);
         assert_ne!(&rv.v[1][0..4], &stale_lane);
     }
+
+    // Regression for issue #23: a non-LOCK memory XADD must be fault-precise. The
+    // lift emits Load → (flag-free) Add → Store → source writeback → flag-only Add,
+    // so a store that faults (e.g. a read-only page) leaves BOTH the arithmetic
+    // flags and the source register architecturally unchanged. Before the fix the
+    // flag-producing Add ran before the Store, committing flags that a faulting
+    // XADD must never produce.
+
+    /// Test memory that serves reads from an inner `FlatMemory` but faults every
+    /// write with a write page fault — models a read-only guest page so a memory
+    /// XADD's store cannot retire. (#23)
+    struct ReadOnlyStoreMemory {
+        inner: FlatMemory,
+    }
+
+    impl SmirMemory for ReadOnlyStoreMemory {
+        fn read(&mut self, addr: GuestAddr, buf: &mut [u8]) -> Result<(), MemoryError> {
+            self.inner.read(addr, buf)
+        }
+        fn write(&mut self, addr: GuestAddr, _data: &[u8]) -> Result<(), MemoryError> {
+            Err(MemoryError::PageFault {
+                addr,
+                write: true,
+                user: true,
+            })
+        }
+        fn atomic_load(
+            &mut self,
+            addr: GuestAddr,
+            size: MemWidth,
+            order: MemoryOrder,
+        ) -> Result<u64, MemoryError> {
+            self.inner.atomic_load(addr, size, order)
+        }
+        fn atomic_store(
+            &mut self,
+            addr: GuestAddr,
+            value: u64,
+            size: MemWidth,
+            order: MemoryOrder,
+        ) -> Result<(), MemoryError> {
+            self.inner.atomic_store(addr, value, size, order)
+        }
+        fn compare_and_swap(
+            &mut self,
+            addr: GuestAddr,
+            expected: u64,
+            new: u64,
+            size: MemWidth,
+            success_order: MemoryOrder,
+            failure_order: MemoryOrder,
+        ) -> Result<(u64, bool), MemoryError> {
+            self.inner
+                .compare_and_swap(addr, expected, new, size, success_order, failure_order)
+        }
+        fn atomic_rmw(
+            &mut self,
+            addr: GuestAddr,
+            op: AtomicOp,
+            operand: u64,
+            size: MemWidth,
+            order: MemoryOrder,
+        ) -> Result<u64, MemoryError> {
+            self.inner.atomic_rmw(addr, op, operand, size, order)
+        }
+        fn load_exclusive(&mut self, addr: GuestAddr, size: MemWidth) -> Result<u64, MemoryError> {
+            self.inner.load_exclusive(addr, size)
+        }
+        fn store_exclusive(
+            &mut self,
+            addr: GuestAddr,
+            value: u64,
+            size: MemWidth,
+        ) -> Result<bool, MemoryError> {
+            self.inner.store_exclusive(addr, value, size)
+        }
+        fn clear_exclusive(&mut self) {
+            self.inner.clear_exclusive()
+        }
+        fn fence(&mut self, kind: FenceKind) {
+            self.inner.fence(kind)
+        }
+        fn probe(&self, addr: GuestAddr, size: usize, write: bool) -> Result<(), MemoryError> {
+            self.inner.probe(addr, size, write)
+        }
+    }
+
+    /// Lift `xadd dword ptr [rax], ecx` (0F C1 08) and run it through the
+    /// interpreter over `memory`, with `rax` pointing at `addr`, `ecx = src`, and
+    /// the flags pre-seeded from `init_rflags`. Returns the resulting RCX, the
+    /// block exit, and the materialized RFLAGS.
+    fn run_xadd_mem32(
+        addr: u64,
+        src: u32,
+        init_rflags: u64,
+        memory: &mut dyn SmirMemory,
+    ) -> (u64, BlockResult, u64) {
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+        use crate::smir::types::SourceArch;
+
+        // xadd dword ptr [rax], ecx: DEST = [rax] (memory), SRC = ecx.
+        let bytes = [0x0F, 0xC1, 0x08];
+        let mut lifter = X86_64Lifter::new();
+        let mut lctx = LiftContext::new(SourceArch::X86_64);
+        let result = lifter.lift_insn(0x1000, &bytes, &mut lctx).unwrap();
+
+        let rax_r = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx_r = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.write_vreg(rax_r, addr);
+        ctx.write_vreg(rcx_r, src as u64);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(init_rflags);
+        ctx.flags.lazy = None;
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        for op in result.ops {
+            builder.push_op(op.guest_pc, op.kind);
+        }
+        builder.set_terminator(Terminator::Trap {
+            kind: TrapKind::Halt,
+        });
+        let func = builder.finish();
+
+        let interp = SmirInterpreter::new();
+        let exit = interp.execute_block(&mut ctx, memory, &func.blocks[0]);
+        ctx.flags.materialize_all();
+        (
+            ctx.read_vreg(rcx_r),
+            exit,
+            ctx.flags.materialized.to_rflags(),
+        )
+    }
+
+    #[test]
+    fn issue_23_xadd_mem_faulting_store_preserves_flags_and_source() {
+        // Seed EVERY flag set: a premature add (the pre-fix bug) would compute
+        // 0xFFFF_FFFF + 1 == 0, clearing SF/OF and forcing ZF/CF, so any leaked
+        // flag commit is observable as a deviation from the all-ones sentinel.
+        const SENTINEL: u64 = 0x0000_0CD7; // CF|PF|AF|ZF|SF|DF|OF (+ reserved bit 1)
+        let mut inner = FlatMemory::new(0x1000);
+        inner.write(0x800, &0xFFFF_FFFFu32.to_le_bytes()).unwrap();
+        let mut memory = ReadOnlyStoreMemory { inner };
+
+        let (rcx, exit, rflags) = run_xadd_mem32(0x800, 0x0000_0001, SENTINEL, &mut memory);
+
+        // The store must fault on the read-only page...
+        assert!(
+            matches!(
+                exit,
+                BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+            ),
+            "read-only store must raise a write page fault, got {exit:?}",
+        );
+        // ...and a faulting XADD must leave the source register untouched...
+        assert_eq!(
+            rcx, 0x0000_0001,
+            "source register must survive a faulting XADD store",
+        );
+        // ...and must NOT have committed any arithmetic flags.
+        assert_eq!(
+            rflags, SENTINEL,
+            "a faulting memory XADD must not update RFLAGS",
+        );
+        // The read-only page itself is unchanged.
+        let mut buf = [0u8; 4];
+        memory.read(0x800, &mut buf).unwrap();
+        assert_eq!(
+            u32::from_le_bytes(buf),
+            0xFFFF_FFFF,
+            "faulting store must not mutate memory",
+        );
+    }
+
+    #[test]
+    fn issue_23_xadd_mem_successful_store_commits_flags_and_source() {
+        // Positive control: with writable memory the same XADD commits. With
+        // [mem] = 0xFFFF_FFFF and ecx = 1, the 32-bit sum wraps to 0 (ZF=1, CF=1),
+        // memory takes the sum, and ECX takes the old memory value.
+        let mut memory = FlatMemory::new(0x1000);
+        memory.write(0x800, &0xFFFF_FFFFu32.to_le_bytes()).unwrap();
+        // Seed flags cleared (only reserved bit 1) so committed add flags are
+        // unambiguous.
+        let (rcx, exit, rflags) = run_xadd_mem32(0x800, 0x0000_0001, 0x0000_0002, &mut memory);
+
+        assert!(
+            matches!(exit, BlockResult::Exit(ExitReason::Halt)),
+            "writable XADD must run to completion, got {exit:?}",
+        );
+        // ECX receives the old destination (zero-extended into RCX).
+        assert_eq!(rcx, 0x0000_0000_FFFF_FFFF, "ECX takes the old memory value");
+        // Memory receives the sum.
+        let mut buf = [0u8; 4];
+        memory.read(0x800, &mut buf).unwrap();
+        assert_eq!(u32::from_le_bytes(buf), 0x0000_0000, "memory takes the sum");
+        // Flags ARE committed on the success path: ZF and CF set, SF and OF clear.
+        assert_ne!(rflags & (1 << 6), 0, "ZF must be set (sum is zero)");
+        assert_ne!(rflags & (1 << 0), 0, "CF must be set (carry out)");
+        assert_eq!(rflags & (1 << 7), 0, "SF must be clear");
+        assert_eq!(rflags & (1 << 11), 0, "OF must be clear");
+    }
 }
 
 // ===========================================================================

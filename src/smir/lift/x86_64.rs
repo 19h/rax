@@ -2307,6 +2307,13 @@ impl X86_64Lifter {
                 ));
             }
 
+            // A non-LOCK memory XADD does a *separate* store that can fault (e.g.
+            // a read-only page). Architecturally a faulting XADD must leave both
+            // the flags and the source register unchanged, so the flag update must
+            // not be committed before the store retires. Compute the sum WITHOUT
+            // flags here; the flags are emitted after the store/writeback below.
+            // A LOCK XADD instead uses the AtomicRmw above, which has already
+            // committed the memory update, so its flags are computed here. (#23)
             let sum = ctx.alloc_vreg();
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
@@ -2316,7 +2323,11 @@ impl X86_64Lifter {
                     src1: old_dst,
                     src2: SrcOperand::Reg(saved_src),
                     width,
-                    flags: FlagUpdate::All,
+                    flags: if prefix.lock {
+                        FlagUpdate::All
+                    } else {
+                        FlagUpdate::None
+                    },
                 },
             ));
 
@@ -2341,6 +2352,24 @@ impl X86_64Lifter {
                     width,
                 },
             ));
+
+            if !prefix.lock {
+                // Now that the store has retired, commit the arithmetic flags. If
+                // the store faulted, none of these ops execute, so a faulting XADD
+                // leaves flags and the source register unchanged. (#23)
+                let flag_tmp = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Add {
+                        dst: flag_tmp,
+                        src1: old_dst,
+                        src2: SrcOperand::Reg(saved_src),
+                        width,
+                        flags: FlagUpdate::All,
+                    },
+                ));
+            }
 
             return Ok(LiftResult::fallthrough(
                 ops,
@@ -12524,7 +12553,13 @@ mod tests {
             //   `xaddb %r18b, 32(%r16,%r17,4)` => d5 f0 c0 54 88 20
             let result = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap();
             assert_eq!(result.bytes_consumed, *bytes_consumed, "{name}");
-            assert_eq!(result.ops.len(), 5, "{name}");
+            // A non-LOCK memory XADD must be fault-precise: the separate Store can
+            // fault (e.g. a read-only page), and a faulting XADD must leave flags
+            // and the source register unchanged. So the flag-producing Add is
+            // emitted AFTER the store (and writeback), not before. The store-feeding
+            // Add therefore carries no flags; a trailing flag-only Add commits them
+            // once the store has retired. (#23)
+            assert_eq!(result.ops.len(), 6, "{name}");
 
             let saved_src = match &result.ops[0].kind {
                 OpKind::Mov {
@@ -12551,20 +12586,22 @@ mod tests {
                 }
                 other => panic!("expected REX2 {name} memory load, got {other:?}"),
             };
+            // Store-feeding sum: NO flags, so a faulting store cannot have committed
+            // flag state.
             let sum = match &result.ops[2].kind {
                 OpKind::Add {
                     dst,
                     src1,
                     src2: SrcOperand::Reg(src2),
                     width,
-                    flags: FlagUpdate::All,
+                    flags: FlagUpdate::None,
                 } => {
                     assert_eq!(*src1, old_dst, "{name}");
                     assert_eq!(*src2, saved_src, "{name}");
                     assert_eq!(*width, *op_width, "{name}");
                     *dst
                 }
-                other => panic!("expected REX2 {name} flagged add, got {other:?}"),
+                other => panic!("expected REX2 {name} flag-free store sum, got {other:?}"),
             };
             match &result.ops[3].kind {
                 OpKind::Store { src, addr, width } => {
@@ -12585,6 +12622,22 @@ mod tests {
                     assert_eq!(*width, *op_width, "{name}");
                 }
                 other => panic!("expected REX2 {name} source writeback, got {other:?}"),
+            }
+            // Flags are committed only after the store and writeback have retired,
+            // recomputed from the same operands as the store-feeding sum.
+            match &result.ops[5].kind {
+                OpKind::Add {
+                    dst: _,
+                    src1,
+                    src2: SrcOperand::Reg(src2),
+                    width,
+                    flags: FlagUpdate::All,
+                } => {
+                    assert_eq!(*src1, old_dst, "{name}");
+                    assert_eq!(*src2, saved_src, "{name}");
+                    assert_eq!(*width, *op_width, "{name}");
+                }
+                other => panic!("expected REX2 {name} post-store flag add, got {other:?}"),
             }
         }
     }
