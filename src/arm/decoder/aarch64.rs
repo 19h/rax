@@ -932,9 +932,7 @@ impl Aarch64Decoder {
             return Self::decode_load_store_pair(raw);
         }
 
-        if (raw >> 31) & 1 == 0
-            && matches!((raw >> 24) & 0x3F, 0b001100 | 0b001101)
-        {
+        if (raw >> 31) & 1 == 0 && matches!((raw >> 24) & 0x3F, 0b001100 | 0b001101) {
             return Self::decode_simd_ldst(raw, (raw >> 30) & 1);
         }
 
@@ -1891,6 +1889,7 @@ impl Aarch64Decoder {
     fn decode_dp_1_source(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let sf = (raw >> 31) & 1;
         let s = (raw >> 29) & 1;
+        let opcode2 = (raw >> 16) & 0x1F;
         let opcode = (raw >> 10) & 0x3F;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
@@ -1898,6 +1897,15 @@ impl Aarch64Decoder {
         if s != 0 {
             return Ok(DecodedInsn::new(
                 Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
+        }
+
+        if opcode2 != 0 {
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNKNOWN,
                 ExecutionState::Aarch64,
                 raw,
                 4,
@@ -3564,6 +3572,23 @@ mod tests {
         // CLZ X0, X1: dac01020
         let insn = decode_bytes(&[0x20, 0x10, 0xc0, 0xda]).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::CLZ);
+    }
+
+    #[test]
+    fn test_dp_1_source_rejects_nonzero_opcode2() {
+        for raw in [
+            0xdac0_0020, // RBIT X0, X1
+            0xdac0_0420, // REV16 X0, X1
+            0xdac0_0820, // REV32 X0, X1
+            0xdac0_0c20, // REV X0, X1
+            0xdac0_1020, // CLZ X0, X1
+            0xdac0_1420, // CLS X0, X1
+        ] {
+            for opcode2 in 1..=0x1F {
+                let insn = Aarch64Decoder::decode(raw | (opcode2 << 16)).unwrap();
+                assert_eq!(insn.mnemonic, Mnemonic::UNKNOWN);
+            }
+        }
     }
 
     #[test]
