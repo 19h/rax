@@ -723,10 +723,15 @@ impl S5lSysic {
             0x44 => 2 << 0x18,               // POWER_ID
             0x08 | 0x14 => self.power_state, // POWER_SETSTATE / POWER_STATE
             0x7a | 0x7c => 1,
-            0x80..=0x9C => self.gpio_int_level[((offset - 0x80) / 4) as usize],
-            0xA0..=0xBC => self.gpio_int_status[((offset - 0xA0) / 4) as usize],
-            0xC0..=0xDC => self.gpio_int_enabled[((offset - 0xC0) / 4) as usize],
-            0xE0..=0xFC => self.gpio_int_type[((offset - 0xE0) / 4) as usize],
+            // Only GPIO_NUMINTGROUPS (7) interrupt groups exist, so the valid
+            // register offsets stop at index 6 (base + 6*4). The endpoints must be
+            // 0x98/0xB8/0xD8/0xF8, not 0x9C/0xBC/0xDC/0xFC — the latter compute
+            // index 7 and a guest LDR there would panic (host abort under
+            // panic=abort). Out-of-range offsets fall through to open-bus (0). (#42)
+            0x80..=0x98 => self.gpio_int_level[((offset - 0x80) / 4) as usize],
+            0xA0..=0xB8 => self.gpio_int_status[((offset - 0xA0) / 4) as usize],
+            0xC0..=0xD8 => self.gpio_int_enabled[((offset - 0xC0) / 4) as usize],
+            0xE0..=0xF8 => self.gpio_int_type[((offset - 0xE0) / 4) as usize],
             _ => 0,
         }
     }
@@ -740,12 +745,14 @@ impl S5lSysic {
                 }
             }
             0x10 => self.power_state = value, // POWER_OFFCTRL
-            0xA0..=0xBC => {
+            // Endpoints stop at index 6 (0xB8/0xD8/0xF8); 0xBC/0xDC/0xFC would
+            // index past the 7-entry arrays and panic on a guest MMIO write. (#42)
+            0xA0..=0xB8 => {
                 let g = ((offset - 0xA0) / 4) as usize;
                 self.gpio_int_status[g] &= !value; // write-1-to-clear
             }
-            0xC0..=0xDC => self.gpio_int_enabled[((offset - 0xC0) / 4) as usize] = value,
-            0xE0..=0xFC => self.gpio_int_type[((offset - 0xE0) / 4) as usize] = value,
+            0xC0..=0xD8 => self.gpio_int_enabled[((offset - 0xC0) / 4) as usize] = value,
+            0xE0..=0xF8 => self.gpio_int_type[((offset - 0xE0) / 4) as usize] = value,
             _ => {}
         }
     }
@@ -2707,6 +2714,42 @@ mod spi_dos_tests {
             "rx FIFO must stay bounded by SPI_RX_FIFO_MAX; got {}",
             spi.rx.len(),
         );
+    }
+}
+
+#[cfg(test)]
+mod sysic_dos_tests {
+    use super::*;
+
+    // Regression for issue #42: the last register of each SYSIC GPIO
+    // interrupt-group range (0x9C/0xBC/0xDC/0xFC) used to compute array index 7
+    // into the 7-entry gpio_int_* arrays, so a guest MMIO access there panicked
+    // (host abort under panic=abort). They must now be handled as open-bus.
+    #[test]
+    fn sysic_gpio_group_endpoint_offsets_do_not_panic() {
+        let mut sysic = S5lSysic::new();
+
+        // Reads across every group register, including the once-OOB endpoints.
+        for off in [
+            0x80u32, 0x98, 0x9C, 0xA0, 0xB8, 0xBC, 0xC0, 0xD8, 0xDC, 0xE0, 0xF8, 0xFC,
+        ] {
+            let _ = sysic.read(off); // must not panic
+        }
+        // Writes across every writable group register, including the endpoints.
+        for off in [0xA0u32, 0xB8, 0xBC, 0xC0, 0xD8, 0xDC, 0xE0, 0xF8, 0xFC] {
+            sysic.write(off, 0xFFFF_FFFF); // must not panic
+        }
+
+        // The out-of-range endpoints read back as open-bus (0), not a group reg.
+        assert_eq!(sysic.read(0x9C), 0);
+        assert_eq!(sysic.read(0xBC), 0);
+        assert_eq!(sysic.read(0xDC), 0);
+        assert_eq!(sysic.read(0xFC), 0);
+
+        // The highest valid register (index 6) still works.
+        let mut sysic = S5lSysic::new();
+        sysic.write(0xD8, 0x1234); // gpio_int_enabled[6]
+        assert_eq!(sysic.read(0xD8), 0x1234);
     }
 }
 
