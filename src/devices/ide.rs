@@ -192,11 +192,15 @@ pub struct IdeController {
     awaiting_packet: bool,
     /// The 12-byte SCSI command packet being assembled / last received.
     packet: [u8; 12],
-    /// Full PIO-in result of the current ATAPI command; transferred to the host
-    /// in DRQ blocks bounded by the byte-count limit.
+    /// Full PIO-in result of the current small ATAPI command; transferred to
+    /// the host in DRQ blocks bounded by the byte-count limit.
     atapi_data: Vec<u8>,
     /// Read cursor into `atapi_data`.
     atapi_pos: usize,
+    /// Byte offset into `cdrom` for a streaming ATAPI READ transfer.
+    atapi_media_offset: usize,
+    /// Bytes left in the current streaming ATAPI READ transfer.
+    atapi_media_remaining: usize,
     /// True while an ATAPI data-in transfer is in progress (selects the ATAPI
     /// chunk-advance path on a PIO-in block boundary).
     atapi_in: bool,
@@ -251,6 +255,8 @@ impl IdeController {
             packet: [0u8; 12],
             atapi_data: Vec::new(),
             atapi_pos: 0,
+            atapi_media_offset: 0,
+            atapi_media_remaining: 0,
             atapi_in: false,
         }
     }
@@ -330,9 +336,19 @@ impl IdeController {
         self.sectors_left = 0;
         self.buf_pos = 0;
         self.buf_len = 0;
+        self.clear_atapi_transfer();
         self.error = ERR_ABRT | extra_err;
         self.status = (self.status & !(ST_BSY | ST_DRQ | ST_DSC)) | ST_DRDY | ST_ERR;
         self.raise_irq();
+    }
+
+    fn clear_atapi_transfer(&mut self) {
+        self.awaiting_packet = false;
+        self.atapi_in = false;
+        self.atapi_data.clear();
+        self.atapi_pos = 0;
+        self.atapi_media_offset = 0;
+        self.atapi_media_remaining = 0;
     }
 
     /// Compute the starting LBA from the task-file registers for the current
@@ -576,10 +592,7 @@ impl IdeController {
         }
         self.drive_head = 0;
         self.hob = false;
-        self.awaiting_packet = false;
-        self.atapi_in = false;
-        self.atapi_data.clear();
-        self.atapi_pos = 0;
+        self.clear_atapi_transfer();
         self.status = ST_DRDY | ST_DSC;
         // SRST does not generate an interrupt.
     }
@@ -776,6 +789,7 @@ impl IdeController {
         }
         if lba.saturating_add(len) > total_blocks {
             // Out of range → CHECK CONDITION (ILLEGAL REQUEST / LBA out of range).
+            self.clear_atapi_transfer();
             self.error = 0x50; // sense key 5 (illegal request) in bits 7-4
             self.status = (self.status & !(ST_BSY | ST_DRQ)) | ST_DRDY | ST_ERR | ST_DSC;
             self.sector_count = 0x03;
@@ -783,19 +797,14 @@ impl IdeController {
             return;
         }
         let start = (lba as usize) * CD_BLOCK;
-        let end = ((lba + len) as usize) * CD_BLOCK;
-        let data = self
-            .cdrom
-            .as_ref()
-            .map(|c| c[start..end.min(c.len())].to_vec())
-            .unwrap_or_default();
-        self.atapi_start_data(data);
+        let bytes = (len as usize) * CD_BLOCK;
+        self.atapi_start_media_read(start, bytes);
     }
 
     /// Complete an ATAPI command that returns no data (status only).
     fn atapi_complete_ok(&mut self) {
         self.transfer = Transfer::None;
-        self.atapi_in = false;
+        self.clear_atapi_transfer();
         self.error = 0;
         self.sector_count = 0x03; // C/D=1, IO=1 (command complete)
         self.status = (self.status & !(ST_BSY | ST_DRQ | ST_ERR)) | ST_DRDY | ST_DSC;
@@ -809,6 +818,8 @@ impl IdeController {
             self.atapi_complete_ok();
             return;
         }
+        self.atapi_media_offset = 0;
+        self.atapi_media_remaining = 0;
         self.atapi_data = data;
         self.atapi_pos = 0;
         self.atapi_in = true;
@@ -816,9 +827,27 @@ impl IdeController {
         self.stage_atapi_chunk();
     }
 
-    /// Stage the next DRQ block of `atapi_data` into the transfer buffer.
+    fn atapi_start_media_read(&mut self, start: usize, bytes: usize) {
+        if bytes == 0 {
+            self.atapi_complete_ok();
+            return;
+        }
+        self.atapi_data.clear();
+        self.atapi_pos = 0;
+        self.atapi_media_offset = start;
+        self.atapi_media_remaining = bytes;
+        self.atapi_in = true;
+        self.error = 0;
+        self.stage_atapi_chunk();
+    }
+
+    /// Stage the next DRQ block into the transfer buffer.
     fn stage_atapi_chunk(&mut self) {
-        let remaining = self.atapi_data.len() - self.atapi_pos;
+        let remaining = if self.atapi_media_remaining != 0 {
+            self.atapi_media_remaining
+        } else {
+            self.atapi_data.len() - self.atapi_pos
+        };
         // Byte-count limit the host requested (LBA mid/high before PACKET).
         let mut limit = ((self.lba_high & 0xFF) as usize) << 8 | (self.lba_mid & 0xFF) as usize;
         if limit == 0 {
@@ -834,8 +863,14 @@ impl IdeController {
         if self.buffer.len() < chunk {
             self.buffer.resize(chunk, 0);
         }
-        self.buffer[..chunk]
-            .copy_from_slice(&self.atapi_data[self.atapi_pos..self.atapi_pos + chunk]);
+        if self.atapi_media_remaining != 0 {
+            let cdrom = self.cdrom.as_ref().expect("ATAPI READ requires a CD-ROM");
+            let end = self.atapi_media_offset + chunk;
+            self.buffer[..chunk].copy_from_slice(&cdrom[self.atapi_media_offset..end]);
+        } else {
+            self.buffer[..chunk]
+                .copy_from_slice(&self.atapi_data[self.atapi_pos..self.atapi_pos + chunk]);
+        }
         self.buf_pos = 0;
         self.buf_len = chunk;
         // Report the actual byte count for this DRQ block in LBA mid/high.
@@ -849,15 +884,22 @@ impl IdeController {
 
     /// Advance to the next ATAPI DRQ block (or complete the transfer).
     fn atapi_in_block_complete(&mut self) {
-        self.atapi_pos += self.buf_len;
-        if self.atapi_pos >= self.atapi_data.len() {
-            // All data transferred → command complete.
-            self.atapi_data.clear();
-            self.atapi_pos = 0;
-            self.atapi_complete_ok();
+        if self.atapi_media_remaining != 0 {
+            self.atapi_media_offset += self.buf_len;
+            self.atapi_media_remaining -= self.buf_len;
+            if self.atapi_media_remaining != 0 {
+                self.stage_atapi_chunk();
+                return;
+            }
         } else {
-            self.stage_atapi_chunk();
+            self.atapi_pos += self.buf_len;
+            if self.atapi_pos < self.atapi_data.len() {
+                self.stage_atapi_chunk();
+                return;
+            }
         }
+        // All data transferred → command complete.
+        self.atapi_complete_ok();
     }
 
     /// Dispatch a command written to the command register (0x1F7).
@@ -1212,6 +1254,29 @@ mod tests {
         (0..n).map(|_| ide.read16(0x1F0)).collect()
     }
 
+    fn drain_bytes(ide: &mut IdeController, n: usize) -> Vec<u8> {
+        assert_eq!(n % 2, 0, "PIO word drains must be even-sized");
+        let mut out = Vec::with_capacity(n);
+        for word in drain_words(ide, n / 2) {
+            out.push((word & 0xFF) as u8);
+            out.push((word >> 8) as u8);
+        }
+        out
+    }
+
+    fn send_atapi_packet(ide: &mut IdeController, packet: [u8; 12], byte_count: u16) {
+        ide.write(0x1F6, DH_LBA);
+        ide.write(0x1F4, (byte_count & 0xFF) as u8);
+        ide.write(0x1F5, (byte_count >> 8) as u8);
+        ide.write(0x1F7, CMD_PACKET);
+        assert_ne!(ide.status() & ST_DRQ, 0, "PACKET requests command bytes");
+        assert_eq!(ide.status() & ST_ERR, 0, "PACKET accepted");
+
+        for chunk in packet.chunks_exact(2) {
+            ide.write16(0x1F0, (chunk[0] as u16) | ((chunk[1] as u16) << 8));
+        }
+    }
+
     /// Decode an ATA string field back into bytes (high byte first).
     fn ata_string_bytes(words: &[u16]) -> Vec<u8> {
         let mut out = Vec::new();
@@ -1294,6 +1359,60 @@ mod tests {
         ide.write(0x1F7, CMD_IDENTIFY);
         assert_ne!(ide.status() & ST_ERR, 0, "ERR set for absent slave");
         assert_ne!(ide.error & ERR_ABRT, 0, "ABRT set");
+    }
+
+    #[test]
+    fn atapi_read12_large_request_buffers_only_current_drq_chunk() {
+        let blocks = 96usize;
+        let requested_bytes = blocks * CD_BLOCK;
+        let mut iso = vec![0u8; requested_bytes];
+        for block in 0..blocks {
+            let start = block * CD_BLOCK;
+            for (i, byte) in iso[start..start + CD_BLOCK].iter_mut().enumerate() {
+                *byte = (block as u8).wrapping_mul(17) ^ (i as u8);
+            }
+        }
+        let expected = iso.clone();
+
+        let mut ide = IdeController::new_primary(Vec::new());
+        ide.attach_cdrom(Arc::new(iso));
+
+        let mut packet = [0u8; 12];
+        packet[0] = SCSI_READ_12;
+        packet[6..10].copy_from_slice(&(blocks as u32).to_be_bytes());
+        send_atapi_packet(&mut ide, packet, CD_BLOCK as u16);
+
+        assert_ne!(ide.status() & ST_DRQ, 0, "READ(12) stages first chunk");
+        assert_eq!(ide.status() & ST_ERR, 0, "READ(12) accepted");
+        assert_eq!(ide.buf_len, CD_BLOCK, "first DRQ chunk is byte-count sized");
+        assert_eq!(
+            ide.atapi_data.len(),
+            0,
+            "large ATAPI READ must stream from the ISO instead of copying the requested range"
+        );
+        assert_eq!(
+            ide.atapi_media_remaining, requested_bytes,
+            "stream tracks the full guest request without allocating it"
+        );
+
+        let first = drain_bytes(&mut ide, CD_BLOCK);
+        assert_eq!(
+            &first[..],
+            &expected[..CD_BLOCK],
+            "first block data matches"
+        );
+        assert_ne!(ide.status() & ST_DRQ, 0, "second chunk is staged");
+        assert_eq!(ide.atapi_media_offset, CD_BLOCK);
+        assert_eq!(ide.atapi_media_remaining, requested_bytes - CD_BLOCK);
+
+        let second = drain_bytes(&mut ide, CD_BLOCK);
+        assert_eq!(
+            &second[..],
+            &expected[CD_BLOCK..CD_BLOCK * 2],
+            "second block data matches"
+        );
+        assert_eq!(ide.atapi_media_offset, CD_BLOCK * 2);
+        assert_eq!(ide.atapi_media_remaining, requested_bytes - CD_BLOCK * 2);
     }
 
     #[test]
