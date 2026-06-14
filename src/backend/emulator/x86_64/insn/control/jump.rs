@@ -179,6 +179,7 @@ mod tests {
             segment_override: None,
             evex: None,
             opcode,
+            boundary_gp: false,
         }
     }
 

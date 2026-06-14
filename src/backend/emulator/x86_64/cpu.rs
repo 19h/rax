@@ -449,6 +449,12 @@ pub(super) struct InsnContext {
     /// opcode-derived register / condition-code arguments without it being passed
     /// as a separate parameter.
     pub opcode: u8,
+    /// Set when `fetch` truncated the instruction-byte buffer because the
+    /// instruction stream crossed from canonical into non-canonical linear space.
+    /// When true, running past `bytes_len` surfaces #GP(0) — an architectural fault
+    /// — instead of a fatal internal "instruction too short" error. See
+    /// `out_of_bytes()`.
+    pub boundary_gp: bool,
 }
 
 /// REX2 prefix decoded fields (2-byte prefix for APX EGPR access)
@@ -746,11 +752,26 @@ impl InsnContext {
         self.evex_vvvv()
     }
 
+    /// Error to return when the decoder runs out of fetched instruction bytes.
+    /// If `fetch` truncated the byte buffer at a canonical-address boundary
+    /// (`boundary_gp`), the missing bytes are not an internal error: the
+    /// instruction stream ran into non-canonical linear space, which is a #GP(0).
+    /// The run loop then injects #GP instead of aborting the VM. (#PF truncation is
+    /// returned eagerly by `fetch`, so a truncated fetch is always the #GP case.)
+    #[inline]
+    pub(super) fn out_of_bytes(&self) -> Error {
+        if self.boundary_gp {
+            Error::GeneralProtection { error_code: 0 }
+        } else {
+            Error::Emulator("instruction too short".to_string())
+        }
+    }
+
     /// Consume and return the next byte.
     #[inline(always)]
     pub fn consume_u8(&mut self) -> Result<u8> {
         if self.cursor >= self.bytes_len {
-            return Err(Error::Emulator("instruction too short".to_string()));
+            return Err(self.out_of_bytes());
         }
         let b = self.bytes[self.cursor];
         self.cursor += 1;
@@ -762,7 +783,7 @@ impl InsnContext {
     #[allow(dead_code)]
     pub fn peek_u8(&self) -> Result<u8> {
         if self.cursor >= self.bytes_len {
-            return Err(Error::Emulator("instruction too short".to_string()));
+            return Err(self.out_of_bytes());
         }
         Ok(self.bytes[self.cursor])
     }
@@ -771,7 +792,7 @@ impl InsnContext {
     #[inline(always)]
     pub fn consume_u16(&mut self) -> Result<u16> {
         if self.cursor + 2 > self.bytes_len {
-            return Err(Error::Emulator("instruction too short for u16".to_string()));
+            return Err(self.out_of_bytes());
         }
         let val = u16::from_le_bytes([self.bytes[self.cursor], self.bytes[self.cursor + 1]]);
         self.cursor += 2;
@@ -782,7 +803,7 @@ impl InsnContext {
     #[inline(always)]
     pub fn consume_u32(&mut self) -> Result<u32> {
         if self.cursor + 4 > self.bytes_len {
-            return Err(Error::Emulator("instruction too short for u32".to_string()));
+            return Err(self.out_of_bytes());
         }
         let val = u32::from_le_bytes([
             self.bytes[self.cursor],
@@ -798,7 +819,7 @@ impl InsnContext {
     #[inline(always)]
     pub fn consume_u64(&mut self) -> Result<u64> {
         if self.cursor + 8 > self.bytes_len {
-            return Err(Error::Emulator("instruction too short for u64".to_string()));
+            return Err(self.out_of_bytes());
         }
         let val = u64::from_le_bytes([
             self.bytes[self.cursor],
@@ -1191,7 +1212,12 @@ impl X86_64Vcpu {
     /// Fetch instruction bytes from RIP into a stack buffer.
     /// Returns (buffer, actual_length).
     #[inline]
-    pub(super) fn fetch(&mut self) -> Result<([u8; MAX_INSN_LEN], usize)> {
+    /// Fetch instruction bytes at RIP. Returns `(buf, len, boundary_gp)` where
+    /// `boundary_gp` is true when the byte window was truncated to `len` because
+    /// the bytes beyond it cross into non-canonical linear space (a #GP, not #PF).
+    /// The decoder defers that #GP until/unless it actually needs a truncated byte,
+    /// so a short instruction that merely sits near the boundary still executes.
+    pub(super) fn fetch(&mut self) -> Result<([u8; MAX_INSN_LEN], usize, bool)> {
         // The fetch linear address is CS.base + RIP. In 64-bit mode (CS.L=1) the
         // CS base is architecturally ignored for address generation (treated as
         // 0) even if a descriptor load recorded a non-zero base — so a far
@@ -1206,7 +1232,7 @@ impl X86_64Vcpu {
         let mut buf = [0u8; MAX_INSN_LEN];
         let mut last_err = None;
         match self.mmu.read(rip, &mut buf, &self.sregs) {
-            Ok(()) => return Ok((buf, MAX_INSN_LEN)),
+            Ok(()) => return Ok((buf, MAX_INSN_LEN, false)),
             Err(Error::PageFault { vaddr, error_code }) => {
                 // Instruction fetch page fault - add instruction fetch bit to error code
                 return Err(Error::PageFault {
@@ -1219,7 +1245,17 @@ impl X86_64Vcpu {
         // If we can't read 15 bytes, try smaller amounts
         for len in (1..MAX_INSN_LEN).rev() {
             match self.mmu.read(rip, &mut buf[..len], &self.sregs) {
-                Ok(()) => return Ok((buf, len)),
+                Ok(()) => {
+                    // A shorter read succeeded only because the bytes past `len`
+                    // were unreadable. #PF is returned eagerly above, so the only
+                    // way to land here with a pending fault is a non-canonical
+                    // boundary (#GP). Flag it so the decoder, if it needs one of the
+                    // missing bytes, raises #GP(0) instead of a fatal "instruction
+                    // too short" — but a short instruction that fits in `len` bytes
+                    // still executes normally.
+                    let boundary_gp = matches!(last_err, Some(Error::GeneralProtection { .. }));
+                    return Ok((buf, len, boundary_gp));
+                }
                 Err(Error::PageFault { vaddr, error_code }) => {
                     return Err(Error::PageFault {
                         vaddr,
@@ -1334,6 +1370,9 @@ impl X86_64Vcpu {
                 segment_override: cached.segment_override,
                 evex: None,
                 opcode: cached.opcode,
+                // Boundary-truncated instructions are never cached (see the fill
+                // path below), so a cache hit always has the full instruction.
+                boundary_gp: false,
             };
 
             // Enforce LOCK-prefix legality (#UD on illegal use) before dispatch.
@@ -1369,10 +1408,10 @@ impl X86_64Vcpu {
         #[cfg(feature = "profiling")]
         profiling::record_cache_miss();
 
-        let (bytes, bytes_len) = self.fetch()?;
+        let (bytes, bytes_len, boundary_gp) = self.fetch()?;
 
         // Decode prefixes (mode-aware: 0xD5 is REX2 in long mode, AAD otherwise)
-        let mut ctx = Decoder::decode_prefixes(bytes, bytes_len, self.sregs.cs.l)?;
+        let mut ctx = Decoder::decode_prefixes(bytes, bytes_len, boundary_gp, self.sregs.cs.l)?;
 
         // Determine operand size (64-bit mode defaults to 32-bit; compat depends on CS.D).
         ctx.op_size = if self.sregs.cs.l {
@@ -1413,23 +1452,29 @@ impl X86_64Vcpu {
         let has_lock = ctx.bytes[..opcode_cursor.min(ctx.bytes_len)].contains(&0xF0);
 
         // Cache the decoded instruction (incl. raw bytes so hits skip fetch()).
-        self.decode_cache[cache_idx] = DecodeCacheEntry {
-            rip,
-            mode_tag,
-            opcode,
-            op_size: ctx.op_size,
-            cursor: opcode_cursor,
-            rex: ctx.rex,
-            rex2: ctx.rex2,
-            operand_size_override: ctx.operand_size_override,
-            address_size_override: ctx.address_size_override,
-            rep_prefix: ctx.rep_prefix,
-            segment_override: ctx.segment_override,
-            bytes: ctx.bytes,
-            bytes_len: ctx.bytes_len,
-            has_lock,
-            handler,
-        };
+        // Never cache a boundary-truncated fetch: its byte window is short, so a
+        // later cache hit would re-run the handler and hit "instruction too short"
+        // without the boundary_gp flag, turning the architectural #GP back into a
+        // fatal error. A fresh decode re-derives boundary_gp every time instead.
+        if !boundary_gp {
+            self.decode_cache[cache_idx] = DecodeCacheEntry {
+                rip,
+                mode_tag,
+                opcode,
+                op_size: ctx.op_size,
+                cursor: opcode_cursor,
+                rex: ctx.rex,
+                rex2: ctx.rex2,
+                operand_size_override: ctx.operand_size_override,
+                address_size_override: ctx.address_size_override,
+                rep_prefix: ctx.rep_prefix,
+                segment_override: ctx.segment_override,
+                bytes: ctx.bytes,
+                bytes_len: ctx.bytes_len,
+                has_lock,
+                handler,
+            };
+        }
 
         // Enforce LOCK-prefix legality (#UD on illegal use) before dispatch.
         // `opcode_cursor` is the primary-opcode offset; prefixes precede it. Only

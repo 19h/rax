@@ -1776,3 +1776,100 @@ fn test_performance_translation_speed() {
     // Just verify it completes in reasonable time
     assert!(elapsed.as_secs() < 5, "Should complete quickly");
 }
+
+// ============================================================================
+// Regression: issue #53 — a multi-byte instruction whose bytes cross from
+// canonical into non-canonical linear space must deliver an architectural
+// #GP(0), not abort the VM with a fatal "instruction too short" error.
+// ============================================================================
+
+/// Map the last canonical 4 KiB page (0x0000_7FFF_FFFF_F000) to `code_paddr`.
+/// Virtual 0x0000_7FFF_FFFF_F000 decodes to PML4[255]/PDPT[511]/PD[511]/PT[511];
+/// the physical pages used for the high-half chain sit above all other test
+/// structures so they cannot collide with the identity tables or handlers.
+fn map_last_canonical_page(mem: &GuestMemoryMmap, code_paddr: u64) {
+    use pte_flags::*;
+    let flags = PRESENT | WRITABLE | USER;
+    const PDPT_HI: u64 = 0x70000;
+    const PD_HI: u64 = 0x71000;
+    const PT_HI: u64 = 0x72000;
+    mem.write_slice(&(PDPT_HI | flags).to_le_bytes(), GuestAddress(PML4_ADDR + 255 * 8))
+        .unwrap();
+    mem.write_slice(&(PD_HI | flags).to_le_bytes(), GuestAddress(PDPT_HI + 511 * 8))
+        .unwrap();
+    mem.write_slice(&(PT_HI | flags).to_le_bytes(), GuestAddress(PD_HI + 511 * 8))
+        .unwrap();
+    mem.write_slice(&(code_paddr | flags).to_le_bytes(), GuestAddress(PT_HI + 511 * 8))
+        .unwrap();
+}
+
+#[test]
+fn test_noncanonical_fetch_boundary_delivers_gp_not_vm_abort() {
+    const CODE_HI_PADDR: u64 = 0x73000;
+    const LAST_CANON_PAGE: u64 = 0x0000_7FFF_FFFF_F000;
+
+    let mem = create_memory(16);
+    setup_identity_page_tables(&mem, pte_flags::WRITABLE | pte_flags::USER);
+    setup_idt(&mem);
+    setup_handlers(&mem);
+    map_last_canonical_page(&mem, CODE_HI_PADDR);
+    clear_result(&mem);
+
+    // MOV EAX, imm32 (0xB8 + 4 immediate bytes) placed so RIP sits 3 bytes below
+    // the canonical boundary: the opcode and two immediate bytes are canonical,
+    // but the rest of the immediate lives at 0x0000_8000_0000_0000, which is
+    // non-canonical. Only the 3 reachable bytes physically exist.
+    let rip = LAST_CANON_PAGE + 0xFFD; // 0x0000_7FFF_FFFF_FFFD
+    mem.write_slice(&[0xB8, 0x00, 0x00], GuestAddress(CODE_HI_PADDR + 0xFFD))
+        .unwrap();
+
+    let mut vcpu = create_paged_vcpu(mem.clone());
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rip = rip;
+    vcpu.set_regs(&regs).unwrap();
+
+    // End-to-end: the fetch truncates at the boundary, the decoder surfaces #GP(0)
+    // when it needs the immediate, the run loop injects #GP (vector 13), and the
+    // GP handler records marker 0x0D and halts. Before the fix the decoder
+    // returned a fatal Error::Emulator("instruction too short") and run() aborted.
+    let exit = vcpu.run();
+    assert!(
+        matches!(exit, Ok(VcpuExit::Hlt)),
+        "non-canonical fetch boundary should deliver #GP to the handler then HLT, got {exit:?}",
+    );
+    let (_error_code, _cr2, marker) = read_result(&mem);
+    assert_eq!(
+        marker, 0x0D,
+        "#GP handler must run (marker 0x0D) instead of the VM aborting",
+    );
+}
+
+#[test]
+fn test_noncanonical_fetch_boundary_step_returns_gp() {
+    // Same setup as above, but assert the precise error surfaced by step(): the
+    // decoder must return #GP(0) (which run() injects), not the pre-fix fatal
+    // Error::Emulator("instruction too short").
+    use rax::error::Error;
+    const CODE_HI_PADDR: u64 = 0x73000;
+    const LAST_CANON_PAGE: u64 = 0x0000_7FFF_FFFF_F000;
+
+    let mem = create_memory(16);
+    setup_identity_page_tables(&mem, pte_flags::WRITABLE | pte_flags::USER);
+    setup_idt(&mem);
+    setup_handlers(&mem);
+    map_last_canonical_page(&mem, CODE_HI_PADDR);
+
+    let rip = LAST_CANON_PAGE + 0xFFD;
+    mem.write_slice(&[0xB8, 0x00, 0x00], GuestAddress(CODE_HI_PADDR + 0xFFD))
+        .unwrap();
+
+    let mut vcpu = create_paged_vcpu(mem.clone());
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rip = rip;
+    vcpu.set_regs(&regs).unwrap();
+
+    match vcpu.step() {
+        Err(Error::GeneralProtection { error_code: 0 }) => {}
+        other => panic!("expected #GP(0) for non-canonical fetch boundary, got {other:?}"),
+    }
+}
