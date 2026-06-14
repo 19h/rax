@@ -3176,20 +3176,10 @@ impl HexagonLifter {
                 ControlFlow::Fallthrough
             }
 
-            // Store-conditional (`memw_locked(Rs,Pd)=Rt` / `memd_locked(Rs,Pd)=Rtt`):
-            // store at `Rs+0` IF the LL reservation matches this address, then write
-            // the success predicate `Pd`. Maps to `OpKind::StoreExclusive`, whose
-            // FlatMemory monitor semantics (succeed iff `exclusive_addr == addr`,
-            // then clear it) match the interpreter's `lock_addr` check exactly; both
-            // monitors start CLEAR, so a lone SC (the only form possible in this
-            // single-packet harness — LL and SC are separate packets) FAILS on both
-            // sides identically. StoreExclusive writes its `status` vreg with the
-            // ARM convention (0 = success, 1 = fail); the Hexagon predicate is the
-            // OPPOSITE polarity AND a full byte (0xff = success, 0x00 = fail), so
-            // convert: `success_truth = status XOR 1` (status is 0/1), then expand
-            // to the 0x00/0xff predicate byte via `emit_pred_full`. Release stores
-            // (`success_pred == None`) never reach the lifter as StoreCond with a
-            // predicate; only the `_locked` forms carry `success_pred = Some(Pd)`.
+            // Store-conditional / store-release at `Rs+0`. The locked forms
+            // (`success_pred = Some(Pd)`) use the exclusive monitor and write the
+            // success predicate. Release stores (`success_pred = None`) are plain
+            // unconditional stores with no reservation or predicate side effect.
             DecodedInsn::StoreCond {
                 src,
                 base,
@@ -3227,14 +3217,14 @@ impl HexagonLifter {
                 } else {
                     MemWidth::B4
                 };
-                let status = ctx.alloc_vreg();
-                push_op!(OpKind::StoreExclusive {
-                    status,
-                    src: store_src,
-                    addr: ea,
-                    width: sc_width,
-                });
                 if let Some(pd) = success_pred {
+                    let status = ctx.alloc_vreg();
+                    push_op!(OpKind::StoreExclusive {
+                        status,
+                        src: store_src,
+                        addr: ea,
+                        width: sc_width,
+                    });
                     // success_truth = status XOR 1  (0 -> 1 success, 1 -> 0 fail)
                     let success_truth = ctx.alloc_vreg();
                     push_op!(OpKind::Xor {
@@ -3245,6 +3235,12 @@ impl HexagonLifter {
                         flags: FlagUpdate::None,
                     });
                     self.emit_pred_full(&mut ops, &mut op_id, addr, ctx, *pd, success_truth);
+                } else {
+                    push_op!(OpKind::Store {
+                        src: store_src,
+                        addr: ea,
+                        width: sc_width,
+                    });
                 }
                 ControlFlow::Fallthrough
             }
@@ -20776,5 +20772,71 @@ mod tests {
             }
             other => panic!("expected GP Mov, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn store_release_lifts_as_unconditional_store() {
+        let mut lifter = HexagonLifter::default_isa();
+        let mut ctx = LiftContext::new(SourceArch::Hexagon);
+        let insn = DecodedInsn::StoreCond {
+            src: 3,
+            base: 4,
+            width: HexMemWidth::Word,
+            success_pred: None,
+        };
+
+        let (ops, flow) = lifter.lift_insn_inner(&insn, 0x1000, &mut ctx).unwrap();
+
+        assert!(matches!(flow, ControlFlow::Fallthrough));
+        assert_eq!(ops.len(), 1);
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::StoreExclusive { .. }))
+        );
+        match &ops[0].kind {
+            OpKind::Store { src, addr, width } => {
+                assert_eq!(*src, lifter.hex_reg(3));
+                assert!(matches!(addr, Address::Direct(reg) if *reg == lifter.hex_reg(4)));
+                assert_eq!(*width, MemWidth::B4);
+            }
+            other => panic!("expected release store to lift as Store, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn store_conditional_still_lifts_as_exclusive_store() {
+        let mut lifter = HexagonLifter::default_isa();
+        let mut ctx = LiftContext::new(SourceArch::Hexagon);
+        let insn = DecodedInsn::StoreCond {
+            src: 3,
+            base: 4,
+            width: HexMemWidth::Word,
+            success_pred: Some(2),
+        };
+
+        let (ops, flow) = lifter.lift_insn_inner(&insn, 0x1000, &mut ctx).unwrap();
+
+        assert!(matches!(flow, ControlFlow::Fallthrough));
+        assert!(ops.iter().any(|op| matches!(
+            &op.kind,
+            OpKind::StoreExclusive {
+                src,
+                addr,
+                width,
+                ..
+            } if *src == lifter.hex_reg(3)
+                && matches!(addr, Address::Direct(reg) if *reg == lifter.hex_reg(4))
+                && *width == MemWidth::B4
+        )));
+        assert!(!ops.iter().any(|op| matches!(op.kind, OpKind::Store { .. })));
+        assert!(ops.iter().any(|op| matches!(
+            &op.kind,
+            OpKind::And {
+                dst,
+                src2: SrcOperand::Imm(0xff),
+                width: OpWidth::W32,
+                ..
+            } if *dst == lifter.hex_pred(2)
+        )));
     }
 }
