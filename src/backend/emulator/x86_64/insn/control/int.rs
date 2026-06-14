@@ -66,7 +66,7 @@ pub fn int_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     // installed) the guest IDT is absent — service the well-known BIOS vectors
     // (INT 10h/13h/15h/16h) natively. Unhandled vectors fall through.
     if vcpu.sregs.cr0 & 1 == 0
-        && super::super::super::bios::active()
+        && super::super::super::bios::active(vcpu)
         && super::super::super::bios::service(vcpu, vector)?
     {
         return Ok(None);
