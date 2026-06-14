@@ -18,6 +18,11 @@ use crate::error::{Error, Result};
 use super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::{flags, insn};
 
+#[inline]
+fn apx_pair_second_stack_slot_addr(first_slot: u64) -> u64 {
+    first_slot.wrapping_add(8)
+}
+
 impl X86_64Vcpu {
     /// Execute EVEX-encoded instruction.
     /// mm: opcode map (1=0F, 2=0F38, 3=0F3A)
@@ -5090,7 +5095,7 @@ impl X86_64Vcpu {
 
         // Pop reg1 first (from RSP), then reg2 (from RSP+8)
         let val1 = self.read_mem(self.regs.rsp, 8)?;
-        let val2 = self.read_mem(self.regs.rsp + 8, 8)?;
+        let val2 = self.read_mem(apx_pair_second_stack_slot_addr(self.regs.rsp), 8)?;
         self.regs.rsp = self.regs.rsp.wrapping_add(16);
 
         self.set_reg(reg1, val1, 8);
@@ -5114,7 +5119,7 @@ impl X86_64Vcpu {
         let new_rsp = self.regs.rsp.wrapping_sub(16);
 
         self.write_mem(new_rsp, val1, 8)?;
-        self.write_mem(new_rsp + 8, val2, 8)?;
+        self.write_mem(apx_pair_second_stack_slot_addr(new_rsp), val2, 8)?;
         self.regs.rsp = new_rsp;
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
@@ -6114,6 +6119,12 @@ mod tests {
     fn read_u64(vcpu: &mut X86_64Vcpu, addr: u64) -> u64 {
         let sregs = vcpu.sregs.clone();
         vcpu.mmu.read_u64(addr, &sregs).unwrap()
+    }
+
+    #[test]
+    fn apx_pair_second_stack_slot_address_wraps() {
+        assert_eq!(apx_pair_second_stack_slot_addr(u64::MAX - 7), 0);
+        assert_eq!(apx_pair_second_stack_slot_addr(0x1000), 0x1008);
     }
 
     #[test]
