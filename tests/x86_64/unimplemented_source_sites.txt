@@ -1,0 +1,66 @@
+# Live x86_64 emulator diagnostics that report unimplemented, unhandled, or
+# unsupported instruction paths.
+#
+# Format:
+# source-relative-path|source-occurrence-count|classification|source-fragment
+#
+# Classifications:
+# dead-diagnostic      Stale diagnostic in source that is not on active dispatch.
+# encoding-hole        Reserved or undefined opcode/ModRM/prefix combinations.
+# manifest-diff        Covered by an XML/generated manifest differential corpus.
+# non-instruction      Emulator support path, not an instruction implementation.
+# system-gap           Valid privileged/system forms needing a system-state oracle.
+# valid-gap-needs-diff Valid instruction-family gap still needing differential work.
+#
+# Keep this sorted by path, then source fragment.
+src/backend/emulator/x86_64/dispatch/twobyte/dispatch/escape_38.rs|1|valid-gap-needs-diff|unimplemented 0x0F 0x38 opcode: {:#04x} at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/dispatch/escape_3a.rs|1|valid-gap-needs-diff|unimplemented 0x0F 0x3A opcode: {:#04x} at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/dispatch/group7.rs|1|system-gap|unimplemented 0F AE /{} (mod=3) at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/dispatch/group7.rs|1|system-gap|unimplemented 0F AE /{} at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/dispatch/primary.rs|1|valid-gap-needs-diff|unimplemented 0x0F 0xD6 opcode variant at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/dispatch/primary.rs|1|valid-gap-needs-diff|unimplemented 0x0F 0xE6 opcode variant at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/sse.rs|1|encoding-hole|unimplemented 0x0F 0x71 /r{} at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/sse.rs|1|encoding-hole|unimplemented 0x0F 0x72 /r{} at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/sse.rs|1|encoding-hole|unimplemented 0x0F 0x73 /r{} at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/sse.rs|1|valid-gap-needs-diff|unimplemented 0x0F 0x7C opcode variant at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/sse.rs|1|valid-gap-needs-diff|unimplemented 0x0F 0x7D opcode variant at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/sse.rs|1|encoding-hole|unimplemented 0x0F 0xC7 /{} at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/sse.rs|1|encoding-hole|unimplemented 0x0F 0xD0 opcode variant at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/sse.rs|1|valid-gap-needs-diff|unimplemented 0x0F {:#04x} opcode variant at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/sse.rs|1|encoding-hole|unimplemented MMX 0x0F 0x71 /r{} at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/sse.rs|1|encoding-hole|unimplemented MMX 0x0F 0x72 /r{} at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/twobyte/sse.rs|1|encoding-hole|unimplemented MMX 0x0F 0x73 /r{} at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/vex/convert.rs|1|encoding-hole|unimplemented VEX 0x5B with pp={}
+src/backend/emulator/x86_64/dispatch/vex/convert.rs|1|encoding-hole|unimplemented VEX 0xE6 with pp={}
+src/backend/emulator/x86_64/dispatch/vex/fma.rs|1|manifest-diff|unimplemented VEX FMA opcode {:#x}
+src/backend/emulator/x86_64/dispatch/vex/shift.rs|1|encoding-hole|unimplemented VEX.0F 71 /{} at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/vex/shift.rs|1|encoding-hole|unimplemented VEX.0F 72 /{} at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/vex/shift.rs|1|encoding-hole|unimplemented VEX.0F 73 /{} at RIP={:#x}
+src/backend/emulator/x86_64/dispatch/vex/shuffle/shufp.rs|1|encoding-hole|unimplemented VEX shuffle pp={}
+src/backend/emulator/x86_64/insn/bit/test.rs|1|encoding-hole|unimplemented 0F BA /{} at RIP={:#x}
+src/backend/emulator/x86_64/insn/bmi.rs|1|encoding-hole|unimplemented VEX.0F38.01 /{}
+src/backend/emulator/x86_64/insn/bmi.rs|1|encoding-hole|unimplemented VEX.0F38.02 /{}
+src/backend/emulator/x86_64/insn/bmi.rs|1|encoding-hole|unimplemented VEX.0F38.F3 /{}
+src/backend/emulator/x86_64/insn/fpu/escape_d9.rs|1|encoding-hole|unimplemented D9 memory opcode reg={} at RIP={:#x}
+src/backend/emulator/x86_64/insn/fpu/escape_d9.rs|1|encoding-hole|unimplemented D9 opcode modrm={:#x} at RIP={:#x}
+src/backend/emulator/x86_64/insn/fpu/escape_db.rs|1|encoding-hole|unimplemented DB memory opcode reg={} at RIP={:#x}
+src/backend/emulator/x86_64/insn/fpu/escape_db.rs|1|encoding-hole|unimplemented DB opcode modrm={:#x} at RIP={:#x}
+src/backend/emulator/x86_64/insn/fpu/escape_dc.rs|1|encoding-hole|unimplemented DC register opcode modrm={:#x} at RIP={:#x}
+src/backend/emulator/x86_64/insn/fpu/escape_dd.rs|1|encoding-hole|unimplemented DD memory opcode reg={} at RIP={:#x}
+src/backend/emulator/x86_64/insn/fpu/escape_dd.rs|1|encoding-hole|unimplemented DD opcode modrm={:#x} at RIP={:#x}
+src/backend/emulator/x86_64/insn/fpu/escape_de.rs|1|encoding-hole|unimplemented DE opcode modrm={:#x} at RIP={:#x}
+src/backend/emulator/x86_64/insn/fpu/escape_df.rs|1|encoding-hole|unimplemented DF opcode modrm={:#x} at RIP={:#x}
+src/backend/emulator/x86_64/insn/logic/group3.rs|1|encoding-hole|unimplemented 0xF6 /op: {}
+src/backend/emulator/x86_64/insn/logic/group3.rs|1|encoding-hole|unimplemented 0xF7 /op: {}
+src/backend/emulator/x86_64/insn/shift/core.rs|1|encoding-hole|unimplemented shift op: {}
+src/backend/emulator/x86_64/insn/shift/core.rs|1|encoding-hole|unimplemented shift8 op: {}
+src/backend/emulator/x86_64/insn/simd/avx512.rs|1|manifest-diff|unimplemented EVEX FMA opcode {:#x}
+src/backend/emulator/x86_64/insn/simd/avx512.rs|1|manifest-diff|unimplemented EVEX FP16 FMA opcode {:#x}
+src/backend/emulator/x86_64/insn/simd/shuffle.rs|1|dead-diagnostic|PSHUFW (MMX) not implemented
+src/backend/emulator/x86_64/insn/simd/sse.rs|1|encoding-hole|unimplemented PREFETCHW hint /{} at RIP={:#x}
+src/backend/emulator/x86_64/insn/simd/sse.rs|1|encoding-hole|unimplemented PREFETCHh hint /{} at RIP={:#x}
+src/backend/emulator/x86_64/insn/simd/sse.rs|2|encoding-hole|unimplemented PSUB opcode {:#x} at RIP={:#x}
+src/backend/emulator/x86_64/insn/system/control_regs.rs|5|system-gap|unhandled 0F 01 modrm={:#04x} at RIP={:#x}
+src/backend/emulator/x86_64/insn/system/control_regs.rs|1|system-gap|unimplemented 0F 01 /{} at RIP={:#x}
+src/backend/emulator/x86_64/insn/system/control_regs.rs|4|system-gap|unsupported
+src/backend/emulator/x86_64/insn/system/descriptor.rs|1|system-gap|unimplemented 0F 00 /{} at RIP={:#x}

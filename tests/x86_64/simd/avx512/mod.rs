@@ -1,15 +1,16 @@
+mod evex_rm_reg_ext;
+mod kadd_mask;
+mod kand_kor_kxor;
+mod kandn_knot_mask;
+mod kmov;
+mod ktest_kunpck_kshift;
+mod vaddps_zmm;
+mod vcomish_vucomish;
+mod vdivps_zmm;
 mod vmovaps_zmm;
 mod vmovups_zmm;
-mod vaddps_zmm;
-mod vsubps_zmm;
 mod vmulps_zmm;
-mod vdivps_zmm;
-mod evex_rm_reg_ext;
-mod kmov;
-mod kand_kor_kxor;
-mod kadd_mask;
-mod kandn_knot_mask;
-mod ktest_kunpck_kshift;
+mod vsubps_zmm;
 
 // AVX-512 FP16 Instructions
 mod vaddph_vsubph_vmulph_vdivph;

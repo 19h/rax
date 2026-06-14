@@ -786,11 +786,7 @@ impl SmirInterpreter {
                 let val = self.sign_extend(ctx.read_vreg(*src) & width.mask(), *width);
                 let amt = self.read_src_operand(ctx, amount) & 0x3F;
                 let result = if amt >= width.bits() as u64 {
-                    if (val as i64) < 0 {
-                        width.mask()
-                    } else {
-                        0
-                    }
+                    if (val as i64) < 0 { width.mask() } else { 0 }
                 } else {
                     ((val as i64 >> amt) as u64) & width.mask()
                 };
@@ -1196,7 +1192,7 @@ impl SmirInterpreter {
                     accv += 0x4000_0000i128;
                 }
                 let shifted = accv >> 31; // arithmetic shift of the signed accumulator
-                                          // Saturate to signed 32 bits with the sticky USR:OVF bit.
+                // Saturate to signed 32 bits with the sticky USR:OVF bit.
                 let lo = i32::MIN as i128;
                 let hi = i32::MAX as i128;
                 let (clamped, ovf) = if shifted < lo {
@@ -2403,11 +2399,7 @@ impl SmirInterpreter {
                     // Integer vector divide is not a NEON op; guard against
                     // division-by-zero in case a malformed op reaches here.
                     self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
-                        if b == 0 {
-                            0
-                        } else {
-                            a.wrapping_div(b)
-                        }
+                        if b == 0 { 0 } else { a.wrapping_div(b) }
                     });
                 }
             },
@@ -2677,20 +2669,12 @@ impl SmirInterpreter {
                 match elem {
                     VecElementType::F32 => {
                         self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| {
-                            if *min {
-                                a.min(b)
-                            } else {
-                                a.max(b)
-                            }
+                            if *min { a.min(b) } else { a.max(b) }
                         });
                     }
                     VecElementType::F64 => {
                         self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| {
-                            if *min {
-                                a.min(b)
-                            } else {
-                                a.max(b)
-                            }
+                            if *min { a.min(b) } else { a.max(b) }
                         });
                     }
                     _ => {
@@ -2733,19 +2717,11 @@ impl SmirInterpreter {
                         }
                         VecPermuteKind::Uzp1 => {
                             let idx = 2 * d;
-                            if idx < n {
-                                geta(idx)
-                            } else {
-                                getb(idx - n)
-                            }
+                            if idx < n { geta(idx) } else { getb(idx - n) }
                         }
                         VecPermuteKind::Uzp2 => {
                             let idx = 2 * d + 1;
-                            if idx < n {
-                                geta(idx)
-                            } else {
-                                getb(idx - n)
-                            }
+                            if idx < n { geta(idx) } else { getb(idx - n) }
                         }
                         VecPermuteKind::Trn1 => {
                             if d % 2 == 0 {
@@ -4166,7 +4142,7 @@ impl SmirInterpreter {
                     // fSE32_64(Vu.w[i]) << 32 — Vu.w is SIGN-extended in the sem.
                     let shift = ((Self::get_lane(&vu, i, 32) as u32 as i32 as i64) << 32) as i64;
                     let xlo = Self::get_lane(&x0, i, 32) as u32 as i64; // ZE lo
-                                                                        // SE hi: (fSE32_64(x0.w[i]) << 32) | ZE lo (matches sem's get_w<<32).
+                    // SE hi: (fSE32_64(x0.w[i]) << 32) | ZE lo (matches sem's get_w<<32).
                     let xhi = (Self::get_lane(&x0, i, 32) as u32 as i32 as i64) << 32;
                     let mask = xhi | xlo;
                     let lomask: i64 = (1i64 << 32) - 1;
@@ -4204,7 +4180,7 @@ impl SmirInterpreter {
                 let u1 = Self::read_vec(ctx, *src_hi); // Vuu.v[1]
                 let cv0 = Self::read_vec(ctx, *src2_lo); // Vvv.v[0] -> c0j
                 let cv1 = Self::read_vec(ctx, *src2_hi); // Vvv.v[1] -> c1j
-                                                         // unsigned byte k (0..3) of word lane i.
+                // unsigned byte k (0..3) of word lane i.
                 let ub = |b: &VecValue, i: u8, k: u8| -> i64 {
                     (Self::get_lane(b, i * 4 + k, 8) & 0xff) as i64
                 };
@@ -6150,11 +6126,7 @@ impl SmirInterpreter {
             ],
         ];
         let p = (phase & 3) as usize;
-        if horizontal {
-            H_TERMS[p]
-        } else {
-            V_TERMS[p]
-        }
+        if horizontal { H_TERMS[p] } else { V_TERMS[p] }
     }
 
     fn get_lane(value: &VecValue, lane: u8, elem_bits: u32) -> u64 {
@@ -6343,11 +6315,7 @@ impl SmirInterpreter {
                     (sx(a) as i128 - sx(b) as i128).unsigned_abs() as u64
                 } else {
                     let (x, y) = (a & mask, b & mask);
-                    if x >= y {
-                        x - y
-                    } else {
-                        y - x
-                    }
+                    if x >= y { x - y } else { y - x }
                 }
             }
         };
@@ -6535,17 +6503,9 @@ fn hf64_class_bit(b: u64) -> u32 {
     let exp = (b >> 52) & 0x7ff;
     let mant = b & 0x000f_ffff_ffff_ffff;
     if exp == 0 {
-        if mant == 0 {
-            0
-        } else {
-            2
-        }
+        if mant == 0 { 0 } else { 2 }
     } else if exp == 0x7ff {
-        if mant == 0 {
-            3
-        } else {
-            4
-        }
+        if mant == 0 { 3 } else { 4 }
     } else {
         1
     }
@@ -6613,11 +6573,7 @@ fn hf_sf_minmax(a: u32, b: u32, is_min: bool) -> u32 {
     } else {
         fa > fb
     };
-    if pick_a {
-        a
-    } else {
-        b
-    }
+    if pick_a { a } else { b }
 }
 fn hf_df_minmax(a: u64, b: u64, is_min: bool) -> u64 {
     let an = hf64_is_nan(a);
@@ -6644,39 +6600,23 @@ fn hf_df_minmax(a: u64, b: u64, is_min: bool) -> u64 {
     } else {
         fa > fb
     };
-    if pick_a {
-        a
-    } else {
-        b
-    }
+    if pick_a { a } else { b }
 }
 
 #[inline]
 fn hf_round_f32(f: f32, chop: bool) -> f32 {
-    if chop {
-        f.trunc()
-    } else {
-        f.round_ties_even()
-    }
+    if chop { f.trunc() } else { f.round_ties_even() }
 }
 #[inline]
 fn hf_round_f64(f: f64, chop: bool) -> f64 {
-    if chop {
-        f.trunc()
-    } else {
-        f.round_ties_even()
-    }
+    if chop { f.trunc() } else { f.round_ties_even() }
 }
 
 /// `float_to_sint` clamp (mirrors sem/float.rs).
 fn hf_to_sint(ri: f64, min: i128, max: i128) -> i128 {
     let v = ri as i128;
     if v < min || v > max || !ri.is_finite() {
-        if ri.is_sign_negative() {
-            min
-        } else {
-            max
-        }
+        if ri.is_sign_negative() { min } else { max }
     } else {
         v
     }
@@ -6756,11 +6696,7 @@ fn hex_sf_fma(araw: u32, braw: u32, craw: u32, negate_product: bool) -> u32 {
     let fb = f32::from_bits(braw);
     let fc = f32::from_bits(craw);
     let r = fa.mul_add(fb, fc);
-    if r.is_nan() {
-        0xFFFF_FFFF
-    } else {
-        r.to_bits()
-    }
+    if r.is_nan() { 0xFFFF_FFFF } else { r.to_bits() }
 }
 
 // ============================================================================
@@ -6846,11 +6782,7 @@ fn hr_getexp(b: u32) -> i32 {
 }
 #[inline]
 fn hr_infinite(neg: bool) -> u32 {
-    if neg {
-        0xff80_0000
-    } else {
-        0x7f80_0000
-    }
+    if neg { 0xff80_0000 } else { 0x7f80_0000 }
 }
 
 /// Exact (sign, m, e) decomposition of a finite f32 (caller excludes NaN/inf).
@@ -6998,24 +6930,8 @@ fn hr_add_scaled(
     let (kb, rb) = split(mb, eb);
     let sa = if neg_a { -ka } else { ka };
     let sb = if neg_b { -kb } else { kb };
-    let res_a = if ra {
-        if neg_a {
-            -1i32
-        } else {
-            1
-        }
-    } else {
-        0
-    };
-    let res_b = if rb {
-        if neg_b {
-            -1i32
-        } else {
-            1
-        }
-    } else {
-        0
-    };
+    let res_a = if ra { if neg_a { -1i32 } else { 1 } } else { 0 };
+    let res_b = if rb { if neg_b { -1i32 } else { 1 } } else { 0 };
     let res_sign = res_a + res_b;
     let mut sum = sa + sb;
     if sum == 0 {
@@ -7520,11 +7436,7 @@ fn hex_tlbmatch(rss: u64, rt: u32) -> u8 {
     mask &= 0xffff_ffffu32.wrapping_shl(2 * size);
     let valid = (tlbhi >> 31) & 1 != 0;
     let matched = valid && ((tlbhi & mask) == (rt & mask));
-    if matched {
-        0xff
-    } else {
-        0x00
-    }
+    if matched { 0xff } else { 0x00 }
 }
 
 /// Port of `arch_sf_recip_common`. Returns `(ret, RsV, RtV, RdV, PeV)`.
@@ -7666,13 +7578,7 @@ fn hex_fp_eval(op: HexFpOp, a: u64, b: u64) -> u64 {
     let a32 = a as u32;
     let b32 = b as u32;
     // Predicate helpers (Hexagon scalar predicate byte: 0x00 / 0xff).
-    let pred = |hit: bool| -> u64 {
-        if hit {
-            0xff
-        } else {
-            0x00
-        }
-    };
+    let pred = |hit: bool| -> u64 { if hit { 0xff } else { 0x00 } };
     match op {
         // ---- single compares ----
         SfCmpEq => pred(hf_cmp_sf(a32, b32) == HfRel::Equal),
@@ -8671,7 +8577,7 @@ mod tests {
         assert_eq!(f(Add, 0xFF, 0x02, 8, false), 0x01);
         assert_eq!(f(Sub, 0x01, 0x02, 8, false), 0xFF);
         assert_eq!(f(Mul, 0x10, 0x10, 8, false), 0x00); // 256 & 0xFF
-                                                        // bitwise
+        // bitwise
         assert_eq!(f(And, 0xF0, 0x3C, 8, false), 0x30);
         assert_eq!(f(Or, 0xF0, 0x0F, 8, false), 0xFF);
         assert_eq!(f(Xor, 0xFF, 0x0F, 8, false), 0xF0);
@@ -8681,16 +8587,16 @@ mod tests {
         assert_eq!(f(Max, 0xFF, 0x01, 8, true), 0x01); // smax(-1,1)
         assert_eq!(f(Min, 0xFF, 0x01, 8, false), 0x01); // umin(255,1)
         assert_eq!(f(Min, 0xFF, 0x01, 8, true), 0xFF); // smin(-1,1)
-                                                       // saturating
+        // saturating
         assert_eq!(f(AddSat, 0xFF, 0x10, 8, false), 0xFF); // u8 clamp
         assert_eq!(f(AddSat, 0x7F, 0x01, 8, true), 0x7F); // i8 +overflow -> 127
         assert_eq!(f(SubSat, 0x01, 0x02, 8, false), 0x00); // u8 underflow -> 0
         assert_eq!(f(SubSat, 0x80, 0x01, 8, true), 0x80); // i8 -128-1 -> -128
-                                                          // average (truncating vs rounding)
+        // average (truncating vs rounding)
         assert_eq!(f(Avg, 0xFF, 0x01, 8, false), 0x80); // (255+1)/2
         assert_eq!(f(Avg, 0x02, 0x03, 8, false), 0x02); // (5)/2 trunc
         assert_eq!(f(AvgRnd, 0x02, 0x03, 8, false), 0x03); // (5+1)/2
-                                                           // absolute difference
+        // absolute difference
         assert_eq!(f(AbsDiff, 0x01, 0x03, 8, false), 0x02);
         assert_eq!(f(AbsDiff, 0xFF, 0x01, 8, true), 0x02); // |-1 - 1|
     }
@@ -9661,7 +9567,7 @@ mod tests {
             },
         );
         assert_eq!(even, [0x0000_000F_0000_000Fu64; 16]); // 3*5 = 15
-                                                          // odd pick: 3 * 7 = 21 = 0x15.
+        // odd pick: 3 * 7 = 21 = 0x15.
         let odd = run_vec2(
             v0,
             v1,
@@ -10417,7 +10323,7 @@ mod tests {
             },
         );
         assert_eq!(out[0], 0xBBBB_BBBB_BBBB_BBBBu64); // bytes 0-7 from Vv
-                                                      // bytes 120-123 = 0xBB (from Vv), 124-127 = 0xAA (wrapped from Vu)
+        // bytes 120-123 = 0xBB (from Vv), 124-127 = 0xAA (wrapped from Vu)
         assert_eq!(out[15], 0xAAAA_AAAA_BBBB_BBBBu64);
     }
 

@@ -1,6 +1,6 @@
 use rax::cpu::Registers;
 
-use crate::common::{run_until_hlt, setup_vm, write_mem_at_u16, zf_set, DATA_ADDR};
+use crate::common::{DATA_ADDR, run_until_hlt, setup_vm, write_mem_at_u16, zf_set};
 
 // LSL - Load Segment Limit
 // Opcode: 0F 03 /r

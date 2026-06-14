@@ -76,24 +76,31 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-    pub(in crate::backend::emulator::x86_64) fn execute_vex_broadcast_i128(
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_broadcast_128(
         &mut self,
         ctx: &mut InsnContext,
         vex_l: u8,
+        vvvv: u8,
+        mnemonic: &str,
     ) -> Result<Option<VcpuExit>> {
-        if vex_l == 0 {
-            return Err(Error::Emulator(
-                "VBROADCASTI128 requires VEX.L=1".to_string(),
-            ));
+        if vvvv != 0 {
+            return Err(Error::Emulator(format!(
+                "{mnemonic} requires VEX.vvvv=1111b"
+            )));
         }
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        if vex_l == 0 {
+            return Err(Error::Emulator(format!("{mnemonic} requires VEX.L=1")));
+        }
+        let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        if !is_memory {
+            return Err(Error::Emulator(format!(
+                "{mnemonic} requires memory operand"
+            )));
+        }
         let xmm_dst = reg as usize;
 
-        let (src_lo, src_hi) = if is_memory {
-            (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
-        } else {
-            (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
-        };
+        let src_lo = self.read_mem(addr, 8)?;
+        let src_hi = self.read_mem(addr + 8, 8)?;
 
         self.regs.xmm[xmm_dst][0] = src_lo;
         self.regs.xmm[xmm_dst][1] = src_hi;

@@ -5,8 +5,19 @@ use crate::error::{Error, Result};
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::insn;
+use crate::backend::emulator::x86_64::flags;
 
 impl X86_64Vcpu {
+    fn kmask_bits(size_bits: u8) -> u64 {
+        match size_bits {
+            8 => 0xFF,
+            16 => 0xFFFF,
+            32 => 0xFFFF_FFFF,
+            64 => !0u64,
+            _ => unreachable!(),
+        }
+    }
+
     pub(in crate::backend::emulator::x86_64) fn execute_vex_movmskp(
         &mut self,
         ctx: &mut InsnContext,
@@ -1137,13 +1148,7 @@ impl X86_64Vcpu {
         };
 
         // Mask to size
-        let mask = match size_bits {
-            8 => 0xFF,
-            16 => 0xFFFF,
-            32 => 0xFFFF_FFFF,
-            64 => !0u64,
-            _ => unreachable!(),
-        };
+        let mask = Self::kmask_bits(size_bits);
         self.regs.k[k_dst] = value & mask;
 
         self.regs.rip += ctx.cursor as u64;
@@ -1198,13 +1203,7 @@ impl X86_64Vcpu {
         let value = self.get_reg(gpr_idx, if size_bits == 64 { 8 } else { 4 });
 
         // Mask to size
-        let mask = match size_bits {
-            8 => 0xFF,
-            16 => 0xFFFF,
-            32 => 0xFFFF_FFFF,
-            64 => !0u64,
-            _ => unreachable!(),
-        };
+        let mask = Self::kmask_bits(size_bits);
         self.regs.k[k_dst] = value & mask;
 
         self.regs.rip += ctx.cursor as u64;
@@ -1232,13 +1231,7 @@ impl X86_64Vcpu {
         let value = self.regs.k[k_src];
 
         // Mask to size and zero-extend to 32 or 64 bits
-        let mask = match size_bits {
-            8 => 0xFF,
-            16 => 0xFFFF,
-            32 => 0xFFFF_FFFF,
-            64 => !0u64,
-            _ => unreachable!(),
-        };
+        let mask = Self::kmask_bits(size_bits);
         let result = value & mask;
 
         // Write to GPR (32-bit writes zero-extend to 64-bit in 64-bit mode)
@@ -1279,13 +1272,7 @@ impl X86_64Vcpu {
         let result = op(src1, src2);
 
         // Mask to size
-        let mask = match size_bits {
-            8 => 0xFF,
-            16 => 0xFFFF,
-            32 => 0xFFFF_FFFF,
-            64 => !0u64,
-            _ => unreachable!(),
-        };
+        let mask = Self::kmask_bits(size_bits);
         self.regs.k[k_dst] = result & mask;
 
         self.regs.rip += ctx.cursor as u64;
@@ -1320,14 +1307,157 @@ impl X86_64Vcpu {
         let result = op(src);
 
         // Mask to size
-        let mask = match size_bits {
-            8 => 0xFF,
-            16 => 0xFFFF,
-            32 => 0xFFFF_FFFF,
-            64 => !0u64,
-            _ => unreachable!(),
-        };
+        let mask = Self::kmask_bits(size_bits);
         self.regs.k[k_dst] = result & mask;
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// KTESTB/W/D/Q: update ZF from SRC1 & SRC2 and CF from !SRC1 & SRC2.
+    pub(in crate::backend::emulator::x86_64) fn execute_ktest(
+        &mut self,
+        ctx: &mut InsnContext,
+        vvvv: u8,
+        size_bits: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vvvv != 0 {
+            return Err(Error::Emulator("KTEST requires VEX.vvvv=1111b".to_string()));
+        }
+
+        let modrm = ctx.consume_u8()?;
+        if (modrm >> 6) != 3 {
+            return Err(Error::Emulator(
+                "KTEST requires register operands".to_string(),
+            ));
+        }
+
+        let k_src1 = ((modrm >> 3) & 0x07) as usize;
+        let k_src2 = (modrm & 0x07) as usize;
+        let mask = Self::kmask_bits(size_bits);
+        let src1 = self.regs.k[k_src1] & mask;
+        let src2 = self.regs.k[k_src2] & mask;
+
+        self.clear_lazy_flags();
+        self.regs.rflags &= !(flags::bits::AF
+            | flags::bits::OF
+            | flags::bits::PF
+            | flags::bits::SF
+            | flags::bits::ZF
+            | flags::bits::CF);
+        if (src1 & src2) == 0 {
+            self.regs.rflags |= flags::bits::ZF;
+        }
+        if ((!src1) & src2 & mask) == 0 {
+            self.regs.rflags |= flags::bits::CF;
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// KORTESTB/W/D/Q: update ZF if SRC1 | SRC2 is zero and CF if it is all ones.
+    pub(in crate::backend::emulator::x86_64) fn execute_kortest(
+        &mut self,
+        ctx: &mut InsnContext,
+        vvvv: u8,
+        size_bits: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vvvv != 0 {
+            return Err(Error::Emulator(
+                "KORTEST requires VEX.vvvv=1111b".to_string(),
+            ));
+        }
+
+        let modrm = ctx.consume_u8()?;
+        if (modrm >> 6) != 3 {
+            return Err(Error::Emulator(
+                "KORTEST requires register operands".to_string(),
+            ));
+        }
+
+        let k_src1 = ((modrm >> 3) & 0x07) as usize;
+        let k_src2 = (modrm & 0x07) as usize;
+        let mask = Self::kmask_bits(size_bits);
+        let result = (self.regs.k[k_src1] | self.regs.k[k_src2]) & mask;
+
+        self.clear_lazy_flags();
+        self.regs.rflags &= !(flags::bits::AF
+            | flags::bits::OF
+            | flags::bits::PF
+            | flags::bits::SF
+            | flags::bits::ZF
+            | flags::bits::CF);
+        if result == 0 {
+            self.regs.rflags |= flags::bits::ZF;
+        }
+        if result == mask {
+            self.regs.rflags |= flags::bits::CF;
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// KUNPCKBW/WD/DQ: concatenate the low source fields and zero-extend.
+    pub(in crate::backend::emulator::x86_64) fn execute_kunpck(
+        &mut self,
+        ctx: &mut InsnContext,
+        vvvv: u8,
+        lane_bits: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let modrm = ctx.consume_u8()?;
+        if (modrm >> 6) != 3 {
+            return Err(Error::Emulator(
+                "KUNPCK requires register operands".to_string(),
+            ));
+        }
+
+        let k_dst = ((modrm >> 3) & 0x07) as usize;
+        let k_src1 = vvvv as usize;
+        let k_src2 = (modrm & 0x07) as usize;
+        let lane_mask = Self::kmask_bits(lane_bits);
+        let result =
+            ((self.regs.k[k_src1] & lane_mask) << lane_bits) | (self.regs.k[k_src2] & lane_mask);
+        self.regs.k[k_dst] = result;
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// KSHIFTL*/KSHIFTR*: shift a mask field by imm8 and zero-extend the result.
+    pub(in crate::backend::emulator::x86_64) fn execute_kshift(
+        &mut self,
+        ctx: &mut InsnContext,
+        vvvv: u8,
+        size_bits: u8,
+        left: bool,
+    ) -> Result<Option<VcpuExit>> {
+        if vvvv != 0 {
+            return Err(Error::Emulator(
+                "KSHIFT requires VEX.vvvv=1111b".to_string(),
+            ));
+        }
+
+        let modrm = ctx.consume_u8()?;
+        if (modrm >> 6) != 3 {
+            return Err(Error::Emulator(
+                "KSHIFT requires register operands".to_string(),
+            ));
+        }
+
+        let k_dst = ((modrm >> 3) & 0x07) as usize;
+        let k_src = (modrm & 0x07) as usize;
+        let count = ctx.consume_u8()?;
+        let mask = Self::kmask_bits(size_bits);
+        let src = self.regs.k[k_src] & mask;
+        self.regs.k[k_dst] = if count >= size_bits {
+            0
+        } else if left {
+            (src << count) & mask
+        } else {
+            src >> count
+        };
 
         self.regs.rip += ctx.cursor as u64;
         Ok(None)

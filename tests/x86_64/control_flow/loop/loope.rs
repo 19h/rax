@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm, VM};
+use crate::common::{VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm};
 
 // LOOPE/LOOPZ - Loop While Equal / Loop While Zero
 // Decrements RCX and jumps if RCX != 0 AND ZF = 1

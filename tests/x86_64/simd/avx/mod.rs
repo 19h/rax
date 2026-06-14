@@ -19,6 +19,7 @@ mod vextractf128_vinsertf128;
 mod vhaddps_vhaddpd;
 mod vhsubps_vhsubpd;
 mod vinsertf128;
+mod vlddqu_vbroadcastf128;
 mod vldmxcsr_vstmxcsr;
 mod vmaskmovps_vmaskmovpd;
 mod vmaxps_vmaxpd;

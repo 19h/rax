@@ -1,8 +1,8 @@
 use rax::cpu::Registers;
 
 use crate::common::{
-    read_mem_at_u16, read_mem_at_u64, run_until_hlt, setup_vm, write_mem_at_u16, write_mem_at_u64,
-    DATA_ADDR,
+    DATA_ADDR, read_mem_at_u16, read_mem_at_u64, run_until_hlt, setup_vm, write_mem_at_u16,
+    write_mem_at_u64,
 };
 
 // LGDT - Load Global Descriptor Table Register

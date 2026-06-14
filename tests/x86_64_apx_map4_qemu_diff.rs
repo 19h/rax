@@ -15,7 +15,7 @@ use std::process::{Command, Stdio};
 #[path = "x86_64/common/mod.rs"]
 mod common;
 
-use common::{run_until_hlt, setup_vm, Bytes, GuestAddress, Registers};
+use common::{Bytes, GuestAddress, Registers, run_until_hlt, setup_vm};
 
 const WIRE_MAGIC: u32 = 0x3458_5041; // 'A','P','X','4'
 const GPR_REGS: usize = 32;

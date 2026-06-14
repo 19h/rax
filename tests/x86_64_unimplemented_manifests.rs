@@ -48,8 +48,10 @@ const AVX10_CPUIDS: &[&str] = &[
 const RAX_AVX512_VEX_OPMASK_MNEMONICS: &[&str] = &[
     "kaddb", "kaddd", "kaddq", "kaddw", "kandb", "kandd", "kandnb", "kandnd", "kandnq", "kandnw",
     "kandq", "kandw", "kmovb", "kmovd", "kmovq", "kmovw", "knotb", "knotd", "knotq", "knotw",
-    "korb", "kord", "korq", "korw", "kxnorb", "kxnord", "kxnorq", "kxnorw", "kxorb", "kxord",
-    "kxorq", "kxorw",
+    "korb", "kord", "korq", "kortestb", "kortestd", "kortestq", "kortestw", "korw", "kshiftlb",
+    "kshiftld", "kshiftlq", "kshiftlw", "kshiftrb", "kshiftrd", "kshiftrq", "kshiftrw", "ktestb",
+    "ktestd", "ktestq", "ktestw", "kunpckbw", "kunpckdq", "kunpckwd", "kxnorb", "kxnord", "kxnorq",
+    "kxnorw", "kxorb", "kxord", "kxorq", "kxorw",
 ];
 
 #[derive(Clone, Copy)]

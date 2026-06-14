@@ -1,8 +1,6 @@
 # Derived from docs/specifications/x86_64/intel-intrinsics-guide-3-6-9.xml.
 # Source bucket: tech="AVX_ALL" plus CPUID AVX.
 # Blank lines and comments are ignored.
-vbroadcastf128
-vlddqu
 vsha512msg1
 vsha512msg2
 vsha512rnds2

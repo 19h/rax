@@ -1,8 +1,9 @@
 //! Differential targets for x86_64 SIMD mnemonics still listed as unimplemented.
 //!
 //! The non-ignored test keeps the manifest-backed corpus assembled and complete.
-//! The ignored qemu test is the semantic audit to enable while implementing each
-//! instruction family.
+//! The RAX rejection test proves every manifest-backed case is still rejected by
+//! the emulator, and the Linux/QEMU oracle test proves those same cases are
+//! executable oracle targets when QEMU is available.
 
 #![cfg(feature = "x86_64-suite")]
 #![allow(dead_code)]
@@ -15,7 +16,9 @@ use std::process::{Command, Stdio};
 #[path = "x86_64/common/mod.rs"]
 mod common;
 
-use common::{run_until_hlt, setup_vm, Bytes, GuestAddress, Registers};
+use common::{
+    run_until_hlt, setup_vm, Bytes, GuestAddress, Registers, VCpu, CODE_ADDR, INT_HANDLER_ADDR,
+};
 
 const WIRE_MAGIC: u32 = 0x5845_5645; // 'E','V','E','X' oracle wire format.
 const ZMM_REGS: usize = 32;
@@ -41,6 +44,13 @@ const AVX10_CPUIDS: &[&str] = &[
     "AVX_VNNI_INT8",
     "AVX_VNNI_INT16",
 ];
+const IMPLEMENTED_AVX512_VEX_OPMASK_MNEMONICS: &[&str] = &[
+    "kortestb", "kortestd", "kortestq", "kortestw", "kshiftlb", "kshiftld", "kshiftlq", "kshiftlw",
+    "kshiftrb", "kshiftrd", "kshiftrq", "kshiftrw", "ktestb", "ktestd", "ktestq", "ktestw",
+    "kunpckbw", "kunpckdq", "kunpckwd",
+];
+const IMPLEMENTED_AVX_LOAD_BROADCAST_MNEMONICS: &[&str] = &["vbroadcastf128", "vlddqu"];
+const IMPLEMENTED_AVX512_FP16_COMI_MNEMONICS: &[&str] = &["vcomish", "vucomish"];
 
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -214,7 +224,7 @@ fn xml_instruction_form_rows_for_manifest(
             if matches!(extension, "avx" | "avx2" | "avx10") && !mnemonic.starts_with('v') {
                 continue;
             }
-            if extension == "avx512" && !mnemonic.starts_with('k') {
+            if extension == "avx512" && !(mnemonic.starts_with('v') || mnemonic.starts_with('k')) {
                 continue;
             }
             rows.insert(InstructionFormKey {
@@ -242,24 +252,23 @@ fn expected_xml_instruction_form_rows() -> BTreeSet<InstructionFormKey> {
     rows
 }
 
+fn expected_implemented_avx512_vex_opmask_form_rows() -> BTreeSet<InstructionFormKey> {
+    let manifest = IMPLEMENTED_AVX512_VEX_OPMASK_MNEMONICS.join("\n");
+    xml_instruction_form_rows_for_manifest("avx512", &manifest)
+}
+
+fn expected_implemented_avx_load_broadcast_form_rows() -> BTreeSet<InstructionFormKey> {
+    let manifest = IMPLEMENTED_AVX_LOAD_BROADCAST_MNEMONICS.join("\n");
+    xml_instruction_form_rows_for_manifest("avx", &manifest)
+}
+
+fn expected_implemented_avx512_fp16_comi_form_rows() -> BTreeSet<InstructionFormKey> {
+    let manifest = IMPLEMENTED_AVX512_FP16_COMI_MNEMONICS.join("\n");
+    xml_instruction_form_rows_for_manifest("avx512", &manifest)
+}
+
 fn generated_specs() -> Vec<CaseSpec> {
     vec![
-        case(
-            "avx",
-            "vbroadcastf128",
-            "ymm, m128",
-            "VBROADCASTF128_YMMqq_MEMdq",
-            "avx::vbroadcastf128_ymm_mem128",
-            "vbroadcastf128 ymm1, xmmword ptr [rax]",
-        ),
-        case(
-            "avx",
-            "vlddqu",
-            "ymm, m256",
-            "VLDDQU_YMMqq_MEMqq",
-            "avx::vlddqu_ymm_mem256",
-            "vlddqu ymm1, ymmword ptr [rax]",
-        ),
         case(
             "avx",
             "vsha512msg1",
@@ -436,6 +445,61 @@ fn generated_specs() -> Vec<CaseSpec> {
             "avx10::vcvtneoph2ps_ymm_mem256",
             "vcvtneoph2ps ymm1, ymmword ptr [rax]",
         ),
+    ]
+}
+
+fn implemented_avx_load_broadcast_specs() -> Vec<CaseSpec> {
+    vec![
+        case(
+            "avx",
+            "vbroadcastf128",
+            "ymm, m128",
+            "VBROADCASTF128_YMMqq_MEMdq",
+            "avx::vbroadcastf128_ymm_mem128",
+            "vbroadcastf128 ymm1, xmmword ptr [rax]",
+        ),
+        case(
+            "avx",
+            "vlddqu",
+            "ymm, m256",
+            "VLDDQU_YMMqq_MEMqq",
+            "avx::vlddqu_ymm_mem256",
+            "vlddqu ymm1, ymmword ptr [rax]",
+        ),
+    ]
+}
+
+fn implemented_avx512_fp16_comi_specs() -> Vec<CaseSpec> {
+    vec![
+        case(
+            "avx512",
+            "vcomish",
+            "xmm, xmm",
+            "VCOMISH_XMMf16_XMMf16_AVX512",
+            "avx512::vcomish_xmm_xmm",
+            "vcomish xmm1, xmm2",
+        ),
+        case(
+            "avx512",
+            "vcomish",
+            "xmm, xmm {sae}",
+            "VCOMISH_XMMf16_XMMf16_AVX512",
+            "avx512::vcomish_xmm_xmm_sae",
+            "vcomish xmm1, xmm2, {sae}",
+        ),
+        case(
+            "avx512",
+            "vucomish",
+            "xmm, xmm",
+            "VUCOMISH_XMMf16_XMMf16_AVX512",
+            "avx512::vucomish_xmm_xmm",
+            "vucomish xmm1, xmm2",
+        ),
+    ]
+}
+
+fn implemented_vex_opmask_specs() -> Vec<CaseSpec> {
+    vec![
         case(
             "avx512",
             "kortestb",
@@ -607,14 +671,7 @@ fn assert_manifest_coverage(specs: &[CaseSpec]) {
         ("avx512", UNIMPLEMENTED_AVX512),
         ("apx", UNIMPLEMENTED_APX),
     ] {
-        let expected = if extension == "avx512" {
-            manifest_entries(manifest)
-                .into_iter()
-                .filter(|mnemonic| mnemonic.starts_with('k'))
-                .collect()
-        } else {
-            manifest_entries(manifest)
-        };
+        let expected = manifest_entries(manifest);
         let actual = actual.remove(extension).unwrap_or_default();
         assert_eq!(
             actual, expected,
@@ -664,6 +721,90 @@ fn assert_xml_instruction_form_coverage(specs: &[CaseSpec]) {
     assert!(
         missing.is_empty() && unexpected.is_empty(),
         "unimplemented differential corpus must cover every manifest-backed XML instruction form\nmissing:\n{}\nunexpected:\n{}",
+        format_instruction_form_keys(missing),
+        format_instruction_form_keys(unexpected)
+    );
+}
+
+fn assert_implemented_vex_opmask_xml_coverage(specs: &[CaseSpec]) {
+    let actual = specs
+        .iter()
+        .map(spec_instruction_form_key)
+        .collect::<BTreeSet<_>>();
+    assert_eq!(
+        actual.len(),
+        specs.len(),
+        "implemented AVX-512 VEX opmask differential corpus must not duplicate XML instruction forms"
+    );
+
+    let expected = expected_implemented_avx512_vex_opmask_form_rows();
+    let missing = expected
+        .difference(&actual)
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    let unexpected = actual
+        .difference(&expected)
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    assert!(
+        missing.is_empty() && unexpected.is_empty(),
+        "implemented AVX-512 VEX opmask differential corpus must cover every XML instruction form\nmissing:\n{}\nunexpected:\n{}",
+        format_instruction_form_keys(missing),
+        format_instruction_form_keys(unexpected)
+    );
+}
+
+fn assert_implemented_avx_load_broadcast_xml_coverage(specs: &[CaseSpec]) {
+    let actual = specs
+        .iter()
+        .map(spec_instruction_form_key)
+        .collect::<BTreeSet<_>>();
+    assert_eq!(
+        actual.len(),
+        specs.len(),
+        "implemented AVX load/broadcast differential corpus must not duplicate XML instruction forms"
+    );
+
+    let expected = expected_implemented_avx_load_broadcast_form_rows();
+    let missing = expected
+        .difference(&actual)
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    let unexpected = actual
+        .difference(&expected)
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    assert!(
+        missing.is_empty() && unexpected.is_empty(),
+        "implemented AVX load/broadcast differential corpus must cover every XML instruction form\nmissing:\n{}\nunexpected:\n{}",
+        format_instruction_form_keys(missing),
+        format_instruction_form_keys(unexpected)
+    );
+}
+
+fn assert_implemented_avx512_fp16_comi_xml_coverage(specs: &[CaseSpec]) {
+    let actual = specs
+        .iter()
+        .map(spec_instruction_form_key)
+        .collect::<BTreeSet<_>>();
+    assert_eq!(
+        actual.len(),
+        specs.len(),
+        "implemented AVX-512 FP16 COMI differential corpus must not duplicate XML instruction forms"
+    );
+
+    let expected = expected_implemented_avx512_fp16_comi_form_rows();
+    let missing = expected
+        .difference(&actual)
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    let unexpected = actual
+        .difference(&expected)
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    assert!(
+        missing.is_empty() && unexpected.is_empty(),
+        "implemented AVX-512 FP16 COMI differential corpus must cover every XML instruction form\nmissing:\n{}\nunexpected:\n{}",
         format_instruction_form_keys(missing),
         format_instruction_form_keys(unexpected)
     );
@@ -838,11 +979,12 @@ fn registers_from_input(input: &InCase) -> Registers {
     regs
 }
 
-fn assembled_cases(llvm_mc: &Path) -> Vec<DiffCase> {
-    let specs = generated_specs();
-    assert_manifest_coverage(&specs);
-    assert_xml_instruction_form_coverage(&specs);
-
+fn assemble_specs_with_prefixes(
+    llvm_mc: &Path,
+    specs: Vec<CaseSpec>,
+    corpus: &str,
+    allowed_prefixes: &[u8],
+) -> Vec<DiffCase> {
     let mut cases = Vec::new();
     let mut failures = Vec::new();
     for spec in specs {
@@ -851,9 +993,11 @@ fn assembled_cases(llvm_mc: &Path) -> Vec<DiffCase> {
             continue;
         };
         assert!(
-            matches!(op.first(), Some(0xc4 | 0xc5)),
-            "{} assembled outside VEX encoding: {:02x?}",
+            op.first()
+                .is_some_and(|prefix| allowed_prefixes.contains(prefix)),
+            "{} assembled outside expected prefixes {:02x?}: {:02x?}",
             spec.label,
+            allowed_prefixes,
             op
         );
         let id = cases.len() as u32;
@@ -870,10 +1014,21 @@ fn assembled_cases(llvm_mc: &Path) -> Vec<DiffCase> {
 
     assert!(
         failures.is_empty(),
-        "unimplemented x86_64 differential corpus failed to assemble:\n{}",
+        "{corpus} x86_64 differential corpus failed to assemble:\n{}",
         failures.join("\n")
     );
     cases
+}
+
+fn assemble_specs(llvm_mc: &Path, specs: Vec<CaseSpec>, corpus: &str) -> Vec<DiffCase> {
+    assemble_specs_with_prefixes(llvm_mc, specs, corpus, &[0xc4, 0xc5])
+}
+
+fn assembled_cases(llvm_mc: &Path) -> Vec<DiffCase> {
+    let specs = generated_specs();
+    assert_manifest_coverage(&specs);
+    assert_xml_instruction_form_coverage(&specs);
+    assemble_specs(llvm_mc, specs, "unimplemented")
 }
 
 fn c_byte_directive(bytes: &[u8]) -> String {
@@ -1016,6 +1171,58 @@ fn try_run_rax(case: &DiffCase) -> Result<OutCase, String> {
     Ok(out)
 }
 
+fn is_expected_unimplemented_error(message: &str) -> bool {
+    let message = message.to_ascii_lowercase();
+    message.contains("unimplemented")
+        || message.contains("not implemented")
+        || message.contains("unsupported")
+        || message.contains("not supported")
+        || message.contains("undefined")
+        || message.contains("invalid opcode")
+}
+
+fn rax_unimplemented_rejection_failure(case: &DiffCase) -> Option<String> {
+    let mut code = case.op.clone();
+    code.push(0xf4);
+
+    let (mut vcpu, mem) = setup_vm(&code, Some(registers_from_input(&case.input)));
+    mem.write_slice(&case.input.scratch, GuestAddress(SCRATCH_ADDR))
+        .unwrap();
+
+    match vcpu.step() {
+        Err(error) => {
+            let message = error.to_string();
+            if is_expected_unimplemented_error(&message) {
+                None
+            } else {
+                Some(format!("{}: unexpected RAX error: {message}", case.label))
+            }
+        }
+        Ok(exit) => {
+            let regs = match vcpu.get_regs() {
+                Ok(regs) => regs,
+                Err(error) => {
+                    return Some(format!("{}: failed to read RAX regs: {error}", case.label));
+                }
+            };
+            if regs.rip == INT_HANDLER_ADDR {
+                None
+            } else {
+                Some(format!(
+                    "{}: RAX executed without rejecting unimplemented case; rip={:#x}, instruction-end={:#x}, expected trap handler {:#x} or explicit error, exit={:?}, bytes={:02x?}, asm={}",
+                    case.label,
+                    regs.rip,
+                    CODE_ADDR + case.op.len() as u64,
+                    INT_HANDLER_ADDR,
+                    exit,
+                    case.op,
+                    case.asm
+                ))
+            }
+        }
+    }
+}
+
 fn assert_same_snapshot(case: &DiffCase, rax: &OutCase, oracle: &OutCase) {
     assert_eq!(rax.id, oracle.id, "{}: case id", case.label);
     assert_eq!(rax.zmm, oracle.zmm, "{}: ZMM snapshot", case.label);
@@ -1050,9 +1257,222 @@ fn unimplemented_vex_simd_diff_corpus_covers_manifests_and_assembles() {
 }
 
 #[test]
-#[ignore = "semantic audit for VEX SIMD instructions intentionally still listed as unimplemented"]
+fn unimplemented_vex_simd_manifest_cases_are_rejected_by_rax() {
+    let Some(llvm_mc) = llvm_mc_path() else {
+        eprintln!("[skip] llvm-mc unavailable; skipping RAX unimplemented rejection coverage");
+        return;
+    };
+    let cases = assembled_cases(&llvm_mc);
+    assert!(
+        !cases.is_empty(),
+        "unimplemented VEX SIMD differential corpus is empty"
+    );
+
+    let failures = cases
+        .iter()
+        .filter_map(rax_unimplemented_rejection_failure)
+        .collect::<Vec<_>>();
+    assert!(
+        failures.is_empty(),
+        "manifest-backed unimplemented cases must be rejected by RAX\n{}",
+        failures.join("\n")
+    );
+}
+
+#[test]
+fn implemented_avx512_vex_opmask_diff_corpus_covers_xml_and_assembles() {
+    let specs = implemented_vex_opmask_specs();
+    assert_implemented_vex_opmask_xml_coverage(&specs);
+
+    let Some(llvm_mc) = llvm_mc_path() else {
+        eprintln!("[skip] llvm-mc unavailable; skipping AVX-512 VEX opmask assembly coverage");
+        return;
+    };
+    let cases = assemble_specs(&llvm_mc, specs, "implemented AVX-512 VEX opmask");
+    assert_eq!(cases.len(), IMPLEMENTED_AVX512_VEX_OPMASK_MNEMONICS.len());
+}
+
+#[test]
+fn implemented_avx_load_broadcast_diff_corpus_covers_xml_and_assembles() {
+    let specs = implemented_avx_load_broadcast_specs();
+    assert_implemented_avx_load_broadcast_xml_coverage(&specs);
+
+    let Some(llvm_mc) = llvm_mc_path() else {
+        eprintln!("[skip] llvm-mc unavailable; skipping AVX load/broadcast assembly coverage");
+        return;
+    };
+    let cases = assemble_specs(&llvm_mc, specs, "implemented AVX load/broadcast");
+    assert_eq!(cases.len(), IMPLEMENTED_AVX_LOAD_BROADCAST_MNEMONICS.len());
+}
+
+#[test]
+fn implemented_avx512_fp16_comi_diff_corpus_covers_xml_and_assembles() {
+    let specs = implemented_avx512_fp16_comi_specs();
+    assert_implemented_avx512_fp16_comi_xml_coverage(&specs);
+
+    let Some(llvm_mc) = llvm_mc_path() else {
+        eprintln!("[skip] llvm-mc unavailable; skipping AVX-512 FP16 COMI assembly coverage");
+        return;
+    };
+    let cases =
+        assemble_specs_with_prefixes(&llvm_mc, specs, "implemented AVX-512 FP16 COMI", &[0x62]);
+    assert_eq!(
+        cases.len(),
+        IMPLEMENTED_AVX512_FP16_COMI_MNEMONICS.len() + 1
+    );
+}
+
+#[test]
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-fn qemu_unimplemented_vex_simd_corpus_matches_rax_when_enabled() {
+fn qemu_implemented_avx512_vex_opmask_corpus_matches_rax() {
+    let specs = implemented_vex_opmask_specs();
+    assert_implemented_vex_opmask_xml_coverage(&specs);
+
+    let Some(llvm_mc) = llvm_mc_path() else {
+        eprintln!("[skip] llvm-mc unavailable; skipping AVX-512 VEX opmask differential audit");
+        return;
+    };
+    let cases = assemble_specs(&llvm_mc, specs, "implemented AVX-512 VEX opmask");
+    assert!(
+        !cases.is_empty(),
+        "implemented AVX-512 VEX opmask differential corpus is empty"
+    );
+
+    let Some(qemu) = qemu_path() else {
+        eprintln!("[skip] qemu-x86_64 unavailable; skipping AVX-512 VEX opmask differential audit");
+        return;
+    };
+    let Some(oracle) = oracle_path(&cases) else {
+        eprintln!("[skip] AVX-512 VEX opmask oracle build failed or compiler unavailable");
+        return;
+    };
+    let Some(outputs) = run_oracle(&qemu, &oracle, &cases) else {
+        eprintln!("[skip] qemu-x86_64 could not run the AVX-512 VEX opmask oracle");
+        return;
+    };
+
+    let mut compared = 0usize;
+    let mut qemu_unsupported = 0usize;
+    for (case, oracle) in cases.iter().zip(outputs.iter()) {
+        assert_eq!(oracle.id, case.id, "{}: oracle case id", case.label);
+        if oracle.valid == 0 {
+            qemu_unsupported += 1;
+            continue;
+        }
+        let rax = try_run_rax(case)
+            .unwrap_or_else(|error| panic!("{}: rax execution failed: {error}", case.label));
+        assert_same_snapshot(case, &rax, oracle);
+        compared += 1;
+    }
+
+    assert!(
+        compared > 0,
+        "qemu rejected all {qemu_unsupported} AVX-512 VEX opmask cases"
+    );
+}
+
+#[test]
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+fn qemu_implemented_avx_load_broadcast_corpus_matches_rax() {
+    let specs = implemented_avx_load_broadcast_specs();
+    assert_implemented_avx_load_broadcast_xml_coverage(&specs);
+
+    let Some(llvm_mc) = llvm_mc_path() else {
+        eprintln!("[skip] llvm-mc unavailable; skipping AVX load/broadcast differential audit");
+        return;
+    };
+    let cases = assemble_specs(&llvm_mc, specs, "implemented AVX load/broadcast");
+    assert!(
+        !cases.is_empty(),
+        "implemented AVX load/broadcast differential corpus is empty"
+    );
+
+    let Some(qemu) = qemu_path() else {
+        eprintln!("[skip] qemu-x86_64 unavailable; skipping AVX load/broadcast differential audit");
+        return;
+    };
+    let Some(oracle) = oracle_path(&cases) else {
+        eprintln!("[skip] AVX load/broadcast oracle build failed or compiler unavailable");
+        return;
+    };
+    let Some(outputs) = run_oracle(&qemu, &oracle, &cases) else {
+        eprintln!("[skip] qemu-x86_64 could not run the AVX load/broadcast oracle");
+        return;
+    };
+
+    let mut compared = 0usize;
+    let mut qemu_unsupported = 0usize;
+    for (case, oracle) in cases.iter().zip(outputs.iter()) {
+        assert_eq!(oracle.id, case.id, "{}: oracle case id", case.label);
+        if oracle.valid == 0 {
+            qemu_unsupported += 1;
+            continue;
+        }
+        let rax = try_run_rax(case)
+            .unwrap_or_else(|error| panic!("{}: rax execution failed: {error}", case.label));
+        assert_same_snapshot(case, &rax, oracle);
+        compared += 1;
+    }
+
+    assert!(
+        compared > 0,
+        "qemu rejected all {qemu_unsupported} AVX load/broadcast cases"
+    );
+}
+
+#[test]
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+fn qemu_implemented_avx512_fp16_comi_corpus_matches_rax() {
+    let specs = implemented_avx512_fp16_comi_specs();
+    assert_implemented_avx512_fp16_comi_xml_coverage(&specs);
+
+    let Some(llvm_mc) = llvm_mc_path() else {
+        eprintln!("[skip] llvm-mc unavailable; skipping AVX-512 FP16 COMI differential audit");
+        return;
+    };
+    let cases =
+        assemble_specs_with_prefixes(&llvm_mc, specs, "implemented AVX-512 FP16 COMI", &[0x62]);
+    assert!(
+        !cases.is_empty(),
+        "implemented AVX-512 FP16 COMI differential corpus is empty"
+    );
+
+    let Some(qemu) = qemu_path() else {
+        eprintln!("[skip] qemu-x86_64 unavailable; skipping AVX-512 FP16 COMI differential audit");
+        return;
+    };
+    let Some(oracle) = oracle_path(&cases) else {
+        eprintln!("[skip] AVX-512 FP16 COMI oracle build failed or compiler unavailable");
+        return;
+    };
+    let Some(outputs) = run_oracle(&qemu, &oracle, &cases) else {
+        eprintln!("[skip] qemu-x86_64 could not run the AVX-512 FP16 COMI oracle");
+        return;
+    };
+
+    let mut compared = 0usize;
+    let mut qemu_unsupported = 0usize;
+    for (case, oracle) in cases.iter().zip(outputs.iter()) {
+        assert_eq!(oracle.id, case.id, "{}: oracle case id", case.label);
+        if oracle.valid == 0 {
+            qemu_unsupported += 1;
+            continue;
+        }
+        let rax = try_run_rax(case)
+            .unwrap_or_else(|error| panic!("{}: rax execution failed: {error}", case.label));
+        assert_same_snapshot(case, &rax, oracle);
+        compared += 1;
+    }
+
+    assert!(
+        compared > 0,
+        "qemu rejected all {qemu_unsupported} AVX-512 FP16 COMI cases"
+    );
+}
+
+#[test]
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+fn qemu_unimplemented_vex_simd_corpus_is_accepted_by_oracle() {
     let Some(llvm_mc) = llvm_mc_path() else {
         eprintln!("[skip] llvm-mc unavailable; skipping unimplemented x86_64 differential audit");
         return;
@@ -1078,32 +1498,21 @@ fn qemu_unimplemented_vex_simd_corpus_matches_rax_when_enabled() {
         return;
     };
 
-    let mut compared = 0usize;
-    let mut qemu_unsupported = 0usize;
-    let mut rax_failures = Vec::new();
+    let mut qemu_unsupported = Vec::new();
     for (case, oracle) in cases.iter().zip(outputs.iter()) {
         assert_eq!(oracle.id, case.id, "{}: oracle case id", case.label);
         if oracle.valid == 0 {
-            qemu_unsupported += 1;
-            continue;
-        }
-        match try_run_rax(case) {
-            Ok(rax) => {
-                assert_same_snapshot(case, &rax, oracle);
-                compared += 1;
-            }
-            Err(error) => rax_failures.push(format!("{}: {error}", case.label)),
+            qemu_unsupported.push(format!(
+                "{}: qemu SIGILL/rejected bytes={:02x?}, asm={}",
+                case.label, case.op, case.asm
+            ));
         }
     }
 
     assert!(
-        compared > 0 || !rax_failures.is_empty(),
-        "qemu rejected all {qemu_unsupported} unimplemented VEX SIMD cases"
-    );
-    assert!(
-        rax_failures.is_empty(),
-        "unimplemented VEX SIMD differential audit found rax execution failures\ncompared: {compared}\nqemu rejected: {qemu_unsupported}\nfailures:\n{}",
-        rax_failures
+        qemu_unsupported.is_empty(),
+        "qemu must accept every manifest-backed unimplemented VEX SIMD differential case\n{}",
+        qemu_unsupported
             .into_iter()
             .take(80)
             .collect::<Vec<_>>()

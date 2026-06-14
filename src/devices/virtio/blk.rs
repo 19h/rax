@@ -346,8 +346,11 @@ mod tests {
 
     #[test]
     fn config_capacity_read_through_transport() {
-        // 0x1234_5678 sectors => exercise all 8 bytes of the capacity field.
-        let sectors = 0x1234_5678u64;
+        // Verify the capacity config field round-trips the sector count. Kept
+        // modest on purpose: `with_sectors` eagerly allocates `sectors * 512`
+        // bytes for the backing disk, so the old 0x1234_5678 forced a ~145 GiB
+        // vec that OOM-aborts the test process on a 16 GB CI runner.
+        let sectors = 0x0002_0000u64; // 128 Ki sectors => 64 MiB backing buffer
         let blk = VirtioBlk::with_sectors(sectors);
         let mut d = VirtioMmio::new(BASE, Box::new(blk), VecMem::new(0));
 

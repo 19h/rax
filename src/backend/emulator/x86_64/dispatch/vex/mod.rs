@@ -147,6 +147,16 @@ impl X86_64Vcpu {
             // AVX-512 opmask (KMOV) instructions - VEX.L0.0F
             if vex_l == 0 {
                 match (vex_pp, vex_w, opcode) {
+                    // KORTESTW/B/D/Q and KTESTW/B/D/Q - VEX.L0.0F/66.W{0,1}
+                    (0, 0, 0x98) => return self.execute_kortest(ctx, vvvv, 16),
+                    (1, 0, 0x98) => return self.execute_kortest(ctx, vvvv, 8),
+                    (0, 1, 0x98) => return self.execute_kortest(ctx, vvvv, 64),
+                    (1, 1, 0x98) => return self.execute_kortest(ctx, vvvv, 32),
+                    (0, 0, 0x99) => return self.execute_ktest(ctx, vvvv, 16),
+                    (1, 0, 0x99) => return self.execute_ktest(ctx, vvvv, 8),
+                    (0, 1, 0x99) => return self.execute_ktest(ctx, vvvv, 64),
+                    (1, 1, 0x99) => return self.execute_ktest(ctx, vvvv, 32),
+
                     // KMOVW k1, k2/m16 - VEX.L0.0F.W0 90 /r
                     (0, 0, 0x90) => return self.execute_kmov_load(ctx, 16),
                     // KMOVB k1, k2/m8 - VEX.L0.66.0F.W0 90 /r
@@ -239,6 +249,14 @@ impl X86_64Vcpu {
                         _ => {}
                     }
                 }
+
+                // KUNPCKBW/WD/DQ - VEX.L1.0F/66.W{0,1} 4B /r
+                match (vex_pp, vex_w, opcode) {
+                    (1, 0, 0x4B) => return self.execute_kunpck(ctx, vvvv, 8),
+                    (0, 0, 0x4B) => return self.execute_kunpck(ctx, vvvv, 16),
+                    (0, 1, 0x4B) => return self.execute_kunpck(ctx, vvvv, 32),
+                    _ => {}
+                }
             }
 
             match (vex_pp, opcode) {
@@ -254,6 +272,8 @@ impl X86_64Vcpu {
                 (1, 0x6F) => return insn::simd::vmovdqa_load(self, ctx, vex_l),
                 // VMOVDQU load - VEX.F3.0F 6F /r
                 (2, 0x6F) => return insn::simd::vmovdqu_load(self, ctx, vex_l),
+                // VLDDQU load - VEX.F2.0F F0 /r
+                (3, 0xF0) => return insn::simd::vlddqu_load(self, ctx, vex_l, vvvv),
                 // VMOVDQA store - VEX.66.0F 7F /r
                 (1, 0x7F) => return insn::simd::vmovdqa_store(self, ctx, vex_l),
                 // VMOVDQU store - VEX.F3.0F 7F /r
@@ -785,6 +805,10 @@ impl X86_64Vcpu {
                 0x18 | 0x19 => {
                     return self.execute_vex_broadcast_fp(ctx, vex_l, vvvv, opcode);
                 }
+                // VBROADCASTF128: broadcast 128-bit floating-point memory to 256-bit
+                0x1A => {
+                    return self.execute_vex_broadcast_128(ctx, vex_l, vvvv, "VBROADCASTF128");
+                }
                 // VTESTPS/VTESTPD
                 0x0E | 0x0F => {
                     return self.execute_vex_vtest(ctx, vex_l, vvvv, opcode);
@@ -801,9 +825,9 @@ impl X86_64Vcpu {
                 0x78 | 0x79 | 0x58 | 0x59 => {
                     return self.execute_vex_broadcast(ctx, vex_l, opcode);
                 }
-                // VBROADCASTI128: broadcast 128-bit integer to 256-bit
+                // VBROADCASTI128: broadcast 128-bit integer memory to 256-bit
                 0x5A => {
-                    return self.execute_vex_broadcast_i128(ctx, vex_l);
+                    return self.execute_vex_broadcast_128(ctx, vex_l, vvvv, "VBROADCASTI128");
                 }
                 // VPMOVSXBW/BD/BQ/WD/WQ/DQ: packed move with sign extension
                 0x20 | 0x21 | 0x22 | 0x23 | 0x24 | 0x25 => {
@@ -897,6 +921,25 @@ impl X86_64Vcpu {
                 | 0xA7 | 0xA8 | 0xA9 | 0xAA | 0xAB | 0xAC | 0xAD | 0xAE | 0xAF | 0xB6 | 0xB7
                 | 0xB8 | 0xB9 | 0xBA | 0xBB | 0xBC | 0xBD | 0xBE | 0xBF => {
                     return self.execute_vex_fma(ctx, vex_l, vex_w, vvvv, opcode);
+                }
+                _ => {}
+            }
+        }
+
+        // VEX.66.0F3A opmask shifts - KSHIFTR*/KSHIFTL*
+        if m_mmmm == 0x3 && vex_pp == 1 && vex_l == 0 {
+            match opcode {
+                0x30 => {
+                    return self.execute_kshift(ctx, vvvv, if vex_w == 0 { 8 } else { 16 }, false);
+                }
+                0x31 => {
+                    return self.execute_kshift(ctx, vvvv, if vex_w == 0 { 32 } else { 64 }, false);
+                }
+                0x32 => {
+                    return self.execute_kshift(ctx, vvvv, if vex_w == 0 { 8 } else { 16 }, true);
+                }
+                0x33 => {
+                    return self.execute_kshift(ctx, vvvv, if vex_w == 0 { 32 } else { 64 }, true);
                 }
                 _ => {}
             }

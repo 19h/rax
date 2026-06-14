@@ -23,11 +23,11 @@ mod avx512_spec;
 
 use avx512_inventory_data::RAX_EVEX_SIMD_DIFF_MNEMONICS;
 use avx512_spec::{
-    avx512_spec_evex_rows, evex_case_variants_for_row, evex_rm_register_class,
-    raw_evex_spec_bytes_for_variant, spec_case_variant_id, EvexAsmMode, EvexCaseVariant,
-    EvexOperandForm, EvexRmRegisterClass,
+    EvexAsmMode, EvexCaseVariant, EvexOperandForm, EvexRmRegisterClass, avx512_spec_evex_rows,
+    evex_case_variants_for_row, evex_rm_register_class, raw_evex_spec_bytes_for_variant,
+    spec_case_variant_id,
 };
-use common::{run_until_hlt, setup_vm, Bytes, GuestAddress, Registers};
+use common::{Bytes, GuestAddress, Registers, run_until_hlt, setup_vm};
 
 const WIRE_MAGIC: u32 = 0x5845_5645; // 'E','V','E','X'
 const ZMM_REGS: usize = 32;
@@ -1016,6 +1016,9 @@ fn expected_dispatch_selectors() -> BTreeSet<EvexSelector> {
         selectors.insert(sel(5, opcode, 0, false));
         selectors.insert(sel(5, opcode, 2, false));
     }
+    for opcode in [0x2e, 0x2f] {
+        selectors.insert(sel(5, opcode, 0, false));
+    }
     for opcode in [0x56, 0x57, 0xd6, 0xd7] {
         selectors.insert(sel(6, opcode, 2, false));
         selectors.insert(sel(6, opcode, 3, false));
@@ -1176,6 +1179,8 @@ fn expected_vector_lengths(selector: EvexSelector) -> BTreeSet<u8> {
                     | (0x2c, 2, true)
                     | (0x2d, 2, false)
                     | (0x2d, 2, true)
+                    | (0x2e, 0, false)
+                    | (0x2f, 0, false)
                     | (0x5a, 2, false)
                     | (0x5a, 3, true)
                     | (0x6e, 1, false)
@@ -3913,6 +3918,22 @@ fn generated_specs() -> Vec<CaseSpec> {
             format!("{mnemonic}_xmm17_mem"),
             format!("{mnemonic} (%rax), %xmm17"),
             InputProfile::F64,
+        );
+    }
+    for mnemonic in ["vcomish", "vucomish"] {
+        for rm in RM_EXT_REGS {
+            spec(
+                &mut specs,
+                format!("{mnemonic}_xmm17_xmm{rm}"),
+                format!("{mnemonic} %xmm{rm}, %xmm17"),
+                InputProfile::F16,
+            );
+        }
+        spec(
+            &mut specs,
+            format!("{mnemonic}_xmm17_mem"),
+            format!("{mnemonic} (%rax), %xmm17"),
+            InputProfile::F16,
         );
     }
     add_fpclass_family(&mut specs, "vfpclassps", InputProfile::F32, 4, false);

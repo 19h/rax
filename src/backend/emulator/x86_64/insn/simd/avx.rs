@@ -100,6 +100,43 @@ pub fn vmovdqu_load(
     Ok(None)
 }
 
+/// VLDDQU load - VEX.F2.0F F0 /r (unaligned memory load only)
+pub fn vlddqu_load(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    vex_l: u8,
+    vvvv: u8,
+) -> Result<Option<VcpuExit>> {
+    if vvvv != 0 {
+        return Err(Error::Emulator(
+            "VLDDQU requires VEX.vvvv=1111b".to_string(),
+        ));
+    }
+
+    let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    if !is_memory {
+        return Err(Error::Emulator(format!(
+            "VLDDQU requires memory operand at RIP={:#x}",
+            vcpu.regs.rip
+        )));
+    }
+
+    let xmm_dst = reg as usize;
+    vcpu.regs.xmm[xmm_dst][0] = vcpu.read_mem(addr, 8)?;
+    vcpu.regs.xmm[xmm_dst][1] = vcpu.read_mem(addr + 8, 8)?;
+
+    if vex_l == 1 {
+        vcpu.regs.ymm_high[xmm_dst][0] = vcpu.read_mem(addr + 16, 8)?;
+        vcpu.regs.ymm_high[xmm_dst][1] = vcpu.read_mem(addr + 24, 8)?;
+    } else {
+        vcpu.regs.ymm_high[xmm_dst][0] = 0;
+        vcpu.regs.ymm_high[xmm_dst][1] = 0;
+    }
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
 /// VMOVDQA store - VEX.66.0F 7F /r (aligned)
 pub fn vmovdqa_store(
     vcpu: &mut X86_64Vcpu,

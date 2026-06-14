@@ -834,6 +834,8 @@ mod x86_64_simd_avx512_vaddph_vsubph_vmulph_vdivph;
 mod x86_64_simd_avx512_vaddps_zmm;
 #[path = "x86_64/simd/avx512/valign_vprol_vpror_vpternlog.rs"]
 mod x86_64_simd_avx512_valign_vprol_vpror_vpternlog;
+#[path = "x86_64/simd/avx512/vcomish_vucomish.rs"]
+mod x86_64_simd_avx512_vcomish_vucomish;
 #[path = "x86_64/simd/avx512/vdbpsadbw_vplzcnt_vpshld.rs"]
 mod x86_64_simd_avx512_vdbpsadbw_vplzcnt_vpshld;
 #[path = "x86_64/simd/avx512/vdivps_zmm.rs"]
@@ -952,6 +954,8 @@ mod x86_64_simd_avx_vhaddps_vhaddpd;
 mod x86_64_simd_avx_vhsubps_vhsubpd;
 #[path = "x86_64/simd/avx/vinsertf128.rs"]
 mod x86_64_simd_avx_vinsertf128;
+#[path = "x86_64/simd/avx/vlddqu_vbroadcastf128.rs"]
+mod x86_64_simd_avx_vlddqu_vbroadcastf128;
 #[path = "x86_64/simd/avx/vldmxcsr_vstmxcsr.rs"]
 mod x86_64_simd_avx_vldmxcsr_vstmxcsr;
 #[path = "x86_64/simd/avx/vmaskmovps_vmaskmovpd.rs"]

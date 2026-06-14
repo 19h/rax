@@ -1,5 +1,5 @@
 use crate::common::{
-    run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm, CODE_ADDR, VM,
+    CODE_ADDR, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
 };
 
 // CALL - Call Procedure

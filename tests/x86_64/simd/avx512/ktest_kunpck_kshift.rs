@@ -14,7 +14,103 @@
 //! References: Intel SDM Vol. 2, KTEST, KUNPCK, and KSHIFT instruction documentation
 
 use crate::common::*;
+use rax::backend::emulator::x86_64::flags;
 use rax::cpu::Registers;
+
+const STATUS_FLAGS: u64 = flags::bits::CF
+    | flags::bits::PF
+    | flags::bits::AF
+    | flags::bits::ZF
+    | flags::bits::SF
+    | flags::bits::OF;
+
+fn run_kmask_case(code: &[u8], k: [u64; 8], rflags: u64) -> Registers {
+    let regs = Registers {
+        k,
+        rflags: rflags | 0x2,
+        ..Registers::default()
+    };
+    let (mut vcpu, _) = setup_vm(code, Some(regs));
+    run_until_hlt(&mut vcpu).unwrap()
+}
+
+#[test]
+fn test_ktestw_sets_zf_and_clears_other_status_flags() {
+    let regs = run_kmask_case(
+        &[
+            0xC5, 0xF8, 0x99, 0xC1, // KTESTW k0, k1
+            0xF4,
+        ],
+        [0x00ff, 0xff00, 0, 0, 0, 0, 0, 0],
+        STATUS_FLAGS,
+    );
+    assert_eq!(regs.rflags & STATUS_FLAGS, flags::bits::ZF);
+}
+
+#[test]
+fn test_ktestw_sets_cf_for_subset_source() {
+    let regs = run_kmask_case(
+        &[
+            0xC5, 0xF8, 0x99, 0xC1, // KTESTW k0, k1
+            0xF4,
+        ],
+        [0x00ff, 0x000f, 0, 0, 0, 0, 0, 0],
+        STATUS_FLAGS,
+    );
+    assert_eq!(regs.rflags & STATUS_FLAGS, flags::bits::CF);
+}
+
+#[test]
+fn test_kortestw_sets_cf_for_all_ones_result() {
+    let regs = run_kmask_case(
+        &[
+            0xC5, 0xF8, 0x98, 0xC1, // KORTESTW k0, k1
+            0xF4,
+        ],
+        [0x00ff, 0xff00, 0, 0, 0, 0, 0, 0],
+        STATUS_FLAGS,
+    );
+    assert_eq!(regs.rflags & STATUS_FLAGS, flags::bits::CF);
+}
+
+#[test]
+fn test_kunpckbw_concatenates_low_source_bytes() {
+    let regs = run_kmask_case(
+        &[
+            0xC5, 0xF5, 0x4B, 0xD0, // KUNPCKBW k2, k1, k0
+            0xF4,
+        ],
+        [0x12, 0xab, 0xffff_ffff_ffff_ffff, 0, 0, 0, 0, 0],
+        STATUS_FLAGS,
+    );
+    assert_eq!(regs.k[2], 0xab12);
+    assert_eq!(regs.rflags & STATUS_FLAGS, STATUS_FLAGS);
+}
+
+#[test]
+fn test_kshiftlw_masks_to_width_and_zeroes_overshift() {
+    let regs = run_kmask_case(
+        &[
+            0xC4, 0xE3, 0xF9, 0x32, 0xC8, 0x04, // KSHIFTLW k1, k0, 4
+            0xC4, 0xE3, 0xF9, 0x32, 0xD0, 0x10, // KSHIFTLW k2, k0, 16
+            0xF4,
+        ],
+        [
+            0x00ff,
+            0xffff_ffff_ffff_ffff,
+            0xffff_ffff_ffff_ffff,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ],
+        STATUS_FLAGS,
+    );
+    assert_eq!(regs.k[1], 0x0ff0);
+    assert_eq!(regs.k[2], 0);
+    assert_eq!(regs.rflags & STATUS_FLAGS, STATUS_FLAGS);
+}
 
 // ============================================================================
 // KTESTW Tests - 16-bit Mask Test

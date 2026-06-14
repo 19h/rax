@@ -1,6 +1,6 @@
 // Module path for tests run via x86_64.rs
 use crate::common::{
-    read_mem_at_u64, run_until_hlt, setup_vm, setup_vm_no_idt, write_mem_at_u64, DATA_ADDR,
+    DATA_ADDR, read_mem_at_u64, run_until_hlt, setup_vm, setup_vm_no_idt, write_mem_at_u64,
 };
 use rax::cpu::{Registers, VCpu, VcpuExit};
 

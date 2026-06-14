@@ -2530,6 +2530,9 @@ impl X86_64Vcpu {
         // MAP5 instructions are FP16 (half-precision) arithmetic
         // pp=0 (NP), W=0 for packed FP16
         match opcode {
+            // VUCOMISH/VCOMISH scalar FP16 compare into RFLAGS.
+            0x2E if evex.pp == 0 && !evex.w => insn::simd::evex_comi(self, ctx, 2, false),
+            0x2F if evex.pp == 0 && !evex.w => insn::simd::evex_comi(self, ctx, 2, true),
             // VMOVSH scalar load/reg-reg move and store forms.
             0x10 if evex.pp == 2 && !evex.w => insn::simd::evex_scalar_fp_move(self, ctx, 2, false),
             0x11 if evex.pp == 2 && !evex.w => insn::simd::evex_scalar_fp_move(self, ctx, 2, true),

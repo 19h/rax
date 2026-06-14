@@ -1,5 +1,5 @@
 use crate::common::{
-    run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm, Bytes, VM,
+    Bytes, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
 };
 
 // MOVS/MOVSB/MOVSW/MOVSD/MOVSQ - Move Data from String to String
