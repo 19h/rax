@@ -3134,6 +3134,42 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
+    /// Lower a vector table lookup (TBL/TBX) to the native AArch64 "advanced
+    /// SIMD table lookup" form: `0 Q 0 01110 00 0 Rm 0 len op 00 Rn Rd`, where
+    /// len = num_tables - 1 (the native instruction reads the consecutive table
+    /// registers Rn..Rn+len itself) and op = TBX.
+    fn lower_vtable(
+        &mut self,
+        dst: VReg,
+        table: VReg,
+        num_tables: u8,
+        index: VReg,
+        lanes: u8,
+        is_tbx: bool,
+    ) -> Result<(), LowerError> {
+        if !(1..=4).contains(&num_tables) {
+            return Err(LowerError::UnsupportedOp {
+                op: format!("AArch64 TBL/TBX table count {num_tables}"),
+            });
+        }
+        let rd = Self::fp_reg(dst)?;
+        let rn = Self::fp_reg(table)?;
+        let rm = Self::fp_reg(index)?;
+        let q = if lanes == 16 { 1 } else { 0 };
+        let len = u32::from(num_tables - 1);
+        let op = if is_tbx { 1 } else { 0 };
+        self.emit(
+            0x0e00_0000
+                | (q << 30)
+                | ((rm as u32) << 16)
+                | (len << 13)
+                | (op << 12)
+                | ((rn as u32) << 5)
+                | (rd as u32),
+        );
+        Ok(())
+    }
+
     /// Emit an "advanced SIMD permute" instruction:
     /// `0 Q 0 01110 size 0 Rm 0 opcode 10 Rn Rd` (opcode = bits[14:12]).
     fn emit_simd_permute(&mut self, rd: u8, rn: u8, rm: u8, q: u32, size: u32, opcode: u32) {
@@ -14725,6 +14761,14 @@ impl Aarch64Lowerer {
                 lanes,
                 kind,
             } => self.lower_vpermute2(*dst, *src1, *src2, *elem, *lanes, *kind),
+            OpKind::VTableLookup {
+                dst,
+                table,
+                num_tables,
+                index,
+                lanes,
+                is_tbx,
+            } => self.lower_vtable(*dst, *table, *num_tables, *index, *lanes, *is_tbx),
             OpKind::VMax {
                 dst,
                 src1,

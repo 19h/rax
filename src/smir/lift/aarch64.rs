@@ -1616,6 +1616,42 @@ impl Aarch64Lifter {
             Mnemonic::TRN1 => self.lift_vpermute(insn, pc, &mut ops, VecPermuteKind::Trn1)?,
             Mnemonic::TRN2 => self.lift_vpermute(insn, pc, &mut ops, VecPermuteKind::Trn2)?,
 
+            // Vector table lookup (TBL/TBX). Operand 0 = dst, 1 = table base
+            // (Vn), 2 = index (Vm); len (bits[14:13]) gives #table regs - 1.
+            Mnemonic::TBL | Mnemonic::TBX => {
+                let (rd, rn, rm) = match (
+                    insn.operands.get(0),
+                    insn.operands.get(1),
+                    insn.operands.get(2),
+                ) {
+                    (
+                        Some(Operand::FpReg(rd)),
+                        Some(Operand::FpReg(rn)),
+                        Some(Operand::FpReg(rm)),
+                    ) => (rd, rn, rm),
+                    _ => {
+                        return Err(LiftError::Unsupported {
+                            addr: pc,
+                            mnemonic: format!("{:?}", insn.mnemonic),
+                        });
+                    }
+                };
+                let q = (insn.raw >> 30) & 1;
+                let num_tables = (((insn.raw >> 13) & 0x3) + 1) as u8;
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VTableLookup {
+                        dst: Self::fp_vreg(rd),
+                        table: Self::fp_vreg(rn),
+                        num_tables,
+                        index: Self::fp_vreg(rm),
+                        lanes: if q == 1 { 16 } else { 8 },
+                        is_tbx: insn.mnemonic == Mnemonic::TBX,
+                    },
+                ));
+            }
+
             // =================================================================
             // Load/Store
             // =================================================================
@@ -3151,11 +3187,9 @@ impl Aarch64Lifter {
             insn.operands.get(1),
             insn.operands.get(2),
         ) {
-            (
-                Some(Operand::FpReg(rd)),
-                Some(Operand::FpReg(rn)),
-                Some(Operand::FpReg(rm)),
-            ) => (rd, rn, rm),
+            (Some(Operand::FpReg(rd)), Some(Operand::FpReg(rn)), Some(Operand::FpReg(rm))) => {
+                (rd, rn, rm)
+            }
             _ => {
                 return Err(LiftError::Unsupported {
                     addr: pc,

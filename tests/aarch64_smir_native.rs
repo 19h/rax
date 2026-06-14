@@ -1514,9 +1514,8 @@ fn probe_vector_rev() {
     assert_eq!(r.v[1], hi.swap_bytes(), "rev64.16b hi");
 
     // rev32 v0.16b, v1.16b (0x6e200820): byte-reverse each 32-bit word.
-    let rev32 = |x: u64| {
-        (x as u32).swap_bytes() as u64 | ((((x >> 32) as u32).swap_bytes() as u64) << 32)
-    };
+    let rev32 =
+        |x: u64| (x as u32).swap_bytes() as u64 | ((((x >> 32) as u32).swap_bytes() as u64) << 32);
     let r = fp_run(&[0x6e20_0820], |g| {
         g.v[2] = lo;
         g.v[3] = hi;
@@ -1799,7 +1798,12 @@ fn e2e_vector_permute_hot_loop_matches_interpreter() {
     let v1: u128 = 0x0000_0004_0000_0003_0000_0002_0000_0001;
     let v2: u128 = 0x0000_0008_0000_0007_0000_0006_0000_0005;
     let ops: [u32; 6] = [
-        0x4e82_3820, 0x4e82_7820, 0x4e82_1820, 0x4e82_5820, 0x4e82_2820, 0x4e82_6820,
+        0x4e82_3820,
+        0x4e82_7820,
+        0x4e82_1820,
+        0x4e82_5820,
+        0x4e82_2820,
+        0x4e82_6820,
     ];
     for op in ops {
         let prog: [u32; 4] = [op, 0xf100_0400, 0x54ff_ffc1, 0xd65f_03c0];
@@ -1810,6 +1814,73 @@ fn e2e_vector_permute_hot_loop_matches_interpreter() {
             cpu.set_simd(0, 0);
             cpu.set_simd(1, v1);
             cpu.set_simd(2, v2);
+            cpu.set_x(0, 100);
+            drive_to_done(&mut cpu);
+            cpu.get_simd(0)
+        };
+        let interp = run_one(false);
+        let jit = run_one(true);
+        assert_eq!(jit, interp, "JIT matches interp op={:#010x}", op);
+        assert_ne!(interp, 0, "op={:#010x} nonzero", op);
+    }
+}
+
+// Vector table lookup TBL/TBX via OpKind::VTableLookup, lift→lower→exec.
+#[test]
+fn probe_vector_table_lookup() {
+    // tbl v0.16b, {v1.16b}, v2.16b (0x4e020020): single table.
+    // v1 = bytes 0x10..0x1f; index = [0..7, 16..23] (first 8 in range).
+    let r = fp_run(&[0x4e02_0020], |g| {
+        g.v[2] = 0x1716_1514_1312_1110;
+        g.v[3] = 0x1f1e_1d1c_1b1a_1918;
+        g.v[4] = 0x0706_0504_0302_0100; // idx 0..7 (in range)
+        g.v[5] = 0x1716_1514_1312_1110; // idx 16..23 (out of range)
+    });
+    assert_eq!(r.v[0], 0x1716_1514_1312_1110, "tbl in-range -> v1[idx]");
+    assert_eq!(r.v[1], 0, "tbl out-of-range -> 0");
+
+    // tbx v0.16b, {v1.16b}, v2.16b (0x4e021020): out-of-range keeps dst.
+    let r = fp_run(&[0x4e02_1020], |g| {
+        g.v[0] = 0xCCCC_CCCC_CCCC_CCCC; // dst lo (overwritten, all in range)
+        g.v[1] = 0xAAAA_AAAA_AAAA_AAAA; // dst hi (kept, all out of range)
+        g.v[2] = 0x1716_1514_1312_1110;
+        g.v[3] = 0x1f1e_1d1c_1b1a_1918;
+        g.v[4] = 0x0706_0504_0302_0100;
+        g.v[5] = 0x1716_1514_1312_1110;
+    });
+    assert_eq!(r.v[0], 0x1716_1514_1312_1110, "tbx in-range -> v1[idx]");
+    assert_eq!(r.v[1], 0xAAAA_AAAA_AAAA_AAAA, "tbx out-of-range -> keeps dst");
+
+    // tbl v0.16b, {v1.16b, v2.16b}, v3.16b (0x4e032020): two-table (consecutive
+    // regs). v1 = 0x10..0x1f, v2 = 0x20..0x2f, index = [16..31] -> table[16..32]
+    // = v2.
+    let r = fp_run(&[0x4e03_2020], |g| {
+        g.v[2] = 0x1716_1514_1312_1110; // v1 lo
+        g.v[3] = 0x1f1e_1d1c_1b1a_1918; // v1 hi
+        g.v[4] = 0x2726_2524_2322_2120; // v2 lo (bytes 0x20..0x27)
+        g.v[5] = 0x2f2e_2d2c_2b2a_2928; // v2 hi (bytes 0x28..0x2f)
+        g.v[6] = 0x1716_1514_1312_1110; // idx 16..23
+        g.v[7] = 0x1f1e_1d1c_1b1a_1918; // idx 24..31
+    });
+    assert_eq!(r.v[0], 0x2726_2524_2322_2120, "2-table tbl -> v2 lo");
+    assert_eq!(r.v[1], 0x2f2e_2d2c_2b2a_2928, "2-table tbl -> v2 hi");
+}
+
+#[test]
+fn e2e_vector_table_lookup_hot_loop_matches_interpreter() {
+    let v1: u128 = 0x1f1e_1d1c_1b1a_1918_1716_1514_1312_1110;
+    // index: reverse byte order 15..0 (all in range).
+    let idx: u128 = 0x0001_0203_0405_0607_0809_0a0b_0c0d_0e0f;
+    let ops: [u32; 2] = [0x4e02_0020 /* tbl */, 0x4e02_1020 /* tbx */];
+    for op in ops {
+        let prog: [u32; 4] = [op, 0xf100_0400, 0x54ff_ffc1, 0xd65f_03c0];
+        let run_one = |jit: bool| -> u128 {
+            let mut cpu = fresh_cpu();
+            cpu.set_jit_enabled(jit);
+            load_prog(&mut cpu, &prog);
+            cpu.set_simd(0, 0);
+            cpu.set_simd(1, v1);
+            cpu.set_simd(2, idx);
             cpu.set_x(0, 100);
             drive_to_done(&mut cpu);
             cpu.get_simd(0)

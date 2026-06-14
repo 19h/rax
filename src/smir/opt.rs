@@ -10,7 +10,8 @@ use crate::smir::flags::{FlagSet, FlagState, FlagUpdate};
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
 use crate::smir::ops::{OpKind, SmirOp, X86OpHint, X86VecAlign};
 use crate::smir::types::{
-    Address, ArchReg, BlockId, HexagonReg, MemWidth, OpWidth, SrcOperand, VReg, VecWidth, X86Reg,
+    Address, ArchReg, ArmReg, BlockId, HexagonReg, MemWidth, OpWidth, SrcOperand, VReg, VecWidth,
+    X86Reg,
 };
 
 // ============================================================================
@@ -2299,6 +2300,29 @@ impl OpKind {
 
             OpKind::VUnary { src, .. } | OpKind::VReduce { src, .. } => {
                 result.push(*src);
+            }
+
+            OpKind::VTableLookup {
+                dst,
+                table,
+                num_tables,
+                index,
+                is_tbx,
+                ..
+            } => {
+                result.push(*index);
+                // The table is `num_tables` consecutive registers from `table`.
+                if let VReg::Arch(ArchReg::Arm(ArmReg::V(base))) = table {
+                    for i in 0..*num_tables {
+                        result.push(VReg::Arch(ArchReg::Arm(ArmReg::V((base + i) % 32))));
+                    }
+                } else {
+                    result.push(*table);
+                }
+                // TBX reads the destination (out-of-range indices keep it).
+                if *is_tbx {
+                    result.push(*dst);
+                }
             }
 
             OpKind::VShift { src, amount, .. } => {

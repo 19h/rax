@@ -5461,6 +5461,16 @@ impl X86_64Lowerer {
                 });
             }
 
+            OpKind::VTableLookup {
+                num_tables, lanes, ..
+            } => {
+                // Vector table lookup (TBL/TBX) is emitted only by the AArch64
+                // lifter; not implemented in the x86 lowerer.
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("VTableLookup {num_tables}-table x{lanes} (x86)"),
+                });
+            }
+
             OpKind::VMul {
                 dst,
                 src1,

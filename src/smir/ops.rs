@@ -1077,6 +1077,18 @@ pub enum OpKind {
         kind: VecPermuteKind,
     },
 
+    /// Vector table lookup (AArch64 TBL/TBX). The table is `num_tables` (1-4)
+    /// consecutive registers starting at `table`; each byte of `index` selects
+    /// a table byte (out-of-range → 0 for TBL, keep `dst` byte for TBX).
+    VTableLookup {
+        dst: VReg,
+        table: VReg,
+        num_tables: u8,
+        index: VReg,
+        lanes: u8,
+        is_tbx: bool,
+    },
+
     /// Vector bitwise AND
     VAnd {
         dst: VReg,
@@ -2780,6 +2792,7 @@ impl OpKind {
             | OpKind::VReduce { dst, .. }
             | OpKind::VFMinMaxNm { dst, .. }
             | OpKind::VPermute2 { dst, .. }
+            | OpKind::VTableLookup { dst, .. }
             | OpKind::VLane { dst, .. }
             | OpKind::VAnd { dst, .. }
             | OpKind::VOr { dst, .. }

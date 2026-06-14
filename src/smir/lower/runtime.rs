@@ -972,6 +972,7 @@ fn aarch64_block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: 
                 | OpKind::VReduce { .. }
                 | OpKind::VFMinMaxNm { .. }
                 | OpKind::VPermute2 { .. }
+                | OpKind::VTableLookup { .. }
                 | OpKind::VMax { .. }
                 | OpKind::VMin { .. }
                 | OpKind::VAnd { .. }

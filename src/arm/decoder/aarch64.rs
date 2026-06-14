@@ -1984,6 +1984,17 @@ impl Aarch64Decoder {
             return Self::decode_simd_scalar_pairwise(raw);
         }
 
+        // SIMD table lookup (TBL/TBX): [28:24]=01110, U=0, [23:22]=00, [21]=0,
+        // [11:10]=00. Must precede SIMD copy (also [21]=0) — copy has bit10=1.
+        if (raw >> 24) & 0x1F == 0b01110
+            && u == 0
+            && (raw >> 22) & 0x3 == 0b00
+            && (raw >> 21) & 1 == 0
+            && (raw >> 10) & 0x3 == 0b00
+        {
+            return Self::decode_simd_table(raw, q);
+        }
+
         // SIMD permute (ZIP/UZP/TRN): [28:24]=01110, [21]=0, [15]=0, [11:10]=10.
         // Must precede SIMD copy (also [21]=0) — copy has bit10=1.
         if (raw >> 24) & 0x1F == 0b01110
@@ -2241,6 +2252,37 @@ impl Aarch64Decoder {
             }))
             .with_operand(Operand::FpReg(FpRegister {
                 num: rn,
+                size: vec_size,
+            })))
+    }
+
+    /// Decode SIMD table lookup (TBL/TBX).
+    /// Encoding: `0 Q 0 01110 00 0 Rm 0 len op 00 Rn Rd` (op = bit12: 0=TBL,
+    /// 1=TBX; len = bits[14:13] = #table regs - 1). Operands: dst, table base
+    /// (Vn — the lifter reads `len` from the raw to know how many regs), index.
+    fn decode_simd_table(raw: u32, q: u32) -> Result<DecodedInsn, DecodeError> {
+        let rm = ((raw >> 16) & 0x1F) as u8;
+        let rn = ((raw >> 5) & 0x1F) as u8;
+        let rd = (raw & 0x1F) as u8;
+        let op = (raw >> 12) & 1;
+
+        let vec_size = if q == 1 { FpRegSize::Q } else { FpRegSize::D };
+        let mnemonic = if op == 1 { Mnemonic::TBX } else { Mnemonic::TBL };
+
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            // dst (Vd.Ta)
+            .with_operand(Operand::FpReg(FpRegister {
+                num: rd,
+                size: vec_size,
+            }))
+            // table base (Vn.16b — table registers are always full 16-byte)
+            .with_operand(Operand::FpReg(FpRegister {
+                num: rn,
+                size: FpRegSize::Q,
+            }))
+            // index (Vm.Ta)
+            .with_operand(Operand::FpReg(FpRegister {
+                num: rm,
                 size: vec_size,
             })))
     }

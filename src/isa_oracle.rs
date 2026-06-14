@@ -1826,6 +1826,14 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             lanes,
             kind,
         } => op_json!("vpermute2", dst, src1, src2, elem, lanes, kind),
+        OpKind::VTableLookup {
+            dst,
+            table,
+            num_tables,
+            index,
+            lanes,
+            is_tbx,
+        } => op_json!("vtbl", dst, table, num_tables, index, lanes, is_tbx),
         OpKind::VAnd {
             dst,
             src1,
