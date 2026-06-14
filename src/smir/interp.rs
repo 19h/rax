@@ -2454,6 +2454,74 @@ impl SmirInterpreter {
                         }
                     });
                 }
+                (VecUnaryOp::Clz, _) => {
+                    let bits = elem.bytes() * 8;
+                    self.vec_unary_op(ctx, *dst, *src, *elem, *lanes, |a| {
+                        let v = if bits >= 64 {
+                            a
+                        } else {
+                            a & ((1u64 << bits) - 1)
+                        };
+                        if v == 0 {
+                            bits as u64
+                        } else {
+                            (v.leading_zeros() - (64 - bits)) as u64
+                        }
+                    });
+                }
+                (VecUnaryOp::Cls, _) => {
+                    let bits = elem.bytes() * 8;
+                    self.vec_unary_op(ctx, *dst, *src, *elem, *lanes, |a| {
+                        // Count consecutive bits below the MSB equal to it.
+                        let sign = (a >> (bits - 1)) & 1;
+                        let mut count = 0u64;
+                        for i in (0..bits - 1).rev() {
+                            if (a >> i) & 1 == sign {
+                                count += 1;
+                            } else {
+                                break;
+                            }
+                        }
+                        count
+                    });
+                }
+                (VecUnaryOp::Rbit, _) => {
+                    self.vec_unary_op(ctx, *dst, *src, VecElementType::I8, *lanes, |a| {
+                        (a as u8).reverse_bits() as u64
+                    });
+                }
+                (VecUnaryOp::Cnt, _) => {
+                    self.vec_unary_op(ctx, *dst, *src, VecElementType::I8, *lanes, |a| {
+                        (a as u8).count_ones() as u64
+                    });
+                }
+                (VecUnaryOp::Not, _) => {
+                    self.vec_unary_op(ctx, *dst, *src, VecElementType::I8, *lanes, |a| {
+                        !(a as u8) as u64
+                    });
+                }
+                (VecUnaryOp::Rev16 | VecUnaryOp::Rev32 | VecUnaryOp::Rev64, _) => {
+                    // Reverse the order of `elem`-sized elements within each
+                    // container (16/32/64 bits). This reorders lanes, so it
+                    // can't use the per-lane vec_unary_op helper.
+                    let container_bits = match op {
+                        VecUnaryOp::Rev16 => 16u32,
+                        VecUnaryOp::Rev32 => 32,
+                        _ => 64,
+                    };
+                    let elem_bits = elem.bytes() * 8;
+                    let per = (container_bits / elem_bits).max(1);
+                    let a = Self::read_vec(ctx, *src);
+                    let mut result = [0u64; 16];
+                    for lane in 0..u32::from(*lanes) {
+                        let container = lane / per;
+                        let within = lane % per;
+                        let dst_lane = container * per + (per - 1 - within);
+                        let v = Self::get_lane(&a, lane as u8, elem_bits);
+                        Self::set_lane(&mut result, dst_lane as u8, elem_bits, v);
+                    }
+                    Self::write_vec(ctx, *dst, result);
+                }
                 _ => {
                     // FP-only ops with an integer element (or vice versa) should
                     // not be produced; leave dst unchanged defensively.

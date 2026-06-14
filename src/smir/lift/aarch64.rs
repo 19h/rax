@@ -1495,12 +1495,8 @@ impl Aarch64Lifter {
                         width,
                     });
                 } else {
-                    // Vector CLZ (two-register misc, FpReg operands) is not yet
-                    // lifted — deopt rather than silently emitting nothing.
-                    return Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: "vector CLZ".to_string(),
-                    });
+                    // Vector CLZ (two-register misc): per-lane count leading zeros.
+                    self.lift_vector_unary(insn, pc, &mut ops, VecUnaryOp::Clz, false)?;
                 }
             }
 
@@ -1545,10 +1541,8 @@ impl Aarch64Lifter {
                         flags: FlagUpdate::None,
                     });
                 } else {
-                    return Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: "vector CLS".to_string(),
-                    });
+                    // Vector CLS: per-lane count leading sign bits.
+                    self.lift_vector_unary(insn, pc, &mut ops, VecUnaryOp::Cls, false)?;
                 }
             }
 
@@ -1564,11 +1558,8 @@ impl Aarch64Lifter {
                         width,
                     });
                 } else {
-                    // Vector RBIT (two-register misc) is not yet lifted — deopt.
-                    return Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: "vector RBIT".to_string(),
-                    });
+                    // Vector RBIT: per-byte bit reverse.
+                    self.lift_vector_unary(insn, pc, &mut ops, VecUnaryOp::Rbit, true)?;
                 }
             }
 
@@ -1576,12 +1567,28 @@ impl Aarch64Lifter {
                 self.lift_rev(insn, RevKind::Full, pc, &mut ops, ctx)?;
             }
 
+            // REV16/REV32 have both a scalar GPR form (Operand::Reg) and a
+            // vector form (Operand::FpReg) that reverses `elem`-sized elements
+            // within each 16-/32-bit container. REV64 is vector-only (the GPR
+            // 64-bit reverse is Mnemonic::REV).
             Mnemonic::REV16 => {
-                self.lift_rev(insn, RevKind::Halfwords, pc, &mut ops, ctx)?;
+                if matches!(insn.operands.first(), Some(Operand::FpReg(_))) {
+                    self.lift_vector_unary(insn, pc, &mut ops, VecUnaryOp::Rev16, false)?;
+                } else {
+                    self.lift_rev(insn, RevKind::Halfwords, pc, &mut ops, ctx)?;
+                }
             }
 
             Mnemonic::REV32 => {
-                self.lift_rev(insn, RevKind::Words, pc, &mut ops, ctx)?;
+                if matches!(insn.operands.first(), Some(Operand::FpReg(_))) {
+                    self.lift_vector_unary(insn, pc, &mut ops, VecUnaryOp::Rev32, false)?;
+                } else {
+                    self.lift_rev(insn, RevKind::Words, pc, &mut ops, ctx)?;
+                }
+            }
+
+            Mnemonic::REV64 => {
+                self.lift_vector_unary(insn, pc, &mut ops, VecUnaryOp::Rev64, false)?;
             }
 
             // =================================================================
@@ -2429,43 +2436,20 @@ impl Aarch64Lifter {
                 ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
             }
 
-            // Vector integer NEG/ABS (advanced SIMD two-register miscellaneous).
-            // The decoder only produces these mnemonics for the vector form
-            // (FpReg operands); element width comes from size = bits[23:22].
-            Mnemonic::VNEG | Mnemonic::VABS => {
-                let (rd, rn) = match (insn.operands.get(0), insn.operands.get(1)) {
-                    (Some(Operand::FpReg(rd)), Some(Operand::FpReg(rn))) => (rd, rn),
-                    _ => {
-                        return Err(LiftError::Unsupported {
-                            addr: pc,
-                            mnemonic: format!("{:?}", insn.mnemonic),
-                        });
-                    }
-                };
-                let q = (insn.raw >> 30) & 1;
-                let (elem, lane_bytes) = match (insn.raw >> 22) & 0x3 {
-                    0 => (VecElementType::I8, 1u8),
-                    1 => (VecElementType::I16, 2),
-                    2 => (VecElementType::I32, 4),
-                    _ => (VecElementType::I64, 8),
-                };
-                let lanes = (if q == 1 { 16u8 } else { 8 }) / lane_bytes;
-                let op = if insn.mnemonic == Mnemonic::VNEG {
-                    VecUnaryOp::Neg
-                } else {
-                    VecUnaryOp::Abs
-                };
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::VUnary {
-                        dst: Self::fp_vreg(rd),
-                        src: Self::fp_vreg(rn),
-                        elem,
-                        lanes,
-                        op,
-                    },
-                ));
+            // Vector integer NEG/ABS, bitwise NOT (size = byte) and per-byte
+            // population count (CNT), all advanced-SIMD two-register misc. The
+            // decoder only produces these mnemonics for the vector form.
+            Mnemonic::VNEG => {
+                self.lift_vector_unary(insn, pc, &mut ops, VecUnaryOp::Neg, false)?;
+            }
+            Mnemonic::VABS => {
+                self.lift_vector_unary(insn, pc, &mut ops, VecUnaryOp::Abs, false)?;
+            }
+            Mnemonic::VMVN => {
+                self.lift_vector_unary(insn, pc, &mut ops, VecUnaryOp::Not, true)?;
+            }
+            Mnemonic::CNT => {
+                self.lift_vector_unary(insn, pc, &mut ops, VecUnaryOp::Cnt, true)?;
             }
 
             // =================================================================
@@ -2980,6 +2964,53 @@ impl Aarch64Lifter {
             }),
             _ => Err(LiftError::Internal("invalid operand".to_string())),
         }
+    }
+
+    /// Emit a vector per-lane unary op (advanced SIMD two-register misc) as an
+    /// `OpKind::VUnary`. When `byte_wise` the element is forced to I8 (CNT/NOT/
+    /// RBIT operate per byte); otherwise the element width comes from
+    /// size = bits[23:22] and the lane count from Q.
+    fn lift_vector_unary(
+        &self,
+        insn: &DecodedInsn,
+        pc: u64,
+        ops: &mut Vec<SmirOp>,
+        op: VecUnaryOp,
+        byte_wise: bool,
+    ) -> Result<(), LiftError> {
+        let (rd, rn) = match (insn.operands.get(0), insn.operands.get(1)) {
+            (Some(Operand::FpReg(rd)), Some(Operand::FpReg(rn))) => (rd, rn),
+            _ => {
+                return Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("vector {:?}", insn.mnemonic),
+                });
+            }
+        };
+        let q = (insn.raw >> 30) & 1;
+        let (elem, lane_bytes) = if byte_wise {
+            (VecElementType::I8, 1u8)
+        } else {
+            match (insn.raw >> 22) & 0x3 {
+                0 => (VecElementType::I8, 1),
+                1 => (VecElementType::I16, 2),
+                2 => (VecElementType::I32, 4),
+                _ => (VecElementType::I64, 8),
+            }
+        };
+        let lanes = (if q == 1 { 16u8 } else { 8 }) / lane_bytes;
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::VUnary {
+                dst: Self::fp_vreg(rd),
+                src: Self::fp_vreg(rn),
+                elem,
+                lanes,
+                op,
+            },
+        ));
+        Ok(())
     }
 
     fn lift_rev(

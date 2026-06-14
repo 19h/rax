@@ -905,6 +905,22 @@ pub enum VecUnaryOp {
     Neg,
     /// Integer absolute value (AArch64 vector ABS).
     Abs,
+    /// Per-lane count leading zeros (AArch64 vector CLZ).
+    Clz,
+    /// Per-lane count leading sign bits (AArch64 vector CLS).
+    Cls,
+    /// Per-byte bit reverse (AArch64 vector RBIT).
+    Rbit,
+    /// Per-byte population count (AArch64 vector CNT).
+    Cnt,
+    /// Bitwise NOT (AArch64 vector NOT/MVN).
+    Not,
+    /// Reverse `elem`-sized elements within each 16-bit container (AArch64 REV16).
+    Rev16,
+    /// Reverse `elem`-sized elements within each 32-bit container (AArch64 REV32).
+    Rev32,
+    /// Reverse `elem`-sized elements within each 64-bit container (AArch64 REV64).
+    Rev64,
 }
 
 /// Vector register width

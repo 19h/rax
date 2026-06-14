@@ -1255,26 +1255,14 @@ fn e2e_vector_fp_div_max_min_matches_interpreter() {
     }
 }
 
-// Safety regression for the two-register-misc decoder fix. Vector FABS/FNEG/
-// FSQRT/NEG/ABS now JIT (see probe_vector_*_unary_4s); the remaining two-reg-
-// misc forms without a per-lane lowering (CLZ/CLS/RBIT) MUST still deopt (lift
-// returns Unsupported) rather than be grabbed by the scalar GPR handlers and
-// silently emit nothing. The SCALAR FP 1-source forms (bit 28 == 1) must still
-// lift and execute.
+// Safety regression for the two-register-misc decoder/lifter work. The vector
+// forms (FABS/FNEG/FSQRT/NEG/ABS/CLZ/CLS/RBIT/CNT/NOT/REV16/REV32/REV64) all JIT
+// now (see the probe_vector_* tests). This guards the converse: the SCALAR FP
+// 1-source forms (bit 28 == 1), which share the FABS/FNEG/FSQRT mnemonics with
+// the vector forms, must still lift and execute via the scalar path (the bit-28
+// discriminator must not misroute them to the vector VUnary path).
 #[test]
-fn vector_two_reg_misc_deopts_but_scalar_fp_still_lifts() {
-    for &insn in &[
-        0x6ea0_4820u32, // clz   v0.4s, v1.4s
-        0x4ea0_4820,    // cls   v0.4s, v1.4s
-        0x6e60_5820,    // rbit  v0.16b, v1.16b
-    ] {
-        let mut regs = Aarch64GuestRegs::default();
-        assert!(
-            jit_run(&[insn], &mut regs).is_err(),
-            "vector two-reg-misc {insn:#010x} must deopt, not mis-lift",
-        );
-    }
-
+fn scalar_fp_one_source_still_lifts_after_vector_unary() {
     let f = |x: f32| x.to_bits() as u64;
     // fabs s0, s1 (0x1e20c020): |-3.0| = 3.0
     let mut regs = Aarch64GuestRegs::default();
@@ -1394,5 +1382,200 @@ fn e2e_vector_unary_hot_loop_matches_interpreter() {
         let jit = run_one(true);
         assert_eq!(interp, expected, "interp op={:#010x}", op);
         assert_eq!(jit, interp, "JIT matches interp op={:#010x}", op);
+    }
+}
+
+// Per-lane vector bit-manipulation unary ops (CLZ/CLS/RBIT/CNT/NOT) via
+// OpKind::VUnary, lift→lower→exec, compared to independent reference closures.
+#[test]
+fn probe_vector_bitmanip_unary() {
+    // Per-byte helpers over a u64 (lane 0 = LSB).
+    let per_byte = |x: u64, f: fn(u8) -> u8| -> u64 {
+        let mut out = 0u64;
+        for i in 0..8 {
+            out |= (f(((x >> (i * 8)) & 0xFF) as u8) as u64) << (i * 8);
+        }
+        out
+    };
+    let lo: u64 = 0x7F3F_1F0F_0703_0100;
+    let hi: u64 = 0xFFAA_5580_C0E0_F0F8;
+
+    // cnt v0.16b, v1.16b (0x4e205820): per-byte popcount.
+    let r = fp_run(&[0x4e20_5820], |g| {
+        g.v[2] = lo;
+        g.v[3] = hi;
+    });
+    assert_eq!(r.v[0], per_byte(lo, |b| b.count_ones() as u8), "cnt lo");
+    assert_eq!(r.v[1], per_byte(hi, |b| b.count_ones() as u8), "cnt hi");
+
+    // not v0.16b, v1.16b (0x6e205820): bitwise NOT.
+    let r = fp_run(&[0x6e20_5820], |g| {
+        g.v[2] = lo;
+        g.v[3] = hi;
+    });
+    assert_eq!(r.v[0], !lo, "not lo");
+    assert_eq!(r.v[1], !hi, "not hi");
+
+    // rbit v0.16b, v1.16b (0x6e605820): per-byte bit reverse.
+    let r = fp_run(&[0x6e60_5820], |g| {
+        g.v[2] = lo;
+        g.v[3] = hi;
+    });
+    assert_eq!(r.v[0], per_byte(lo, |b| b.reverse_bits()), "rbit lo");
+    assert_eq!(r.v[1], per_byte(hi, |b| b.reverse_bits()), "rbit hi");
+
+    // Per-32-bit-lane CLZ/CLS helpers.
+    let pack32 = |a: u32, b: u32| (a as u64) | ((b as u64) << 32);
+    let cls32 = |x: u32| -> u32 {
+        let sign = (x >> 31) & 1;
+        let mut c = 0u32;
+        for i in (0..31).rev() {
+            if (x >> i) & 1 == sign {
+                c += 1;
+            } else {
+                break;
+            }
+        }
+        c
+    };
+
+    // clz v0.4s, v1.4s (0x6ea04820).
+    let s = [0x0000_0001u32, 0x0000_FFFF, 0x8000_0000, 0x0000_0000];
+    let r = fp_run(&[0x6ea0_4820], |g| {
+        g.v[2] = pack32(s[0], s[1]);
+        g.v[3] = pack32(s[2], s[3]);
+    });
+    assert_eq!(
+        r.v[0],
+        pack32(s[0].leading_zeros(), s[1].leading_zeros()),
+        "clz 0,1"
+    );
+    assert_eq!(
+        r.v[1],
+        pack32(s[2].leading_zeros(), s[3].leading_zeros()),
+        "clz 2,3"
+    );
+
+    // cls v0.4s, v1.4s (0x4ea04820).
+    let s = [0x0000_0001u32, 0xFFFF_FFFF, 0x8000_0000, 0x4000_0000];
+    let r = fp_run(&[0x4ea0_4820], |g| {
+        g.v[2] = pack32(s[0], s[1]);
+        g.v[3] = pack32(s[2], s[3]);
+    });
+    assert_eq!(r.v[0], pack32(cls32(s[0]), cls32(s[1])), "cls 0,1");
+    assert_eq!(r.v[1], pack32(cls32(s[2]), cls32(s[3])), "cls 2,3");
+}
+
+// End-to-end: each vector bit-manip op run as a hot loop through the emulator
+// JIT vs the interpreter (which decodes them via its own independent path).
+#[test]
+fn e2e_vector_bitmanip_hot_loop_matches_interpreter() {
+    // (op, v1): <op> v0,v1 ; subs x0,x0,#1 ; b.ne -8 ; ret. v0 = op(v1) each iter.
+    let v1: u128 = 0x0123_4567_89AB_CDEF_FEDC_BA98_7654_3210;
+    let ops: [u32; 5] = [
+        0x4e20_5820, // cnt  v0.16b, v1.16b
+        0x6e20_5820, // not  v0.16b, v1.16b
+        0x6e60_5820, // rbit v0.16b, v1.16b
+        0x6ea0_4820, // clz  v0.4s,  v1.4s
+        0x4ea0_4820, // cls  v0.4s,  v1.4s
+    ];
+    for op in ops {
+        let prog: [u32; 4] = [op, 0xf100_0400, 0x54ff_ffc1, 0xd65f_03c0];
+        let run_one = |jit: bool| -> u128 {
+            let mut cpu = fresh_cpu();
+            cpu.set_jit_enabled(jit);
+            load_prog(&mut cpu, &prog);
+            cpu.set_simd(0, 0);
+            cpu.set_simd(1, v1);
+            cpu.set_x(0, 100);
+            drive_to_done(&mut cpu);
+            cpu.get_simd(0)
+        };
+        let interp = run_one(false);
+        let jit = run_one(true);
+        assert_eq!(jit, interp, "JIT matches interp op={:#010x}", op);
+        assert_ne!(interp, 0, "op={:#010x} produced a nonzero result", op);
+    }
+}
+
+// Vector REV16/REV32/REV64 (reverse elements within 16/32/64-bit containers)
+// via OpKind::VUnary, lift→lower→exec, compared to reference closures.
+#[test]
+fn probe_vector_rev() {
+    let lo: u64 = 0x0102_0304_0506_0708;
+    let hi: u64 = 0x1112_1314_1516_1718;
+
+    // rev64 v0.16b, v1.16b (0x4e200820): byte-reverse each 64-bit lane.
+    let r = fp_run(&[0x4e20_0820], |g| {
+        g.v[2] = lo;
+        g.v[3] = hi;
+    });
+    assert_eq!(r.v[0], lo.swap_bytes(), "rev64.16b lo");
+    assert_eq!(r.v[1], hi.swap_bytes(), "rev64.16b hi");
+
+    // rev32 v0.16b, v1.16b (0x6e200820): byte-reverse each 32-bit word.
+    let rev32 = |x: u64| {
+        (x as u32).swap_bytes() as u64 | ((((x >> 32) as u32).swap_bytes() as u64) << 32)
+    };
+    let r = fp_run(&[0x6e20_0820], |g| {
+        g.v[2] = lo;
+        g.v[3] = hi;
+    });
+    assert_eq!(r.v[0], rev32(lo), "rev32.16b lo");
+    assert_eq!(r.v[1], rev32(hi), "rev32.16b hi");
+
+    // rev16 v0.16b, v1.16b (0x4e201820): byte-reverse each 16-bit halfword.
+    let rev16 = |x: u64| {
+        let mut out = 0u64;
+        for i in 0..4 {
+            let h = ((x >> (i * 16)) & 0xFFFF) as u16;
+            out |= (h.swap_bytes() as u64) << (i * 16);
+        }
+        out
+    };
+    let r = fp_run(&[0x4e20_1820], |g| {
+        g.v[2] = lo;
+        g.v[3] = hi;
+    });
+    assert_eq!(r.v[0], rev16(lo), "rev16.16b lo");
+    assert_eq!(r.v[1], rev16(hi), "rev16.16b hi");
+
+    // rev64 v0.4s, v1.4s (0x4ea00820): swap the two 32-bit words in each lane.
+    let rev64_w = |x: u64| (x >> 32) | (x << 32);
+    let r = fp_run(&[0x4ea0_0820], |g| {
+        g.v[2] = lo;
+        g.v[3] = hi;
+    });
+    assert_eq!(r.v[0], rev64_w(lo), "rev64.4s lo");
+    assert_eq!(r.v[1], rev64_w(hi), "rev64.4s hi");
+}
+
+// End-to-end: vector REV ops run as a hot loop through the emulator JIT vs the
+// interpreter (which reverses container elements via its own decode path).
+#[test]
+fn e2e_vector_rev_hot_loop_matches_interpreter() {
+    let v1: u128 = 0x0011_2233_4455_6677_8899_AABB_CCDD_EEFF;
+    let ops: [u32; 4] = [
+        0x4e20_0820, // rev64 v0.16b, v1.16b
+        0x6e20_0820, // rev32 v0.16b, v1.16b
+        0x4e20_1820, // rev16 v0.16b, v1.16b
+        0x4ea0_0820, // rev64 v0.4s,  v1.4s
+    ];
+    for op in ops {
+        let prog: [u32; 4] = [op, 0xf100_0400, 0x54ff_ffc1, 0xd65f_03c0];
+        let run_one = |jit: bool| -> u128 {
+            let mut cpu = fresh_cpu();
+            cpu.set_jit_enabled(jit);
+            load_prog(&mut cpu, &prog);
+            cpu.set_simd(0, 0);
+            cpu.set_simd(1, v1);
+            cpu.set_x(0, 100);
+            drive_to_done(&mut cpu);
+            cpu.get_simd(0)
+        };
+        let interp = run_one(false);
+        let jit = run_one(true);
+        assert_eq!(jit, interp, "JIT matches interp op={:#010x}", op);
+        assert_ne!(interp, 0, "op={:#010x} produced a nonzero result", op);
     }
 }

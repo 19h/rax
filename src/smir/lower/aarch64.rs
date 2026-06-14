@@ -2977,6 +2977,48 @@ impl Aarch64Lowerer {
                 let (q, size) = Self::simd_integer_shape(elem, lanes)?;
                 (q, 0, size, 0b01011)
             }
+            // CLZ/CLS: opcode 00100, size = element width (8/16/32 only — there
+            // is no 64-bit CLZ/CLS). CLZ: U=1, CLS: U=0.
+            VecUnaryOp::Clz | VecUnaryOp::Cls => {
+                let (q, size) = Self::simd_integer_shape(elem, lanes)?;
+                if size == 3 {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("AArch64 native vector {op:?} I64"),
+                    });
+                }
+                let u = if matches!(op, VecUnaryOp::Clz) { 1 } else { 0 };
+                (q, u, size, 0b00100)
+            }
+            // Per-byte forms share opcode 00101 with fixed size fields: CNT
+            // (U=0,size=00), NOT (U=1,size=00), RBIT (U=1,size=01). The element
+            // is always I8, so simd_integer_shape only supplies Q.
+            VecUnaryOp::Cnt => {
+                let (q, _) = Self::simd_integer_shape(elem, lanes)?;
+                (q, 0, 0b00, 0b00101)
+            }
+            VecUnaryOp::Not => {
+                let (q, _) = Self::simd_integer_shape(elem, lanes)?;
+                (q, 1, 0b00, 0b00101)
+            }
+            VecUnaryOp::Rbit => {
+                let (q, _) = Self::simd_integer_shape(elem, lanes)?;
+                (q, 1, 0b01, 0b00101)
+            }
+            // REV: reverse `elem`-sized elements within each container. size =
+            // the reversed-element width; opcode/U select the container:
+            // REV64 U=0/op00000, REV16 U=0/op00001, REV32 U=1/op00000.
+            VecUnaryOp::Rev64 => {
+                let (q, size) = Self::simd_integer_shape(elem, lanes)?;
+                (q, 0, size, 0b00000)
+            }
+            VecUnaryOp::Rev16 => {
+                let (q, size) = Self::simd_integer_shape(elem, lanes)?;
+                (q, 0, size, 0b00001)
+            }
+            VecUnaryOp::Rev32 => {
+                let (q, size) = Self::simd_integer_shape(elem, lanes)?;
+                (q, 1, size, 0b00000)
+            }
         };
         self.emit_simd_two_reg_misc(rd, rn, q, u, size, opcode);
         Ok(())

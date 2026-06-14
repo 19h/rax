@@ -2149,7 +2149,8 @@ impl Aarch64Decoder {
             (0, 0b00000) => Mnemonic::REV64,
             (0, 0b00001) => Mnemonic::REV16,
             (0, 0b00100) => Mnemonic::CLS,
-            (0, 0b01011) => Mnemonic::VABS, // ABS
+            (0, 0b00101) if size == 0b00 => Mnemonic::CNT, // CNT (per-byte popcount)
+            (0, 0b01011) => Mnemonic::VABS,                // ABS
             (1, 0b00000) => Mnemonic::REV32,
             (1, 0b00100) => Mnemonic::CLZ,
             (1, 0b00101) if size == 0b00 => Mnemonic::VMVN, // NOT
@@ -2986,8 +2987,8 @@ mod tests {
             (0x4EA0_F820, Mnemonic::FABS),  // fabs  v0.4s,  v1.4s
             (0x6EA0_F820, Mnemonic::FNEG),  // fneg  v0.4s,  v1.4s
             (0x6EA1_F820, Mnemonic::FSQRT), // fsqrt v0.4s,  v1.4s
-            // Unmodeled-as-vector forms: bail to UNKNOWN (were VNEG / CLS).
-            (0x4E20_5820, Mnemonic::UNKNOWN), // cnt   v0.16b, v1.16b
+            (0x4E20_5820, Mnemonic::CNT),   // cnt   v0.16b, v1.16b
+            // Unmodeled-as-vector form: bails to UNKNOWN (was mislabeled CLS).
             (0x4EA1_4820, Mnemonic::UNKNOWN), // sqxtn v0.4s,  v1.4s
         ];
         for &(raw, expected) in cases {
