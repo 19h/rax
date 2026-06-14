@@ -114,9 +114,16 @@ pub struct Aarch64GuestRegs {
     pub v: [u64; 64],
     /// Opaque context pointer passed as arg0 to AArch64 memory helpers.
     pub ctx: u64,
-    /// Address of `fn(ctx, addr, size, signed) -> value`.
+    /// Address of the load helper
+    /// `extern "C" fn(ctx, addr, size, signed) -> (value, ok)`. The 16-byte
+    /// return is an AAPCS64 two-eightbyte value: `value` in x0, `ok` (non-zero
+    /// on success) in x1. The identity-map AArch64 lowerer's `Load` call-out
+    /// fault-bails (records the faulting PC and exits to the interpreter) when
+    /// `ok == 0` — so a `#[repr(C)] { value: u64, ok: u64 }` return is required
+    /// for precise fault restart (analogous to the x86 helper's RAX:RDX).
     pub load_fn: u64,
-    /// Address of `fn(ctx, addr, value, size) -> ok`.
+    /// Address of `extern "C" fn(ctx, addr, value, size) -> ok` (non-zero on
+    /// success; `ok == 0` fault-bails like the load helper).
     pub store_fn: u64,
     /// Address armed by the last load-exclusive.
     pub exclusive_addr: u64,
@@ -283,8 +290,8 @@ core::arch::global_asm!(
     "stp x25, x26, [sp, #48]",
     "stp x27, x28, [sp, #64]",
     "stp x29, x30, [sp, #80]",
-    "str x0, [sp, #96]", // stash entry (guest x0 is about to overwrite host x0)
-    "mov x28, x1",       // x28 = regs ptr, reserved for the duration of the block
+    "str x0, [sp, #96]",   // stash entry (guest x0 is about to overwrite host x0)
+    "mov x28, x1",         // x28 = regs ptr, reserved for the duration of the block
     "ldr w9, [x28, #264]", // NZCV (offset 33*8); load before guest x9 below
     "msr nzcv, x9",
     "ldp x0, x1, [x28, #0]",
@@ -345,6 +352,144 @@ core::arch::global_asm!(
 #[cfg(target_arch = "aarch64")]
 unsafe extern "C" {
     fn rax_a64_enter_native(entry: *const u8, regs: *mut Aarch64GuestRegs);
+}
+
+// rax_a64_enter_native_fp(x0 = entry, x1 = *mut Aarch64GuestRegs):
+//   Like rax_a64_enter_native but ALSO marshals V0-V31 + FPCR/FPSR, for regions
+//   that use scalar FP / SIMD. Saves the host AAPCS64 callee-saved low-64 of
+//   V8-V15 and the host FPCR/FPSR (restored on exit so guest rounding never
+//   leaks into host float code). Same GPR/NZCV/reserved-register contract as the
+//   scalar trampoline. Frame: 192 B (x19-x30 @0..88, entry @96, host_fpcr @104,
+//   host_fpsr @112, d8-d15 @120..184). Aarch64GuestRegs.v is [u64;64] @288, so
+//   Vn occupies bytes 288 + n*16 (q-register pairs, imm7 = byteoffset/16).
+#[cfg(target_arch = "aarch64")]
+core::arch::global_asm!(
+    ".text",
+    ".p2align 2",
+    ".globl _rax_a64_enter_native_fp",
+    ".globl rax_a64_enter_native_fp",
+    "_rax_a64_enter_native_fp:",
+    "rax_a64_enter_native_fp:",
+    "sub sp, sp, #192",
+    "stp x19, x20, [sp, #0]",
+    "stp x21, x22, [sp, #16]",
+    "stp x23, x24, [sp, #32]",
+    "stp x25, x26, [sp, #48]",
+    "stp x27, x28, [sp, #64]",
+    "stp x29, x30, [sp, #80]",
+    "str x0, [sp, #96]",      // stash entry
+    "stp d8, d9, [sp, #120]", // save host callee-saved V8-V15 (low 64)
+    "stp d10, d11, [sp, #136]",
+    "stp d12, d13, [sp, #152]",
+    "stp d14, d15, [sp, #168]",
+    "mrs x9, fpcr", // save host FPCR/FPSR
+    "str x9, [sp, #104]",
+    "mrs x9, fpsr",
+    "str x9, [sp, #112]",
+    "mov x28, x1",         // x28 = regs ptr
+    "ldr w9, [x28, #272]", // guest FPCR -> host (honor guest rounding)
+    "msr fpcr, x9",
+    "ldr w9, [x28, #280]", // guest FPSR
+    "msr fpsr, x9",
+    "ldr w9, [x28, #264]", // NZCV
+    "msr nzcv, x9",
+    "ldp x0, x1, [x28, #0]",
+    "ldp x2, x3, [x28, #16]",
+    "ldp x4, x5, [x28, #32]",
+    "ldp x6, x7, [x28, #48]",
+    "ldp x8, x9, [x28, #64]",
+    "ldp x10, x11, [x28, #80]",
+    "ldp x12, x13, [x28, #96]",
+    "ldp x14, x15, [x28, #112]",
+    "ldp x16, x17, [x28, #128]",
+    "ldr x19, [x28, #152]",
+    "ldr x20, [x28, #160]",
+    "ldr x21, [x28, #168]",
+    "ldr x22, [x28, #176]",
+    "ldr x23, [x28, #184]",
+    "ldr x24, [x28, #192]",
+    "ldr x25, [x28, #200]",
+    "ldr x26, [x28, #208]",
+    "ldr x27, [x28, #216]",
+    "ldr x29, [x28, #232]",
+    "ldp q0, q1, [x28, #288]", // load guest V0-V31
+    "ldp q2, q3, [x28, #320]",
+    "ldp q4, q5, [x28, #352]",
+    "ldp q6, q7, [x28, #384]",
+    "ldp q8, q9, [x28, #416]",
+    "ldp q10, q11, [x28, #448]",
+    "ldp q12, q13, [x28, #480]",
+    "ldp q14, q15, [x28, #512]",
+    "ldp q16, q17, [x28, #544]",
+    "ldp q18, q19, [x28, #576]",
+    "ldp q20, q21, [x28, #608]",
+    "ldp q22, q23, [x28, #640]",
+    "ldp q24, q25, [x28, #672]",
+    "ldp q26, q27, [x28, #704]",
+    "ldp q28, q29, [x28, #736]",
+    "ldp q30, q31, [x28, #768]",
+    "ldr x30, [sp, #96]", // entry
+    "blr x30",
+    "stp q0, q1, [x28, #288]", // store guest V0-V31
+    "stp q2, q3, [x28, #320]",
+    "stp q4, q5, [x28, #352]",
+    "stp q6, q7, [x28, #384]",
+    "stp q8, q9, [x28, #416]",
+    "stp q10, q11, [x28, #448]",
+    "stp q12, q13, [x28, #480]",
+    "stp q14, q15, [x28, #512]",
+    "stp q16, q17, [x28, #544]",
+    "stp q18, q19, [x28, #576]",
+    "stp q20, q21, [x28, #608]",
+    "stp q22, q23, [x28, #640]",
+    "stp q24, q25, [x28, #672]",
+    "stp q26, q27, [x28, #704]",
+    "stp q28, q29, [x28, #736]",
+    "stp q30, q31, [x28, #768]",
+    "stp x0, x1, [x28, #0]",
+    "stp x2, x3, [x28, #16]",
+    "stp x4, x5, [x28, #32]",
+    "stp x6, x7, [x28, #48]",
+    "stp x8, x9, [x28, #64]",
+    "stp x10, x11, [x28, #80]",
+    "stp x12, x13, [x28, #96]",
+    "stp x14, x15, [x28, #112]",
+    "stp x16, x17, [x28, #128]",
+    "str x19, [x28, #152]",
+    "str x20, [x28, #160]",
+    "str x21, [x28, #168]",
+    "str x22, [x28, #176]",
+    "str x23, [x28, #184]",
+    "str x24, [x28, #192]",
+    "str x25, [x28, #200]",
+    "str x26, [x28, #208]",
+    "str x27, [x28, #216]",
+    "str x29, [x28, #232]",
+    "mrs x9, nzcv",
+    "str x9, [x28, #264]",
+    "mrs x9, fpsr", // guest FPSR (accumulated exception flags) out
+    "str x9, [x28, #280]",
+    "ldr x9, [sp, #104]", // restore host FPCR/FPSR
+    "msr fpcr, x9",
+    "ldr x9, [sp, #112]",
+    "msr fpsr, x9",
+    "ldp d8, d9, [sp, #120]", // restore host V8-V15
+    "ldp d10, d11, [sp, #136]",
+    "ldp d12, d13, [sp, #152]",
+    "ldp d14, d15, [sp, #168]",
+    "ldp x19, x20, [sp, #0]",
+    "ldp x21, x22, [sp, #16]",
+    "ldp x23, x24, [sp, #32]",
+    "ldp x25, x26, [sp, #48]",
+    "ldp x27, x28, [sp, #64]",
+    "ldp x29, x30, [sp, #80]",
+    "add sp, sp, #192",
+    "ret",
+);
+
+#[cfg(target_arch = "aarch64")]
+unsafe extern "C" {
+    fn rax_a64_enter_native_fp(entry: *const u8, regs: *mut Aarch64GuestRegs);
 }
 
 /// Byte offset of `GuestRegs.exit_pc` (after `gpr[32]` + `rflags`). An exit stub
@@ -540,6 +685,19 @@ impl ExecMem {
         let entry = unsafe { self.ptr.add(entry_offset) } as *const u8;
         unsafe { rax_a64_enter_native(entry, regs as *mut Aarch64GuestRegs) };
     }
+
+    /// As [`Self::run_aarch64_identity`] but for a region that uses scalar FP /
+    /// SIMD: additionally marshals V0-V31 + FPCR/FPSR through the FP trampoline.
+    /// Used only for regions whose ops touch V registers (the integer path keeps
+    /// the cheaper GPR-only trampoline).
+    ///
+    /// # Safety
+    /// As [`Self::run_aarch64_identity`].
+    #[cfg(target_arch = "aarch64")]
+    pub fn run_aarch64_identity_fp(&self, entry_offset: usize, regs: &mut Aarch64GuestRegs) {
+        let entry = unsafe { self.ptr.add(entry_offset) } as *const u8;
+        unsafe { rax_a64_enter_native_fp(entry, regs as *mut Aarch64GuestRegs) };
+    }
 }
 
 impl Drop for ExecMem {
@@ -685,6 +843,117 @@ fn block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) ->
             return false;
         }
         if !mem_ok && op.kind.source_vregs().iter().any(touches_sp_bp) {
+            return false;
+        }
+    }
+    true
+}
+
+/// AArch64 analogue of [`is_native_clobber_safe_excluding`]: decide whether the
+/// EXECUTED (non-exit) blocks of `func` are safe to run through the identity-map
+/// AArch64 entry trampoline (`rax_a64_enter_native`). `excluded` holds the
+/// native-exit (frontier) blocks, whose bodies never execute natively.
+///
+/// The identity map (guest `Xn` ⇒ host `Xn`) leaves every host GPR holding live
+/// guest state, and the trampoline reserves host X18 (platform), X28 (state
+/// pointer), X30 (link), and SP (host stack). So a block is unsafe if it:
+///   1. uses a non-JIT-safe op (touches memory / has side effects / is
+///      unvalidated) — except register-destination `Load`/`Store` when
+///      `allow_mem` (they lower to MMU helper call-outs), and except `DivU`/
+///      `DivS` which are clean on AArch64 (the shared [`OpKind::is_jit_safe`]
+///      excludes them only to model x86's `#DE`);
+///   2. writes a `VReg::Virtual` temporary (would alias a guest GPR); or
+///   3. reads or writes guest X18/X28/X30/SP — a read is tolerated only as a
+///      memory operand under `allow_mem` (the helper reads the frozen value
+///      from the state struct, not the live host register).
+/// A trailing `TestCondition` feeding the block's `CondBranch` is exempt (the
+/// lowerer folds it into a `B.cond` and never materializes its dst).
+pub fn is_aarch64_native_clobber_safe_excluding(
+    func: &crate::smir::ir::SmirFunction,
+    excluded: &std::collections::HashMap<crate::smir::types::BlockId, u64>,
+    allow_mem: bool,
+) -> bool {
+    func.blocks
+        .iter()
+        .filter(|b| !excluded.contains_key(&b.id))
+        .all(|b| aarch64_block_is_clobber_safe(b, allow_mem))
+}
+
+fn aarch64_block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) -> bool {
+    use crate::smir::ir::Terminator;
+    use crate::smir::ops::OpKind;
+    use crate::smir::types::{ArchReg, ArmReg, VReg};
+
+    // Reserved host registers under the identity-map trampoline. A guest write to
+    // any of these clobbers host platform/state/link/stack; a guest read returns
+    // the host (not guest) value. X28 holds the live state pointer; X18 is the
+    // macOS platform register; X30 is the trampoline link; SP is the host stack
+    // (guest SP is never loaded).
+    let touches_reserved = |v: &VReg| {
+        matches!(
+            v,
+            VReg::Arch(ArchReg::Arm(ArmReg::X(18)))
+                | VReg::Arch(ArchReg::Arm(ArmReg::X(28)))
+                | VReg::Arch(ArchReg::Arm(ArmReg::X(30)))
+                | VReg::Arch(ArchReg::Arm(ArmReg::Sp))
+        )
+    };
+
+    let n = block.ops.len();
+    for (i, op) in block.ops.iter().enumerate() {
+        if i + 1 == n {
+            if let (Terminator::CondBranch { cond, .. }, OpKind::TestCondition { dst, .. }) =
+                (&block.terminator, &op.kind)
+            {
+                if dst == cond {
+                    continue;
+                }
+            }
+        }
+        let mem_ok = allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. });
+        // AArch64-clean register-only ops that the x86-tuned `is_jit_safe`
+        // whitelist omits: UDIV/SDIV never trap on AArch64 (no x86 `#DE`), and
+        // CLZ/RBIT/REV(Bswap)/bitfield insert+extract are pure ALU ops the
+        // native lowerer emits correctly (validated by the differential harness
+        // in tests/aarch64_smir_native.rs). Admitting them lets the emulator JIT
+        // real scalar loops that use them instead of deopting.
+        let a64_ok = matches!(
+            op.kind,
+            OpKind::DivU { .. }
+                | OpKind::DivS { .. }
+                | OpKind::Clz { .. }
+                | OpKind::Rbit { .. }
+                | OpKind::Bswap { .. }
+                | OpKind::Bfx { .. }
+                | OpKind::Bfi { .. }
+                // IEEE-exact / correctly-rounded scalar FP: lower to the native
+                // f-ops and match the interpreter under default rounding (run via
+                // the FP trampoline which marshals V0-V31 + FPCR/FPSR). The
+                // directed-rounding/convert/min-max/fmov forms are deliberately
+                // excluded (the lowerer has documented rounding/fusion deviations).
+                | OpKind::FAdd { .. }
+                | OpKind::FSub { .. }
+                | OpKind::FMul { .. }
+                | OpKind::FDiv { .. }
+                | OpKind::FSqrt { .. }
+                | OpKind::FAbs { .. }
+                | OpKind::FNeg { .. }
+        );
+        if !op.kind.is_jit_safe() && !a64_ok && !mem_ok {
+            return false;
+        }
+        if op
+            .kind
+            .dests()
+            .iter()
+            .any(|d| matches!(d, VReg::Virtual(_)))
+        {
+            return false;
+        }
+        if op.kind.dests().iter().any(touches_reserved) {
+            return false;
+        }
+        if !mem_ok && op.kind.source_vregs().iter().any(touches_reserved) {
             return false;
         }
     }
@@ -959,6 +1228,36 @@ mod tests_aarch64 {
         assert_ne!(regs.nzcv & (1 << 30), 0, "Z (bit 30) set on zero result");
         assert_ne!(regs.nzcv & (1 << 29), 0, "C (bit 29) set: no borrow");
         assert_eq!(regs.nzcv & (1 << 31), 0, "N (bit 31) clear");
+    }
+
+    // FP trampoline: V-register + FPCR/FPSR marshaling. fadd d0,d1,d2 reads the
+    // low 64 bits (f64) of V1,V2 and writes V0; this proves run_aarch64_identity_fp
+    // marshals the SIMD/FP register file in and out.
+    #[test]
+    fn exec_mem_fp_marshals_v_regs_aarch64() {
+        // 1e622820 fadd d0, d1, d2 ; d65f03c0 ret
+        let code: [u8; 8] = [0x20, 0x28, 0x62, 0x1e, 0xc0, 0x03, 0x5f, 0xd6];
+        let mem = ExecMem::new(&code).expect("ExecMem map");
+        let mut regs = Aarch64GuestRegs::default();
+        regs.v[2] = (2.0_f64).to_bits(); // V1 low (d1)
+        regs.v[4] = (3.0_f64).to_bits(); // V2 low (d2)
+        mem.run_aarch64_identity_fp(0, &mut regs);
+        assert_eq!(f64::from_bits(regs.v[0]), 5.0, "V0 = V1 + V2 (f64)");
+    }
+
+    // The FP trampoline must still marshal GPRs/NZCV exactly like the scalar one.
+    #[test]
+    fn exec_mem_fp_trampoline_preserves_gprs_aarch64() {
+        // 8b020020 add x0, x1, x2 ; d65f03c0 ret
+        let code: [u8; 8] = [0x20, 0x00, 0x02, 0x8b, 0xc0, 0x03, 0x5f, 0xd6];
+        let mem = ExecMem::new(&code).expect("ExecMem map");
+        let mut regs = Aarch64GuestRegs::default();
+        regs.x[1] = 40;
+        regs.x[2] = 2;
+        regs.x[25] = 0x1234_5678; // callee-saved guest reg must round-trip
+        mem.run_aarch64_identity_fp(0, &mut regs);
+        assert_eq!(regs.x[0], 42);
+        assert_eq!(regs.x[25], 0x1234_5678);
     }
 
     // NZCV marshals IN: cset x0 reads the Z flag we seed in the struct.

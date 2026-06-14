@@ -27,12 +27,42 @@ const SYSREG_NZCV: u32 = (3 << 14) | (3 << 11) | (4 << 7) | (2 << 3);
 const SYSREG_FPCR: u32 = (3 << 14) | (3 << 11) | (4 << 7) | (4 << 3);
 const SYSREG_FPSR: u32 = (3 << 14) | (3 << 11) | (4 << 7) | (4 << 3) | 1;
 
+/// Host register reserved by the identity-map entry trampoline
+/// (`rax_a64_enter_native`, smir::lower::runtime) to hold the persistent
+/// `*mut Aarch64GuestRegs` state pointer. Native-exit and memory-helper stubs
+/// dereference it; region bodies must never use guest X28 (clobber gate).
+const A64_STATE_REG: u8 = 28;
+/// Byte offsets into the runtime `Aarch64GuestRegs` struct (smir::lower::
+/// runtime), dereferenced via the state pointer in `A64_STATE_REG` by the
+/// native-exit and memory-helper stubs. Kept in sync with that struct's
+/// `*_OFFSET` consts (asserted in the runtime's aarch64 tests). All are
+/// multiples of 8 so they encode as scaled `emit_ldst_unsigned` imm12 offsets.
+const A64_GUEST_SP_OFFSET: u32 = 248;
+const A64_GUEST_PC_OFFSET: u32 = 256;
+const A64_GUEST_NZCV_OFFSET: u32 = 264;
+const A64_GUEST_CTX_OFFSET: u32 = 800;
+const A64_GUEST_LOAD_FN_OFFSET: u32 = 808;
+const A64_GUEST_STORE_FN_OFFSET: u32 = 816;
+
 /// Native AArch64 lowerer for identity-mapped AArch64 scalar SMIR.
 pub struct Aarch64Lowerer {
     code: CodeBuffer,
     block_offsets: HashMap<BlockId, usize>,
     branch_fixups: Vec<BranchFixup>,
     relocations: Vec<Relocation>,
+    /// Frontier blocks (block id → resume guest PC) that must EXIT the native
+    /// region rather than execute. Their body is replaced by a stub that
+    /// records the resume PC into `Aarch64GuestRegs.pc` (via the state pointer
+    /// in `A64_STATE_REG`) and returns to the entry trampoline; the interpreter
+    /// then re-executes from that PC. Set via [`Self::set_native_exits`] before
+    /// `lower_function`. Empty ⇒ self-contained region: terminators lower to
+    /// their native guest control transfer (e.g. RET → `ret`), as used by the
+    /// standalone byte/exec tests.
+    native_exits: HashMap<BlockId, u64>,
+    /// When true, memory ops lower to runtime-helper call-outs (MMU-translated)
+    /// instead of inline native LDR/STR against the raw guest address. Set via
+    /// [`Self::set_mem_helpers`].
+    mem_helpers: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -64,11 +94,257 @@ impl Aarch64Lowerer {
             block_offsets: HashMap::new(),
             branch_fixups: Vec::new(),
             relocations: Vec::new(),
+            native_exits: HashMap::new(),
+            mem_helpers: false,
         }
+    }
+
+    /// Mark frontier blocks as native-exit stubs (block id → resume guest PC).
+    /// Call before `lower_function`. See [`Aarch64Lowerer::native_exits`].
+    pub fn set_native_exits(&mut self, exits: HashMap<BlockId, u64>) {
+        self.native_exits = exits;
+    }
+
+    /// Route memory ops through MMU-translated runtime helpers rather than
+    /// inline native loads/stores. Call before `lower_function`.
+    pub fn set_mem_helpers(&mut self, enable: bool) {
+        self.mem_helpers = enable;
     }
 
     fn emit(&mut self, word: u32) {
         self.code.emit_u32(word);
+    }
+
+    /// Emit a native-exit stub: record `resume_pc` into the guest state struct's
+    /// PC field (via the state pointer in `A64_STATE_REG` = x28) and `ret` to
+    /// the entry trampoline. The scratch register is spilled to the host stack
+    /// around its use so the live guest GPRs the trampoline must write back are
+    /// left intact.
+    fn emit_native_exit(&mut self, resume_pc: u64) -> Result<(), LowerError> {
+        const SCRATCH: u8 = 9;
+        self.emit_push_scratch(SCRATCH); // str x9, [sp, #-16]!
+        self.emit_mov_imm(SCRATCH, resume_pc as i64, OpWidth::W64);
+        // str x9, [x28, #A64_GUEST_PC_OFFSET]  (64-bit unsigned scaled offset)
+        self.emit_ldst_unsigned(SCRATCH, A64_STATE_REG, 3, 0b00, A64_GUEST_PC_OFFSET / 8);
+        self.emit_pop_scratch(SCRATCH); // ldr x9, [sp], #16
+        self.emit(0xd65f_03c0); // ret
+        Ok(())
+    }
+
+    /// `blr Xn` — call through a register, setting the link register (x30).
+    fn emit_blr_reg(&mut self, rn: u8) {
+        self.emit(0xd63f_0000 | ((rn as u32) << 5));
+    }
+
+    /// Bytes accessed for a scalar memory width (the helper ABI `size` arg).
+    fn mem_width_bytes(width: MemWidth) -> Result<u32, LowerError> {
+        match width {
+            MemWidth::B1 => Ok(1),
+            MemWidth::B2 => Ok(2),
+            MemWidth::B4 => Ok(4),
+            MemWidth::B8 => Ok(8),
+            other => Err(LowerError::UnsupportedOp {
+                op: format!("AArch64 mem-helper width {other:?}"),
+            }),
+        }
+    }
+
+    /// Byte offset of a guest base/index register within `Aarch64GuestRegs`
+    /// (X(n) → n*8, SP → 248). The helper reads the *frozen* guest value from
+    /// the struct, which is why guest-SP-relative addressing is legal under the
+    /// helper path (the host SP is the JIT stack, not the guest SP).
+    fn arm_struct_slot(vreg: VReg) -> Result<u32, LowerError> {
+        match vreg {
+            VReg::Arch(ArchReg::Arm(ArmReg::X(n))) if n < 31 => Ok((n as u32) * 8),
+            VReg::Arch(ArchReg::Arm(ArmReg::Sp)) => Ok(A64_GUEST_SP_OFFSET),
+            other => Err(LowerError::UnsupportedOp {
+                op: format!("AArch64 mem-helper address register {other:?}"),
+            }),
+        }
+    }
+
+    /// Spill the live guest GPRs a C helper may clobber (x0–x17 caller-saved,
+    /// x29) plus NZCV into the state struct, so they survive a `blr`. x18/x28/
+    /// x30 are reserved (never live guest state in a region body); x19–x27 are
+    /// AAPCS64 callee-saved and survive a compliant helper. Spilling to the
+    /// struct (not the host stack) keeps SP exactly 16-aligned for the call.
+    fn emit_mem_helper_spill(&mut self) -> Result<(), LowerError> {
+        for r in 0u8..=17 {
+            self.emit_ldst_unsigned(r, A64_STATE_REG, 3, 0b00, r as u32);
+        }
+        self.emit_ldst_unsigned(29, A64_STATE_REG, 3, 0b00, 29);
+        self.emit_sysreg(9, ArmReg::Nzcv, true)?; // mrs x9, nzcv (x9 already spilled)
+        self.emit_ldst_unsigned(9, A64_STATE_REG, 3, 0b00, A64_GUEST_NZCV_OFFSET / 8);
+        Ok(())
+    }
+
+    /// Reverse of [`Self::emit_mem_helper_spill`]: restore NZCV (via x9, before
+    /// x9 itself is reloaded) then x0–x17,x29 from the struct.
+    fn emit_mem_helper_reload(&mut self) -> Result<(), LowerError> {
+        self.emit_ldst_unsigned(9, A64_STATE_REG, 3, 0b01, A64_GUEST_NZCV_OFFSET / 8);
+        self.emit_sysreg(9, ArmReg::Nzcv, false)?; // msr nzcv, x9
+        for r in 0u8..=17 {
+            self.emit_ldst_unsigned(r, A64_STATE_REG, 3, 0b01, r as u32);
+        }
+        self.emit_ldst_unsigned(29, A64_STATE_REG, 3, 0b01, 29);
+        Ok(())
+    }
+
+    /// Compute a guest effective address into x1 (helper arg1) from the spilled
+    /// state-struct slots — never the live host regs, which the spill froze and
+    /// the upcoming `blr` will clobber. Uses x9 as scratch.
+    fn emit_mem_helper_addr(&mut self, addr: &Address) -> Result<(), LowerError> {
+        const A: u8 = 1; // x1 = address arg
+        const T: u8 = 9; // scratch
+        match addr {
+            Address::Direct(base) => {
+                let slot = Self::arm_struct_slot(*base)?;
+                self.emit_ldst_unsigned(A, A64_STATE_REG, 3, 0b01, slot / 8);
+            }
+            Address::BaseOffset { base, offset, .. } => {
+                let slot = Self::arm_struct_slot(*base)?;
+                self.emit_ldst_unsigned(A, A64_STATE_REG, 3, 0b01, slot / 8);
+                if *offset != 0 {
+                    self.emit_add_signed_imm(A, A, *offset, OpWidth::W64)?;
+                }
+            }
+            Address::BaseIndexScale {
+                base,
+                index,
+                scale,
+                disp,
+                ..
+            } => {
+                if let Some(b) = base {
+                    let bslot = Self::arm_struct_slot(*b)?;
+                    self.emit_ldst_unsigned(A, A64_STATE_REG, 3, 0b01, bslot / 8);
+                } else {
+                    self.emit_mov_imm(A, 0, OpWidth::W64)?;
+                }
+                let islot = Self::arm_struct_slot(*index)?;
+                self.emit_ldst_unsigned(T, A64_STATE_REG, 3, 0b01, islot / 8);
+                let shift = match scale {
+                    1 => 0u32,
+                    2 => 1,
+                    4 => 2,
+                    8 => 3,
+                    other => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("AArch64 mem-helper index scale {other}"),
+                        });
+                    }
+                };
+                // add x1, x1, x9, lsl #shift  (ADD shifted register, 64-bit)
+                self.emit(
+                    0x8b00_0000
+                        | ((T as u32) << 16)
+                        | (shift << 10)
+                        | ((A as u32) << 5)
+                        | (A as u32),
+                );
+                if *disp != 0 {
+                    self.emit_add_signed_imm(A, A, *disp as i64, OpWidth::W64)?;
+                }
+            }
+            other => {
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("AArch64 mem-helper address form {other:?}"),
+                });
+            }
+        }
+        Ok(())
+    }
+
+    /// Lower a `Load` as an MMU-translated runtime helper call-out:
+    /// spill-all → save LR → compute addr → `load_fn(ctx, addr, size, signed)
+    /// -> (value in x0, ok in x1)` → restore LR → fault-bail on `!ok` →
+    /// deliver value into the dst slot → reload. On fault the faulting op's
+    /// guest PC is recorded and the region exits to the interpreter (precise
+    /// restart). See the Phase-2b spec.
+    fn emit_jit_mem_load_op(
+        &mut self,
+        guest_pc: u64,
+        dst: VReg,
+        addr: &Address,
+        width: MemWidth,
+        sign: SignExtend,
+    ) -> Result<(), LowerError> {
+        let dst = Self::dst_gpr(dst)?;
+        let size = Self::mem_width_bytes(width)?;
+        let signed = matches!(sign, SignExtend::Sign) as i64;
+
+        self.emit_mem_helper_spill()?;
+        self.emit_push_scratch(30); // save trampoline LR around the blr
+        self.emit_mem_helper_addr(addr)?; // x1 = effective address
+        self.emit_ldst_unsigned(0, A64_STATE_REG, 3, 0b01, A64_GUEST_CTX_OFFSET / 8); // x0 = ctx
+        self.emit_mov_imm(2, size as i64, OpWidth::W32)?; // w2 = size
+        self.emit_mov_imm(3, signed, OpWidth::W32)?; // w3 = signed
+        self.emit_ldst_unsigned(9, A64_STATE_REG, 3, 0b01, A64_GUEST_LOAD_FN_OFFSET / 8);
+        self.emit_blr_reg(9); // -> x0 = value, x1 = ok
+        self.emit_pop_scratch(30); // restore LR
+
+        let cbz_off = self.code.position();
+        self.emit(0xb400_0000 | 1); // cbz x1, <fault>  (back-patched)
+        // OK: stash value (x0) into the dst slot, then bulk-reload so the dst
+        // register ends up with the value and every other reg is restored.
+        self.emit_ldst_unsigned(0, A64_STATE_REG, 3, 0b00, dst as u32);
+        self.emit_mem_helper_reload()?;
+        let done_off = self.code.position();
+        self.emit(0x1400_0000); // b <done>  (back-patched)
+        // fault label:
+        self.patch_compare_branch_to_current(cbz_off, 1, false)?;
+        self.emit_mem_helper_reload()?;
+        self.emit_native_exit(guest_pc)?;
+        // done label:
+        self.patch_branch_to_current(done_off)?;
+        Ok(())
+    }
+
+    /// Lower a `Store` as an MMU-translated runtime helper call-out:
+    /// `store_fn(ctx, addr, value, size) -> ok in x0`, with the same spill / LR
+    /// / fault-bail discipline as [`Self::emit_jit_mem_load_op`].
+    fn emit_jit_mem_store_op(
+        &mut self,
+        guest_pc: u64,
+        src: VReg,
+        addr: &Address,
+        width: MemWidth,
+    ) -> Result<(), LowerError> {
+        let size = Self::mem_width_bytes(width)?;
+
+        self.emit_mem_helper_spill()?;
+        self.emit_push_scratch(30);
+        self.emit_mem_helper_addr(addr)?; // x1 = effective address
+        // x2 = value (from the spilled slot, or an immediate)
+        match src {
+            VReg::Arch(ArchReg::Arm(ArmReg::X(n))) if n < 31 => {
+                self.emit_ldst_unsigned(2, A64_STATE_REG, 3, 0b01, n as u32);
+            }
+            VReg::Imm(v) => {
+                self.emit_mov_imm(2, v, OpWidth::W64)?;
+            }
+            other => {
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("AArch64 mem-helper store source {other:?}"),
+                });
+            }
+        }
+        self.emit_ldst_unsigned(0, A64_STATE_REG, 3, 0b01, A64_GUEST_CTX_OFFSET / 8); // x0 = ctx
+        self.emit_mov_imm(3, size as i64, OpWidth::W32)?; // w3 = size
+        self.emit_ldst_unsigned(9, A64_STATE_REG, 3, 0b01, A64_GUEST_STORE_FN_OFFSET / 8);
+        self.emit_blr_reg(9); // -> x0 = ok
+        self.emit_pop_scratch(30);
+
+        let cbz_off = self.code.position();
+        self.emit(0xb400_0000); // cbz x0, <fault>  (back-patched)
+        self.emit_mem_helper_reload()?;
+        let done_off = self.code.position();
+        self.emit(0x1400_0000); // b <done>
+        self.patch_compare_branch_to_current(cbz_off, 0, false)?;
+        self.emit_mem_helper_reload()?;
+        self.emit_native_exit(guest_pc)?;
+        self.patch_branch_to_current(done_off)?;
+        Ok(())
     }
 
     fn emit_branch_placeholder(&mut self, target: BlockId) {
@@ -14334,8 +14610,20 @@ impl Aarch64Lowerer {
                 addr,
                 width,
                 sign,
-            } => self.lower_load(*dst, addr, *width, *sign),
-            OpKind::Store { src, addr, width } => self.lower_store(*src, addr, *width),
+            } => {
+                if self.mem_helpers {
+                    self.emit_jit_mem_load_op(op.guest_pc, *dst, addr, *width, *sign)
+                } else {
+                    self.lower_load(*dst, addr, *width, *sign)
+                }
+            }
+            OpKind::Store { src, addr, width } => {
+                if self.mem_helpers {
+                    self.emit_jit_mem_store_op(op.guest_pc, *src, addr, *width)
+                } else {
+                    self.lower_store(*src, addr, *width)
+                }
+            }
             OpKind::PredLoad {
                 dst,
                 cond,
@@ -14805,33 +15093,46 @@ impl Aarch64Lowerer {
 
     fn lower_block(&mut self, block: &SmirBlock) -> Result<(), LowerError> {
         self.block_offsets.insert(block.id, self.code.position());
+        // Frontier block: emit an exit stub instead of its body. Branches from
+        // interior blocks land on the stub; the interpreter resumes at the
+        // block's guest PC. (The block's ops are never executed natively — which
+        // is why the clobber gate excludes native-exit blocks.)
+        if let Some(&resume_pc) = self.native_exits.get(&block.id) {
+            return self.emit_native_exit(resume_pc);
+        }
         let (op_end, folded_cond) = Self::folded_branch_condition(block);
         let mut idx = 0;
         while idx < op_end {
             let ops = &block.ops[idx..op_end];
-            if let Some(consumed) = self.try_lower_fused_signed_load_w(ops)? {
-                idx += consumed;
-                continue;
-            }
-            if let Some(consumed) = self.try_lower_fused_ldpsw_pair(ops)? {
-                idx += consumed;
-                continue;
-            }
-            if let Some(consumed) = self.try_lower_fused_mem_indexed(ops)? {
-                idx += consumed;
-                continue;
-            }
-            if let Some(consumed) = self.try_lower_fused_pair_indexed(ops)? {
-                idx += consumed;
-                continue;
-            }
-            if let Some(consumed) = self.try_lower_fused_mem_reg_offset(ops)? {
-                idx += consumed;
-                continue;
-            }
-            if let Some(consumed) = self.try_lower_fused_ldclr(ops)? {
-                idx += consumed;
-                continue;
+            // Memory-fusion peepholes emit INLINE native loads/stores at the raw
+            // guest address — correct only when NOT routing memory through the
+            // MMU helpers. Skip them in mem_helpers mode so Load/Store reach the
+            // call-out path in lower_op.
+            if !self.mem_helpers {
+                if let Some(consumed) = self.try_lower_fused_signed_load_w(ops)? {
+                    idx += consumed;
+                    continue;
+                }
+                if let Some(consumed) = self.try_lower_fused_ldpsw_pair(ops)? {
+                    idx += consumed;
+                    continue;
+                }
+                if let Some(consumed) = self.try_lower_fused_mem_indexed(ops)? {
+                    idx += consumed;
+                    continue;
+                }
+                if let Some(consumed) = self.try_lower_fused_pair_indexed(ops)? {
+                    idx += consumed;
+                    continue;
+                }
+                if let Some(consumed) = self.try_lower_fused_mem_reg_offset(ops)? {
+                    idx += consumed;
+                    continue;
+                }
+                if let Some(consumed) = self.try_lower_fused_ldclr(ops)? {
+                    idx += consumed;
+                    continue;
+                }
             }
             if let Some(consumed) = self.try_lower_fused_extract(ops)? {
                 idx += consumed;

@@ -2376,6 +2376,34 @@ impl Aarch64Decoder {
         };
         let fp_reg = |num, size| Operand::FpReg(FpRegister { num, size });
 
+        // FP data-processing (2 source): bits[11:10] == 0b10. The real opcode is
+        // the 4-bit field bits[15:12]; decode it directly here. (The legacy
+        // `(opcode = bits[15:10], ptype, rm)` table below mis-mapped every entry
+        // for these — e.g. it read double FADD's 0x0A as UNKNOWN and FDIV's 0x06
+        // as FADD — so scalar FP arithmetic mis-decoded for all ptypes except
+        // single FADD.)
+        if (raw >> 10) & 0x3 == 0b10 {
+            let mnemonic = match (raw >> 12) & 0xF {
+                0b0000 => Mnemonic::FMUL,
+                0b0001 => Mnemonic::FDIV,
+                0b0010 => Mnemonic::FADD,
+                0b0011 => Mnemonic::FSUB,
+                0b0100 => Mnemonic::FMAX,
+                0b0101 => Mnemonic::FMIN,
+                0b0110 => Mnemonic::FMAXNM,
+                0b0111 => Mnemonic::FMINNM,
+                0b1000 => Mnemonic::FNMUL,
+                _ => Mnemonic::UNKNOWN,
+            };
+            if mnemonic == Mnemonic::UNKNOWN {
+                return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4));
+            }
+            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                .with_operand(fp_reg(rd, fp_size))
+                .with_operand(fp_reg(rn, fp_size))
+                .with_operand(fp_reg(rm, fp_size)));
+        }
+
         let mnemonic = match (opcode, ptype, rm) {
             (0x0A, 0b00, _) => Mnemonic::FADD,
             (0x06, 0b01, _) => Mnemonic::FADD,

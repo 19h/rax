@@ -4761,7 +4761,9 @@ mod tests {
 
     #[test]
     fn test_lift_fadd_scalar_d() {
-        let (ops, _) = lift_single([0x20, 0x18, 0x62, 0x1e]);
+        // fadd d0, d1, d2  (0x1e622820); was previously the FDIV-double encoding,
+        // which only decoded as FADD due to the scrambled 2-source opcode table.
+        let (ops, _) = lift_single([0x20, 0x28, 0x62, 0x1e]);
         assert_eq!(ops.len(), 1);
         match &ops[0].kind {
             OpKind::FAdd { precision, .. } => assert_eq!(*precision, FpPrecision::F64),
@@ -4771,7 +4773,8 @@ mod tests {
 
     #[test]
     fn test_lift_fsub_scalar() {
-        let (ops, _) = lift_single([0x20, 0x58, 0x22, 0x1e]);
+        // fsub s0, s1, s2  (0x1e223820); was the FMIN encoding under the old bug.
+        let (ops, _) = lift_single([0x20, 0x38, 0x22, 0x1e]);
         assert_eq!(ops.len(), 1);
         match &ops[0].kind {
             OpKind::FSub { .. } => {}
@@ -4781,7 +4784,8 @@ mod tests {
 
     #[test]
     fn test_lift_fdiv_scalar() {
-        let (ops, _) = lift_single([0x20, 0x68, 0x22, 0x1e]);
+        // fdiv s0, s1, s2  (0x1e221820); was the FMAXNM encoding under the old bug.
+        let (ops, _) = lift_single([0x20, 0x18, 0x22, 0x1e]);
         assert_eq!(ops.len(), 1);
         match &ops[0].kind {
             OpKind::FDiv { .. } => {}

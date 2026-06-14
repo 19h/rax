@@ -235,6 +235,11 @@ pub struct AArch64Cpu {
     /// Cycle count.
     cycle_count: u64,
 
+    /// SMIR hot-block JIT tier state (region cache + hotness counters). Present
+    /// only on an aarch64 host with the `smir-jit` feature.
+    #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+    jit: Aarch64JitState,
+
     /// CPU halted.
     halted: bool,
 
@@ -331,6 +336,8 @@ impl AArch64Cpu {
 
             insn_count: 0,
             cycle_count: 0,
+            #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+            jit: Aarch64JitState::default(),
             halted: false,
             wfi: false,
             wfe: false,
@@ -552,25 +559,45 @@ impl AArch64Cpu {
     /// Write byte to memory.
     pub fn mem_write_u8(&mut self, va: u64, value: u8) -> Result<(), ArmError> {
         let pa = self.translate_address(va, true, false)?;
-        self.memory.write_u8(pa, value).map_err(|e| e.into())
+        self.memory
+            .write_u8(pa, value)
+            .map_err(|e| -> ArmError { e.into() })?;
+        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+        self.jit_note_write(va);
+        Ok(())
     }
 
     /// Write halfword to memory.
     pub fn mem_write_u16(&mut self, va: u64, value: u16) -> Result<(), ArmError> {
         let pa = self.translate_address(va, true, false)?;
-        self.memory.write_u16(pa, value).map_err(|e| e.into())
+        self.memory
+            .write_u16(pa, value)
+            .map_err(|e| -> ArmError { e.into() })?;
+        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+        self.jit_note_write(va);
+        Ok(())
     }
 
     /// Write word to memory.
     pub fn mem_write_u32(&mut self, va: u64, value: u32) -> Result<(), ArmError> {
         let pa = self.translate_address(va, true, false)?;
-        self.memory.write_u32(pa, value).map_err(|e| e.into())
+        self.memory
+            .write_u32(pa, value)
+            .map_err(|e| -> ArmError { e.into() })?;
+        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+        self.jit_note_write(va);
+        Ok(())
     }
 
     /// Write doubleword to memory.
     pub fn mem_write_u64(&mut self, va: u64, value: u64) -> Result<(), ArmError> {
         let pa = self.translate_address(va, true, false)?;
-        self.memory.write_u64(pa, value).map_err(|e| e.into())
+        self.memory
+            .write_u64(pa, value)
+            .map_err(|e| -> ArmError { e.into() })?;
+        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+        self.jit_note_write(va);
+        Ok(())
     }
 
     /// Translate virtual address to physical address.
@@ -15748,6 +15775,10 @@ impl AArch64Cpu {
 
     /// Execute one instruction with full system semantics.
     pub fn step_system(&mut self) -> Result<CpuExit, ArmError> {
+        // Drain any pending self-modifying-code invalidation before consulting
+        // the region cache (never mid-region — writes during a run defer here).
+        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+        self.jit_drain_smc();
         self.tick_system(Self::TIMER_TICKS_PER_INSN);
 
         if self.halted {
@@ -15786,9 +15817,21 @@ impl AArch64Cpu {
             return Ok(CpuExit::Continue);
         }
 
+        // SMIR JIT fast path: if a compiled region covers the current PC, run it
+        // (it advances PC to its recorded exit) and continue — bypassing the
+        // per-instruction interpreter and its PC pre-increment. IRQ/timer state
+        // is re-checked on the next step.
+        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+        if let Some(region) = self.jit_lookup(self.pc) {
+            self.jit_run_region(&region);
+            return Ok(CpuExit::Continue);
+        }
+
         self.pc_ring[self.pc_ring_idx] = self.pc;
         self.pc_ring_idx = (self.pc_ring_idx + 1) % self.pc_ring.len();
 
+        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+        let pc_before = self.pc;
         match self.execute_instruction() {
             Ok(CpuExit::Svc(imm)) => {
                 // PC already points past the SVC: that is the preferred
@@ -15803,7 +15846,13 @@ impl AArch64Cpu {
                 self.enter_sync_exception(SyndromeRegister::brk(imm as u16), None)?;
                 Ok(CpuExit::Continue)
             }
-            Ok(exit) => Ok(exit),
+            Ok(exit) => {
+                // Loop-head hotness sampling: a backward branch (PC decreased)
+                // is a loop back-edge; promote + run the head once it is hot.
+                #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+                self.jit_sample_backedge(pc_before);
+                Ok(exit)
+            }
             Err(err) => self.deliver_fault(err),
         }
     }
@@ -16007,6 +16056,426 @@ fn fsc_for_fault(fault_type: MemoryFaultType, level: u8) -> super::exceptions::F
             _ => F::AddressSizeL3,
         },
         _ => F::SyncExternal,
+    }
+}
+
+// ============================================================================
+// SMIR hot-block JIT tier (aarch64 host; opt-in via the `smir-jit` feature).
+//
+// Mirrors the x86_64 tier (src/backend/emulator/x86_64/cpu.rs): when a guest
+// loop head turns hot, the region is lifted to SMIR (Aarch64Lifter), optimized,
+// lowered to native AArch64 under the identity register map (Aarch64Lowerer),
+// W^X-mapped (ExecMem), and run in one call through the rax_a64_enter_native
+// trampoline. Frontier terminators (RET/BR/SVC/...) lower to native-exit stubs
+// that record the resume guest PC; memory ops (when jit.mem is set) route
+// through the rax_a64_mem_* helpers (MMU-translated, fault-bail). Validated
+// differentially against the interpreter.
+// ============================================================================
+
+/// Back-edge hits to a loop head before it is promoted (compiled).
+#[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+const A64_JIT_HOT_THRESHOLD: u32 = 64;
+
+/// A compiled native AArch64 region: W^X executable code + its entry offset.
+#[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+pub(crate) struct JitRegion {
+    exec: crate::smir::lower::runtime::ExecMem,
+    entry_offset: usize,
+    /// The region touches V (SIMD/FP) registers, so it must run through the FP
+    /// trampoline that additionally marshals V0-V31 + FPCR/FPSR. Integer-only
+    /// regions use the cheaper GPR-only trampoline.
+    uses_fp: bool,
+}
+
+/// Per-CPU JIT tier state.
+#[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+#[derive(Default)]
+pub(crate) struct Aarch64JitState {
+    /// Compiled regions keyed by (head guest PC, mode tag). `Some` ⇒ runnable;
+    /// `None` ⇒ memoized-ineligible (skipped until an SMC cache wipe).
+    cache: std::collections::HashMap<(u64, u64), Option<std::sync::Arc<JitRegion>>>,
+    /// Per-head back-edge hit counter (promotion trigger).
+    hot: std::collections::HashMap<u64, u32>,
+    /// Route memory ops through MMU helper call-outs (vs. bail to interpreter).
+    mem: bool,
+    /// Per-instance kill switch (default enabled). Used by differential tests to
+    /// get a pure-interpreter oracle run; complements the process-global
+    /// `RAX_NO_JIT` env. When set, no region is ever promoted, so the cache
+    /// stays empty and the fast path never fires.
+    disabled: bool,
+    /// 4 KiB page bases covered by some cached region's guest code. A guest
+    /// write into one of these pages marks the cache stale (self-modifying
+    /// code); the next `step_system` drains it. Empty ⇒ the SMC write-check is
+    /// a single `is_empty()` on the hot store path.
+    code_pages: std::collections::HashSet<u64>,
+    /// Set when a write hit a `code_pages` entry; drained (whole-cache evict) at
+    /// the top of the next `step_system`. Deferred so a write performed *inside*
+    /// a running region doesn't pull the executing code out from under it.
+    smc_dirty: bool,
+}
+
+/// AAPCS64 16-byte load-helper return: value in x0, ok in x1.
+#[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+#[repr(C)]
+struct A64LoadRet {
+    value: u64,
+    ok: u64,
+}
+
+/// JIT memory-load helper: MMU-translate + read through the vcpu. `ok == 0` on a
+/// fault — the region records the faulting PC and bails to the interpreter,
+/// which re-executes the access and raises the architectural fault.
+///
+/// # Safety
+/// `ctx` must be the live `*mut AArch64Cpu` the JIT installed for this run.
+#[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+unsafe extern "C" fn rax_a64_mem_load(
+    ctx: *mut AArch64Cpu,
+    addr: u64,
+    size: u32,
+    signed: u32,
+) -> A64LoadRet {
+    let cpu = unsafe { &*ctx };
+    let res = match size {
+        1 => cpu.mem_read_u8(addr).map(|v| {
+            if signed != 0 {
+                v as i8 as i64 as u64
+            } else {
+                v as u64
+            }
+        }),
+        2 => cpu.mem_read_u16(addr).map(|v| {
+            if signed != 0 {
+                v as i16 as i64 as u64
+            } else {
+                v as u64
+            }
+        }),
+        4 => cpu.mem_read_u32(addr).map(|v| {
+            if signed != 0 {
+                v as i32 as i64 as u64
+            } else {
+                v as u64
+            }
+        }),
+        _ => cpu.mem_read_u64(addr),
+    };
+    match res {
+        Ok(value) => A64LoadRet { value, ok: 1 },
+        Err(_) => A64LoadRet { value: 0, ok: 0 },
+    }
+}
+
+/// JIT memory-store helper. Returns 0 on fault (region bails to the interpreter).
+///
+/// # Safety
+/// `ctx` must be the live `*mut AArch64Cpu` the JIT installed for this run.
+#[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+unsafe extern "C" fn rax_a64_mem_store(
+    ctx: *mut AArch64Cpu,
+    addr: u64,
+    value: u64,
+    size: u32,
+) -> u64 {
+    let cpu = unsafe { &mut *ctx };
+    let res = match size {
+        1 => cpu.mem_write_u8(addr, value as u8),
+        2 => cpu.mem_write_u16(addr, value as u16),
+        4 => cpu.mem_write_u32(addr, value as u32),
+        _ => cpu.mem_write_u64(addr, value),
+    };
+    if res.is_ok() { 1 } else { 0 }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+impl AArch64Cpu {
+    /// Enable/disable JIT of memory-touching regions (Load/Store via helpers).
+    /// Off by default (register-only regions); memory ops otherwise bail.
+    pub fn set_jit_mem(&mut self, on: bool) {
+        self.jit.mem = on;
+    }
+
+    /// Enable/disable the JIT tier for this CPU instance (default enabled).
+    /// Disabling forces pure interpretation — used to obtain a differential
+    /// oracle without touching the process-global `RAX_NO_JIT`.
+    pub fn set_jit_enabled(&mut self, on: bool) {
+        self.jit.disabled = !on;
+    }
+
+    /// Note a guest write at `va` (called from the memory-store path). If it
+    /// lands in a page covered by a cached region, flag the cache stale so the
+    /// next `step_system` drains it (self-modifying-code correctness). The
+    /// fast `is_empty()` guard keeps the common no-JIT-code-pages case cheap.
+    fn jit_note_write(&mut self, va: u64) {
+        if !self.jit.code_pages.is_empty() && self.jit.code_pages.contains(&(va & !0xFFF)) {
+            self.jit.smc_dirty = true;
+        }
+    }
+
+    /// Drain a pending SMC invalidation: evict every cached region (and hot
+    /// counters + code-page set). Whole-cache eviction is coarse but correct and
+    /// SMC is rare; heads re-promote from the modified bytes. Called at the top
+    /// of `step_system`, never mid-region.
+    fn jit_drain_smc(&mut self) {
+        if self.jit.smc_dirty {
+            self.jit.cache.clear();
+            self.jit.hot.clear();
+            self.jit.code_pages.clear();
+            self.jit.smc_dirty = false;
+        }
+    }
+
+    /// Cache-key discriminator: the active translation regime (TTBR0 frame + EL
+    /// + MMU-enable). A region is only reused while these are unchanged, so a
+    /// context switch can never run a stale region.
+    fn jit_mode_tag(&self) -> u64 {
+        (self.sysregs.el1.ttbr0 & !0xFFF)
+            | (self.current_el as u64)
+            | (((self.sysregs.el1.sctlr & 1) as u64) << 2)
+    }
+
+    /// Read up to `max` bytes of guest instruction stream from `entry`, stopping
+    /// at the first unmapped word (fault-free; tolerates a short mapped tail).
+    fn jit_read_window(&self, entry: u64, max: usize) -> Vec<u8> {
+        let mut bytes = Vec::with_capacity(max);
+        let mut a = entry;
+        while bytes.len() + 4 <= max {
+            match self.mem_read_u32(a) {
+                Ok(w) => {
+                    bytes.extend_from_slice(&w.to_le_bytes());
+                    a = a.wrapping_add(4);
+                }
+                Err(_) => break,
+            }
+        }
+        bytes
+    }
+
+    /// Marshal live architectural state into the native register file.
+    fn jit_marshal_to(&self) -> crate::smir::lower::runtime::Aarch64GuestRegs {
+        let mut gr = crate::smir::lower::runtime::Aarch64GuestRegs::default();
+        gr.load_fn = rax_a64_mem_load as usize as u64;
+        gr.store_fn = rax_a64_mem_store as usize as u64;
+        for i in 0..NUM_GPRS {
+            gr.x[i] = self.x[i];
+        }
+        gr.sp = self.current_sp();
+        gr.pc = self.pc; // fallback resume PC; a native-exit stub overwrites it
+        gr.nzcv = ((self.nzcv as u64) & 0xF) << 28; // u8 [N,Z,C,V] -> PSTATE 31:28
+        gr.fpcr = self.fpcr as u64;
+        gr.fpsr = self.fpsr as u64;
+        for i in 0..NUM_SIMD_REGS {
+            gr.v[2 * i] = self.v[i] as u64;
+            gr.v[2 * i + 1] = (self.v[i] >> 64) as u64;
+        }
+        gr
+    }
+
+    /// Marshal the native register file back, resuming at the recorded PC.
+    fn jit_marshal_from(&mut self, gr: &crate::smir::lower::runtime::Aarch64GuestRegs) {
+        for i in 0..NUM_GPRS {
+            self.x[i] = gr.x[i];
+        }
+        self.set_current_sp(gr.sp);
+        self.nzcv = ((gr.nzcv >> 28) & 0xF) as u8;
+        self.fpcr = gr.fpcr as u32;
+        self.fpsr = gr.fpsr as u32;
+        for i in 0..NUM_SIMD_REGS {
+            self.v[i] = (gr.v[2 * i] as u128) | ((gr.v[2 * i + 1] as u128) << 64);
+        }
+        self.pc = gr.pc;
+    }
+
+    /// Run a compiled region over the current state. FP/SIMD regions take the
+    /// V-register-marshaling trampoline; integer-only regions the cheaper one.
+    fn jit_run_region(&mut self, region: &JitRegion) {
+        let mut gr = self.jit_marshal_to();
+        gr.ctx = self as *mut AArch64Cpu as u64; // mutable ctx for the store helper
+        if region.uses_fp {
+            region
+                .exec
+                .run_aarch64_identity_fp(region.entry_offset, &mut gr);
+        } else {
+            region
+                .exec
+                .run_aarch64_identity(region.entry_offset, &mut gr);
+        }
+        self.jit_marshal_from(&gr);
+    }
+
+    /// Lift+optimize+lower the region at the current PC. `None` if ineligible
+    /// (lift/lower failure, no frontier, entry-is-frontier, clobber-unsafe, or
+    /// a relocation slipped through).
+    fn jit_compile_region(&mut self) -> Option<JitRegion> {
+        use crate::smir::ir::Terminator;
+        use crate::smir::lift::aarch64::Aarch64Lifter;
+        use crate::smir::lift::{LiftContext, MemoryReader, SmirLifter};
+        use crate::smir::lower::SmirLowerer;
+        use crate::smir::lower::aarch64::Aarch64Lowerer;
+        use crate::smir::lower::runtime::{ExecMem, is_aarch64_native_clobber_safe_excluding};
+        use crate::smir::memory::MemoryError;
+        use crate::smir::opt::{OptLevel, optimize_function};
+        use crate::smir::types::SourceArch;
+
+        let entry = self.pc;
+        const WINDOW: usize = 512;
+        let bytes = self.jit_read_window(entry, WINDOW);
+        if bytes.len() < 4 {
+            return None;
+        }
+
+        struct Win {
+            base: u64,
+            bytes: Vec<u8>,
+        }
+        impl MemoryReader for Win {
+            fn read(&self, addr: u64, size: usize) -> core::result::Result<Vec<u8>, MemoryError> {
+                let off = addr
+                    .checked_sub(self.base)
+                    .filter(|&o| (o as usize) < self.bytes.len())
+                    .ok_or(MemoryError::OutOfBounds { addr })? as usize;
+                let n = (self.bytes.len() - off).min(size);
+                Ok(self.bytes[off..off + n].to_vec())
+            }
+        }
+        let reader = Win { base: entry, bytes };
+
+        let mut lifter = Aarch64Lifter::new();
+        let mut lctx = LiftContext::new(SourceArch::Aarch64);
+        let mut func = lifter.lift_function(entry, &reader, &mut lctx).ok()?;
+
+        if std::env::var_os("RAX_JIT_NO_OPT").is_none() {
+            optimize_function(&mut func, OptLevel::O2);
+        }
+
+        // Frontier terminals become native-exit stubs (resume = block start PC);
+        // internal Branch/CondBranch edges stay native (loops, if/else).
+        let mut exits: std::collections::HashMap<_, u64> = std::collections::HashMap::new();
+        for b in &func.blocks {
+            let frontier = matches!(
+                &b.terminator,
+                Terminator::Trap { .. }
+                    | Terminator::Return { .. }
+                    | Terminator::IndirectBranch { .. }
+                    | Terminator::Switch { .. }
+                    | Terminator::Call { .. }
+                    | Terminator::Unreachable
+            );
+            if frontier {
+                exits.insert(b.id, b.guest_pc);
+            }
+        }
+        // No frontier ⇒ spin loop (never returns); entry itself a frontier ⇒ no
+        // native work. Either way, decline.
+        if exits.is_empty() || exits.contains_key(&func.entry) {
+            return None;
+        }
+
+        let allow_mem = self.jit.mem;
+        if !is_aarch64_native_clobber_safe_excluding(&func, &exits, allow_mem) {
+            return None;
+        }
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.set_native_exits(exits);
+        lowerer.set_mem_helpers(allow_mem);
+        let res = lowerer.lower_function(&func).ok()?;
+        if !res.relocations.is_empty() {
+            return None; // self-contained regions only (no external fixups)
+        }
+        let code = lowerer.finalize().ok()?;
+        let exec = ExecMem::new(&code).ok()?;
+
+        // A region needs the V-register-marshaling trampoline iff any op reads or
+        // writes a guest V (SIMD/FP) register.
+        use crate::smir::types::{ArchReg, ArmReg, VReg};
+        let touches_v = |v: &VReg| matches!(v, VReg::Arch(ArchReg::Arm(ArmReg::V(_))));
+        let uses_fp = func.blocks.iter().flat_map(|b| &b.ops).any(|op| {
+            op.kind.dests().iter().any(touches_v) || op.kind.source_vregs().iter().any(touches_v)
+        });
+
+        Some(JitRegion {
+            exec,
+            entry_offset: res.entry_offset,
+            uses_fp,
+        })
+    }
+
+    /// Fast-path lookup: a runnable compiled region at `pc` in the current mode.
+    fn jit_lookup(&self, pc: u64) -> Option<std::sync::Arc<JitRegion>> {
+        if self.jit.disabled {
+            return None;
+        }
+        let mt = self.jit_mode_tag();
+        match self.jit.cache.get(&(pc, mt)) {
+            Some(Some(r)) => Some(r.clone()),
+            _ => None,
+        }
+    }
+
+    /// After an interpreted instruction: if it was a backward branch (PC
+    /// decreased — a loop back-edge), bump the head's hotness and, once hot,
+    /// compile + run the region. RAX_NO_JIT disables promotion.
+    fn jit_sample_backedge(&mut self, pc_before: u64) {
+        {
+            use std::sync::OnceLock;
+            static OFF: OnceLock<bool> = OnceLock::new();
+            if *OFF.get_or_init(|| std::env::var_os("RAX_NO_JIT").is_some()) {
+                return;
+            }
+        }
+        if self.jit.disabled {
+            return;
+        }
+        let head = self.pc;
+        if head >= pc_before {
+            return; // forward / fallthrough — not a loop back-edge
+        }
+        let mt = self.jit_mode_tag();
+        if self.jit.cache.contains_key(&(head, mt)) {
+            return; // already promoted or memoized-ineligible
+        }
+        let hot = {
+            let c = self.jit.hot.entry(head).or_insert(0);
+            *c = c.saturating_add(1);
+            *c
+        };
+        if hot < A64_JIT_HOT_THRESHOLD {
+            return;
+        }
+        self.jit.hot.remove(&head);
+        let region = self.jit_compile_region().map(std::sync::Arc::new);
+        if std::env::var_os("RAX_JIT_LOG").is_some() {
+            eprintln!(
+                "[JIT-a64] promote @ {head:#x} -> {}",
+                if region.is_some() {
+                    "compiled"
+                } else {
+                    "ineligible"
+                }
+            );
+        }
+        match &region {
+            Some(r) => {
+                let r = r.clone();
+                self.jit.cache.insert((head, mt), region);
+                // Track the guest-code pages this region covers (its ≤512 B lift
+                // window), so a later write into them invalidates it (SMC). Add
+                // the next page only when the window can straddle into it.
+                self.jit.code_pages.insert(head & !0xFFF);
+                if (head & 0xFFF) + 512 > 0x1000 {
+                    self.jit.code_pages.insert((head & !0xFFF) + 0x1000);
+                }
+                self.jit_run_region(&r);
+            }
+            None => {
+                // Soft-cap the memo so a long run can't grow it unbounded.
+                if self.jit.cache.len() >= 16384 {
+                    self.jit.cache.clear();
+                }
+                self.jit.cache.insert((head, mt), None);
+            }
+        }
     }
 }
 
