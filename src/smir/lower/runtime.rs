@@ -192,81 +192,99 @@ impl Aarch64GuestRegs {
 // guest stack). Alignment: 6 callee pushes (48) + `sub rsp,24` (72 total) leaves
 // rsp 16-aligned at the `call`.
 #[cfg(target_arch = "x86_64")]
-core::arch::global_asm!(
-    ".text",
-    ".p2align 4",
+macro_rules! x86_enter_native_trampoline {
+    ($global:literal, $type_directive:literal, $label:literal) => {
+        core::arch::global_asm!(
+            ".text",
+            ".p2align 4",
+            $global,
+            $type_directive,
+            $label,
+            "push rbp",
+            "push rbx",
+            "push r12",
+            "push r13",
+            "push r14",
+            "push r15",
+            "sub rsp, 24", // [rsp]=entry [rsp+8]=state [rsp+16]=pad ; rsp 16-aligned
+            "mov [rsp], rdi",
+            "mov [rsp+8], rsi",
+            "mov rax, [rsi+256]", // RFLAGS
+            "push rax",
+            "popfq",
+            "mov rax, [rsi+0]",
+            "mov rcx, [rsi+8]",
+            "mov rdx, [rsi+16]",
+            "mov rbx, [rsi+24]",
+            "mov rbp, [rsi+40]",
+            "mov rdi, [rsi+56]",
+            "mov r8,  [rsi+64]",
+            "mov r9,  [rsi+72]",
+            "mov r10, [rsi+80]",
+            "mov r11, [rsi+88]",
+            "mov r12, [rsi+96]",
+            "mov r13, [rsi+104]",
+            "mov r14, [rsi+112]",
+            "mov r15, [rsi+120]",
+            "mov rsi, [rsi+48]", // rsi last (was the base pointer)
+            "call [rsp]",
+            "push rax",          // save guest RAX ; state now at [rsp+16]
+            "mov rax, [rsp+16]", // rax = *mut GuestRegs
+            "mov [rax+8],   rcx",
+            "mov [rax+16],  rdx",
+            "mov [rax+24],  rbx",
+            "mov [rax+40],  rbp",
+            "mov [rax+48],  rsi",
+            "mov [rax+56],  rdi",
+            "mov [rax+64],  r8",
+            "mov [rax+72],  r9",
+            "mov [rax+80],  r10",
+            "mov [rax+88],  r11",
+            "mov [rax+96],  r12",
+            "mov [rax+104], r13",
+            "mov [rax+112], r14",
+            "mov [rax+120], r15",
+            "pushfq",
+            "pop rcx",
+            "mov [rax+256], rcx",
+            // Sanitize the HOST EFLAGS before returning to Rust. The `popfq` above loaded
+            // the GUEST RFLAGS into the host, and the region runs with them — but the
+            // sticky control flags then LEAK into the host: AC (alignment check, set by
+            // the kernel's SMAP `stac` for user copies) faults the next unaligned host
+            // access with #AC/SIGBUS; DF (direction) reverses host `rep` string ops
+            // (memcpy/memset) → corruption; TF would single-step → SIGTRAP; NT corrupts
+            // a host `iret`. Clear bits 8(TF)/10(DF)/14(NT)/18(AC); the arithmetic flags
+            // are caller-saved scratch the host re-derives, so they need no restore.
+            "pushfq",
+            "and qword ptr [rsp], -0x44501", // ~0x44500: clear TF(0x100)+DF(0x400)+NT(0x4000)+AC(0x40000)
+            "popfq",
+            "mov rcx, [rsp]", // saved guest RAX
+            "mov [rax+0], rcx",
+            "add rsp, 8",  // pop saved RAX
+            "add rsp, 24", // pop locals
+            "pop r15",
+            "pop r14",
+            "pop r13",
+            "pop r12",
+            "pop rbx",
+            "pop rbp",
+            "ret",
+        );
+    };
+}
+
+#[cfg(all(target_arch = "x86_64", target_vendor = "apple"))]
+x86_enter_native_trampoline!(
+    ".globl _rax_smir_enter_native",
+    "",
+    "_rax_smir_enter_native:"
+);
+
+#[cfg(all(target_arch = "x86_64", not(target_vendor = "apple")))]
+x86_enter_native_trampoline!(
     ".globl rax_smir_enter_native",
     ".type rax_smir_enter_native,@function",
-    "rax_smir_enter_native:",
-    "push rbp",
-    "push rbx",
-    "push r12",
-    "push r13",
-    "push r14",
-    "push r15",
-    "sub rsp, 24", // [rsp]=entry [rsp+8]=state [rsp+16]=pad ; rsp 16-aligned
-    "mov [rsp], rdi",
-    "mov [rsp+8], rsi",
-    "mov rax, [rsi+256]", // RFLAGS
-    "push rax",
-    "popfq",
-    "mov rax, [rsi+0]",
-    "mov rcx, [rsi+8]",
-    "mov rdx, [rsi+16]",
-    "mov rbx, [rsi+24]",
-    "mov rbp, [rsi+40]",
-    "mov rdi, [rsi+56]",
-    "mov r8,  [rsi+64]",
-    "mov r9,  [rsi+72]",
-    "mov r10, [rsi+80]",
-    "mov r11, [rsi+88]",
-    "mov r12, [rsi+96]",
-    "mov r13, [rsi+104]",
-    "mov r14, [rsi+112]",
-    "mov r15, [rsi+120]",
-    "mov rsi, [rsi+48]", // rsi last (was the base pointer)
-    "call [rsp]",
-    "push rax",          // save guest RAX ; state now at [rsp+16]
-    "mov rax, [rsp+16]", // rax = *mut GuestRegs
-    "mov [rax+8],   rcx",
-    "mov [rax+16],  rdx",
-    "mov [rax+24],  rbx",
-    "mov [rax+40],  rbp",
-    "mov [rax+48],  rsi",
-    "mov [rax+56],  rdi",
-    "mov [rax+64],  r8",
-    "mov [rax+72],  r9",
-    "mov [rax+80],  r10",
-    "mov [rax+88],  r11",
-    "mov [rax+96],  r12",
-    "mov [rax+104], r13",
-    "mov [rax+112], r14",
-    "mov [rax+120], r15",
-    "pushfq",
-    "pop rcx",
-    "mov [rax+256], rcx",
-    // Sanitize the HOST EFLAGS before returning to Rust. The `popfq` above loaded
-    // the GUEST RFLAGS into the host, and the region runs with them — but the
-    // sticky control flags then LEAK into the host: AC (alignment check, set by
-    // the kernel's SMAP `stac` for user copies) faults the next unaligned host
-    // access with #AC/SIGBUS; DF (direction) reverses host `rep` string ops
-    // (memcpy/memset) → corruption; TF would single-step → SIGTRAP; NT corrupts
-    // a host `iret`. Clear bits 8(TF)/10(DF)/14(NT)/18(AC); the arithmetic flags
-    // are caller-saved scratch the host re-derives, so they need no restore.
-    "pushfq",
-    "and qword ptr [rsp], -0x44501", // ~0x44500: clear TF(0x100)+DF(0x400)+NT(0x4000)+AC(0x40000)
-    "popfq",
-    "mov rcx, [rsp]", // saved guest RAX
-    "mov [rax+0], rcx",
-    "add rsp, 8",  // pop saved RAX
-    "add rsp, 24", // pop locals
-    "pop r15",
-    "pop r14",
-    "pop r13",
-    "pop r12",
-    "pop rbx",
-    "pop rbp",
-    "ret",
+    "rax_smir_enter_native:"
 );
 
 #[cfg(target_arch = "x86_64")]
