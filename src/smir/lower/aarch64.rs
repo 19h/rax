@@ -4022,7 +4022,7 @@ impl Aarch64Lowerer {
         if let Address::PcRel { offset, base, .. } = addr {
             let base = base.unwrap_or(guest_pc) as i64;
             let target = base.wrapping_add(*offset);
-            let insn_pc = self.code.position() as i64;
+            let insn_pc = guest_pc as i64;
             let imm19 = Self::literal_scaled_imm19("AArch64 PRFM literal", target, insn_pc)?;
             self.emit_prfm_literal(prfop, imm19);
             return Ok(());
@@ -46371,9 +46371,9 @@ mod tests {
 
     #[test]
     fn lowers_prefetch_pcrel_as_prfm_literal() {
-        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
         builder.push_op(
-            0,
+            0x1000,
             OpKind::Prefetch {
                 addr: Address::PcRel {
                     offset: 12,
