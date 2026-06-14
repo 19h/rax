@@ -888,6 +888,26 @@ impl X86_64Vcpu {
         }
     }
 
+    /// Run-loop periodic work shared by interpreter execution and JIT call-outs.
+    /// Returns true when execution should yield back to the VMM.
+    #[inline]
+    fn poll_periodic_housekeeping(&mut self, start_time: &std::time::Instant) -> bool {
+        if let Some(vector) = self.mmu.tick_lapic_timer() {
+            if self.can_inject_interrupt() && self.inject_interrupt(vector).unwrap_or(false) {
+                self.mmu.clear_lapic_pending();
+                self.halted = false;
+            }
+        }
+
+        start_time.elapsed().as_millis() >= 1
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[inline]
+    fn jit_callout_should_yield(&mut self, start_time: &std::time::Instant, steps: u64) -> bool {
+        steps % LAPIC_POLL_STRIDE == 0 && self.poll_periodic_housekeeping(start_time)
+    }
+
     /// Materialize lazy flags into rflags.
     /// Call this before any instruction that reads flags (Jcc, CMOVcc, SETcc, ADC, SBB, PUSHF, LAHF).
     #[inline]
@@ -2585,19 +2605,11 @@ impl VCpu for X86_64Vcpu {
             // free of clock reads, RefCell borrows and 64-bit division.
             batch = batch.wrapping_add(1);
             if batch % LAPIC_POLL_STRIDE == 0 {
-                // Deliver any due LAPIC timer interrupt.
-                if let Some(vector) = self.mmu.tick_lapic_timer() {
-                    if self.can_inject_interrupt() && self.inject_interrupt(vector).unwrap_or(false)
-                    {
-                        self.mmu.clear_lapic_pending();
-                        self.halted = false;
-                    }
-                }
                 // Yield to the VMM (~1ms wall-clock slices) so timers/IRQs get
                 // serviced. Real-time paced: the guest clock (TSC, elapsed_nanos)
                 // tracks host wall time, so delays and timers complete in real
                 // time rather than being tied to emulator instruction throughput.
-                if start_time.elapsed().as_millis() >= 1 {
+                if self.poll_periodic_housekeeping(&start_time) {
                     publish_instruction_count(self.insn_count);
                     return Ok(VcpuExit::Hlt);
                 }
@@ -3251,6 +3263,7 @@ unsafe extern "C" fn rax_jit_call(
 
     // Run the callee to completion. The callee is bounded (a normal function);
     // the step cap is a runaway backstop only.
+    let start_time = std::time::Instant::now();
     let mut ok: u64 = 1;
     let mut steps: u64 = 0;
     loop {
@@ -3259,6 +3272,11 @@ unsafe extern "C" fn rax_jit_call(
         }
         steps += 1;
         if steps > 500_000_000 {
+            ok = 0;
+            break;
+        }
+        if vcpu.jit_callout_should_yield(&start_time, steps) {
+            vcpu.jit_callout_exit = Some(VcpuExit::Hlt);
             ok = 0;
             break;
         }
@@ -4219,5 +4237,30 @@ impl X86_64Vcpu {
     /// calls). For tests; production seeds this from `RAX_JIT_MEM`.
     pub fn set_jit_mem(&mut self, on: bool) {
         self.jit_mem = on;
+    }
+}
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+    use std::time::{Duration, Instant};
+    use vm_memory::{GuestAddress, GuestMemoryMmap};
+
+    fn test_vcpu() -> X86_64Vcpu {
+        let mem =
+            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+        X86_64Vcpu::new(0, mem)
+    }
+
+    #[test]
+    fn jit_callout_housekeeping_yields_on_run_loop_slice() {
+        let mut vcpu = test_vcpu();
+        let expired = Instant::now()
+            .checked_sub(Duration::from_millis(2))
+            .unwrap_or_else(Instant::now);
+
+        assert!(!vcpu.jit_callout_should_yield(&expired, LAPIC_POLL_STRIDE - 1));
+        assert!(vcpu.jit_callout_should_yield(&expired, LAPIC_POLL_STRIDE));
     }
 }
