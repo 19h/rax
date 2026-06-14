@@ -16,6 +16,9 @@ impl X86_64Vcpu {
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
         let opcode3 = ctx.consume_u8()?;
+        if self.reject_rex2_for_legacy_simd(ctx)? {
+            return Ok(None);
+        }
 
         // Record precise opcode key for profiling
         #[cfg(feature = "profiling")]

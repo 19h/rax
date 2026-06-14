@@ -15,6 +15,15 @@
 use crate::common::*;
 use rax::cpu::Registers;
 
+fn assert_missing_idt_ud(code: &[u8]) {
+    let (mut vcpu, _) = setup_vm_no_idt(code, None);
+    let err = vcpu.run().expect_err("instruction should inject #UD");
+    assert!(
+        err.to_string().contains("IDT entry 6 not present"),
+        "expected #UD delivery failure, got {err}"
+    );
+}
+
 // ============================================================================
 // GF2P8MULB Tests - Galois Field Multiply Bytes
 // ============================================================================
@@ -112,6 +121,46 @@ fn test_gf2p8mulb_sequence() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
+}
+
+#[test]
+fn test_rex2_gfni_extended_xmm_rejects_ud() {
+    assert_missing_idt_ud(&[
+        0x66, 0xD5, 0xC0, 0x38, 0xCF, 0xC0, // REX2 + GF2P8MULB with reg=16
+        0xF4,
+    ]);
+}
+
+#[test]
+fn test_rex2_primary_sse_extended_xmm_rejects_ud() {
+    assert_missing_idt_ud(&[
+        0x66, 0xD5, 0xC0, 0xEF, 0xC0, // REX2 + PXOR with reg=16
+        0xF4,
+    ]);
+}
+
+#[test]
+fn test_rex2_primary_cmp_extended_xmm_rejects_ud() {
+    assert_missing_idt_ud(&[
+        0xD5, 0xC0, 0xC2, 0xC0, 0x00, // REX2 + CMPPS with reg=16
+        0xF4,
+    ]);
+}
+
+#[test]
+fn test_rex2_primary_movq_extended_xmm_rejects_ud() {
+    assert_missing_idt_ud(&[
+        0x66, 0xD5, 0xC0, 0x7E, 0xC0, // REX2 + MOVD/MOVQ from xmm16
+        0xF4,
+    ]);
+}
+
+#[test]
+fn test_rex2_0f3a_simd_extended_xmm_rejects_ud() {
+    assert_missing_idt_ud(&[
+        0x66, 0xD5, 0xC0, 0x3A, 0xCE, 0xC0, 0x00, // REX2 + GF2P8AFFINEQB reg=16
+        0xF4,
+    ]);
 }
 
 // ============================================================================

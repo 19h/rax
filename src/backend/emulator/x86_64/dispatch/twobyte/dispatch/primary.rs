@@ -7,6 +7,20 @@ use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::super::flags;
 use super::super::super::super::insn;
 
+#[inline]
+fn is_legacy_0f_simd_opcode(opcode: u8) -> bool {
+    matches!(
+        opcode,
+        0x10..=0x17
+            | 0x28..=0x2F
+            | 0x50..=0x77
+            | 0x7C..=0x7F
+            | 0xC2
+            | 0xC4..=0xC6
+            | 0xD0..=0xFE
+    )
+}
+
 impl X86_64Vcpu {
     #[inline(always)]
     pub(in crate::backend::emulator::x86_64) fn execute_0f(
@@ -14,6 +28,9 @@ impl X86_64Vcpu {
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
         let opcode2 = ctx.consume_u8()?;
+        if is_legacy_0f_simd_opcode(opcode2) && self.reject_rex2_for_legacy_simd(ctx)? {
+            return Ok(None);
+        }
 
         // Record precise opcode key for profiling
         #[cfg(feature = "profiling")]
