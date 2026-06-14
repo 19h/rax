@@ -1785,6 +1785,13 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             elem,
             lanes,
         } => op_json!("vmul", dst, src1, src2, elem, lanes),
+        OpKind::VDiv {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+        } => op_json!("vdiv", dst, src1, src2, elem, lanes),
         OpKind::VAnd {
             dst,
             src1,

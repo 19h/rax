@@ -1494,6 +1494,13 @@ impl Aarch64Lifter {
                         src: self.arm_reg(rn),
                         width,
                     });
+                } else {
+                    // Vector CLZ (two-register misc, FpReg operands) is not yet
+                    // lifted — deopt rather than silently emitting nothing.
+                    return Err(LiftError::Unsupported {
+                        addr: pc,
+                        mnemonic: "vector CLZ".to_string(),
+                    });
                 }
             }
 
@@ -1537,6 +1544,11 @@ impl Aarch64Lifter {
                         width,
                         flags: FlagUpdate::None,
                     });
+                } else {
+                    return Err(LiftError::Unsupported {
+                        addr: pc,
+                        mnemonic: "vector CLS".to_string(),
+                    });
                 }
             }
 
@@ -1550,6 +1562,12 @@ impl Aarch64Lifter {
                         dst,
                         src: self.arm_reg(rn),
                         width,
+                    });
+                } else {
+                    // Vector RBIT (two-register misc) is not yet lifted — deopt.
+                    return Err(LiftError::Unsupported {
+                        addr: pc,
+                        mnemonic: "vector RBIT".to_string(),
                     });
                 }
             }
@@ -2057,9 +2075,11 @@ impl Aarch64Lifter {
                 };
                 // Vector FP three-same (bit 28 == 0) processes all lanes; the
                 // scalar FP 2-source form (bit 28 == 1) takes the path below.
-                // Only the unambiguous IEEE arithmetic ops are vectorized here;
-                // vector FMAX/FMIN/FMAXNM/FMINNM (NaN semantics) and FDIV (no
-                // vector-divide op) bail to the interpreter.
+                // FADD/FSUB/FMUL/FDIV map to the native IEEE ops; FMAX/FMIN map
+                // to the lowerer's native AArch64 FMAX/FMIN (same ARM NaN
+                // propagation). The numeric-IEEE variants FMAXNM/FMINNM differ
+                // (maxNum/minNum) and have no dedicated lowering, so they bail
+                // to the interpreter.
                 if (insn.raw >> 28) & 1 == 0 {
                     let q = (insn.raw >> 30) & 1;
                     let sz = (insn.raw >> 22) & 1;
@@ -2072,9 +2092,49 @@ impl Aarch64Lifter {
                     let src1 = Self::fp_vreg(rn);
                     let src2 = Self::fp_vreg(rm);
                     let vkind = match insn.mnemonic {
-                        Mnemonic::FADD => OpKind::VAdd { dst, src1, src2, elem, lanes },
-                        Mnemonic::FSUB => OpKind::VSub { dst, src1, src2, elem, lanes },
-                        Mnemonic::FMUL => OpKind::VMul { dst, src1, src2, elem, lanes },
+                        Mnemonic::FADD => OpKind::VAdd {
+                            dst,
+                            src1,
+                            src2,
+                            elem,
+                            lanes,
+                        },
+                        Mnemonic::FSUB => OpKind::VSub {
+                            dst,
+                            src1,
+                            src2,
+                            elem,
+                            lanes,
+                        },
+                        Mnemonic::FMUL => OpKind::VMul {
+                            dst,
+                            src1,
+                            src2,
+                            elem,
+                            lanes,
+                        },
+                        Mnemonic::FDIV => OpKind::VDiv {
+                            dst,
+                            src1,
+                            src2,
+                            elem,
+                            lanes,
+                        },
+                        Mnemonic::FMAX => OpKind::VMax {
+                            dst,
+                            src1,
+                            src2,
+                            elem,
+                            lanes,
+                        },
+                        Mnemonic::FMIN => OpKind::VMin {
+                            dst,
+                            src1,
+                            src2,
+                            elem,
+                            lanes,
+                            signed: true,
+                        },
                         _ => {
                             return Err(LiftError::Unsupported {
                                 addr: pc,
@@ -2286,6 +2346,17 @@ impl Aarch64Lifter {
             // Scalar FP - Unary
             // =================================================================
             Mnemonic::FMOV | Mnemonic::FABS | Mnemonic::FNEG | Mnemonic::FSQRT => {
+                // This handler lifts only the SCALAR FP 1-source forms (bit 28
+                // == 1). The vector two-register-misc FABS/FNEG/FSQRT (bit 28
+                // == 0) share these mnemonics but operate per-lane; lifting them
+                // here would mis-emit a single-lane op, so they deopt until a
+                // dedicated vector FP-unary lowering exists.
+                if (insn.raw >> 28) & 1 == 0 {
+                    return Err(LiftError::Unsupported {
+                        addr: pc,
+                        mnemonic: format!("vector {:?}", insn.mnemonic),
+                    });
+                }
                 let rd = match insn.operands.get(0) {
                     Some(Operand::FpReg(r)) => r,
                     _ => return Err(LiftError::Internal("missing fp rd".to_string())),
@@ -4075,7 +4146,11 @@ impl Aarch64Lifter {
     ) -> Result<(), LiftError> {
         let (rt, mem) = match (insn.operands.get(0), insn.operands.get(1)) {
             (Some(Operand::FpReg(r)), Some(Operand::Mem(m))) => (r, m),
-            _ => return Err(LiftError::Internal("invalid vector mem operands".to_string())),
+            _ => {
+                return Err(LiftError::Internal(
+                    "invalid vector mem operands".to_string(),
+                ));
+            }
         };
         let width = match rt.size {
             FpRegSize::Q => VecWidth::V128,
@@ -4929,7 +5004,10 @@ mod tests {
 
     #[test]
     fn test_lift_fabs_scalar() {
-        let (ops, _) = lift_single([0x20, 0x40, 0x21, 0x1e]);
+        // fabs s0, s1 = 0x1e20c020 (opcode 000001). The earlier encoding
+        // 0x1e214020 is actually FNEG (opcode 000010); it only decoded as FABS
+        // under the old, buggy scalar FP 1-source table.
+        let (ops, _) = lift_single([0x20, 0xc0, 0x20, 0x1e]);
         assert_eq!(ops.len(), 1);
         match &ops[0].kind {
             OpKind::FAbs { precision, .. } => assert_eq!(*precision, FpPrecision::F32),
@@ -4938,8 +5016,11 @@ mod tests {
     }
 
     #[test]
+    // fneg s0, s1 = 0x1e214020 (opcode 000010). The earlier encoding 0x1e244020
+    // is actually FRINTN (opcode 001000); it only decoded as FNEG under the old,
+    // buggy scalar FP 1-source table.
     fn test_lift_fneg_scalar() {
-        let (ops, _) = lift_single([0x20, 0x40, 0x24, 0x1e]);
+        let (ops, _) = lift_single([0x20, 0x40, 0x21, 0x1e]);
         assert_eq!(ops.len(), 1);
         match &ops[0].kind {
             OpKind::FNeg { .. } => {}

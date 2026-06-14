@@ -947,8 +947,16 @@ fn e2e_vector_hot_loop_matches_interpreter() {
     drive_to_done(&mut jit);
 
     let expected = pack(N as u32, 2 * N as u32, 3 * N as u32, 4 * N as u32);
-    assert_eq!(interp.get_simd(0), expected, "interpreter accumulates the vector");
-    assert_eq!(jit.get_simd(0), interp.get_simd(0), "JIT vector result matches interp");
+    assert_eq!(
+        interp.get_simd(0),
+        expected,
+        "interpreter accumulates the vector"
+    );
+    assert_eq!(
+        jit.get_simd(0),
+        interp.get_simd(0),
+        "JIT vector result matches interp"
+    );
     assert_eq!(jit.get_x(0), 0);
 }
 
@@ -996,7 +1004,11 @@ fn e2e_vector_fmla_hot_loop_matches_interpreter() {
 
     let interp = run_one(false);
     let jit = run_one(true);
-    assert_eq!(interp, splat(N as f32 * 6.0), "interp: v0 = N*(2*3) per lane");
+    assert_eq!(
+        interp,
+        splat(N as f32 * 6.0),
+        "interp: v0 = N*(2*3) per lane"
+    );
     assert_eq!(jit, interp, "JIT FMLA loop matches interpreter");
 }
 
@@ -1020,7 +1032,11 @@ fn interp_vector_ldr_q() {
         }
         cpu.step_system().unwrap();
     }
-    assert_eq!(cpu.get_simd(0), val, "interpreter loaded the 128-bit vector");
+    assert_eq!(
+        cpu.get_simd(0),
+        val,
+        "interpreter loaded the 128-bit vector"
+    );
 }
 
 // End-to-end vector load/compute/store loop over guest memory, JIT'd vs the
@@ -1082,7 +1098,10 @@ fn e2e_vector_loadstore_loop_matches_interpreter() {
             );
         }
     }
-    assert_eq!(jit, interp, "vector load/store loop: JIT matches interpreter");
+    assert_eq!(
+        jit, interp,
+        "vector load/store loop: JIT matches interpreter"
+    );
 }
 
 // Vector FP arithmetic (fadd/fmul v.4s), newly routed from the cleaned-up
@@ -1141,4 +1160,140 @@ fn e2e_vector_fp_hot_loop_matches_interpreter() {
     let expected = f(nf) | f(2.0 * nf) << 32 | f(3.0 * nf) << 64 | f(4.0 * nf) << 96;
     assert_eq!(interp, expected, "interp: v0 = N*v1 per lane");
     assert_eq!(jit, interp, "JIT vector FP loop matches interpreter");
+}
+
+// Vector FP divide / max / min (three-same, .4s) through the lift→lower→exec
+// JIT path. These exercise the new OpKind::VDiv (native FDIV) and the FMAX/FMIN
+// lifter emission that reuses VMax/VMin (native FMAX/FMIN).
+#[test]
+fn probe_vector_fp_div_max_min_4s() {
+    let f = |x: f32| x.to_bits() as u64;
+    let pack = |a: f32, b: f32| f(a) | f(b) << 32;
+
+    // fdiv v0.4s, v1.4s, v2.4s (0x6e22fc20): [12,20,30,42] / [3,4,5,6]
+    let r = fp_run(&[0x6e22_fc20], |g| {
+        g.v[2] = pack(12.0, 20.0);
+        g.v[3] = pack(30.0, 42.0);
+        g.v[4] = pack(3.0, 4.0);
+        g.v[5] = pack(5.0, 6.0);
+    });
+    assert_eq!(r.v[0], pack(4.0, 5.0), "fdiv v.4s lanes 0,1");
+    assert_eq!(r.v[1], pack(6.0, 7.0), "fdiv v.4s lanes 2,3");
+
+    // fmax v0.4s, v1.4s, v2.4s (0x4e22f420): max([1,9,3,8],[5,2,7,4])
+    let r = fp_run(&[0x4e22_f420], |g| {
+        g.v[2] = pack(1.0, 9.0);
+        g.v[3] = pack(3.0, 8.0);
+        g.v[4] = pack(5.0, 2.0);
+        g.v[5] = pack(7.0, 4.0);
+    });
+    assert_eq!(r.v[0], pack(5.0, 9.0), "fmax v.4s lanes 0,1");
+    assert_eq!(r.v[1], pack(7.0, 8.0), "fmax v.4s lanes 2,3");
+
+    // fmin v0.4s, v1.4s, v2.4s (0x4ea2f420): min(same inputs)
+    let r = fp_run(&[0x4ea2_f420], |g| {
+        g.v[2] = pack(1.0, 9.0);
+        g.v[3] = pack(3.0, 8.0);
+        g.v[4] = pack(5.0, 2.0);
+        g.v[5] = pack(7.0, 4.0);
+    });
+    assert_eq!(r.v[0], pack(1.0, 2.0), "fmin v.4s lanes 0,1");
+    assert_eq!(r.v[1], pack(3.0, 4.0), "fmin v.4s lanes 2,3");
+}
+
+// End-to-end differential: each new vector-FP op (fdiv/fmax/fmin) run as a hot
+// loop through the emulator JIT vs the interpreter. Catches any lifter/lowerer/
+// decoder disagreement with the authoritative AArch64 interpreter.
+#[test]
+fn e2e_vector_fp_div_max_min_matches_interpreter() {
+    let f = |x: f32| x.to_bits() as u128;
+    let pack = |a: f32, b: f32, c: f32, d: f32| f(a) | f(b) << 32 | f(c) << 64 | f(d) << 96;
+
+    // Each program: <op> v0.4s,v1.4s,v2.4s ; subs x0,x0,#1 ; b.ne -8 ; ret.
+    // v0 is recomputed every iteration (idempotent), so the final v0 = op(v1,v2).
+    let cases: [(u32, u128, u128, u128); 3] = [
+        // fdiv: [60,60,60,60] / [2,3,4,5] = [30,20,15,12]
+        (
+            0x6e22_fc20,
+            pack(60.0, 60.0, 60.0, 60.0),
+            pack(2.0, 3.0, 4.0, 5.0),
+            pack(30.0, 20.0, 15.0, 12.0),
+        ),
+        // fmax: max([1,9,3,8],[5,2,7,4]) = [5,9,7,8]
+        (
+            0x4e22_f420,
+            pack(1.0, 9.0, 3.0, 8.0),
+            pack(5.0, 2.0, 7.0, 4.0),
+            pack(5.0, 9.0, 7.0, 8.0),
+        ),
+        // fmin: min(same) = [1,2,3,4]
+        (
+            0x4ea2_f420,
+            pack(1.0, 9.0, 3.0, 8.0),
+            pack(5.0, 2.0, 7.0, 4.0),
+            pack(1.0, 2.0, 3.0, 4.0),
+        ),
+    ];
+
+    for (op, v1, v2, expected) in cases {
+        let prog: [u32; 4] = [op, 0xf100_0400, 0x54ff_ffc1, 0xd65f_03c0];
+        let run_one = |jit: bool| -> u128 {
+            let mut cpu = fresh_cpu();
+            cpu.set_jit_enabled(jit);
+            load_prog(&mut cpu, &prog);
+            cpu.set_simd(0, 0);
+            cpu.set_simd(1, v1);
+            cpu.set_simd(2, v2);
+            cpu.set_x(0, 100);
+            drive_to_done(&mut cpu);
+            cpu.get_simd(0)
+        };
+        let interp = run_one(false);
+        let jit = run_one(true);
+        assert_eq!(interp, expected, "interp op={:#010x}", op);
+        assert_eq!(jit, interp, "JIT matches interp op={:#010x}", op);
+    }
+}
+
+// Safety regression for the two-register-misc decoder fix: the decoder now
+// produces correct vector FABS/FNEG/FSQRT/CLS/CLZ/RBIT mnemonics, but the
+// lifter has no per-lane vector-unary lowering yet. These MUST deopt (lift
+// returns Unsupported) rather than be grabbed by the scalar FP / GPR handlers
+// and mis-lifted as a single-lane op (which would silently corrupt lanes 1..N).
+// The SCALAR FP 1-source forms (bit 28 == 1) must still lift and execute.
+#[test]
+fn vector_two_reg_misc_deopts_but_scalar_fp_still_lifts() {
+    for &insn in &[
+        0x4ea0_f820u32, // fabs  v0.4s, v1.4s
+        0x6ea0_f820,    // fneg  v0.4s, v1.4s
+        0x6ea1_f820,    // fsqrt v0.4s, v1.4s
+        0x6ea0_4820,    // clz   v0.4s, v1.4s
+        0x4ea0_4820,    // cls   v0.4s, v1.4s
+        0x6e60_5820,    // rbit  v0.16b, v1.16b
+    ] {
+        let mut regs = Aarch64GuestRegs::default();
+        assert!(
+            jit_run(&[insn], &mut regs).is_err(),
+            "vector two-reg-misc {insn:#010x} must deopt, not mis-lift",
+        );
+    }
+
+    let f = |x: f32| x.to_bits() as u64;
+    // fabs s0, s1 (0x1e20c020): |-3.0| = 3.0
+    let mut regs = Aarch64GuestRegs::default();
+    regs.v[2] = f(-3.0); // V1.lo = s1
+    jit_run(&[0x1e20_c020], &mut regs).expect("scalar fabs must still lift");
+    assert_eq!(regs.v[0] as u32, f(3.0) as u32, "scalar fabs s0");
+
+    // fneg s0, s1 (0x1e214020): -(3.0) = -3.0
+    let mut regs = Aarch64GuestRegs::default();
+    regs.v[2] = f(3.0);
+    jit_run(&[0x1e21_4020], &mut regs).expect("scalar fneg must still lift");
+    assert_eq!(regs.v[0] as u32, f(-3.0) as u32, "scalar fneg s0");
+
+    // fsqrt s0, s1 (0x1e21c020): sqrt(9.0) = 3.0
+    let mut regs = Aarch64GuestRegs::default();
+    regs.v[2] = f(9.0);
+    jit_run(&[0x1e21_c020], &mut regs).expect("scalar fsqrt must still lift");
+    assert_eq!(regs.v[0] as u32, f(3.0) as u32, "scalar fsqrt s0");
 }

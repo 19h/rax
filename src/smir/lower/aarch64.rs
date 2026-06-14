@@ -2904,6 +2904,14 @@ impl Aarch64Lowerer {
                 }
                 (if signed { 0 } else { 1 }, 0b01101)
             }
+            SimdArithmeticOp::Div => {
+                // No integer vector divide in NEON; FP divide is routed to
+                // lower_vfloat_arith above. Reaching here means an integer
+                // element type, which is unsupported.
+                return Err(LowerError::UnsupportedOp {
+                    op: "AArch64 native integer vector divide".to_string(),
+                });
+            }
         };
         self.emit_simd_three_same(rd, rn, rm, q, u, size, opcode);
         Ok(())
@@ -2926,6 +2934,7 @@ impl Aarch64Lowerer {
             SimdArithmeticOp::Add => (0, elem_size, 0b11010),
             SimdArithmeticOp::Sub => (0, elem_size | 0b10, 0b11010),
             SimdArithmeticOp::Mul => (1, elem_size, 0b11011),
+            SimdArithmeticOp::Div => (1, elem_size, 0b11111),
             SimdArithmeticOp::Max => (0, elem_size, 0b11110),
             SimdArithmeticOp::Min { .. } => (0, elem_size | 0b10, 0b11110),
         };
@@ -14473,6 +14482,13 @@ impl Aarch64Lowerer {
                 elem,
                 lanes,
             } => self.lower_varith(*dst, *src1, *src2, *elem, *lanes, SimdArithmeticOp::Mul),
+            OpKind::VDiv {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+            } => self.lower_varith(*dst, *src1, *src2, *elem, *lanes, SimdArithmeticOp::Div),
             OpKind::VMax {
                 dst,
                 src1,
@@ -15337,6 +15353,7 @@ enum SimdArithmeticOp {
     Add,
     Sub,
     Mul,
+    Div,
     Max,
     Min { signed: bool },
 }

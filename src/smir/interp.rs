@@ -2382,6 +2382,28 @@ impl SmirInterpreter {
                 }
             },
 
+            OpKind::VDiv {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+            } => match elem {
+                VecElementType::F32 => {
+                    self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| a / b);
+                }
+                VecElementType::F64 => {
+                    self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| a / b);
+                }
+                _ => {
+                    // Integer vector divide is not a NEON op; guard against
+                    // division-by-zero in case a malformed op reaches here.
+                    self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
+                        if b == 0 { 0 } else { a.wrapping_div(b) }
+                    });
+                }
+            },
+
             OpKind::VAnd {
                 dst,
                 src1,

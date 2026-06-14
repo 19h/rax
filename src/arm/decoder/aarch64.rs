@@ -1262,7 +1262,10 @@ impl Aarch64Decoder {
         };
 
         let rt_operand = match simd_fp_size {
-            Some(fp_size) => Operand::FpReg(FpRegister { num: rt, size: fp_size }),
+            Some(fp_size) => Operand::FpReg(FpRegister {
+                num: rt,
+                size: fp_size,
+            }),
             None => Operand::Reg(Register::with_zr(rt, is_64bit)),
         };
 
@@ -2036,6 +2039,35 @@ impl Aarch64Decoder {
             })
         };
 
+        // FP three-same occupy opcode 0b11xxx. Unlike the integer forms below
+        // (keyed on (U, opcode)), the FP forms are discriminated by
+        // (U, a, opcode) where a = size<1> (bit 23): FADD/FSUB, FMAX/FMIN,
+        // FMAXNM/FMINNM and FMLA/FMLS are ALL U=0 and differ only in `a`. sz
+        // (bit 22) selects single/double and is read by the lifter. Keying these
+        // on U alone (the prior bug) mislabeled FSUB as FADD, FMIN as FMAX, and
+        // the U=1 pairwise/FABD forms as FSUB/FMIN. Forms RAX does not model
+        // (FMULX/FRECPS/FRSQRTS/FADDP/FABD/pairwise/compare/FACG*) → UNKNOWN.
+        if opcode >> 3 == 0b11 {
+            let a = (raw >> 23) & 1;
+            let mnemonic = match (u, a, opcode) {
+                (0, 0, 0b11000) => Mnemonic::FMAXNM,
+                (0, 1, 0b11000) => Mnemonic::FMINNM,
+                (0, 0, 0b11001) => Mnemonic::FMLA,
+                (0, 1, 0b11001) => Mnemonic::FMLS,
+                (0, 0, 0b11010) => Mnemonic::FADD,
+                (0, 1, 0b11010) => Mnemonic::FSUB,
+                (0, 0, 0b11110) => Mnemonic::FMAX,
+                (0, 1, 0b11110) => Mnemonic::FMIN,
+                (1, 0, 0b11011) => Mnemonic::FMUL,
+                (1, 0, 0b11111) => Mnemonic::FDIV,
+                _ => Mnemonic::UNKNOWN,
+            };
+            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                .with_operand(fp_reg(rd))
+                .with_operand(fp_reg(rn))
+                .with_operand(fp_reg(rm)));
+        }
+
         let mnemonic = match (u, opcode) {
             // Integer operations
             (0, 0b00000) => Mnemonic::VADD, // SHADD actually, simplified
@@ -2073,30 +2105,8 @@ impl Aarch64Decoder {
             (1, 0b00011) if size == 0b10 => Mnemonic::VORR, // BIT
             (1, 0b00011) if size == 0b11 => Mnemonic::VORR, // BIF
 
-            // FP three-same (opcode = bits[15:11]); sz (bit22) selects
-            // single/double. The opcodes here are now mapped to their REAL
-            // mnemonics (the previous table mislabeled almost all of them — e.g.
-            // FMAXNM/FRECPS as FADD, FACGE as FMUL — which mis-executed vector FP
-            // in the interpreter and blocked vector-FP JIT). Forms RAX does not
-            // model (FMULX/FRECPS/FRSQRTS/FCM*/FACG*) decode to UNKNOWN so they
-            // bail cleanly rather than silently doing the wrong arithmetic.
-            (0, 0b11000) => Mnemonic::FMAXNM,
-            (0, 0b11001) => Mnemonic::FMLA,
-            (0, 0b11010) => Mnemonic::FADD,
-            (0, 0b11011) => Mnemonic::UNKNOWN, // FMULX
-            (0, 0b11100) => Mnemonic::UNKNOWN, // FCMEQ
-            (0, 0b11110) => Mnemonic::FMAX,
-            (0, 0b11111) => Mnemonic::UNKNOWN, // FRECPS / FRSQRTS
-
-            (1, 0b11000) => Mnemonic::FMINNM,
-            (1, 0b11001) => Mnemonic::FMLS,
-            (1, 0b11010) => Mnemonic::FSUB,
-            (1, 0b11011) => Mnemonic::FMUL,
-            (1, 0b11100) => Mnemonic::UNKNOWN, // FCMGE
-            (1, 0b11101) => Mnemonic::UNKNOWN, // FACGE
-            (1, 0b11110) => Mnemonic::FMIN,
-            (1, 0b11111) => Mnemonic::FDIV,
-
+            // FP three-same (opcode 0b11xxx) handled by the (U, a, opcode)
+            // branch above.
             _ => Mnemonic::UNKNOWN,
         };
 
@@ -2121,47 +2131,35 @@ impl Aarch64Decoder {
             })
         };
 
+        // `a` (size<1>, bit 23) selects the FP opcode sub-group, mirroring the
+        // three-same FP encoding; for integer forms `size` is the element width.
+        // The prior table keyed everything on (U, opcode) and so collapsed
+        // REV64/REV16/REV32/CNT/NEG all onto VNEG, mislabeled CLS/CLZ as
+        // compares — and put them at opcode 10100, which is actually SQXTN/
+        // UQXTN (CLS/CLZ are 00100) — and placed FSQRT at the FCVTXN slot
+        // (10111; real FSQRT is U=1,a=1,11111). We now name the integer
+        // bit-manip/arithmetic unary ops and FP FABS/FNEG/FSQRT correctly.
+        // Forms RAX does not model as vector ops (CNT, CM#0, S/UADDLP, S/USQADD,
+        // S/UADALP, SQABS/SQNEG, XTN/SQXTN/UQXTN/SQXTUN, FCVT*/FRINT*/SCVTF/
+        // UCVTF/FCM#0/FRECPE/FRSQRTE) decode to UNKNOWN and bail to the
+        // (independent, correct) interpreter rather than being mislabeled.
+        let a = (raw >> 23) & 1;
         let mnemonic = match (u, opcode) {
-            // Integer unary
-            (0, 0b00000) => Mnemonic::VNEG, // REV64
-            (0, 0b00001) => Mnemonic::VNEG, // REV16
-            (0, 0b00101) => Mnemonic::VNEG, // CNT
-            (0, 0b01000) => Mnemonic::VCMP, // CMGT #0
-            (0, 0b01001) => Mnemonic::VCMP, // CMEQ #0
-            (0, 0b01010) => Mnemonic::VCMP, // CMLT #0
+            // integer two-register misc (size = element width)
+            (0, 0b00000) => Mnemonic::REV64,
+            (0, 0b00001) => Mnemonic::REV16,
+            (0, 0b00100) => Mnemonic::CLS,
             (0, 0b01011) => Mnemonic::VABS, // ABS
-            (0, 0b10100) => Mnemonic::VCMP, // CLS
+            (1, 0b00000) => Mnemonic::REV32,
+            (1, 0b00100) => Mnemonic::CLZ,
+            (1, 0b00101) if size == 0b00 => Mnemonic::VMVN, // NOT
+            (1, 0b00101) if size == 0b01 => Mnemonic::RBIT, // RBIT
+            (1, 0b01011) => Mnemonic::VNEG,                 // NEG
 
-            (1, 0b00000) => Mnemonic::VNEG, // REV32
-            (1, 0b00101) => Mnemonic::VMVN, // NOT / MVN
-            (1, 0b01000) => Mnemonic::VCMP, // CMGE #0
-            (1, 0b01001) => Mnemonic::VCMP, // CMLE #0
-            (1, 0b01011) => Mnemonic::VNEG, // NEG
-            (1, 0b10100) => Mnemonic::VCMP, // CLZ
-
-            // FP unary
-            (0, 0b01100) => Mnemonic::FCMP,   // FCMGT #0
-            (0, 0b01101) => Mnemonic::FCMP,   // FCMEQ #0
-            (0, 0b01110) => Mnemonic::FCMP,   // FCMLT #0
-            (0, 0b01111) => Mnemonic::FABS,   // FABS
-            (0, 0b11000) => Mnemonic::FRINT,  // FRINTN
-            (0, 0b11001) => Mnemonic::FRINT,  // FRINTM
-            (0, 0b11010) => Mnemonic::FCVT,   // FCVTNS
-            (0, 0b11011) => Mnemonic::FCVT,   // FCVTMS
-            (0, 0b11100) => Mnemonic::FCVT,   // FCVTAS
-            (0, 0b11101) => Mnemonic::SCVTF,  // SCVTF
-            (0, 0b11111) => Mnemonic::VRECPE, // FRECPE
-
-            (1, 0b01100) => Mnemonic::FCMP,    // FCMGE #0
-            (1, 0b01101) => Mnemonic::FCMP,    // FCMLE #0
-            (1, 0b01111) => Mnemonic::FNEG,    // FNEG
-            (1, 0b11000) => Mnemonic::FRINT,   // FRINTP
-            (1, 0b11001) => Mnemonic::FRINT,   // FRINTZ
-            (1, 0b11010) => Mnemonic::FCVT,    // FCVTPS
-            (1, 0b11011) => Mnemonic::FCVTZS,  // FCVTZS
-            (1, 0b11101) => Mnemonic::UCVTF,   // UCVTF
-            (1, 0b11111) => Mnemonic::VRSQRTE, // FRSQRTE
-            (1, 0b10111) => Mnemonic::FSQRT,   // FSQRT
+            // FP two-register misc (a = size<1>; sz = size<0> single/double)
+            (0, 0b01111) if a == 1 => Mnemonic::FABS,
+            (1, 0b01111) if a == 1 => Mnemonic::FNEG,
+            (1, 0b11111) if a == 1 => Mnemonic::FSQRT,
 
             _ => Mnemonic::UNKNOWN,
         };
@@ -2449,6 +2447,48 @@ impl Aarch64Decoder {
                 .with_operand(fp_reg(rd, fp_size))
                 .with_operand(fp_reg(rn, fp_size))
                 .with_operand(fp_reg(rm, fp_size)));
+        }
+
+        // FP data-processing (1 source): bits[14:10] == 0b10000. The real opcode
+        // is the 6-bit field bits[20:15]. The legacy `(opcode = bits[15:10],
+        // ptype, rm)` table below mis-decoded these — bits[15:10] folds the
+        // opcode LSB into the 0b10000 marker, so real FABS (opcode 000001)
+        // landed at (0x30,..) → UNKNOWN and FNEG (000010) landed at (0x10,_,1)
+        // → FABS. Decode the simple unary forms (FMOV/FABS/FNEG/FSQRT, which
+        // operate at the source precision) directly; FCVT/FRINT and friends
+        // fall through to the table, which scales the destination size.
+        if (raw >> 10) & 0x1F == 0b10000 {
+            // Authoritative for the 1-source class so nothing falls through to
+            // the legacy table below (which mislabeled e.g. FRINTN as FNEG).
+            let opc6 = (raw >> 15) & 0x3F;
+            let mnemonic = match opc6 {
+                0b000000 => Mnemonic::FMOV,
+                0b000001 => Mnemonic::FABS,
+                0b000010 => Mnemonic::FNEG,
+                0b000011 => Mnemonic::FSQRT,
+                0b000100 | 0b000101 | 0b000111 => Mnemonic::FCVT,
+                // FRINT[NPMZAXI], FRINT32/64[XZ] and BFCVT are not modeled →
+                // UNKNOWN (bail cleanly to the interpreter).
+                _ => Mnemonic::UNKNOWN,
+            };
+            if mnemonic == Mnemonic::UNKNOWN {
+                return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4));
+            }
+            if mnemonic == Mnemonic::FCVT {
+                // FCVT precision convert; destination type = opcode<1:0> (bits
+                // [16:15]): 00=S, 01=D, 11=H. Source type is ptype.
+                let dst_size = match opc6 & 0b11 {
+                    0b00 => FpRegSize::S,
+                    0b01 => FpRegSize::D,
+                    _ => FpRegSize::H,
+                };
+                return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(fp_reg(rd, dst_size))
+                    .with_operand(fp_reg(rn, fp_size)));
+            }
+            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                .with_operand(fp_reg(rd, fp_size))
+                .with_operand(fp_reg(rn, fp_size)));
         }
 
         let mnemonic = match (opcode, ptype, rm) {
@@ -2923,6 +2963,37 @@ mod tests {
         let insn = decode_bytes(&[0x20, 0x40, 0x00, 0x91]).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::ADD);
         assert_eq!(insn.operands.len(), 3);
+    }
+
+    #[test]
+    fn test_simd_two_reg_misc_distinct_mnemonics() {
+        // Regression: the two-register-misc table previously collapsed
+        // REV64/REV16/REV32/CNT/NEG all onto VNEG, mislabeled CLS/CLZ as
+        // compares at the wrong opcode (10100 = SQXTN/UQXTN), and put FSQRT at
+        // the FCVTXN slot. Each form must now decode to its own correct
+        // mnemonic, and the forms RAX does not model as vectors must bail to
+        // UNKNOWN instead of being mislabeled. (Rd=v0, Rn=v1.)
+        let cases: &[(u32, Mnemonic)] = &[
+            (0x4E20_0820, Mnemonic::REV64), // rev64 v0.16b, v1.16b
+            (0x4E20_1820, Mnemonic::REV16), // rev16 v0.16b, v1.16b
+            (0x6E20_0820, Mnemonic::REV32), // rev32 v0.16b, v1.16b
+            (0x4EA0_4820, Mnemonic::CLS),   // cls   v0.4s,  v1.4s
+            (0x6EA0_4820, Mnemonic::CLZ),   // clz   v0.4s,  v1.4s
+            (0x6E20_5820, Mnemonic::VMVN),  // not   v0.16b, v1.16b
+            (0x6E60_5820, Mnemonic::RBIT),  // rbit  v0.16b, v1.16b
+            (0x6EA0_B820, Mnemonic::VNEG),  // neg   v0.4s,  v1.4s
+            (0x4EA0_B820, Mnemonic::VABS),  // abs   v0.4s,  v1.4s
+            (0x4EA0_F820, Mnemonic::FABS),  // fabs  v0.4s,  v1.4s
+            (0x6EA0_F820, Mnemonic::FNEG),  // fneg  v0.4s,  v1.4s
+            (0x6EA1_F820, Mnemonic::FSQRT), // fsqrt v0.4s,  v1.4s
+            // Unmodeled-as-vector forms: bail to UNKNOWN (were VNEG / CLS).
+            (0x4E20_5820, Mnemonic::UNKNOWN), // cnt   v0.16b, v1.16b
+            (0x4EA1_4820, Mnemonic::UNKNOWN), // sqxtn v0.4s,  v1.4s
+        ];
+        for &(raw, expected) in cases {
+            let insn = Aarch64Decoder::decode(raw).unwrap();
+            assert_eq!(insn.mnemonic, expected, "raw={raw:#010x}");
+        }
     }
 
     #[test]

@@ -16252,7 +16252,11 @@ unsafe extern "C" fn rax_a64_vec_store(
     if cpu.mem_write_u64(addr, st.v[i]).is_err() {
         return 0;
     }
-    if size > 8 && cpu.mem_write_u64(addr.wrapping_add(8), st.v[i + 1]).is_err() {
+    if size > 8
+        && cpu
+            .mem_write_u64(addr.wrapping_add(8), st.v[i + 1])
+            .is_err()
+    {
         return 0;
     }
     1

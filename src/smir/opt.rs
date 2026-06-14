@@ -2285,6 +2285,7 @@ impl OpKind {
             | OpKind::VSub { src1, src2, .. }
             | OpKind::VMax { src1, src2, .. }
             | OpKind::VMul { src1, src2, .. }
+            | OpKind::VDiv { src1, src2, .. }
             | OpKind::VLane { src1, src2, .. }
             | OpKind::VAnd { src1, src2, .. }
             | OpKind::VOr { src1, src2, .. }

@@ -1027,6 +1027,15 @@ pub enum OpKind {
         lanes: u8,
     },
 
+    /// Vector floating-point divide (FP element types only; AArch64 FDIV).
+    VDiv {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        lanes: u8,
+    },
+
     /// Vector bitwise AND
     VAnd {
         dst: VReg,
@@ -2725,6 +2734,7 @@ impl OpKind {
             | OpKind::VSub { dst, .. }
             | OpKind::VMax { dst, .. }
             | OpKind::VMul { dst, .. }
+            | OpKind::VDiv { dst, .. }
             | OpKind::VLane { dst, .. }
             | OpKind::VAnd { dst, .. }
             | OpKind::VOr { dst, .. }
