@@ -411,7 +411,14 @@ impl HexagonVcpu {
     /// Read element `idx` (0-based) of an HVX vector register `vreg` as an
     /// `esz`-byte little-endian value (`esz` = 2 or 4).
     fn velem(&self, vreg: u8, esz: u8, idx: usize) -> u32 {
-        let bytes = vec_to_bytes(&self.regs.v[vreg as usize]);
+        // `.w` (off_pair) scatter/gather reads offsets from a vector PAIR
+        // (Vv, Vv+1); an odd pair base such as V31 implies the nonexistent V32.
+        // Guard the index so a crafted packet can't panic the emulator.
+        let Some(reg) = self.regs.v.get(vreg as usize) else {
+            return 0;
+        };
+        
+        let bytes = vec_to_bytes(reg);
         let off = idx * esz as usize;
         match esz {
             2 => u16::from_le_bytes([bytes[off], bytes[off + 1]]) as u32,
