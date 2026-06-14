@@ -791,7 +791,7 @@ pub fn is_native_clobber_safe_excluding(
 }
 
 /// True if every op in `block` is safe to execute natively under the JIT:
-///   (1) it is on the fail-safe register-only whitelist ([`OpKind::is_jit_safe`])
+///   (1) it is on the fail-safe register-only whitelist (`SmirOp::is_jit_safe`)
 ///       — so it touches no memory and is validated bit-exact vs KVM; and
 ///   (2) it writes only architectural registers (no virtual temp, which would
 ///       alias a guest GPR under the identity register map).
@@ -835,7 +835,7 @@ fn block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) ->
         // still bail via the virtual-temp check below, and RSP/RBP-based
         // addresses via check (3).
         let mem_ok = allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. });
-        if !op.kind.is_jit_safe() && !mem_ok {
+        if !op.is_jit_safe() && !mem_ok {
             return false;
         }
         // (2) no virtual-temp writes (would clobber a guest GPR).
@@ -980,7 +980,7 @@ fn aarch64_block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: 
                 | OpKind::VXor { .. }
                 | OpKind::VFma { .. }
         );
-        if !op.kind.is_jit_safe() && !a64_ok && !mem_ok {
+        if !op.is_jit_safe() && !a64_ok && !mem_ok {
             return false;
         }
         if op
@@ -999,6 +999,47 @@ fn aarch64_block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: 
         }
     }
     true
+}
+
+#[cfg(test)]
+mod jit_gate_tests {
+    use super::*;
+
+    use crate::smir::flags::FlagUpdate;
+    use crate::smir::ir::{FunctionBuilder, Terminator};
+    use crate::smir::ops::{OpKind, X86OpHint};
+    use crate::smir::types::{ArchReg, FunctionId, OpWidth, SrcOperand, VReg, X86Reg};
+
+    fn x86(reg: X86Reg) -> VReg {
+        VReg::Arch(ArchReg::X86(reg))
+    }
+
+    #[test]
+    fn clobber_gate_rejects_mulx_hint() {
+        let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
+        b.push_op(
+            0x1000,
+            OpKind::MulU {
+                dst_lo: x86(X86Reg::Rbx),
+                dst_hi: Some(x86(X86Reg::Rcx)),
+                src1: x86(X86Reg::Rdx),
+                src2: SrcOperand::Reg(x86(X86Reg::Rax)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        b.set_terminator(Terminator::Return { values: vec![] });
+
+        let mut func = b.finish();
+        let op = &mut func.blocks[0].ops[0];
+        assert!(op.kind.is_jit_safe(), "generic MulU stays whitelisted");
+        op.x86_hint = Some(X86OpHint::Mulx);
+
+        assert!(
+            !is_native_clobber_safe(&func),
+            "MULX-shaped MulU must not enter the destructive native MUL lowering"
+        );
+    }
 }
 
 #[cfg(all(test, target_arch = "x86_64"))]
