@@ -235,6 +235,53 @@ impl HexagonLifter {
         Some(VReg::Arch(ArchReg::Hexagon(reg)))
     }
 
+    fn hex_creg_pair_values(&self, idx: u8) -> Option<(VReg, VReg)> {
+        if idx & 1 != 0 {
+            return None;
+        }
+        Some((self.hex_creg_value(idx)?, self.hex_creg_value(idx + 1)?))
+    }
+
+    fn emit_creg_value_write(
+        &self,
+        ops: &mut Vec<SmirOp>,
+        op_id: &mut u16,
+        addr: GuestAddr,
+        ctx: &mut LiftContext,
+        dst: VReg,
+        src: VReg,
+    ) {
+        let src = if matches!(dst, VReg::Arch(ArchReg::Hexagon(HexagonReg::Gp))) {
+            let masked = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(*op_id),
+                addr,
+                OpKind::And {
+                    dst: masked,
+                    src1: src,
+                    src2: SrcOperand::Imm(0xffff_ffc0u32 as i64),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            *op_id += 1;
+            masked
+        } else {
+            src
+        };
+
+        ops.push(SmirOp::new(
+            OpId(*op_id),
+            addr,
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Reg(src),
+                width: OpWidth::W32,
+            },
+        ));
+        *op_id += 1;
+    }
+
     /// Emit `out = brev(src)` (`fbrev`/`fEA_BREVR`): reverse the LOW 16 bits of
     /// `src`, keeping the upper 16 bits intact. Matches `hex_brev` in cpu.rs.
     ///   lo16  = src & 0xffff
@@ -2750,7 +2797,7 @@ impl HexagonLifter {
             // Control-register PAIR transfers.
             //
             // `Rdd = Css` (tfrcpp): read the even/odd control-register pair into a
-            // GPR pair. `src`/`dst` are the EVEN register number of the pair (the
+            // GPR pair. `src` is the EVEN control-register number of the pair (the
             // encoding stores the c-reg number directly, e.g. `c7:6` -> src=6).
             // The interpreter (cpu.rs) does
             //   new_r[dst]   = control(src);
@@ -2759,65 +2806,62 @@ impl HexagonLifter {
             // Only lift when BOTH halves of the pair are modeled value registers
             // (LC/SA/M/CS/USR/GP) — see `hex_creg_value`. A pair whose half is an
             // unmodeled c-reg (C5 reserved, C10 UGP) or the PC (C9) is rejected.
-            DecodedInsn::TfrCrRPair { dst, src } => {
-                let lo = self.hex_creg_value(*src);
-                let hi = self.hex_creg_value(*src + 1);
-                match (lo, hi) {
-                    (Some(lo), Some(hi)) => {
-                        push_op!(OpKind::Mov {
-                            dst: self.hex_reg(*dst),
-                            src: SrcOperand::Reg(lo),
-                            width: OpWidth::W32,
-                        });
-                        push_op!(OpKind::Mov {
-                            dst: self.hex_reg(*dst + 1),
-                            src: SrcOperand::Reg(hi),
-                            width: OpWidth::W32,
-                        });
-                        ControlFlow::Fallthrough
-                    }
-                    _ => {
-                        return Err(LiftError::Unsupported {
-                            addr,
-                            mnemonic: "tfrcpp".to_string(),
-                        });
-                    }
+            DecodedInsn::TfrCrRPair { dst, src } => match self.hex_creg_pair_values(*src) {
+                Some((lo, hi)) => {
+                    push_op!(OpKind::Mov {
+                        dst: self.hex_reg(*dst),
+                        src: SrcOperand::Reg(lo),
+                        width: OpWidth::W32,
+                    });
+                    push_op!(OpKind::Mov {
+                        dst: self.hex_reg(*dst + 1),
+                        src: SrcOperand::Reg(hi),
+                        width: OpWidth::W32,
+                    });
+                    ControlFlow::Fallthrough
                 }
-            }
+                None => {
+                    return Err(LiftError::Unsupported {
+                        addr,
+                        mnemonic: "tfrcpp".to_string(),
+                    });
+                }
+            },
             // `Cdd = Rss` (tfrpcp): write a GPR pair into the control-register pair.
             // The interpreter does
             //   set_control(dst,   r[src]);
             //   set_control(dst+1, r[src+1]);
             // Lift to two Movs writing the GPRs into the SMIR c-reg value regs.
-            // Same modeled-pair gating as tfrcpp. NOTE: `set_control(11=GP, v)`
-            // masks the low 6 bits to zero, so the C13:C12=CS1:CS0 and C7:C6=M1:M0
-            // pairs (no GP) are exact; the C11:C10 (GP/UGP) pair is rejected by the
-            // unmodeled UGP half before GP-masking ever matters.
-            DecodedInsn::TfrRrCrPair { dst, src } => {
-                let lo = self.hex_creg_value(*dst);
-                let hi = self.hex_creg_value(*dst + 1);
-                match (lo, hi) {
-                    (Some(lo), Some(hi)) => {
-                        push_op!(OpKind::Mov {
-                            dst: lo,
-                            src: SrcOperand::Reg(self.hex_reg(*src)),
-                            width: OpWidth::W32,
-                        });
-                        push_op!(OpKind::Mov {
-                            dst: hi,
-                            src: SrcOperand::Reg(self.hex_reg(*src + 1)),
-                            width: OpWidth::W32,
-                        });
-                        ControlFlow::Fallthrough
-                    }
-                    _ => {
-                        return Err(LiftError::Unsupported {
-                            addr,
-                            mnemonic: "tfrpcp".to_string(),
-                        });
-                    }
+            // Same modeled-pair gating as tfrcpp, including the even-pair-base
+            // requirement. GP is defensively masked in case a modeled pair ever
+            // reaches it, matching set_control(11).
+            DecodedInsn::TfrRrCrPair { dst, src } => match self.hex_creg_pair_values(*dst) {
+                Some((lo, hi)) => {
+                    self.emit_creg_value_write(
+                        &mut ops,
+                        &mut op_id,
+                        addr,
+                        ctx,
+                        lo,
+                        self.hex_reg(*src),
+                    );
+                    self.emit_creg_value_write(
+                        &mut ops,
+                        &mut op_id,
+                        addr,
+                        ctx,
+                        hi,
+                        self.hex_reg(*src + 1),
+                    );
+                    ControlFlow::Fallthrough
                 }
-            }
+                None => {
+                    return Err(LiftError::Unsupported {
+                        addr,
+                        mnemonic: "tfrpcp".to_string(),
+                    });
+                }
+            },
             DecodedInsn::DcZero { base } => {
                 // `dczeroa(Rs)`: zero the 32-byte cache line at `Rs & !31`.
                 // Compute the aligned base address, materialize a zero register,
@@ -20656,5 +20700,81 @@ mod tests {
         // Extension should be consumed
         let not_extended = ctx.extend_imm(0x30);
         assert_eq!(not_extended, 0x30);
+    }
+
+    fn assert_unsupported(
+        result: Result<(Vec<SmirOp>, ControlFlow), LiftError>,
+        expected_mnemonic: &str,
+    ) {
+        match result {
+            Err(LiftError::Unsupported { mnemonic, .. }) => {
+                assert_eq!(mnemonic, expected_mnemonic);
+            }
+            other => panic!("expected Unsupported({expected_mnemonic}), got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_hexagon_control_pair_rejects_odd_creg_base() {
+        let mut lifter = HexagonLifter::default_isa();
+
+        let mut ctx = LiftContext::new(SourceArch::Hexagon);
+        assert_unsupported(
+            lifter.lift_insn_inner(
+                &DecodedInsn::TfrCrRPair { dst: 0, src: 11 },
+                0x1000,
+                &mut ctx,
+            ),
+            "tfrcpp",
+        );
+
+        let mut ctx = LiftContext::new(SourceArch::Hexagon);
+        assert_unsupported(
+            lifter.lift_insn_inner(
+                &DecodedInsn::TfrRrCrPair { dst: 11, src: 0 },
+                0x1000,
+                &mut ctx,
+            ),
+            "tfrpcp",
+        );
+    }
+
+    #[test]
+    fn test_hexagon_creg_value_write_masks_gp() {
+        let lifter = HexagonLifter::default_isa();
+        let mut ops = Vec::new();
+        let mut op_id = 0;
+        let mut ctx = LiftContext::new(SourceArch::Hexagon);
+        let gp = VReg::Arch(ArchReg::Hexagon(HexagonReg::Gp));
+        let r3 = VReg::Arch(ArchReg::Hexagon(HexagonReg::R(3)));
+
+        lifter.emit_creg_value_write(&mut ops, &mut op_id, 0x1000, &mut ctx, gp, r3);
+
+        assert_eq!(ops.len(), 2);
+        let masked = match &ops[0].kind {
+            OpKind::And {
+                dst,
+                src1,
+                src2,
+                width,
+                flags,
+            } => {
+                assert_eq!(*src1, r3);
+                assert_eq!(*src2, SrcOperand::Imm(0xffff_ffc0u32 as i64));
+                assert_eq!(*width, OpWidth::W32);
+                assert_eq!(*flags, FlagUpdate::None);
+                *dst
+            }
+            other => panic!("expected GP mask And, got {other:?}"),
+        };
+
+        match &ops[1].kind {
+            OpKind::Mov { dst, src, width } => {
+                assert_eq!(*dst, gp);
+                assert_eq!(*src, SrcOperand::Reg(masked));
+                assert_eq!(*width, OpWidth::W32);
+            }
+            other => panic!("expected GP Mov, got {other:?}"),
+        }
     }
 }
