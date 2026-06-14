@@ -830,7 +830,10 @@ fn test_pcmpestrm_varying_lengths() {
 #[test]
 fn kat_pcmpestrm_equal_each_bitmask() {
     // EAX=5, EDX=5. PCMPESTRM XMM1, XMM2, 0x08 (66 0F 3A 60 CA 08): byte,
-    // equal-each, bit-mask. "HELLO" vs "HEXLO" => mask 0x1B in XMM0 low.
+    // equal-each, bit-mask. "HELLO" vs "HEXLO" => mask 0xFFFB in XMM0 low.
+    // EQUAL_EACH forces both-invalid lanes (i >= la,lb) to 1, so bits 5..15 are
+    // set; verified against real SSE4.2 silicon (the length-truncated 0x1B that
+    // was here is a common misconception, not what hardware returns).
     let code = [
         0xb8, 0x05, 0x00, 0x00, 0x00, // MOV EAX, 5
         0xba, 0x05, 0x00, 0x00, 0x00, // MOV EDX, 5
@@ -843,20 +846,20 @@ fn kat_pcmpestrm_equal_each_bitmask() {
     let regs = crate::common::run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(
         crate::common::get_xmm(&regs, 0),
-        0x1B,
+        0xFFFB,
         "PCMPESTRM mask got {:032x}",
         crate::common::get_xmm(&regs, 0)
     );
 }
 
-// NOTE: The expanded byte-mask form (imm8[6]=1) is intentionally exercised by a
-// separate #[ignore]d test that documents an emulator truncation bug; see
-// kat_pcmpestrm_expanded_mask_bug below.
+// The expanded byte-mask form (imm8[6]=1) expands each IntRes2 bit to a 0xFF/0x00
+// byte. EQUAL_EACH forces both-invalid lanes to 1, so every byte is 0xFF except
+// byte 2 (the only valid-lane mismatch, L vs X) — matching real SSE4.2 silicon.
 #[test]
 fn kat_pcmpestrm_expanded_mask_bug() {
     // EAX=5, EDX=5. PCMPESTRM XMM1, XMM2, 0x48 (66 0F 3A 60 CA 48): byte,
     // equal-each, EXPANDED byte mask (imm8[6]=1). "HELLO" vs "HEXLO".
-    // Matches at byte positions 0,1,3,4 => those bytes 0xFF, others 0x00.
+    // Mismatch only at byte 2 => byte 2 = 0x00, all other bytes = 0xFF.
     let code = [
         0xb8, 0x05, 0x00, 0x00, 0x00, // MOV EAX, 5
         0xba, 0x05, 0x00, 0x00, 0x00, // MOV EDX, 5
@@ -869,7 +872,7 @@ fn kat_pcmpestrm_expanded_mask_bug() {
     let regs = crate::common::run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(
         crate::common::get_xmm(&regs, 0),
-        0x0000000000000000000000ffff00ffff,
+        0xffffffffffffffffffffffffff00ffff,
         "PCMPESTRM expanded mask got {:032x}",
         crate::common::get_xmm(&regs, 0)
     );

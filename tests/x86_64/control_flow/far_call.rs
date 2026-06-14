@@ -626,14 +626,19 @@ fn test_far_call_mem_sib_addressing() {
 
 #[test]
 fn test_far_call_preserves_general_registers() {
+    // Seed the GPRs directly rather than with guest `MOV r64, imm` (0x48 ... ):
+    // this runs in IA-32e compatibility mode, where the 0x48 byte is DEC, not a
+    // REX.W prefix (per Intel SDM Vol.2A 2.2.1, REX is recognized only in 64-bit
+    // mode), so those setup MOVs would corrupt the instruction stream.
     let code = [
-        0x48, 0xc7, 0xc0, 0x11, 0x11, 0x00, 0x00, // MOV RAX, 0x1111
-        0x48, 0xc7, 0xc3, 0x22, 0x22, 0x00, 0x00, // MOV RBX, 0x2222
-        0x48, 0xc7, 0xc1, 0x33, 0x33, 0x00, 0x00, // MOV RCX, 0x3333
         0x9a, 0x00, 0x20, 0x08, 0x00, // CALL 0x0008:0x2000
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm_compat(&code, None);
+    let mut regs_in = Registers::default();
+    regs_in.rax = 0x1111;
+    regs_in.rbx = 0x2222;
+    regs_in.rcx = 0x3333;
+    let (mut vcpu, mem) = setup_vm_compat(&code, Some(regs_in));
 
     let target_code = [
         // Registers should be preserved
@@ -860,7 +865,11 @@ fn test_far_call_ptr_loads_real_descriptor_base_limit() {
     // base=0x000C_0000, limit=0xFFFF bytes (G=0), 32-bit code (L=0, D=1).
     let desc = encode_descriptor(0x000C_0000, 0xFFFF, 0x9A, 0b0100);
     install_gdt_descriptor(&mut vcpu, &mem, 0x30, desc);
-    mem.write_slice(&[0xf4], GuestAddress(0x3000)).unwrap();
+    // The target segment is 32-bit (L=0), i.e. IA-32e compatibility mode, where
+    // CS.base IS applied to fetches. So the HLT must sit at the based linear
+    // address base + offset = 0x000C_0000 + 0x3000 (not the flat offset).
+    mem.write_slice(&[0xf4], GuestAddress(0x000C_0000 + 0x3000))
+        .unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3001);

@@ -17,7 +17,7 @@ use std::process::{Command, Stdio};
 mod common;
 
 use common::{
-    run_until_hlt, setup_vm, Bytes, GuestAddress, Registers, VCpu, CODE_ADDR, INT_HANDLER_ADDR,
+    Bytes, CODE_ADDR, GuestAddress, INT_HANDLER_ADDR, Registers, VCpu, run_until_hlt, setup_vm,
 };
 
 const WIRE_MAGIC: u32 = 0x5845_5645; // 'E','V','E','X' oracle wire format.

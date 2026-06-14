@@ -17,10 +17,6 @@ pub fn insw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
     ins_common(vcpu, ctx, size)
 }
 
-/// Cap on elements transferred per batched `rep ins` exit (bounds the backend's
-/// temporary buffer; a larger rep re-enters for the remainder).
-const REP_INS_BLOCK_MAX: u64 = 16384;
-
 fn ins_common(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, size: u8) -> Result<Option<VcpuExit>> {
     let port = vcpu.regs.rdx as u16;
     let df = (vcpu.regs.rflags & flags::bits::DF) != 0;
@@ -32,32 +28,14 @@ fn ins_common(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, size: u8) -> Result<
         return Ok(None);
     }
 
-    // Fast path: a forward (DF=0) `rep ins` transfers all its elements in one
-    // exit instead of one VM exit per element. The destination is `count`
-    // consecutive `size`-byte slots from ES:[RDI]; we advance RDI/RCX here and
-    // let `complete_io_in` write the whole block from the bytes the backend
-    // reads off the (fixed) port. (DF=1 is rare and falls through to the
-    // per-element path so the reverse stride is handled correctly.)
-    if rep && !df {
-        let full = rep_count(vcpu, addr_size);
-        let count = full.min(REP_INS_BLOCK_MAX);
-        let addr = di_addr(vcpu, addr_size);
-        // Advance RDI by count*size (forward) and RCX by -count.
-        advance_di_block(vcpu, addr_size, size, count);
-        sub_rep_count(vcpu, addr_size, count);
-        // Only retire the instruction once the whole rep is done; otherwise the
-        // capped remainder re-executes (RCX still non-zero).
-        if count == full {
-            vcpu.regs.rip += ctx.cursor as u64;
-        }
-        vcpu.set_io_pending_block(size, addr, count as u32);
-        return Ok(Some(VcpuExit::IoInString {
-            port,
-            size,
-            count: count as u32,
-        }));
-    }
-
+    // `rep ins` is emulated one element per VM exit: each iteration performs the
+    // port input into ES:[RDI], advances RDI by the operand size (honoring DF),
+    // and decrements RCX. The instruction is only retired (RIP advanced) once
+    // RCX reaches zero; until then RIP is left pointing at the same instruction
+    // so it re-executes for the next element. This keeps each port read a
+    // discrete `IoIn` exit, matching hardware semantics where every string
+    // element is an individual port access (a batched fast path is invisible to
+    // FIFO-style devices and to consumers that count discrete port reads).
     let addr = di_addr(vcpu, addr_size);
     vcpu.set_io_pending_mem(size, addr);
     update_di(vcpu, addr_size, size, df);
@@ -72,37 +50,6 @@ fn ins_common(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, size: u8) -> Result<
     }
 
     Ok(Some(VcpuExit::IoIn { port, size }))
-}
-
-/// Advance RDI forward by `count * size` bytes, honoring the address size.
-fn advance_di_block(vcpu: &mut X86_64Vcpu, addr_size: u8, size: u8, count: u64) {
-    let delta = count.wrapping_mul(size as u64);
-    match addr_size {
-        2 => {
-            let di = (vcpu.regs.rdi as u16).wrapping_add(delta as u16);
-            vcpu.regs.rdi = (vcpu.regs.rdi & !0xFFFF) | di as u64;
-        }
-        4 => {
-            let edi = (vcpu.regs.rdi as u32).wrapping_add(delta as u32);
-            vcpu.regs.rdi = edi as u64;
-        }
-        _ => vcpu.regs.rdi = vcpu.regs.rdi.wrapping_add(delta),
-    }
-}
-
-/// Subtract `count` from RCX, honoring the address size.
-fn sub_rep_count(vcpu: &mut X86_64Vcpu, addr_size: u8, count: u64) {
-    match addr_size {
-        2 => {
-            let cx = (vcpu.regs.rcx as u16).wrapping_sub(count as u16);
-            vcpu.regs.rcx = (vcpu.regs.rcx & !0xFFFF) | cx as u64;
-        }
-        4 => {
-            let ecx = (vcpu.regs.rcx as u32).wrapping_sub(count as u32);
-            vcpu.regs.rcx = ecx as u64;
-        }
-        _ => vcpu.regs.rcx = vcpu.regs.rcx.wrapping_sub(count),
-    }
 }
 
 fn addr_size_bytes(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {

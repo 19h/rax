@@ -1192,9 +1192,14 @@ impl X86_64Vcpu {
     /// Returns (buffer, actual_length).
     #[inline]
     pub(super) fn fetch(&mut self) -> Result<([u8; MAX_INSN_LEN], usize)> {
-        // The fetch linear address is CS.base + RIP. CS.base is 0 in long mode
-        // (flat) — so this is unchanged there — and selector<<4 in real mode.
-        let rip = self.sregs.cs.base.wrapping_add(self.regs.rip);
+        // The fetch linear address is CS.base + RIP. In 64-bit mode (CS.L=1) the
+        // CS base is architecturally ignored for address generation (treated as
+        // 0) even if a descriptor load recorded a non-zero base — so a far
+        // transfer that adopts a based 64-bit segment still fetches flat. In
+        // every other mode (IA-32e compatibility, legacy protected, real) the
+        // base IS applied (selector<<4 in real mode, descriptor base otherwise).
+        let cs_base = if self.sregs.cs.l { 0 } else { self.sregs.cs.base };
+        let rip = cs_base.wrapping_add(self.regs.rip);
         // Mark this page as containing code for self-modifying code detection
         self.mmu.mark_code_page(rip);
 

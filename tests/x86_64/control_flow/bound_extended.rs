@@ -214,11 +214,13 @@ fn test_bound_16bit_negative_bounds() {
 fn test_bound_32bit_negative_bounds() {
     // Test with negative bounds: index 0 within [-100, 100]
     // Test that a negative lower bound works correctly
+    // Runs in IA-32e compatibility mode where 0x48 is DEC (not REX.W), so use
+    // absolute [0x2000] addressing and a 0x66-overridden `MOV EBX, imm32` for the
+    // success marker instead of `MOV RBX, imm` (mirrors the passing BOUND tests).
     let code = [
         0x66, 0xb8, 0x00, 0x00, 0x00, 0x00, // MOV EAX, 0
-        0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
-        0x66, 0x62, 0x03, // BOUND EAX, [RBX]
-        0x48, 0xc7, 0xc3, 0x01, 0x00, 0x00, 0x00, // MOV RBX, 1
+        0x66, 0x67, 0x62, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // BOUND EAX, [0x2000]
+        0x66, 0xbb, 0x01, 0x00, 0x00, 0x00, // MOV EBX, 1
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm_compat(&code, None);

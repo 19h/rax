@@ -978,7 +978,9 @@ fn test_pcmpistrm_alternating_patterns() {
 fn kat_pcmpistrm_equal_each_bitmask() {
     // PCMPISTRM XMM1, XMM2, 0x08 (66 0F 3A 62 CA 08): byte, equal-each,
     // bit-mask output (imm8[6]=0). DST(XMM1)="HELLO", SRC(XMM2)="HEXLO".
-    // Matches at positions 0,1,3,4 => mask 0b11011 = 0x1B in XMM0 low.
+    // Valid lanes 0..4 (null terminator at index 5); EQUAL_EACH forces the
+    // both-invalid lanes 5..15 to 1 => mask 0xFFFB in XMM0 low (verified vs real
+    // SSE4.2 silicon; the length-truncated 0x1B is a common misconception).
     let code = [0x66, 0x0f, 0x3a, 0x62, 0xca, 0x08, 0xf4];
     let (mut vcpu, mem) = crate::common::setup_vm(&code, None);
     crate::common::set_xmm(&mem, &mut vcpu, 1, 0x00000000000000000000004f4c4c4548); // "HELLO"
@@ -986,7 +988,7 @@ fn kat_pcmpistrm_equal_each_bitmask() {
     let regs = crate::common::run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(
         crate::common::get_xmm(&regs, 0),
-        0x1B,
+        0xFFFB,
         "PCMPISTRM mask got {:032x}",
         crate::common::get_xmm(&regs, 0)
     );
