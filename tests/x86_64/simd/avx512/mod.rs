@@ -1,4 +1,5 @@
 mod evex_rm_reg_ext;
+mod evex_rex_prefix_ud;
 mod kadd_mask;
 mod kand_kor_kxor;
 mod kandn_knot_mask;

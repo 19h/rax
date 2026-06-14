@@ -1100,6 +1100,12 @@ impl X86_64Vcpu {
     /// rm (3 bits) extended by EVEX.B (bit 3) and EVEX.X (bit 4, V' for reg-reg).
     #[inline]
     fn evex_rm_vec_reg(evex: &super::super::cpu::EvexPrefix, rm: u8) -> usize {
+        // rm is the raw 3-bit ModRM.rm field; the r/m vector register's high bits
+        // come solely from EVEX.B (bit 3) and EVEX.X (bit 4, V' for reg-reg). Mask
+        // to 3 bits defensively so a caller that passes a REX-extended rm (e.g. a
+        // stray legacy REX before the EVEX prefix) can never push the index past
+        // 31 and read regs.zmm_ext out of bounds.
+        let rm = rm & 0x07;
         let base = if !evex.b { rm + 8 } else { rm };
         let base = if !evex.x { base + 16 } else { base };
         base as usize

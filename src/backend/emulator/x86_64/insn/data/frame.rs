@@ -49,6 +49,21 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
     let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
 
     if in_64bit_mode {
+        // A legacy REX (0x40-0x4F) or REX2 (0xD5) prefix preceding an EVEX prefix
+        // is an illegal encoding: EVEX carries its own R/X/B/W register-extension
+        // bits, and the Intel SDM specifies #UD when a REX/REX2 prefix precedes a
+        // VEX/EVEX prefix. The prefix scanner records such a stray REX in
+        // ctx.rex/ctx.rex2, which would otherwise leak into decode_modrm()
+        // (reg |= any_rex_r(), rm |= any_rex_b()) and push the EVEX vector-register
+        // index past 31 — an out-of-bounds access into regs.zmm_ext that aborts the
+        // host under panic=abort. Reject it as #UD before decoding the EVEX payload.
+        // RIP is left on the faulting instruction (advanced only on retire), so the
+        // fault points at it.
+        if ctx.has_any_rex() {
+            vcpu.inject_exception(6, None)?; // #UD = vector 6
+            return Ok(None);
+        }
+
         // In 64-bit mode, 0x62 is EVEX prefix (AVX-512)
         // Decode 3-byte EVEX payload
         let p0 = ctx.consume_u8()?;
