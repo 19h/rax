@@ -57,13 +57,13 @@ jobs:
           # - i686-unknown-linux-gnu          # 32-bit
           # - x86_64-pc-windows-gnu           # Windows: no vm-memory rawfd backend
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: stable
           cache-key: cross-${{ matrix.target }}
       - name: Install cross
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@7a79fe8c3a13344501c80d99cae481c1c9085912 # v2
         with:
           tool: cross
       - name: cross build (core, no default features)
@@ -89,14 +89,14 @@ jobs:
           # - powerpc-unknown-linux-gnu       # 32-bit (vm-memory 64-bit only)
           # - mipsel-unknown-linux-gnu        # 32-bit (vm-memory 64-bit only)
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: nightly
           components: rust-src
           cache-key: cross-exp-${{ matrix.target }}
       - name: Install cross
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@7a79fe8c3a13344501c80d99cae481c1c9085912 # v2
         with:
           tool: cross
       - name: cross build (build-std fallback)
@@ -125,7 +125,7 @@ jobs:
           # - { os: ubuntu-24.04, target: wasm32-wasip1,          experimental: true }
           # - { os: ubuntu-24.04, target: wasm32-unknown-unknown, experimental: true }
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: stable
