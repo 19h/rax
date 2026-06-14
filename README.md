@@ -21,6 +21,10 @@ scalar and HVX), and a correctly-rounded RV64GC. Hexagon and RISC-V boot bare-me
 
 <div align="center"><code>Rust</code> • <code>x86-64 · AArch64+SVE · Hexagon+HVX · RV64GC</code> • <code>boots Linux</code> • <code>hot-block JIT</code> • <code>oracle-verified</code></div>
 
+rax is a research project, not an official Hex-Rays product. It is already useful in practice: point
+IDA Pro's GDB debugger at rax's built-in GDB stub (the `--gdb` option) and you can debug a full kernel
+running under the emulator.
+
 ---
 
 ## Quick start
@@ -98,6 +102,12 @@ flags) and trustworthy (a regression suite stands between any change and the beh
 It is also what makes the JIT possible: a native code generator is only safe if you can prove its
 output matches the interpreter, and the same oracle provides that proof.
 
+Correctness is the main reason to build this rather than reach for QEMU, but not the only one. rax is
+MIT-licensed, while QEMU and Unicorn (the usual emulation engines) are GPL, which makes them awkward to
+embed in a binary-analysis product; a permissively licensed, well-tested emulator can ship alongside or
+inside reverse-engineering tools without GPL obligations, which benefits the whole ecosystem. And it is
+written in Rust, for memory safety and maintainability, rather than C.
+
 ---
 
 ## What a run looks like
@@ -154,7 +164,7 @@ are bootable emulator backends for bare-metal programs. All four also have SMIR 
 
 ### x86-64
 
-The primary target, and the one that boots Linux. The decoder handles the full x86-64 encoding space (REX and
+The most complete target. The decoder handles the full x86-64 encoding space (REX and
 REX2, every legacy prefix including the `0x67` address-size override, ModR/M + SIB, VEX2/VEX3, EVEX
 including APX Map 4, RIP-relative), dispatching to per-category implementations under `insn/`.
 
@@ -495,36 +505,6 @@ make test-sde      # run it under Intel SDE for a reference trace
 
 ---
 
-## Repository map
-
-```
-src/
-├── main.rs · lib.rs · config.rs · vmm.rs   # CLI, VM monitor, run loop
-├── memory.rs · timing.rs · trace.rs · snapshot.rs
-├── cpu/            # VCpu trait, register/system state (x86 · hexagon · riscv), exit reasons
-├── arch/           # boot protocols + loaders: x86_64/ · riscv.rs · hexagon · arm
-├── backend/
-│   ├── kvm/        # Linux hardware virtualization (HVF for macOS)
-│   └── emulator/
-│       ├── x86_64/ # decoder, mmu, flags, dispatch/{legacy,twobyte,vex,evex}, insn/, JIT integration
-│       ├── hexagon/# scalar core, VLIW packets, full HVX, every opcode verified
-│       └── riscv/  # RiscVVcpu bridges the rax::riscv interpreter into the VMM
-├── arm/            # aarch64 (complete SVE) · cortex_m · decoder · vfp · sysreg · cp15
-├── riscv/          # RV64GC + RVA23 scalar · cpu · decode · rvc · float · csr · crypto · disasm
-├── smir/           # ir · ops · types · interp · opt · lift/ · lower/ (x86_64 · aarch64 · regalloc · runtime)
-├── devices/        # serial·pit·pic·lapic·ioapic·rtc·hpet·pci·fw_cfg·pl011·s3c64xx·s5l8900  +  ahci·nvme·ide·virtio·e1000·vga·ac97·uhci·fdc·dma
-├── gdb/            # Remote Serial Protocol server      (--features debug)
-└── profiling/      # per-mnemonic profiler              (--features profiling)
-
-tests/              # differential (x86↔KVM) · arm_diff/arm_diff32/riscv_diff/hexagon_*_diff (↔QEMU) · smir_jit_vcpu · realmode_boot · riscv_boot
-                    # x86_64/ · arm/generated (from ASL) · diff_fuzz · smir_avx10_roundtrip
-tools/              # asl-parser (ARM ASL → tests) · arm-diff · riscv-diff · hexagon-diff (QEMU oracles)
-microkernel/        # bare-metal x86-64 test kernel
-docs/specifications/# smir/ (the IR spec) · riscv/ (vendored RISC-V specs) · arm/
-```
-
----
-
 ## Status
 
 | Path | State |
@@ -540,15 +520,20 @@ docs/specifications/# smir/ (the IR spec) · riscv/ (vendored RISC-V specs) · a
 
 ### What's missing
 
-This is not a production hypervisor, by design. x86-64 and AArch64 both boot a general-purpose OS;
-Hexagon and RISC-V run bare-metal only, and the 32-bit AArch32 core is validated through its oracle but
-not yet wired as a backend. There is no SMP (one vCPU executes), VGA is not wired (serial console only),
-and PCI interrupts run in polled mode. The JIT compiles integer and memory hot regions; the double-width
-DIV model and native block-to-block chaining are still future work. The runnable RISC-V backend executes
-the RVA23 scalar set; its RVV vector ISA is lifted and verified through SMIR but not wired into the
-standalone interpreter, and there is no privileged/Sv39 MMU. The software Linux boot reaches a BusyBox
-shell on a mitigations-off ELF kernel; wider configurations (CFI/FineIBT, bzImage real-mode entry) are
-still being worked through, and the KVM path boots cleanly throughout.
+This is not a production hypervisor, and the scope is deliberately bounded:
+
+- **No SMP.** A single vCPU executes.
+- **Limited devices.** VGA is not wired (serial console only), and PCI interrupts run in polled mode.
+- **AArch32 has no runnable backend yet.** The A32/Thumb core is validated through its oracle but not
+  yet wired into the VM.
+- **JIT scope.** It compiles integer and memory hot regions; the double-width DIV model and native
+  block-to-block chaining are future work.
+- **RISC-V is scalar at runtime.** The runnable `--arch riscv64` backend executes the RVA23 scalar set;
+  the RVV vector ISA is lifted and verified through SMIR but not wired into the standalone interpreter,
+  and there is no privileged/Sv39 MMU.
+- **Software x86-64 boot is narrow.** It reaches a BusyBox shell on a mitigations-off ELF kernel; wider
+  configurations (CFI/FineIBT, bzImage real-mode entry) are still being worked through. The KVM path
+  boots cleanly throughout.
 
 ---
 
