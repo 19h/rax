@@ -59,24 +59,154 @@ impl X86_64Vcpu {
             0x10 | 0x28 if evex.pp == 0 => self.execute_evex_mov_load(ctx, opcode == 0x28),
             // VMOVUPD/VMOVAPD load (0x10/0x28 with 66 prefix)
             0x10 | 0x28 if evex.pp == 1 => self.execute_evex_mov_load(ctx, opcode == 0x28),
+            // VMOVSS/VMOVSD scalar load/reg-reg move forms.
+            0x10 if evex.pp == 2 && !evex.w => insn::simd::evex_scalar_fp_move(self, ctx, 4, false),
+            0x10 if evex.pp == 3 && evex.w => insn::simd::evex_scalar_fp_move(self, ctx, 8, false),
             // VMOVUPS/VMOVAPS store (0x11/0x29)
             0x11 | 0x29 if evex.pp == 0 => self.execute_evex_mov_store(ctx, opcode == 0x29),
             // VMOVUPD/VMOVAPD store (0x11/0x29 with 66 prefix)
             0x11 | 0x29 if evex.pp == 1 => self.execute_evex_mov_store(ctx, opcode == 0x29),
+            // VMOVSS/VMOVSD scalar store/reg-reg move forms.
+            0x11 if evex.pp == 2 && !evex.w => insn::simd::evex_scalar_fp_move(self, ctx, 4, true),
+            0x11 if evex.pp == 3 && evex.w => insn::simd::evex_scalar_fp_move(self, ctx, 8, true),
+            // VMOVLPS/VMOVHLPS and VMOVHPS/VMOVLHPS.
+            0x12 if evex.pp == 0 && !evex.w => {
+                insn::simd::evex_high_low_move(self, ctx, false, true)
+            }
+            0x16 if evex.pp == 0 && !evex.w => {
+                insn::simd::evex_high_low_move(self, ctx, true, true)
+            }
+            // VMOVLPD and VMOVHPD.
+            0x12 if evex.pp == 1 && evex.w => {
+                insn::simd::evex_high_low_move(self, ctx, false, false)
+            }
+            0x16 if evex.pp == 1 && evex.w => {
+                insn::simd::evex_high_low_move(self, ctx, true, false)
+            }
+            // VMOVSLDUP/VMOVDDUP and VMOVSHDUP.
+            0x12 if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_duplicate_lanes(self, ctx, 4, false)
+            }
+            0x12 if evex.pp == 3 && evex.w => insn::simd::evex_duplicate_lanes(self, ctx, 8, false),
+            0x16 if evex.pp == 2 && !evex.w => insn::simd::evex_duplicate_lanes(self, ctx, 4, true),
+            // VMOVNTPS (NP.0F.2B) and VMOVNTPD (66.0F.W1.2B) memory stores.
+            0x2B if (evex.pp == 0 && !evex.w) || (evex.pp == 1 && evex.w) => {
+                insn::simd::evex_nt_store(self, ctx)
+            }
+            // VMOVD/VMOVQ: GPR/memory to XMM.
+            0x6E if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_gpr_or_mem_to_xmm(self, ctx, es)
+            }
+            // VMOVD/VMOVQ: XMM to GPR/memory.
+            0x7E if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_xmm_to_gpr_or_mem(self, ctx, es)
+            }
+            // VMOVQ: XMM/m64 to XMM.
+            0x7E if evex.pp == 2 && evex.w => insn::simd::evex_movq_vec_load(self, ctx),
+            // VMOVQ: XMM to XMM/m64.
+            0xD6 if evex.pp == 1 && evex.w => insn::simd::evex_movq_vec_store(self, ctx),
+            // VMOVNTDQ (66.0F.E7) memory store.
+            0xE7 if evex.pp == 1 && !evex.w => insn::simd::evex_nt_store(self, ctx),
+            // VUCOMISS/VUCOMISD and VCOMISS/VCOMISD: scalar compare into RFLAGS.
+            0x2E if evex.pp == 0 && !evex.w => insn::simd::evex_comi(self, ctx, 4, false),
+            0x2E if evex.pp == 1 && evex.w => insn::simd::evex_comi(self, ctx, 8, false),
+            0x2F if evex.pp == 0 && !evex.w => insn::simd::evex_comi(self, ctx, 4, true),
+            0x2F if evex.pp == 1 && evex.w => insn::simd::evex_comi(self, ctx, 8, true),
+            // VADDSS/VADDSD scalar forms. These must be matched before packed PS/PD.
+            0x58 if evex.pp == 2 && !evex.w => {
+                self.execute_evex_fp_scalar_arith_f32(ctx, |a, b| a + b)
+            }
+            0x58 if evex.pp == 3 && evex.w => {
+                self.execute_evex_fp_scalar_arith_f64(ctx, |a, b| a + b)
+            }
             // VADDPS (pp=0/W=0) / VADDPD (pp=1/W=1) (0x58)
             0x58 if evex.pp == 1 || evex.w => self.execute_evex_fp_arith_pd(ctx, |a, b| a + b),
             0x58 => self.execute_evex_fp_arith_ps(ctx, |a, b| a + b),
+            // VMULSS/VMULSD scalar forms.
+            0x59 if evex.pp == 2 && !evex.w => {
+                self.execute_evex_fp_scalar_arith_f32(ctx, |a, b| a * b)
+            }
+            0x59 if evex.pp == 3 && evex.w => {
+                self.execute_evex_fp_scalar_arith_f64(ctx, |a, b| a * b)
+            }
             // VMULPS / VMULPD (0x59)
             0x59 if evex.pp == 1 || evex.w => self.execute_evex_fp_arith_pd(ctx, |a, b| a * b),
             0x59 => self.execute_evex_fp_arith_ps(ctx, |a, b| a * b),
+            // VSUBSS/VSUBSD scalar forms.
+            0x5C if evex.pp == 2 && !evex.w => {
+                self.execute_evex_fp_scalar_arith_f32(ctx, |a, b| a - b)
+            }
+            0x5C if evex.pp == 3 && evex.w => {
+                self.execute_evex_fp_scalar_arith_f64(ctx, |a, b| a - b)
+            }
             // VSUBPS / VSUBPD (0x5C)
             0x5C if evex.pp == 1 || evex.w => self.execute_evex_fp_arith_pd(ctx, |a, b| a - b),
             0x5C => self.execute_evex_fp_arith_ps(ctx, |a, b| a - b),
+            // VDIVSS/VDIVSD scalar forms.
+            0x5E if evex.pp == 2 && !evex.w => {
+                self.execute_evex_fp_scalar_arith_f32(ctx, |a, b| a / b)
+            }
+            0x5E if evex.pp == 3 && evex.w => {
+                self.execute_evex_fp_scalar_arith_f64(ctx, |a, b| a / b)
+            }
             // VDIVPS / VDIVPD (0x5E)
             0x5E if evex.pp == 1 || evex.w => self.execute_evex_fp_arith_pd(ctx, |a, b| a / b),
             0x5E => self.execute_evex_fp_arith_ps(ctx, |a, b| a / b),
-            // VXORPS/VXORPD (0x57)
-            0x57 => self.execute_evex_bitwise_xor(ctx),
+            // VSQRTSS/VSQRTSD scalar forms.
+            0x51 if evex.pp == 2 && !evex.w => {
+                self.execute_evex_fp_scalar_arith_f32(ctx, |_, b| b.sqrt())
+            }
+            0x51 if evex.pp == 3 && evex.w => {
+                self.execute_evex_fp_scalar_arith_f64(ctx, |_, b| b.sqrt())
+            }
+            // VSQRTPS / VSQRTPD (0x51)
+            0x51 if evex.pp == 1 && evex.w => self.execute_evex_fp_unary_pd(ctx, |a| a.sqrt()),
+            0x51 if evex.pp == 0 && !evex.w => self.execute_evex_fp_unary_ps(ctx, |a| a.sqrt()),
+            // VMINSS/VMINSD scalar forms.
+            0x5D if evex.pp == 2 && !evex.w => {
+                self.execute_evex_fp_scalar_arith_f32(ctx, Self::x86_min_f32)
+            }
+            0x5D if evex.pp == 3 && evex.w => {
+                self.execute_evex_fp_scalar_arith_f64(ctx, Self::x86_min_f64)
+            }
+            // VMINPS / VMINPD (0x5D)
+            0x5D if evex.pp == 1 && evex.w => self.execute_evex_fp_arith_pd(ctx, Self::x86_min_f64),
+            0x5D if evex.pp == 0 && !evex.w => {
+                self.execute_evex_fp_arith_ps(ctx, Self::x86_min_f32)
+            }
+            // VMAXSS/VMAXSD scalar forms.
+            0x5F if evex.pp == 2 && !evex.w => {
+                self.execute_evex_fp_scalar_arith_f32(ctx, Self::x86_max_f32)
+            }
+            0x5F if evex.pp == 3 && evex.w => {
+                self.execute_evex_fp_scalar_arith_f64(ctx, Self::x86_max_f64)
+            }
+            // VMAXPS / VMAXPD (0x5F)
+            0x5F if evex.pp == 1 && evex.w => self.execute_evex_fp_arith_pd(ctx, Self::x86_max_f64),
+            0x5F if evex.pp == 0 && !evex.w => {
+                self.execute_evex_fp_arith_ps(ctx, Self::x86_max_f32)
+            }
+            // VANDPS/VANDPD, VANDNPS/VANDNPD, VORPS/VORPD, VXORPS/VXORPD.
+            0x54 if evex.pp == 0 && !evex.w => self.execute_evex_fp_bitwise(ctx, 4, |a, b| a & b),
+            0x54 if evex.pp == 1 && evex.w => self.execute_evex_fp_bitwise(ctx, 8, |a, b| a & b),
+            0x55 if evex.pp == 0 && !evex.w => {
+                self.execute_evex_fp_bitwise(ctx, 4, |a, b| (!a) & b)
+            }
+            0x55 if evex.pp == 1 && evex.w => self.execute_evex_fp_bitwise(ctx, 8, |a, b| (!a) & b),
+            0x56 if evex.pp == 0 && !evex.w => self.execute_evex_fp_bitwise(ctx, 4, |a, b| a | b),
+            0x56 if evex.pp == 1 && evex.w => self.execute_evex_fp_bitwise(ctx, 8, |a, b| a | b),
+            0x57 if evex.pp == 0 && !evex.w => self.execute_evex_fp_bitwise(ctx, 4, |a, b| a ^ b),
+            0x57 if evex.pp == 1 && evex.w => self.execute_evex_fp_bitwise(ctx, 8, |a, b| a ^ b),
+            // VUNPCKLPS/PD and VUNPCKHPS/PD.
+            0x14 if evex.pp == 0 && !evex.w => insn::simd::evex_unpack(self, ctx, 4, false),
+            0x15 if evex.pp == 0 && !evex.w => insn::simd::evex_unpack(self, ctx, 4, true),
+            0x14 if evex.pp == 1 && evex.w => insn::simd::evex_unpack(self, ctx, 8, false),
+            0x15 if evex.pp == 1 && evex.w => insn::simd::evex_unpack(self, ctx, 8, true),
+            // VPINSRW and VPEXTRW register-destination form.
+            0xC4 if evex.pp == 1 => insn::simd::evex_pinsr(self, ctx, 2),
+            0xC5 if evex.pp == 1 => insn::simd::evex_extract_scalar(self, ctx, 2, 4, false),
 
             // ================================================================
             // Broadened EVEX coverage: integer/logical/compare/move/broadcast/shift
@@ -130,8 +260,94 @@ impl X86_64Vcpu {
             0xF9 if evex.pp == 1 => insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::SubW),
             0xFA if evex.pp == 1 => insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::SubD),
             0xFB if evex.pp == 1 => insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::SubQ),
+            // VPUNPCKL* / VPUNPCKH* integer interleaves.
+            0x60 if evex.pp == 1 && !evex.w => insn::simd::evex_unpack(self, ctx, 1, false),
+            0x61 if evex.pp == 1 && !evex.w => insn::simd::evex_unpack(self, ctx, 2, false),
+            0x62 if evex.pp == 1 && !evex.w => insn::simd::evex_unpack(self, ctx, 4, false),
+            0x68 if evex.pp == 1 && !evex.w => insn::simd::evex_unpack(self, ctx, 1, true),
+            0x69 if evex.pp == 1 && !evex.w => insn::simd::evex_unpack(self, ctx, 2, true),
+            0x6A if evex.pp == 1 && !evex.w => insn::simd::evex_unpack(self, ctx, 4, true),
+            0x6C if evex.pp == 1 && evex.w => insn::simd::evex_unpack(self, ctx, 8, false),
+            0x6D if evex.pp == 1 && evex.w => insn::simd::evex_unpack(self, ctx, 8, true),
             // VPMULLW (0xD5)
             0xD5 if evex.pp == 1 => insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MullW),
+            // Saturating add/sub, averages, min/max, and multiply/madd word/dword forms.
+            0xD8 if evex.pp == 1 => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::SubSatUB)
+            }
+            0xD9 if evex.pp == 1 => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::SubSatUW)
+            }
+            0xDA if evex.pp == 1 => insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MinUB),
+            0xDC if evex.pp == 1 => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::AddSatUB)
+            }
+            0xDD if evex.pp == 1 => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::AddSatUW)
+            }
+            0xDE if evex.pp == 1 => insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MaxUB),
+            0xE0 if evex.pp == 1 => insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::AvgB),
+            0xE3 if evex.pp == 1 => insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::AvgW),
+            0xE4 if evex.pp == 1 => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MulHighUW)
+            }
+            0xE5 if evex.pp == 1 => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MulHighSW)
+            }
+            0xE8 if evex.pp == 1 => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::SubSatSB)
+            }
+            0xE9 if evex.pp == 1 => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::SubSatSW)
+            }
+            0xEA if evex.pp == 1 => insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MinSW),
+            0xEC if evex.pp == 1 => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::AddSatSB)
+            }
+            0xED if evex.pp == 1 => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::AddSatSW)
+            }
+            0xEE if evex.pp == 1 => insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MaxSW),
+            0xF4 if evex.pp == 1 && evex.w => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MulUDQ)
+            }
+            0xF5 if evex.pp == 1 => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MaddWD)
+            }
+            // VPACKSSWB/VPACKSSDW/VPACKUSWB.
+            0x63 if evex.pp == 1 => insn::simd::evex_pack_saturate(
+                self,
+                ctx,
+                insn::simd::PackKind::SignedWordToSignedByte,
+            ),
+            0x67 if evex.pp == 1 => insn::simd::evex_pack_saturate(
+                self,
+                ctx,
+                insn::simd::PackKind::UnsignedWordToUnsignedByte,
+            ),
+            0x6B if evex.pp == 1 && !evex.w => insn::simd::evex_pack_saturate(
+                self,
+                ctx,
+                insn::simd::PackKind::SignedDwordToSignedWord,
+            ),
+            // VCMPPS/PD/SS/SD compare into a k-mask destination.
+            0xC2 if evex.pp == 0 && !evex.w => insn::simd::evex_fp_cmp(self, ctx, 4, false),
+            0xC2 if evex.pp == 1 && evex.w => insn::simd::evex_fp_cmp(self, ctx, 8, false),
+            0xC2 if evex.pp == 2 && !evex.w => insn::simd::evex_fp_cmp(self, ctx, 4, true),
+            0xC2 if evex.pp == 3 && evex.w => insn::simd::evex_fp_cmp(self, ctx, 8, true),
+            // VSHUFPS/VSHUFPD.
+            0xC6 if evex.pp == 0 && !evex.w => insn::simd::evex_shufp(self, ctx, 4),
+            0xC6 if evex.pp == 1 && evex.w => insn::simd::evex_shufp(self, ctx, 8),
+            // VPSHUFD/HW/LW.
+            0x70 if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_shuffle_imm(self, ctx, insn::simd::ShuffleImmKind::Dword)
+            }
+            0x70 if evex.pp == 2 => {
+                insn::simd::evex_shuffle_imm(self, ctx, insn::simd::ShuffleImmKind::HighWord)
+            }
+            0x70 if evex.pp == 3 => {
+                insn::simd::evex_shuffle_imm(self, ctx, insn::simd::ShuffleImmKind::LowWord)
+            }
 
             // Compare into mask (fixed predicate forms), pp=1 (66):
             // VPCMPEQB/W/D (0x74/0x75/0x76), VPCMPGTB/W/D (0x64/0x65/0x66)
@@ -154,22 +370,38 @@ impl X86_64Vcpu {
                 insn::simd::evex_int_cmp(self, ctx, 4, true, insn::simd::CmpPred::Gt, false)
             }
 
-            // Packed shift by immediate (group opcodes 0x72/0x73 with /reg selecting op)
+            // Packed shift by immediate (group opcodes 0x71/0x72/0x73 with /reg selecting op)
+            // 0x71: VPSRLW(/2), VPSRAW(/4), VPSLLW(/6)  (word)
             // 0x72: VPSRLD(/2), VPSRAD(/4), VPSLLD(/6)  (dword, or qword for SRA via W1)
             // 0x73: VPSRLQ(/2), VPSLLQ(/6)              (qword)
+            0x71 if evex.pp == 1 => {
+                let modrm = ctx.peek_u8()?;
+                let sub = (modrm >> 3) & 0x7;
+                let es = 2;
+                match sub {
+                    2 => insn::simd::evex_shift_imm(self, ctx, insn::simd::ShiftKind::Srl, es),
+                    4 => insn::simd::evex_shift_imm(self, ctx, insn::simd::ShiftKind::Sra, es),
+                    6 => insn::simd::evex_shift_imm(self, ctx, insn::simd::ShiftKind::Sll, es),
+                    _ => Err(Error::Emulator(format!(
+                        "Unimplemented EVEX 0F 71 /{} at RIP={:#x}",
+                        sub, self.regs.rip
+                    ))),
+                }
+            }
             0x72 if evex.pp == 1 => {
                 // Need the /reg field to pick the operation.
                 let modrm = ctx.peek_u8()?;
                 let sub = (modrm >> 3) & 0x7;
-                let es = 4;
+                let es = if evex.w { 8 } else { 4 };
                 match sub {
-                    2 => insn::simd::evex_shift_imm(self, ctx, insn::simd::ShiftKind::Srl, es),
+                    0 => insn::simd::evex_rotate_imm(self, ctx, insn::simd::RotateKind::Right, es),
+                    1 => insn::simd::evex_rotate_imm(self, ctx, insn::simd::RotateKind::Left, es),
+                    2 => insn::simd::evex_shift_imm(self, ctx, insn::simd::ShiftKind::Srl, 4),
                     4 => {
                         // VPSRAD (W0=dword) / VPSRAQ (W1=qword)
-                        let es = if evex.w { 8 } else { 4 };
                         insn::simd::evex_shift_imm(self, ctx, insn::simd::ShiftKind::Sra, es)
                     }
-                    6 => insn::simd::evex_shift_imm(self, ctx, insn::simd::ShiftKind::Sll, es),
+                    6 => insn::simd::evex_shift_imm(self, ctx, insn::simd::ShiftKind::Sll, 4),
                     _ => Err(Error::Emulator(format!(
                         "Unimplemented EVEX 0F 72 /{} at RIP={:#x}",
                         sub, self.regs.rip
@@ -182,15 +414,26 @@ impl X86_64Vcpu {
                 let es = 8;
                 match sub {
                     2 => insn::simd::evex_shift_imm(self, ctx, insn::simd::ShiftKind::Srl, es),
+                    3 => insn::simd::evex_shift_bytes_imm(
+                        self,
+                        ctx,
+                        insn::simd::ByteShiftKind::Right,
+                    ),
                     6 => insn::simd::evex_shift_imm(self, ctx, insn::simd::ShiftKind::Sll, es),
+                    7 => {
+                        insn::simd::evex_shift_bytes_imm(self, ctx, insn::simd::ByteShiftKind::Left)
+                    }
                     _ => Err(Error::Emulator(format!(
                         "Unimplemented EVEX 0F 73 /{} at RIP={:#x}",
                         sub, self.regs.rip
                     ))),
                 }
             }
-            // Packed shift by xmm count: VPSRLD/Q (0xD2/0xD3), VPSRAD/Q (0xE2),
-            // VPSLLD/Q (0xF2/0xF3).
+            // Packed shift by xmm count: VPSRLW/D/Q (0xD1/0xD2/0xD3),
+            // VPSRAW/D/Q (0xE1/0xE2), VPSLLW/D/Q (0xF1/0xF2/0xF3).
+            0xD1 if evex.pp == 1 => {
+                insn::simd::evex_shift_var(self, ctx, insn::simd::ShiftKind::Srl, 2)
+            }
             0xD2 if evex.pp == 1 => {
                 insn::simd::evex_shift_var(self, ctx, insn::simd::ShiftKind::Srl, 4)
             }
@@ -201,12 +444,20 @@ impl X86_64Vcpu {
                 let es = if evex.w { 8 } else { 4 };
                 insn::simd::evex_shift_var(self, ctx, insn::simd::ShiftKind::Sra, es)
             }
+            0xE1 if evex.pp == 1 => {
+                insn::simd::evex_shift_var(self, ctx, insn::simd::ShiftKind::Sra, 2)
+            }
+            0xF1 if evex.pp == 1 => {
+                insn::simd::evex_shift_var(self, ctx, insn::simd::ShiftKind::Sll, 2)
+            }
             0xF2 if evex.pp == 1 => {
                 insn::simd::evex_shift_var(self, ctx, insn::simd::ShiftKind::Sll, 4)
             }
             0xF3 if evex.pp == 1 => {
                 insn::simd::evex_shift_var(self, ctx, insn::simd::ShiftKind::Sll, 8)
             }
+            // VPSADBW.
+            0xF6 if evex.pp == 1 => insn::simd::evex_psadbw(self, ctx),
 
             _ => Err(Error::Emulator(format!(
                 "Unimplemented EVEX.0F opcode {:#04x} at RIP={:#x}",
@@ -347,7 +598,17 @@ impl X86_64Vcpu {
 
         // Load source2 (register operand also honors V'/X extension to 0-31)
         let src2 = if is_memory {
-            self.load_zmm_data(addr, vl)?
+            if evex.broadcast {
+                let value = self.read_mem(addr, 4)?.to_le_bytes();
+                let mut data = [0u8; 64];
+                for lane in 0..num_elems {
+                    let base = lane * 4;
+                    data[base..base + 4].copy_from_slice(&value[..4]);
+                }
+                data
+            } else {
+                self.load_zmm_data(addr, vl)?
+            }
         } else {
             let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
@@ -437,7 +698,17 @@ impl X86_64Vcpu {
 
         // Load source2 (register operand also honors V'/X extension to 0-31)
         let src2 = if is_memory {
-            self.load_zmm_data(addr, vl)?
+            if evex.broadcast {
+                let value = self.read_mem(addr, 8)?.to_le_bytes();
+                let mut data = [0u8; 64];
+                for lane in 0..num_elems {
+                    let base = lane * 8;
+                    data[base..base + 8].copy_from_slice(&value);
+                }
+                data
+            } else {
+                self.load_zmm_data(addr, vl)?
+            }
         } else {
             let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
@@ -503,6 +774,238 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
+    /// EVEX packed single-precision unary FP operation (VSQRTPS).
+    fn execute_evex_fp_unary_ps<F>(
+        &mut self,
+        ctx: &mut InsnContext,
+        op: F,
+    ) -> Result<Option<VcpuExit>>
+    where
+        F: Fn(f32) -> f32,
+    {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+        let num_elems = vl / 4;
+
+        let src = if is_memory {
+            if evex.broadcast {
+                let value = self.read_mem(addr, 4)?.to_le_bytes();
+                let mut data = [0u8; 64];
+                for lane in 0..num_elems {
+                    let base = lane * 4;
+                    data[base..base + 4].copy_from_slice(&value[..4]);
+                }
+                data
+            } else {
+                self.load_zmm_data(addr, vl)?
+            }
+        } else {
+            let zmm_src = Self::evex_rm_vec_reg(&evex, rm);
+            self.get_zmm_data(zmm_src, vl)
+        };
+
+        let dest_old = self.get_zmm_data(zmm_dst, vl);
+        let mask = Self::evex_kmask(&evex, &self.regs.k, num_elems);
+        let mut result = [0u8; 64];
+        for lane in 0..num_elems {
+            let base = lane * 4;
+            if (mask >> lane) & 1 != 0 {
+                let value = f32::from_le_bytes(src[base..base + 4].try_into().unwrap());
+                result[base..base + 4].copy_from_slice(&op(value).to_le_bytes());
+            } else if evex.z {
+                // Zeroing: leave as 0.
+            } else {
+                result[base..base + 4].copy_from_slice(&dest_old[base..base + 4]);
+            }
+        }
+
+        self.set_zmm_data(zmm_dst, &result[..vl], vl);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// EVEX packed double-precision unary FP operation (VSQRTPD).
+    fn execute_evex_fp_unary_pd<F>(
+        &mut self,
+        ctx: &mut InsnContext,
+        op: F,
+    ) -> Result<Option<VcpuExit>>
+    where
+        F: Fn(f64) -> f64,
+    {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+        let num_elems = vl / 8;
+
+        let src = if is_memory {
+            if evex.broadcast {
+                let value = self.read_mem(addr, 8)?.to_le_bytes();
+                let mut data = [0u8; 64];
+                for lane in 0..num_elems {
+                    let base = lane * 8;
+                    data[base..base + 8].copy_from_slice(&value);
+                }
+                data
+            } else {
+                self.load_zmm_data(addr, vl)?
+            }
+        } else {
+            let zmm_src = Self::evex_rm_vec_reg(&evex, rm);
+            self.get_zmm_data(zmm_src, vl)
+        };
+
+        let dest_old = self.get_zmm_data(zmm_dst, vl);
+        let mask = Self::evex_kmask(&evex, &self.regs.k, num_elems);
+        let mut result = [0u8; 64];
+        for lane in 0..num_elems {
+            let base = lane * 8;
+            if (mask >> lane) & 1 != 0 {
+                let value = f64::from_le_bytes(src[base..base + 8].try_into().unwrap());
+                result[base..base + 8].copy_from_slice(&op(value).to_le_bytes());
+            } else if evex.z {
+                // Zeroing: leave as 0.
+            } else {
+                result[base..base + 8].copy_from_slice(&dest_old[base..base + 8]);
+            }
+        }
+
+        self.set_zmm_data(zmm_dst, &result[..vl], vl);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// EVEX scalar single-precision FP arithmetic (VADDSS, VMULSS, VSUBSS, VDIVSS).
+    fn execute_evex_fp_scalar_arith_f32<F>(
+        &mut self,
+        ctx: &mut InsnContext,
+        op: F,
+    ) -> Result<Option<VcpuExit>>
+    where
+        F: Fn(f32, f32) -> f32,
+    {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let dst = if !evex.r { reg + 8 } else { reg };
+        let dst = if !evex.r_prime { dst + 16 } else { dst } as usize;
+        let src1 = ctx.evex_vvvv() as usize;
+        let src2 = if is_memory {
+            f32::from_bits(self.read_mem(addr, 4)? as u32)
+        } else {
+            let src2_reg = Self::evex_rm_vec_reg(&evex, rm);
+            let src2_data = self.get_zmm_data(src2_reg, 16);
+            f32::from_bits(u32::from_le_bytes([
+                src2_data[0],
+                src2_data[1],
+                src2_data[2],
+                src2_data[3],
+            ]))
+        };
+
+        let src1_data = self.get_zmm_data(src1, 16);
+        let dest_old = self.get_zmm_data(dst, 16);
+        let src1_scalar = f32::from_bits(u32::from_le_bytes([
+            src1_data[0],
+            src1_data[1],
+            src1_data[2],
+            src1_data[3],
+        ]));
+
+        let mut result = [0u8; 64];
+        result[4..16].copy_from_slice(&src1_data[4..16]);
+        if evex.aaa == 0 || (self.regs.k[evex.aaa as usize] & 1) != 0 {
+            result[0..4].copy_from_slice(&op(src1_scalar, src2).to_bits().to_le_bytes());
+        } else if evex.z {
+            result[0..4].fill(0);
+        } else {
+            result[0..4].copy_from_slice(&dest_old[0..4]);
+        }
+
+        self.set_zmm_data(dst, &result[..16], 16);
+        self.zero_zmm_upper_from_128(dst);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// EVEX scalar double-precision FP arithmetic (VADDSD, VMULSD, VSUBSD, VDIVSD).
+    fn execute_evex_fp_scalar_arith_f64<F>(
+        &mut self,
+        ctx: &mut InsnContext,
+        op: F,
+    ) -> Result<Option<VcpuExit>>
+    where
+        F: Fn(f64, f64) -> f64,
+    {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let dst = if !evex.r { reg + 8 } else { reg };
+        let dst = if !evex.r_prime { dst + 16 } else { dst } as usize;
+        let src1 = ctx.evex_vvvv() as usize;
+        let src2 = if is_memory {
+            f64::from_bits(self.read_mem(addr, 8)?)
+        } else {
+            let src2_reg = Self::evex_rm_vec_reg(&evex, rm);
+            let src2_data = self.get_zmm_data(src2_reg, 16);
+            f64::from_bits(u64::from_le_bytes([
+                src2_data[0],
+                src2_data[1],
+                src2_data[2],
+                src2_data[3],
+                src2_data[4],
+                src2_data[5],
+                src2_data[6],
+                src2_data[7],
+            ]))
+        };
+
+        let src1_data = self.get_zmm_data(src1, 16);
+        let dest_old = self.get_zmm_data(dst, 16);
+        let src1_scalar = f64::from_bits(u64::from_le_bytes([
+            src1_data[0],
+            src1_data[1],
+            src1_data[2],
+            src1_data[3],
+            src1_data[4],
+            src1_data[5],
+            src1_data[6],
+            src1_data[7],
+        ]));
+
+        let mut result = [0u8; 64];
+        result[8..16].copy_from_slice(&src1_data[8..16]);
+        if evex.aaa == 0 || (self.regs.k[evex.aaa as usize] & 1) != 0 {
+            result[0..8].copy_from_slice(&op(src1_scalar, src2).to_bits().to_le_bytes());
+        } else if evex.z {
+            result[0..8].fill(0);
+        } else {
+            result[0..8].copy_from_slice(&dest_old[0..8]);
+        }
+
+        self.set_zmm_data(dst, &result[..16], 16);
+        self.zero_zmm_upper_from_128(dst);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
     /// Resolve the full 0-31 vector register index for an EVEX r/m register operand.
     /// rm (3 bits) extended by EVEX.B (bit 3) and EVEX.X (bit 4, V' for reg-reg).
     #[inline]
@@ -528,47 +1031,116 @@ impl X86_64Vcpu {
         }
     }
 
-    /// EVEX bitwise XOR (VXORPS, VXORPD)
-    fn execute_evex_bitwise_xor(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    fn zero_zmm_upper_from_128(&mut self, zmm: usize) {
+        if zmm < 16 {
+            self.regs.ymm_high[zmm] = [0; 2];
+            self.regs.zmm_high[zmm] = [0; 4];
+        } else {
+            self.regs.zmm_ext[zmm - 16][2..].fill(0);
+        }
+    }
+
+    fn x86_min_f32(a: f32, b: f32) -> f32 {
+        if (a == 0.0 && b == 0.0) || a.is_nan() || b.is_nan() {
+            b
+        } else if a < b {
+            a
+        } else {
+            b
+        }
+    }
+
+    fn x86_min_f64(a: f64, b: f64) -> f64 {
+        if (a == 0.0 && b == 0.0) || a.is_nan() || b.is_nan() {
+            b
+        } else if a < b {
+            a
+        } else {
+            b
+        }
+    }
+
+    fn x86_max_f32(a: f32, b: f32) -> f32 {
+        if (a == 0.0 && b == 0.0) || a.is_nan() || b.is_nan() {
+            b
+        } else if a > b {
+            a
+        } else {
+            b
+        }
+    }
+
+    fn x86_max_f64(a: f64, b: f64) -> f64 {
+        if (a == 0.0 && b == 0.0) || a.is_nan() || b.is_nan() {
+            b
+        } else if a > b {
+            a
+        } else {
+            b
+        }
+    }
+
+    /// EVEX FP bitwise logical operation (VAND*/VANDN*/VOR*/VXOR*).
+    fn execute_evex_fp_bitwise<F>(
+        &mut self,
+        ctx: &mut InsnContext,
+        elem_size: usize,
+        op: F,
+    ) -> Result<Option<VcpuExit>>
+    where
+        F: Fn(u8, u8) -> u8,
+    {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
-        // Destination register (5 bits)
         let zmm_dst = if !evex.r { reg + 8 } else { reg };
         let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
-
-        // Source1 from vvvv (inverted), extended by EVEX.V'
         let zmm_src1 = ctx.evex_vvvv() as usize;
-
-        // Vector length from L'L
         let vl = match evex.ll {
             0 => 16, // 128-bit
             1 => 32, // 256-bit
             2 => 64, // 512-bit
             _ => 64,
         };
+        let num_elems = vl / elem_size;
 
-        // Load source2 (register operand honors V'/X extension to 0-31)
         let src2 = if is_memory {
-            self.load_zmm_data(addr, vl)?
+            if evex.broadcast {
+                let value = self.read_mem(addr, elem_size as u8)?;
+                let value = value.to_le_bytes();
+                let mut data = [0u8; 64];
+                for lane in 0..num_elems {
+                    let base = lane * elem_size;
+                    data[base..base + elem_size].copy_from_slice(&value[..elem_size]);
+                }
+                data
+            } else {
+                self.load_zmm_data(addr, vl)?
+            }
         } else {
             let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
-
-        // Get source1
         let src1 = self.get_zmm_data(zmm_src1, vl);
+        let dest_old = self.get_zmm_data(zmm_dst, vl);
+        let mask = Self::evex_kmask(&evex, &self.regs.k, num_elems);
 
-        // Perform bitwise XOR
         let mut result = [0u8; 64];
-        for i in 0..vl {
-            result[i] = src1[i] ^ src2[i];
+        for lane in 0..num_elems {
+            let base = lane * elem_size;
+            if (mask >> lane) & 1 != 0 {
+                for byte in 0..elem_size {
+                    result[base + byte] = op(src1[base + byte], src2[base + byte]);
+                }
+            } else if evex.z {
+                // Zeroing: leave this element as 0.
+            } else {
+                result[base..base + elem_size].copy_from_slice(&dest_old[base..base + elem_size]);
+            }
         }
 
-        // Store result
         self.set_zmm_data(zmm_dst, &result[..vl], vl);
 
-        // Zero upper bits if not 512-bit (for ZMM0-15)
         if vl < 64 && zmm_dst < 16 {
             if vl <= 16 {
                 self.regs.ymm_high[zmm_dst][0] = 0;
@@ -734,17 +1306,21 @@ impl X86_64Vcpu {
             if vl > 16 {
                 self.regs.ymm_high[zmm][0] = read_u64(16);
                 self.regs.ymm_high[zmm][1] = read_u64(24);
+            } else {
+                self.regs.ymm_high[zmm] = [0; 2];
             }
             if vl > 32 {
                 self.regs.zmm_high[zmm][0] = read_u64(32);
                 self.regs.zmm_high[zmm][1] = read_u64(40);
                 self.regs.zmm_high[zmm][2] = read_u64(48);
                 self.regs.zmm_high[zmm][3] = read_u64(56);
+            } else {
+                self.regs.zmm_high[zmm] = [0; 4];
             }
         } else {
             let idx = zmm - 16;
-            for i in 0..(vl / 8) {
-                self.regs.zmm_ext[idx][i] = read_u64(i * 8);
+            for i in 0..8 {
+                self.regs.zmm_ext[idx][i] = if i < vl / 8 { read_u64(i * 8) } else { 0 };
             }
         }
     }
@@ -766,19 +1342,287 @@ impl X86_64Vcpu {
                     insn::simd::vpmulld_evex(self, ctx)
                 }
             }
+            // VPMADDUBSW (0x04)
+            0x04 if evex.pp == 1 => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MaddUBSW)
+            }
+            // VPMULHRSW (0x0B)
+            0x0B if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MulHighRoundSW)
+            }
+            // VMOVNTDQA (66.0F38.2A) memory load.
+            0x2A if evex.pp == 1 && !evex.w => insn::simd::evex_nt_load(self, ctx),
+            // VAESENC/VAESENCLAST/VAESDEC/VAESDECLAST (WIG).
+            0xDC if evex.pp == 1 => insn::simd::evex_vaes(self, ctx, insn::simd::VaesRound::Enc),
+            0xDD if evex.pp == 1 => {
+                insn::simd::evex_vaes(self, ctx, insn::simd::VaesRound::EncLast)
+            }
+            0xDE if evex.pp == 1 => insn::simd::evex_vaes(self, ctx, insn::simd::VaesRound::Dec),
+            0xDF if evex.pp == 1 => {
+                insn::simd::evex_vaes(self, ctx, insn::simd::VaesRound::DecLast)
+            }
+            // VP2INTERSECTD/Q.
+            0x68 if evex.pp == 3 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_p2intersect(self, ctx, es)
+            }
+            // VPSHUFB.
+            0x00 if evex.pp == 1 => insn::simd::evex_pshufb(self, ctx),
+            // Per-element variable shifts: VPSRLV*, VPSRAV*, VPSLLV*.
+            0x10 if evex.pp == 1 && evex.w => {
+                insn::simd::evex_shift_per_elem(self, ctx, insn::simd::ShiftKind::Srl, 2)
+            }
+            0x11 if evex.pp == 1 && evex.w => {
+                insn::simd::evex_shift_per_elem(self, ctx, insn::simd::ShiftKind::Sra, 2)
+            }
+            0x12 if evex.pp == 1 && evex.w => {
+                insn::simd::evex_shift_per_elem(self, ctx, insn::simd::ShiftKind::Sll, 2)
+            }
+            // Variable funnel shifts: VPSHLDV* (0x70/0x71) and VPSHRDV* (0x72/0x73).
+            0x70 if evex.pp == 1 && evex.w => insn::simd::evex_funnel_shift_per_elem(
+                self,
+                ctx,
+                insn::simd::FunnelShiftKind::Left,
+                2,
+            ),
+            0x71 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_funnel_shift_per_elem(
+                    self,
+                    ctx,
+                    insn::simd::FunnelShiftKind::Left,
+                    es,
+                )
+            }
+            0x72 if evex.pp == 1 && evex.w => insn::simd::evex_funnel_shift_per_elem(
+                self,
+                ctx,
+                insn::simd::FunnelShiftKind::Right,
+                2,
+            ),
+            0x73 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_funnel_shift_per_elem(
+                    self,
+                    ctx,
+                    insn::simd::FunnelShiftKind::Right,
+                    es,
+                )
+            }
+            // Per-element variable rotates: VPRORVD/Q (0x14), VPROLVD/Q (0x15).
+            0x14 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_rotate_per_elem(self, ctx, insn::simd::RotateKind::Right, es)
+            }
+            0x15 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_rotate_per_elem(self, ctx, insn::simd::RotateKind::Left, es)
+            }
+            // VPMOVUS*: narrow with unsigned saturation.
+            0x10 if evex.pp == 2 && !evex.w => insn::simd::evex_int_narrow(
+                self,
+                ctx,
+                2,
+                1,
+                insn::simd::NarrowMode::UnsignedSaturate,
+            ),
+            0x11 if evex.pp == 2 && !evex.w => insn::simd::evex_int_narrow(
+                self,
+                ctx,
+                4,
+                1,
+                insn::simd::NarrowMode::UnsignedSaturate,
+            ),
+            0x12 if evex.pp == 2 && !evex.w => insn::simd::evex_int_narrow(
+                self,
+                ctx,
+                8,
+                1,
+                insn::simd::NarrowMode::UnsignedSaturate,
+            ),
+            0x13 if evex.pp == 2 && !evex.w => insn::simd::evex_int_narrow(
+                self,
+                ctx,
+                4,
+                2,
+                insn::simd::NarrowMode::UnsignedSaturate,
+            ),
+            0x14 if evex.pp == 2 && !evex.w => insn::simd::evex_int_narrow(
+                self,
+                ctx,
+                8,
+                2,
+                insn::simd::NarrowMode::UnsignedSaturate,
+            ),
+            0x15 if evex.pp == 2 && !evex.w => insn::simd::evex_int_narrow(
+                self,
+                ctx,
+                8,
+                4,
+                insn::simd::NarrowMode::UnsignedSaturate,
+            ),
+            // VPABSB/W/D/Q (0x1C..0x1F)
+            0x1C if evex.pp == 1 => insn::simd::evex_int_abs(self, ctx, 1),
+            0x1D if evex.pp == 1 => insn::simd::evex_int_abs(self, ctx, 2),
+            0x1E if evex.pp == 1 && !evex.w => insn::simd::evex_int_abs(self, ctx, 4),
+            0x1F if evex.pp == 1 && evex.w => insn::simd::evex_int_abs(self, ctx, 8),
+            // VPMULDQ (0x28)
+            0x28 if evex.pp == 1 && evex.w => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MulDQ)
+            }
+            // VPMOVM2B/W (0x28, F3)
+            0x28 if evex.pp == 2 => {
+                let es = if evex.w { 2 } else { 1 };
+                insn::simd::evex_mask_to_vec(self, ctx, es)
+            }
+            // VPMOVB/W2M (0x29, F3)
+            0x29 if evex.pp == 2 => {
+                let es = if evex.w { 2 } else { 1 };
+                insn::simd::evex_vec_to_mask(self, ctx, es)
+            }
+            // VPBROADCASTMB2Q (0x2A, F3.W1)
+            0x2A if evex.pp == 2 && evex.w => insn::simd::evex_broadcast_mask(self, ctx, 8, 8),
+            // VPBLENDMD/Q (0x64), VBLENDMPS/PD (0x65), VPBLENDMB/W (0x66).
+            0x64 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_blend_select(self, ctx, es)
+            }
+            0x65 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_blend_select(self, ctx, es)
+            }
+            0x66 if evex.pp == 1 => {
+                let es = if evex.w { 2 } else { 1 };
+                insn::simd::evex_blend_select(self, ctx, es)
+            }
+            // VPMOVS*: narrow with signed saturation.
+            0x20 if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_int_narrow(self, ctx, 2, 1, insn::simd::NarrowMode::SignedSaturate)
+            }
+            0x21 if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_int_narrow(self, ctx, 4, 1, insn::simd::NarrowMode::SignedSaturate)
+            }
+            0x22 if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_int_narrow(self, ctx, 8, 1, insn::simd::NarrowMode::SignedSaturate)
+            }
+            0x23 if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_int_narrow(self, ctx, 4, 2, insn::simd::NarrowMode::SignedSaturate)
+            }
+            0x24 if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_int_narrow(self, ctx, 8, 2, insn::simd::NarrowMode::SignedSaturate)
+            }
+            0x25 if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_int_narrow(self, ctx, 8, 4, insn::simd::NarrowMode::SignedSaturate)
+            }
+            // VPMOVSX*: sign extend packed byte/word/dword elements.
+            0x20 if evex.pp == 1 && !evex.w => insn::simd::evex_int_extend(self, ctx, 1, 2, true),
+            0x21 if evex.pp == 1 && !evex.w => insn::simd::evex_int_extend(self, ctx, 1, 4, true),
+            0x22 if evex.pp == 1 && !evex.w => insn::simd::evex_int_extend(self, ctx, 1, 8, true),
+            0x23 if evex.pp == 1 && !evex.w => insn::simd::evex_int_extend(self, ctx, 2, 4, true),
+            0x24 if evex.pp == 1 && !evex.w => insn::simd::evex_int_extend(self, ctx, 2, 8, true),
+            0x25 if evex.pp == 1 && !evex.w => insn::simd::evex_int_extend(self, ctx, 4, 8, true),
+            // VPMOV*: narrow by truncating high bits.
+            0x30 if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_int_narrow(self, ctx, 2, 1, insn::simd::NarrowMode::Truncate)
+            }
+            0x31 if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_int_narrow(self, ctx, 4, 1, insn::simd::NarrowMode::Truncate)
+            }
+            0x32 if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_int_narrow(self, ctx, 8, 1, insn::simd::NarrowMode::Truncate)
+            }
+            0x33 if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_int_narrow(self, ctx, 4, 2, insn::simd::NarrowMode::Truncate)
+            }
+            0x34 if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_int_narrow(self, ctx, 8, 2, insn::simd::NarrowMode::Truncate)
+            }
+            0x35 if evex.pp == 2 && !evex.w => {
+                insn::simd::evex_int_narrow(self, ctx, 8, 4, insn::simd::NarrowMode::Truncate)
+            }
+            // VPMOVZX*: zero extend packed byte/word/dword elements.
+            0x30 if evex.pp == 1 && !evex.w => insn::simd::evex_int_extend(self, ctx, 1, 2, false),
+            0x31 if evex.pp == 1 && !evex.w => insn::simd::evex_int_extend(self, ctx, 1, 4, false),
+            0x32 if evex.pp == 1 && !evex.w => insn::simd::evex_int_extend(self, ctx, 1, 8, false),
+            0x33 if evex.pp == 1 && !evex.w => insn::simd::evex_int_extend(self, ctx, 2, 4, false),
+            0x34 if evex.pp == 1 && !evex.w => insn::simd::evex_int_extend(self, ctx, 2, 8, false),
+            0x35 if evex.pp == 1 && !evex.w => insn::simd::evex_int_extend(self, ctx, 4, 8, false),
+            // VPTESTMB/W (66.0F38.26) and VPTESTNMB/W (F3.0F38.26)
+            0x26 if evex.pp == 1 => {
+                let es = if evex.w { 2 } else { 1 };
+                insn::simd::evex_int_test_mask(self, ctx, es, false)
+            }
+            0x26 if evex.pp == 2 => {
+                let es = if evex.w { 2 } else { 1 };
+                insn::simd::evex_int_test_mask(self, ctx, es, true)
+            }
+            // VPTESTMD/Q (66.0F38.27) and VPTESTNMD/Q (F3.0F38.27)
+            0x27 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_int_test_mask(self, ctx, es, false)
+            }
+            0x27 if evex.pp == 2 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_int_test_mask(self, ctx, es, true)
+            }
             // Broadcasts (pp=1 / 66):
             // VBROADCASTSS (0x18, W0): broadcast 32-bit float
             0x18 if evex.pp == 1 && !evex.w => insn::simd::evex_broadcast(self, ctx, 4),
+            // VBROADCASTF32X2 (0x19, W0): broadcast 64-bit block, xmm/m64 source
+            0x19 if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_broadcast_block(self, ctx, 4, 8, 32, true)
+            }
             // VBROADCASTSD (0x19, W1): broadcast 64-bit double
             0x19 if evex.pp == 1 && evex.w => insn::simd::evex_broadcast(self, ctx, 8),
+            // VBROADCASTF32X4 / VBROADCASTF64X2 (0x1A), memory source
+            0x1A if evex.pp == 1 => {
+                if evex.w {
+                    insn::simd::evex_broadcast_block(self, ctx, 8, 16, 32, false)
+                } else {
+                    insn::simd::evex_broadcast_block(self, ctx, 4, 16, 32, false)
+                }
+            }
+            // VBROADCASTF32X8 / VBROADCASTF64X4 (0x1B), memory source
+            0x1B if evex.pp == 1 => {
+                if evex.w {
+                    insn::simd::evex_broadcast_block(self, ctx, 8, 32, 64, false)
+                } else {
+                    insn::simd::evex_broadcast_block(self, ctx, 4, 32, 64, false)
+                }
+            }
             // VPBROADCASTD (0x58, W0): broadcast 32-bit integer
             0x58 if evex.pp == 1 && !evex.w => insn::simd::evex_broadcast(self, ctx, 4),
+            // VBROADCASTI32X2 (0x59, W0): broadcast 64-bit block, xmm/m64 source
+            0x59 if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_broadcast_block(self, ctx, 4, 8, 16, true)
+            }
             // VPBROADCASTQ (0x59, W1): broadcast 64-bit integer
             0x59 if evex.pp == 1 && evex.w => insn::simd::evex_broadcast(self, ctx, 8),
+            // VBROADCASTI32X4 / VBROADCASTI64X2 (0x5A), memory source
+            0x5A if evex.pp == 1 => {
+                if evex.w {
+                    insn::simd::evex_broadcast_block(self, ctx, 8, 16, 32, false)
+                } else {
+                    insn::simd::evex_broadcast_block(self, ctx, 4, 16, 32, false)
+                }
+            }
+            // VBROADCASTI32X8 / VBROADCASTI64X4 (0x5B), memory source
+            0x5B if evex.pp == 1 => {
+                if evex.w {
+                    insn::simd::evex_broadcast_block(self, ctx, 8, 32, 64, false)
+                } else {
+                    insn::simd::evex_broadcast_block(self, ctx, 4, 32, 64, false)
+                }
+            }
             // VPBROADCASTB (0x78, W0): broadcast 8-bit integer
             0x78 if evex.pp == 1 && !evex.w => insn::simd::evex_broadcast(self, ctx, 1),
             // VPBROADCASTW (0x79, W0): broadcast 16-bit integer
             0x79 if evex.pp == 1 && !evex.w => insn::simd::evex_broadcast(self, ctx, 2),
+
+            // FP32/FP64 FMA 132/213/231 packed and scalar families.
+            0x96..=0x9F | 0xA6..=0xAF | 0xB6..=0xBF if evex.pp == 1 => {
+                insn::simd::evex_fma(self, ctx, opcode)
+            }
 
             // VPCMPEQQ (0x29, W1): qword equality compare into mask
             0x29 if evex.pp == 1 && evex.w => {
@@ -787,6 +1631,99 @@ impl X86_64Vcpu {
             // VPCMPGTQ (0x37, W1): qword signed greater-than compare into mask
             0x37 if evex.pp == 1 && evex.w => {
                 insn::simd::evex_int_cmp(self, ctx, 8, true, insn::simd::CmpPred::Gt, false)
+            }
+            // Packed integer min/max.
+            0x38 if evex.pp == 1 => insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MinSB),
+            // VPMOVM2D/Q (0x38, F3)
+            0x38 if evex.pp == 2 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_mask_to_vec(self, ctx, es)
+            }
+            // VPMOVD/Q2M (0x39, F3)
+            0x39 if evex.pp == 2 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_vec_to_mask(self, ctx, es)
+            }
+            // VPACKUSDW (0x2B)
+            0x2B if evex.pp == 1 && !evex.w => insn::simd::evex_pack_saturate(
+                self,
+                ctx,
+                insn::simd::PackKind::UnsignedDwordToUnsignedWord,
+            ),
+            0x39 if evex.pp == 1 => {
+                let op = if evex.w {
+                    insn::simd::IntOp::MinSQ
+                } else {
+                    insn::simd::IntOp::MinSD
+                };
+                insn::simd::evex_int_arith(self, ctx, op)
+            }
+            0x3A if evex.pp == 1 => insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MinUW),
+            // VPBROADCASTMW2D (0x3A, F3.W0)
+            0x3A if evex.pp == 2 && !evex.w => insn::simd::evex_broadcast_mask(self, ctx, 16, 4),
+            0x3B if evex.pp == 1 => {
+                let op = if evex.w {
+                    insn::simd::IntOp::MinUQ
+                } else {
+                    insn::simd::IntOp::MinUD
+                };
+                insn::simd::evex_int_arith(self, ctx, op)
+            }
+            0x3C if evex.pp == 1 => insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MaxSB),
+            0x3D if evex.pp == 1 => {
+                let op = if evex.w {
+                    insn::simd::IntOp::MaxSQ
+                } else {
+                    insn::simd::IntOp::MaxSD
+                };
+                insn::simd::evex_int_arith(self, ctx, op)
+            }
+            0x3E if evex.pp == 1 => insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::MaxUW),
+            0x3F if evex.pp == 1 => {
+                let op = if evex.w {
+                    insn::simd::IntOp::MaxUQ
+                } else {
+                    insn::simd::IntOp::MaxUD
+                };
+                insn::simd::evex_int_arith(self, ctx, op)
+            }
+            // VPLZCNTD/Q (0x44) - leading zero count for packed dwords/qwords.
+            0x44 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_count(self, ctx, insn::simd::CountKind::Lzcnt, es)
+            }
+            0x45 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_shift_per_elem(self, ctx, insn::simd::ShiftKind::Srl, es)
+            }
+            0x46 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_shift_per_elem(self, ctx, insn::simd::ShiftKind::Sra, es)
+            }
+            0x47 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_shift_per_elem(self, ctx, insn::simd::ShiftKind::Sll, es)
+            }
+
+            // VPEXPANDB/VPEXPANDW (0x62)
+            0x62 if evex.pp == 1 => {
+                let es = if evex.w { 2 } else { 1 };
+                insn::simd::vexpand_evex(
+                    self,
+                    ctx,
+                    es,
+                    if evex.w { "VPEXPANDW" } else { "VPEXPANDB" },
+                )
+            }
+            // VPCOMPRESSB/VPCOMPRESSW (0x63)
+            0x63 if evex.pp == 1 => {
+                let es = if evex.w { 2 } else { 1 };
+                insn::simd::vcompress_evex(
+                    self,
+                    ctx,
+                    es,
+                    if evex.w { "VPCOMPRESSW" } else { "VPCOMPRESSB" },
+                )
             }
 
             // VEXPANDPS/VEXPANDPD (0x88)
@@ -850,19 +1787,34 @@ impl X86_64Vcpu {
 
             // VPOPCNTB/W (0x54) - Population count for packed bytes/words
             0x54 if evex.pp == 1 => {
-                if evex.w {
-                    self.execute_vpopcnt(ctx, 2) // VPOPCNTW
-                } else {
-                    self.execute_vpopcnt(ctx, 1) // VPOPCNTB
-                }
+                let es = if evex.w { 2 } else { 1 };
+                insn::simd::evex_count(self, ctx, insn::simd::CountKind::Popcnt, es)
             }
             // VPOPCNTD/Q (0x55) - Population count for packed dwords/qwords
             0x55 if evex.pp == 1 => {
-                if evex.w {
-                    self.execute_vpopcnt(ctx, 8) // VPOPCNTQ
-                } else {
-                    self.execute_vpopcnt(ctx, 4) // VPOPCNTD
-                }
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_count(self, ctx, insn::simd::CountKind::Popcnt, es)
+            }
+            // VPCONFLICTD/Q (0xC4) - conflict detection for packed dwords/qwords
+            0xC4 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_conflict(self, ctx, es)
+            }
+            // VGF2P8MULB (0xCF) - byte multiply in GF(2^8).
+            0xCF if evex.pp == 1 && !evex.w => {
+                insn::simd::evex_int_arith(self, ctx, insn::simd::IntOp::Gf2p8MulB)
+            }
+
+            // VPERMPS/VPERMPD and VPERMD/VPERMQ variable-index permutes.
+            0x0C if evex.pp == 1 && !evex.w => insn::simd::evex_permil_var(self, ctx, 4),
+            0x0D if evex.pp == 1 && evex.w => insn::simd::evex_permil_var(self, ctx, 8),
+            0x16 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_permute_var(self, ctx, es, false, true)
+            }
+            0x36 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_permute_var(self, ctx, es, false, true)
             }
 
             // ============================================================================
@@ -871,10 +1823,32 @@ impl X86_64Vcpu {
 
             // VPERMB (0x8D) - Permute Packed Bytes Elements
             0x8D if evex.pp == 1 && !evex.w => self.execute_vpermb(ctx),
-            // VPERMI2B (0x75) - Full Permute of Bytes from Two Tables Overwriting Index
-            0x75 if evex.pp == 1 && !evex.w => self.execute_vpermi2b(ctx),
-            // VPERMT2B (0x7D) - Full Permute of Bytes from Two Tables Overwriting Table
-            0x7D if evex.pp == 1 && !evex.w => self.execute_vpermt2b(ctx),
+            // VPERMW (0x8D, W1) - Permute Packed Word Elements
+            0x8D if evex.pp == 1 && evex.w => {
+                insn::simd::evex_permute_var(self, ctx, 2, true, false)
+            }
+            // VPMULTISHIFTQB (0x83, W1).
+            0x83 if evex.pp == 1 && evex.w => insn::simd::evex_multishift_qb(self, ctx),
+            // VPERMI2B/W (0x75) - two-table permute overwriting index.
+            0x75 if evex.pp == 1 => {
+                let es = if evex.w { 2 } else { 1 };
+                insn::simd::evex_two_table_permute(self, ctx, es, true, false)
+            }
+            // VPERMI2D/Q (0x76) and VPERMI2PS/PD (0x77).
+            0x76 | 0x77 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_two_table_permute(self, ctx, es, true, true)
+            }
+            // VPERMT2B/W (0x7D) - two-table permute overwriting table.
+            0x7D if evex.pp == 1 => {
+                let es = if evex.w { 2 } else { 1 };
+                insn::simd::evex_two_table_permute(self, ctx, es, false, false)
+            }
+            // VPERMT2D/Q (0x7E) and VPERMT2PS/PD (0x7F).
+            0x7E | 0x7F if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_two_table_permute(self, ctx, es, false, true)
+            }
 
             // ============================================================================
             // AVX10.1 BITALG Instructions
@@ -941,6 +1915,116 @@ impl X86_64Vcpu {
             // EVEX integer compare with imm8 predicate (write into k-mask)
             // ============================================================================
 
+            // VPERMQ/VPERMPD immediate qword permutes.
+            0x00 if evex.pp == 1 && evex.w => insn::simd::evex_permute_qword_imm(self, ctx),
+            0x01 if evex.pp == 1 && evex.w => insn::simd::evex_permute_qword_imm(self, ctx),
+            // VPERMILPS/VPERMILPD immediate lane-local permutes.
+            0x04 if evex.pp == 1 && !evex.w => insn::simd::evex_permil_imm(self, ctx, 4),
+            0x05 if evex.pp == 1 && evex.w => insn::simd::evex_permil_imm(self, ctx, 8),
+            // VGF2P8AFFINEQB/VGF2P8AFFINEINVQB.
+            0xCE if evex.pp == 1 && evex.w => insn::simd::evex_gf2p8_affine(self, ctx, false),
+            0xCF if evex.pp == 1 && evex.w => insn::simd::evex_gf2p8_affine(self, ctx, true),
+
+            // VPALIGNR.
+            0x0F if evex.pp == 1 => insn::simd::evex_palignr(self, ctx),
+
+            // VPEXTRB/W/D/Q and VEXTRACTPS.
+            0x14 if evex.pp == 1 => insn::simd::evex_extract_scalar(self, ctx, 1, 4, true),
+            0x15 if evex.pp == 1 => insn::simd::evex_extract_scalar(self, ctx, 2, 4, true),
+            0x16 if evex.pp == 1 => {
+                if evex.w {
+                    insn::simd::evex_extract_scalar(self, ctx, 8, 8, true)
+                } else {
+                    insn::simd::evex_extract_scalar(self, ctx, 4, 4, true)
+                }
+            }
+            0x17 if evex.pp == 1 => insn::simd::evex_extract_scalar(self, ctx, 4, 4, true),
+
+            // VPINSRB/W/D/Q and VINSERTPS.
+            0x20 if evex.pp == 1 => insn::simd::evex_pinsr(self, ctx, 1),
+            0x21 if evex.pp == 1 => insn::simd::evex_insertps(self, ctx),
+            0x22 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_pinsr(self, ctx, es)
+            }
+
+            // VSHUFF32x4/VSHUFF64x2 and VSHUFI32x4/VSHUFI64x2.
+            0x23 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_shuffle_128_lanes(self, ctx, es)
+            }
+            0x43 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_shuffle_128_lanes(self, ctx, es)
+            }
+            // VPCLMULQDQ.
+            0x44 if evex.pp == 1 => insn::simd::evex_pclmulqdq(self, ctx),
+
+            // VALIGND/Q (0x03): concatenate src2|src1 and align by imm8 elements.
+            0x03 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_valign(self, ctx, es)
+            }
+
+            // VPTERNLOGD/Q (0x25): destination is both input and output.
+            0x25 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_ternlog(self, ctx, es)
+            }
+
+            // VINSERTF32x4/F64x2 and VINSERTI32x4/I64x2.
+            0x18 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_insert_chunk(self, ctx, es, 16)
+            }
+            0x38 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_insert_chunk(self, ctx, es, 16)
+            }
+            // VEXTRACTF32x4/F64x2 and VEXTRACTI32x4/I64x2.
+            0x19 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_extract_chunk(self, ctx, es, 16)
+            }
+            0x39 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_extract_chunk(self, ctx, es, 16)
+            }
+            // VINSERTF32x8/F64x4 and VINSERTI32x8/I64x4.
+            0x1A if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_insert_chunk(self, ctx, es, 32)
+            }
+            0x3A if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_insert_chunk(self, ctx, es, 32)
+            }
+            // VEXTRACTF32x8/F64x4 and VEXTRACTI32x8/I64x4.
+            0x1B if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_extract_chunk(self, ctx, es, 32)
+            }
+            0x3B if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_extract_chunk(self, ctx, es, 32)
+            }
+
+            // Immediate funnel shifts: VPSHLD* (0x70/0x71), VPSHRD* (0x72/0x73).
+            0x70 if evex.pp == 1 && evex.w => {
+                insn::simd::evex_funnel_shift_imm(self, ctx, insn::simd::FunnelShiftKind::Left, 2)
+            }
+            0x71 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_funnel_shift_imm(self, ctx, insn::simd::FunnelShiftKind::Left, es)
+            }
+            0x72 if evex.pp == 1 && evex.w => {
+                insn::simd::evex_funnel_shift_imm(self, ctx, insn::simd::FunnelShiftKind::Right, 2)
+            }
+            0x73 if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_funnel_shift_imm(self, ctx, insn::simd::FunnelShiftKind::Right, es)
+            }
+
             // VPCMPUD (0x1E, W0) / VPCMPUQ (0x1E, W1): unsigned dword/qword
             0x1E if evex.pp == 1 => {
                 let es = if evex.w { 8 } else { 4 };
@@ -961,6 +2045,16 @@ impl X86_64Vcpu {
                 let es = if evex.w { 2 } else { 1 };
                 insn::simd::evex_int_cmp(self, ctx, es, true, insn::simd::CmpPred::Eq, true)
             }
+            // VCMPPH/SH compare into a k-mask destination.
+            0xC2 if evex.pp == 0 && !evex.w => insn::simd::evex_fp_cmp(self, ctx, 2, false),
+            0xC2 if evex.pp == 2 && !evex.w => insn::simd::evex_fp_cmp(self, ctx, 2, true),
+            // VFPCLASSPS/PD/PH and VFPCLASSSS/SD/SH.
+            0x66 if evex.pp == 0 && !evex.w => insn::simd::evex_fpclass(self, ctx, 2, false),
+            0x66 if evex.pp == 1 && !evex.w => insn::simd::evex_fpclass(self, ctx, 4, false),
+            0x66 if evex.pp == 1 && evex.w => insn::simd::evex_fpclass(self, ctx, 8, false),
+            0x67 if evex.pp == 0 && !evex.w => insn::simd::evex_fpclass(self, ctx, 2, true),
+            0x67 if evex.pp == 1 && !evex.w => insn::simd::evex_fpclass(self, ctx, 4, true),
+            0x67 if evex.pp == 1 && evex.w => insn::simd::evex_fpclass(self, ctx, 8, true),
 
             // ============================================================================
             // AVX-512 VDBPSADBW Instruction
@@ -998,6 +2092,12 @@ impl X86_64Vcpu {
         // MAP5 instructions are FP16 (half-precision) arithmetic
         // pp=0 (NP), W=0 for packed FP16
         match opcode {
+            // VMOVSH scalar load/reg-reg move and store forms.
+            0x10 if evex.pp == 2 && !evex.w => insn::simd::evex_scalar_fp_move(self, ctx, 2, false),
+            0x11 if evex.pp == 2 && !evex.w => insn::simd::evex_scalar_fp_move(self, ctx, 2, true),
+            // VMOVW GPR/memory to XMM and XMM to GPR/memory.
+            0x6E if evex.pp == 1 && !evex.w => insn::simd::evex_gpr_or_mem_to_xmm(self, ctx, 2),
+            0x7E if evex.pp == 1 && !evex.w => insn::simd::evex_xmm_to_gpr_or_mem(self, ctx, 2),
             // VCVTTPS2IBS (0x68) - Convert with Truncation Packed Single to Signed Byte with Saturation
             0x68 if evex.pp == 1 && !evex.w => self.execute_vcvttps2ibs(ctx),
             // VCVTTPS2IUBS (0x6A) - Convert with Truncation Packed Single to Unsigned Byte with Saturation
@@ -1006,14 +2106,41 @@ impl X86_64Vcpu {
             0x6D if evex.pp == 1 && evex.w => self.execute_vcvttpd2qqs(ctx),
             // VCVTTPD2UQQS (0x6C) - Convert with Truncation Packed Double to Unsigned Qword with Saturation
             0x6C if evex.pp == 1 && evex.w => self.execute_vcvttpd2uqqs(ctx),
-            // VADDPH (0x58)
-            0x58 if evex.pp == 0 => self.execute_evex_fp16_arith(ctx, |a, b| a + b),
-            // VMULPH (0x59)
-            0x59 if evex.pp == 0 => self.execute_evex_fp16_arith(ctx, |a, b| a * b),
-            // VSUBPH (0x5C)
-            0x5C if evex.pp == 0 => self.execute_evex_fp16_arith(ctx, |a, b| a - b),
-            // VDIVPH (0x5E)
-            0x5E if evex.pp == 0 => self.execute_evex_fp16_arith(ctx, |a, b| a / b),
+            // VSQRTPH (0x51, NP) / VSQRTSH (0x51, F3)
+            0x51 if evex.pp == 0 && !evex.w => self.execute_evex_fp16_unary(ctx, |a| a.sqrt()),
+            0x51 if evex.pp == 2 && !evex.w => {
+                self.execute_evex_fp16_scalar_arith(ctx, |_, b| b.sqrt())
+            }
+            // VADDPH/VADDSH (0x58)
+            0x58 if evex.pp == 0 && !evex.w => self.execute_evex_fp16_arith(ctx, |a, b| a + b),
+            0x58 if evex.pp == 2 && !evex.w => {
+                self.execute_evex_fp16_scalar_arith(ctx, |a, b| a + b)
+            }
+            // VMULPH/VMULSH (0x59)
+            0x59 if evex.pp == 0 && !evex.w => self.execute_evex_fp16_arith(ctx, |a, b| a * b),
+            0x59 if evex.pp == 2 && !evex.w => {
+                self.execute_evex_fp16_scalar_arith(ctx, |a, b| a * b)
+            }
+            // VSUBPH/VSUBSH (0x5C)
+            0x5C if evex.pp == 0 && !evex.w => self.execute_evex_fp16_arith(ctx, |a, b| a - b),
+            0x5C if evex.pp == 2 && !evex.w => {
+                self.execute_evex_fp16_scalar_arith(ctx, |a, b| a - b)
+            }
+            // VMINPH/VMINSH (0x5D)
+            0x5D if evex.pp == 0 && !evex.w => self.execute_evex_fp16_arith(ctx, Self::x86_min_f32),
+            0x5D if evex.pp == 2 && !evex.w => {
+                self.execute_evex_fp16_scalar_arith(ctx, Self::x86_min_f32)
+            }
+            // VDIVPH/VDIVSH (0x5E)
+            0x5E if evex.pp == 0 && !evex.w => self.execute_evex_fp16_arith(ctx, |a, b| a / b),
+            0x5E if evex.pp == 2 && !evex.w => {
+                self.execute_evex_fp16_scalar_arith(ctx, |a, b| a / b)
+            }
+            // VMAXPH/VMAXSH (0x5F)
+            0x5F if evex.pp == 0 && !evex.w => self.execute_evex_fp16_arith(ctx, Self::x86_max_f32),
+            0x5F if evex.pp == 2 && !evex.w => {
+                self.execute_evex_fp16_scalar_arith(ctx, Self::x86_max_f32)
+            }
             _ => Err(Error::Emulator(format!(
                 "Unimplemented EVEX.MAP5 opcode {:#04x} (pp={}) at RIP={:#x}",
                 opcode, evex.pp, self.regs.rip
@@ -1021,7 +2148,7 @@ impl X86_64Vcpu {
         }
     }
 
-    /// EVEX FP16 (half-precision) arithmetic (VADDPH, VSUBPH, VMULPH, VDIVPH)
+    /// EVEX FP16 (half-precision) packed arithmetic/min/max.
     fn execute_evex_fp16_arith<F>(
         &mut self,
         ctx: &mut InsnContext,
@@ -1051,42 +2178,151 @@ impl X86_64Vcpu {
         // Number of FP16 elements (2 bytes each)
         let num_elems = vl / 2;
 
-        // Load source2
         let src2 = if is_memory {
-            self.load_zmm_data(addr, vl)?
+            if evex.broadcast {
+                let value = self.read_mem(addr, 2)?.to_le_bytes();
+                let mut data = [0u8; 64];
+                for lane in 0..num_elems {
+                    let base = lane * 2;
+                    data[base..base + 2].copy_from_slice(&value[..2]);
+                }
+                data
+            } else {
+                self.load_zmm_data(addr, vl)?
+            }
         } else {
             let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
-        // Get source1
         let src1 = self.get_zmm_data(zmm_src1, vl);
+        let dest_old = self.get_zmm_data(zmm_dst, vl);
+        let mask = Self::evex_kmask(&evex, &self.regs.k, num_elems);
 
-        // Perform operation on each FP16 element
         let mut result = [0u8; 64];
         for i in 0..num_elems {
-            // Convert FP16 to f32, perform operation, convert back to FP16
-            let a_fp16 = u16::from_le_bytes([src1[i * 2], src1[i * 2 + 1]]);
-            let b_fp16 = u16::from_le_bytes([src2[i * 2], src2[i * 2 + 1]]);
-            let a = fp16_to_f32(a_fp16);
-            let b = fp16_to_f32(b_fp16);
-            let r = op(a, b);
-            let r_fp16 = f32_to_fp16(r);
-            let bytes = r_fp16.to_le_bytes();
-            result[i * 2..i * 2 + 2].copy_from_slice(&bytes);
+            let base = i * 2;
+            if (mask >> i) & 1 != 0 {
+                let a_fp16 = u16::from_le_bytes([src1[base], src1[base + 1]]);
+                let b_fp16 = u16::from_le_bytes([src2[base], src2[base + 1]]);
+                let r_fp16 = f32_to_fp16(op(fp16_to_f32(a_fp16), fp16_to_f32(b_fp16)));
+                result[base..base + 2].copy_from_slice(&r_fp16.to_le_bytes());
+            } else if evex.z {
+                // Zeroing: leave as 0.
+            } else {
+                result[base..base + 2].copy_from_slice(&dest_old[base..base + 2]);
+            }
         }
 
-        // Store result
         self.set_zmm_data(zmm_dst, &result[..vl], vl);
 
-        // Zero upper bits if not 512-bit (for ZMM0-15)
-        if vl < 64 && zmm_dst < 16 {
-            if vl <= 16 {
-                self.regs.ymm_high[zmm_dst][0] = 0;
-                self.regs.ymm_high[zmm_dst][1] = 0;
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// EVEX FP16 packed unary operation (VSQRTPH).
+    fn execute_evex_fp16_unary<F>(
+        &mut self,
+        ctx: &mut InsnContext,
+        op: F,
+    ) -> Result<Option<VcpuExit>>
+    where
+        F: Fn(f32) -> f32,
+    {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+        let num_elems = vl / 2;
+
+        let src = if is_memory {
+            if evex.broadcast {
+                let value = self.read_mem(addr, 2)?.to_le_bytes();
+                let mut data = [0u8; 64];
+                for lane in 0..num_elems {
+                    let base = lane * 2;
+                    data[base..base + 2].copy_from_slice(&value[..2]);
+                }
+                data
+            } else {
+                self.load_zmm_data(addr, vl)?
             }
-            self.regs.zmm_high[zmm_dst] = [0; 4];
+        } else {
+            let zmm_src = Self::evex_rm_vec_reg(&evex, rm);
+            self.get_zmm_data(zmm_src, vl)
+        };
+
+        let dest_old = self.get_zmm_data(zmm_dst, vl);
+        let mask = Self::evex_kmask(&evex, &self.regs.k, num_elems);
+        let mut result = [0u8; 64];
+
+        for lane in 0..num_elems {
+            let base = lane * 2;
+            if (mask >> lane) & 1 != 0 {
+                let value = u16::from_le_bytes([src[base], src[base + 1]]);
+                let result_fp16 = f32_to_fp16(op(fp16_to_f32(value)));
+                result[base..base + 2].copy_from_slice(&result_fp16.to_le_bytes());
+            } else if evex.z {
+                // Zeroing: leave as 0.
+            } else {
+                result[base..base + 2].copy_from_slice(&dest_old[base..base + 2]);
+            }
         }
+
+        self.set_zmm_data(zmm_dst, &result[..vl], vl);
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// EVEX FP16 scalar arithmetic/min/max/sqrt.
+    fn execute_evex_fp16_scalar_arith<F>(
+        &mut self,
+        ctx: &mut InsnContext,
+        op: F,
+    ) -> Result<Option<VcpuExit>>
+    where
+        F: Fn(f32, f32) -> f32,
+    {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let dst = if !evex.r { reg + 8 } else { reg };
+        let dst = if !evex.r_prime { dst + 16 } else { dst } as usize;
+        let src1 = ctx.evex_vvvv() as usize;
+        let src2 = if is_memory {
+            self.read_mem(addr, 2)? as u16
+        } else {
+            let src2_reg = Self::evex_rm_vec_reg(&evex, rm);
+            let src2_data = self.get_zmm_data(src2_reg, 16);
+            u16::from_le_bytes([src2_data[0], src2_data[1]])
+        };
+
+        let src1_data = self.get_zmm_data(src1, 16);
+        let dest_old = self.get_zmm_data(dst, 16);
+        let src1_scalar = u16::from_le_bytes([src1_data[0], src1_data[1]]);
+
+        let mut result = [0u8; 64];
+        result[2..16].copy_from_slice(&src1_data[2..16]);
+        if evex.aaa == 0 || (self.regs.k[evex.aaa as usize] & 1) != 0 {
+            let r = f32_to_fp16(op(fp16_to_f32(src1_scalar), fp16_to_f32(src2)));
+            result[0..2].copy_from_slice(&r.to_le_bytes());
+        } else if evex.z {
+            result[0..2].fill(0);
+        } else {
+            result[0..2].copy_from_slice(&dest_old[0..2]);
+        }
+
+        self.set_zmm_data(dst, &result[..16], 16);
+        self.zero_zmm_upper_from_128(dst);
 
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
@@ -1337,79 +2573,6 @@ impl X86_64Vcpu {
     }
 
     // ============================================================================
-    // AVX10.1 VPOPCNTDQ Instruction Implementations
-    // ============================================================================
-
-    /// VPOPCNTB/W/D/Q - Population count for packed elements
-    fn execute_vpopcnt(
-        &mut self,
-        ctx: &mut InsnContext,
-        elem_size: usize,
-    ) -> Result<Option<VcpuExit>> {
-        let evex = ctx.evex.unwrap();
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-
-        let zmm_dst = if !evex.r { reg + 8 } else { reg };
-        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
-
-        let vl = match evex.ll {
-            0 => 16,
-            1 => 32,
-            2 => 64,
-            _ => 64,
-        };
-
-        let src = if is_memory {
-            self.load_zmm_data(addr, vl)?
-        } else {
-            let zmm_src = Self::evex_rm_vec_reg(&evex, rm);
-            self.get_zmm_data(zmm_src, vl)
-        };
-
-        let mut dst = [0u8; 64];
-        let num_elems = vl / elem_size;
-
-        for i in 0..num_elems {
-            let base = i * elem_size;
-            let mut count = 0u64;
-
-            for j in 0..elem_size {
-                count += src[base + j].count_ones() as u64;
-            }
-
-            match elem_size {
-                1 => dst[base] = count as u8,
-                2 => {
-                    let bytes = (count as u16).to_le_bytes();
-                    dst[base..base + 2].copy_from_slice(&bytes);
-                }
-                4 => {
-                    let bytes = (count as u32).to_le_bytes();
-                    dst[base..base + 4].copy_from_slice(&bytes);
-                }
-                8 => {
-                    let bytes = count.to_le_bytes();
-                    dst[base..base + 8].copy_from_slice(&bytes);
-                }
-                _ => {}
-            }
-        }
-
-        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
-
-        if vl < 64 && zmm_dst < 16 {
-            if vl <= 16 {
-                self.regs.ymm_high[zmm_dst][0] = 0;
-                self.regs.ymm_high[zmm_dst][1] = 0;
-            }
-            self.regs.zmm_high[zmm_dst] = [0; 4];
-        }
-
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
-    }
-
-    // ============================================================================
     // AVX10.1 VBMI Instruction Implementations
     // ============================================================================
 
@@ -1443,112 +2606,6 @@ impl X86_64Vcpu {
         for i in 0..vl {
             let index = (idx[i] as usize) % vl;
             dst[i] = src[index];
-        }
-
-        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
-
-        if vl < 64 && zmm_dst < 16 {
-            if vl <= 16 {
-                self.regs.ymm_high[zmm_dst][0] = 0;
-                self.regs.ymm_high[zmm_dst][1] = 0;
-            }
-            self.regs.zmm_high[zmm_dst] = [0; 4];
-        }
-
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
-    }
-
-    /// VPERMI2B - Full Permute of Bytes from Two Tables Overwriting Index
-    fn execute_vpermi2b(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-        let evex = ctx.evex.unwrap();
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-
-        let zmm_idx = if !evex.r { reg + 8 } else { reg };
-        let zmm_idx = if !evex.r_prime { zmm_idx + 16 } else { zmm_idx } as usize;
-
-        let zmm_src1 = ctx.evex_vvvv() as usize;
-
-        let vl = match evex.ll {
-            0 => 16,
-            1 => 32,
-            2 => 64,
-            _ => 64,
-        };
-
-        let src2 = if is_memory {
-            self.load_zmm_data(addr, vl)?
-        } else {
-            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
-            self.get_zmm_data(zmm_src2, vl)
-        };
-
-        let src1 = self.get_zmm_data(zmm_src1, vl);
-        let idx = self.get_zmm_data(zmm_idx, vl);
-
-        let mut dst = [0u8; 64];
-        let table_size = vl * 2;
-
-        for i in 0..vl {
-            let index = (idx[i] as usize) % table_size;
-            dst[i] = if index < vl {
-                src1[index]
-            } else {
-                src2[index - vl]
-            };
-        }
-
-        self.set_zmm_data(zmm_idx, &dst[..vl], vl);
-
-        if vl < 64 && zmm_idx < 16 {
-            if vl <= 16 {
-                self.regs.ymm_high[zmm_idx][0] = 0;
-                self.regs.ymm_high[zmm_idx][1] = 0;
-            }
-            self.regs.zmm_high[zmm_idx] = [0; 4];
-        }
-
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
-    }
-
-    /// VPERMT2B - Full Permute of Bytes from Two Tables Overwriting Table
-    fn execute_vpermt2b(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-        let evex = ctx.evex.unwrap();
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-
-        let zmm_dst = if !evex.r { reg + 8 } else { reg };
-        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
-
-        let zmm_idx = ctx.evex_vvvv() as usize;
-
-        let vl = match evex.ll {
-            0 => 16,
-            1 => 32,
-            2 => 64,
-            _ => 64,
-        };
-
-        let src2 = if is_memory {
-            self.load_zmm_data(addr, vl)?
-        } else {
-            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
-            self.get_zmm_data(zmm_src2, vl)
-        };
-
-        let src1 = self.get_zmm_data(zmm_dst, vl);
-        let idx = self.get_zmm_data(zmm_idx, vl);
-
-        let mut dst = [0u8; 64];
-        let table_size = vl * 2;
-
-        for i in 0..vl {
-            let index = (idx[i] as usize) % table_size;
-            dst[i] = if index < vl {
-                src1[index]
-            } else {
-                src2[index - vl]
-            };
         }
 
         self.set_zmm_data(zmm_dst, &dst[..vl], vl);
@@ -4636,44 +5693,44 @@ fn fp16_to_f32(h: u16) -> f32 {
 /// Convert single-precision (f32) to IEEE 754 half-precision (FP16)
 fn f32_to_fp16(f: f32) -> u16 {
     let bits = f.to_bits();
-    let sign = ((bits >> 31) & 1) as u16;
-    let exp = ((bits >> 23) & 0xFF) as i32;
-    let mant = (bits & 0x7FFFFF) as u32;
+    let sign = (bits >> 16) & 0x8000;
+    let abs = bits & 0x7fff_ffff;
+    let exp = (abs >> 23) as i32;
+    let mant = abs & 0x007f_ffff;
 
-    if exp == 0xFF {
-        // Infinity or NaN
+    if exp == 0xff {
         if mant == 0 {
-            // Infinity
-            (sign << 15) | (0x1F << 10)
-        } else {
-            // NaN - preserve some mantissa bits
-            (sign << 15) | (0x1F << 10) | ((mant >> 13) as u16 & 0x3FF).max(1)
+            return (sign | 0x7c00) as u16;
         }
-    } else if exp == 0 {
-        // Zero or denormalized f32 (becomes zero in FP16)
-        sign << 15
+        let payload = (mant >> 13).max(1);
+        return (sign | 0x7c00 | payload) as u16;
+    }
+
+    // Too small to round to the smallest half subnormal.
+    if abs < 0x3300_0000 {
+        return sign as u16;
+    }
+
+    // Half subnormal: round the f32 significand to a 10-bit denormal.
+    if abs < 0x3880_0000 {
+        let mant24 = mant | 0x0080_0000;
+        let shift = (126 - exp) as u32;
+        let round = 1u32 << (shift - 1);
+        let half_mant = (mant24 + round - 1 + ((mant24 >> shift) & 1)) >> shift;
+        return (sign | half_mant) as u16;
+    }
+
+    // Half normal: rebias exponent and round mantissa to nearest-even.
+    let mut half = (abs - 0x3800_0000) >> 13;
+    let remainder = abs & 0x1fff;
+    if remainder > 0x1000 || (remainder == 0x1000 && (half & 1) != 0) {
+        half += 1;
+    }
+
+    if half >= 0x7c00 {
+        (sign | 0x7c00) as u16
     } else {
-        // Normalized number
-        let new_exp = exp - 127 + 15;
-        if new_exp >= 0x1F {
-            // Overflow - return infinity
-            (sign << 15) | (0x1F << 10)
-        } else if new_exp <= 0 {
-            // Underflow - return zero or denormalized
-            if new_exp < -10 {
-                // Too small, return zero
-                sign << 15
-            } else {
-                // Denormalized
-                let shift = 1 - new_exp;
-                let m = (0x800000 | mant) >> (13 + shift);
-                (sign << 15) | (m as u16 & 0x3FF)
-            }
-        } else {
-            // Normal case
-            let new_mant = (mant >> 13) as u16;
-            (sign << 15) | ((new_exp as u16) << 10) | (new_mant & 0x3FF)
-        }
+        (sign | half) as u16
     }
 }
 

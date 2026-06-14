@@ -21,6 +21,9 @@ struct in_case {
     uint32_t reserved;
     uint64_t zmm[ZMM_REGS][8];
     uint64_t k[K_REGS];
+    uint64_t rax;
+    uint64_t r8;
+    uint64_t rflags;
     uint8_t scratch[SCRATCH_BYTES];
 };
 
@@ -29,6 +32,9 @@ struct out_case {
     uint32_t valid;
     uint64_t zmm[ZMM_REGS][8];
     uint64_t k[K_REGS];
+    uint64_t rax;
+    uint64_t r8;
+    uint64_t rflags;
     uint8_t scratch[SCRATCH_BYTES];
 };
 
@@ -149,14 +155,24 @@ static void sigill_handler(int signo) {
     __asm__ volatile(                                                                 \
         LOAD_ALL_ZMM                                                                  \
         LOAD_ALL_K                                                                    \
+        "movq %[r8in], %%r8\n\t"                                                      \
         "movq %[scratch], %%rax\n\t"                                                  \
+        "pushq %[rflagsin]\n\t"                                                       \
+        "popfq\n\t"                                                                   \
         OP "\n\t"                                                                     \
         STORE_ALL_ZMM                                                                 \
         STORE_ALL_K                                                                   \
+        "movq %%rax, %[raxout]\n\t"                                                   \
+        "movq %%r8, %[r8out]\n\t"                                                     \
+        "pushfq\n\t"                                                                  \
+        "popq %[rflagsout]\n\t"                                                       \
         :                                                                             \
+          [raxout] "=m"(out->rax), [r8out] "=m"(out->r8),                             \
+          [rflagsout] "=m"(out->rflags)                                               \
         : [zin] "r"(in->zmm), [kin] "r"(in->k), [scratch] "r"(scratch),              \
-          [zout] "r"(out->zmm), [kout] "r"(out->k)                                   \
-        : "rax", ZMM_CLOBBERS, K_CLOBBERS, "memory")
+          [zout] "r"(out->zmm), [kout] "r"(out->k), [r8in] "m"(in->r8),              \
+          [rflagsin] "m"(in->rflags)                                                  \
+        : "rax", "r8", ZMM_CLOBBERS, K_CLOBBERS, "memory")
 
 static void execute_case(const struct in_case *in, struct out_case *out) {
     _Alignas(64) uint8_t scratch[SCRATCH_BYTES];
@@ -165,6 +181,9 @@ static void execute_case(const struct in_case *in, struct out_case *out) {
     out->valid = 1;
     memset(out->zmm, 0, sizeof(out->zmm));
     memset(out->k, 0, sizeof(out->k));
+    out->rax = in->rax;
+    out->r8 = in->r8;
+    out->rflags = 0;
     memcpy(scratch, in->scratch, sizeof(scratch));
 
     if (sigsetjmp(sigill_jmp, 1) == 0) {
@@ -181,6 +200,9 @@ static void execute_case(const struct in_case *in, struct out_case *out) {
         out->valid = 0;
         memcpy(out->zmm, in->zmm, sizeof(out->zmm));
         memcpy(out->k, in->k, sizeof(out->k));
+        out->rax = in->rax;
+        out->r8 = in->r8;
+        out->rflags = 0;
     }
 
     memcpy(out->scratch, scratch, sizeof(out->scratch));

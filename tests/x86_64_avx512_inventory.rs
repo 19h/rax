@@ -22,10 +22,10 @@ use avx512_inventory_data::{
     RAX_EVEX_EXTRA_MNEMONICS_NOT_IN_AVX512_SPEC, RAX_EVEX_SIMD_DIFF_MNEMONICS,
 };
 use avx512_spec::{
+    EvexAsmMode, EvexCaseVariant, EvexEncodingKey, EvexRmRegisterClass, EvexSpecRow, EvexVl, EvexW,
     avx512_spec_evex_rows, evex_asm_modes_for_row, evex_case_variants_for_row, evex_operand_parts,
     evex_rm_operand_index, evex_rm_register_buckets_for_row, raw_evex_spec_bytes_for_variant,
-    spec_case_variant_id, spec_row_mode_id, EvexAsmMode, EvexCaseVariant, EvexEncodingKey,
-    EvexRmRegisterClass, EvexSpecRow, EvexVl, EvexW,
+    spec_case_variant_id, spec_row_mode_id,
 };
 
 const UNIMPLEMENTED_AVX512: &str = include_str!("x86_64/avx512_unimplemented_mnemonics.txt");

@@ -5412,6 +5412,16 @@ impl X86_64Lowerer {
                 }
             }
 
+            OpKind::VDiv { elem, lanes, .. } => {
+                // Vector FP divide is currently emitted only by the AArch64
+                // lifter; the x86 struct-lowerer does not yet implement DIVPS/
+                // DIVPD, so this path is unreachable in practice and bails
+                // explicitly rather than mis-lowering.
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("VDiv {:?}x{} (x86 vector FP divide)", elem, lanes),
+                });
+            }
+
             OpKind::VMul {
                 dst,
                 src1,
