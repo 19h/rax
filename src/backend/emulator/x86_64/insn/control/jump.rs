@@ -105,8 +105,10 @@ pub fn jmp_far_ptr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
     // or the protected→long handoff) lands here — just load the descriptor.
 
     // Load CS:IP from the real descriptor (lenient: flat fallback for a sparse
-    // descriptor table so legacy flat-segment code keeps working).
-    vcpu.load_code_segment_lenient(selector);
+    // descriptor table so legacy flat-segment code keeps working). The far-JMP
+    // variant additionally refuses to lower the CPL, so guest user code cannot
+    // escalate to ring 0 by selecting a ring-0 CS (see load_code_segment_far_jmp).
+    vcpu.load_code_segment_far_jmp(selector);
     vcpu.regs.rip = offset;
     Ok(None)
 }
@@ -133,8 +135,9 @@ pub fn jmp_far_mem(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
     // can). The mode-establishing flush jump after `mov cr0` (real→protected,
     // or the protected→long handoff) lands here — just load the descriptor.
 
-    // Load CS:IP from the real descriptor (lenient: flat fallback).
-    vcpu.load_code_segment_lenient(selector);
+    // Load CS:IP from the real descriptor (lenient: flat fallback). As in
+    // jmp_far_ptr, refuse to lower the CPL so a far JMP cannot escalate privilege.
+    vcpu.load_code_segment_far_jmp(selector);
     vcpu.regs.rip = offset;
     Ok(None)
 }

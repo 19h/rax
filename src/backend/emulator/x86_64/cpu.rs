@@ -2293,6 +2293,28 @@ impl X86_64Vcpu {
         }
     }
 
+    /// Load CS for a far JMP. Wraps [`Self::load_code_segment_lenient`] but
+    /// enforces that a far JMP never *gains* privilege.
+    ///
+    /// The emulator derives the current privilege level from `CS.selector & 3`,
+    /// and an architectural far JMP leaves CPL unchanged (it cannot switch ring
+    /// the way a call gate or interrupt can). Without this, a guest running at
+    /// CPL > 0 could far-JMP to a selector whose RPL is lower (e.g. a ring-0
+    /// kernel code selector) and the lenient load would write those low bits
+    /// straight into `CS.selector`, making the emulator treat the vCPU as CPL0 —
+    /// bypassing privileged-instruction checks and user/supervisor page
+    /// permissions. In protected/long mode we re-pin the loaded CS RPL to the
+    /// prior CPL whenever the transfer would lower it. (Real mode has no CPL; its
+    /// CS selector is a raw segment base, so it is left untouched.)
+    pub(super) fn load_code_segment_far_jmp(&mut self, selector: u16) {
+        let protected = self.sregs.cr0 & 1 != 0;
+        let old_cpl = self.sregs.cs.selector & 0x3;
+        self.load_code_segment_lenient(selector);
+        if protected && (self.sregs.cs.selector & 0x3) < old_cpl {
+            self.sregs.cs.selector = (self.sregs.cs.selector & !0x3) | old_cpl;
+        }
+    }
+
     // Condition checking for Jcc/SETcc/CMOVcc - materializes lazy flags first
     pub(super) fn check_condition(&mut self, cc: u8) -> bool {
         // Evaluate the predicate without materializing RFLAGS (a conditional

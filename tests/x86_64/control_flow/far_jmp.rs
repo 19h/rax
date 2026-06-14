@@ -747,3 +747,59 @@ fn test_far_jmp_same_segment_different_offset() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0xcdab);
 }
+
+// ============================================================================
+// FAR JMP - Privilege preservation (regression: issue #78)
+// ============================================================================
+
+#[test]
+fn test_far_jmp_does_not_escalate_cpl() {
+    // A far JMP from CPL3 to a ring-0 (RPL 0) selector must NOT lower the CPL.
+    // The emulator derives CPL from CS.selector & 3, so adopting selector 0x08
+    // (RPL 0) while at CPL3 would otherwise make the vCPU CPL0 and let guest user
+    // code bypass privileged-instruction and user/supervisor page checks.
+    let code = [
+        0x66, 0xea, 0x00, 0x20, 0x08, 0x00, // JMP FAR 0x0008:0x2000
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    mem.write_slice(&[0xf4], vm_memory::GuestAddress(0x2000))
+        .unwrap(); // HLT at the target
+
+    // Drop the vCPU to CPL3 (CS RPL = 3) before the far JMP.
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 0x0b; // GDT index 1 (0x08) with RPL 3
+    vcpu.set_sregs(&sregs).unwrap();
+
+    // Execute only the far JMP.
+    vcpu.step().unwrap();
+
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(
+        sregs.cs.selector & 0x3,
+        3,
+        "far JMP from CPL3 must preserve CPL (no escalation to ring 0); CS={:#x}",
+        sregs.cs.selector,
+    );
+}
+
+#[test]
+fn test_far_jmp_cpl0_stays_cpl0() {
+    // A normal CPL0 far JMP to a ring-0 selector keeps CPL0: the fix only blocks
+    // privilege *gain* and must not perturb same-privilege transfers.
+    let code = [
+        0x66, 0xea, 0x00, 0x20, 0x08, 0x00, // JMP FAR 0x0008:0x2000
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    mem.write_slice(&[0xf4], vm_memory::GuestAddress(0x2000))
+        .unwrap();
+
+    vcpu.step().unwrap();
+
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(
+        sregs.cs.selector, 0x08,
+        "CPL0 far JMP should adopt the target ring-0 selector unchanged",
+    );
+}
