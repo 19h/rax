@@ -5114,7 +5114,7 @@ impl X86_64Vcpu {
         let new_rsp = self.regs.rsp.wrapping_sub(16);
 
         self.write_mem(new_rsp, val1, 8)?;
-        self.write_mem(new_rsp + 8, val2, 8)?;
+        self.write_mem(new_rsp.wrapping_add(8), val2, 8)?;
         self.regs.rsp = new_rsp;
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
@@ -6114,6 +6114,66 @@ mod tests {
     fn read_u64(vcpu: &mut X86_64Vcpu, addr: u64) -> u64 {
         let sregs = vcpu.sregs.clone();
         vcpu.mmu.read_u64(addr, &sregs).unwrap()
+    }
+
+    fn enable_paging_for_wrapped_stack_test(vcpu: &mut X86_64Vcpu) {
+        const PRESENT_WRITABLE: u64 = 0x3;
+        const HUGE_PAGE: u64 = 0x80;
+        const PML4: u64 = 0x3000;
+        const LOW_PDPT: u64 = 0x4000;
+        const LOW_PD: u64 = 0x5000;
+        const HIGH_PDPT: u64 = 0x6000;
+        const HIGH_PD: u64 = 0x7000;
+        const HIGH_PT: u64 = 0x8000;
+        const HIGH_STACK_PHYS: u64 = 0x9000;
+
+        let sregs = vcpu.sregs.clone();
+        vcpu.mmu
+            .write_u64(PML4, LOW_PDPT | PRESENT_WRITABLE, &sregs)
+            .unwrap();
+        vcpu.mmu
+            .write_u64(LOW_PDPT, LOW_PD | PRESENT_WRITABLE, &sregs)
+            .unwrap();
+        vcpu.mmu
+            .write_u64(LOW_PD, PRESENT_WRITABLE | HUGE_PAGE, &sregs)
+            .unwrap();
+
+        vcpu.mmu
+            .write_u64(PML4 + 511 * 8, HIGH_PDPT | PRESENT_WRITABLE, &sregs)
+            .unwrap();
+        vcpu.mmu
+            .write_u64(HIGH_PDPT + 511 * 8, HIGH_PD | PRESENT_WRITABLE, &sregs)
+            .unwrap();
+        vcpu.mmu
+            .write_u64(HIGH_PD + 511 * 8, HIGH_PT | PRESENT_WRITABLE, &sregs)
+            .unwrap();
+        vcpu.mmu
+            .write_u64(
+                HIGH_PT + 511 * 8,
+                HIGH_STACK_PHYS | PRESENT_WRITABLE,
+                &sregs,
+            )
+            .unwrap();
+
+        vcpu.sregs.cr3 = PML4;
+        vcpu.sregs.cr0 = 0x8000_0001;
+        vcpu.sregs.efer = 0x500;
+    }
+
+    #[test]
+    fn apx_push2_wraps_second_store_address() {
+        // LLVM 23: `push2 %rax, %rbx` => 62 f4 64 18 ff f0.
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0x64, 0x18, 0xFF, 0xF0]);
+        enable_paging_for_wrapped_stack_test(&mut vcpu);
+        vcpu.regs.rsp = 8;
+        vcpu.regs.rax = 0x1111_2222_3333_4444;
+        vcpu.regs.rbx = 0xAAAA_BBBB_CCCC_DDDD;
+
+        step_ok(&mut vcpu);
+
+        assert_eq!(vcpu.regs.rsp, u64::MAX - 7);
+        assert_eq!(read_u64(&mut vcpu, u64::MAX - 7), 0x1111_2222_3333_4444);
+        assert_eq!(read_u64(&mut vcpu, 0), 0xAAAA_BBBB_CCCC_DDDD);
     }
 
     #[test]
