@@ -7737,6 +7737,13 @@ impl X86_64Lifter {
         prefix: &X86Prefix,
         pc: u64,
     ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![opcode],
+            });
+        }
+
         if prefix.operand_size_override && !prefix.rex_w() {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
@@ -12779,6 +12786,23 @@ mod tests {
         // Intel documents BSWAP r16 as undefined; LLVM 23 rejects the assembly
         // form even though its disassembler can print raw data16-prefixed bytes.
         for bytes in [&[0x66, 0x0F, 0xC8][..], &[0x66, 0xD5, 0x90, 0xC8][..]] {
+            let err = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap_err();
+            assert!(matches!(err, LiftError::InvalidEncoding { .. }), "{err:?}");
+        }
+    }
+
+    #[test]
+    fn lift_lock_bswap_rejected_like_spec() {
+        let mut lifter = X86_64Lifter::strict();
+        let mut ctx = LiftContext::new(SourceArch::X86_64);
+
+        // LOCK is only valid on selected read-modify-write memory forms; BSWAP
+        // is a register-only instruction and must #UD with LOCK.
+        for bytes in [
+            &[0xF0, 0x0F, 0xC8][..],
+            &[0xF0, 0x48, 0x0F, 0xC8][..],
+            &[0xF0, 0xD5, 0x90, 0xC8][..],
+        ] {
             let err = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap_err();
             assert!(matches!(err, LiftError::InvalidEncoding { .. }), "{err:?}");
         }
