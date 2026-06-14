@@ -932,9 +932,20 @@ impl Aarch64Decoder {
             return Self::decode_load_store_pair(raw);
         }
 
+        if (raw >> 31) & 1 == 0
+            && matches!((raw >> 24) & 0x3F, 0b001100 | 0b001101)
+        {
+            return Self::decode_simd_ldst(raw, (raw >> 30) & 1);
+        }
+
+        let bit26 = (raw >> 26) & 1;
+        let bit24 = (raw >> 24) & 1;
+
         match op_cat {
-            // 0b000, 0b001, 0b010: Exclusive, atomic, ordered
-            0b000 | 0b001 | 0b010 => Self::decode_load_store_exclusive(raw),
+            // Exclusive, atomic, ordered: bits[29:27] = 00x, bit26 = 0, bit24 = 0.
+            _ if op_cat & 0b110 == 0 && bit26 == 0 && bit24 == 0 => {
+                Self::decode_load_store_exclusive(raw)
+            }
             // 0b011: Load register literal
             0b011 => Self::decode_ldr_literal(raw),
             // 0b100, 0b110: Load/store register variants
@@ -951,6 +962,15 @@ impl Aarch64Decoder {
     }
 
     fn decode_load_store_exclusive(raw: u32) -> Result<DecodedInsn, DecodeError> {
+        if (raw >> 24) & 0x3F != 0b001000 {
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
+        }
+
         let size = (raw >> 30) & 0x3;
         let l = (raw >> 22) & 1;
         let o0 = (raw >> 15) & 1;
@@ -965,6 +985,17 @@ impl Aarch64Decoder {
         let is_pair = o1 == 1;
         let is_ordered_non_exclusive = o2 == 1;
         let is_ordered_exclusive = o0 == 1;
+
+        if !is_pair && is_ordered_non_exclusive && is_ordered_exclusive {
+            if rs != 31 || rt2 != 31 {
+                return Ok(DecodedInsn::new(
+                    Mnemonic::UNDEFINED,
+                    ExecutionState::Aarch64,
+                    raw,
+                    4,
+                ));
+            }
+        }
 
         if o2 == 1 && o1 == 1 {
             let mnemonic = match (l, o0) {
@@ -3070,6 +3101,20 @@ mod tests {
             | rd
     }
 
+    fn ordered_ldst_raw(size: u32, load: bool, rs: u32, rt2: u32) -> u32 {
+        let l = if load { 1 } else { 0 };
+
+        (size << 30)
+            | (0b001000 << 24)
+            | (1 << 23)
+            | (l << 22)
+            | (rs << 16)
+            | (1 << 15)
+            | (rt2 << 10)
+            | (1 << 5)
+            | 3
+    }
+
     #[test]
     fn test_nop() {
         // NOP: d503201f
@@ -3256,6 +3301,38 @@ mod tests {
         .unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::STLR);
         assert_eq!(insn.operands.len(), 2);
+    }
+
+    #[test]
+    fn test_ordered_ldst_decode_rejects_widened_bucket() {
+        let valid_stlrb = ordered_ldst_raw(0b00, false, 31, 31);
+
+        let simd_structure = valid_stlrb | (1 << 26);
+        let insn = Aarch64Decoder::decode(simd_structure).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::VSTR);
+
+        let bit24_set = valid_stlrb | (1 << 24);
+        let insn = Aarch64Decoder::decode(bit24_set).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::UNKNOWN);
+    }
+
+    #[test]
+    fn test_ordered_ldst_decode_requires_rs_and_rt2_zr() {
+        let valid_ldar = Aarch64Decoder::decode(ordered_ldst_raw(0b11, true, 31, 31)).unwrap();
+        assert_eq!(valid_ldar.mnemonic, Mnemonic::LDAR);
+
+        let valid_stlr = Aarch64Decoder::decode(ordered_ldst_raw(0b11, false, 31, 31)).unwrap();
+        assert_eq!(valid_stlr.mnemonic, Mnemonic::STLR);
+
+        for raw in [
+            ordered_ldst_raw(0b11, true, 0, 31),
+            ordered_ldst_raw(0b11, true, 31, 0),
+            ordered_ldst_raw(0b11, false, 0, 31),
+            ordered_ldst_raw(0b11, false, 31, 0),
+        ] {
+            let insn = Aarch64Decoder::decode(raw).unwrap();
+            assert_eq!(insn.mnemonic, Mnemonic::UNDEFINED);
+        }
     }
 
     #[test]
