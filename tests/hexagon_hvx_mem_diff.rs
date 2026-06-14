@@ -1296,3 +1296,107 @@ fn diff_hvx_srls() {
         false,
     );
 }
+
+/// Regression for the HVX `.w` (off_pair) scatter/gather out-of-bounds offset
+/// read. These forms take element offsets from a vector PAIR `(Vv, Vv+1)`; the
+/// odd elements read `Vv+1`. The decoder accepts the raw 5-bit offset-vector
+/// field without enforcing even alignment, so an *odd* pair base of V31 makes
+/// the odd elements read the nonexistent V32 — which indexed the 32-entry `v[]`
+/// register file out of bounds and panicked the emulator on a crafted guest
+/// packet (e.g. `vscattermhw`). `velem` now bounds-checks and yields 0 for the
+/// missing register.
+///
+/// rax-only — needs neither qemu nor llvm-mc — because an odd pair base is not
+/// assembler-producible (HVX register pairs are even-aligned). The words are the
+/// `v1:0.w` (offset field 0) encodings with the offset-vector field forced to
+/// 31. Without the fix the first odd element panics on `self.regs.v[32]`; with
+/// it, every off_pair form runs to completion. The plain `vscattermhw` case
+/// additionally pins the guarded read's result to exactly 0.
+#[test]
+fn hvx_scatter_gather_oob_offset_no_panic() {
+    // `v1:0.w` base encodings (`llvm-mc -triple=hexagon -mcpu=hexagonv68 -mhvx
+    // -show-encoding`). The offset-vector field is bits[12:8] for scatter and
+    // bits[4:0] for the `vgather` word; forcing it to 31 selects the odd pair
+    // base V31, whose +1 partner is the nonexistent V32.
+    const VSCATTERMHW: u32 = 0x2f24_c042; // { vscatter(r4,m0,v1:0.w).h=v2 }
+    const VSCATTERMHW_ADD: u32 = 0x2f24_c0c2; // { vscatter(r4,m0,v1:0.w).h+=v2 }
+    const VSCATTERMHWQ: u32 = 0x2fa4_c002; // { if (q0) vscatter(r4,m0,v1:0.w).h=v2 }
+    const VGATHERMHW: u32 = 0x2f04_4200; // vtmp.h=vgather(r4,m0,v1:0.w).h
+    const VGATHERMHWQ: u32 = 0x2f04_4600; // if (q0) vtmp.h=vgather(r4,m0,v1:0.w).h
+    const VMEM_VTMP: u32 = 0x2826_c022; // vmem(r6+#0)=vtmp.new (gather store)
+    let scatter_oob = |w: u32| (w & !(0x1f << 8)) | (0x1f << 8); // offsets := V31
+    let gather_oob = |w: u32| (w & !0x1f) | 0x1f; // offsets := V31
+
+    let varena = 0x1_0000u32; // 128-aligned, inside run_rax's 0..2 MiB map
+
+    // r4 = region base, r6 = gather store target, M0/M1 = length-1 (whole arena
+    // in range), Q0..Q3 = all ones so the predicated (`q`) forms commit.
+    let mk_case = |words: Vec<u32>, v: [[u32; VWORDS]; VREGS], arena: [u8; ARENA]| -> Case {
+        let mut st = [0u32; ST_WORDS];
+        st[BASE_REG] = varena;
+        st[GATHER_REG] = varena + GATHER_OFF;
+        st[I_M0] = ARENA as u32 - 1;
+        st[I_M1] = ARENA as u32 - 1;
+        Case {
+            words,
+            st,
+            v,
+            arena,
+            qsrc: [[1u8; 128]; QSRC_VECS],
+        }
+    };
+
+    // Part 1: none of the five `.w` off_pair forms may panic. V31 (even
+    // elements, offset+0) holds zero offsets and V32 (odd elements, offset+1)
+    // is OOB -> 0, so every element resolves to the in-range base address and
+    // the guarded read is exercised for all 64 elements of each form.
+    let mut rng = Rng::new(0x5ca7_7e60);
+    let mut v = [[0u32; VWORDS]; VREGS];
+    for reg in v.iter_mut() {
+        for w in reg.iter_mut() {
+            *w = rng.next() as u32;
+        }
+    }
+    v[31] = [0u32; VWORDS]; // even-element offsets = 0 -> EA = base (in range)
+    let mut arena = [0u8; ARENA];
+    for b in arena.iter_mut() {
+        *b = rng.next() as u8;
+    }
+    let forms: [(&str, Vec<u32>); 5] = [
+        ("vscattermhw", vec![scatter_oob(VSCATTERMHW)]),
+        ("vscattermhw_add", vec![scatter_oob(VSCATTERMHW_ADD)]),
+        ("vscattermhwq", vec![scatter_oob(VSCATTERMHWQ)]),
+        ("vgathermhw", vec![gather_oob(VGATHERMHW), VMEM_VTMP]),
+        ("vgathermhwq", vec![gather_oob(VGATHERMHWQ), VMEM_VTMP]),
+    ];
+    for (label, words) in forms {
+        let c = mk_case(words, v, arena);
+        assert!(
+            run_rax(&c.words, &c, varena).is_some(),
+            "{label}: crafted off_pair packet with offset vector V31 must not \
+             panic and must run to completion (OOB read of V32 guarded in velem)"
+        );
+    }
+
+    // Part 2: pin the guarded read to exactly 0 for the plain scatter. V31 (even
+    // elements) is forced fully out of range, so ONLY the odd elements commit;
+    // each reads V32 (OOB). If the read yields 0 the effective address is the
+    // base and the store lands; any non-zero result would move or drop it. The
+    // data vector V2 is 0x1234 in every halfword, so the base halfword must end
+    // up 0x1234 and nothing else may be written.
+    let mut v = [[0u32; VWORDS]; VREGS];
+    v[31] = [0xFFFF_FFFFu32; VWORDS]; // even elements: EA = base-1 -> dropped
+    v[2] = [0x1234_1234u32; VWORDS]; // data: every halfword = 0x1234
+    let arena = [0u8; ARENA];
+    let c = mk_case(vec![scatter_oob(VSCATTERMHW)], v, arena);
+    let out = run_rax(&c.words, &c, varena).expect("plain off_pair scatter must run");
+    assert_eq!(
+        &out.arena[0..2],
+        &[0x34, 0x12],
+        "OOB offset read must yield 0 so odd elements store 0x1234 at the base"
+    );
+    assert!(
+        out.arena[2..].iter().all(|&b| b == 0),
+        "no arena bytes other than the base halfword may be written"
+    );
+}
