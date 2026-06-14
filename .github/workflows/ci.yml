@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: stable
@@ -85,7 +85,7 @@ jobs:
           # - { name: windows-x64,   os: windows-2025,   features: "--no-default-features --features x86_64-suite" }
           # - { name: windows-arm64, os: windows-11-arm, features: "--no-default-features --features x86_64-suite" }
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: stable
@@ -118,7 +118,7 @@ jobs:
           # - { name: windows-x64,   os: windows-2025,   features: "--no-default-features --features x86_64-suite" }
           # - { name: windows-arm64, os: windows-11-arm, features: "--no-default-features --features x86_64-suite" }
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: stable
