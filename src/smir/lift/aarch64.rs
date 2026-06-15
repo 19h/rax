@@ -3158,7 +3158,19 @@ impl Aarch64Lifter {
             }
         };
         let q = (insn.raw >> 30) & 1;
-        let (elem, lane_bytes) = match (insn.raw >> 22) & 0x3 {
+        let size = (insn.raw >> 22) & 0x3;
+        // Across-vector integer reductions (ADDV/SADDLV/UADDLV/SMAXV/...) are defined
+        // ONLY for 8B/16B/4H/8H/4S. Reject 2S (size=0b10, Q=0) and the 64-bit-element
+        // forms (size=0b11, 1D/2D): both are reserved encodings that would otherwise
+        // lower to an invalid host across-lanes op and SIGILL. Bail to the
+        // interpreter, which treats these as UNDEFINED. (#28)
+        if size == 0b11 || (size == 0b10 && q == 0) {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: format!("{:?}", insn.mnemonic),
+            });
+        }
+        let (elem, lane_bytes) = match size {
             0 => (VecElementType::I8, 1u8),
             1 => (VecElementType::I16, 2),
             2 => (VecElementType::I32, 4),
@@ -5202,6 +5214,37 @@ mod tests {
             }
             _ => panic!("Expected Add operation"),
         }
+    }
+
+    // Regression for issue #28: an across-vector integer reduction with a reserved
+    // arrangement (here SADDLV with Q=0, size=0b10 = 2S) must NOT lift to a native
+    // across-lanes op — that would be an invalid host encoding and SIGILL if
+    // executed. It must bail (Unsupported) so the interpreter treats it as
+    // UNDEFINED. The valid 4S form (Q=1, size=0b10) must still lift.
+    #[test]
+    fn issue_28_rejects_reserved_2s_across_lanes_reduction() {
+        let mut lifter = Aarch64Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Aarch64);
+
+        // SADDLV ..., V0.2S  (Q=0, size=0b10): reserved.
+        let saddlv_2s = 0x0EB0_3800u32.to_le_bytes();
+        assert!(
+            lifter.lift_insn(0x2000, &saddlv_2s, &mut ctx).is_err(),
+            "SADDLV with Q=0,size=0b10 (2S) is reserved and must not lift natively"
+        );
+
+        // SADDLV ..., V0.4S  (Q=1, size=0b10): valid — still lifts to a VReduce.
+        let saddlv_4s = 0x4EB0_3800u32.to_le_bytes();
+        let result = lifter
+            .lift_insn(0x2000, &saddlv_4s, &mut ctx)
+            .expect("SADDLV 4S must lift");
+        assert!(
+            result
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::VReduce { .. })),
+            "SADDLV 4S must lift to a VReduce op"
+        );
     }
 
     #[test]
