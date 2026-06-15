@@ -384,7 +384,8 @@ pub(super) struct DecodeCacheEntry {
     /// Address-space + CPU-mode tag (CR3 base | cs.l | cs.db<<1): part of the key
     /// so a hit never reuses stale bytes/decode across a context or mode switch.
     pub(super) mode_tag: u64,
-    /// Raw instruction bytes captured at fill time (so hits skip the MMU fetch).
+    /// Raw instruction bytes captured at fill time. Hits re-fetch and compare
+    /// against this window before reusing the cached decode.
     pub(super) bytes: [u8; MAX_INSN_LEN],
     /// Number of valid bytes in `bytes`.
     pub(super) bytes_len: usize,
@@ -1378,62 +1379,75 @@ impl X86_64Vcpu {
         // legitimately executing at offset 0 of a segment.
         let cached = self.decode_cache[cache_idx];
         if cached.bytes_len != 0 && cached.rip == rip && cached.mode_tag == mode_tag {
-            // Cache hit! Record for profiling
-            #[cfg(feature = "profiling")]
-            profiling::record_cache_hit();
-
-            // Reuse the cached instruction bytes - skip the MMU fetch +
-            // mark_code_page entirely (the page was marked when the entry filled).
-            let mut ctx = InsnContext {
-                bytes: cached.bytes,
-                bytes_len: cached.bytes_len,
-                cursor: if cached.rex2.map_or(false, |r| r.m) {
-                    cached.cursor
-                } else {
-                    cached.cursor + 1 // Skip past opcode byte
-                },
-                rex: cached.rex,
-                rex2: cached.rex2,
-                operand_size_override: cached.operand_size_override,
-                address_size_override: cached.address_size_override,
-                rep_prefix: cached.rep_prefix,
-                op_size: cached.op_size,
-                rip_relative_offset: 0,
-                segment_override: cached.segment_override,
-                evex: None,
-                opcode: cached.opcode,
-                // Boundary-truncated instructions are never cached (see the fill
-                // path below), so a cache hit always has the full instruction.
-                boundary_gp: false,
-            };
-
-            // Enforce LOCK-prefix legality (#UD on illegal use) before dispatch.
-            // The LOCK-present verdict was computed once on the fill path, so the
-            // hit path skips the prefix-byte scan and only takes the (cold)
-            // legality check when a 0xF0 prefix is actually present.
-            if cached.has_lock {
-                if self.enforce_lock_prefix_cold(&ctx, cached.opcode)? {
-                    return Ok(None);
-                }
-            }
-
-            // Function-pointer dispatch: call the handler resolved on the fill
-            // path directly, skipping the `execute` opcode match and the
-            // two-byte / escape call chain. Equivalent to `trace_and_execute`
-            // when tracing is off (the common build); the `trace` build keeps
-            // the instrumented path so traces stay complete.
-            let result = self.trace_and_execute_cached(cached.handler, &mut ctx, rip);
-
-            // End profiling for this instruction
-            #[cfg(feature = "profiling")]
+            // Validate the hit against the current MMU state. This preserves
+            // instruction-fetch faults and catches remaps or permission changes
+            // that are not represented in the cache key.
+            let (bytes, bytes_len, boundary_gp) = self.fetch()?;
+            if !boundary_gp
+                && bytes_len == cached.bytes_len
+                && bytes[..bytes_len] == cached.bytes[..cached.bytes_len]
             {
-                // Use precise opcode key if set by dispatch, otherwise fall back to simple key
-                let key = profiling::take_current_opcode_key()
-                    .unwrap_or_else(|| profiling::build_simple_opcode_key(cached.opcode));
-                profiling::end_instruction(key, prof_start);
+                // Cache hit! Record for profiling only after validation, so a
+                // stale entry that falls through to full decode counts as a miss.
+                #[cfg(feature = "profiling")]
+                profiling::record_cache_hit();
+
+                let mut ctx = InsnContext {
+                    bytes,
+                    bytes_len,
+                    cursor: if cached.rex2.map_or(false, |r| r.m) {
+                        cached.cursor
+                    } else {
+                        cached.cursor + 1 // Skip past opcode byte
+                    },
+                    rex: cached.rex,
+                    rex2: cached.rex2,
+                    operand_size_override: cached.operand_size_override,
+                    address_size_override: cached.address_size_override,
+                    rep_prefix: cached.rep_prefix,
+                    op_size: cached.op_size,
+                    rip_relative_offset: 0,
+                    segment_override: cached.segment_override,
+                    evex: None,
+                    opcode: cached.opcode,
+                    // Boundary-truncated instructions are never cached (see the fill
+                    // path below), so a cache hit always has the full instruction.
+                    boundary_gp: false,
+                };
+
+                // Enforce LOCK-prefix legality (#UD on illegal use) before dispatch.
+                // The LOCK-present verdict was computed once on the fill path, so the
+                // hit path skips the prefix-byte scan and only takes the (cold)
+                // legality check when a 0xF0 prefix is actually present.
+                if cached.has_lock {
+                    if self.enforce_lock_prefix_cold(&ctx, cached.opcode)? {
+                        return Ok(None);
+                    }
+                }
+
+                // Function-pointer dispatch: call the handler resolved on the fill
+                // path directly, skipping the `execute` opcode match and the
+                // two-byte / escape call chain. Equivalent to `trace_and_execute`
+                // when tracing is off (the common build); the `trace` build keeps
+                // the instrumented path so traces stay complete.
+                let result = self.trace_and_execute_cached(cached.handler, &mut ctx, rip);
+
+                // End profiling for this instruction
+                #[cfg(feature = "profiling")]
+                {
+                    // Use precise opcode key if set by dispatch, otherwise fall back to simple key
+                    let key = profiling::take_current_opcode_key()
+                        .unwrap_or_else(|| profiling::build_simple_opcode_key(cached.opcode));
+                    profiling::end_instruction(key, prof_start);
+                }
+
+                return result;
             }
 
-            return result;
+            // Fetched bytes no longer match the cached decode, or the fetch is
+            // now boundary-truncated. Drop the stale entry and fall through to a
+            // full decode using a fresh fetch.
+            self.decode_cache[cache_idx] = DecodeCacheEntry::default();
         }
 
         // Cache miss - do full decode

@@ -1306,6 +1306,83 @@ fn test_cr3_flush_tlb() {
     assert_eq!(error_code & pf_error::P, 0, "P=0 (non-present)");
 }
 
+/// Decode-cache hits must still perform the current instruction fetch.
+#[test]
+fn test_decode_cache_hit_revalidates_instruction_fetch_after_invlpg() {
+    fn push_rel32(code: &mut Vec<u8>, base: u64, opcode: &[u8], target: u64) {
+        let next = base + code.len() as u64 + opcode.len() as u64 + 4;
+        let rel = (target as i64 - next as i64) as i32;
+        code.extend_from_slice(opcode);
+        code.extend_from_slice(&rel.to_le_bytes());
+    }
+
+    let mem = create_memory(8);
+    setup_identity_page_tables(&mem, pte_flags::WRITABLE | pte_flags::USER);
+    setup_idt(&mem);
+    setup_handlers(&mem);
+    clear_result(&mem);
+
+    let target = CODE_PADDR;
+    let control = CODE_PADDR + 0x1000;
+    let fail = CODE_PADDR + 0x2000;
+    let target_pte_addr = PT_ADDR + (target >> 12) * 8;
+
+    // First pass: RAX becomes 1, the JNE is not taken, and the target-page
+    // instructions are cached. If the second pass reuses stale cached bytes
+    // after INVLPG, RAX becomes 2 and the JNE reaches the fail page.
+    let mut target_code = vec![
+        0x48, 0xff, 0xc0, // inc rax
+        0x48, 0x83, 0xf8, 0x01, // cmp rax, 1
+    ];
+    push_rel32(&mut target_code, target, &[0x0f, 0x85], fail); // jne fail
+    push_rel32(&mut target_code, target, &[0xe9], control); // jmp control
+    mem.write_slice(&target_code, GuestAddress(target)).unwrap();
+
+    let mut control_code = vec![
+        0x48, 0x31, 0xdb, // xor rbx, rbx
+        0x48, 0x89, 0x1c, 0x25, // mov [target_pte_addr], rbx
+    ];
+    control_code.extend_from_slice(&(target_pte_addr as u32).to_le_bytes());
+    control_code.extend_from_slice(&[
+        0x0f, 0x01, 0x3c, 0x25, // invlpg [target]
+    ]);
+    control_code.extend_from_slice(&(target as u32).to_le_bytes());
+    push_rel32(&mut control_code, control, &[0xe9], target); // jmp target
+    mem.write_slice(&control_code, GuestAddress(control))
+        .unwrap();
+
+    let fail_code = [
+        0xb8, 0xef, 0xbe, 0xad, 0xde, // mov eax, 0xdeadbeef
+        0xf4, // hlt
+    ];
+    mem.write_slice(&fail_code, GuestAddress(fail)).unwrap();
+
+    let mut vcpu = create_paged_vcpu(mem.clone());
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rip = target;
+    regs.rax = 0;
+    vcpu.set_regs(&regs).unwrap();
+
+    let exit = vcpu.run();
+    assert!(
+        matches!(exit, Ok(VcpuExit::Hlt)),
+        "instruction-fetch #PF should be delivered to the guest, got {exit:?}",
+    );
+
+    let (error_code, cr2, marker) = read_result(&mem);
+    assert_eq!(
+        marker, 0x14,
+        "stale decode-cache bytes must not execute after INVLPG",
+    );
+    assert_eq!(cr2, target, "CR2 should name the unmapped instruction RIP");
+    assert_eq!(error_code & pf_error::P, 0, "P=0 (non-present)");
+    assert_eq!(
+        error_code & pf_error::ID,
+        pf_error::ID,
+        "instruction-fetch bit should be set",
+    );
+}
+
 // ============================================================================
 // STRESS TESTS
 // ============================================================================
