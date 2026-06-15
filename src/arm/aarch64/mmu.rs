@@ -424,6 +424,25 @@ impl Default for MmuConfig {
     }
 }
 
+impl MmuConfig {
+    fn sanitized(mut self) -> Self {
+        self.t0sz = sanitize_tsz(self.t0sz, self.tg0);
+        self.t1sz = sanitize_tsz(self.t1sz, self.tg1);
+        self
+    }
+}
+
+fn sanitize_tsz(tsz: u8, granule: TranslationGranule) -> u8 {
+    const MIN_TSZ_FOR_48_BIT_VA: u8 = 16;
+    const MAX_TSZ_WITHOUT_LVA: u8 = 48;
+
+    // Keep the modeled VA size within the non-LVA 48-bit range and leave at
+    // least one translation-table index bit for the walker.
+    let max_tsz_for_walk = 63 - granule.page_offset_bits() as u8;
+    let max_tsz = MAX_TSZ_WITHOUT_LVA.min(max_tsz_for_walk);
+    tsz.clamp(MIN_TSZ_FOR_48_BIT_VA, max_tsz)
+}
+
 // =============================================================================
 // MMU
 // =============================================================================
@@ -444,7 +463,9 @@ impl Mmu {
 
     /// Create with configuration.
     pub fn with_config(config: MmuConfig) -> Self {
-        Self { config }
+        Self {
+            config: config.sanitized(),
+        }
     }
 
     /// Get configuration.
@@ -454,7 +475,7 @@ impl Mmu {
 
     /// Update configuration.
     pub fn set_config(&mut self, config: MmuConfig) {
-        self.config = config;
+        self.config = config.sanitized();
     }
 
     /// Check if MMU is enabled.
@@ -870,6 +891,34 @@ mod tests {
     fn test_mmu_disabled() {
         let mmu = Mmu::new();
         assert!(!mmu.is_enabled());
+    }
+
+    #[test]
+    fn test_mmu_config_sanitizes_tsz_ranges() {
+        let mmu = Mmu::with_config(MmuConfig {
+            enabled: true,
+            t0sz: 0,
+            t1sz: 63,
+            tg0: TranslationGranule::Granule4KB,
+            tg1: TranslationGranule::Granule64KB,
+            ..MmuConfig::default()
+        });
+
+        assert_eq!(mmu.config().t0sz, 16);
+        assert_eq!(mmu.config().t1sz, 47);
+
+        let mut mmu = Mmu::new();
+        mmu.set_config(MmuConfig {
+            enabled: true,
+            t0sz: 63,
+            t1sz: 0,
+            tg0: TranslationGranule::Granule16KB,
+            tg1: TranslationGranule::Granule4KB,
+            ..MmuConfig::default()
+        });
+
+        assert_eq!(mmu.config().t0sz, 48);
+        assert_eq!(mmu.config().t1sz, 16);
     }
 
     #[test]

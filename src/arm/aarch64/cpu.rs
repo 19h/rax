@@ -22862,6 +22862,36 @@ mod tests {
         assert_eq!(cpu.mem_read_u64(data_va).unwrap(), 0x1122_3344_5566_7788);
     }
 
+    // Regression for issue #49: checkpoint-imported TCR values are guest
+    // controlled, so invalid T0SZ/T1SZ fields must be clamped before translation
+    // arithmetic uses them.
+    #[test]
+    fn issue_49_import_sregs_sanitizes_tcr_sizes_for_mmu() {
+        let mut cpu = create_test_cpu();
+        let mut sregs = Aarch64SystemRegisters {
+            sctlr_el1: sctlr::M,
+            tcr_el1: 0,
+            ..Aarch64SystemRegisters::default()
+        };
+
+        cpu.import_sregs(&sregs);
+        assert_eq!(cpu.mmu.config().t0sz, 16);
+        assert_eq!(cpu.mmu.config().t1sz, 16);
+        assert!(
+            cpu.mem_read_u8(0).is_err(),
+            "invalid low TCR sizes should fault, not panic"
+        );
+
+        sregs.tcr_el1 = 63 | (63 << 16) | (0b01 << 14) | (0b11 << 30);
+        cpu.import_sregs(&sregs);
+        assert_eq!(cpu.mmu.config().t0sz, 47);
+        assert_eq!(cpu.mmu.config().t1sz, 47);
+        assert!(
+            cpu.mem_read_u8(0).is_err(),
+            "invalid high TCR sizes should fault, not panic"
+        );
+    }
+
     // Regression for issue #45: the JIT vector load/store helpers must translate and
     // permission-check every byte (like the interpreter), so a vector access that
     // straddles a guest page boundary faults on the second page instead of reading/
