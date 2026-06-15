@@ -621,19 +621,17 @@ impl AArch64Cpu {
         self.translate_address_at(va, is_write, is_execute, self.current_el > 0)
     }
 
-    /// Translate as an UNPRIVILEGED (EL0) access regardless of the current EL.
-    /// Used by the unprivileged load/store instructions (the FEAT_LRCPC3
-    /// unprivileged pairs LDTP/STTP/LDTNP/STTNP), which must check permissions as
-    /// if executed at EL0 even when the guest runs them at EL1 — otherwise a guest
-    /// kernel could be tricked into accessing a kernel-only address on behalf of a
-    /// user that supplied it. (#39)
+    /// Translate as an unprivileged access. PSTATE.UAO lets EL1+ unprivileged
+    /// load/store instructions use privileged permissions instead.
+    /// Used by LDTR/STTR and the FEAT_LRCPC3 unprivileged pairs
+    /// LDTP/STTP/LDTNP/STTNP. (#39)
     fn translate_address_unprivileged(
         &self,
         va: u64,
         is_write: bool,
         is_execute: bool,
     ) -> Result<u64, ArmError> {
-        self.translate_address_at(va, is_write, is_execute, false)
+        self.translate_address_at(va, is_write, is_execute, self.current_el > 0 && self.uao)
     }
 
     fn translate_address_at(
@@ -673,19 +671,64 @@ impl AArch64Cpu {
         }
     }
 
-    /// Read a doubleword as an UNPRIVILEGED (EL0) access. See
+    /// Read a doubleword through unprivileged access translation. See
     /// [`Self::translate_address_unprivileged`]. (#39)
     fn mem_read_u64_unprivileged(&self, va: u64) -> Result<u64, ArmError> {
         let pa = self.translate_address_unprivileged(va, false, false)?;
         self.memory.read_u64(pa).map_err(|e| e.into())
     }
 
-    /// Write a doubleword as an UNPRIVILEGED (EL0) access. See
+    fn mem_read_u8_unprivileged(&self, va: u64) -> Result<u8, ArmError> {
+        let pa = self.translate_address_unprivileged(va, false, false)?;
+        self.memory.read_u8(pa).map_err(|e| e.into())
+    }
+
+    fn mem_read_u16_unprivileged(&self, va: u64) -> Result<u16, ArmError> {
+        let pa = self.translate_address_unprivileged(va, false, false)?;
+        self.memory.read_u16(pa).map_err(|e| e.into())
+    }
+
+    fn mem_read_u32_unprivileged(&self, va: u64) -> Result<u32, ArmError> {
+        let pa = self.translate_address_unprivileged(va, false, false)?;
+        self.memory.read_u32(pa).map_err(|e| e.into())
+    }
+
+    /// Write a doubleword through unprivileged access translation. See
     /// [`Self::translate_address_unprivileged`]. (#39)
     fn mem_write_u64_unprivileged(&mut self, va: u64, value: u64) -> Result<(), ArmError> {
         let pa = self.translate_address_unprivileged(va, true, false)?;
         self.memory
             .write_u64(pa, value)
+            .map_err(|e| -> ArmError { e.into() })?;
+        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+        self.jit_note_write(va);
+        Ok(())
+    }
+
+    fn mem_write_u8_unprivileged(&mut self, va: u64, value: u8) -> Result<(), ArmError> {
+        let pa = self.translate_address_unprivileged(va, true, false)?;
+        self.memory
+            .write_u8(pa, value)
+            .map_err(|e| -> ArmError { e.into() })?;
+        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+        self.jit_note_write(va);
+        Ok(())
+    }
+
+    fn mem_write_u16_unprivileged(&mut self, va: u64, value: u16) -> Result<(), ArmError> {
+        let pa = self.translate_address_unprivileged(va, true, false)?;
+        self.memory
+            .write_u16(pa, value)
+            .map_err(|e| -> ArmError { e.into() })?;
+        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+        self.jit_note_write(va);
+        Ok(())
+    }
+
+    fn mem_write_u32_unprivileged(&mut self, va: u64, value: u32) -> Result<(), ArmError> {
+        let pa = self.translate_address_unprivileged(va, true, false)?;
+        self.memory
+            .write_u32(pa, value)
             .map_err(|e| -> ArmError { e.into() })?;
         #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
         self.jit_note_write(va);
@@ -14841,6 +14884,7 @@ impl AArch64Cpu {
 
         // Determine addressing mode
         let (address, wback, wback_value) = self.decode_address(insn, rn, size)?;
+        let unprivileged = bit24 == 0 && bit21 == 0 && op2 == 0b10;
 
         let is_load = (opc & 1) != 0 || opc == 0b10;
         let is_signed = opc >= 0b10;
@@ -14848,7 +14892,11 @@ impl AArch64Cpu {
         if is_load {
             let value = match size {
                 0b00 => {
-                    let v = self.mem_read_u8(address)?;
+                    let v = if unprivileged {
+                        self.mem_read_u8_unprivileged(address)?
+                    } else {
+                        self.mem_read_u8(address)?
+                    };
                     if is_signed && opc == 0b11 {
                         v as i8 as i64 as u64
                     } else if is_signed {
@@ -14858,7 +14906,11 @@ impl AArch64Cpu {
                     }
                 }
                 0b01 => {
-                    let v = self.mem_read_u16(address)?;
+                    let v = if unprivileged {
+                        self.mem_read_u16_unprivileged(address)?
+                    } else {
+                        self.mem_read_u16(address)?
+                    };
                     if is_signed && opc == 0b11 {
                         v as i16 as i64 as u64
                     } else if is_signed {
@@ -14868,14 +14920,24 @@ impl AArch64Cpu {
                     }
                 }
                 0b10 => {
-                    let v = self.mem_read_u32(address)?;
+                    let v = if unprivileged {
+                        self.mem_read_u32_unprivileged(address)?
+                    } else {
+                        self.mem_read_u32(address)?
+                    };
                     if is_signed {
                         v as i32 as i64 as u64
                     } else {
                         v as u64
                     }
                 }
-                0b11 => self.mem_read_u64(address)?,
+                0b11 => {
+                    if unprivileged {
+                        self.mem_read_u64_unprivileged(address)?
+                    } else {
+                        self.mem_read_u64(address)?
+                    }
+                }
                 _ => unreachable!(),
             };
 
@@ -14887,10 +14949,34 @@ impl AArch64Cpu {
         } else {
             // Store
             match size {
-                0b00 => self.mem_write_u8(address, self.get_w(rt) as u8)?,
-                0b01 => self.mem_write_u16(address, self.get_w(rt) as u16)?,
-                0b10 => self.mem_write_u32(address, self.get_w(rt))?,
-                0b11 => self.mem_write_u64(address, self.get_x(rt))?,
+                0b00 => {
+                    if unprivileged {
+                        self.mem_write_u8_unprivileged(address, self.get_w(rt) as u8)?
+                    } else {
+                        self.mem_write_u8(address, self.get_w(rt) as u8)?
+                    }
+                }
+                0b01 => {
+                    if unprivileged {
+                        self.mem_write_u16_unprivileged(address, self.get_w(rt) as u16)?
+                    } else {
+                        self.mem_write_u16(address, self.get_w(rt) as u16)?
+                    }
+                }
+                0b10 => {
+                    if unprivileged {
+                        self.mem_write_u32_unprivileged(address, self.get_w(rt))?
+                    } else {
+                        self.mem_write_u32(address, self.get_w(rt))?
+                    }
+                }
+                0b11 => {
+                    if unprivileged {
+                        self.mem_write_u64_unprivileged(address, self.get_x(rt))?
+                    } else {
+                        self.mem_write_u64(address, self.get_x(rt))?
+                    }
+                }
                 _ => unreachable!(),
             }
         }
@@ -22648,13 +22734,7 @@ mod tests {
         assert_eq!(cpu.get_x(2), 0xABCD);
     }
 
-    // Regression for issue #39: the FEAT_LRCPC3 unprivileged pair load/stores must
-    // perform their permission checks as EL0 accesses even when run at EL1. With an
-    // AP=00 page (EL1 RW, EL0 no-access), a privileged access succeeds but an
-    // unprivileged access must fault — exercising the translate helper the
-    // unprivileged-pair path now uses.
-    #[test]
-    fn issue_39_unprivileged_access_uses_el0_permission_checks() {
+    fn create_issue_39_cpu() -> (AArch64Cpu, u64) {
         let mut cpu = create_test_cpu(); // EL1, flat memory, MMU initially disabled.
 
         // Single-level L1-block identity map for the low 1GB, AP=00 (EL1 RW, EL0
@@ -22671,6 +22751,31 @@ mod tests {
         cpu.update_mmu_config();
         assert_eq!(cpu.current_el(), 1, "test runs at EL1");
 
+        (cpu, data_va)
+    }
+
+    fn ldtr_x0_x1_0() -> u32 {
+        (0b11 << 30) | (0b111 << 27) | (0b01 << 22) | (0b10 << 10) | (1 << 5)
+    }
+
+    fn sttr_x0_x1_0() -> u32 {
+        (0b11 << 30) | (0b111 << 27) | (0b00 << 22) | (0b10 << 10) | (1 << 5)
+    }
+
+    fn is_permission_error<T>(result: Result<T, ArmError>) -> bool {
+        matches!(
+            result,
+            Err(ArmError::MemoryError(info)) if info.fault_type == MemoryFaultType::Permission
+        )
+    }
+
+    // Regression for issue #39: unprivileged load/stores must perform their
+    // permission checks as EL0 accesses when run at EL1, unless PSTATE.UAO
+    // explicitly overrides that behavior.
+    #[test]
+    fn issue_39_unprivileged_access_uses_el0_permission_checks() {
+        let (mut cpu, data_va) = create_issue_39_cpu();
+
         // Privileged (EL1) access succeeds...
         assert_eq!(
             cpu.mem_read_u64(data_va).unwrap(),
@@ -22679,9 +22784,37 @@ mod tests {
         );
         // ...unprivileged (EL0) access to the same page must fault, even at EL1.
         assert!(
-            cpu.mem_read_u64_unprivileged(data_va).is_err(),
+            is_permission_error(cpu.mem_read_u64_unprivileged(data_va)),
             "unprivileged access to an EL0-no-access page must fault even at EL1"
         );
+
+        cpu.uao = true;
+        assert_eq!(
+            cpu.mem_read_u64_unprivileged(data_va).unwrap(),
+            0xCAFE_F00D_DEAD_BEEF,
+            "UAO lets EL1 unprivileged accesses use privileged permissions"
+        );
+    }
+
+    #[test]
+    fn issue_39_ldtr_sttr_use_unprivileged_permission_checks() {
+        let (mut cpu, data_va) = create_issue_39_cpu();
+        cpu.set_x(1, data_va);
+
+        assert!(is_permission_error(cpu.exec_ldst_reg(ldtr_x0_x1_0())));
+
+        cpu.uao = true;
+        assert_eq!(cpu.exec_ldst_reg(ldtr_x0_x1_0()).unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.get_x(0), 0xCAFE_F00D_DEAD_BEEF);
+
+        cpu.uao = false;
+        cpu.set_x(0, 0x1122_3344_5566_7788);
+        assert!(is_permission_error(cpu.exec_ldst_reg(sttr_x0_x1_0())));
+        assert_eq!(cpu.mem_read_u64(data_va).unwrap(), 0xCAFE_F00D_DEAD_BEEF);
+
+        cpu.uao = true;
+        assert_eq!(cpu.exec_ldst_reg(sttr_x0_x1_0()).unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.mem_read_u64(data_va).unwrap(), 0x1122_3344_5566_7788);
     }
 
     // Regression for issue #45: the JIT vector load/store helpers must translate and
