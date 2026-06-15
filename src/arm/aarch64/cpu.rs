@@ -20843,6 +20843,21 @@ mod tests {
     }
 
     #[test]
+    fn sve_fscale_rejects_byte_elements() {
+        let insn = 0x6509_8020; // invalid FSCALE Z0.B, P0/M, Z0.B, Z1.B
+        let mut cpu = create_cpu_with_insn(insn);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_sve_pred(0, 0xffff);
+        let z0 = 0x0011_2233_4455_6677_8899_aabb_ccdd_eeff;
+
+        cpu.set_simd(0, z0);
+        cpu.set_simd(1, 0x0101_0101_0101_0101_0101_0101_0101_0101);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Undefined(insn));
+        assert_eq!(cpu.get_simd(0), z0);
+    }
+
+    #[test]
     fn sve_predicate_sel_s_form_is_undefined() {
         let mut cpu = create_cpu_with_insn(0x2543_4650); // invalid SELS P0, P1, P2, P3
         cpu.sysregs.el1.cpacr |= 0b11 << 16; // ZEN
@@ -20857,8 +20872,7 @@ mod tests {
 
     #[test]
     fn sve_predicate_permute_rejects_reserved_predicate_bits() {
-        let canonical =
-            (0x05 << 24) | (0b10 << 20) | (2 << 16) | (0b010 << 13) | (1 << 5);
+        let canonical = (0x05 << 24) | (0b10 << 20) | (2 << 16) | (0b010 << 13) | (1 << 5);
 
         for bit in [9, 4] {
             let insn = canonical | (1 << bit);
