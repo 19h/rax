@@ -260,15 +260,22 @@ fn decode_q1_alu(h: u16, rv64: bool, isa: &Isa) -> Insn {
                 (0, 0b11) => mk(Op::And, rd_, rd_, rs2_, 0, h),
                 (1, 0b00) if rv64 => mk(Op::Subw, rd_, rd_, rs2_, 0, h),
                 (1, 0b01) if rv64 => mk(Op::Addw, rd_, rd_, rs2_, 0, h),
-                // Zcb: c.mul (10) and the zext/sext/not unary ops (11).
-                (1, 0b10) if isa.zcb => mk(Op::Mul, rd_, rd_, rs2_, 0, h),
+                // Zcb: c.mul (10) and the zext/sext/not unary ops (11). Several
+                // of these alias instructions from dependent extensions and are
+                // only legal when those extensions (and XLEN) are also present:
+                //   c.mul   -> needs M (no separate Zmmul flag here)
+                //   c.sext.b/c.zext.h/c.sext.h -> need Zbb
+                //   c.zext.w (add.uw) -> needs Zba and RV64
+                // c.zext.b (andi) and c.not (xori) need only Zcb (base ops).
+                (1, 0b10) if isa.zcb && isa.m => mk(Op::Mul, rd_, rd_, rs2_, 0, h),
                 (1, 0b11) if isa.zcb => match bits(h, 4, 2) {
                     0b000 => mk(Op::Andi, rd_, rd_, 0, 0xff, h), // c.zext.b
-                    0b001 => mk(Op::SextB, rd_, rd_, 0, 0, h),   // c.sext.b
-                    0b010 => mk(Op::ZextH, rd_, rd_, 0, 0, h),   // c.zext.h
-                    0b011 => mk(Op::SextH, rd_, rd_, 0, 0, h),   // c.sext.h
-                    0b100 => mk(Op::AddUw, rd_, rd_, 0, 0, h),   // c.zext.w (add.uw rd',rd',x0)
-                    0b101 => mk(Op::Xori, rd_, rd_, 0, -1, h),   // c.not
+                    0b001 if isa.zbb => mk(Op::SextB, rd_, rd_, 0, 0, h), // c.sext.b
+                    0b010 if isa.zbb => mk(Op::ZextH, rd_, rd_, 0, 0, h), // c.zext.h
+                    0b011 if isa.zbb => mk(Op::SextH, rd_, rd_, 0, 0, h), // c.sext.h
+                    // c.zext.w (add.uw rd',rd',x0)
+                    0b100 if isa.zba && rv64 => mk(Op::AddUw, rd_, rd_, 0, 0, h),
+                    0b101 => mk(Op::Xori, rd_, rd_, 0, -1, h), // c.not
                     _ => ill(h),
                 },
                 _ => ill(h),
@@ -417,6 +424,35 @@ mod tests {
         assert_eq!(i.rd, 10);
         assert_eq!(i.rs1, 0);
         assert_eq!(i.imm, -1);
+    }
+
+    #[test]
+    fn zcb_aliases_require_dependent_extensions() {
+        // Q1 ALU, funct3=100, funct2=11, bit12=1. rd'=x8, rs2'=x9.
+        let c_mul = ((0b100 << 13) | (1 << 12) | (0b11 << 10) | (0b10 << 5) | (1 << 2) | 0b01) as u16;
+        let c_sextb = ((0b100 << 13) | (1 << 12) | (0b11 << 10) | (0b11 << 5) | (0b001 << 2) | 0b01) as u16;
+        let c_zextw = ((0b100 << 13) | (1 << 12) | (0b11 << 10) | (0b11 << 5) | (0b100 << 2) | 0b01) as u16;
+
+        // Fully-featured RV64GC decodes all of them.
+        assert_eq!(decode_rvc(c_mul, Xlen::Rv64, &Isa::rv64gc()).op, Op::Mul);
+        assert_eq!(decode_rvc(c_sextb, Xlen::Rv64, &Isa::rv64gc()).op, Op::SextB);
+        assert_eq!(decode_rvc(c_zextw, Xlen::Rv64, &Isa::rv64gc()).op, Op::AddUw);
+
+        // c.mul needs M.
+        let mut no_m = Isa::rv64gc();
+        no_m.m = false;
+        assert_eq!(decode_rvc(c_mul, Xlen::Rv64, &no_m).op, Op::Illegal);
+
+        // c.sext.b needs Zbb.
+        let mut no_zbb = Isa::rv64gc();
+        no_zbb.zbb = false;
+        assert_eq!(decode_rvc(c_sextb, Xlen::Rv64, &no_zbb).op, Op::Illegal);
+
+        // c.zext.w needs Zba and RV64.
+        let mut no_zba = Isa::rv64gc();
+        no_zba.zba = false;
+        assert_eq!(decode_rvc(c_zextw, Xlen::Rv64, &no_zba).op, Op::Illegal);
+        assert_eq!(decode_rvc(c_zextw, Xlen::Rv32, &Isa::rv64gc()).op, Op::Illegal);
     }
 
     #[test]
