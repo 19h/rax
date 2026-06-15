@@ -3416,6 +3416,9 @@ impl X86_64Lowerer {
 
     /// Get the destination register for a VReg
     fn get_dst_reg(&mut self, vreg: VReg) -> Result<PhysReg, LowerError> {
+        // Reject guest writes to architectural RSP/RBP: a lowered block runs on
+        // the HOST stack (guest RSP is not loaded), so writing the host stack /
+        // frame pointer would let the guest pivot the host stack at the epilogue.
         Self::ensure_native_stack_dst_safe(vreg)?;
         let loc = self.regalloc.alloc_vreg(vreg)?;
         match loc {
@@ -10540,12 +10543,27 @@ mod tests {
         // LLVM 20:
         //   push2 %rax, %rbx => 62 f4 64 18 ff f0
         //   pop2  %rax, %rbx => 62 f4 64 18 8f c0
+        // PUSH2/POP2 write architectural RSP; a lowered block runs on the host
+        // stack, so this must be rejected rather than emit a pivotable frame.
         let err = lower_rex2_block_err(&[
             0x62, 0xF4, 0x64, 0x18, 0xFF, 0xF0, 0x62, 0xF4, 0x64, 0x18, 0x8F, 0xC0, 0xF4,
         ]);
         assert!(
             matches!(err, LowerError::InvalidRegister(ref reg) if reg.contains("Rsp")),
             "push2/pop2 must reject guest RSP writes, got {err:?}"
+        );
+    }
+
+    #[test]
+    fn lower_rejects_guest_rbp_write() {
+        // `mov rbp, 0x1234` (48 C7 C5 34 12 00 00). A guest write to RBP (the
+        // host frame pointer) must be rejected by the native lowerer so the
+        // epilogue's `pop rbp; ret` can never run on an attacker-controlled
+        // value. (RSP writes are covered by the PUSH2/POP2 test.)
+        let err = lower_rex2_block_err(&[0x48, 0xC7, 0xC5, 0x34, 0x12, 0x00, 0x00, 0xF4]);
+        assert!(
+            matches!(err, LowerError::InvalidRegister(ref reg) if reg.contains("Rbp")),
+            "a guest RBP write must be rejected by the native lowerer, got {err:?}"
         );
     }
 
