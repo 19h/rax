@@ -755,6 +755,51 @@ fn lift_mem_family_idx(
     }
 }
 
+fn assert_lift_mem_words_match(
+    label: &str,
+    words: &[u32],
+    init: &State,
+    data: &[u8],
+) -> Option<State> {
+    if which("llvm-mc").is_none() {
+        eprintln!("[hexagon_smir_lift] {label}: llvm-mc unavailable -> skipping");
+        return None;
+    }
+
+    let (interp, idata) = run_interp_mem(words, init, data)
+        .unwrap_or_else(|| panic!("{label}: interpreter rejected raw words"));
+    let (lift, ldata) = lift_and_run_mem(words, init, data)
+        .unwrap_or_else(|e| panic!("{label}: lift error: {e}"))
+        .unwrap_or_else(|| panic!("{label}: raw words were not lifted"));
+
+    assert_eq!(lift.r, interp.r, "{label}: GPR state");
+    assert_eq!(lift.p, interp.p, "{label}: predicate state");
+    assert_eq!(lift.usr & 1, interp.usr & 1, "{label}: USR.OVF");
+    assert_eq!(lift.m, interp.m, "{label}: modifier registers");
+    assert_eq!(lift.cs, interp.cs, "{label}: circular-start registers");
+    assert_eq!(lift.gp, interp.gp, "{label}: GP");
+    assert_eq!(ldata, idata, "{label}: DATA bytes");
+
+    Some(lift)
+}
+
+fn postinc_alias_fixture() -> (State, Vec<u8>) {
+    let mut st = State::zeroed();
+    st.r[0] = DATA_ADDR;
+    st.r[1] = 0x1122_3344;
+    st.p[0] = 0xff;
+    st.m = [4, 4];
+    st.cs = [DATA_ADDR, DATA_ADDR];
+    st.gp = DATA_ADDR;
+
+    let mut data = vec![0u8; DATA_LEN];
+    data[..16].copy_from_slice(&[
+        0x78, 0x56, 0x34, 0x12, 0xef, 0xcd, 0xab, 0x90, 0x80, 0x7f, 0xfe, 0x01, 0x22,
+        0x33, 0x44, 0x55,
+    ]);
+    (st, data)
+}
+
 // ============================================================================
 // Control-flow harness path (Step 1/2).
 //
@@ -5876,6 +5921,47 @@ fn lift_mem_load_pcr() {
 }
 
 #[test]
+fn lift_mem_postinc_load_base_dst_alias() {
+    let (st, data) = postinc_alias_fixture();
+
+    // Raw words are valid encodings derived from assembler-accepted non-alias
+    // forms by setting the destination field to r0. llvm-mc rejects the alias
+    // syntax with "register modified more than once", but the decoder accepts it.
+    for (label, word) in [
+        ("loadri_pi_r0_r0", 0x9b80_c020),
+        ("loadri_pr_r0_r0", 0x9d80_c000),
+        ("ploadrit_pi_r0_r0", 0x9b80_e020),
+    ] {
+        let Some(lift) = assert_lift_mem_words_match(label, &[word], &st, &data) else {
+            return;
+        };
+        assert_eq!(lift.r[0], 0x1234_5678, "{label}: loaded value wins");
+    }
+}
+
+#[test]
+fn lift_mem_postinc_loadpair_base_dst_alias() {
+    let (st, data) = postinc_alias_fixture();
+
+    for (label, word) in [
+        ("loadrd_pi_r1_0_r0", 0x9bc0_c020),
+        ("ploadrdt_pi_r1_0_r0", 0x9bc0_e020),
+    ] {
+        let Some(lift) = assert_lift_mem_words_match(label, &[word], &st, &data) else {
+            return;
+        };
+        assert_eq!(lift.r[0], 0x1234_5678, "{label}: low word wins");
+        assert_eq!(lift.r[1], 0x90ab_cdef, "{label}: high word wins");
+    }
+}
+
+#[test]
+fn lift_mem_loadalign_postinc_base_pair_alias() {
+    let (st, data) = postinc_alias_fixture();
+    let _ = assert_lift_mem_words_match("loadalignb_pi_r1_0_r0", &[0x9a80_c020], &st, &data);
+}
+
+#[test]
 fn lift_mem_store_pcr() {
     lift_mem_family(
         "mem_store_pcr",
@@ -6049,6 +6135,37 @@ fn lift_mem_loadunpack_pr() {
         40,
         0xd003,
     );
+}
+
+#[test]
+fn lift_mem_loadunpack_postinc_base_dst_alias() {
+    let (st, data) = postinc_alias_fixture();
+
+    for (label, word, expected) in [
+        ("loadbzw2_pi_r0_r0", 0x9a60_c020, 0x0056_0078),
+        ("loadbzw2_pr_r0_r0", 0x9c60_c000, 0x0056_0078),
+    ] {
+        let Some(lift) = assert_lift_mem_words_match(label, &[word], &st, &data) else {
+            return;
+        };
+        assert_eq!(lift.r[0], expected, "{label}: unpacked value wins");
+    }
+}
+
+#[test]
+fn lift_mem_loadunpack_postinc_base_pair_alias() {
+    let (st, data) = postinc_alias_fixture();
+
+    for (label, word) in [
+        ("loadbzw4_pi_r1_0_r0", 0x9aa0_c020),
+        ("loadbzw4_pr_r1_0_r0", 0x9ca0_c000),
+    ] {
+        let Some(lift) = assert_lift_mem_words_match(label, &[word], &st, &data) else {
+            return;
+        };
+        assert_eq!(lift.r[0], 0x0056_0078, "{label}: low unpacked lanes win");
+        assert_eq!(lift.r[1], 0x0012_0034, "{label}: high unpacked lanes win");
+    }
 }
 
 // Scaled-index absolute byte-unpack loads (`L4_loadb{s,z}w{2,4}_ur`):
