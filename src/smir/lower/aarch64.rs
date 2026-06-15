@@ -13424,6 +13424,13 @@ impl Aarch64Lowerer {
             || clz_src != normalized
             || sub_src != leading
             || !Self::src_masked_imm_eq(sub_amount, 1, *width)
+            // The three intermediates must be dead virtual scratch: fusing to a
+            // single CLS writes only `dst` and never sign_mask/normalized/leading.
+            // If any is an architectural register (a real guest SAR/EOR/CLZ
+            // sequence), dropping its write would leave that register stale. (#8)
+            || !matches!(sign_mask, VReg::Virtual(_))
+            || !matches!(normalized, VReg::Virtual(_))
+            || !matches!(leading, VReg::Virtual(_))
         {
             return Ok(None);
         }
@@ -13864,6 +13871,11 @@ impl Aarch64Lowerer {
         let bits = i64::from(op_width.bits());
         if flags.updates_any()
             || shl_src != extracted
+            // The Bfx result must be a dead virtual scratch: fusing emits only the
+            // final SBFIZ/UBFIZ and never writes `extracted`. If it is an
+            // architectural register (a real guest Bfx), dropping its write would
+            // leave that register stale. (#11)
+            || !matches!(extracted, VReg::Virtual(_))
             || width != op_width
             || !(1..bits).contains(&amount)
             || i64::from(*width_bits) + amount > bits
@@ -13915,7 +13927,14 @@ impl Aarch64Lowerer {
             return Ok(None);
         };
 
-        if bfi_src != extracted || width_bits != bfi_width_bits || op_width != bfi_width {
+        if bfi_src != extracted
+            // The Bfx result must be a dead virtual scratch: fusing to a single
+            // BFXIL never writes `extracted`, so an architectural register there
+            // (a real guest Bfx) would be left stale. (#12)
+            || !matches!(extracted, VReg::Virtual(_))
+            || width_bits != bfi_width_bits
+            || op_width != bfi_width
+        {
             return Ok(None);
         }
 
@@ -13963,7 +13982,14 @@ impl Aarch64Lowerer {
                         if let Some((rt, addr, size, opc, access_consumed)) =
                             Self::mem_access_sequence_parts(&ops[3..])?
                         {
-                            if Self::direct_addr_reg(addr) == Some(*addr_tmp) {
+                            if Self::direct_addr_reg(addr) == Some(*addr_tmp)
+                                // Intermediates must be dead virtual scratch: a real
+                                // guest extend/shift/add writing architectural regs
+                                // must not be fused away (its writes would vanish). (#9)
+                                && matches!(addr_tmp, VReg::Virtual(_))
+                                && matches!(shifted, VReg::Virtual(_))
+                                && matches!(extended, VReg::Virtual(_))
+                            {
                                 if let Some(s) = Self::mem_shift_bit(amount, size) {
                                     self.lower_mem_reg_offset_access(
                                         rt, *base, index, size, opc, option, s,
@@ -14010,7 +14036,11 @@ impl Aarch64Lowerer {
                 if let Some((rt, addr, size, opc, access_consumed)) =
                     Self::mem_access_sequence_parts(&ops[2..])?
                 {
-                    if Self::direct_addr_reg(addr) == Some(*addr_tmp) {
+                    if Self::direct_addr_reg(addr) == Some(*addr_tmp)
+                        // Intermediates must be dead virtual scratch (see #9).
+                        && matches!(addr_tmp, VReg::Virtual(_))
+                        && matches!(shifted, VReg::Virtual(_))
+                    {
                         if let Some(s) = Self::mem_shift_bit(amount, size) {
                             self.lower_mem_reg_offset_access(
                                 rt, *base, *index, size, opc, 0b011, s,
@@ -14044,7 +14074,11 @@ impl Aarch64Lowerer {
                         if let Some((rt, addr, size, opc, access_consumed)) =
                             Self::mem_access_sequence_parts(&ops[2..])?
                         {
-                            if Self::direct_addr_reg(addr) == Some(*addr_tmp) {
+                            if Self::direct_addr_reg(addr) == Some(*addr_tmp)
+                                // Intermediates must be dead virtual scratch (see #9).
+                                && matches!(addr_tmp, VReg::Virtual(_))
+                                && matches!(extended, VReg::Virtual(_))
+                            {
                                 self.lower_mem_reg_offset_access(
                                     rt, *base, index, size, opc, option, 0,
                                 )?;
@@ -14076,7 +14110,12 @@ impl Aarch64Lowerer {
                     if let Some((rt, addr, size, opc, access_consumed)) =
                         Self::mem_access_sequence_parts(&ops[1..])?
                     {
-                        if Self::direct_addr_reg(addr) == Some(*addr_tmp) {
+                        if Self::direct_addr_reg(addr) == Some(*addr_tmp)
+                            // The Add result must be a dead virtual scratch: a real
+                            // guest `add xN, ...; ldr/str [xN]` must not drop the
+                            // architectural Add write. (#9)
+                            && matches!(addr_tmp, VReg::Virtual(_))
+                        {
                             self.lower_mem_reg_offset_access(
                                 rt, *base, *index, size, opc, 0b011, 0,
                             )?;
@@ -17297,6 +17336,133 @@ mod tests {
                 assert_eq!(out[reg as usize], value, "{label}: x{reg} restored");
             }
         }
+    }
+
+    // Regression for issue #11: the BFIZ/UBFIZ fusion (Bfx{lsb:0} + Shl) must not
+    // fire when the Bfx destination is an architectural register — that would drop
+    // the guest-visible Bfx write. With x2 architectural, both x2 and x0 must update.
+    #[test]
+    fn issue_11_bfiz_fusion_preserves_arch_bfx_write() {
+        let code = lower_ops(vec![
+            OpKind::Bfx {
+                dst: x(2),
+                src: x(1),
+                lsb: 0,
+                width_bits: 8,
+                sign_extend: false,
+                op_width: OpWidth::W64,
+            },
+            OpKind::Shl {
+                dst: x(0),
+                src: x(2),
+                amount: SrcOperand::Imm(4),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ]);
+        let (regs, _, _) = run_aarch64_code(&code, &[(1, 0x123), (2, 0xDEAD)], 0);
+        assert_eq!(regs[2], 0x23, "Bfx must write x2 (UBFIZ fusion must not drop it)");
+        assert_eq!(regs[0], 0x230, "final Shl result");
+    }
+
+    // Regression for issue #12: the BFXIL fusion (Bfx + Bfi{lsb:0}) must not fire
+    // when the Bfx destination is an architectural register.
+    #[test]
+    fn issue_12_bfxil_fusion_preserves_arch_bfx_write() {
+        let code = lower_ops(vec![
+            OpKind::Bfx {
+                dst: x(2),
+                src: x(1),
+                lsb: 4,
+                width_bits: 8,
+                sign_extend: false,
+                op_width: OpWidth::W64,
+            },
+            OpKind::Bfi {
+                dst: x(0),
+                dst_in: x(0),
+                src: x(2),
+                lsb: 0,
+                width_bits: 8,
+                op_width: OpWidth::W64,
+            },
+        ]);
+        let (regs, _, _) = run_aarch64_code(&code, &[(1, 0xAB0), (2, 0xDEAD), (0, 0xFF00)], 0);
+        assert_eq!(regs[2], 0xAB, "Bfx must write x2 (BFXIL fusion must not drop it)");
+        assert_eq!(regs[0], 0xFFAB, "final Bfi result: low byte replaced");
+    }
+
+    // Regression for issue #8: the CLS fusion (Sar->Xor->Clz->Sub) must not collapse
+    // to `cls x0, x1` when its three intermediates are architectural registers — the
+    // guest-visible asr/eor/clz writes must survive.
+    #[test]
+    fn issue_8_cls_fusion_preserves_arch_intermediate_writes() {
+        let code = lower_ops(vec![
+            OpKind::Sar {
+                dst: x(2),
+                src: x(1),
+                amount: SrcOperand::Imm(63),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Xor {
+                dst: x(3),
+                src1: x(1),
+                src2: SrcOperand::Reg(x(2)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Clz {
+                dst: x(4),
+                src: x(3),
+                width: OpWidth::W64,
+            },
+            OpKind::Sub {
+                dst: x(0),
+                src1: x(4),
+                src2: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ]);
+        let (regs, _, _) =
+            run_aarch64_code(&code, &[(1, 0xFF), (2, 0xDEAD), (3, 0xDEAD), (4, 0xDEAD)], 0);
+        assert_eq!(regs[2], 0, "asr result (sign_mask) must be written");
+        assert_eq!(regs[3], 0xFF, "eor result (normalized) must be written");
+        assert_eq!(regs[4], 56, "clz result (leading) must be written");
+        assert_eq!(regs[0], 55, "final cls result");
+    }
+
+    // Regression for issue #9: the mem-offset fusion (Add + Load) must not collapse
+    // `add x0, x1, x2; ldr x3, [x0]` to `ldr x3, [x1, x2]` when x0 is architectural —
+    // the guest-visible ADD write to x0 must survive.
+    #[test]
+    fn issue_9_mem_offset_fusion_preserves_arch_add_write() {
+        let code = lower_ops(vec![
+            OpKind::Add {
+                dst: x(0),
+                src1: x(1),
+                src2: SrcOperand::Reg(x(2)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Load {
+                dst: x(3),
+                addr: Address::Direct(x(0)),
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            },
+        ]);
+        let (regs, _, _, _) = run_aarch64_code_with_memory(
+            &code,
+            &[(1, 0x100), (2, 0x40)],
+            0,
+            0x140,
+            0xCAFE,
+            MemWidth::B8,
+        );
+        assert_eq!(regs[0], 0x140, "Add must write x0 (mem-offset fusion must not drop it)");
+        assert_eq!(regs[3], 0xCAFE, "loaded value");
     }
 
     #[test]
