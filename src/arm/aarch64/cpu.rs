@@ -4498,7 +4498,9 @@ impl AArch64Cpu {
         // SDOT/UDOT by element (opcode 1110): the index selects a 32-bit
         // (4-byte) group of Vm that is reused for every output lane.
         if opcode == 0b1110 {
-            if size != 0b10 {
+            // SDOT/UDOT by element are vector-only; the scalar indexed-element
+            // form (bits[28:24]==11111) is unallocated and must trap.
+            if scalar || size != 0b10 {
                 return Ok(CpuExit::Undefined(insn));
             }
             let signed = u == 0;
@@ -21215,6 +21217,20 @@ mod tests {
         for insn in [gather_d(3, false, 1), gather_d(1, true, 1), scatter_d(2, true)] {
             assert_eq!(run(insn), CpuExit::Continue, "encoding {insn:#x} should execute");
         }
+    }
+
+    #[test]
+    fn simd_indexed_sdot_rejects_scalar_form() {
+        // SDOT/UDOT by element are vector-only. The scalar indexed-element form
+        // (bits[28:24]==11111, e.g. 0x5f82e020) is unallocated and must trap;
+        // the vector form (0x4f82e020) still executes.
+        let mut bad = create_cpu_with_insn(0x5f82_e020);
+        bad.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        assert_eq!(bad.step().unwrap(), CpuExit::Undefined(0x5f82_e020));
+
+        let mut good = create_cpu_with_insn(0x4f82_e020);
+        good.sysregs.el1.cpacr |= 0b11 << 20;
+        assert_eq!(good.step().unwrap(), CpuExit::Continue);
     }
 
     #[test]
