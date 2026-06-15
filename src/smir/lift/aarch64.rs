@@ -2503,6 +2503,17 @@ impl Aarch64Lifter {
                     };
                     let q = (insn.raw >> 30) & 1;
                     let sz = (insn.raw >> 22) & 1;
+                    // 1D (sz=1, Q=0) is a reserved FP-vector arrangement; only 2D
+                    // (Q=1) is valid for 64-bit FP elements. Bail to the interpreter
+                    // (UNDEFINED) rather than silently promoting it to a 2D op — the
+                    // lowerer derives Q from elem*lanes and would emit a valid 2D
+                    // native instruction for the invalid guest encoding. (#54)
+                    if sz == 1 && q == 0 {
+                        return Err(LiftError::Unsupported {
+                            addr: pc,
+                            mnemonic: format!("vector {:?}", insn.mnemonic),
+                        });
+                    }
                     let (elem, lanes) = if sz == 0 {
                         (VecElementType::F32, if q == 1 { 4u8 } else { 2 })
                     } else {
@@ -5303,6 +5314,46 @@ mod tests {
                 .iter()
                 .any(|op| matches!(op.kind, OpKind::VUnary { .. })),
             "REV16.8B must lift to a VUnary op"
+        );
+    }
+
+    // Regression for issue #54: an FP-vector unary (FABS/FNEG/FSQRT) with sz=1, Q=0
+    // is the reserved 1D arrangement. It must NOT lift (the lowerer would re-derive
+    // Q from elem*lanes and emit a valid 2D op for the invalid encoding); it must
+    // bail to the interpreter. Valid 2D and 2S forms still lift. (#54)
+    #[test]
+    fn issue_54_rejects_reserved_1d_fp_vector_unary() {
+        let mut lifter = Aarch64Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Aarch64);
+
+        // FABS V0.1D, V0.1D (sz=1, Q=0): reserved.
+        assert!(
+            lifter
+                .lift_insn(0x4000, &0x0EE0_F800u32.to_le_bytes(), &mut ctx)
+                .is_err(),
+            "FABS with 1D arrangement (sz=1,Q=0) is reserved and must not lift natively"
+        );
+
+        // FABS V0.2D (sz=1, Q=1): valid — lifts to a VUnary.
+        let r2d = lifter
+            .lift_insn(0x4000, &0x4EE0_F800u32.to_le_bytes(), &mut ctx)
+            .expect("FABS.2D must lift");
+        assert!(
+            r2d.ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::VUnary { .. })),
+            "FABS.2D must lift to a VUnary op"
+        );
+
+        // FABS V0.2S (sz=0, Q=0): valid — Q=0 alone must not be rejected.
+        let r2s = lifter
+            .lift_insn(0x4000, &0x0EA0_F800u32.to_le_bytes(), &mut ctx)
+            .expect("FABS.2S must lift");
+        assert!(
+            r2s.ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::VUnary { .. })),
+            "FABS.2S must lift to a VUnary op"
         );
     }
 
