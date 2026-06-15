@@ -14052,9 +14052,14 @@ impl HexagonLifter {
                 });
             }
             // S2_mask: Rd = ((1<<width)-1) << offset  (width=#u5(i), off=#U5(I)).
+            // width/offset are UNEXTENDED 5-bit fields — read them via `fld`, NOT
+            // the extender-aware `fimm_u`. This matches the interpreter (which reads
+            // them without immext) and keeps both shift amounts in 0..=31: a guest
+            // A4_ext before S2_mask could otherwise drive them past 63 and panic the
+            // host on `1u64 << width` in overflow-checked builds. (#106)
             Opcode::S2_mask => {
-                let width = fimm_u(b'i');
-                let offset = fimm_u(b'I');
+                let width = fld(b'i');
+                let offset = fld(b'I');
                 let m: i64 = (((1u64 << width) - 1) << offset) as u32 as i64;
                 push_op!(OpKind::Mov {
                     dst: rd,
@@ -20698,6 +20703,60 @@ mod tests {
         assert_eq!(not_extended, 0x30);
     }
 
+    // Regression for issue #106: S2_mask's width (#u5) and offset (#U5) are
+    // UNEXTENDED fields. A guest A4_ext before S2_mask leaves a pending extender;
+    // the lift must ignore it for these fields (matching the interpreter, which
+    // reads them without immext) rather than folding it in via fimm_u — which would
+    // drive the shift amount well past 63 and panic the host on `1u64 << width` in
+    // overflow-checked builds.
+    #[test]
+    fn issue_106_s2_mask_ignores_immext_and_does_not_panic() {
+        // `lift_unknown_op` has a very large stack frame in debug builds, so run the
+        // lift on a thread with a generous stack: a plain 2 MiB test thread would
+        // overflow on the frame itself, which is unrelated to the bug under test.
+        std::thread::Builder::new()
+            .stack_size(64 * 1024 * 1024)
+            .spawn(|| {
+                fn mask_imm(ops: &[SmirOp]) -> Option<i64> {
+                    ops.iter().find_map(|op| match &op.kind {
+                        OpKind::Mov {
+                            src: SrcOperand::Imm(m),
+                            ..
+                        } => Some(*m),
+                        _ => None,
+                    })
+                }
+
+                // S2_mask: R1 = mask(#u5=4, #U5=0) -> ((1<<4)-1)<<0 = 0xF.
+                // Encoding 0x8d00e401 = base 0x8d002000 | parse[15:14]=11 (single
+                // insn, end-of-packet) | width(=4 at bits[12:8]) | Rd(=1 at [4:0]).
+                let word = 0x8d00_e401u32.to_le_bytes();
+
+                // Baseline (no pending extender): mask = 0xF.
+                let mut lifter = HexagonLifter::default_isa();
+                let mut ctx = LiftContext::new(SourceArch::Hexagon);
+                let base = lifter.lift_insn(0x1000, &word, &mut ctx).unwrap();
+                assert_eq!(mask_imm(&base.ops), Some(0xF), "baseline S2_mask mask value");
+
+                // With a pending maximum-width extender: the result must be
+                // UNCHANGED and, critically, the lift must not panic on an
+                // out-of-range shift (the pre-fix `fimm_u` made width ~
+                // 0x3ff_ffff << 6, panicking `1u64 << width` in checked builds).
+                let mut lifter = HexagonLifter::default_isa();
+                let mut ctx = LiftContext::new(SourceArch::Hexagon);
+                ctx.set_extended_imm(0x03ff_ffff);
+                let ext = lifter.lift_insn(0x1000, &word, &mut ctx).unwrap();
+                assert_eq!(
+                    mask_imm(&ext.ops),
+                    Some(0xF),
+                    "a pending immext must not change S2_mask width/offset (no panic)",
+                );
+            })
+            .unwrap()
+            .join()
+            .unwrap();
+    }
+
     fn assert_unsupported(
         result: Result<(Vec<SmirOp>, ControlFlow), LiftError>,
         expected_mnemonic: &str,
@@ -20840,3 +20899,4 @@ mod tests {
         )));
     }
 }
+
