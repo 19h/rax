@@ -13086,7 +13086,12 @@ impl AArch64Cpu {
         // Pg Rn Zt. opc=bits[22:21] in {01,10,11} -> nreg in {2,3,4}. Reads
         // nreg*elements consecutive structures and de-interleaves them so that
         // Z[(t+r)%32][e] = Mem[base + (e*nreg + r)*mbytes]; zeroes inactive lanes.
-        if !is_store && insn >> 25 == 0b1010010 && b15_13 == 0b111 && (insn >> 21) & 0x3 != 0b00 {
+        if !is_store
+            && insn >> 25 == 0b1010010
+            && b15_13 == 0b111
+            && (insn >> 20) & 1 == 0 // fixed 0; bit20==1 is unallocated
+            && (insn >> 21) & 0x3 != 0b00
+        {
             let nreg = (((insn >> 21) & 0x3) + 1) as usize;
             let msz = (insn >> 23) & 0x3;
             let esize = 1usize << msz;
@@ -21056,6 +21061,21 @@ mod tests {
         // Valid ADDP (00,1) and UMINP (11,1) still execute.
         assert_eq!(setup(0x4411_a020).step().unwrap(), CpuExit::Continue);
         assert_eq!(setup(0x4417_a020).step().unwrap(), CpuExit::Continue);
+    }
+
+    #[test]
+    fn sve_ld234_rejects_bit20_set() {
+        // SVE LD2/LD3/LD4 (scalar+imm) has a fixed 0 at bit20. 0xa430e020 is
+        // unallocated (bit20=1) and must trap, not read guest memory; the valid
+        // ld2b (0xa420e020) still executes.
+        let mut bad = create_cpu_with_insn(0xA430_E020);
+        bad.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16);
+        assert_eq!(bad.step().unwrap(), CpuExit::Undefined(0xA430_E020));
+
+        let mut good = create_cpu_with_insn(0xA420_E020);
+        good.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16);
+        good.set_sve_pred(0, 0); // no active lanes -> no memory access needed
+        assert_eq!(good.step().unwrap(), CpuExit::Continue);
     }
 
     #[test]
