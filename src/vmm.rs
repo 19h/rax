@@ -16,12 +16,7 @@ use crate::backend::hvf::HvfVm;
 #[cfg(all(feature = "kvm", target_os = "linux"))]
 use crate::backend::kvm::KvmVm;
 use crate::backend::{self, Vm};
-#[cfg(any(
-    all(feature = "kvm", target_os = "linux"),
-    all(feature = "hvf", target_os = "macos")
-))]
-use crate::config::BackendKind;
-use crate::config::{ArchKind, CheckpointConfig, VmConfig};
+use crate::config::{ArchKind, BackendKind, CheckpointConfig, VmConfig};
 use crate::console::{Console, ConsoleAction, ESCAPE_HELP};
 use crate::cpu::{CpuState, VCpu, VcpuExit};
 use crate::devices::bus::{IoBus, IoDevice, IoRange, MmioBus, MmioRange, SharedIoDevice};
@@ -95,6 +90,60 @@ fn null_boot_info(arch: ArchKind) -> BootInfo {
             identity_map_addr: 0,
             real_mode: None,
         }),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::any::Any;
+
+    use vm_memory::GuestMemoryMmap;
+
+    use super::*;
+    use crate::cpu::VCpu;
+
+    #[derive(Default)]
+    struct RecordingVm {
+        irq_calls: std::sync::Mutex<Vec<(u32, bool)>>,
+    }
+
+    impl Vm for RecordingVm {
+        fn create_vcpu(&self, _id: u32, _mem: Arc<GuestMemoryMmap>) -> Result<Box<dyn VCpu>> {
+            Err(Error::InvalidConfig("unused test vcpu".to_string()))
+        }
+
+        fn set_irq_line(&self, irq: u32, level: bool) -> Result<()> {
+            self.irq_calls.lock().unwrap().push((irq, level));
+            Ok(())
+        }
+
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+    }
+
+    #[test]
+    fn legacy_serial_irq_drives_pic_and_kvm_irq_line() {
+        let vm = RecordingVm::default();
+        let pic = Arc::new(std::sync::Mutex::new(DualPic::new()));
+
+        drive_legacy_serial_irq(&vm, BackendKind::Kvm, &pic, Some(4), true);
+
+        assert_eq!(vm.irq_calls.lock().unwrap().as_slice(), &[(4, true)]);
+        let (master_irr, _, _, _, _, _) = pic.lock().unwrap().debug_info();
+        assert_eq!(master_irr & (1 << 4), 1 << 4);
+    }
+
+    #[test]
+    fn legacy_serial_irq_does_not_call_backend_for_emulator() {
+        let vm = RecordingVm::default();
+        let pic = Arc::new(std::sync::Mutex::new(DualPic::new()));
+
+        drive_legacy_serial_irq(&vm, BackendKind::Emulator, &pic, Some(4), true);
+
+        assert!(vm.irq_calls.lock().unwrap().is_empty());
+        let (master_irr, _, _, _, _, _) = pic.lock().unwrap().debug_info();
+        assert_eq!(master_irr & (1 << 4), 1 << 4);
     }
 }
 
@@ -302,6 +351,7 @@ impl IoDevice for PitDevice {
 
 pub struct Vmm {
     vm: Box<dyn Vm>,
+    backend_kind: BackendKind,
     guest_mem: GuestMemoryWrapper,
     io_bus: IoBus,
     mmio_bus: MmioBus,
@@ -345,6 +395,28 @@ pub struct Vmm {
     checkpoint_config: CheckpointConfig,
     /// Where hotkey/signal-triggered checkpoints are written.
     snapshot_out: std::path::PathBuf,
+}
+
+fn drive_legacy_serial_irq(
+    vm: &dyn Vm,
+    backend_kind: BackendKind,
+    pic: &Arc<std::sync::Mutex<DualPic>>,
+    serial_irq: Option<u32>,
+    pending: bool,
+) {
+    let Some(irq) = serial_irq else {
+        return;
+    };
+
+    if let Ok(mut pic) = pic.lock() {
+        pic.set_irq(irq as u8, pending);
+    }
+
+    if backend_kind == BackendKind::Kvm {
+        if let Err(e) = vm.set_irq_line(irq, pending) {
+            debug!(irq, pending, error = %e, "failed to drive serial irq line");
+        }
+    }
 }
 
 impl Vmm {
@@ -632,6 +704,7 @@ impl Vmm {
 
         Ok(Vmm {
             vm,
+            backend_kind: config.backend,
             guest_mem,
             io_bus,
             mmio_bus,
@@ -720,12 +793,9 @@ impl Vmm {
 
         loop {
             // Drain host stdin through the console mux: forward guest bytes to the
-            // UART and act on host escape commands. Then drive the serial RX/TX
-            // interrupt line through the inline PIC — the SAME path the PIT uses.
-            // (The backend's set_irq_line() only pushes to an `irq_pending` vec
-            // that nothing drains, so serial IRQs reach the guest only via the
-            // inline PIC.) Release the serial lock before taking the PIC lock to
-            // keep a consistent lock order.
+            // UART and act on host escape commands. Then drive the legacy serial
+            // RX/TX interrupt line. Release the serial lock before taking the PIC
+            // lock to keep a consistent lock order.
             {
                 let (guest_bytes, actions) = console.poll();
                 let mut quit = false;
@@ -780,11 +850,13 @@ impl Vmm {
                     } else {
                         false
                     };
-                    if let Some(irq) = self.serial_irq {
-                        if let Ok(mut pic) = self.pic.lock() {
-                            pic.set_irq(irq as u8, pending);
-                        }
-                    }
+                    drive_legacy_serial_irq(
+                        &*self.vm,
+                        self.backend_kind,
+                        &self.pic,
+                        self.serial_irq,
+                        pending,
+                    );
                 }
             }
 
@@ -1103,13 +1175,15 @@ impl Vmm {
                         } else {
                             false
                         };
-                        // Drive the serial IRQ (TX-empty / line-status) through the
-                        // inline PIC, same as the RX path above.
-                        if let Some(irq) = self.serial_irq {
-                            if let Ok(mut pic) = self.pic.lock() {
-                                pic.set_irq(irq as u8, pending);
-                            }
-                        }
+                        // Drive the serial IRQ (TX-empty / line-status), same as
+                        // the RX path above.
+                        drive_legacy_serial_irq(
+                            &*self.vm,
+                            self.backend_kind,
+                            &self.pic,
+                            self.serial_irq,
+                            pending,
+                        );
                     } else if port == 0xE9 {
                         // Bochs debug port - output directly
                         for byte in &data {
