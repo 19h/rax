@@ -181,14 +181,19 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
 
     let ubase = fld(d, b'u');
     let vbase = fld(d, b'v');
+    let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
+    // These operands are vector-register PAIR bases, which must be even so that
+    // base+1 stays within V0..V31. An odd base (e.g. 31) would read/write
+    // V[32] out of bounds and abort the emulator; reject such encodings.
+    if ubase & 1 != 0 || vbase & 1 != 0 || dbase & 1 != 0 {
+        return false;
+    }
     let u0 = to_bytes(&ctx.vread(ubase)); // Vuu.v[0]
     let u1 = to_bytes(&ctx.vread(ubase + 1)); // Vuu.v[1]
     let cv0 = to_bytes(&ctx.vread(vbase)); // Vvv.v[0] -> c0j
     let cv1 = to_bytes(&ctx.vread(vbase + 1)); // Vvv.v[1] -> c1j
     let phase = (fimm_u(d, b'i', ctx.immext) & 3) as usize;
     let terms = terms_tbl[phase];
-
-    let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
     let mut o0 = if acc {
         to_bytes(&ctx.vread(dbase))
     } else {
@@ -228,4 +233,41 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
     ctx.set_v(dbase, from_bytes(&o0));
     ctx.set_v(dbase + 1, from_bytes(&o1));
     true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::backend::emulator::hexagon::opcode::decode_word;
+    use crate::cpu::HexagonRegisters;
+
+    #[test]
+    fn v6mpy_rejects_odd_pair_base_no_abort() {
+        // V6_v6mpyhubs10 with the destination pair base d (bits[4:0]) == 31.
+        // base+1 == 32 would index V[32] out of bounds and abort; the handler
+        // must reject the encoding (return false) without touching V[32].
+        let word = 0x1f40_2080u32 | 0x1F; // d = 31 (odd pair base)
+        let decoded = decode_word(word).expect("decodes to V6_v6mpyhubs10");
+        assert_eq!(decoded.opcode, Opcode::V6_v6mpyhubs10);
+
+        let regs = HexagonRegisters::default();
+        let mut new_r = [None; 32];
+        let mut new_p = [None; 4];
+        let vnone = [None; 32];
+        let qnone = [None; 4];
+        let mut ctx = SemCtx {
+            regs: &regs,
+            new_r: &mut new_r,
+            new_p: &mut new_p,
+            immext: None,
+            usr_or: 0,
+            vnew: &vnone,
+            vtmp: &vnone,
+            qnew: &qnone,
+            v_writes: Vec::new(),
+            q_writes: Vec::new(),
+        };
+        assert!(!exec(decoded.opcode, &decoded, &mut ctx));
+        assert!(ctx.v_writes.is_empty());
+    }
 }
