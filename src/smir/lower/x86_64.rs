@@ -3416,6 +3416,7 @@ impl X86_64Lowerer {
 
     /// Get the destination register for a VReg
     fn get_dst_reg(&mut self, vreg: VReg) -> Result<PhysReg, LowerError> {
+        Self::ensure_native_stack_dst_safe(vreg)?;
         let loc = self.regalloc.alloc_vreg(vreg)?;
         match loc {
             RegLocation::Register(r) => Ok(r),
@@ -3425,6 +3426,29 @@ impl X86_64Lowerer {
                 })
             }
         }
+    }
+
+    fn native_stack_dst(vreg: VReg) -> Option<X86Reg> {
+        match vreg {
+            VReg::Arch(ArchReg::X86(reg @ (X86Reg::Rsp | X86Reg::Rbp))) => Some(reg),
+            _ => None,
+        }
+    }
+
+    fn ensure_native_stack_dst_safe(vreg: VReg) -> Result<(), LowerError> {
+        if let Some(reg) = Self::native_stack_dst(vreg) {
+            return Err(LowerError::InvalidRegister(format!(
+                "guest {reg:?} cannot be a native lowerer destination"
+            )));
+        }
+        Ok(())
+    }
+
+    fn ensure_native_stack_dests_safe(op: &SmirOp) -> Result<(), LowerError> {
+        for dst in op.kind.dests() {
+            Self::ensure_native_stack_dst_safe(dst)?;
+        }
+        Ok(())
     }
 
     fn emit_shift_reg_imm(&mut self, kind: ShiftRegOp, dst_reg: PhysReg, imm: u8, width: OpWidth) {
@@ -10005,6 +10029,7 @@ impl X86_64Lowerer {
         let mut idx = 0;
         while idx < end_idx {
             self.regalloc.set_current_idx(idx);
+            Self::ensure_native_stack_dests_safe(&block.ops[idx])?;
             // The memory-fusion peepholes emit direct host-pointer accesses,
             // which are invalid under the JIT's MMU helper-call mode. In that
             // mode each Load/Store is lowered individually via the helper path
@@ -10232,7 +10257,9 @@ mod tests {
     use crate::smir::lift::x86_64::X86_64Lifter;
     use crate::smir::lift::{LiftContext, MemoryReader, SmirLifter};
     use crate::smir::memory::MemoryError;
-    use crate::smir::types::{ArchReg, FunctionId, OpWidth, SourceArch, SrcOperand, VReg, X86Reg};
+    use crate::smir::types::{
+        Address, ArchReg, FunctionId, OpWidth, SourceArch, SrcOperand, VReg, X86Reg,
+    };
 
     struct TestReader {
         base: u64,
@@ -10271,6 +10298,27 @@ mod tests {
         (lowerer.finalize().expect("finalize"), res.entry_offset)
     }
 
+    fn lower_rex2_block_err(bytes: &[u8]) -> LowerError {
+        let reader = TestReader {
+            base: 0x1000,
+            bytes: bytes.to_vec(),
+        };
+        let mut lifter = X86_64Lifter::strict();
+        let mut lctx = LiftContext::new(SourceArch::X86_64);
+        let mut block = lifter
+            .lift_block(0x1000, &reader, &mut lctx)
+            .expect("lift REX2 block");
+        block.set_terminator(Terminator::Return { values: vec![] });
+        let block_id = block.id;
+        let mut func = SmirFunction::new(FunctionId(0), block_id, 0x1000);
+        func.add_block(block);
+
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer
+            .lower_function(&func)
+            .expect_err("REX2 block should fail to lower")
+    }
+
     fn lower_single_op(kind: OpKind) -> Vec<u8> {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
         builder.push_op(0x1000, kind);
@@ -10281,6 +10329,62 @@ mod tests {
         let res = lowerer.lower_function(&func).expect("lower single op");
         assert!(res.relocations.is_empty(), "single op should not relocate");
         lowerer.finalize().expect("finalize")
+    }
+
+    fn lower_single_op_err(kind: OpKind) -> LowerError {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(0x1000, kind);
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer
+            .lower_function(&func)
+            .expect_err("single op should fail to lower")
+    }
+
+    #[test]
+    fn rejects_guest_stack_frame_register_destinations() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
+
+        for (name, expected, kind) in [
+            (
+                "mov rsp, imm",
+                "Rsp",
+                OpKind::Mov {
+                    dst: rsp,
+                    src: SrcOperand::Imm(0x1234),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "add rsp, rax",
+                "Rsp",
+                OpKind::Add {
+                    dst: rsp,
+                    src1: rax,
+                    src2: SrcOperand::Imm(8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "lea rbp, [rax]",
+                "Rbp",
+                OpKind::Lea {
+                    dst: rbp,
+                    addr: Address::Direct(rax),
+                },
+            ),
+        ] {
+            let err = lower_single_op_err(kind);
+            assert!(
+                matches!(err, LowerError::InvalidRegister(ref reg) if reg.contains(expected)),
+                "{name} should reject {expected}, got {err:?}"
+            );
+        }
     }
 
     #[test]
@@ -10389,15 +10493,17 @@ mod tests {
     }
 
     #[test]
-    fn lower_apx_push2_pop2_legacy_pair_lowers_without_relocs() {
+    fn lower_apx_push2_pop2_legacy_pair_rejects_guest_rsp_write() {
         // LLVM 20:
         //   push2 %rax, %rbx => 62 f4 64 18 ff f0
         //   pop2  %rax, %rbx => 62 f4 64 18 8f c0
-        let (lowered, entry) = lower_rex2_block(&[
+        let err = lower_rex2_block_err(&[
             0x62, 0xF4, 0x64, 0x18, 0xFF, 0xF0, 0x62, 0xF4, 0x64, 0x18, 0x8F, 0xC0, 0xF4,
         ]);
-        assert!(entry < lowered.len());
-        assert!(!lowered.is_empty());
+        assert!(
+            matches!(err, LowerError::InvalidRegister(ref reg) if reg.contains("Rsp")),
+            "push2/pop2 must reject guest RSP writes, got {err:?}"
+        );
     }
 
     #[test]
