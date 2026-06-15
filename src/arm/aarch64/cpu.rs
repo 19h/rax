@@ -17362,7 +17362,15 @@ fn sqrshl_bhs(src: i32, shift: i32, bits: u32, round: bool, sat: bool) -> i32 {
     } else if !sat || src == 0 {
         return 0;
     }
-    (1i32 << (bits - 1)) - i32::from(src >= 0)
+    // Saturate: positive sources clamp to the max, negatives to the min. For
+    // bits < 32 the max/min share their low `bits` bits, so the caller's mask
+    // recovers the right value either way. For bits == 32, `(1<<31)-1` would
+    // overflow i32 in checked builds, so return i32::MAX / i32::MIN directly.
+    if bits == 32 {
+        if src >= 0 { i32::MAX } else { i32::MIN }
+    } else {
+        (1i32 << (bits - 1)) - i32::from(src >= 0)
+    }
 }
 
 /// Unsigned saturating/rounding shift-left, bits in {8,16,32}. Port of qemu
@@ -20962,6 +20970,27 @@ mod tests {
 
         assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
         assert_eq!(cpu.get_simd_reg(0), Some((src_lo, src_hi)));
+    }
+
+    #[test]
+    fn test_sve2_sqshl_s_positive_saturation_no_panic() {
+        // SQSHL Z0.S, P0/M, Z0.S, Z1.S. A positive 32-bit source shifted far
+        // enough to saturate took the `(1i32<<31)-1` path, which overflows i32
+        // and panics in checked builds. It must instead saturate to i32::MAX.
+        let mut cpu = create_cpu_with_insn(0x4488_8020);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_sve_pred(0, 0xffff); // all lanes active
+        // Four 32-bit lanes of 0x4000_0000 (positive), each shifted left by 4.
+        cpu.set_simd_reg(0, 0x4000_0000_4000_0000, 0x4000_0000_4000_0000)
+            .unwrap();
+        cpu.set_simd_reg(1, 0x0000_0004_0000_0004, 0x0000_0004_0000_0004)
+            .unwrap();
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(
+            cpu.get_simd_reg(0),
+            Some((0x7fff_ffff_7fff_ffff, 0x7fff_ffff_7fff_ffff))
+        );
     }
 
     #[test]
