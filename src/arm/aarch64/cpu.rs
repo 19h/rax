@@ -12443,11 +12443,11 @@ impl AArch64Cpu {
         // 010 = vector register, 000 = predicate register. The immediate is
         // scaled by the register's byte size.
         if insn >> 22 == 0b1000010110 && b15_13 == 0b010 {
-            let addr = (base as i64 + imm9 * 16) as u64;
+            let addr = base.wrapping_add((imm9 * 16) as u64);
             let mut bytes = [0u8; 16];
             for (i, b) in bytes.iter_mut().enumerate() {
                 *b = self.memory.read_u8(self.translate_address(
-                    addr + i as u64,
+                    addr.wrapping_add(i as u64),
                     false,
                     false,
                 )?)?;
@@ -12456,17 +12456,17 @@ impl AArch64Cpu {
             return Ok(CpuExit::Continue);
         }
         if insn >> 22 == 0b1110010110 && b15_13 == 0b010 {
-            let addr = (base as i64 + imm9 * 16) as u64;
+            let addr = base.wrapping_add((imm9 * 16) as u64);
             let bytes = self.v[zt].to_le_bytes();
             for (i, b) in bytes.iter().enumerate() {
                 self.memory
-                    .write_u8(self.translate_address(addr + i as u64, true, false)?, *b)?;
+                    .write_u8(self.translate_address(addr.wrapping_add(i as u64), true, false)?, *b)?;
             }
             return Ok(CpuExit::Continue);
         }
         if insn >> 22 == 0b1000010110 && b15_13 == 0b000 {
             let pt = (insn & 0xF) as usize;
-            let addr = (base as i64 + imm9 * 2) as u64;
+            let addr = base.wrapping_add((imm9 * 2) as u64);
             let b0 = self
                 .memory
                 .read_u8(self.translate_address(addr, false, false)?)? as u32;
@@ -12479,7 +12479,7 @@ impl AArch64Cpu {
         }
         if insn >> 22 == 0b1110010110 && b15_13 == 0b000 {
             let pt = (insn & 0xF) as usize;
-            let addr = (base as i64 + imm9 * 2) as u64;
+            let addr = base.wrapping_add((imm9 * 2) as u64);
             let p = self.sve_p[pt];
             self.memory
                 .write_u8(self.translate_address(addr, true, false)?, p as u8)?;
@@ -12531,13 +12531,13 @@ impl AArch64Cpu {
             let dtype = (insn >> 21) & 0xF;
             let (esize, mbytes, signed) = sve_ld1_dtype(dtype);
             let elements = 16 / esize;
-            let addr0 = (base as i64 + imm4 * (elements * mbytes) as i64) as u64;
+            let addr0 = base.wrapping_add((imm4 * (elements * mbytes) as i64) as u64);
             let mut dst = [0u8; 16];
             for e in 0..elements {
                 if (pred >> (e * esize)) & 1 == 0 {
                     continue; // inactive -> zero (LD1 is zeroing)
                 }
-                let ea = addr0 + (e * mbytes) as u64;
+                let ea = addr0.wrapping_add((e * mbytes) as u64);
                 let pa = self.translate_address(ea, false, false)?;
                 let raw: u64 = match mbytes {
                     1 => self.memory.read_u8(pa)? as u64,
@@ -12567,13 +12567,13 @@ impl AArch64Cpu {
             let esize = 1usize << size;
             let mbytes = 1usize << msz;
             let elements = 16 / esize;
-            let addr0 = (base as i64 + imm4 * (elements * mbytes) as i64) as u64;
+            let addr0 = base.wrapping_add((imm4 * (elements * mbytes) as i64) as u64);
             let src = self.v[zt].to_le_bytes();
             for e in 0..elements {
                 if (pred >> (e * esize)) & 1 == 0 {
                     continue; // inactive -> leave memory unchanged
                 }
-                let ea = addr0 + (e * mbytes) as u64;
+                let ea = addr0.wrapping_add((e * mbytes) as u64);
                 let pa = self.translate_address(ea, true, false)?;
                 let val = read_elem(&src, e * esize, esize); // low msize bytes stored
                 match mbytes {
@@ -12602,7 +12602,7 @@ impl AArch64Cpu {
                 if (pred >> (e * esize)) & 1 == 0 {
                     continue;
                 }
-                let pa = self.translate_address(addr0 + (e * mbytes) as u64, false, false)?;
+                let pa = self.translate_address(addr0.wrapping_add((e * mbytes) as u64), false, false)?;
                 let raw: u64 = match mbytes {
                     1 => self.memory.read_u8(pa)? as u64,
                     2 => self.memory.read_u16(pa)? as u64,
@@ -12639,7 +12639,7 @@ impl AArch64Cpu {
             let dtype = (insn >> 21) & 0xF;
             let (esize, mbytes, signed) = sve_ld1_dtype(dtype);
             let elements = 16 / esize;
-            let addr0 = (base as i64 + imm4 * (elements * mbytes) as i64) as u64;
+            let addr0 = base.wrapping_add((imm4 * (elements * mbytes) as i64) as u64);
             return self.exec_sve_ff_load(addr0, mbytes, esize, signed, elements, pred, zt, true);
         }
 
@@ -12663,7 +12663,7 @@ impl AArch64Cpu {
                 if (pred >> (e * esize)) & 1 == 0 {
                     continue;
                 }
-                let pa = self.translate_address(addr0 + (e * mbytes) as u64, true, false)?;
+                let pa = self.translate_address(addr0.wrapping_add((e * mbytes) as u64), true, false)?;
                 let val = read_elem(&src, e * esize, esize);
                 match mbytes {
                     1 => self.memory.write_u8(pa, val as u8)?,
@@ -13003,7 +13003,7 @@ impl AArch64Cpu {
             let esize = 1usize << ((insn >> 23) & 0x3);
             let elements = 16 / esize;
             let addr0 = if b15_13 == 0b001 {
-                (base as i64 + imm4 * 16) as u64
+                base.wrapping_add((imm4 * 16) as u64)
             } else {
                 let rm = ((insn >> 16) & 0x1F) as u8;
                 if rm == 31 {
@@ -13016,7 +13016,7 @@ impl AArch64Cpu {
                 if (pred >> (e * esize)) & 1 == 0 {
                     continue;
                 }
-                let pa = self.translate_address(addr0 + (e * esize) as u64, false, false)?;
+                let pa = self.translate_address(addr0.wrapping_add((e * esize) as u64), false, false)?;
                 let val: u64 = match esize {
                     1 => self.memory.read_u8(pa)? as u64,
                     2 => self.memory.read_u16(pa)? as u64,
@@ -13035,13 +13035,13 @@ impl AArch64Cpu {
         if !is_store && insn >> 25 == 0b1010010 && b15_13 == 0b111 && (insn >> 20) & 0x7 == 0b000 {
             let esize = 1usize << ((insn >> 23) & 0x3);
             let elements = 16 / esize;
-            let addr0 = (base as i64 + imm4 * (elements * esize) as i64) as u64;
+            let addr0 = base.wrapping_add((imm4 * (elements * esize) as i64) as u64);
             let mut dst = [0u8; 16];
             for e in 0..elements {
                 if (pred >> (e * esize)) & 1 == 0 {
                     continue;
                 }
-                let pa = self.translate_address(addr0 + (e * esize) as u64, false, false)?;
+                let pa = self.translate_address(addr0.wrapping_add((e * esize) as u64), false, false)?;
                 let val: u64 = match esize {
                     1 => self.memory.read_u8(pa)? as u64,
                     2 => self.memory.read_u16(pa)? as u64,
@@ -13059,13 +13059,13 @@ impl AArch64Cpu {
         if is_store && insn >> 25 == 0b1110010 && b15_13 == 0b111 && (insn >> 20) & 0x7 == 0b001 {
             let esize = 1usize << ((insn >> 23) & 0x3);
             let elements = 16 / esize;
-            let addr0 = (base as i64 + imm4 * (elements * esize) as i64) as u64;
+            let addr0 = base.wrapping_add((imm4 * (elements * esize) as i64) as u64);
             let src = self.v[zt].to_le_bytes();
             for e in 0..elements {
                 if (pred >> (e * esize)) & 1 == 0 {
                     continue;
                 }
-                let pa = self.translate_address(addr0 + (e * esize) as u64, true, false)?;
+                let pa = self.translate_address(addr0.wrapping_add((e * esize) as u64), true, false)?;
                 let val = read_elem(&src, e * esize, esize);
                 match esize {
                     1 => self.memory.write_u8(pa, val as u8)?,
@@ -13087,7 +13087,7 @@ impl AArch64Cpu {
             let esize = 1usize << msz;
             let elements = 16 / esize;
             let mbytes = esize;
-            let addr0 = (base as i64 + imm4 * (elements * nreg * mbytes) as i64) as u64;
+            let addr0 = base.wrapping_add((imm4 * (elements * nreg * mbytes) as i64) as u64);
             let mut regs = [[0u8; 16]; 4];
             let mut a = addr0;
             for e in 0..elements {
@@ -13126,7 +13126,7 @@ impl AArch64Cpu {
             let esize = 1usize << msz;
             let elements = 16 / esize;
             let mbytes = esize;
-            let addr0 = (base as i64 + imm4 * (elements * nreg * mbytes) as i64) as u64;
+            let addr0 = base.wrapping_add((imm4 * (elements * nreg * mbytes) as i64) as u64);
             let mut srcs = [[0u8; 16]; 4];
             for r in 0..nreg {
                 srcs[r] = self.v[(zt + r) % 32].to_le_bytes();
@@ -13256,7 +13256,7 @@ impl AArch64Cpu {
                 self.sve_ffr &= !(1u32 << (e * esize));
                 continue;
             }
-            let ea = addr0 + (e * mbytes) as u64;
+            let ea = addr0.wrapping_add((e * mbytes) as u64);
             let read: Result<u64, ArmError> = match self.translate_address(ea, false, false) {
                 Ok(pa) => match mbytes {
                     1 => self
@@ -16897,14 +16897,14 @@ impl ArmCpu for AArch64Cpu {
     fn read_memory(&self, addr: u64, size: usize) -> Result<Vec<u8>, ArmError> {
         let mut data = vec![0u8; size];
         for i in 0..size {
-            data[i] = self.mem_read_u8(addr + i as u64)?;
+            data[i] = self.mem_read_u8(addr.wrapping_add(i as u64))?;
         }
         Ok(data)
     }
 
     fn write_memory(&mut self, addr: u64, data: &[u8]) -> Result<(), ArmError> {
         for (i, &byte) in data.iter().enumerate() {
-            self.mem_write_u8(addr + i as u64, byte)?;
+            self.mem_write_u8(addr.wrapping_add(i as u64), byte)?;
         }
         Ok(())
     }
@@ -20991,6 +20991,20 @@ mod tests {
 
         assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
         assert_eq!(cpu.get_simd_reg(0), Some((src_lo, src_hi)));
+    }
+
+    #[test]
+    fn sve_ld1rq_effective_address_wraps_no_panic() {
+        // LD1RQ Z0.B, P0/Z, [X5, #0]. With the base register at u64::MAX, the
+        // per-lane effective address addr0 + e overflows u64. Effective-address
+        // arithmetic must wrap (and fault through translation), not panic in
+        // checked builds. Lane 0 is inactive so a later lane drives the wrap.
+        let mut cpu = create_cpu_with_insn(0xA400_20A0);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_x(5, u64::MAX); // base = u64::MAX
+        cpu.set_sve_pred(0, 0b10); // lane 0 inactive, lane 1 active
+        // Must not panic; the wrapped lane addresses resolve normally here.
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
     }
 
     #[test]
