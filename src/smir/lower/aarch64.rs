@@ -6882,18 +6882,110 @@ impl Aarch64Lowerer {
     ) -> Result<(), LowerError> {
         let rd = Self::dst_gpr_arm_or_x86(dst)?;
         let rn = Self::fp_reg(src)?;
+        let lower_width = match int_width {
+            OpWidth::W8 | OpWidth::W16 => OpWidth::W64,
+            OpWidth::W32 | OpWidth::W64 => int_width,
+            other => {
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("AArch64 native FpToInt width {other:?}"),
+                });
+            }
+        };
+
+        if round == FpRoundMode::Dynamic {
+            self.lower_fp_to_int_dynamic(rd, rn, fp_precision, lower_width, signed)?;
+        } else {
+            self.emit_fp_to_int(rd, rn, fp_precision, lower_width, signed, round)?;
+        }
+
         match int_width {
             OpWidth::W8 | OpWidth::W16 => {
-                self.emit_fp_to_int(rd, rn, fp_precision, OpWidth::W64, signed, round)?;
                 self.emit_bitfield(rd, rd, 0b10, 0, int_width.bits() - 1, OpWidth::W32)
             }
-            OpWidth::W32 | OpWidth::W64 => {
-                self.emit_fp_to_int(rd, rn, fp_precision, int_width, signed, round)
-            }
-            other => Err(LowerError::UnsupportedOp {
-                op: format!("AArch64 native FpToInt width {other:?}"),
-            }),
+            OpWidth::W32 | OpWidth::W64 => Ok(()),
+            _ => unreachable!(),
         }
+    }
+
+    fn lower_fp_to_int_dynamic(
+        &mut self,
+        rd: u8,
+        rn: u8,
+        fp_precision: FpPrecision,
+        int_width: OpWidth,
+        signed: bool,
+    ) -> Result<(), LowerError> {
+        Self::fp_type(fp_precision)?;
+        Self::sf(int_width)?;
+
+        let scratches = Self::scratch_regs(&[rd], 1)?;
+        let rmode_reg = scratches[0];
+        let mut done_branches = Vec::with_capacity(3);
+
+        self.emit_scratch_save(&scratches);
+        self.emit_sysreg(rmode_reg, ArmReg::Fpcr, true)?;
+        self.emit_bitfield(rmode_reg, rmode_reg, 0b10, 22, 23, OpWidth::W32)?;
+
+        let not_nearest = self.code.position();
+        self.emit(0xb500_0000 | (rmode_reg as u32));
+        self.emit_fp_to_int(
+            rd,
+            rn,
+            fp_precision,
+            int_width,
+            signed,
+            FpRoundMode::RoundNearest,
+        )?;
+        let done = self.code.position();
+        self.emit(0x1400_0000);
+        done_branches.push(done);
+        self.patch_compare_branch_to_current(not_nearest, rmode_reg, true)?;
+
+        self.emit_addsub_imm(rmode_reg, rmode_reg, 1, true, false, OpWidth::W32)?;
+        let not_up = self.code.position();
+        self.emit(0xb500_0000 | (rmode_reg as u32));
+        self.emit_fp_to_int(
+            rd,
+            rn,
+            fp_precision,
+            int_width,
+            signed,
+            FpRoundMode::RoundUp,
+        )?;
+        let done = self.code.position();
+        self.emit(0x1400_0000);
+        done_branches.push(done);
+        self.patch_compare_branch_to_current(not_up, rmode_reg, true)?;
+
+        self.emit_addsub_imm(rmode_reg, rmode_reg, 1, true, false, OpWidth::W32)?;
+        let not_down = self.code.position();
+        self.emit(0xb500_0000 | (rmode_reg as u32));
+        self.emit_fp_to_int(
+            rd,
+            rn,
+            fp_precision,
+            int_width,
+            signed,
+            FpRoundMode::RoundDown,
+        )?;
+        let done = self.code.position();
+        self.emit(0x1400_0000);
+        done_branches.push(done);
+        self.patch_compare_branch_to_current(not_down, rmode_reg, true)?;
+
+        self.emit_fp_to_int(
+            rd,
+            rn,
+            fp_precision,
+            int_width,
+            signed,
+            FpRoundMode::RoundTowardZero,
+        )?;
+        for done in done_branches {
+            self.patch_branch_to_current(done)?;
+        }
+        self.emit_scratch_restore(&scratches);
+        Ok(())
     }
 
     fn lower_fp_fma(
@@ -16457,6 +16549,17 @@ mod tests {
         regs: &[(u8, u64)],
         simd_regs: &[(u8, u64, u64)],
     ) -> ([u64; 31], [(u64, u64); 32], u64) {
+        let (regs, simd, sp, _) =
+            run_aarch64_code_with_regs_simd_and_fpcr(code, regs, simd_regs, 0);
+        (regs, simd, sp)
+    }
+
+    fn run_aarch64_code_with_regs_simd_and_fpcr(
+        code: &[u8],
+        regs: &[(u8, u64)],
+        simd_regs: &[(u8, u64, u64)],
+        fpcr: u32,
+    ) -> ([u64; 31], [(u64, u64); 32], u64, u32) {
         let mut image = vec![0u8; 0x10000];
         image[..code.len()].copy_from_slice(code);
         image[code.len()..code.len() + 4].copy_from_slice(&0xd420_0000u32.to_le_bytes());
@@ -16466,6 +16569,7 @@ mod tests {
         cpu.set_pc(0);
         cpu.set_current_sp(0x8000);
         cpu.set_x(30, code.len() as u64);
+        cpu.set_fpcr(fpcr).unwrap();
         for &(reg, value) in regs {
             cpu.set_x(reg, value);
         }
@@ -16495,7 +16599,12 @@ mod tests {
         for reg in 0..32 {
             out_simd[reg] = cpu.get_simd_reg(reg as u8).unwrap();
         }
-        (out_regs, out_simd, cpu.current_sp())
+        (
+            out_regs,
+            out_simd,
+            cpu.current_sp(),
+            cpu.get_fpcr().unwrap(),
+        )
     }
 
     fn run_aarch64_code_with_regs_simd_and_memory(
@@ -27022,6 +27131,50 @@ mod tests {
     }
 
     #[test]
+    fn lowers_scalar_fp_to_int_dynamic_runtime_uses_fpcr_rounding() {
+        let code = lower_ops(vec![
+            OpKind::FpToInt {
+                dst: x(0),
+                src: v(1),
+                fp_precision: FpPrecision::F64,
+                int_width: OpWidth::W64,
+                signed: true,
+                round: FpRoundMode::Dynamic,
+            },
+            OpKind::TestCondition {
+                dst: x(2),
+                cond: Condition::Eq,
+            },
+        ]);
+        let scratch16 = 0x1616_1616_1616_1616;
+        let scratch31 = (0x3131_3131_3131_3131, 0x1313_1313_1313_1313);
+        let cases = [
+            (0b00, 3.5_f64, 4_u64),
+            (0b01, 2.1_f64, 3_u64),
+            (0b10, -2.1_f64, (-3_i64) as u64),
+            (0b11, -2.9_f64, (-2_i64) as u64),
+        ];
+
+        for (rmode, input, expected) in cases {
+            let fpcr_in = rmode << 22;
+            let (regs, simd, sp, fpcr) = run_aarch64_code_with_regs_simd_and_fpcr(
+                &code,
+                &[(0, 0x1234_5678_9abc_def0), (16, scratch16)],
+                &[(1, input.to_bits(), 0), (31, scratch31.0, scratch31.1)],
+                fpcr_in,
+            );
+
+            assert_eq!(regs[0], expected, "FPCR.RMode={rmode:#04b}");
+            assert_eq!(regs[2], 0, "FPCR.RMode={rmode:#04b}");
+            assert_eq!(regs[16], scratch16, "FPCR.RMode={rmode:#04b}");
+            assert_eq!(simd[1], (input.to_bits(), 0), "FPCR.RMode={rmode:#04b}");
+            assert_eq!(simd[31], scratch31, "FPCR.RMode={rmode:#04b}");
+            assert_eq!(sp, 0x8000, "FPCR.RMode={rmode:#04b}");
+            assert_eq!(fpcr, fpcr_in, "FPCR.RMode={rmode:#04b}");
+        }
+    }
+
+    #[test]
     fn lowers_scalar_fp_int_conversion_apx_egpr_operands_runtime() {
         let code = lower_ops(vec![
             OpKind::IntToFp {
@@ -27143,17 +27296,6 @@ mod tests {
 
         let mut lowerer = Aarch64Lowerer::new();
         let err = lowerer.lower_function(&func).unwrap_err();
-        assert!(matches!(err, LowerError::UnsupportedOp { .. }));
-
-        let err = try_lower_single_op(OpKind::FpToInt {
-            dst: x(0),
-            src: v(1),
-            fp_precision: FpPrecision::F64,
-            int_width: OpWidth::W64,
-            signed: true,
-            round: FpRoundMode::Dynamic,
-        })
-        .unwrap_err();
         assert!(matches!(err, LowerError::UnsupportedOp { .. }));
     }
 
