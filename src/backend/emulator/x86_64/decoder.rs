@@ -1,7 +1,6 @@
 //! x86_64 instruction decoder with LUT-based prefix detection.
 
 use super::cpu::{InsnContext, Rex2Prefix, X86_64Vcpu};
-use crate::cpu::VcpuExit;
 use crate::error::{Error, Result};
 
 /// Lookup table for prefix detection (256 bytes, index = byte value).
@@ -430,8 +429,9 @@ impl X86_64Vcpu {
     /// `ctx.cursor` points just past the primary opcode in both the full-decode
     /// and decode-cache-hit paths.
     ///
-    /// Returns `Ok(Some(exit))` if the LOCK was illegal (after delivering #UD),
-    /// `Ok(None)` if the instruction may proceed.
+    /// Returns `Ok(true)` if the LOCK was illegal and #UD was delivered, so the
+    /// caller must stop dispatching this instruction. Returns `Ok(false)` if the
+    /// instruction may proceed.
     #[inline(always)]
     #[allow(dead_code)] // retained for non-cache callers / documentation; the hot
     // path now caches the LOCK verdict and calls `enforce_lock_prefix_cold` directly.
@@ -440,13 +440,13 @@ impl X86_64Vcpu {
         ctx: &InsnContext,
         opcode: u8,
         opcode_cursor: usize,
-    ) -> Result<Option<VcpuExit>> {
+    ) -> Result<bool> {
         // Fast path (inlined into the hot loop): no LOCK prefix (0xF0) among the
         // prefix bytes => nothing to enforce. This is the overwhelmingly common
         // case (prefix-less instructions resolve to an empty scan). Only when a
         // 0xF0 is actually present do we take the cold legality path.
         if !ctx.bytes[..opcode_cursor.min(ctx.bytes_len)].contains(&0xF0) {
-            return Ok(None);
+            return Ok(false);
         }
         self.enforce_lock_prefix_cold(ctx, opcode)
     }
@@ -457,16 +457,16 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &InsnContext,
         opcode: u8,
-    ) -> Result<Option<VcpuExit>> {
+    ) -> Result<bool> {
         if Self::lock_is_legal(ctx, opcode) {
-            return Ok(None);
+            return Ok(false);
         }
 
         // Illegal LOCK use: deliver #UD (vector 6, no error code). RIP still
         // points at the faulting instruction (it is only advanced by handlers
         // on success), which is the architecturally correct fault behaviour.
         self.inject_exception(6, None)?;
-        Ok(Some(VcpuExit::Shutdown))
+        Ok(true)
     }
 
     /// Decide whether a LOCK-prefixed instruction is legal. Pure decode-time

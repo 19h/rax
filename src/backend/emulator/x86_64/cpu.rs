@@ -1412,8 +1412,8 @@ impl X86_64Vcpu {
             // hit path skips the prefix-byte scan and only takes the (cold)
             // legality check when a 0xF0 prefix is actually present.
             if cached.has_lock {
-                if let Some(exit) = self.enforce_lock_prefix_cold(&ctx, cached.opcode)? {
-                    return Ok(Some(exit));
+                if self.enforce_lock_prefix_cold(&ctx, cached.opcode)? {
+                    return Ok(None);
                 }
             }
 
@@ -1512,8 +1512,8 @@ impl X86_64Vcpu {
         // `opcode_cursor` is the primary-opcode offset; prefixes precede it. Only
         // pay the legality check when a LOCK prefix is actually present.
         if has_lock {
-            if let Some(exit) = self.enforce_lock_prefix_cold(&ctx, opcode)? {
-                return Ok(Some(exit));
+            if self.enforce_lock_prefix_cold(&ctx, opcode)? {
+                return Ok(None);
             }
         }
 

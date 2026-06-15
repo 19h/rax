@@ -1,7 +1,7 @@
 use crate::common::{
-    cf_set, of_set, pf_set, read_mem_u8, read_mem_u16, read_mem_u32, read_mem_u64, run_until_hlt,
-    setup_vm, setup_vm_no_idt, sf_set, write_mem_u8, write_mem_u16, write_mem_u32, write_mem_u64,
-    zf_set,
+    Bytes, CODE_ADDR, GuestAddress, INT_HANDLER_ADDR, cf_set, of_set, pf_set, read_mem_u8,
+    read_mem_u16, read_mem_u32, read_mem_u64, run_until_hlt, setup_vm, setup_vm_no_idt, sf_set,
+    write_mem_u8, write_mem_u16, write_mem_u32, write_mem_u64, zf_set,
 };
 use rax::cpu::{Registers, VCpu, VcpuExit};
 
@@ -541,6 +541,38 @@ fn test_lock_accumulator_pattern() {
 fn reached_hlt(code: &[u8], regs: Option<Registers>) -> bool {
     let (mut vcpu, _mem) = setup_vm_no_idt(code, regs);
     matches!(vcpu.run(), Ok(VcpuExit::Hlt))
+}
+
+#[test]
+fn test_lock_mov_ud_runs_guest_handler_without_shutdown() {
+    // LOCK MOV EAX, EBX is invalid. With a present IDT, run() must keep executing
+    // guest code after #UD delivery instead of returning a VMM Shutdown exit.
+    let mut regs = Registers::default();
+    regs.rax = 0x1111;
+    regs.rbx = 0x2222;
+
+    let code = [
+        0xf0, 0x89, 0xd8, // LOCK MOV EAX, EBX (illegal; must not execute)
+        0xf4, // HLT after the #UD handler skips the faulting instruction
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let ud_handler = [
+        0x48, 0x83, 0x04, 0x24, 0x03, // ADD QWORD PTR [RSP], 3 (saved RIP)
+        0x48, 0xcf, // IRETQ
+        0xf4, // HLT fallback
+    ];
+    mem.write_slice(&ud_handler, GuestAddress(INT_HANDLER_ADDR))
+        .unwrap();
+
+    let exit = vcpu.run().unwrap();
+    assert!(
+        matches!(exit, VcpuExit::Hlt),
+        "expected guest to reach HLT after handling #UD, got {exit:?}",
+    );
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rax, 0x1111, "illegal LOCK MOV must not retire");
+    assert_eq!(regs.rbx, 0x2222);
+    assert_eq!(regs.rip, CODE_ADDR + code.len() as u64);
 }
 
 // ----- Positive: LOCK ADD [mem], reg works (item 1 of the task) -----
