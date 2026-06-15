@@ -1098,6 +1098,26 @@ impl Aarch64Lowerer {
         )
     }
 
+    fn emit_zero_base_extended_flags(
+        &mut self,
+        src: u8,
+        option: u32,
+        amount: u32,
+        subtract: bool,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
+        let scratch = Self::scratch_regs(&[src], 1)?[0];
+        self.emit_scratch_save(&[scratch]);
+
+        let mut result = self.emit_zero_base_extended(scratch, src, option, amount, width);
+        if result.is_ok() {
+            result = self.emit_addsub_reg(31, 31, scratch, subtract, true, width);
+        }
+
+        self.emit_scratch_restore(&[scratch]);
+        result
+    }
+
     fn emit_addsub_extended(
         &mut self,
         dst: u8,
@@ -5235,15 +5255,11 @@ impl Aarch64Lowerer {
                             op: format!("AArch64 native zero-base add/sub width {width:?}"),
                         });
                     }
-                    if dst == 31 {
-                        // Flag-only zero-base extended add/sub would need a
-                        // destination scratch to hold extend(rm); bail to the
-                        // interpreter rather than encode SP as the base.
-                        return Err(LowerError::UnsupportedOp {
-                            op: "AArch64 native flag-setting zero-base extended add/sub".into(),
-                        });
-                    }
                     let (rm, option, amount) = Self::addsub_ext_src2(src2)?;
+                    if dst == 31 {
+                        return self
+                            .emit_zero_base_extended_flags(rm, option, amount, subtract, width);
+                    }
                     // dst = extend(rm) << amount (no SP). Fold in the subtract
                     // sign and/or flag update with an XZR-based shifted add/sub
                     // (Rn = 31 is XZR in the shifted-register encoding).
@@ -7534,15 +7550,8 @@ impl Aarch64Lowerer {
                     return self.emit_addsub_shifted(31, 31, rm, true, true, shift, amount, width);
                 }
                 SrcOperand::Extended { .. } => {
-                    // `CMP 0, extend(rm)` sets flags from `0 - extend(rm)`, but
-                    // the extended encoding's Rn = 31 is SP, not XZR, so it
-                    // cannot be emitted directly and the narrowing extend needs
-                    // a scratch register to materialize. The destination here is
-                    // the discard register (31), so bail to the interpreter
-                    // rather than compare against SP.
-                    return Err(LowerError::UnsupportedOp {
-                        op: "AArch64 native zero-base extended CMP".into(),
-                    });
+                    let (rm, option, amount) = Self::addsub_ext_src2(src2)?;
+                    return self.emit_zero_base_extended_flags(rm, option, amount, true, width);
                 }
                 _ => {}
             }
@@ -7729,14 +7738,10 @@ impl Aarch64Lowerer {
                             );
                         }
                         SrcOperand::Extended { .. } => {
-                            // Flags from `extend(src)` with a discard
-                            // destination (Rd = 31) would need a scratch to hold
-                            // the extended value; the extended encoding's
-                            // Rn = 31 is SP, so bail to the interpreter rather
-                            // than set flags from `SP + extend(src)`.
-                            return Err(LowerError::UnsupportedOp {
-                                op: "AArch64 native zero-base extended test flags".into(),
-                            });
+                            let (src, option, amount) = Self::addsub_ext_src2(src2)?;
+                            return self.emit_zero_base_extended_flags(
+                                src, option, amount, false, width,
+                            );
                         }
                         _ => {}
                     }
@@ -20733,6 +20738,50 @@ mod tests {
             | rd
     }
 
+    fn zero_base_extended_flags_words(
+        sf: u32,
+        op: u32,
+        option: u32,
+        imm3: u32,
+        rm: u32,
+    ) -> Vec<u32> {
+        let scratch = if rm == 16 { 17 } else { 16 };
+        let regbits = if sf == 1 { 64 } else { 32 };
+        let ext_bits = match option & 0b011 {
+            0b00 => 8,
+            0b01 => 16,
+            0b10 => 32,
+            _ => 64,
+        };
+        let mut words = vec![enc_ldst_simm_regs(3, 0b00, 0b11, -16, scratch, 31)];
+        if ext_bits >= regbits {
+            if imm3 == 0 {
+                words.push(enc_mov_reg(sf, scratch, rm));
+            } else {
+                words.push(enc_bitfield_regs(
+                    sf,
+                    0b10,
+                    regbits - imm3,
+                    regbits - 1 - imm3,
+                    rm,
+                    scratch,
+                ));
+            }
+        } else {
+            words.push(enc_bitfield_regs(
+                sf,
+                if (option & 0b100) != 0 { 0b00 } else { 0b10 },
+                (regbits - imm3) & (regbits - 1),
+                ext_bits - 1,
+                rm,
+                scratch,
+            ));
+        }
+        words.push(enc_addsub_shift_regs(sf, op, 1, 0, 0, 31, 31, scratch));
+        words.push(enc_ldst_simm_regs(3, 0b01, 0b01, 16, scratch, 31));
+        words
+    }
+
     fn enc_logical_reg_n(sf: u32, opc: u32, n: u32, rd: u32, rn: u32, rm: u32) -> u32 {
         enc_logical_shift_regs(sf, opc, n, 0, 0, rd, rn, rm)
     }
@@ -21431,6 +21480,7 @@ mod tests {
         // pointer into guest state. The harness runs with SP = 0x8000, so a
         // correct lowering must produce SP-independent results.
         let x10: u64 = 0x1_2345_6789;
+        let scratch = 0x1616_1616_1616_1616;
         let uxtw = x10 & 0xFFFF_FFFF; // 0x2345_6789
         let sxtb = ((x10 as u8) as i8 as i64) as u64; // sign-extend low byte
 
@@ -21489,15 +21539,41 @@ mod tests {
                 width: OpWidth::W16,
                 flags: FlagUpdate::None,
             },
+            // Flag-only 0 - uxtw(x10) uses a saved scratch, not SP.
+            OpKind::Sub {
+                dst: VReg::virt(0),
+                src1: VReg::Imm(0),
+                src2: ext(x(10), ExtendOp::Uxtw, 0),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+            OpKind::TestCondition {
+                dst: x(6),
+                cond: Condition::Negative,
+            },
+            // Flag-only TST -1, sxtb(x10) also uses the scratch path.
+            OpKind::Test {
+                src1: VReg::Imm(-1),
+                src2: ext(x(10), ExtendOp::Sxtb, 0),
+                width: OpWidth::W64,
+            },
+            OpKind::TestCondition {
+                dst: x(7),
+                cond: Condition::Negative,
+            },
         ]);
 
-        let (out, _nzcv, _sp) = run_aarch64_code(&code, &[(10, x10)], 0);
+        let (out, _nzcv, sp) = run_aarch64_code(&code, &[(10, x10), (16, scratch)], 0);
         assert_eq!(out[0], uxtw << 2, "add uxtw<<2");
         assert_eq!(out[1], 0u64.wrapping_sub(uxtw), "sub uxtw (negate)");
         assert_eq!(out[2], uxtw << 1, "or uxtw<<1");
         assert_eq!(out[3], uxtw, "xor uxtw");
         assert_eq!(out[4], sxtb, "add sxtb");
         assert_eq!(out[5], (uxtw << 1) & 0xFFFF, "subword add uxtw<<1 (W16)");
+        assert_eq!(out[6], 1, "flag-only sub uxtw is negative");
+        assert_eq!(out[7], 1, "flag-only test sxtb is negative");
+        assert_eq!(out[16], scratch, "scratch register restored");
+        assert_eq!(sp, 0x8000, "stack pointer restored");
     }
 
     #[test]
@@ -22602,12 +22678,16 @@ mod tests {
         builder.set_terminator(Terminator::Return { values: vec![] });
         let func = builder.finish();
 
-        // A zero-base extended CMP would compute flags from `SP - extend(x1)`
-        // (Rn = 31 is SP in the extended encoding), and the discard destination
-        // leaves no scratch to materialize extend(x1) first; the lowerer bails
-        // to the interpreter instead of comparing against SP.
         let mut lowerer = Aarch64Lowerer::new();
-        assert!(lowerer.lower_function(&func).is_err());
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        for word in zero_base_extended_flags_words(1, 1, 0b010, 2, 1) {
+            expected.extend_from_slice(&word.to_le_bytes());
+        }
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
     }
 
     #[test]
@@ -43918,49 +43998,62 @@ mod tests {
     }
 
     #[test]
-    fn rejects_test_all_ones_left_imm_extended_zero_base() {
-        // #58: a flag-only TST with an all-ones mask and an extended source
-        // would set flags from `SP + extend(x2)` (Rn = 31 is SP in the extended
-        // add) and, with a discard destination, has no scratch to materialize
-        // extend(x2); the lowerer bails to the interpreter instead of using SP.
+    fn lowers_test_all_ones_left_imm_extended_zero_base_with_scratch() {
         let cases = [
-            OpKind::Test {
-                src1: VReg::Imm(-1),
-                src2: SrcOperand::Extended {
-                    reg: x(2),
-                    extend: ExtendOp::Uxtw,
-                    shift: 0,
+            (
+                OpKind::Test {
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Uxtw,
+                        shift: 0,
+                    },
+                    width: OpWidth::W64,
                 },
-                width: OpWidth::W64,
-            },
-            OpKind::Test {
-                src1: VReg::Imm(-1),
-                src2: SrcOperand::Extended {
-                    reg: x(2),
-                    extend: ExtendOp::Sxtw,
-                    shift: 2,
+                zero_base_extended_flags_words(1, 0, 0b010, 0, 2),
+            ),
+            (
+                OpKind::Test {
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Sxtw,
+                        shift: 2,
+                    },
+                    width: OpWidth::W64,
                 },
-                width: OpWidth::W64,
-            },
-            OpKind::Test {
-                src1: VReg::Imm(0x1_ffff_ffff),
-                src2: SrcOperand::Extended {
-                    reg: x(2),
-                    extend: ExtendOp::Uxtb,
-                    shift: 1,
+                zero_base_extended_flags_words(1, 0, 0b110, 2, 2),
+            ),
+            (
+                OpKind::Test {
+                    src1: VReg::Imm(0x1_ffff_ffff),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Uxtb,
+                        shift: 1,
+                    },
+                    width: OpWidth::W32,
                 },
-                width: OpWidth::W32,
-            },
+                zero_base_extended_flags_words(0, 0, 0b000, 1, 2),
+            ),
         ];
 
-        for kind in cases {
+        for (kind, expected_words) in cases {
             let mut builder = FunctionBuilder::new(FunctionId(0), 0);
             builder.push_op(0, kind);
             builder.set_terminator(Terminator::Return { values: vec![] });
             let func = builder.finish();
 
             let mut lowerer = Aarch64Lowerer::new();
-            assert!(lowerer.lower_function(&func).is_err());
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            for word in expected_words {
+                expected.extend_from_slice(&word.to_le_bytes());
+            }
+            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+            assert_eq!(code, expected);
         }
     }
 
