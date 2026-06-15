@@ -101,6 +101,10 @@ pub fn lahf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
 /// SAHF - Store AH into Flags (0x9E)
 /// Stores AH into SF, ZF, AF, PF, CF of RFLAGS
 pub fn sahf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // SAHF preserves OF (and the non-0xD5 bits). After a lazy Jcc/SETcc/CMOVcc
+    // the authoritative flags live in lazy_flags, not regs.rflags; commit them
+    // before this partial write so the preserved OF is not lost.
+    vcpu.materialize_flags();
     // AH contains SF:ZF:0:AF:0:PF:1:CF
     let ah = ((vcpu.regs.rax >> 8) & 0xFF) as u64;
     // Mask for SF, ZF, AF, PF, CF (bits 7, 6, 4, 2, 0)

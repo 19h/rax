@@ -10,6 +10,11 @@ use super::super::super::flags;
 /// For memory operands, the bit offset can extend beyond the operand size,
 /// causing the effective address to be adjusted.
 pub fn bt_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // BT/BTS/BTR/BTC write only CF and preserve the other status flags.
+    // After a lazy Jcc/SETcc/CMOVcc the authoritative flags live in
+    // lazy_flags, not regs.rflags; commit them before the partial CF
+    // write so the preserved ZF/SF/OF/PF/AF are not lost.
+    vcpu.materialize_flags();
     let op_size = ctx.op_size;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let bit_offset = vcpu.get_reg(reg, op_size) as i64; // Signed for negative offsets
@@ -47,6 +52,11 @@ pub fn bt_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 /// BTS r/m, r (0x0F 0xAB) - Bit Test and Set
 /// For memory operands, the bit offset can extend beyond the operand size.
 pub fn bts_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // BT/BTS/BTR/BTC write only CF and preserve the other status flags.
+    // After a lazy Jcc/SETcc/CMOVcc the authoritative flags live in
+    // lazy_flags, not regs.rflags; commit them before the partial CF
+    // write so the preserved ZF/SF/OF/PF/AF are not lost.
+    vcpu.materialize_flags();
     let op_size = ctx.op_size;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let bit_offset = vcpu.get_reg(reg, op_size) as i64;
@@ -90,6 +100,11 @@ pub fn bts_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// BTR r/m, r (0x0F 0xB3) - Bit Test and Reset
 /// For memory operands, the bit offset can extend beyond the operand size.
 pub fn btr_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // BT/BTS/BTR/BTC write only CF and preserve the other status flags.
+    // After a lazy Jcc/SETcc/CMOVcc the authoritative flags live in
+    // lazy_flags, not regs.rflags; commit them before the partial CF
+    // write so the preserved ZF/SF/OF/PF/AF are not lost.
+    vcpu.materialize_flags();
     let op_size = ctx.op_size;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let bit_offset = vcpu.get_reg(reg, op_size) as i64;
@@ -133,6 +148,11 @@ pub fn btr_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// BTC r/m, r (0x0F 0xBB) - Bit Test and Complement
 /// For memory operands, the bit offset can extend beyond the operand size.
 pub fn btc_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // BT/BTS/BTR/BTC write only CF and preserve the other status flags.
+    // After a lazy Jcc/SETcc/CMOVcc the authoritative flags live in
+    // lazy_flags, not regs.rflags; commit them before the partial CF
+    // write so the preserved ZF/SF/OF/PF/AF are not lost.
+    vcpu.materialize_flags();
     let op_size = ctx.op_size;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let bit_offset = vcpu.get_reg(reg, op_size) as i64;
@@ -175,6 +195,11 @@ pub fn btc_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 
 /// Group 8: BT/BTS/BTR/BTC with immediate (0x0F 0xBA)
 pub fn group8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // BT/BTS/BTR/BTC write only CF and preserve the other status flags.
+    // After a lazy Jcc/SETcc/CMOVcc the authoritative flags live in
+    // lazy_flags, not regs.rflags; commit them before the partial CF
+    // write so the preserved ZF/SF/OF/PF/AF are not lost.
+    vcpu.materialize_flags();
     let op_size = ctx.op_size;
     ctx.rip_relative_offset = 1;
     let modrm_start = ctx.cursor;

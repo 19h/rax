@@ -516,3 +516,48 @@ fn test_sahf_ef_pattern() {
     assert_eq!(zf_set(regs.rflags), true, "ZF should be set");
     assert_eq!(sf_set(regs.rflags), true, "SF should be set");
 }
+
+// Regression (#172): after a lazy Jcc/SETcc/CMOVcc, the authoritative flags
+// live in lazy_flags (check_condition no longer commits them into rflags). A
+// partial-flag writer that clears the lazy state without first materializing
+// would lose the preserved flags. BT writes only CF and preserves ZF; SAHF
+// preserves OF. Both must materialize before their partial write.
+#[test]
+fn test_bt_preserves_zf_after_lazy_setcc() {
+    // xor ecx,ecx (ZF=1, lazy); sete al (reads ZF lazily); bt ecx,0 (writes CF,
+    // must keep ZF); sete bl (re-reads ZF -> must still be 1).
+    let code = [
+        0x31, 0xC9, // xor ecx, ecx   -> ZF=1 (lazy)
+        0x0F, 0x94, 0xC0, // sete al   (check_condition, leaves lazy authoritative)
+        0x0F, 0xBA, 0xE1, 0x00, // bt ecx, 0  (partial CF write)
+        0x0F, 0x94, 0xC3, // sete bl   (re-read ZF)
+        0xF4, // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rflags = 0x2; // ZF initially clear, so a stale read would give 0
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFF, 1, "sete al saw ZF=1");
+    assert_eq!(regs.rbx & 0xFF, 1, "BT must preserve ZF (got stale 0)");
+}
+
+#[test]
+fn test_sahf_preserves_of_after_lazy_setcc() {
+    // mov al,0x7f; add al,1 (OF=1, lazy); seto bl (reads OF lazily);
+    // mov ah,2; sahf (writes SF/ZF/AF/PF/CF, preserves OF); seto cl (re-read OF).
+    let code = [
+        0xB0, 0x7F, // mov al, 0x7f
+        0x04, 0x01, // add al, 1        -> OF=1 (lazy)
+        0x0F, 0x90, 0xC3, // seto bl    (check_condition, leaves lazy authoritative)
+        0xB4, 0x02, // mov ah, 0x02
+        0x9E, // sahf                    (partial write, preserves OF)
+        0x0F, 0x90, 0xC1, // seto cl    (re-read OF)
+        0xF4, // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rflags = 0x2; // OF initially clear
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rbx & 0xFF, 1, "seto bl saw OF=1");
+    assert_eq!(regs.rcx & 0xFF, 1, "SAHF must preserve OF (got stale 0)");
+}
