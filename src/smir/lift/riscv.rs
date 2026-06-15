@@ -4092,7 +4092,7 @@ impl RiscVLifter {
         match (op, funct3) {
             // Quadrant 0
             (0b00, 0b000) if insn != 0 => self.lift_c_addi4spn(insn, addr, ctx),
-            (0b00, 0b100) => self.lift_c_zcb_ldst(insn, addr, ctx),
+            (0b00, 0b100) if self.extensions.zcb => self.lift_c_zcb_ldst(insn, addr, ctx),
             (0b00, 0b010) => self.lift_c_lw(insn, addr, ctx),
             (0b00, 0b001) if self.extensions.d => self.lift_c_fp_ldst(insn, addr, ctx), // c.fld
             (0b00, 0b011) if self.xlen == 64 => self.lift_c_ld(insn, addr, ctx),
@@ -4146,7 +4146,7 @@ impl RiscVLifter {
         } else {
             RvXlen::Rv32
         };
-        let d = crate::riscv::decode::decode_compressed(insn, xl, &RvIsa::rv64gc());
+        let d = crate::riscv::decode::decode_compressed(insn, xl, &self.decoder_isa());
         if d.is_illegal() {
             return Err(LiftError::InvalidEncoding {
                 addr,
@@ -4208,7 +4208,7 @@ impl RiscVLifter {
         } else {
             RvXlen::Rv32
         };
-        let d = crate::riscv::decode::decode_compressed(insn, xl, &RvIsa::rv64gc());
+        let d = crate::riscv::decode::decode_compressed(insn, xl, &self.decoder_isa());
         if d.is_illegal() {
             return Err(LiftError::InvalidEncoding {
                 addr,
@@ -4794,7 +4794,7 @@ impl RiscVLifter {
                                 ));
                             }
                             // Zcb c.mul.
-                            0b10 => ops.push(SmirOp::new(
+                            0b10 if self.extensions.zcb => ops.push(SmirOp::new(
                                 ctx.next_op_id(),
                                 addr,
                                 OpKind::MulS {
@@ -4807,7 +4807,7 @@ impl RiscVLifter {
                                 },
                             )),
                             // Zcb unary: c.zext.b/sext.b/zext.h/sext.h/zext.w/not.
-                            _ => {
+                            0b11 if self.extensions.zcb => {
                                 let sub = (insn >> 2) & 0x7;
                                 let k = match sub {
                                     0b000 => OpKind::And {
@@ -4856,6 +4856,12 @@ impl RiscVLifter {
                                     }
                                 };
                                 ops.push(SmirOp::new(ctx.next_op_id(), addr, k));
+                            }
+                            _ => {
+                                return Err(LiftError::InvalidEncoding {
+                                    addr,
+                                    bytes: insn.to_le_bytes().to_vec(),
+                                });
                             }
                         }
                     } else {
@@ -5689,6 +5695,37 @@ mod tests {
                 }
             )
         }));
+    }
+
+    #[test]
+    fn zcb_compressed_requires_zcb_extension() {
+        let zcb_cases = [
+            0x8000u16, // c.lbu x8, 0(x8)
+            0x9c45u16, // c.mul x8, x9
+            0x9c61u16, // c.zext.b x8
+        ];
+
+        for word in zcb_cases {
+            assert_invalid_lift(
+                RiscVLifter::new_rv64(RiscVExtensions::rv64imac()),
+                word as u32,
+            );
+        }
+
+        let mut lifter = RiscVLifter::new_rv64(RiscVExtensions {
+            zcb: true,
+            ..RiscVExtensions::rv64imac()
+        });
+        for word in zcb_cases {
+            let mut ctx = test_ctx();
+            let result = lifter
+                .lift_insn(0x1000, &word.to_le_bytes(), &mut ctx)
+                .expect("enabled Zcb compressed instruction should lift");
+            assert!(
+                !result.ops.is_empty(),
+                "enabled Zcb instruction {word:#06x} lifted to no ops"
+            );
+        }
     }
 
     #[test]
