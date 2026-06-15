@@ -373,7 +373,10 @@ fn jit_loop_with_call_matches_interpreter() {
     ];
 
     let mut jit = make_vcpu_code(code);
-    let _ = jit.jit_try_block().expect("jit_try_block");
+    assert!(
+        jit.jit_try_block().expect("jit_try_block"),
+        "CALL frontier loop should JIT and advance to its exit"
+    );
     run_interp(&mut jit);
     let jr = jit.get_regs().unwrap();
 
@@ -410,7 +413,10 @@ fn jit_loop_cond_call_matches_interpreter() {
     ];
 
     let mut jit = make_vcpu_code(code);
-    let _ = jit.jit_try_block().expect("jit_try_block");
+    assert!(
+        jit.jit_try_block().expect("jit_try_block"),
+        "conditional CALL frontier loop should JIT and advance to its exit"
+    );
     run_interp(&mut jit);
     let jr = jit.get_regs().unwrap();
 
