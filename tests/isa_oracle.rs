@@ -1,6 +1,6 @@
 use rax::isa_oracle::{
-    ArmState, OracleIsa, OracleOptions, OracleSeed, RiscVIsaProfile, decode_to_json,
-    decode_to_json_with_seed, parse_hex_bytes,
+    ArmState, MAX_ORACLE_SEED_MEMORY_SIZE, OracleIsa, OracleMemorySeed, OracleOptions,
+    OracleSeed, RiscVIsaProfile, decode_to_json, decode_to_json_with_seed, parse_hex_bytes,
 };
 use rax::riscv::Xlen;
 
@@ -216,4 +216,39 @@ fn reports_seeded_side_effects() {
         value["side_effects"]["changed_regs"]["rax"]["after"],
         "0x1234"
     );
+}
+
+#[test]
+fn rejects_oversized_oracle_seed_memory_size() {
+    let value = serde_json::json!({
+        "memory_size": MAX_ORACLE_SEED_MEMORY_SIZE + 1,
+    });
+    let err = OracleSeed::from_json(&value).unwrap_err();
+    assert!(err.contains("seed.memory_size"), "{err}");
+    assert!(err.contains("oracle seed memory limit"), "{err}");
+}
+
+#[test]
+fn rejects_sparse_oracle_seed_memory_span_before_allocation() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let seed = OracleSeed {
+        regs: vec![],
+        memory: vec![
+            OracleMemorySeed {
+                addr: 0,
+                bytes: vec![0],
+            },
+            OracleMemorySeed {
+                addr: (MAX_ORACLE_SEED_MEMORY_SIZE as u64) + 1,
+                bytes: vec![0],
+            },
+        ],
+        memory_size: None,
+    };
+    let value = decode_to_json_with_seed(&[0x90], &opts, Some(&seed)).unwrap();
+    let err = value["side_effects"]["error"].as_str().unwrap();
+    assert!(err.contains("seeded memory span"), "{err}");
+    assert!(err.contains("oracle seed memory limit"), "{err}");
 }

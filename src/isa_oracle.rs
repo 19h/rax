@@ -116,12 +116,16 @@ pub struct OracleMemorySeed {
     pub bytes: Vec<u8>,
 }
 
+pub const MAX_ORACLE_SEED_MEMORY_SIZE: usize = 16 * 1024 * 1024;
+
 impl OracleSeed {
     pub fn from_json(value: &Value) -> Result<Self, String> {
         let mut seed = OracleSeed::default();
 
         if let Some(size) = value.get("memory_size") {
-            seed.memory_size = Some(json_usize(size, "memory_size")?);
+            let size = json_usize(size, "memory_size")?;
+            validate_seed_memory_size(size, "seed.memory_size")?;
+            seed.memory_size = Some(size);
         }
 
         if let Some(regs) = value.get("regs") {
@@ -785,6 +789,10 @@ struct MemoryLayout {
 }
 
 fn seed_memory_layout(seed: &OracleSeed) -> Result<MemoryLayout, String> {
+    if let Some(size) = seed.memory_size {
+        validate_seed_memory_size(size, "seed.memory_size")?;
+    }
+
     if seed.memory.is_empty() {
         return Ok(MemoryLayout {
             base: 0,
@@ -793,15 +801,21 @@ fn seed_memory_layout(seed: &OracleSeed) -> Result<MemoryLayout, String> {
     }
 
     let base = seed.memory.iter().map(|mem| mem.addr).min().unwrap();
-    let max_end = seed
-        .memory
-        .iter()
-        .map(|mem| mem.addr.saturating_add(mem.bytes.len() as u64))
-        .max()
-        .unwrap();
-    let needed = max_end
+    let max_end = seed.memory.iter().try_fold(base, |max_end, mem| {
+        let len = u64::try_from(mem.bytes.len())
+            .map_err(|_| "seed memory entry length does not fit in u64".to_string())?;
+        let end = mem
+            .addr
+            .checked_add(len)
+            .ok_or_else(|| "seed memory entry address range overflows u64".to_string())?;
+        Ok::<_, String>(max_end.max(end))
+    })?;
+    let needed_u64 = max_end
         .checked_sub(base)
-        .ok_or_else(|| "invalid seed memory layout".to_string())? as usize;
+        .ok_or_else(|| "invalid seed memory layout".to_string())?;
+    let needed = usize::try_from(needed_u64)
+        .map_err(|_| format!("seeded memory span {needed_u64} does not fit in host usize"))?;
+    validate_seed_memory_size(needed, "seeded memory span")?;
     let size = seed.memory_size.unwrap_or(needed.max(0x1000));
     if size < needed {
         return Err(format!(
@@ -809,6 +823,15 @@ fn seed_memory_layout(seed: &OracleSeed) -> Result<MemoryLayout, String> {
         ));
     }
     Ok(MemoryLayout { base, size })
+}
+
+fn validate_seed_memory_size(size: usize, field: &str) -> Result<(), String> {
+    if size > MAX_ORACLE_SEED_MEMORY_SIZE {
+        return Err(format!(
+            "{field} {size} exceeds oracle seed memory limit {MAX_ORACLE_SEED_MEMORY_SIZE}"
+        ));
+    }
+    Ok(())
 }
 
 fn parse_arch_reg(source: SourceArch, name: &str) -> Option<ArchReg> {
