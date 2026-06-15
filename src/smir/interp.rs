@@ -6143,6 +6143,14 @@ impl SmirInterpreter {
         let word_index = (bit_index / 64) as usize;
         let bit_offset = bit_index % 64;
 
+        // VecValue is a fixed 1024-bit (16-word) backing store. A lane whose
+        // bits fall outside it has no storage; reading it as 0 keeps an
+        // oversized/invalid VLane lane count from indexing out of bounds and
+        // aborting the emulator (panic=abort) instead of corrupting memory.
+        if word_index >= value.len() {
+            return 0;
+        }
+
         if elem_bits == 64 {
             return value[word_index];
         }
@@ -6152,7 +6160,9 @@ impl SmirInterpreter {
             (value[word_index] >> bit_offset) & mask
         } else {
             let low = value[word_index] >> bit_offset;
-            let high = value[word_index + 1] << (64 - bit_offset);
+            let high = value
+                .get(word_index + 1)
+                .map_or(0, |w| w << (64 - bit_offset));
             (low | high) & mask
         }
     }
@@ -6161,6 +6171,12 @@ impl SmirInterpreter {
         let bit_index = lane as u32 * elem_bits;
         let word_index = (bit_index / 64) as usize;
         let bit_offset = bit_index % 64;
+
+        // Out-of-range lanes (see `get_lane`) have no backing storage; drop the
+        // write rather than indexing past the 1024-bit VecValue and aborting.
+        if word_index >= value.len() {
+            return;
+        }
 
         if elem_bits == 64 {
             value[word_index] = bits;
@@ -6172,7 +6188,7 @@ impl SmirInterpreter {
         if bit_offset + elem_bits <= 64 {
             let clear = !(mask << bit_offset);
             value[word_index] = (value[word_index] & clear) | (bits << bit_offset);
-        } else {
+        } else if word_index + 1 < value.len() {
             let low_bits = 64 - bit_offset;
             let low_mask = (1u64 << low_bits) - 1;
             let high_bits = elem_bits - low_bits;
@@ -8719,6 +8735,56 @@ mod tests {
         interp.execute_block(&mut ctx, &mut memory, &block);
         if let ArchRegState::Hexagon(hex) = &ctx.arch_regs {
             assert_eq!(hex.get_v(2), [0x0303_0303_0303_0303u64; 16]); // every byte = 3
+        } else {
+            panic!("not hexagon");
+        }
+    }
+
+    #[test]
+    fn test_vlane_oversized_lane_count_does_not_abort() {
+        // A VLane whose lane count exceeds what fits in the 1024-bit VecValue
+        // (here I8 x 200 lanes; lane 128 maps to word index 16) must not index
+        // out of bounds and abort the emulator. Lanes within the register are
+        // computed; out-of-range lanes have no storage and are dropped.
+        let mut ctx = SmirContext::new_hexagon();
+        let mut memory = FlatMemory::new(0x1000);
+        let interp = SmirInterpreter::new();
+        if let ArchRegState::Hexagon(hex) = &mut ctx.arch_regs {
+            hex.set_v(0, [0x0101_0101_0101_0101u64; 16]); // every byte = 1
+            hex.set_v(1, [0x0202_0202_0202_0202u64; 16]); // every byte = 2
+        }
+        let v2 = VReg::Arch(ArchReg::Hexagon(HexagonReg::V(2)));
+        let v0 = VReg::Arch(ArchReg::Hexagon(HexagonReg::V(0)));
+        let v1 = VReg::Arch(ArchReg::Hexagon(HexagonReg::V(1)));
+        let block = SmirBlock {
+            id: BlockId(0),
+            guest_pc: 0x1000,
+            phis: vec![],
+            ops: vec![SmirOp {
+                id: OpId(0),
+                guest_pc: 0x1000,
+                kind: OpKind::VLane {
+                    dst: v2,
+                    src1: v0,
+                    src2: v1,
+                    elem: VecElementType::I8,
+                    lanes: 200, // exceeds the 128 byte-lanes the register holds
+                    op: VLaneOp::Add,
+                    signed: false,
+                    set_ovf: false,
+                },
+                x86_hint: None,
+            }],
+            terminator: Terminator::Trap {
+                kind: TrapKind::Halt,
+            },
+            exec_count: 0,
+        };
+        // Must complete without a panic/abort.
+        interp.execute_block(&mut ctx, &mut memory, &block);
+        if let ArchRegState::Hexagon(hex) = &ctx.arch_regs {
+            // All 128 in-register byte lanes were computed (1 + 2 = 3).
+            assert_eq!(hex.get_v(2), [0x0303_0303_0303_0303u64; 16]);
         } else {
             panic!("not hexagon");
         }
