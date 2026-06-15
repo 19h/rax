@@ -47,6 +47,8 @@ use super::flags;
 use super::insn;
 use super::mmu::Mmu;
 use crate::cpu::{CpuState, Registers, SystemRegisters, VCpu, VcpuExit, X86_64CpuState};
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use crate::smir::types::BlockId;
 
 /// Byte offset of each GPR field within `Registers`, indexed by x86 register
 /// encoding (0=rax,1=rcx,2=rdx,3=rbx,4=rsp,5=rbp,6=rsi,7=rdi, 8..=15 = r8..=r15,
@@ -2706,15 +2708,15 @@ impl VCpu for X86_64Vcpu {
             // stale native region dropped) before it next executes. Guarded —
             // zero work when no code page has been written. Sits on the
             // run-loop path (where real guest execution and the JIT live); for
-            // a JIT'd hot loop it costs one guarded check per whole-loop run,
-            // not per iteration. This is now the SOLE SMC invalidation point on
+            // a JIT'd hot loop it costs one guarded check per native run-loop
+            // slice. This is now the SOLE SMC invalidation point on
             // the run path: `note_smc` (in every MMU `write_u*`) journals the
             // page and this drain invalidates it once — deduplicated — before
             // the next fetch, so no per-store immediate scan is needed.
             self.drain_smc();
 
             // SMIR hot-block JIT fast path: if the region at RIP has been
-            // compiled, run it natively (whole loop in one call) and continue.
+            // compiled, run it natively until a frontier/yield exit and continue.
             // Cheap O(1) guard keeps the interpreter path untouched until any
             // region has actually been promoted. `_jit_rip_before` snapshots RIP
             // so the post-step back-edge sampler can spot loop heads.
@@ -3079,9 +3081,11 @@ pub fn publish_instruction_count(count: u64) {
 // touches the `step()` hot path. Given a self-contained basic-block region at
 // the current RIP (a hot loop / ALU chain that exits via HLT), it lifts the
 // region to SMIR, verifies it is clobber-safe under the 1:1 identity register
-// map, lowers it to native x86-64, and runs the WHOLE region in one call —
-// loops stay internal via native back-edges (the "dragon" path). Validated
-// bit-exact vs KVM by the `smir_native_*` differential tests.
+// map, lowers it to native x86-64, and runs it through the native trampoline.
+// Explicit `jit_try_block` calls keep internal branches native; run-loop auto
+// promotion lowers backward edges as exits so housekeeping can run between loop
+// iterations. Validated bit-exact vs KVM by the `smir_native_*` differential
+// tests.
 // ============================================================================
 /// Backward-branch hits at a loop head before the JIT promotes (compiles) it.
 /// Low enough to catch real hot loops quickly, high enough to skip loops that
@@ -3554,6 +3558,59 @@ impl X86_64Vcpu {
     /// register-state-independent and may be re-run for any later entry to the
     /// same RIP (until the underlying guest code changes; see SMC invalidation).
     pub(super) fn jit_compile_region(&mut self) -> Result<Option<JitRegion>> {
+        self.jit_compile_region_with_edge_exits(false)
+    }
+
+    fn jit_backward_native_exit_edges(
+        func: &crate::smir::ir::SmirFunction,
+        exits: &std::collections::HashMap<BlockId, u64>,
+    ) -> std::collections::HashMap<(BlockId, BlockId), u64> {
+        use crate::smir::ir::Terminator;
+        use std::collections::HashMap;
+
+        let guest_pcs: HashMap<_, _> = func.blocks.iter().map(|b| (b.id, b.guest_pc)).collect();
+        let mut edge_exits = HashMap::new();
+
+        for block in &func.blocks {
+            if exits.contains_key(&block.id) {
+                continue;
+            }
+
+            let mut add_backward_edge = |target| {
+                if exits.contains_key(&target) {
+                    return;
+                }
+                if let Some(&target_pc) = guest_pcs.get(&target) {
+                    if target_pc <= block.guest_pc {
+                        edge_exits.insert((block.id, target), target_pc);
+                    }
+                }
+            };
+
+            match &block.terminator {
+                Terminator::Branch { target } => add_backward_edge(*target),
+                Terminator::CondBranch {
+                    true_target,
+                    false_target,
+                    ..
+                } => {
+                    add_backward_edge(*true_target);
+                    add_backward_edge(*false_target);
+                }
+                _ => {}
+            }
+        }
+
+        edge_exits
+    }
+
+    /// Compile a region, optionally lowering internal backward Branch/CondBranch
+    /// edges as native exits. The yielding mode is for run-loop auto promotion:
+    /// it bounds each native invocation to an acyclic slice of the lifted CFG.
+    fn jit_compile_region_with_edge_exits(
+        &mut self,
+        yield_backward_edges: bool,
+    ) -> Result<Option<JitRegion>> {
         use crate::smir::ir::Terminator;
         use crate::smir::lift::x86_64::X86_64Lifter;
         use crate::smir::lift::{LiftContext, MemoryReader, SmirLifter};
@@ -3714,8 +3771,15 @@ impl X86_64Vcpu {
                 continue 'modes;
             }
 
+            let edge_exits = if yield_backward_edges {
+                Self::jit_backward_native_exit_edges(&func, &exits)
+            } else {
+                HashMap::new()
+            };
+
             let mut lowerer = X86_64Lowerer::new();
             lowerer.set_native_exits(exits);
+            lowerer.set_native_exit_edges(edge_exits);
             if allow_mem {
                 lowerer.set_mem_helpers(true);
             }
@@ -4233,9 +4297,11 @@ impl X86_64Vcpu {
     /// Loop-head hotness sampling: called after an interpreted instruction. If
     /// the instruction was a BACKWARD branch (rip decreased) — i.e. a loop
     /// back-edge to `rip` — bump that head's counter and, once hot, compile +
-    /// cache the region (and run it immediately). RIP now equals the head, so
-    /// `jit_compile_region` compiles exactly there. Ineligible heads are cached
-    /// as `None` so they are never retried.
+    /// cache the region (and run it immediately). Auto-promoted regions lower
+    /// internal backward edges as exits, so native execution returns to the run
+    /// loop before another loop iteration. RIP now equals the head, so the JIT
+    /// compiles exactly there. Ineligible heads are cached as `None` so they are
+    /// never retried.
     fn jit_sample_backedge(&mut self, rip_before: u64) {
         // Diagnostic kill-switch: RAX_NO_JIT disables hot-region promotion so the
         // interpreter handles everything (isolates JIT-codegen bugs from the
@@ -4281,7 +4347,7 @@ impl X86_64Vcpu {
         }
         self.jit_hot.remove(&head);
         let region = self
-            .jit_compile_region()
+            .jit_compile_region_with_edge_exits(true)
             .ok()
             .flatten()
             .map(std::sync::Arc::new);
@@ -4523,6 +4589,58 @@ mod tests {
 
         assert!(!vcpu.jit_callout_should_yield(&expired, LAPIC_POLL_STRIDE - 1));
         assert!(vcpu.jit_callout_should_yield(&expired, LAPIC_POLL_STRIDE));
+    }
+
+    #[test]
+    fn jit_backward_native_exit_edges_marks_only_internal_back_edges() {
+        use crate::smir::ir::{SmirBlock, SmirFunction, Terminator, TrapKind};
+        use crate::smir::types::{BlockId, FunctionId, VReg};
+        use std::collections::HashMap;
+
+        let entry = BlockId(0);
+        let body = BlockId(1);
+        let self_loop = BlockId(2);
+        let exit = BlockId(3);
+
+        let mut func = SmirFunction::new(FunctionId(0), entry, 0x1000);
+
+        let mut entry_block = SmirBlock::new(entry, 0x1000);
+        entry_block.set_terminator(Terminator::Branch { target: body });
+        func.add_block(entry_block);
+
+        let mut body_block = SmirBlock::new(body, 0x1010);
+        body_block.set_terminator(Terminator::CondBranch {
+            cond: VReg::virt(0),
+            true_target: entry,
+            false_target: self_loop,
+        });
+        func.add_block(body_block);
+
+        let mut self_loop_block = SmirBlock::new(self_loop, 0x1020);
+        self_loop_block.set_terminator(Terminator::CondBranch {
+            cond: VReg::virt(1),
+            true_target: self_loop,
+            false_target: exit,
+        });
+        func.add_block(self_loop_block);
+
+        let mut exit_block = SmirBlock::new(exit, 0x1030);
+        exit_block.set_terminator(Terminator::Trap {
+            kind: TrapKind::Halt,
+        });
+        func.add_block(exit_block);
+
+        let mut exits = HashMap::new();
+        exits.insert(exit, 0x1030);
+
+        let edges = X86_64Vcpu::jit_backward_native_exit_edges(&func, &exits);
+
+        assert_eq!(edges.len(), 2);
+        assert_eq!(edges.get(&(body, entry)), Some(&0x1000));
+        assert_eq!(edges.get(&(self_loop, self_loop)), Some(&0x1020));
+        assert!(!edges.contains_key(&(entry, body)));
+        assert!(!edges.contains_key(&(body, self_loop)));
+        assert!(!edges.contains_key(&(self_loop, exit)));
     }
 
     #[cfg(unix)]

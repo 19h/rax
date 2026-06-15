@@ -3296,6 +3296,12 @@ pub struct X86_64Lowerer {
     /// [`X86_64Lowerer::set_native_exits`] before `lower_function`.
     native_exits: std::collections::HashMap<BlockId, u64>,
 
+    /// Native-exit branch edges (source block, target block) => resume guest PC.
+    /// Unlike `native_exits`, these do not replace the target block. They only
+    /// turn the selected terminator edge into an exit stub, so another path can
+    /// still enter and execute the same target block normally.
+    native_exit_edges: std::collections::HashMap<(BlockId, BlockId), u64>,
+
     /// Folded condition for the current block's `CondBranch` terminator.
     /// Set by `lower_block` when the block's last op is a `TestCondition`
     /// feeding the terminator's `cond` vreg: the SETcc-into-a-vreg + `test`
@@ -3345,6 +3351,7 @@ impl X86_64Lowerer {
             pending_ret_imm: None,
             pending_cond: None,
             native_exits: std::collections::HashMap::new(),
+            native_exit_edges: std::collections::HashMap::new(),
             mem_helpers: false,
             call_helpers: false,
             epilogue_stack_patches: Vec::new(),
@@ -3367,6 +3374,15 @@ impl X86_64Lowerer {
     /// emitted. Requires the block to be reachable only as an exit edge.
     pub fn set_native_exits(&mut self, exits: std::collections::HashMap<BlockId, u64>) {
         self.native_exits = exits;
+    }
+
+    /// Mark individual branch edges as JIT native-exit stubs. Call after `new()`
+    /// and before `lower_function`.
+    pub fn set_native_exit_edges(
+        &mut self,
+        exits: std::collections::HashMap<(BlockId, BlockId), u64>,
+    ) {
+        self.native_exit_edges = exits;
     }
 
     pub fn set_pcrel_adjust(&mut self, adjust: bool) {
@@ -6407,16 +6423,45 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    fn emit_native_exit(&mut self, resume_pc: u64) {
+        // JIT native-exit stub: record the resume guest PC into `exit_pc` and
+        // return to the trampoline. The state pointer lives at
+        // [rbp+X86_STATE_PTR_AT_RBP] in the enter_native frame; borrow RAX as
+        // scratch via push/pop so no guest register is disturbed.
+        self.code.emit_u8(0x50); // push rax
+        // mov rax, [rbp+state_ptr]
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0x8B);
+        self.code.emit_u8(0x45);
+        self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8);
+        // mov dword [rax+exit_pc], resume_pc<low32>   (C7 80 <disp32> <imm32>)
+        self.code.emit_u8(0xC7);
+        self.code.emit_u8(0x80);
+        self.code.emit_u32(X86_GUEST_EXIT_PC_OFFSET as u32);
+        self.code.emit_u32(resume_pc as u32);
+        // mov dword [rax+exit_pc+4], resume_pc<high32>
+        self.code.emit_u8(0xC7);
+        self.code.emit_u8(0x80);
+        self.code.emit_u32((X86_GUEST_EXIT_PC_OFFSET + 4) as u32);
+        self.code.emit_u32((resume_pc >> 32) as u32);
+        self.code.emit_u8(0x58); // pop rax
+        self.emit_epilogue_with_ret(None);
+    }
+
     /// Lower a block terminator
-    fn lower_terminator(&mut self, term: &Terminator) -> Result<(), LowerError> {
+    fn lower_terminator(&mut self, source: BlockId, term: &Terminator) -> Result<(), LowerError> {
         match term {
             Terminator::Branch { target } => {
-                // Record jump to fix up later
-                let jump_offset = self.code.position();
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_jmp_rel32(0); // Placeholder
-                self.pending_jumps
-                    .push((jump_offset + 1, *target, RelocKind::PcRel32));
+                if let Some(&resume_pc) = self.native_exit_edges.get(&(source, *target)) {
+                    self.emit_native_exit(resume_pc);
+                } else {
+                    // Record jump to fix up later
+                    let jump_offset = self.code.position();
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_jmp_rel32(0); // Placeholder
+                    self.pending_jumps
+                        .push((jump_offset + 1, *target, RelocKind::PcRel32));
+                }
             }
 
             Terminator::CondBranch {
@@ -6438,23 +6483,41 @@ impl X86_64Lowerer {
                     X86Cond::Ne
                 };
 
-                // Jcc<taken> true_target
-                let jnz_offset = self.code.position();
-                {
-                    let mut emitter = X86Emitter::new(&mut self.code);
-                    emitter.emit_jcc_rel32(taken, 0); // Placeholder
+                if let Some(&resume_pc) = self.native_exit_edges.get(&(source, *true_target)) {
+                    // If the true edge exits, invert the branch to skip over the
+                    // inline exit stub when the condition is false.
+                    let skip_exit = self.emit_jcc_placeholder(taken.invert());
+                    self.emit_native_exit(resume_pc);
+                    self.patch_rel32_to_current(skip_exit)?;
+                } else {
+                    // Jcc<taken> true_target
+                    let jnz_offset = self.code.position();
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_jcc_rel32(taken, 0); // Placeholder
+                    }
+                    self.pending_jumps.push((
+                        jnz_offset + 2,
+                        *true_target,
+                        RelocKind::PcRel32,
+                    ));
                 }
-                self.pending_jumps
-                    .push((jnz_offset + 2, *true_target, RelocKind::PcRel32));
 
-                // JMP false_target
-                let jmp_offset = self.code.position();
-                {
-                    let mut emitter = X86Emitter::new(&mut self.code);
-                    emitter.emit_jmp_rel32(0); // Placeholder
+                if let Some(&resume_pc) = self.native_exit_edges.get(&(source, *false_target)) {
+                    self.emit_native_exit(resume_pc);
+                } else {
+                    // JMP false_target
+                    let jmp_offset = self.code.position();
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_jmp_rel32(0); // Placeholder
+                    }
+                    self.pending_jumps.push((
+                        jmp_offset + 1,
+                        *false_target,
+                        RelocKind::PcRel32,
+                    ));
                 }
-                self.pending_jumps
-                    .push((jmp_offset + 1, *false_target, RelocKind::PcRel32));
             }
 
             Terminator::IndirectBranch { target, .. } => {
@@ -9871,31 +9934,10 @@ impl X86_64Lowerer {
         self.block_offsets.insert(block.id, self.code.position());
         self.block_guest_pcs.insert(block.id, block.guest_pc);
 
-        // JIT native-exit stub: record the resume guest PC into `exit_pc` and
-        // return to the trampoline, skipping this block's ops/terminator. The
-        // state pointer lives at [rbp+X86_STATE_PTR_AT_RBP] (the enter_native frame layout); we
-        // borrow RAX as scratch (push/pop) so no guest register is disturbed.
-        // exit_pc is after gpr[32] + rflags.
+        // JIT frontier native-exit stub: return to the trampoline before
+        // executing this block's ops/terminator.
         if let Some(&resume_pc) = self.native_exits.get(&block.id) {
-            self.code.emit_u8(0x50); // push rax
-            // mov rax, [rbp+state_ptr]
-            self.code.emit_u8(0x48);
-            self.code.emit_u8(0x8B);
-            self.code.emit_u8(0x45);
-            self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8);
-            // mov dword [rax+exit_pc], resume_pc<low32>   (C7 80 <disp32> <imm32>)
-            self.code.emit_u8(0xC7);
-            self.code.emit_u8(0x80);
-            self.code.emit_u32(X86_GUEST_EXIT_PC_OFFSET as u32);
-            self.code.emit_u32(resume_pc as u32);
-            // mov dword [rax+exit_pc+4], resume_pc<high32>
-            self.code.emit_u8(0xC7);
-            self.code.emit_u8(0x80);
-            self.code.emit_u32((X86_GUEST_EXIT_PC_OFFSET + 4) as u32);
-            self.code.emit_u32((resume_pc >> 32) as u32);
-            self.code.emit_u8(0x58); // pop rax
-            // epilogue: mov rsp,rbp ; pop rbp ; ret (flag-preserving teardown)
-            self.emit_epilogue_with_ret(None);
+            self.emit_native_exit(resume_pc);
             return Ok(());
         }
 
@@ -10006,7 +10048,7 @@ impl X86_64Lowerer {
         }
 
         // Lower terminator
-        self.lower_terminator(&block.terminator)?;
+        self.lower_terminator(block.id, &block.terminator)?;
 
         Ok(())
     }
