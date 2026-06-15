@@ -367,6 +367,26 @@ impl CpuInterface {
             && self.highest_pending_priority < self.running_priority
     }
 
+    fn interrupt_exists(&self, intid: u32, spis: &[InterruptConfig]) -> bool {
+        if intid < SPI_START {
+            self.private_interrupts.get(intid as usize).is_some()
+        } else {
+            spis.get((intid - SPI_START) as usize).is_some()
+        }
+    }
+
+    fn interrupt_config_mut<'a>(
+        &'a mut self,
+        intid: u32,
+        spis: &'a mut [InterruptConfig],
+    ) -> Option<&'a mut InterruptConfig> {
+        if intid < SPI_START {
+            self.private_interrupts.get_mut(intid as usize)
+        } else {
+            spis.get_mut((intid - SPI_START) as usize)
+        }
+    }
+
     /// Acknowledge interrupt (read ICC_IAR).
     pub fn acknowledge(&mut self, spis: &mut [InterruptConfig]) -> u32 {
         let intid = self.highest_pending_intid;
@@ -375,11 +395,10 @@ impl CpuInterface {
             return INTID_SPURIOUS;
         }
 
-        // Get interrupt config
-        let config = if intid < SPI_START {
-            &mut self.private_interrupts[intid as usize]
-        } else {
-            &mut spis[(intid - SPI_START) as usize]
+        let Some(config) = self.interrupt_config_mut(intid, spis) else {
+            self.highest_pending_priority = 0xFF;
+            self.highest_pending_intid = INTID_SPURIOUS;
+            return INTID_SPURIOUS;
         };
 
         // Transition state
@@ -403,9 +422,11 @@ impl CpuInterface {
             config.state.clear_pending();
         }
 
+        let priority = config.priority;
+
         // Push to active stack
-        self.active_priorities.push((intid, config.priority));
-        self.running_priority = config.priority;
+        self.active_priorities.push((intid, priority));
+        self.running_priority = priority;
 
         // Update pending
         self.update_pending(spis);
@@ -416,6 +437,10 @@ impl CpuInterface {
     /// End of Interrupt (write ICC_EOIR).
     pub fn end_of_interrupt(&mut self, intid: u32, spis: &mut [InterruptConfig]) {
         if intid == INTID_SPURIOUS {
+            return;
+        }
+
+        if !self.interrupt_exists(intid, spis) {
             return;
         }
 
@@ -437,12 +462,9 @@ impl CpuInterface {
 
         // Deactivate interrupt (if not in EOI mode 1)
         if !self.eoi_mode {
-            let config = if intid < SPI_START {
-                &mut self.private_interrupts[intid as usize]
-            } else {
-                &mut spis[(intid - SPI_START) as usize]
-            };
-            config.state.clear_active();
+            if let Some(config) = self.interrupt_config_mut(intid, spis) {
+                config.state.clear_active();
+            }
         }
 
         self.update_pending(spis);
@@ -454,10 +476,8 @@ impl CpuInterface {
             return;
         }
 
-        let config = if intid < SPI_START {
-            &mut self.private_interrupts[intid as usize]
-        } else {
-            &mut spis[(intid - SPI_START) as usize]
+        let Some(config) = self.interrupt_config_mut(intid, spis) else {
+            return;
         };
 
         config.state.clear_active();
@@ -1316,6 +1336,31 @@ mod tests {
         // Clear pending
         gic.clear_pending(32);
         assert!(!gic.pending_interrupt(0));
+    }
+
+    #[test]
+    fn test_eoi_and_deactivate_ignore_unallocated_intids() {
+        let mut gic = Gic::new(GicConfig::default());
+        if let Some(cpu) = gic.cpu_mut(0) {
+            cpu.active_priorities.push((0, 0x80));
+            cpu.running_priority = 0x80;
+        }
+
+        let first_unallocated_spi = SPI_START + GicConfig::default().num_spis as u32;
+        for intid in [
+            first_unallocated_spi,
+            MAX_INTID as u32,
+            INTID_SPURIOUS - 1,
+            INTID_SPURIOUS,
+            u32::MAX,
+        ] {
+            gic.end_of_interrupt(0, intid);
+            gic.deactivate(0, intid);
+        }
+
+        let cpu = gic.cpu(0).unwrap();
+        assert_eq!(cpu.active_priorities, vec![(0, 0x80)]);
+        assert_eq!(cpu.running_priority, 0x80);
     }
 
     #[test]
