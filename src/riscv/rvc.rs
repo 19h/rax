@@ -239,11 +239,19 @@ fn decode_q1_alu(h: u16, rv64: bool, isa: &Isa) -> Insn {
         0b00 => {
             // C.SRLI -> srli rd', rd', shamt
             let shamt = (bit(h, 12) << 5) | bits(h, 6, 2);
+            // On RV32 the high shift bit (shamt[5]) must be 0; shamt >= 32 is a
+            // reserved encoding and must not execute as a masked 5-bit shift.
+            if !rv64 && shamt >= 32 {
+                return ill(h);
+            }
             mk(Op::Srli, rd_, rd_, 0, shamt as i64, h)
         }
         0b01 => {
             // C.SRAI -> srai rd', rd', shamt
             let shamt = (bit(h, 12) << 5) | bits(h, 6, 2);
+            if !rv64 && shamt >= 32 {
+                return ill(h);
+            }
             mk(Op::Srai, rd_, rd_, 0, shamt as i64, h)
         }
         0b10 => {
@@ -291,6 +299,10 @@ fn decode_q2(h: u16, funct3: u32, rv64: bool, _isa: &Isa) -> Insn {
         0b000 => {
             // C.SLLI -> slli rd, rd, shamt (rd==0 hint)
             let shamt = (bit(h, 12) << 5) | bits(h, 6, 2);
+            // On RV32 shamt[5] must be 0; shamt >= 32 is a reserved encoding.
+            if !rv64 && shamt >= 32 {
+                return ill(h);
+            }
             mk(Op::Slli, rd, rd, 0, shamt as i64, h)
         }
         0b001 => {
@@ -424,6 +436,24 @@ mod tests {
         assert_eq!(i.rd, 10);
         assert_eq!(i.rs1, 0);
         assert_eq!(i.imm, -1);
+    }
+
+    #[test]
+    fn rv32c_reserved_shifts_are_illegal() {
+        // C.SRLI/C.SRAI (Q1, funct2=00/01) and C.SLLI (Q2, funct3=000) with the
+        // high shift bit (shamt[5], bit12) set are reserved on RV32 and must be
+        // illegal; on RV64 the same encodings are legal (shamt up to 63).
+        let isa = Isa::rv64gc();
+        // C.SRLI x8, 32 : funct3=100, funct2=00, bit12=1, rd'=x8, shamt[4:0]=0.
+        let c_srli = ((0b100 << 13) | (1 << 12) | (0b00 << 10) | (0 << 7) | 0b01) as u16;
+        // C.SLLI x8, 32 : funct3=000, bit12=1, rd=8, shamt[4:0]=0.
+        let c_slli = ((0b000 << 13) | (1 << 12) | (8 << 7) | 0b10) as u16;
+
+        assert_eq!(decode_rvc(c_srli, Xlen::Rv32, &isa).op, Op::Illegal);
+        assert_eq!(decode_rvc(c_slli, Xlen::Rv32, &isa).op, Op::Illegal);
+        // RV64: legal (shamt 32).
+        assert_eq!(decode_rvc(c_srli, Xlen::Rv64, &isa).op, Op::Srli);
+        assert_eq!(decode_rvc(c_slli, Xlen::Rv64, &isa).op, Op::Slli);
     }
 
     #[test]
