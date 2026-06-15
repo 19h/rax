@@ -5355,6 +5355,10 @@ fn neon_saturating_shift_register_saturates_left_shifts_and_sets_qc() {
         Mnemonic::VQSHL
     );
     assert_eq!(
+        Aarch32Decoder::decode(0xF302_0411).unwrap().mnemonic,
+        Mnemonic::VQSHL
+    );
+    assert_eq!(
         Aarch32Decoder::decode(0xF20A_6518).unwrap().mnemonic,
         Mnemonic::VQRSHL
     );
@@ -5362,6 +5366,26 @@ fn neon_saturating_shift_register_saturates_left_shifts_and_sets_qc() {
         Aarch32Decoder::decode(0xF31C_4558).unwrap().mnemonic,
         Mnemonic::VQRSHL
     );
+
+    cpu.vfp.fpscr.set_qc(false);
+    cpu.vfp.write_d_bits(1, 0);
+    cpu.vfp.write_d_bits(2, 0x0808_0808_0808_0808);
+    assert!(matches!(
+        exec_one(&mut cpu, &mut mem, 0xF202_0411),
+        ExecResult::Continue
+    ));
+    assert_eq!(cpu.vfp.read_d_bits(0), 0);
+    assert!(!cpu.vfp.fpscr.qc());
+
+    cpu.vfp.fpscr.set_qc(false);
+    cpu.vfp.write_d_bits(1, 0);
+    cpu.vfp.write_d_bits(2, 0x0808_0808_0808_0808);
+    assert!(matches!(
+        exec_one(&mut cpu, &mut mem, 0xF302_0411),
+        ExecResult::Continue
+    ));
+    assert_eq!(cpu.vfp.read_d_bits(0), 0);
+    assert!(!cpu.vfp.fpscr.qc());
 
     cpu.vfp.fpscr.set_qc(false);
     cpu.vfp.write_d_bits(1, 0x7f80_7f80_0102_4040);

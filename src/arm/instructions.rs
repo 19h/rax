@@ -3659,19 +3659,27 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                 let shift = Self::neon_sign_extend_elem_u64(shift_elem, size.bits());
                 let result = if shift >= size.bits() as i128 {
                     if saturating {
-                        self.cpu.vfp.fpscr.set_qc(true);
-                        if unsigned {
-                            mask
-                        } else if Self::neon_sign_extend_elem_u64(value_elem, size.bits()) < 0 {
-                            Self::neon_pack_signed_elem_i128(
-                                -(1i128 << (size.bits() - 1)),
-                                size.bits(),
-                            )
+                        if (value_elem & mask) == 0 {
+                            0
                         } else {
-                            Self::neon_pack_signed_elem_i128(
-                                (1i128 << (size.bits() - 1)) - 1,
-                                size.bits(),
-                            )
+                            self.cpu.vfp.fpscr.set_qc(true);
+                            if unsigned {
+                                mask
+                            } else {
+                                let signed_value =
+                                    Self::neon_sign_extend_elem_u64(value_elem, size.bits());
+                                if signed_value < 0 {
+                                    Self::neon_pack_signed_elem_i128(
+                                        -(1i128 << (size.bits() - 1)),
+                                        size.bits(),
+                                    )
+                                } else {
+                                    Self::neon_pack_signed_elem_i128(
+                                        (1i128 << (size.bits() - 1)) - 1,
+                                        size.bits(),
+                                    )
+                                }
+                            }
                         }
                     } else {
                         0
