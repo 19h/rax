@@ -334,6 +334,59 @@ fn hexagon_bare_metal_word_ops() {
     assert_eq!(regs.r[3], 0x2468);
 }
 
+/// #146: a false-predicated HVX `.tmp` vector load must be CANCELLED, including
+/// in the fresh-packet pre-scan that pre-executes `.tmp` loads so a same-packet
+/// consumer (encoded before the load) can see them. Otherwise the cancelled
+/// load still seeds the scratch buffer and the consumer observes data from a
+/// memory access that architecturally never happened.
+///
+/// Packet `{ vhist ; if (p0) v0.tmp = vmem(r4+#0) }` (llvm-mc -mhvx, v68). vhist
+/// is encoded BEFORE the producing `.tmp` load and reads v0's `.tmp` scratch.
+/// Run it over the same distinctive arena with p0 true vs false: when the
+/// predicate is honored the two vhist results MUST differ (false cancels the
+/// load, so vhist sees the old/zero V0); the pre-scan bug seeds the scratch
+/// regardless of the predicate and makes them identical.
+fn run_vhist_predicated_tmp(pred_true: bool) -> [[u32; 32]; 32] {
+    const ARENA: u32 = 0x2000; // 128-aligned scratch source
+    // { vhist ; if (p0) v0.tmp = vmem(r4+#0) }  (parse bits already encoded)
+    let code = [0x1e00_6080u32, 0x2884_c0c0u32, encode_trap0()];
+
+    let mem_size = 64 * 1024;
+    let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), mem_size)]).unwrap());
+    write_words(&mem, CODE_ADDR, &code, Endianness::Little);
+    // Distinctive arena data — the vector the `.tmp` load would forward.
+    let mut arena = [0u8; 128];
+    for (i, b) in arena.iter_mut().enumerate() {
+        *b = (i as u8).wrapping_mul(7).wrapping_add(3);
+    }
+    write_bytes(&mem, ARENA, &arena);
+
+    let mut vcpu = HexagonVcpu::new(0, mem.clone(), HexagonIsa::V68, Endianness::Little);
+    let mut regs = HexagonRegisters::default();
+    regs.set_pc(CODE_ADDR);
+    regs.r[4] = ARENA;
+    regs.p[0] = if pred_true { 0xff } else { 0x00 };
+    // V0 starts zeroed (default), so a cancelled load leaves vhist reading zeros.
+    vcpu.set_state(&CpuState::hexagon(regs)).unwrap();
+    run_until_shutdown(&mut vcpu);
+
+    match vcpu.get_state().unwrap() {
+        CpuState::Hexagon(state) => state.regs.v,
+        _ => panic!("expected hexagon state"),
+    }
+}
+
+#[test]
+fn hexagon_predicated_tmp_load_cancels_in_prescan() {
+    let with_load = run_vhist_predicated_tmp(true);
+    let cancelled = run_vhist_predicated_tmp(false);
+    assert_ne!(
+        with_load, cancelled,
+        "#146: a false-predicated .tmp load must be cancelled in the packet \
+         pre-scan; vhist must not observe the cancelled load's scratch data",
+    );
+}
+
 #[test]
 fn hexagon_bare_metal_doubleword_ops() {
     let code = [
