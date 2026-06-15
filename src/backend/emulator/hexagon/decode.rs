@@ -2574,11 +2574,19 @@ fn decode_main(decoded: &DecodedOp, word: u32, immext: Option<u32>) -> (DecodedI
         Opcode::A4_tfrcpp => {
             let dst = req!(field_u8(decoded, b'd'));
             let src = req!(field_u8(decoded, b's'));
+            // Register-pair fields encode an even base; an odd base (e.g. 31)
+            // is unallocated and would index reg[base+1] == [32] out of bounds.
+            if dst & 1 != 0 || src & 1 != 0 {
+                return (DecodedInsn::Unknown(word), false);
+            }
             (DecodedInsn::TfrCrRPair { dst, src }, false)
         }
         Opcode::A4_tfrpcp => {
             let dst = req!(field_u8(decoded, b'd'));
             let src = req!(field_u8(decoded, b's'));
+            if dst & 1 != 0 || src & 1 != 0 {
+                return (DecodedInsn::Unknown(word), false);
+            }
             (DecodedInsn::TfrRrCrPair { dst, src }, false)
         }
         Opcode::Y2_dczeroa => {
@@ -5082,5 +5090,48 @@ pub fn decode(word: u32, immext: Option<u32>, _isa: HexagonIsa) -> DecodedWord {
         insn,
         used_ext,
         opcode: Some(decoded.opcode),
+    }
+}
+
+#[cfg(test)]
+mod pair_base_tests {
+    use super::*;
+
+    // A4_tfrcpp/A4_tfrpcp encode the destination GPR-pair base in bits[4:0] and
+    // the source pair base in bits[20:16]. An odd base (e.g. 31) is unallocated
+    // and would index reg[base+1] == [32] out of bounds, aborting the emulator.
+    #[test]
+    fn tfr_control_pair_rejects_odd_register_base() {
+        let isa = HexagonIsa::V69;
+
+        // tfrcpp (value 0x68000000): odd dst=31 and odd src=31 must be Unknown.
+        assert!(matches!(
+            decode(0x6800_001F, None, isa).insn, // dst = 31
+            DecodedInsn::Unknown(_)
+        ));
+        assert!(matches!(
+            decode(0x681F_0000, None, isa).insn, // src = 31
+            DecodedInsn::Unknown(_)
+        ));
+        // tfrpcp (value 0x63200000): odd dst=31 and odd src=31 must be Unknown.
+        assert!(matches!(
+            decode(0x6320_001F, None, isa).insn, // dst = 31
+            DecodedInsn::Unknown(_)
+        ));
+        assert!(matches!(
+            decode(0x633F_0000, None, isa).insn, // src = 31
+            DecodedInsn::Unknown(_)
+        ));
+
+        // Even pair bases remain valid: tfrcpp dst=4, src=6.
+        assert!(matches!(
+            decode(0x6806_0004, None, isa).insn,
+            DecodedInsn::TfrCrRPair { dst: 4, src: 6 }
+        ));
+        // tfrpcp dst=2, src=8.
+        assert!(matches!(
+            decode(0x6328_0002, None, isa).insn,
+            DecodedInsn::TfrRrCrPair { dst: 2, src: 8 }
+        ));
     }
 }
