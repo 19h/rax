@@ -3112,10 +3112,31 @@ impl Aarch64Lifter {
             }
         };
         let q = (insn.raw >> 30) & 1;
+        let size = (insn.raw >> 22) & 0x3;
+        // AArch64 vector REV reverses elements WITHIN a container, so the element
+        // size must be strictly smaller than the container; otherwise the encoding
+        // is reserved (the interpreter raises UNDEFINED). Reject the invalid
+        // arrangements — REV16: byte only; REV32: byte/halfword; REV64:
+        // byte/halfword/word — so they bail to the interpreter instead of lowering
+        // to an architecturally undefined host op and a SIGILL. (#55)
+        let rev_max_size = match op {
+            VecUnaryOp::Rev16 => Some(0),
+            VecUnaryOp::Rev32 => Some(1),
+            VecUnaryOp::Rev64 => Some(2),
+            _ => None,
+        };
+        if let Some(max) = rev_max_size {
+            if size > max {
+                return Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("vector {:?}", insn.mnemonic),
+                });
+            }
+        }
         let (elem, lane_bytes) = if byte_wise {
             (VecElementType::I8, 1u8)
         } else {
-            match (insn.raw >> 22) & 0x3 {
+            match size {
                 0 => (VecElementType::I8, 1),
                 1 => (VecElementType::I16, 2),
                 2 => (VecElementType::I32, 4),
@@ -5244,6 +5265,44 @@ mod tests {
                 .iter()
                 .any(|op| matches!(op.kind, OpKind::VReduce { .. })),
             "SADDLV 4S must lift to a VReduce op"
+        );
+    }
+
+    // Regression for issue #55: vector REV reverses elements within a container, so
+    // the element size must be strictly smaller than the container. Reserved forms
+    // (REV16 with >=halfword elements, REV64 with doubleword elements) must NOT lift
+    // to a native two-reg-misc op (which would be an undefined host encoding =
+    // SIGILL); they must bail to the interpreter. Valid forms still lift. (#55)
+    #[test]
+    fn issue_55_rejects_invalid_vector_rev_arrangements() {
+        let mut lifter = Aarch64Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Aarch64);
+
+        // REV16 with halfword elements (size=0b01): reserved.
+        assert!(
+            lifter
+                .lift_insn(0x3000, &0x0E60_1800u32.to_le_bytes(), &mut ctx)
+                .is_err(),
+            "REV16 with halfword elements is reserved and must not lift natively"
+        );
+        // REV64 with doubleword elements (size=0b11): reserved.
+        assert!(
+            lifter
+                .lift_insn(0x3000, &0x0EE0_0800u32.to_le_bytes(), &mut ctx)
+                .is_err(),
+            "REV64 with doubleword elements is reserved and must not lift natively"
+        );
+
+        // REV16 with byte elements (size=0b00): valid — still lifts to a VUnary.
+        let result = lifter
+            .lift_insn(0x3000, &0x0E20_1800u32.to_le_bytes(), &mut ctx)
+            .expect("REV16.8B must lift");
+        assert!(
+            result
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::VUnary { .. })),
+            "REV16.8B must lift to a VUnary op"
         );
     }
 
