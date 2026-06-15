@@ -4946,7 +4946,7 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-    fn lower_lea(&mut self, dst: VReg, addr: &Address) -> Result<(), LowerError> {
+    fn lower_lea(&mut self, dst: VReg, addr: &Address, guest_pc: u64) -> Result<(), LowerError> {
         let dst = Self::dst_gpr_arm_or_x86(dst)?;
         match addr {
             Address::Direct(base) => {
@@ -5014,7 +5014,10 @@ impl Aarch64Lowerer {
             }
             Address::Absolute(addr) => self.emit_mov_imm_best(dst, *addr as i64, OpWidth::W64),
             Address::PcRel { offset, base, .. } => {
-                let addr = base.unwrap_or(0).wrapping_add(*offset as u64);
+                // A base-less PC-relative LEA (e.g. ADR) resolves to the CURRENT
+                // guest PC + offset, matching the interpreter; the previous
+                // `unwrap_or(0)` dropped the PC and computed an offset from 0. (#13)
+                let addr = base.unwrap_or(guest_pc).wrapping_add(*offset as u64);
                 self.emit_mov_imm_best(dst, addr as i64, OpWidth::W64)
             }
             Address::GpRel { .. } | Address::SegmentRel { .. } => Err(LowerError::UnsupportedOp {
@@ -15310,7 +15313,7 @@ impl Aarch64Lowerer {
                 width_bits,
                 op_width,
             } => self.lower_bfi(*dst, *dst_in, *src, *lsb, *width_bits, *op_width),
-            OpKind::Lea { dst, addr } => self.lower_lea(*dst, addr),
+            OpKind::Lea { dst, addr } => self.lower_lea(*dst, addr, op.guest_pc),
             OpKind::ZeroExtend {
                 dst,
                 src,
@@ -33194,6 +33197,40 @@ mod tests {
         expected.extend_from_slice(&enc_mov_wide(1, 0b00, 0, 0xe, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    // Regression for issue #13: a base-less PC-relative LEA (ADR-style) resolves to
+    // the CURRENT guest PC + offset, matching the interpreter. The previous lowering
+    // used 0 as the base, so it computed an offset from zero. (The SP-base
+    // BaseIndexScale form is covered by `lowers_lea_sp_base_index_scale_runtime`.)
+    #[test]
+    fn issue_13_pcrel_baseless_lea_uses_guest_pc() {
+        let guest_pc = 0x4000u64;
+        let offset = 0x120i64;
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            guest_pc,
+            OpKind::Lea {
+                dst: x(0),
+                addr: Address::PcRel {
+                    offset,
+                    disp_size: DispSize::Auto,
+                    base: None,
+                },
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+        let (out, _, _) = run_aarch64_code(&code, &[], 0);
+        assert_eq!(
+            out[0],
+            guest_pc.wrapping_add(offset as u64),
+            "base-less PC-relative LEA must resolve to guest_pc + offset, not 0 + offset"
+        );
     }
 
     #[test]
