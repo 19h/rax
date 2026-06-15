@@ -2492,10 +2492,14 @@ impl Aarch64Decoder {
         let o0 = (raw >> 15) & 1;
         let o1 = (raw >> 21) & 1;
 
-        let fp_size = if size & 1 == 0 {
-            FpRegSize::S
-        } else {
-            FpRegSize::D
+        // The 3-source `type` field [23:22]: 00=S, 01=D, 11=H, 10=reserved.
+        // The old `size & 1` test aliased reserved 0b10 to single and
+        // half-precision 0b11 to double; decode the real precision instead.
+        let fp_size = match size {
+            0b00 => FpRegSize::S,
+            0b01 => FpRegSize::D,
+            0b11 => FpRegSize::H,
+            _ => return Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Aarch64, raw, 4)),
         };
         let fp_reg = |num| Operand::FpReg(FpRegister { num, size: fp_size });
 
@@ -2575,13 +2579,13 @@ impl Aarch64Decoder {
         let rm = ((raw >> 16) & 0x1F) as u8;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        let opcode = (raw >> 10) & 0x3F;
-
+        // ptype 0b10 is reserved; the executor treats it as undefined/reserved,
+        // so reject it here rather than aliasing it to single precision.
         let fp_size = match ptype {
             0b00 => FpRegSize::S,
             0b01 => FpRegSize::D,
             0b11 => FpRegSize::H,
-            _ => FpRegSize::S,
+            _ => return Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Aarch64, raw, 4)),
         };
         let fp_reg = |num, size| Operand::FpReg(FpRegister { num, size });
 
@@ -2655,51 +2659,17 @@ impl Aarch64Decoder {
                 .with_operand(fp_reg(rn, fp_size)));
         }
 
-        let mnemonic = match (opcode, ptype, rm) {
-            (0x0A, 0b00, _) => Mnemonic::FADD,
-            (0x06, 0b01, _) => Mnemonic::FADD,
-            (0x16, _, _) => Mnemonic::FSUB,
-            (0x1A, _, _) => Mnemonic::FDIV,
-            (0x1E, _, _) => Mnemonic::FMAX,
-            (0x22, _, _) => Mnemonic::FMIN,
-            (0x02, _, _) => Mnemonic::FNMUL,
-            (0x30, 0b01, _) => Mnemonic::FSQRT,
-            (0x30, 0b00, 0x01) => Mnemonic::FSQRT,
-            (0x10, 0b00, 0x01) => Mnemonic::FABS,
-            (0x10, 0b00, 0x04) => Mnemonic::FNEG,
-            (0x00, 0b00, 0x01) => Mnemonic::FABS,
-            (0x00, 0b00, 0x04) => Mnemonic::FNEG,
-            (0x00, 0b00, _) => Mnemonic::FMOV,
-            (0x10, 0b00, _) => Mnemonic::FMOV,
-            (0x30, 0b00, 0x02) => Mnemonic::FCVT,
-            (0x10, 0b01, _) => Mnemonic::FCVT,
-            (0x07, _, _) => Mnemonic::FCMP,
-            (0x01, _, _) => Mnemonic::FCMP,
-            _ => Mnemonic::UNKNOWN,
-        };
-
-        if mnemonic == Mnemonic::UNKNOWN {
-            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4));
-        }
-
-        if mnemonic == Mnemonic::FCVT {
-            let dst_size = match (opcode, ptype, rm) {
-                (0x30, 0b00, 0x02) => FpRegSize::D,
-                (0x10, 0b01, 0x02) => FpRegSize::S,
-                (0x30, 0b00, 0x03) => FpRegSize::H,
-                (0x10, 0b11, 0x02) => FpRegSize::H,
-                _ => fp_size,
-            };
-            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
-                .with_operand(fp_reg(rd, dst_size))
-                .with_operand(fp_reg(rn, fp_size))
-                .with_operand(fp_reg(rm, fp_size)));
-        }
-
-        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
-            .with_operand(fp_reg(rd, fp_size))
-            .with_operand(fp_reg(rn, fp_size))
-            .with_operand(fp_reg(rm, fp_size)))
+        // Anything reaching here has bits[11:10] != 0b10 and bits[14:10] !=
+        // 0b10000, so it is a *different* scalar FP class that merely shares
+        // bit 21 with the 2-source group: floating-point compare ([13:10]=1000),
+        // conditional compare ([11:10]=01), conditional select ([11:10]=11) or
+        // immediate ([12:10]=100). None of these are modeled by the SMIR
+        // decoder, and the old `(opcode=bits[15:10], ptype, rm)` table actively
+        // mis-decoded them — e.g. FCSEL with cond=0001 ([15:10]=0x07) became
+        // FCMP and FCCMP with cond=0000 ([15:10]=0x01) became FCMP. Return
+        // UNKNOWN so the lifter bails to the interpreter, which decodes and
+        // executes these classes correctly.
+        Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Aarch64, raw, 4))
     }
 
     // =========================================================================
@@ -3589,6 +3559,54 @@ mod tests {
                 assert_eq!(insn.mnemonic, Mnemonic::UNKNOWN);
             }
         }
+    }
+
+    #[test]
+    fn test_scalar_fp_decoder_classifies_by_subfields() {
+        // #48: the scalar FP routing sent every [28:24]=11110, [21]=1 encoding
+        // to the 2-source decoder, but floating-point compare / conditional
+        // compare / conditional select / immediate forms all share bit 21 and
+        // are distinguished by finer subfields ([11:10], [14:10], [13:10]).
+        // The old fallthrough table actively mis-decoded several of them, and
+        // reserved type 0b10 aliased to single precision in both the 2- and
+        // 3-source helpers.
+        let fp_size = |insn: &DecodedInsn, idx: usize| match insn.operands[idx] {
+            Operand::FpReg(r) => r.size,
+            ref other => panic!("operand {idx} not an FP reg: {other:?}"),
+        };
+
+        // --- 2-source still decodes correctly (must not regress) ---
+        // FADD S0,S1,S2 / FADD D0,D1,D2 / FDIV S0,S1,S2
+        assert_eq!(Aarch64Decoder::decode(0x1E22_2820).unwrap().mnemonic, Mnemonic::FADD);
+        assert_eq!(Aarch64Decoder::decode(0x1E62_2820).unwrap().mnemonic, Mnemonic::FADD);
+        assert_eq!(Aarch64Decoder::decode(0x1E22_1820).unwrap().mnemonic, Mnemonic::FDIV);
+        assert_eq!(fp_size(&Aarch64Decoder::decode(0x1E22_2820).unwrap(), 0), FpRegSize::S);
+        assert_eq!(fp_size(&Aarch64Decoder::decode(0x1E62_2820).unwrap(), 0), FpRegSize::D);
+
+        // --- 1-source still decodes correctly ---
+        // FABS S0,S1 / FNEG S0,S1
+        assert_eq!(Aarch64Decoder::decode(0x1E20_C020).unwrap().mnemonic, Mnemonic::FABS);
+        assert_eq!(Aarch64Decoder::decode(0x1E21_4020).unwrap().mnemonic, Mnemonic::FNEG);
+
+        // --- the fix: classes that merely share bit 21 must not mis-decode ---
+        // FCSEL S0,S1,S2,NE ([11:10]=11): old table read [15:10]=0x07 as FCMP.
+        assert_eq!(Aarch64Decoder::decode(0x1E22_1C20).unwrap().mnemonic, Mnemonic::UNKNOWN);
+        // FCCMP S1,S2,#0,EQ ([11:10]=01): old table read [15:10]=0x01 as FCMP.
+        assert_eq!(Aarch64Decoder::decode(0x1E22_0420).unwrap().mnemonic, Mnemonic::UNKNOWN);
+        // FCMP S1,S2 ([13:10]=1000): compare class, not modeled by this decoder.
+        assert_eq!(Aarch64Decoder::decode(0x1E22_2020).unwrap().mnemonic, Mnemonic::UNKNOWN);
+
+        // --- reserved type 0b10 must be undefined, not aliased to single ---
+        // 2-source FADD-shaped word with ptype=0b10.
+        assert_eq!(Aarch64Decoder::decode(0x1EA2_2820).unwrap().mnemonic, Mnemonic::UNKNOWN);
+
+        // --- 3-source: half precision keeps H, reserved 0b10 is undefined ---
+        // FMADD H0,H1,H2,H3 (type=0b11): old `size & 1` mislabeled the size as D.
+        let fmadd_h = Aarch64Decoder::decode(0x1FC2_0C20).unwrap();
+        assert_eq!(fmadd_h.mnemonic, Mnemonic::FMADD);
+        assert_eq!(fp_size(&fmadd_h, 0), FpRegSize::H);
+        // type=0b10 reserved → undefined (old `size & 1` aliased it to single).
+        assert_eq!(Aarch64Decoder::decode(0x1F82_0C20).unwrap().mnemonic, Mnemonic::UNKNOWN);
     }
 
     #[test]
