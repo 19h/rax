@@ -922,10 +922,65 @@ pub fn is_aarch64_native_clobber_safe_excluding(
     excluded: &std::collections::HashMap<crate::smir::types::BlockId, u64>,
     allow_mem: bool,
 ) -> bool {
-    func.blocks
+    let blocks = func
+        .blocks
         .iter()
-        .filter(|b| !excluded.contains_key(&b.id))
-        .all(|b| aarch64_block_is_clobber_safe(b, allow_mem))
+        .filter(|b| !excluded.contains_key(&b.id));
+    let mut uses_fp_trampoline = false;
+    let mut uses_mem_helper = false;
+    for block in blocks {
+        if !aarch64_block_is_clobber_safe(block, allow_mem) {
+            return false;
+        }
+        for op in &block.ops {
+            uses_fp_trampoline |= aarch64_op_needs_fp_trampoline(&op.kind);
+            uses_mem_helper |= allow_mem && aarch64_mem_helper_op(&op.kind);
+        }
+    }
+    // The FP trampoline keeps guest V0-V31/FPCR/FPSR live in host SIMD/FP
+    // state for the whole region, while extern memory helpers may clobber the
+    // AAPCS64 caller-saved subset. Keep those paths separate.
+    !(uses_fp_trampoline && uses_mem_helper)
+}
+
+fn aarch64_mem_helper_op(op: &crate::smir::ops::OpKind) -> bool {
+    use crate::smir::ops::OpKind;
+
+    matches!(
+        op,
+        OpKind::Load { .. } | OpKind::Store { .. } | OpKind::VLoad { .. } | OpKind::VStore { .. }
+    )
+}
+
+fn aarch64_fp_trampoline_vreg(vreg: &crate::smir::types::VReg) -> bool {
+    use crate::smir::types::{ArchReg, ArmReg, VReg};
+
+    matches!(
+        vreg,
+        VReg::Arch(ArchReg::Arm(ArmReg::V(_) | ArmReg::Fpcr | ArmReg::Fpsr))
+    )
+}
+
+fn aarch64_fp_sysreg(reg: u32) -> bool {
+    const SYSREG_FPCR: u32 = (3 << 14) | (3 << 11) | (4 << 7) | (4 << 3);
+    const SYSREG_FPSR: u32 = SYSREG_FPCR | 1;
+
+    matches!(reg, SYSREG_FPCR | SYSREG_FPSR)
+}
+
+fn aarch64_op_needs_fp_trampoline(op: &crate::smir::ops::OpKind) -> bool {
+    use crate::smir::ops::OpKind;
+
+    let touches_raw_fp_sysreg = match op {
+        OpKind::ReadSysReg { reg, .. } | OpKind::WriteSysReg { reg, .. } => {
+            aarch64_fp_sysreg(*reg)
+        }
+        _ => false,
+    };
+
+    touches_raw_fp_sysreg
+        || op.dests().iter().any(aarch64_fp_trampoline_vreg)
+        || op.source_vregs().iter().any(aarch64_fp_trampoline_vreg)
 }
 
 fn aarch64_block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) -> bool {
@@ -959,14 +1014,7 @@ fn aarch64_block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: 
                 }
             }
         }
-        let mem_ok = allow_mem
-            && matches!(
-                op.kind,
-                OpKind::Load { .. }
-                    | OpKind::Store { .. }
-                    | OpKind::VLoad { .. }
-                    | OpKind::VStore { .. }
-            );
+        let mem_ok = allow_mem && aarch64_mem_helper_op(&op.kind);
         // AArch64-clean register-only ops that the x86-tuned `is_jit_safe`
         // whitelist omits: UDIV/SDIV never trap on AArch64 (no x86 `#DE`), and
         // CLZ/RBIT/REV(Bswap)/bitfield insert+extract are pure ALU ops the
@@ -1041,10 +1089,34 @@ mod jit_gate_tests {
     use crate::smir::flags::FlagUpdate;
     use crate::smir::ir::{FunctionBuilder, Terminator};
     use crate::smir::ops::{OpKind, X86OpHint};
-    use crate::smir::types::{ArchReg, FunctionId, OpWidth, SrcOperand, VReg, X86Reg};
+    use crate::smir::types::{
+        Address, ArchReg, ArmReg, FpPrecision, FunctionId, MemWidth, OpWidth, SignExtend,
+        SrcOperand, VReg, X86Reg,
+    };
 
     fn x86(reg: X86Reg) -> VReg {
         VReg::Arch(ArchReg::X86(reg))
+    }
+
+    fn arm_x(n: u8) -> VReg {
+        VReg::Arch(ArchReg::Arm(ArmReg::X(n)))
+    }
+
+    fn arm_v(n: u8) -> VReg {
+        VReg::Arch(ArchReg::Arm(ArmReg::V(n)))
+    }
+
+    fn aarch64_gate(ops: Vec<OpKind>, allow_mem: bool) -> bool {
+        let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
+        for (i, op) in ops.into_iter().enumerate() {
+            b.push_op(0x1000 + i as u64 * 4, op);
+        }
+        b.set_terminator(Terminator::Return { values: vec![] });
+        is_aarch64_native_clobber_safe_excluding(
+            &b.finish(),
+            &std::collections::HashMap::new(),
+            allow_mem,
+        )
     }
 
     #[test]
@@ -1116,6 +1188,39 @@ mod jit_gate_tests {
                 flags: FlagUpdate::All,
             }),
             "non-aliased ADC must stay native-eligible"
+        );
+    }
+
+    #[test]
+    fn aarch64_clobber_gate_rejects_fp_mixed_with_mem_helpers() {
+        let fp_add = OpKind::FAdd {
+            dst: arm_v(0),
+            src1: arm_v(1),
+            src2: arm_v(2),
+            precision: FpPrecision::F64,
+        };
+        let load = OpKind::Load {
+            dst: arm_x(0),
+            addr: Address::Direct(arm_x(1)),
+            width: MemWidth::B8,
+            sign: SignExtend::Zero,
+        };
+
+        assert!(
+            aarch64_gate(vec![fp_add.clone()], true),
+            "pure FP blocks may use the FP trampoline"
+        );
+        assert!(
+            aarch64_gate(vec![load.clone()], true),
+            "integer memory-helper blocks stay eligible when memory JIT is enabled"
+        );
+        assert!(
+            !aarch64_gate(vec![load.clone()], false),
+            "memory ops still require the memory-helper gate"
+        );
+        assert!(
+            !aarch64_gate(vec![fp_add, load], true),
+            "helper-call regions must not run with live guest SIMD state"
         );
     }
 }
