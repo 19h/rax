@@ -5007,6 +5007,57 @@ fn smir_native_m0_add() {
     );
 }
 
+// #163: a guest block that overwrites RBP must NOT be able to pivot the host
+// stack. The epilogue deallocates the frame with `lea rsp, [rsp + frame]`
+// (frame-size based, RBP-independent) rather than `mov rsp, rbp`, so the block
+// returns cleanly with RAX intact. With the old `mov rsp, rbp` teardown the
+// bogus guest RBP becomes RSP and `pop rbp; ret` faults / hijacks control.
+#[test]
+fn smir_native_rbp_clobber_does_not_pivot_stack() {
+    use rax::smir::ir::{FunctionBuilder, Terminator};
+    use rax::smir::lower::SmirLowerer;
+    use rax::smir::lower::x86_64::X86_64Lowerer;
+    use rax::smir::ops::OpKind;
+    use rax::smir::types::{ArchReg, FunctionId, OpWidth, SrcOperand, VReg, X86Reg};
+
+    let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+    let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
+
+    let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
+    b.push_op(
+        0x1000,
+        OpKind::Mov {
+            dst: rax,
+            src: SrcOperand::Imm(0x1234_5678),
+            width: OpWidth::W64,
+        },
+    );
+    // Clobber the frame pointer with an unmapped address.
+    b.push_op(
+        0x1004,
+        OpKind::Mov {
+            dst: rbp,
+            src: SrcOperand::Imm(0xDEAD_BEEF),
+            width: OpWidth::W64,
+        },
+    );
+    b.set_terminator(Terminator::Return { values: vec![rax] });
+    let func = b.finish();
+
+    let mut l = X86_64Lowerer::new();
+    let res = l.lower_function(&func).expect("lower_function");
+    let code = l.finalize().expect("finalize");
+    let mem = ExecMem::new(&code).expect("ExecMem");
+    let mut regs = GuestRegs::default();
+    regs.rflags = 0x2;
+    // Returns cleanly (no stack pivot) and preserves the RAX computation.
+    mem.run(res.entry_offset, &mut regs);
+    assert_eq!(
+        regs.gpr[0], 0x1234_5678,
+        "RAX corrupted or control hijacked by guest RBP clobber; regs={regs:?}"
+    );
+}
+
 // run_smir_native: lift x86 -> SMIR -> LOWER to native -> execute via ExecMem
 // -> read back architectural state. The M2 differential gate validates the
 // lowerer's codegen bit-exact against KVM (the lowerer is otherwise unvalidated

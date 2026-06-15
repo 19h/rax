@@ -3321,6 +3321,13 @@ pub struct X86_64Lowerer {
     /// resumes native execution at the call's continuation block, instead of
     /// being treated as a region-ending native exit. The lift-through-calls path.
     call_helpers: bool,
+
+    /// Code offsets of the disp32 field in each epilogue's `lea rsp, [rsp+frame]`
+    /// frame-teardown placeholder. The frame size is not final until every block
+    /// is lowered, so each epilogue emits a forced-disp32 LEA and is backpatched
+    /// with the final frame size after lowering. Using the frame size (not the
+    /// guest-clobberable RBP) keeps the host return path off guest control.
+    epilogue_stack_patches: Vec<usize>,
 }
 
 impl X86_64Lowerer {
@@ -3340,6 +3347,7 @@ impl X86_64Lowerer {
             native_exits: std::collections::HashMap::new(),
             mem_helpers: false,
             call_helpers: false,
+            epilogue_stack_patches: Vec::new(),
         }
     }
 
@@ -3619,13 +3627,22 @@ impl X86_64Lowerer {
     }
 
     fn emit_epilogue_with_ret(&mut self, ret_imm: Option<u16>) {
-        let mut emitter = X86Emitter::new(&mut self.code);
+        // Deallocate the frame with `lea rsp, [rsp + frame]` rather than
+        // `mov rsp, rbp`. The block body is guest-controlled and owns all GPRs,
+        // so it can overwrite RBP (`mov rbp, imm`, `lea rbp, ...`); restoring
+        // RSP from RBP would let the guest pivot the host stack and hijack the
+        // `ret`. The frame-size LEA is also flag-preserving (unlike `add`), and
+        // it mirrors the prologue's `lea rsp, [rsp - frame]`. The frame size is
+        // not final yet, so emit a forced-disp32 placeholder and record it for
+        // backpatching once lowering completes.
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea_disp(PhysReg::Rsp, PhysReg::Rsp, 0, DispSize::Disp32);
+        }
+        // The disp32 is the final 4 bytes of the LEA just emitted.
+        self.epilogue_stack_patches.push(self.code.position() - 4);
 
-        // Deallocate stack space with `mov rsp, rbp` (flag-preserving) rather
-        // than `add rsp, frame` (which sets RFLAGS, clobbering the guest flags
-        // the block body computed). RBP = RSP after the prologue's `push rbp`,
-        // so this exactly undoes the frame `sub rsp, frame`.
-        emitter.emit_mov_rr(PhysReg::Rsp, PhysReg::Rbp, OpWidth::W64);
+        let mut emitter = X86Emitter::new(&mut self.code);
 
         // NOTE: callee-saved guest registers are intentionally NOT restored
         // here. A lowered block owns all GPRs (identity-mapped guest state), and
@@ -10054,6 +10071,7 @@ impl SmirLowerer for X86_64Lowerer {
         self.guest_base = func.guest_range.0;
         self.pending_ret_imm = None;
         self.pending_cond = None;
+        self.epilogue_stack_patches.clear();
         self.block_guest_pcs = func
             .blocks
             .iter()
@@ -10128,6 +10146,16 @@ impl SmirLowerer for X86_64Lowerer {
                 self.code.data[prologue_patch_at + i] = b;
             }
             // Any remaining reserved bytes stay 0x90 (NOP) and execute harmlessly.
+        }
+
+        // Backpatch each epilogue's `lea rsp, [rsp + frame]` disp32 with the now-
+        // final frame size, mirroring the prologue's `lea rsp, [rsp - frame]`.
+        {
+            let frame = self.regalloc.frame_size() as i32;
+            let disp = frame.to_le_bytes();
+            for &patch_at in &self.epilogue_stack_patches {
+                self.code.data[patch_at..patch_at + 4].copy_from_slice(&disp);
+            }
         }
 
         let code_size = self.code.len();
