@@ -865,6 +865,9 @@ fn block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) ->
         if x86_native_op_would_clobber_preserved_flags(&op.kind) {
             return false;
         }
+        if x86_movx_uses_ambiguous_high_byte_source(&op.kind) {
+            return false;
+        }
         // (2) no virtual-temp writes (would clobber a guest GPR).
         if op
             .kind
@@ -903,6 +906,24 @@ fn block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) ->
         }
     }
     true
+}
+
+fn x86_movx_uses_ambiguous_high_byte_source(op: &crate::smir::ops::OpKind) -> bool {
+    use crate::smir::ops::OpKind;
+    use crate::smir::types::{ArchReg, OpWidth, VReg, X86Reg};
+
+    matches!(
+        op,
+        OpKind::ZeroExtend {
+            src: VReg::Arch(ArchReg::X86(X86Reg::Rsi | X86Reg::Rdi)),
+            from_width: OpWidth::W8,
+            ..
+        } | OpKind::SignExtend {
+            src: VReg::Arch(ArchReg::X86(X86Reg::Rsi | X86Reg::Rdi)),
+            from_width: OpWidth::W8,
+            ..
+        }
+    )
 }
 
 fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ops::OpKind) -> bool {
@@ -1373,6 +1394,49 @@ mod jit_gate_tests {
             width: OpWidth::W64,
             flags: FlagUpdate::All,
         }));
+    }
+
+    #[test]
+    fn clobber_gate_rejects_ambiguous_high_byte_movx_sources() {
+        for src in [X86Reg::Rsi, X86Reg::Rdi] {
+            assert!(
+                !x86_gate(OpKind::ZeroExtend {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(src),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W64,
+                }),
+                "W8 ZeroExtend from {src:?} can be legacy DH/BH and must deopt"
+            );
+            assert!(
+                !x86_gate(OpKind::SignExtend {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(src),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W64,
+                }),
+                "W8 SignExtend from {src:?} can be legacy DH/BH and must deopt"
+            );
+        }
+
+        assert!(
+            x86_gate(OpKind::ZeroExtend {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::Rdx),
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W64,
+            }),
+            "unambiguous DL byte source stays native-eligible"
+        );
+        assert!(
+            x86_gate(OpKind::ZeroExtend {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::Rsi),
+                from_width: OpWidth::W16,
+                to_width: OpWidth::W64,
+            }),
+            "word-sized RSI source is not a high-byte register ambiguity"
+        );
     }
 
     // Regression for issue #14: an APX NDD ADC/SBB whose destination aliases its
