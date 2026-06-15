@@ -2451,7 +2451,11 @@ impl RiscVCpu {
             | Op::Vmorn
             | Op::Vmxnor => {
                 // Mask-register logicals: vd.bit[i] = vs2.bit[i] OP vs1.bit[i],
-                // always unmasked, over the body [vstart, vl).
+                // always unmasked, over the body [vstart, vl). The vm=0 form is
+                // reserved and must raise an illegal-instruction trap.
+                if !vm {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 for e in vstart..vl {
                     let a = self.vbit(vs2, e);
                     let b = self.vbit(insn.rs1, e);
@@ -2918,6 +2922,11 @@ impl RiscVCpu {
             }
             Op::Vadc | Op::Vsbc => {
                 // vd[i] = vs2[i] +/- op[i] +/- v0.mask[i]; every body lane written.
+                // These consume the v0 carry/borrow-in and are only defined in
+                // the masked (vm=0) form; the unmasked vm=1 encoding is reserved.
+                if vm {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 let scalar = match insn.funct3 {
@@ -3027,6 +3036,23 @@ impl RiscVCpu {
                 }
             }
             Op::Vcompress => {
+                // vcompress.vm is unmasked (vm=1), is not restartable (vstart
+                // must be 0), and its destination group must not overlap the
+                // source vs2 group or the single-register mask source vs1.
+                let emul: u8 = match self.vtype & 0x7 {
+                    1 => 2,
+                    2 => 4,
+                    3 => 8,
+                    _ => 1, // LMUL=1 and all fractional LMULs occupy one register
+                };
+                let overlaps = |a: u8, an: u8, b: u8, bn: u8| a < b + bn && b < a + an;
+                if !vm
+                    || vstart != 0
+                    || overlaps(vd, emul, vs2, emul)
+                    || overlaps(vd, emul, insn.rs1, 1)
+                {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 // Pack vs2 elements whose vs1 mask bit is set into the low lanes of vd.
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
@@ -3071,7 +3097,11 @@ impl RiscVCpu {
                 }
             }
             Op::Vcpop => {
-                // x[rd] = number of active mask bits set in vs2.
+                // x[rd] = number of active mask bits set in vs2. This reduction
+                // is not restartable: a non-zero vstart is reserved and traps.
+                if vstart != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let mut count = 0u64;
                 for e in vstart..vl {
                     if !vm && !self.vmask_bit(e) {
@@ -3084,7 +3114,11 @@ impl RiscVCpu {
                 self.set_x(insn.rd, count);
             }
             Op::Vfirst => {
-                // x[rd] = index of first active set mask bit, or -1.
+                // x[rd] = index of first active set mask bit, or -1. Not
+                // restartable: a non-zero vstart is reserved and traps.
+                if vstart != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let mut idx: i64 = -1;
                 for e in vstart..vl {
                     if !vm && !self.vmask_bit(e) {
@@ -3099,6 +3133,10 @@ impl RiscVCpu {
             }
             Op::Vmsbf | Op::Vmsif | Op::Vmsof => {
                 // Set-before / set-including / set-only the first active set bit.
+                // These prefix ops are not restartable: non-zero vstart traps.
+                if vstart != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let mut found = false;
                 for e in vstart..vl {
                     if !vm && !self.vmask_bit(e) {
@@ -3120,6 +3158,10 @@ impl RiscVCpu {
             }
             Op::Viota => {
                 // vd[i] = count of active set bits in vs2 strictly before i.
+                // This prefix scan is not restartable: non-zero vstart traps.
+                if vstart != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 let mut sum = 0u64;
@@ -4660,6 +4702,116 @@ mod tests {
             run_one(&mut c, r_type(0, 2, 1, 0, 3, 0x3b)),
             RiscVExit::Trap(_)
         ));
+    }
+
+    /// Encode an OP-V vector instruction (funct6/vm/vs2/vs1|rs1/funct3/vd).
+    fn op_v(funct6: u32, vm: u32, vs2: u32, src: u32, funct3: u32, vd: u32) -> u32 {
+        (funct6 << 26) | (vm << 25) | (vs2 << 20) | (src << 15) | (funct3 << 12) | (vd << 7) | 0x57
+    }
+
+    /// Fresh CPU with a valid e8,m1 vtype (vl = VLMAX) so vector ops aren't vill.
+    fn cpu_e8m1() -> RiscVCpu {
+        let mut c = cpu();
+        // vsetvli x1, x0, e8, m1 (rs1=x0 keeps AVL=VLMAX).
+        run_one(&mut c, (0u32 << 20) | (0 << 15) | (7 << 12) | (1 << 7) | 0x57);
+        c
+    }
+
+    #[test]
+    fn vmask_logical_rejects_masked_encoding() {
+        // vmand.mm etc. (funct6 011001, OPMVV funct3=010) are always unmasked;
+        // the vm=0 form is reserved and must trap.
+        let mut c = cpu_e8m1();
+        // vm=0 (masked) vmand.mm v1, v2, v3 -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b011001, 0, 2, 3, 0b010, 1)),
+            RiscVExit::Trap(_)
+        ));
+        // vm=1 (proper) form still executes.
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b011001, 1, 2, 3, 0b010, 1)),
+            RiscVExit::Continue
+        ));
+    }
+
+    #[test]
+    fn vadc_vsbc_reject_unmasked_encoding() {
+        // vadc.vvm (funct6 010000) and vsbc.vvm (010010) consume the v0 carry
+        // and are only defined masked (vm=0); the vm=1 form is reserved.
+        for funct6 in [0b010000u32, 0b010010] {
+            assert!(
+                matches!(
+                    run_one(&mut cpu_e8m1(), op_v(funct6, 1, 2, 3, 0b000, 1)),
+                    RiscVExit::Trap(_)
+                ),
+                "unmasked funct6={funct6:06b} must trap"
+            );
+            // Masked (vm=0) form executes (vd=1 avoids overwriting v0 mask).
+            assert!(matches!(
+                run_one(&mut cpu_e8m1(), op_v(funct6, 0, 2, 3, 0b000, 1)),
+                RiscVExit::Continue
+            ));
+        }
+    }
+
+    #[test]
+    fn vcompress_rejects_reserved_states() {
+        // vcompress.vm (funct6 010111, OPMVV) must be unmasked, vstart==0, and
+        // its destination must not overlap vs2 or the vs1 mask source.
+        // Masked (vm=0) -> illegal.
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b010111, 0, 2, 3, 0b010, 1)),
+            RiscVExit::Trap(_)
+        ));
+        // vd overlaps vs2 -> illegal.
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b010111, 1, 1, 3, 0b010, 1)),
+            RiscVExit::Trap(_)
+        ));
+        // vd overlaps vs1 (mask source) -> illegal.
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b010111, 1, 2, 1, 0b010, 1)),
+            RiscVExit::Trap(_)
+        ));
+        // Nonzero vstart -> illegal.
+        let mut c = cpu_e8m1();
+        c.set_vstart(3);
+        assert!(matches!(
+            run_one(&mut c, op_v(0b010111, 1, 2, 3, 0b010, 1)),
+            RiscVExit::Trap(_)
+        ));
+        // Valid form (distinct vd/vs2/vs1, vm=1, vstart=0) executes.
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b010111, 1, 2, 3, 0b010, 1)),
+            RiscVExit::Continue
+        ));
+    }
+
+    #[test]
+    fn mask_reductions_reject_nonzero_vstart() {
+        // vcpop.m/vfirst.m/vmsbf.m/vmsof.m/vmsif.m/viota.m are not restartable;
+        // a guest-set non-zero vstart must raise illegal, not skip elements.
+        // funct6 010000 OPMVV with vs1 select: vcpop=10000, vfirst=10001,
+        // vmsbf=00001, vmsof=00010, vmsif=00011, viota=10000(funct6 010100).
+        let cases: &[(u32, u32, u32)] = &[
+            (0b010000, 0b10000, 1), // vcpop.m   -> x1
+            (0b010000, 0b10001, 1), // vfirst.m  -> x1
+            (0b010100, 0b00001, 2), // vmsbf.m   -> v2
+            (0b010100, 0b00010, 2), // vmsof.m   -> v2
+            (0b010100, 0b00011, 2), // vmsif.m   -> v2
+            (0b010100, 0b10000, 2), // viota.m   -> v2
+        ];
+        for &(funct6, vs1, vd) in cases {
+            let mut c = cpu_e8m1();
+            c.set_vstart(2);
+            assert!(
+                matches!(
+                    run_one(&mut c, op_v(funct6, 1, 4, vs1, 0b010, vd)),
+                    RiscVExit::Trap(_)
+                ),
+                "funct6={funct6:06b} vs1={vs1:05b} with vstart!=0 must trap"
+            );
+        }
     }
 
     #[test]
