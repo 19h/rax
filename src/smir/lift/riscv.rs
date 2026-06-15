@@ -45,14 +45,46 @@ pub struct RiscVExtensions {
     pub d: bool,
     /// C extension: Compressed instructions
     pub c: bool,
+    /// Zicsr extension: Control and status register access
+    pub zicsr: bool,
+    /// Zifencei extension: Instruction-stream fence
+    pub zifencei: bool,
     /// Zba extension: Address bit manipulation
     pub zba: bool,
     /// Zbb extension: Basic bit manipulation
     pub zbb: bool,
+    /// Zbc extension: Carry-less multiplication
+    pub zbc: bool,
+    /// Zbs extension: Single-bit instructions
+    pub zbs: bool,
+    /// Zicond extension: Integer conditional operations
+    pub zicond: bool,
+    /// Zfa extension: Additional floating-point instructions
+    pub zfa: bool,
+    /// Zbkb extension: Bit-manipulation for cryptography
+    pub zbkb: bool,
+    /// Zfh extension: Half-precision floating point
+    pub zfh: bool,
+    /// Zbkx extension: Crossbar permutations
+    pub zbkx: bool,
+    /// Zknh extension: NIST SHA-256/512 hash transforms
+    pub zknh: bool,
+    /// Zksh extension: ShangMi SM3 hash transforms
+    pub zksh: bool,
+    /// Zksed extension: ShangMi SM4 block cipher
+    pub zksed: bool,
+    /// Zkne extension: NIST AES encryption
+    pub zkne: bool,
+    /// Zknd extension: NIST AES decryption
+    pub zknd: bool,
+    /// Zcb extension: Additional compressed instructions
+    pub zcb: bool,
+    /// V extension: Vector instructions
+    pub v: bool,
 }
 
 impl RiscVExtensions {
-    /// Standard RV64GC configuration (I + M + A + F + D + C)
+    /// Standard test/differential configuration used by this crate.
     pub fn rv64gc() -> Self {
         Self {
             m: true,
@@ -60,8 +92,24 @@ impl RiscVExtensions {
             f: true,
             d: true,
             c: true,
-            zba: false,
-            zbb: false,
+            zicsr: true,
+            zifencei: true,
+            zba: true,
+            zbb: true,
+            zbc: true,
+            zbs: true,
+            zicond: true,
+            zfa: true,
+            zbkb: true,
+            zfh: true,
+            zbkx: true,
+            zknh: true,
+            zksh: true,
+            zksed: true,
+            zkne: true,
+            zknd: true,
+            zcb: true,
+            v: true,
         }
     }
 
@@ -121,6 +169,42 @@ impl RiscVLifter {
             OpWidth::W64
         } else {
             OpWidth::W32
+        }
+    }
+
+    fn rv_xlen(&self) -> RvXlen {
+        if self.xlen == 64 {
+            RvXlen::Rv64
+        } else {
+            RvXlen::Rv32
+        }
+    }
+
+    fn decoder_isa(&self) -> RvIsa {
+        RvIsa {
+            m: self.extensions.m,
+            a: self.extensions.a,
+            f: self.extensions.f,
+            d: self.extensions.d,
+            c: self.extensions.c,
+            zicsr: self.extensions.zicsr,
+            zifencei: self.extensions.zifencei,
+            zba: self.extensions.zba,
+            zbb: self.extensions.zbb,
+            zbc: self.extensions.zbc,
+            zbs: self.extensions.zbs,
+            zicond: self.extensions.zicond,
+            zfa: self.extensions.zfa,
+            zbkb: self.extensions.zbkb,
+            zfh: self.extensions.zfh,
+            zbkx: self.extensions.zbkx,
+            zknh: self.extensions.zknh,
+            zksh: self.extensions.zksh,
+            zksed: self.extensions.zksed,
+            zkne: self.extensions.zkne,
+            zknd: self.extensions.zknd,
+            zcb: self.extensions.zcb,
+            v: self.extensions.v,
         }
     }
 
@@ -614,12 +698,7 @@ impl RiscVLifter {
 
         // Route non-base OP-IMM (Zbb/Zbs immediates, unary count/extend) through
         // the decode-driven bit-manip path.
-        let xl = if self.xlen == 64 {
-            RvXlen::Rv64
-        } else {
-            RvXlen::Rv32
-        };
-        let dop = rv_decode(insn, xl, &RvIsa::rv64gc()).op;
+        let dop = rv_decode(insn, self.rv_xlen(), &self.decoder_isa()).op;
         if !matches!(
             dop,
             RvOp::Addi
@@ -758,16 +837,17 @@ impl RiscVLifter {
         ctx: &mut LiftContext,
     ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
         use CryptoTerm::*;
-        let xl = if self.xlen == 64 {
-            RvXlen::Rv64
-        } else {
-            RvXlen::Rv32
-        };
-        let d = rv_decode(insn, xl, &RvIsa::rv64gc());
+        let d = rv_decode(insn, self.rv_xlen(), &self.decoder_isa());
         let rs1 = self.get_x_reg(d.rs1, ctx);
         let shamt = ((insn >> 20) & 0x3F) as i64; // 6-bit (RV64) bit/shift index
         let mut ops = Vec::new();
         let mk = |ctx: &mut LiftContext, k: OpKind| SmirOp::new(ctx.next_op_id(), addr, k);
+        if d.is_illegal() {
+            return Err(LiftError::InvalidEncoding {
+                addr,
+                bytes: insn.to_le_bytes().to_vec(),
+            });
+        }
         let dst = match self.def_x_reg(d.rd, ctx) {
             Some(dst) => dst,
             None => return Ok((ops, ControlFlow::NextInsn)),
@@ -1151,12 +1231,7 @@ impl RiscVLifter {
 
         // Route non-base OP-IMM-32 (Zba slli.uw, Zbb roriw/clzw/cpopw/ctzw)
         // through the decode-driven word bit-manip path.
-        let xl = if self.xlen == 64 {
-            RvXlen::Rv64
-        } else {
-            RvXlen::Rv32
-        };
-        let dop = rv_decode(insn, xl, &RvIsa::rv64gc()).op;
+        let dop = rv_decode(insn, self.rv_xlen(), &self.decoder_isa()).op;
         if !matches!(dop, RvOp::Addiw | RvOp::Slliw | RvOp::Srliw | RvOp::Sraiw) {
             return self.lift_zb_imm32(insn, addr, ctx);
         }
@@ -1421,12 +1496,7 @@ impl RiscVLifter {
         }
         // Non-base word ALU (Zba add.uw/sh*add.uw, Zbb rolw/rorw, Zbkb packw)
         // share the decode-driven bit-manip path.
-        let xl = if self.xlen == 64 {
-            RvXlen::Rv64
-        } else {
-            RvXlen::Rv32
-        };
-        let dop = rv_decode(insn, xl, &RvIsa::rv64gc()).op;
+        let dop = rv_decode(insn, self.rv_xlen(), &self.decoder_isa()).op;
         if !matches!(
             dop,
             RvOp::Addw | RvOp::Subw | RvOp::Sllw | RvOp::Srlw | RvOp::Sraw
@@ -1531,16 +1601,17 @@ impl RiscVLifter {
         addr: GuestAddr,
         ctx: &mut LiftContext,
     ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
-        let xlen = if self.xlen == 64 {
-            RvXlen::Rv64
-        } else {
-            RvXlen::Rv32
-        };
-        let d = rv_decode(insn, xlen, &RvIsa::rv64gc());
+        let d = rv_decode(insn, self.rv_xlen(), &self.decoder_isa());
         let rs1 = self.get_x_reg(d.rs1, ctx);
         let rs2 = self.get_x_reg(d.rs2, ctx);
         let mut ops = Vec::new();
         let mk = |ctx: &mut LiftContext, k: OpKind| SmirOp::new(ctx.next_op_id(), addr, k);
+        if d.is_illegal() {
+            return Err(LiftError::InvalidEncoding {
+                addr,
+                bytes: insn.to_le_bytes().to_vec(),
+            });
+        }
         let dst = match self.def_x_reg(d.rd, ctx) {
             Some(dst) => dst,
             None => return Ok((ops, ControlFlow::NextInsn)), // rd == x0: pure no-op
@@ -2142,15 +2213,16 @@ impl RiscVLifter {
         addr: GuestAddr,
         ctx: &mut LiftContext,
     ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
-        let xl = if self.xlen == 64 {
-            RvXlen::Rv64
-        } else {
-            RvXlen::Rv32
-        };
-        let d = rv_decode(insn, xl, &RvIsa::rv64gc());
+        let d = rv_decode(insn, self.rv_xlen(), &self.decoder_isa());
         let rs1 = self.get_x_reg(d.rs1, ctx);
         let mut ops = Vec::new();
         let mk = |ctx: &mut LiftContext, k: OpKind| SmirOp::new(ctx.next_op_id(), addr, k);
+        if d.is_illegal() {
+            return Err(LiftError::InvalidEncoding {
+                addr,
+                bytes: insn.to_le_bytes().to_vec(),
+            });
+        }
         let dst = match self.def_x_reg(d.rd, ctx) {
             Some(dst) => dst,
             None => return Ok((ops, ControlFlow::NextInsn)),
@@ -5457,6 +5529,66 @@ mod tests {
 
     fn test_ctx() -> LiftContext {
         LiftContext::new(SourceArch::RiscV64)
+    }
+
+    fn r_type(funct7: u32, rs2: u32, rs1: u32, funct3: u32, rd: u32, opcode: u32) -> u32 {
+        (funct7 << 25) | (rs2 << 20) | (rs1 << 15) | (funct3 << 12) | (rd << 7) | opcode
+    }
+
+    fn i_type(imm12: u32, rs1: u32, funct3: u32, rd: u32, opcode: u32) -> u32 {
+        ((imm12 & 0xfff) << 20) | (rs1 << 15) | (funct3 << 12) | (rd << 7) | opcode
+    }
+
+    #[track_caller]
+    fn assert_invalid_lift(mut lifter: RiscVLifter, word: u32) {
+        let mut ctx = test_ctx();
+        let err = match lifter.lift_insn(0x1000, &word.to_le_bytes(), &mut ctx) {
+            Err(err) => err,
+            Ok(_) => panic!("instruction {word:#010x} must not lift as a no-op"),
+        };
+        assert!(
+            matches!(err, LiftError::InvalidEncoding { .. }),
+            "expected InvalidEncoding for {word:#010x}, got {err:?}"
+        );
+    }
+
+    #[test]
+    fn zb_helpers_reject_illegal_rd_x0_before_noop() {
+        let cases = [
+            r_type(0x7f, 0, 0, 0, 0, 0x33),
+            i_type(0x7ff, 0, 0b001, 0, 0x13),
+            i_type(0x7ff, 0, 0b001, 0, 0x1b),
+        ];
+
+        for word in cases {
+            assert_invalid_lift(RiscVLifter::rv64gc(), word);
+        }
+    }
+
+    #[test]
+    fn zb_helpers_decode_with_configured_extensions() {
+        let rori = (0b011000 << 26) | (1 << 20) | (1 << 15) | (0b101 << 12) | (2 << 7) | 0x13;
+
+        assert_invalid_lift(RiscVLifter::new_rv64(RiscVExtensions::rv64i()), rori);
+
+        let mut lifter = RiscVLifter::new_rv64(RiscVExtensions {
+            zbb: true,
+            ..RiscVExtensions::rv64i()
+        });
+        let mut ctx = test_ctx();
+        let result = lifter
+            .lift_insn(0x1000, &rori.to_le_bytes(), &mut ctx)
+            .expect("enabled Zbb RORI should lift");
+
+        assert!(matches!(result.control_flow, ControlFlow::NextInsn));
+        assert!(
+            result
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::Ror { .. })),
+            "enabled Zbb RORI did not produce a rotate: {:?}",
+            result.ops
+        );
     }
 
     #[test]
