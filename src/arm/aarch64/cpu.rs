@@ -8189,6 +8189,12 @@ impl AArch64Cpu {
             {
                 let opc = (insn >> 17) & 0x3;
                 let unsigned = (insn >> 16) & 1 == 1;
+                // Only (opc,U) in {(00,1)=ADDP, (10,0)=SMAXP, (10,1)=UMAXP,
+                // (11,0)=SMINP, (11,1)=UMINP} are allocated; (00,0), (01,0) and
+                // (01,1) are reserved and must trap rather than execute.
+                if !matches!((opc, unsigned), (0b00, true) | (0b10, _) | (0b11, _)) {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 let bits = (esize * 8) as u32;
                 let mask = elem_mask(bits);
                 let elements = 16 / esize;
@@ -20978,6 +20984,29 @@ mod tests {
 
         assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
         assert_eq!(cpu.get_simd_reg(0), Some((src_lo, src_hi)));
+    }
+
+    #[test]
+    fn sve2_int_pairwise_rejects_reserved_encodings() {
+        // SVE2 integer pairwise (ADDP/SMAXP/UMAXP/SMINP/UMINP) only allocates
+        // (opc,U) in {(00,1),(10,0),(10,1),(11,0),(11,1)}. The reserved (00,0),
+        // (01,0) and (01,1) encodings must trap, not execute as ADDP/MINP.
+        let setup = |insn: u32| {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+            cpu.set_sve_pred(0, 0xffff);
+            cpu
+        };
+        for insn in [0x4410_a020u32, 0x4412_a020, 0x4413_a020] {
+            assert_eq!(
+                setup(insn).step().unwrap(),
+                CpuExit::Undefined(insn),
+                "reserved pairwise encoding {insn:#x} must trap"
+            );
+        }
+        // Valid ADDP (00,1) and UMINP (11,1) still execute.
+        assert_eq!(setup(0x4411_a020).step().unwrap(), CpuExit::Continue);
+        assert_eq!(setup(0x4417_a020).step().unwrap(), CpuExit::Continue);
     }
 
     #[test]
