@@ -924,6 +924,18 @@ impl Aarch64Lowerer {
         }
     }
 
+    fn fp_to_int_rmode(round: FpRoundMode) -> Result<u32, LowerError> {
+        match round {
+            FpRoundMode::RoundNearest => Ok(0b00),
+            FpRoundMode::RoundUp => Ok(0b01),
+            FpRoundMode::RoundDown => Ok(0b10),
+            FpRoundMode::RoundTowardZero => Ok(0b11),
+            FpRoundMode::Dynamic => Err(LowerError::UnsupportedOp {
+                op: "AArch64 native FpToInt dynamic rounding".to_string(),
+            }),
+        }
+    }
+
     fn emit_fp_three_source(
         &mut self,
         rd: u8,
@@ -978,16 +990,18 @@ impl Aarch64Lowerer {
         fp_precision: FpPrecision,
         int_width: OpWidth,
         signed: bool,
+        round: FpRoundMode,
     ) -> Result<(), LowerError> {
         let sf = Self::sf(int_width)?;
         let ptype = Self::fp_type(fp_precision)?;
+        let rmode = Self::fp_to_int_rmode(round)?;
         let opcode = if signed { 0b000 } else { 0b001 };
         self.emit(
             (sf << 31)
                 | (0b0011110 << 24)
                 | (ptype << 22)
                 | (1 << 21)
-                | (0b11 << 19)
+                | (rmode << 19)
                 | (opcode << 16)
                 | ((rn as u32) << 5)
                 | (rd as u32),
@@ -6781,10 +6795,16 @@ impl Aarch64Lowerer {
         dst: VReg,
         src: VReg,
         precision: FpPrecision,
-        _mode: FpRoundMode,
+        mode: FpRoundMode,
     ) -> Result<(), LowerError> {
-        // SMIR currently ignores the mode and rounds to nearest with ties away.
-        self.lower_fp_unary(dst, src, precision, 0b01100)
+        let opcode = match mode {
+            FpRoundMode::RoundNearest => 0b01000,     // FRINTN
+            FpRoundMode::RoundUp => 0b01001,          // FRINTP
+            FpRoundMode::RoundDown => 0b01010,        // FRINTM
+            FpRoundMode::RoundTowardZero => 0b01011,  // FRINTZ
+            FpRoundMode::Dynamic => 0b01111,          // FRINTI
+        };
+        self.lower_fp_unary(dst, src, precision, opcode)
     }
 
     fn lower_fp_compare(
@@ -6858,17 +6878,17 @@ impl Aarch64Lowerer {
         fp_precision: FpPrecision,
         int_width: OpWidth,
         signed: bool,
-        _round: FpRoundMode,
+        round: FpRoundMode,
     ) -> Result<(), LowerError> {
         let rd = Self::dst_gpr_arm_or_x86(dst)?;
         let rn = Self::fp_reg(src)?;
         match int_width {
             OpWidth::W8 | OpWidth::W16 => {
-                self.emit_fp_to_int(rd, rn, fp_precision, OpWidth::W64, signed)?;
+                self.emit_fp_to_int(rd, rn, fp_precision, OpWidth::W64, signed, round)?;
                 self.emit_bitfield(rd, rd, 0b10, 0, int_width.bits() - 1, OpWidth::W32)
             }
             OpWidth::W32 | OpWidth::W64 => {
-                self.emit_fp_to_int(rd, rn, fp_precision, int_width, signed)
+                self.emit_fp_to_int(rd, rn, fp_precision, int_width, signed, round)
             }
             other => Err(LowerError::UnsupportedOp {
                 op: format!("AArch64 native FpToInt width {other:?}"),
@@ -26873,7 +26893,7 @@ mod tests {
             signed: true,
             round: FpRoundMode::RoundDown,
         }));
-        assert_eq!(words, vec![0x1e38_0020, 0xd65f_03c0]);
+        assert_eq!(words, vec![0x1e30_0020, 0xd65f_03c0]);
 
         let words = code_words(&lower_single_op(OpKind::FpToInt {
             dst: x(2),
@@ -26883,13 +26903,13 @@ mod tests {
             signed: false,
             round: FpRoundMode::RoundUp,
         }));
-        assert_eq!(words, vec![0x9e79_0062, 0xd65f_03c0]);
+        assert_eq!(words, vec![0x9e69_0062, 0xd65f_03c0]);
     }
 
     #[test]
     fn lowers_scalar_fp_to_int_runtime() {
         assert_fp_to_int_f32(
-            "fcvtzs_w_s_round_ignored",
+            "fcvtms_w_s_round_down",
             OpKind::FpToInt {
                 dst: x(0),
                 src: v(1),
@@ -26899,10 +26919,10 @@ mod tests {
                 round: FpRoundMode::RoundDown,
             },
             -7.9,
-            u64::from((-7_i32) as u32),
+            u64::from((-8_i32) as u32),
         );
         assert_fp_to_int_f64(
-            "fcvtzu_x_d",
+            "fcvtnu_x_d_round_nearest",
             OpKind::FpToInt {
                 dst: x(0),
                 src: v(1),
@@ -26912,7 +26932,7 @@ mod tests {
                 round: FpRoundMode::RoundNearest,
             },
             1_234_567_890_123.75,
-            1_234_567_890_123,
+            1_234_567_890_124,
         );
         assert_fp_to_int_f64(
             "fcvtzs_b_d_large_low_bits",
@@ -27065,6 +27085,17 @@ mod tests {
         let mut lowerer = Aarch64Lowerer::new();
         let err = lowerer.lower_function(&func).unwrap_err();
         assert!(matches!(err, LowerError::UnsupportedOp { .. }));
+
+        let err = try_lower_single_op(OpKind::FpToInt {
+            dst: x(0),
+            src: v(1),
+            fp_precision: FpPrecision::F64,
+            int_width: OpWidth::W64,
+            signed: true,
+            round: FpRoundMode::Dynamic,
+        })
+        .unwrap_err();
+        assert!(matches!(err, LowerError::UnsupportedOp { .. }));
     }
 
     #[test]
@@ -27167,7 +27198,7 @@ mod tests {
             precision: FpPrecision::F32,
             mode: FpRoundMode::RoundDown,
         }));
-        assert_eq!(words, vec![0x1e26_4020, 0xd65f_03c0]);
+        assert_eq!(words, vec![0x1e25_4020, 0xd65f_03c0]);
 
         let words = code_words(&lower_single_op(OpKind::FRound {
             dst: v(2),
@@ -27175,7 +27206,7 @@ mod tests {
             precision: FpPrecision::F64,
             mode: FpRoundMode::RoundTowardZero,
         }));
-        assert_eq!(words, vec![0x1e66_4062, 0xd65f_03c0]);
+        assert_eq!(words, vec![0x1e65_c062, 0xd65f_03c0]);
     }
 
     #[test]
@@ -27211,7 +27242,7 @@ mod tests {
             3.0,
         );
         assert_fp_unary_f32(
-            "frinta_s_mode_ignored",
+            "frintm_s_round_down",
             OpKind::FRound {
                 dst: v(0),
                 src: v(1),
@@ -27219,7 +27250,18 @@ mod tests {
                 mode: FpRoundMode::RoundDown,
             },
             2.5,
-            3.0,
+            2.0,
+        );
+        assert_fp_unary_f32(
+            "frintn_s_ties_even",
+            OpKind::FRound {
+                dst: v(0),
+                src: v(1),
+                precision: FpPrecision::F32,
+                mode: FpRoundMode::RoundNearest,
+            },
+            2.5,
+            2.0,
         );
     }
 
@@ -27256,7 +27298,7 @@ mod tests {
             3.0,
         );
         assert_fp_unary_f64(
-            "frinta_d_mode_ignored",
+            "frintp_d_round_up",
             OpKind::FRound {
                 dst: v(0),
                 src: v(1),
@@ -27264,7 +27306,7 @@ mod tests {
                 mode: FpRoundMode::RoundUp,
             },
             -2.5,
-            -3.0,
+            -2.0,
         );
     }
 
