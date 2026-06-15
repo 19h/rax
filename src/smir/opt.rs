@@ -1733,18 +1733,26 @@ fn redundant_load_elimination_block(block: &mut SmirBlock) -> usize {
                 }
             }
 
-            OpKind::Store { .. }
-            | OpKind::AtomicStore { .. }
-            | OpKind::AtomicRmw { .. }
-            | OpKind::Cas { .. }
-            | OpKind::AtomicCmpXadd { .. }
-            | OpKind::StoreExclusive { .. }
-            | OpKind::Fence { .. }
+            // Any op that writes memory may alias an arbitrary cached address, so
+            // conservatively drop every cached load. This is keyed off
+            // `writes_memory()` rather than an explicit op list so that store-like
+            // ops cannot silently regress by falling through to the default arm:
+            // the prior explicit list omitted PredStore, RepStos, RepMovs,
+            // StorePair, VStore, and RvVector, any of which could leave a stale
+            // cached load alive across a memory write. (#112)
+            other if other.writes_memory() => {
+                mem_to_reg.clear();
+                new_ops.push(op.clone());
+            }
+
+            // I/O ports and syscalls don't write guest RAM through a tracked
+            // address, and a fence imposes ordering on prior writes — none are
+            // covered by `writes_memory()`, but all may have arbitrary memory side
+            // effects, so be conservative and also drop the cache.
+            OpKind::Fence { .. }
             | OpKind::IoIn { .. }
             | OpKind::IoOut { .. }
             | OpKind::Syscall { .. } => {
-                // Any store / atomic / I/O / syscall may alias an arbitrary
-                // address, so conservatively drop every cached load.
                 mem_to_reg.clear();
                 new_ops.push(op.clone());
             }
@@ -3330,6 +3338,70 @@ mod tests {
             satn_count_after_opt(false),
             0,
             "a SatN with set_ovf=false and a dead data result has no side effect and is removable",
+        );
+    }
+
+    // Regression for issue #112: PredStore writes memory (writes_memory() == true),
+    // so redundant-load elimination must invalidate its cached loads across one.
+    // A `Load X; PredStore X; Load X` sequence must keep BOTH loads — forwarding the
+    // second from the first would read stale memory if the PredStore committed.
+    #[test]
+    fn issue_112_redundant_load_elim_invalidates_on_pred_store() {
+        use crate::smir::ir::FunctionBuilder;
+        use crate::smir::types::SignExtend;
+
+        let r0 = VReg::Arch(ArchReg::Hexagon(HexagonReg::R(0)));
+        let r1 = VReg::Arch(ArchReg::Hexagon(HexagonReg::R(1)));
+        let r2 = VReg::Arch(ArchReg::Hexagon(HexagonReg::R(2)));
+        let r3 = VReg::Arch(ArchReg::Hexagon(HexagonReg::R(3)));
+        let p0 = VReg::Arch(ArchReg::Hexagon(HexagonReg::P(0)));
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Load {
+                dst: r1,
+                addr: Address::Direct(r0),
+                width: MemWidth::B4,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.push_op(
+            0x1004,
+            OpKind::PredStore {
+                src: SrcOperand::Reg(r2),
+                cond: p0,
+                addr: Address::Direct(r0),
+                width: MemWidth::B4,
+            },
+        );
+        builder.push_op(
+            0x1008,
+            OpKind::Load {
+                dst: r3,
+                addr: Address::Direct(r0),
+                width: MemWidth::B4,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.set_terminator(Terminator::Trap {
+            kind: crate::smir::ir::TrapKind::Halt,
+        });
+        let mut func = builder.finish();
+
+        let eliminated = redundant_load_elimination(&mut func);
+        assert_eq!(
+            eliminated, 0,
+            "a PredStore must prevent the following load from being forwarded",
+        );
+        let load_count = func.blocks[0]
+            .ops
+            .iter()
+            .filter(|op| matches!(op.kind, OpKind::Load { .. }))
+            .count();
+        assert_eq!(
+            load_count, 2,
+            "both loads must survive across a PredStore (none rewritten to a Mov)",
         );
     }
 

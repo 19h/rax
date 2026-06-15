@@ -11916,6 +11916,73 @@ mod tests {
         assert_ne!(&rv.v[1][0..4], &stale_lane);
     }
 
+    // Regression for issue #112: PredStore writes memory, so the O2 redundant-load
+    // elimination pass must drop cached loads across it. This builds `Load X;
+    // PredStore X (committing); Load X`, runs the FULL optimizer, then executes:
+    // the second load must observe the value the PredStore wrote, not a stale value
+    // forwarded from the first load.
+    #[test]
+    fn issue_112_optimized_load_after_pred_store_reads_fresh_memory() {
+        use crate::smir::opt::{optimize_function, OptLevel};
+
+        let addr = 0x800u64;
+        let mut ctx = SmirContext::new_hexagon();
+        let mut memory = FlatMemory::new(0x1000);
+        memory.write(addr, &0x1111_1111u32.to_le_bytes()).unwrap();
+
+        let r0 = VReg::Arch(ArchReg::Hexagon(HexagonReg::R(0))); // address
+        let r1 = VReg::Arch(ArchReg::Hexagon(HexagonReg::R(1))); // first load dst
+        let r2 = VReg::Arch(ArchReg::Hexagon(HexagonReg::R(2))); // store value
+        let r3 = VReg::Arch(ArchReg::Hexagon(HexagonReg::R(3))); // second load dst
+        let p0 = VReg::Arch(ArchReg::Hexagon(HexagonReg::P(0))); // predicate
+        ctx.write_arch_reg(ArchReg::Hexagon(HexagonReg::R(0)), addr);
+        ctx.write_arch_reg(ArchReg::Hexagon(HexagonReg::R(2)), 0x2222_2222);
+        ctx.write_arch_reg(ArchReg::Hexagon(HexagonReg::P(0)), 1); // commit the store
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Load {
+                dst: r1,
+                addr: Address::Direct(r0),
+                width: MemWidth::B4,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.push_op(
+            0x1004,
+            OpKind::PredStore {
+                src: SrcOperand::Reg(r2),
+                cond: p0,
+                addr: Address::Direct(r0),
+                width: MemWidth::B4,
+            },
+        );
+        builder.push_op(
+            0x1008,
+            OpKind::Load {
+                dst: r3,
+                addr: Address::Direct(r0),
+                width: MemWidth::B4,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.set_terminator(Terminator::Trap {
+            kind: TrapKind::Halt,
+        });
+        let mut func = builder.finish();
+        optimize_function(&mut func, OptLevel::O2);
+
+        let interp = SmirInterpreter::new();
+        interp.execute_block(&mut ctx, &mut memory, &func.blocks[0]);
+
+        assert_eq!(
+            ctx.read_arch_reg(ArchReg::Hexagon(HexagonReg::R(3))) as u32,
+            0x2222_2222,
+            "a load after a committing PredStore must read fresh memory, not a stale forwarded load",
+        );
+    }
+
     // Regression for issue #23: a non-LOCK memory XADD must be fault-precise. The
     // lift emits Load → (flag-free) Add → Store → source writeback → flag-only Add,
     // so a store that faults (e.g. a read-only page) leaves BOTH the arithmetic
