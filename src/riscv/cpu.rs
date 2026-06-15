@@ -1644,6 +1644,26 @@ impl RiscVCpu {
                 };
                 // For indexed segments data EEW = SEW, index EEW = funct3 width.
                 let eb = if indexed { self.sew_bytes() } else { width };
+                // Each field is a register group of EMUL = data_EEW/SEW * LMUL
+                // registers, so consecutive fields are EMUL registers apart (not
+                // 1). Reject encodings whose group exceeds 8 registers per field,
+                // whose NFIELDS*EMUL > 8, or whose group would run past v31.
+                let sew_bits = 8u32 << ((self.vtype >> 3) & 0x7);
+                let eew_bits = if indexed { sew_bits } else { (width as u32) * 8 };
+                let (lmul_n, lmul_d): (u32, u32) = match self.vtype & 0x7 {
+                    0 => (1, 1),
+                    1 => (2, 1),
+                    2 => (4, 1),
+                    3 => (8, 1),
+                    5 => (1, 8),
+                    6 => (1, 4),
+                    7 => (1, 2),
+                    _ => (1, 1),
+                };
+                let emul_regs = ((eew_bits * lmul_n) / (sew_bits * lmul_d)).max(1) as usize;
+                if emul_regs > 8 || nf * emul_regs > 8 || vd as usize + nf * emul_regs > 32 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let base = self.x(insn.rs1) & self.xmask();
                 let stride = self.x(insn.rs2) as i64;
                 for e in vstart..vl {
@@ -1657,7 +1677,7 @@ impl RiscVCpu {
                     } & self.xmask();
                     for f in 0..nf {
                         let addr = elem_base.wrapping_add((f * eb) as u64) & self.xmask();
-                        let reg = (vd as usize + f) as u8;
+                        let reg = (vd as usize + f * emul_regs) as u8;
                         if is_load {
                             let mut buf = [0u8; 8];
                             self.mem
@@ -2319,9 +2339,12 @@ impl RiscVCpu {
             | Op::VfncvtRodFF
             | Op::VfncvtRtzXuF
             | Op::VfncvtRtzXF => {
-                // Narrowing conversions: 2*SEW source vs2 -> SEW result.
+                // Narrowing conversions: 2*SEW source vs2 -> SEW result. Only
+                // SEW in {16,32} (eb 2/4) is supported: SEW=8 would imply an
+                // FP8 format / 8-bit float-to-int width that has no defined
+                // conversion here, so reject eb outside {2,4}.
                 let eb = self.sew_bytes();
-                if eb > 4 {
+                if !(2..=4).contains(&eb) {
                     return Err(Trap::illegal(insn.raw));
                 }
                 let web = eb * 2;
@@ -2505,7 +2528,10 @@ impl RiscVCpu {
                     if !vm && !self.vmask_bit(e) {
                         continue;
                     }
-                    let src = (e as u64).wrapping_add(offset);
+                    // A guest-controlled scalar offset can be huge; saturate so
+                    // an overflowing i+offset stays >= VLMAX and zeroes the lane
+                    // rather than wrapping back into an in-range source index.
+                    let src = (e as u64).saturating_add(offset);
                     let v = if src < vlmax {
                         self.velem(vs2, src as usize, eb)
                     } else {
@@ -3077,6 +3103,32 @@ impl RiscVCpu {
                 };
                 let ei16 = insn.op == Op::Vrgatherei16;
                 let is_vv = insn.funct3 == 0b000;
+                // The destination group must not overlap the source vs2 group,
+                // nor (for vv/ei16) the index vector group; such encodings are
+                // reserved and must trap rather than gather in place.
+                let data_emul: u8 = match self.vtype & 0x7 {
+                    1 => 2,
+                    2 => 4,
+                    3 => 8,
+                    _ => 1,
+                };
+                let overlaps = |a: u8, an: u8, b: u8, bn: u8| a < b + bn && b < a + an;
+                if overlaps(vd, data_emul, vs2, data_emul) {
+                    return Err(Trap::illegal(insn.raw));
+                }
+                if is_vv || ei16 {
+                    let idx_regs = if ei16 {
+                        // Index EEW=16, so its EMUL (in registers) is
+                        // ceil(data_emul * 16 / SEW), at least one register.
+                        let sew_bits = 8u32 << ((self.vtype >> 3) & 0x7);
+                        ((data_emul as u32 * 16 + sew_bits - 1) / sew_bits).max(1) as u8
+                    } else {
+                        data_emul
+                    };
+                    if overlaps(vd, data_emul, insn.rs1, idx_regs) {
+                        return Err(Trap::illegal(insn.raw));
+                    }
+                }
                 for e in vstart..vl {
                     if !vm && !self.vmask_bit(e) {
                         continue;
@@ -4715,6 +4767,65 @@ mod tests {
         // vsetvli x1, x0, e8, m1 (rs1=x0 keeps AVL=VLMAX).
         run_one(&mut c, (0u32 << 20) | (0 << 15) | (7 << 12) | (1 << 7) | 0x57);
         c
+    }
+
+    #[test]
+    fn vslidedown_oversized_offset_zeroes_lane() {
+        // vslidedown.vx v1, v2, x5 with x5 = u64::MAX. Each source index
+        // i+offset must be treated as >= VLMAX (zero), not wrap to an in-range
+        // element. v2[0] is non-zero, so a wrapped read would be observable.
+        let mut c = cpu_e8m1();
+        c.set_x(5, u64::MAX);
+        c.set_vreg(2, &[0xAAu8; VLENB as usize]);
+        c.set_vreg(1, &[0x55u8; VLENB as usize]); // dest pre-filled
+        assert!(matches!(
+            run_one(&mut c, op_v(0b001111, 1, 2, 5, 0b100, 1)),
+            RiscVExit::Continue
+        ));
+        // Every lane zeroed (no wrap into v2[0]==0xAA).
+        assert_eq!(c.vreg(1), [0u8; VLENB as usize]);
+    }
+
+    #[test]
+    fn vfncvt_rejects_sew8() {
+        // vfncvt.f.f.w (funct6 010010, OPFV, vs1=10100) under SEW=8 has no
+        // defined narrowing (no FP8 / 8-bit float-to-int width) and must trap.
+        let mut c = cpu_e8m1(); // e8 -> SEW=8
+        assert!(matches!(
+            run_one(&mut c, op_v(0b010010, 1, 2, 0b10100, 0b001, 1)),
+            RiscVExit::Trap(_)
+        ));
+    }
+
+    #[test]
+    fn vrgather_rejects_overlapping_operands() {
+        // vrgather.vv (funct6 001100, vv) with vd overlapping vs2 is reserved.
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b001100, 1, 1, 2, 0b000, 1)),
+            RiscVExit::Trap(_)
+        ));
+        // vd overlapping the index source vs1 is also reserved.
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b001100, 1, 2, 1, 0b000, 1)),
+            RiscVExit::Trap(_)
+        ));
+        // Distinct vd/vs2/vs1 still executes.
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b001100, 1, 2, 3, 0b000, 1)),
+            RiscVExit::Continue
+        ));
+    }
+
+    #[test]
+    fn vlseg_rejects_oversized_register_group() {
+        // vlseg2e8.v under LMUL=8: EMUL=8 per field, so NFIELDS*EMUL=16 > 8.
+        // This reserved register-group size must trap before any access.
+        let mut c = cpu();
+        // vsetvli x1, x0, e8, m8 (vtype = vlmul=011, vsew=000 => 0b00011).
+        run_one(&mut c, (0b00011u32 << 20) | (0 << 15) | (7 << 12) | (1 << 7) | 0x57);
+        // vlseg2e8.v v8, (x10): nf field=1, mop=00, lumop=0, width=0, vd=8.
+        let vlseg = (1u32 << 29) | (1 << 25) | (10 << 15) | (0 << 12) | (8 << 7) | 0x07;
+        assert!(matches!(run_one(&mut c, vlseg), RiscVExit::Trap(_)));
     }
 
     #[test]
