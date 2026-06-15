@@ -10,8 +10,8 @@ use crate::smir::flags::{FlagSet, FlagState, FlagUpdate};
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
 use crate::smir::ops::{OpKind, SmirOp, X86OpHint, X86VecAlign};
 use crate::smir::types::{
-    Address, ArchReg, ArmReg, BlockId, HexagonReg, MemWidth, OpWidth, SrcOperand, VReg, VecWidth,
-    X86Reg,
+    Address, ArchReg, ArmReg, BlockId, HexagonReg, MemWidth, OpWidth, SignExtend, SrcOperand, VReg,
+    VecWidth, X86Reg,
 };
 
 // ============================================================================
@@ -3565,6 +3565,60 @@ mod tests {
         } else {
             panic!("Expected Shr operation");
         }
+    }
+
+    #[test]
+    fn optimize_function_preserves_faulting_load_after_mul_zero_fold() {
+        use crate::smir::ir::FunctionBuilder;
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        let load_tmp = builder.alloc_vreg();
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+
+        builder.push_op(
+            0x1000,
+            OpKind::Load {
+                dst: load_tmp,
+                addr: Address::Absolute(0x2000),
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.push_op(
+            0x1003,
+            OpKind::MulS {
+                dst_lo: dst,
+                dst_hi: None,
+                src1: load_tmp,
+                src2: SrcOperand::Imm(0),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![dst] });
+
+        let mut func = builder.finish();
+        optimize_function(&mut func, OptLevel::O2);
+        let block = &func.blocks[0];
+
+        assert!(block.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Load { dst, .. } if dst == load_tmp
+        )));
+        assert!(block.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Mov {
+                dst: mov_dst,
+                src: SrcOperand::Imm(0),
+                ..
+            } if mov_dst == dst
+        )));
+        assert!(
+            !block
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::MulS { .. }))
+        );
     }
 
     #[test]

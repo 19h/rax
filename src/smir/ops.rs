@@ -3063,42 +3063,45 @@ impl OpKind {
 
     /// Check if this operation has side effects
     pub fn has_side_effects(&self) -> bool {
-        matches!(
-            self,
-            OpKind::Store { .. }
-                | OpKind::PredStore { .. }
-                | OpKind::RepStos { .. }
-                | OpKind::RepMovs { .. }
-                | OpKind::StorePair { .. }
-                | OpKind::AtomicStore { .. }
-                | OpKind::AtomicRmw { .. }
-                | OpKind::Cas { .. }
-                | OpKind::AtomicCmpXadd { .. }
-                | OpKind::StoreExclusive { .. }
-                | OpKind::RvVector { .. }
-                | OpKind::IoIn { .. }
-                | OpKind::IoOut { .. }
-                | OpKind::Leave
-                | OpKind::ClearExclusive
-                | OpKind::Fence { .. }
-                | OpKind::VStore { .. }
-                | OpKind::WriteFlags { .. }
-                | OpKind::SetCF { .. }
-                | OpKind::SetDF { .. }
-                | OpKind::CmcCF
-                | OpKind::MaterializeFlags
-                // A saturating clamp ORs the Hexagon USR:OVF sticky bit when it
-                // actually clamps and `set_ovf` is set. That update is invisible
-                // to `dests()`, so the op must be treated as side-effecting or DCE
-                // would drop it whenever its data destination is dead and silently
-                // lose the OVF update. `set_ovf == false` SatN has no side effect
-                // and stays removable. (#108)
-                | OpKind::SatN { set_ovf: true, .. }
-                | OpKind::Syscall { .. }
-                | OpKind::Swi { .. }
-                | OpKind::WriteSysReg { .. }
-                | OpKind::Breakpoint
-        )
+        // Guest memory reads can fault or trigger MMIO/device effects even when
+        // their destination is dead.
+        self.reads_memory()
+            || matches!(
+                self,
+                OpKind::Store { .. }
+                    | OpKind::PredStore { .. }
+                    | OpKind::RepStos { .. }
+                    | OpKind::RepMovs { .. }
+                    | OpKind::StorePair { .. }
+                    | OpKind::AtomicStore { .. }
+                    | OpKind::AtomicRmw { .. }
+                    | OpKind::Cas { .. }
+                    | OpKind::AtomicCmpXadd { .. }
+                    | OpKind::StoreExclusive { .. }
+                    | OpKind::RvVector { .. }
+                    | OpKind::IoIn { .. }
+                    | OpKind::IoOut { .. }
+                    | OpKind::Leave
+                    | OpKind::ClearExclusive
+                    | OpKind::Fence { .. }
+                    | OpKind::VStore { .. }
+                    | OpKind::WriteFlags { .. }
+                    | OpKind::SetCF { .. }
+                    | OpKind::SetDF { .. }
+                    | OpKind::CmcCF
+                    | OpKind::MaterializeFlags
+                    // A saturating clamp ORs the Hexagon USR:OVF sticky bit when it
+                    // actually clamps and `set_ovf` is set. That update is invisible
+                    // to `dests()`, so the op must be treated as side-effecting or DCE
+                    // would drop it whenever its data destination is dead and silently
+                    // lose the OVF update. `set_ovf == false` SatN has no side effect
+                    // and stays removable. (#108)
+                    | OpKind::SatN { set_ovf: true, .. }
+                    | OpKind::Syscall { .. }
+                    | OpKind::Swi { .. }
+                    | OpKind::WriteSysReg { .. }
+                    | OpKind::Breakpoint
+            )
     }
 
     /// Check if this operation reads memory
