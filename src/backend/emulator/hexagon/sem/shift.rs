@@ -177,7 +177,12 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
     let s = |c: &SemCtx| c.r(fld(d, b's'));
     let t = |c: &SemCtx| c.r(fld(d, b't'));
     let sp = |c: &SemCtx| c.rp(fld(d, b's'));
-    let ui = || fimm_u(d, b'i', ctx.immext);
+    // Shift/rotate counts are fixed-width immediate fields that are NOT
+    // constant-extendable; decode them with the extender disabled (as the
+    // legacy S2_*_i_r decoders do). A preceding ImmExt would otherwise inflate
+    // the count far beyond the architectural 5/6-bit width and overflow the raw
+    // Rust shift (`src << shamt`, `64 - shamt`), panicking checked builds.
+    let ui = || fimm_u(d, b'i', None);
     // Bidirectional shift amount: sign-extend low 7 bits of Rt to i32.
     let shamt = |c: &SemCtx| ((c.r(fld(d, b't')) as i32) << 25) >> 25;
 
@@ -642,4 +647,43 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         _ => return false,
     }
     true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::backend::emulator::hexagon::opcode::decode_word;
+    use crate::cpu::HexagonRegisters;
+
+    #[test]
+    fn immediate_shift_count_ignores_constant_extender() {
+        // S2_asl_i_r (0x8c000040, shift count field = 0). A preceding ImmExt
+        // (ctx.immext = Some(1)) would, if applied, inflate the count to 64 and
+        // overflow `(src as i32) << 64`, aborting checked builds. The shift
+        // count is not extendable, so it must stay 0 and produce src unchanged.
+        let decoded = decode_word(0x8c00_0040).expect("decodes to S2_asl_i_r");
+        assert_eq!(decoded.opcode, Opcode::S2_asl_i_r);
+
+        let mut regs = HexagonRegisters::default();
+        regs.r[0] = 0x1234_5678; // Rs
+        let mut new_r = [None; 32];
+        let mut new_p = [None; 4];
+        let vnone = [None; 32];
+        let qnone = [None; 4];
+        let mut ctx = SemCtx {
+            regs: &regs,
+            new_r: &mut new_r,
+            new_p: &mut new_p,
+            immext: Some(1), // would extend the count to 64 if (wrongly) applied
+            usr_or: 0,
+            vnew: &vnone,
+            vtmp: &vnone,
+            qnew: &qnone,
+            v_writes: Vec::new(),
+            q_writes: Vec::new(),
+        };
+        // Must not panic; with the extender ignored the count is 0 -> Rd = Rs.
+        assert!(exec(decoded.opcode, &decoded, &mut ctx));
+        assert_eq!(ctx.new_r[0], Some(0x1234_5678));
+    }
 }
