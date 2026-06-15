@@ -4076,9 +4076,21 @@ impl Aarch64Lowerer {
         addr: &Address,
     ) -> Result<(Vec<u8>, u8), LowerError> {
         match addr {
-            Address::Direct(base) => Ok((Vec::new(), Self::base_gpr(*base)?)),
+            Address::Direct(base) => {
+                let base_reg = Self::base_gpr(*base)?;
+                if base_reg == 31 {
+                    self.lower_base_offset_to_scratch(avoid, *base, 0)
+                } else {
+                    Ok((Vec::new(), base_reg))
+                }
+            }
             Address::BaseOffset { base, offset, .. } if *offset == 0 => {
-                Ok((Vec::new(), Self::base_gpr(*base)?))
+                let base_reg = Self::base_gpr(*base)?;
+                if base_reg == 31 {
+                    self.lower_base_offset_to_scratch(avoid, *base, 0)
+                } else {
+                    Ok((Vec::new(), base_reg))
+                }
             }
             Address::BaseOffset { base, offset, .. } => {
                 self.lower_base_offset_to_scratch(avoid, *base, *offset)
@@ -37401,6 +37413,60 @@ mod tests {
             1,
             2,
         );
+    }
+
+    #[test]
+    fn lowers_atomic_cmpxadd_sp_zero_offset_uses_original_sp_runtime() {
+        let sp_reg = VReg::Arch(ArchReg::Arm(ArmReg::Sp));
+        for (label, addr) in [
+            ("direct_sp", Address::Direct(sp_reg)),
+            ("base_offset_sp_zero", Address::base_off(sp_reg, 0)),
+        ] {
+            let mem_addr = 0x8000;
+            let mem_value = 0x1111_2222_3333_4444;
+            let cmp_value = mem_value;
+            let add_value = 0x0101_0101_0101_0101;
+            let code = lower_single_op(OpKind::AtomicCmpXadd {
+                dst_old: x(0),
+                addr,
+                cmp: x(1),
+                add: x(2),
+                cond: Condition::Eq,
+                width: MemWidth::B8,
+                order: MemoryOrder::SeqCst,
+            });
+            let (expected_old, expected_mem, expected_nzcv) =
+                ref_atomic_cmpxadd(mem_value, cmp_value, add_value, Condition::Eq, MemWidth::B8);
+
+            let regs = [
+                (1, cmp_value),
+                (2, add_value),
+                (14, 0x1414_1414_1414_1414),
+                (15, 0x1515_1515_1515_1515),
+                (16, 0x1616_1616_1616_1616),
+                (17, 0x1717_1717_1717_1717),
+            ];
+            let old_nzcv = 0b0110;
+            let (out, out_nzcv, sp, mem) = run_aarch64_code_with_memory(
+                &code,
+                &regs,
+                old_nzcv,
+                mem_addr,
+                mem_value,
+                MemWidth::B8,
+            );
+
+            assert_eq!(out[0], expected_old, "{label}: old value");
+            assert_eq!(out[1], cmp_value, "{label}: cmp preserved");
+            assert_eq!(out[2], add_value, "{label}: add preserved");
+            assert_eq!(out[14], 0x1414_1414_1414_1414, "{label}: x14 restored");
+            assert_eq!(out[15], 0x1515_1515_1515_1515, "{label}: x15 restored");
+            assert_eq!(out[16], 0x1616_1616_1616_1616, "{label}: x16 restored");
+            assert_eq!(out[17], 0x1717_1717_1717_1717, "{label}: x17 restored");
+            assert_eq!(out_nzcv, expected_nzcv, "{label}: NZCV");
+            assert_eq!(sp, 0x8000, "{label}: stack restored");
+            assert_eq!(mem, expected_mem, "{label}: memory");
+        }
     }
 
     #[test]
