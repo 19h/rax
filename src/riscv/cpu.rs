@@ -3006,9 +3006,21 @@ impl RiscVCpu {
                 }
             }
             Op::Vmvr => {
-                // Whole-register move: copy (simm+1) registers vs2 -> vd, raw bytes.
-                let nreg = insn.rs1 as usize + 1;
-                let total = nreg * VLENB as usize;
+                // vmv<nr>r.v whole-register move: only nr in {1,2,4,8} (simm
+                // 0/1/3/7) is defined, the encoding must be unmasked, and both
+                // vd and vs2 must be aligned to the nr-register group. Reserved
+                // simm values, masked encodings, or misaligned groups trap.
+                let nreg = match insn.rs1 {
+                    0 => 1u8,
+                    1 => 2,
+                    3 => 4,
+                    7 => 8,
+                    _ => return Err(Trap::illegal(insn.raw)),
+                };
+                if !vm || vd % nreg != 0 || vs2 % nreg != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
+                let total = nreg as usize * VLENB as usize;
                 for i in 0..total {
                     let b = self.velem(vs2, i, 1);
                     self.set_velem(vd, i, 1, b);
@@ -4648,6 +4660,53 @@ mod tests {
             run_one(&mut c, r_type(0, 2, 1, 0, 3, 0x3b)),
             RiscVExit::Trap(_)
         ));
+    }
+
+    #[test]
+    fn vmvr_rejects_reserved_encodings() {
+        // vmv<nr>r.v: funct6=0b100111, funct3=0b011, OP-V (0x57). Only nr in
+        // {1,2,4,8} (simm 0/1/3/7), unmasked, with vd/vs2 aligned to nr are
+        // defined. Reserved simm, masked, or misaligned forms must trap.
+        let op_mvr = |vm: u32, vs2: u32, simm: u32, vd: u32| -> u32 {
+            (0b100111u32 << 26) | (vm << 25) | (vs2 << 20) | (simm << 15) | (0b011 << 12) | (vd << 7)
+                | 0x57
+        };
+        let setup = || {
+            let mut c = cpu();
+            // vsetvli x1, x0, e8, m1 -> valid (non-vill) vtype.
+            run_one(
+                &mut c,
+                (0u32 << 20) | (0 << 15) | (7 << 12) | (1 << 7) | 0x57,
+            );
+            c
+        };
+
+        // Reserved simm=2 (would be a 3-register move): illegal.
+        assert!(matches!(
+            run_one(&mut setup(), op_mvr(1, 16, 2, 8)),
+            RiscVExit::Trap(_)
+        ));
+        // Masked encoding (vm=0) of an otherwise-valid vmv1r.v: illegal.
+        assert!(matches!(
+            run_one(&mut setup(), op_mvr(0, 16, 0, 8)),
+            RiscVExit::Trap(_)
+        ));
+        // vmv2r.v with misaligned vd=9 (not a multiple of 2): illegal.
+        assert!(matches!(
+            run_one(&mut setup(), op_mvr(1, 16, 1, 9)),
+            RiscVExit::Trap(_)
+        ));
+
+        // Valid vmv1r.v v8, v16 executes and copies the register.
+        let mut c = setup();
+        let pat: [u8; VLENB as usize] =
+            core::array::from_fn(|i| (i as u8).wrapping_mul(7).wrapping_add(1));
+        c.set_vreg(16, &pat);
+        assert!(matches!(
+            run_one(&mut c, op_mvr(1, 16, 0, 8)),
+            RiscVExit::Continue
+        ));
+        assert_eq!(c.vreg(8), pat);
     }
 
     #[test]
