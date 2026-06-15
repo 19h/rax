@@ -5638,8 +5638,7 @@ impl X86_64Lifter {
         // instruction, which for the F6/F7 immediate form includes the immediate
         // bytes. Compute next_pc only after imm_size is known so RIP-relative CTEST
         // memory operands are not read `imm_size` bytes too low. (#19)
-        let next_pc =
-            pc + prefix.bytes as u64 + 1 + modrm.bytes_consumed as u64 + imm_size as u64;
+        let next_pc = pc + prefix.bytes as u64 + 1 + modrm.bytes_consumed as u64 + imm_size as u64;
 
         let imm = match imm_size {
             1 => bytes[imm_offset] as i8 as i64,
@@ -8618,6 +8617,52 @@ impl X86_64Lifter {
         ))
     }
 
+    /// Lift TEST AL/AX/EAX/RAX, imm (A8/A9)
+    fn lift_test_acc_imm(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
+        let (width, imm_size): (OpWidth, usize) = if opcode == 0xA8 {
+            (OpWidth::W8, 1)
+        } else {
+            let op_size = prefix.op_size();
+            (
+                self.size_to_width(op_size),
+                if op_size == 8 { 4 } else { op_size as usize },
+            )
+        };
+
+        if bytes.len() < imm_size {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: bytes.len(),
+                need: imm_size,
+            });
+        }
+
+        let imm = match imm_size {
+            1 => bytes[0] as i8 as i64,
+            2 => i16::from_le_bytes([bytes[0], bytes[1]]) as i64,
+            4 => i32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]) as i64,
+            _ => unreachable!("invalid TEST accumulator immediate size"),
+        };
+
+        let ops = vec![SmirOp::new(
+            OpId(0),
+            pc,
+            OpKind::Test {
+                src1: self.gpr(0),
+                src2: SrcOperand::Imm(imm),
+                width,
+            },
+        )];
+
+        Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_size))
+    }
+
     /// Lift XOR r/m, r and XOR r, r/m (30-33)
     fn lift_xor_rm_r(
         &self,
@@ -9128,6 +9173,15 @@ impl X86_64Lifter {
                 },
                 pc,
                 ctx,
+            ),
+            0xA8 | 0xA9 => self.lift_test_acc_imm(
+                opcode,
+                after_opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
             ),
 
             // String ops
@@ -16309,6 +16363,36 @@ mod tests {
             )
             .unwrap();
         assert_eq!(result.bytes_consumed, 10);
+    }
+
+    #[test]
+    fn test_lift_test_acc_imm() {
+        let mut lifter = X86_64Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::X86_64);
+
+        let result = lifter.lift_insn(0x1000, &[0xA8, 0x01], &mut ctx).unwrap();
+        assert_eq!(result.bytes_consumed, 2);
+        match &result.ops[0].kind {
+            OpKind::Test { src1, src2, width } => {
+                assert_eq!(*src1, lifter.gpr(0));
+                assert_eq!(*src2, SrcOperand::Imm(1));
+                assert_eq!(*width, OpWidth::W8);
+            }
+            other => panic!("expected TEST AL, imm8 lift, got {other:?}"),
+        }
+
+        let result = lifter
+            .lift_insn(0x1000, &[0x48, 0xA9, 0xFF, 0xFF, 0xFF, 0xFF], &mut ctx)
+            .unwrap();
+        assert_eq!(result.bytes_consumed, 6);
+        match &result.ops[0].kind {
+            OpKind::Test { src1, src2, width } => {
+                assert_eq!(*src1, lifter.gpr(0));
+                assert_eq!(*src2, SrcOperand::Imm(-1));
+                assert_eq!(*width, OpWidth::W64);
+            }
+            other => panic!("expected TEST RAX, imm32 lift, got {other:?}"),
+        }
     }
 
     #[test]
