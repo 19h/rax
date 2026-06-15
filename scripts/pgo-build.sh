@@ -11,8 +11,50 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-PROF="${PGO_PROFILE_DIR:-/tmp/rax-pgo-data}"
 TARGET_CPU="${PGO_TARGET_CPU:-native}"
+TMP_PARENT="${PGO_TMPDIR:-${TMPDIR:-/tmp}}"
+TMP_PARENT="${TMP_PARENT%/}"
+if [ -z "$TMP_PARENT" ]; then
+  TMP_PARENT="/"
+fi
+
+check_private_dir() {
+  local dir="$1"
+  local mode
+
+  if [ ! -d "$dir" ] || [ ! -O "$dir" ]; then
+    echo "error: PGO work directory is not owned by the current user: $dir" >&2
+    exit 1
+  fi
+
+  if mode="$(stat -f '%Lp' "$dir" 2>/dev/null)"; then
+    :
+  elif mode="$(stat -c '%a' "$dir" 2>/dev/null)"; then
+    :
+  else
+    echo "error: unable to verify PGO work directory permissions: $dir" >&2
+    exit 1
+  fi
+
+  if [ "$mode" != "700" ]; then
+    echo "error: PGO work directory must be mode 700, got $mode: $dir" >&2
+    exit 1
+  fi
+}
+
+WORKDIR="$(mktemp -d "$TMP_PARENT/rax-pgo.XXXXXX")"
+cleanup() {
+  rm -rf -- "$WORKDIR"
+}
+trap cleanup EXIT
+
+chmod 700 "$WORKDIR"
+check_private_dir "$WORKDIR"
+
+PROFILE_DIR="$WORKDIR/raw"
+PROFILE_DATA="$WORKDIR/merged.profdata"
+mkdir -m 700 "$PROFILE_DIR"
+check_private_dir "$PROFILE_DIR"
 
 # Locate llvm-profdata: PATH first, then the rustup llvm-tools component.
 PROFDATA="$(command -v llvm-profdata || true)"
@@ -25,10 +67,8 @@ if [ -z "$PROFDATA" ]; then
   exit 1
 fi
 
-rm -rf "$PROF" "$PROF.profdata"
-
 echo "[pgo] 1/4 instrumented build (target-cpu=$TARGET_CPU)"
-RUSTFLAGS="-Cprofile-generate=$PROF -C target-cpu=$TARGET_CPU" \
+RUSTFLAGS="-Cprofile-generate=$PROFILE_DIR -C target-cpu=$TARGET_CPU" \
   cargo build --release --examples
 
 echo "[pgo] 2/4 training run (representative workloads)"
@@ -37,10 +77,10 @@ echo "[pgo] 2/4 training run (representative workloads)"
 ./target/release/examples/run_microkernel >/dev/null 2>&1 || true
 
 echo "[pgo] 3/4 merging profile data"
-"$PROFDATA" merge -o "$PROF.profdata" "$PROF"
+"$PROFDATA" merge -o "$PROFILE_DATA" "$PROFILE_DIR"
 
 echo "[pgo] 4/4 optimized rebuild"
-RUSTFLAGS="-Cprofile-use=$PROF.profdata -Cllvm-args=-pgo-warn-missing-function=0 -C target-cpu=$TARGET_CPU" \
+RUSTFLAGS="-Cprofile-use=$PROFILE_DATA -Cllvm-args=-pgo-warn-missing-function=0 -C target-cpu=$TARGET_CPU" \
   cargo build --release
 
 echo "[pgo] done -> target/release/rax  (PGO, target-cpu=$TARGET_CPU)"
