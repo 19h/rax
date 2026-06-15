@@ -604,15 +604,19 @@ impl SmirInterpreter {
                 };
                 let q = dividend.wrapping_div(b);
                 let r = dividend.wrapping_rem(b);
-                // Signed quotient must fit in `bits`, else #DE.
-                let qmax = (1i128 << (bits - 1)) - 1;
-                let qmin = -(1i128 << (bits - 1));
-                if q < qmin || q > qmax {
-                    ctx.request_exit(ExitReason::Undefined {
-                        addr: ctx.pc,
-                        opcode: 0,
-                    });
-                    return Ok(());
+                // x86 IDIV raises #DE when the quotient does not fit. Non-x86
+                // users of DivS are single-width operations and keep the
+                // wrapping MIN / -1 result.
+                if is_x86 {
+                    let qmax = (1i128 << (bits - 1)) - 1;
+                    let qmin = -(1i128 << (bits - 1));
+                    if q < qmin || q > qmax {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
                 }
                 let (q, r) = ((q as u64) & mask, (r as u64) & mask);
                 if is_x86 && *width == OpWidth::W8 {
@@ -7782,6 +7786,45 @@ mod tests {
             value[idx] = u64::from_le_bytes(lane);
         }
         value
+    }
+
+    #[test]
+    fn non_x86_divs_min_overflow_wraps_without_trap() {
+        let quot = VReg::Virtual(VirtualId(1));
+        let rem = VReg::Virtual(VirtualId(2));
+        let src1 = VReg::Virtual(VirtualId(3));
+        let src2 = VReg::Virtual(VirtualId(4));
+
+        let mut ctx = SmirContext::new_aarch64();
+        ctx.write_vreg(quot, 0x1111);
+        ctx.write_vreg(rem, 0x2222);
+        ctx.write_vreg(src1, i64::MIN as u64);
+        ctx.write_vreg(src2, (-1i64) as u64);
+
+        let interp = SmirInterpreter::new();
+        let mut memory = FlatMemory::new(0x1000);
+        interp
+            .execute_op(
+                &mut ctx,
+                &mut memory,
+                &SmirOp::new(
+                    OpId(0),
+                    0x1000,
+                    OpKind::DivS {
+                        quot,
+                        rem: Some(rem),
+                        src1,
+                        src2: SrcOperand::Reg(src2),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ),
+            )
+            .unwrap();
+
+        assert!(ctx.exit_reason.is_none());
+        assert_eq!(ctx.read_vreg(quot), i64::MIN as u64);
+        assert_eq!(ctx.read_vreg(rem), 0);
     }
 
     #[test]
