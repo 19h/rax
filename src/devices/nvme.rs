@@ -248,6 +248,10 @@ impl Queue {
     fn reset(&mut self) {
         *self = Queue::default();
     }
+
+    fn accepts_doorbell(&self, value: u32) -> bool {
+        self.active && self.size != 0 && value < self.size
+    }
 }
 
 /// The NVMe controller: register file, queue state, and the backing namespace.
@@ -504,18 +508,34 @@ impl<M: Mem> NvmeController<M> {
         if is_cq {
             // CQyHDBL: advance the host head pointer.
             if qid == 0 {
+                if !self.admin_cq.accepts_doorbell(value) {
+                    self.csts |= CSTS_CFS;
+                    return;
+                }
                 self.admin_cq.head = value;
-            } else if let Some(q) = self.io_cqs.get_mut(qid) {
-                q.head = value;
+            } else if qid < self.io_cqs.len() {
+                if !self.io_cqs[qid].accepts_doorbell(value) {
+                    self.csts |= CSTS_CFS;
+                    return;
+                }
+                self.io_cqs[qid].head = value;
             }
             return;
         }
 
         // SQyTDBL: record the new tail and run the submission queue.
         if qid == 0 {
+            if !self.admin_sq.accepts_doorbell(value) {
+                self.csts |= CSTS_CFS;
+                return;
+            }
             self.admin_sq.tail = value;
             self.process_admin_sq();
         } else if qid < self.io_sqs.len() {
+            if !self.io_sqs[qid].accepts_doorbell(value) {
+                self.csts |= CSTS_CFS;
+                return;
+            }
             self.io_sqs[qid].tail = value;
             self.process_io_sq(qid as u16);
         }
@@ -539,7 +559,8 @@ impl<M: Mem> NvmeController<M> {
         if !self.admin_sq.active || self.admin_sq.size == 0 {
             return;
         }
-        while self.admin_sq.head != self.admin_sq.tail {
+        let mut remaining = self.admin_sq.size;
+        while self.admin_sq.head != self.admin_sq.tail && remaining != 0 {
             let slot = self.admin_sq.head;
             let entry = match self.read_sqe(self.admin_sq.base, slot) {
                 Some(e) => e,
@@ -548,6 +569,10 @@ impl<M: Mem> NvmeController<M> {
             let (status, dw0) = self.exec_admin(&entry);
             self.admin_sq.head = (self.admin_sq.head + 1) % self.admin_sq.size;
             self.post_completion(true, 0, &entry, status, dw0);
+            remaining -= 1;
+        }
+        if remaining == 0 && self.admin_sq.head != self.admin_sq.tail {
+            self.csts |= CSTS_CFS;
         }
     }
 
@@ -559,7 +584,9 @@ impl<M: Mem> NvmeController<M> {
         };
         let cqid = sq.cqid;
         let mut head = sq.head;
-        while head != self.io_sqs[sqid as usize].tail {
+        let tail = self.io_sqs[sqid as usize].tail;
+        let mut remaining = sq.size;
+        while head != tail && remaining != 0 {
             let entry = match self.read_sqe(sq.base, head) {
                 Some(e) => e,
                 None => break,
@@ -567,6 +594,10 @@ impl<M: Mem> NvmeController<M> {
             let (status, dw0) = self.exec_nvm(&entry);
             head = (head + 1) % sq.size;
             self.post_completion(false, cqid, &entry, status, dw0);
+            remaining -= 1;
+        }
+        if remaining == 0 && head != tail {
+            self.csts |= CSTS_CFS;
         }
         self.io_sqs[sqid as usize].head = head;
     }
@@ -1131,6 +1162,28 @@ mod tests {
         assert_eq!(d.admin_sq().tail, 0);
     }
 
+    #[test]
+    fn admin_sq_rejects_out_of_range_tail_doorbell() {
+        let mut d = dev(64);
+        let invalid_asq = 0x20_0000u64;
+        let acq = 0x2000u64;
+
+        // One-entry admin queue: valid tail values are only 0. The bad ASQ keeps
+        // this regression fast on the old implementation instead of hanging in
+        // the unbounded drain loop.
+        write32(&mut d, REG_AQA, 0);
+        write64(&mut d, REG_ASQ, invalid_asq);
+        write64(&mut d, REG_ACQ, acq);
+        write32(&mut d, REG_CC, CC_EN);
+
+        write32(&mut d, REG_DOORBELL_BASE, 1);
+
+        assert_eq!(d.admin_sq().tail, 0);
+        assert_eq!(d.admin_sq().head, 0);
+        assert_eq!(d.admin_cq().tail, 0);
+        assert_ne!(d.csts() & CSTS_CFS, 0);
+    }
+
     // ---- Namespace capacity ----
 
     #[test]
@@ -1389,6 +1442,45 @@ mod tests {
         let (sr, _, cr) = read_cqe_status(&d, io_cq, 1);
         assert_eq!(sr, SC_SUCCESS);
         assert_eq!(cr, 0x21);
+    }
+
+    #[test]
+    fn io_sq_rejects_out_of_range_tail_doorbell() {
+        let mut d = dev(64);
+        let asq = 0x1000u64;
+        let acq = 0x2000u64;
+        let io_sq = 0x20_0000u64;
+        let io_cq = 0x4000u64;
+        bring_up(&mut d, asq, acq, 16);
+
+        // Create CQ1 + SQ1 with two entries. The bad SQ base keeps the old
+        // implementation from hanging while still proving it accepted the
+        // invalid tail value.
+        let sqe = make_sqe(ADMIN_CREATE_IO_CQ, 1, 0, io_cq, 0, 1 | (1u32 << 16), 1, 0);
+        d.mem_mut_write(asq, &sqe);
+        let sqe = make_sqe(
+            ADMIN_CREATE_IO_SQ,
+            2,
+            0,
+            io_sq,
+            0,
+            1 | (1u32 << 16),
+            1 | (1u32 << 16),
+            0,
+        );
+        d.mem_mut_write(asq + SQE_SIZE, &sqe);
+        write32(&mut d, REG_DOORBELL_BASE, 2);
+
+        assert_eq!(d.io_sq(1).unwrap().size, 2);
+        assert_eq!(d.csts() & CSTS_CFS, 0);
+
+        write32(&mut d, REG_DOORBELL_BASE + 2 * 4, 2);
+
+        let sq = d.io_sq(1).unwrap();
+        assert_eq!(sq.tail, 0);
+        assert_eq!(sq.head, 0);
+        assert_eq!(d.io_cq(1).unwrap().tail, 0);
+        assert_ne!(d.csts() & CSTS_CFS, 0);
     }
 
     #[test]
