@@ -8,6 +8,9 @@
 //! guest RAM by the arch boot setup; the CPU resets to IBOOT_BASE.
 
 use std::cell::RefCell;
+use std::fs::OpenOptions;
+use std::io::{self, Write};
+use std::path::Path;
 use std::sync::{Arc, Mutex, OnceLock};
 
 use tracing::{debug, info};
@@ -290,6 +293,7 @@ const UART0_IRQ: u32 = 24;
 
 /// Instructions per `run()` batch before yielding to the VMM loop.
 const BATCH: u32 = 65_536;
+const S5L_DMADUMP_DEFAULT_LIMIT: u64 = 16 * 1024 * 1024;
 
 /// Default guest-time speedup for the µs timer: firmware delays elapse this
 /// many times faster than real wall-clock time (keeps multi-second boot waits
@@ -325,6 +329,66 @@ fn u32_env(name: &str) -> Option<u32> {
             .ok()
             .or_else(|| u32::from_str_radix(value, 16).ok())
     }
+}
+
+fn u64_env(name: &str) -> Option<u64> {
+    let value = std::env::var(name).ok()?;
+    let value = value.trim();
+    if let Some(hex) = value
+        .strip_prefix("0x")
+        .or_else(|| value.strip_prefix("0X"))
+    {
+        u64::from_str_radix(hex, 16).ok()
+    } else {
+        value
+            .parse()
+            .ok()
+            .or_else(|| u64::from_str_radix(value, 16).ok())
+    }
+}
+
+fn s5l_dmadump_limit() -> u64 {
+    u64_env("RAX_S5L_DMADUMP_LIMIT").unwrap_or(S5L_DMADUMP_DEFAULT_LIMIT)
+}
+
+fn dmadump_remaining_for_path(path: &Path, limit: u64) -> usize {
+    let remaining = limit.saturating_sub(std::fs::metadata(path).map(|m| m.len()).unwrap_or(0));
+    remaining.min(usize::MAX as u64) as usize
+}
+
+fn append_limited_dmadump<P: AsRef<Path>>(
+    path: P,
+    header: &[u8],
+    payload: &[u8],
+    limit: u64,
+) -> io::Result<()> {
+    if limit == 0 {
+        return Ok(());
+    }
+
+    let path = path.as_ref();
+    let mut file = OpenOptions::new().create(true).append(true).open(path)?;
+    let remaining = limit.saturating_sub(file.metadata()?.len());
+    let mut remaining = remaining.min(usize::MAX as u64) as usize;
+
+    write_limited_chunk(&mut file, &mut remaining, header)?;
+    write_limited_chunk(&mut file, &mut remaining, payload)?;
+    write_limited_chunk(&mut file, &mut remaining, b"\n")
+}
+
+fn write_limited_chunk<W: Write>(
+    writer: &mut W,
+    remaining: &mut usize,
+    data: &[u8],
+) -> io::Result<()> {
+    if *remaining == 0 {
+        return Ok(());
+    }
+
+    let len = data.len().min(*remaining);
+    writer.write_all(&data[..len])?;
+    *remaining -= len;
+    Ok(())
 }
 
 fn parse_watch_range_env(name: &str) -> Option<(u32, u32)> {
@@ -1230,7 +1294,15 @@ impl BridgeInner {
             Err(_) => false,
         };
         let dump_path = std::env::var("RAX_S5L_DMADUMP").ok();
-        let mut dump = dump_path.as_ref().map(|_| Vec::<u8>::new());
+        let dump_limit = s5l_dmadump_limit();
+        let mut dump_remaining = dump_path
+            .as_deref()
+            .map(|path| dmadump_remaining_for_path(Path::new(path), dump_limit))
+            .unwrap_or(0);
+        let mut dump = dump_path
+            .as_ref()
+            .filter(|_| dump_remaining != 0)
+            .map(|_| Vec::<u8>::new());
         let (mut src, mut dst, mut lli, mut ctl, cfg) = self.dma_descriptor(controller, ch);
         let mut total = 0usize;
         let mut descriptors = 0usize;
@@ -1295,7 +1367,10 @@ impl BridgeInner {
                 }
 
                 if let Some(dump) = dump.as_mut() {
-                    dump.extend_from_slice(&buf[..xsize.min(buf.len())]);
+                    let bytes = &buf[..xsize.min(buf.len())];
+                    let len = bytes.len().min(dump_remaining);
+                    dump.extend_from_slice(&bytes[..len]);
+                    dump_remaining -= len;
                 }
                 count -= 1;
                 total += xsize;
@@ -1327,21 +1402,10 @@ impl BridgeInner {
             "dma_run"
         );
         if let Some(path) = dump_path {
-            use std::io::Write;
-            if let Ok(mut f) = std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(&path)
-            {
-                let _ = writeln!(
-                    f,
-                    "--- dmac{controller} ch{ch} src={src:#x} dst={dst:#x} bytes={total}"
-                );
-                if let Some(dump) = dump {
-                    let _ = f.write_all(&dump);
-                }
-                let _ = writeln!(f);
-            }
+            let header =
+                format!("--- dmac{controller} ch{ch} src={src:#x} dst={dst:#x} bytes={total}\n");
+            let payload = dump.as_deref().unwrap_or(&[]);
+            let _ = append_limited_dmadump(path, header.as_bytes(), payload, dump_limit);
         }
         self.dma_complete(controller, ch);
     }
@@ -5734,6 +5798,28 @@ mod dos_bounds_tests {
             Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x4000)]).unwrap());
         let vcpu = S5L8900Vcpu::new(0, mem.clone());
         (vcpu, mem)
+    }
+
+    fn unique_temp_path(name: &str) -> std::path::PathBuf {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!("rax-{name}-{}-{now}", std::process::id()))
+    }
+
+    #[test]
+    fn dmadump_append_respects_cumulative_file_limit() {
+        let path = unique_temp_path("s5l-dmadump-limit");
+        let _ = std::fs::remove_file(&path);
+
+        append_limited_dmadump(&path, b"hdr\n", b"abcdef", 8).unwrap();
+        assert_eq!(std::fs::read(&path).unwrap(), b"hdr\nabcd");
+
+        append_limited_dmadump(&path, b"next\n", b"zzzz", 8).unwrap();
+        assert_eq!(std::fs::read(&path).unwrap(), b"hdr\nabcd");
+
+        let _ = std::fs::remove_file(&path);
     }
 
     // issues #43 / #50: guest-controlled DMA sizes must be validated against
