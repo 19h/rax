@@ -3788,22 +3788,23 @@ impl Aarch64Lowerer {
         let saved_flags = scratches[5];
         self.emit_sysreg(saved_flags, ArmReg::Nzcv, true)?;
 
-        let src1_base = (imm & 0x3) * 4;
-        let src2_base = ((imm >> 2) & 0x3) * 4;
+        // VMPSADBW computes eight SAD results: lane `i` slides a 4-byte window over
+        // SRC1 (window start = imm[2]*4, then + i) and compares it against a FIXED
+        // 4-byte block from SRC2 (block = imm[1:0]*4). The previous code had this
+        // backwards (fixed SRC1, sliding SRC2). Every byte index stays inside the
+        // 128-bit lane (src1 max 4+7+3=14, src2 max 12+3=15), so no padding. (#33)
+        let src1_base = ((imm >> 2) & 0x1) * 4;
+        let src2_base = (imm & 0x3) * 4;
         let uge = Self::arm_cond_code(Condition::Uge)?;
         for lane in 0..8 {
             self.emit_mov_imm(sum, 0, OpWidth::W32)?;
             for offset in 0..4 {
-                let (_, src1_imm5) = Self::simd_lane_imm5(VecElementType::I8, src1_base + offset)?;
+                let (_, src1_imm5) =
+                    Self::simd_lane_imm5(VecElementType::I8, src1_base + lane + offset)?;
                 self.emit_simd_umov(lhs, src1_work, src1_imm5, false);
 
-                let src2_lane = src2_base + lane + offset;
-                if src2_lane < 16 {
-                    let (_, src2_imm5) = Self::simd_lane_imm5(VecElementType::I8, src2_lane)?;
-                    self.emit_simd_umov(rhs, src2_work, src2_imm5, false);
-                } else {
-                    self.emit_mov_imm(rhs, 0, OpWidth::W32)?;
-                }
+                let (_, src2_imm5) = Self::simd_lane_imm5(VecElementType::I8, src2_base + offset)?;
+                self.emit_simd_umov(rhs, src2_work, src2_imm5, false);
 
                 self.emit_addsub_reg(diff, lhs, rhs, true, true, OpWidth::W32)?;
                 self.emit_addsub_reg(alt, rhs, lhs, true, false, OpWidth::W32)?;
@@ -29587,21 +29588,16 @@ mod tests {
         fn ref_vmpsadbw(src1: (u64, u64), src2: (u64, u64), imm: u8) -> (u64, u64) {
             let src1 = pair_bytes(src1);
             let src2 = pair_bytes(src2);
-            let src1_blk = (imm & 0x3) as usize;
-            let src2_blk = ((imm >> 2) & 0x3) as usize;
-            let src1_offset = src1_blk * 4;
+            // SRC1 provides the sliding 4-byte window (start = imm[2]*4); SRC2 the
+            // FIXED 4-byte block (= imm[1:0]*4). Matches x86 MPSADBW. (#33)
+            let src1_window_base = (((imm >> 2) & 0x1) as usize) * 4;
+            let src2_block_base = ((imm & 0x3) as usize) * 4;
             let mut out = [0u8; 16];
             for lane in 0..8 {
                 let mut sad = 0u16;
-                let src2_start = src2_blk * 4 + lane;
                 for offset in 0..4 {
-                    let lhs = src1[src1_offset + offset] as i16;
-                    let rhs_lane = src2_start + offset;
-                    let rhs = if rhs_lane < 16 {
-                        src2[rhs_lane] as i16
-                    } else {
-                        0
-                    };
+                    let lhs = src1[src1_window_base + lane + offset] as i16;
+                    let rhs = src2[src2_block_base + offset] as i16;
                     sad = sad.wrapping_add((lhs - rhs).unsigned_abs());
                 }
                 out[lane * 2..lane * 2 + 2].copy_from_slice(&sad.to_le_bytes());
