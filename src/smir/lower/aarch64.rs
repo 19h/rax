@@ -70,6 +70,8 @@ pub struct Aarch64Lowerer {
     flagm_available: bool,
     /// Host support for FEAT_FLAGM2 (`AXFLAG`/`XAFLAG`).
     flagm2_available: bool,
+    /// Host support for FEAT_FP16 (half-precision Advanced SIMD / scalar FP).
+    fp16_available: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -105,7 +107,23 @@ impl Aarch64Lowerer {
             mem_helpers: false,
             flagm_available: Self::detect_flagm_available(),
             flagm2_available: Self::detect_flagm2_available(),
+            fp16_available: Self::detect_fp16_available(),
         }
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    fn detect_fp16_available() -> bool {
+        std::arch::is_aarch64_feature_detected!("fp16")
+    }
+
+    #[cfg(not(target_arch = "aarch64"))]
+    fn detect_fp16_available() -> bool {
+        true
+    }
+
+    #[cfg(test)]
+    fn set_fp16_available_for_test(&mut self, available: bool) {
+        self.fp16_available = available;
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -3197,6 +3215,15 @@ impl Aarch64Lowerer {
         op: Avx10FP16Op,
         width: VecWidth,
     ) -> Result<(), LowerError> {
+        // FP16 Advanced SIMD arithmetic (FADD/FSUB/FMUL/FDIV .4h/.8h) requires the
+        // optional FEAT_FP16 extension. On a host without it the emitted encodings
+        // are UNDEFINED and would SIGILL, so bail to the interpreter (which performs
+        // FP16 in software) when the host lacks the feature. (#32)
+        if !self.fp16_available {
+            return Err(LowerError::UnsupportedOp {
+                op: "AArch64 native FP16 vector arithmetic without host FEAT_FP16".into(),
+            });
+        }
         let rd = Self::fp_reg(dst)?;
         let rn = Self::fp_reg(src1)?;
         let rm = Self::fp_reg(src2)?;
@@ -32806,6 +32833,43 @@ mod tests {
             4,
             2,
             OpWidth::W32,
+        );
+    }
+
+    // Regression for issue #32: FP16 Advanced SIMD arithmetic requires FEAT_FP16.
+    // On a host without it the lowering must bail to the interpreter rather than
+    // emit an UNDEFINED host FADD/FSUB/.4h that would SIGILL. When the host has
+    // FEAT_FP16 it lowers normally.
+    #[test]
+    fn issue_32_fp16_arith_gated_on_host_feat_fp16() {
+        fn lower_with_fp16(available: bool) -> Result<Vec<u8>, LowerError> {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(
+                0,
+                OpKind::VFP16Arith {
+                    dst: v(0),
+                    src1: v(1),
+                    src2: v(2),
+                    op: Avx10FP16Op::Add,
+                    width: VecWidth::V128,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.set_fp16_available_for_test(available);
+            lowerer.lower_function(&func)?;
+            lowerer.finalize()
+        }
+
+        assert!(
+            matches!(lower_with_fp16(false), Err(LowerError::UnsupportedOp { .. })),
+            "FP16 arithmetic must bail to the interpreter when the host lacks FEAT_FP16"
+        );
+        assert!(
+            lower_with_fp16(true).is_ok(),
+            "FP16 arithmetic must lower natively when the host supports FEAT_FP16"
         );
     }
 
