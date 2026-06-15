@@ -120,6 +120,56 @@ pub struct HvfArm64Vm {
     memory_mapped: Mutex<bool>,
 }
 
+fn checked_arm_ram_mapping(
+    region_start: u64,
+    region_len: u64,
+    ram_base: u64,
+    ram_size: u64,
+) -> Result<(u64, usize, usize)> {
+    let ram_end = ram_base.checked_add(ram_size).ok_or_else(|| {
+        Error::InvalidConfig(format!(
+            "ARM RAM window {:#x} + {:#x} overflows guest address space",
+            ram_base, ram_size
+        ))
+    })?;
+
+    if region_start != 0 || ram_end > region_len {
+        return Err(Error::InvalidConfig(format!(
+            "guest memory region (start {:#x}, len {:#x}) does not cover ARM RAM window {:#x}..{:#x}",
+            region_start, region_len, ram_base, ram_end
+        )));
+    }
+
+    let host_offset = usize::try_from(ram_base).map_err(|_| {
+        Error::InvalidConfig("ARM RAM base does not fit in host address size".to_string())
+    })?;
+    let map_size = usize::try_from(ram_size).map_err(|_| {
+        Error::InvalidConfig("ARM RAM size does not fit in host address size".to_string())
+    })?;
+
+    Ok((ram_end, host_offset, map_size))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn checked_arm_ram_mapping_accepts_covered_window() {
+        let mapping = checked_arm_ram_mapping(0, 0x5000, 0x1000, 0x2000).unwrap();
+        assert_eq!(mapping, (0x3000, 0x1000, 0x2000));
+    }
+
+    #[test]
+    fn checked_arm_ram_mapping_rejects_overflowing_window() {
+        let err = checked_arm_ram_mapping(0, 0x1000, 0x800, u64::MAX).unwrap_err();
+        assert!(
+            err.to_string().contains("overflows guest address space"),
+            "{err}"
+        );
+    }
+}
+
 impl HvfArm64Vm {
     /// Register guest RAM with the VM.
     ///
@@ -145,16 +195,10 @@ impl HvfArm64Vm {
             .next()
             .ok_or_else(|| Error::InvalidConfig("no guest memory region".to_string()))?;
         let region_len = region.len();
-        if region.start_addr().0 != 0 || ram_base + ram_size > region_len {
-            return Err(Error::InvalidConfig(format!(
-                "guest memory region (len {:#x}) does not cover ARM RAM window {:#x}..{:#x}",
-                region_len,
-                ram_base,
-                ram_base + ram_size
-            )));
-        }
+        let (_ram_end, host_offset, map_size) =
+            checked_arm_ram_mapping(region.start_addr().0, region_len, ram_base, ram_size)?;
         let host_addr =
-            unsafe { (region.as_ptr() as *mut std::ffi::c_void).add(ram_base as usize) };
+            unsafe { (region.as_ptr() as *mut std::ffi::c_void).add(host_offset) };
 
         debug!(
             guest_addr = format!("{:#x}", ram_base),
@@ -163,7 +207,7 @@ impl HvfArm64Vm {
         );
 
         let flags = HV_MEMORY_READ | HV_MEMORY_WRITE | HV_MEMORY_EXEC;
-        let ret = unsafe { hv_vm_map(host_addr, ram_base, ram_size as usize, flags) };
+        let ret = unsafe { hv_vm_map(host_addr, ram_base, map_size, flags) };
         if ret != HV_SUCCESS {
             return Err(Error::Emulator(format!(
                 "Failed to map RAM at {:#x}: {}",
