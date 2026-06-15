@@ -783,7 +783,7 @@ impl HexagonLifter {
     }
 
     /// Materialize the old effective address for a post-increment load into a
-    /// temporary so the base can be written back before the load destination.
+    /// temporary so later staged writeback cannot change the memory address.
     fn emit_postinc_load_ea(
         &self,
         ops: &mut Vec<SmirOp>,
@@ -818,49 +818,114 @@ impl HexagonLifter {
         Some(Address::Direct(ea))
     }
 
-    fn emit_postinc_imm(
-        &self,
-        ops: &mut Vec<SmirOp>,
-        op_id: &mut u16,
-        addr: GuestAddr,
-        base: u8,
-        inc: i64,
-    ) {
-        let base_reg = self.hex_reg(base);
-        ops.push(SmirOp::new(
-            OpId(*op_id),
-            addr,
-            OpKind::Add {
-                dst: base_reg,
-                src1: base_reg,
-                src2: SrcOperand::Imm(inc),
-                width: OpWidth::W32,
-                flags: FlagUpdate::None,
-            },
-        ));
-        *op_id += 1;
-    }
-
-    fn emit_load_postinc_update(
+    fn emit_postinc_update_value(
         &self,
         ops: &mut Vec<SmirOp>,
         op_id: &mut u16,
         addr: GuestAddr,
         ctx: &mut LiftContext,
         am: &AddrMode,
-    ) {
+    ) -> Option<(u8, VReg)> {
         match am {
             AddrMode::PostIncImm { base, offset } => {
                 let offset = ctx.extend_imm(*offset);
-                self.emit_postinc_imm(ops, op_id, addr, *base, offset as i64);
+                let update = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(*op_id),
+                    addr,
+                    OpKind::Add {
+                        dst: update,
+                        src1: self.hex_reg(*base),
+                        src2: SrcOperand::Imm(offset as i64),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                *op_id += 1;
+                Some((*base, update))
             }
-            AddrMode::PostIncReg { base, .. }
-            | AddrMode::PostIncBrev { base, .. }
-            | AddrMode::PostIncCircImm { base, .. }
-            | AddrMode::PostIncCircReg { base, .. } => {
-                self.emit_mod_postinc(ops, op_id, addr, ctx, *base, am);
+            AddrMode::PostIncReg { base, modsel } | AddrMode::PostIncBrev { base, modsel } => {
+                let update = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(*op_id),
+                    addr,
+                    OpKind::Add {
+                        dst: update,
+                        src1: self.hex_reg(*base),
+                        src2: SrcOperand::Reg(self.hex_mod(*modsel)),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                *op_id += 1;
+                Some((*base, update))
             }
-            _ => {}
+            AddrMode::PostIncCircImm { base, modsel, incr } => {
+                let update = ctx.alloc_vreg();
+                let incr_reg = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(*op_id),
+                    addr,
+                    OpKind::Mov {
+                        dst: incr_reg,
+                        src: SrcOperand::Imm(*incr as i64),
+                        width: OpWidth::W32,
+                    },
+                ));
+                *op_id += 1;
+                self.emit_circ_add(
+                    ops,
+                    op_id,
+                    addr,
+                    ctx,
+                    update,
+                    self.hex_reg(*base),
+                    *modsel,
+                    incr_reg,
+                );
+                Some((*base, update))
+            }
+            AddrMode::PostIncCircReg {
+                base,
+                modsel,
+                shift,
+            } => {
+                let update = ctx.alloc_vreg();
+                let incr_reg = self.emit_read_ireg_shifted(ops, op_id, addr, ctx, *modsel, *shift);
+                self.emit_circ_add(
+                    ops,
+                    op_id,
+                    addr,
+                    ctx,
+                    update,
+                    self.hex_reg(*base),
+                    *modsel,
+                    incr_reg,
+                );
+                Some((*base, update))
+            }
+            _ => None,
+        }
+    }
+
+    fn emit_commit_postinc_update(
+        &self,
+        ops: &mut Vec<SmirOp>,
+        op_id: &mut u16,
+        addr: GuestAddr,
+        staged: Option<(u8, VReg)>,
+    ) {
+        if let Some((base, update)) = staged {
+            ops.push(SmirOp::new(
+                OpId(*op_id),
+                addr,
+                OpKind::Mov {
+                    dst: self.hex_reg(base),
+                    src: SrcOperand::Reg(update),
+                    width: OpWidth::W32,
+                },
+            ));
+            *op_id += 1;
         }
     }
 
@@ -1611,21 +1676,11 @@ impl HexagonLifter {
                 let mem_width = self.hex_mem_width(*width);
                 let sign_ext = self.hex_sign(*sign);
 
-                // Predicated post-increment-immediate: the base advances ONLY
-                // when the predicate holds. Emit the gated write-back before the
-                // destination load so dst==base aliases match the interpreter.
-                if let AddrMode::PostIncImm { base, offset } = load_addr {
-                    let offset = ctx.extend_imm(*offset);
-                    self.emit_gated_postinc_imm(
-                        &mut ops,
-                        &mut op_id,
-                        addr,
-                        ctx,
-                        *base,
-                        offset as i64,
-                        cond,
-                    );
-                }
+                let pred_postinc = if let AddrMode::PostIncImm { base, offset } = load_addr {
+                    Some((*base, ctx.extend_imm(*offset) as i64))
+                } else {
+                    None
+                };
 
                 if matches!(width, HexMemWidth::Double) {
                     // `memd` predicated load writes a register PAIR conditionally
@@ -1643,32 +1698,105 @@ impl HexagonLifter {
                         dst: ea_tmp,
                         addr: smir_addr,
                     });
-                    push_op!(OpKind::PredLoad {
-                        dst: self.hex_reg(even),
-                        cond,
-                        addr: Address::Direct(ea_tmp),
-                        width: MemWidth::B4,
-                        signed: SignExtend::Zero,
-                    });
-                    push_op!(OpKind::PredLoad {
-                        dst: self.hex_reg(even + 1),
-                        cond,
-                        addr: Address::BaseOffset {
-                            base: ea_tmp,
-                            offset: 4,
-                            disp_size: DispSize::Auto,
-                        },
-                        width: MemWidth::B4,
-                        signed: SignExtend::Zero,
-                    });
+                    if let Some((base, inc)) = pred_postinc {
+                        let lo = ctx.alloc_vreg();
+                        let hi = ctx.alloc_vreg();
+                        push_op!(OpKind::PredLoad {
+                            dst: lo,
+                            cond,
+                            addr: Address::Direct(ea_tmp),
+                            width: MemWidth::B4,
+                            signed: SignExtend::Zero,
+                        });
+                        push_op!(OpKind::PredLoad {
+                            dst: hi,
+                            cond,
+                            addr: Address::BaseOffset {
+                                base: ea_tmp,
+                                offset: 4,
+                                disp_size: DispSize::Auto,
+                            },
+                            width: MemWidth::B4,
+                            signed: SignExtend::Zero,
+                        });
+                        self.emit_gated_postinc_imm(
+                            &mut ops,
+                            &mut op_id,
+                            addr,
+                            ctx,
+                            base,
+                            inc,
+                            cond,
+                        );
+                        push_op!(OpKind::Select {
+                            dst: self.hex_reg(even),
+                            cond,
+                            src_true: lo,
+                            src_false: self.hex_reg(even),
+                            width: OpWidth::W32,
+                        });
+                        push_op!(OpKind::Select {
+                            dst: self.hex_reg(even + 1),
+                            cond,
+                            src_true: hi,
+                            src_false: self.hex_reg(even + 1),
+                            width: OpWidth::W32,
+                        });
+                    } else {
+                        push_op!(OpKind::PredLoad {
+                            dst: self.hex_reg(even),
+                            cond,
+                            addr: Address::Direct(ea_tmp),
+                            width: MemWidth::B4,
+                            signed: SignExtend::Zero,
+                        });
+                        push_op!(OpKind::PredLoad {
+                            dst: self.hex_reg(even + 1),
+                            cond,
+                            addr: Address::BaseOffset {
+                                base: ea_tmp,
+                                offset: 4,
+                                disp_size: DispSize::Auto,
+                            },
+                            width: MemWidth::B4,
+                            signed: SignExtend::Zero,
+                        });
+                    }
                 } else {
-                    push_op!(OpKind::PredLoad {
-                        dst: self.hex_reg(*dst),
-                        cond,
-                        addr: smir_addr,
-                        width: mem_width,
-                        signed: sign_ext,
-                    });
+                    if let Some((base, inc)) = pred_postinc {
+                        let loaded = ctx.alloc_vreg();
+                        push_op!(OpKind::PredLoad {
+                            dst: loaded,
+                            cond,
+                            addr: smir_addr,
+                            width: mem_width,
+                            signed: sign_ext,
+                        });
+                        self.emit_gated_postinc_imm(
+                            &mut ops,
+                            &mut op_id,
+                            addr,
+                            ctx,
+                            base,
+                            inc,
+                            cond,
+                        );
+                        push_op!(OpKind::Select {
+                            dst: self.hex_reg(*dst),
+                            cond,
+                            src_true: loaded,
+                            src_false: self.hex_reg(*dst),
+                            width: OpWidth::W32,
+                        });
+                    } else {
+                        push_op!(OpKind::PredLoad {
+                            dst: self.hex_reg(*dst),
+                            cond,
+                            addr: smir_addr,
+                            width: mem_width,
+                            signed: sign_ext,
+                        });
+                    }
                 }
                 ControlFlow::Fallthrough
             }
@@ -1691,35 +1819,47 @@ impl HexagonLifter {
                 sign,
                 pred: _,
             } => {
-                let base = match am {
-                    AddrMode::PostIncReg { base, .. }
-                    | AddrMode::PostIncBrev { base, .. }
-                    | AddrMode::PostIncCircImm { base, .. }
-                    | AddrMode::PostIncCircReg { base, .. } => *base,
-                    _ => unreachable!(),
-                };
                 let ea = self
                     .emit_postinc_load_ea(&mut ops, &mut op_id, addr, ctx, am)
                     .expect("post-increment load EA");
                 let mem_width = self.hex_mem_width(*width);
                 let sign_ext = self.hex_sign(*sign);
-                // Write back the base before the destination register(s), but
-                // after the old EA is materialized so the access still uses Rx_old.
-                self.emit_mod_postinc(&mut ops, &mut op_id, addr, ctx, base, am);
+                let staged_update =
+                    self.emit_postinc_update_value(&mut ops, &mut op_id, addr, ctx, am);
                 if matches!(width, HexMemWidth::Double) {
                     let even = *dst & !1;
+                    let lo = ctx.alloc_vreg();
+                    let hi = ctx.alloc_vreg();
                     push_op!(OpKind::LoadPair {
-                        dst1: self.hex_reg(even),
-                        dst2: self.hex_reg(even + 1),
+                        dst1: lo,
+                        dst2: hi,
                         addr: ea,
                         width: MemWidth::B4,
                     });
+                    self.emit_commit_postinc_update(&mut ops, &mut op_id, addr, staged_update);
+                    push_op!(OpKind::Mov {
+                        dst: self.hex_reg(even),
+                        src: SrcOperand::Reg(lo),
+                        width: OpWidth::W32,
+                    });
+                    push_op!(OpKind::Mov {
+                        dst: self.hex_reg(even + 1),
+                        src: SrcOperand::Reg(hi),
+                        width: OpWidth::W32,
+                    });
                 } else {
+                    let loaded = ctx.alloc_vreg();
                     push_op!(OpKind::Load {
-                        dst: self.hex_reg(*dst),
+                        dst: loaded,
                         addr: ea,
                         width: mem_width,
                         sign: sign_ext,
+                    });
+                    self.emit_commit_postinc_update(&mut ops, &mut op_id, addr, staged_update);
+                    push_op!(OpKind::Mov {
+                        dst: self.hex_reg(*dst),
+                        src: SrcOperand::Reg(loaded),
+                        width: OpWidth::W32,
                     });
                 }
                 ControlFlow::Fallthrough
@@ -1750,10 +1890,8 @@ impl HexagonLifter {
                     });
                 }
 
-                // Post-increment write-back precedes the destination write. The
-                // EA was already materialized above so dst==base aliases let the
-                // loaded value win, matching the interpreter's new_r ordering.
-                self.emit_load_postinc_update(&mut ops, &mut op_id, addr, ctx, load_addr);
+                let staged_update =
+                    self.emit_postinc_update_value(&mut ops, &mut op_id, addr, ctx, load_addr);
 
                 if matches!(width, HexMemWidth::Double) {
                     // `memd` writes a register PAIR (Rdd): the even register gets
@@ -1762,19 +1900,67 @@ impl HexagonLifter {
                     // bits and leave R(odd) stale, so emit a LoadPair (two 32-bit
                     // loads at EA and EA+4) instead.
                     let even = *dst & !1;
-                    push_op!(OpKind::LoadPair {
-                        dst1: self.hex_reg(even),
-                        dst2: self.hex_reg(even + 1),
-                        addr: smir_addr,
-                        width: MemWidth::B4,
-                    });
+                    if staged_update.is_some() {
+                        let lo = ctx.alloc_vreg();
+                        let hi = ctx.alloc_vreg();
+                        push_op!(OpKind::LoadPair {
+                            dst1: lo,
+                            dst2: hi,
+                            addr: smir_addr,
+                            width: MemWidth::B4,
+                        });
+                        self.emit_commit_postinc_update(
+                            &mut ops,
+                            &mut op_id,
+                            addr,
+                            staged_update,
+                        );
+                        push_op!(OpKind::Mov {
+                            dst: self.hex_reg(even),
+                            src: SrcOperand::Reg(lo),
+                            width: OpWidth::W32,
+                        });
+                        push_op!(OpKind::Mov {
+                            dst: self.hex_reg(even + 1),
+                            src: SrcOperand::Reg(hi),
+                            width: OpWidth::W32,
+                        });
+                    } else {
+                        push_op!(OpKind::LoadPair {
+                            dst1: self.hex_reg(even),
+                            dst2: self.hex_reg(even + 1),
+                            addr: smir_addr,
+                            width: MemWidth::B4,
+                        });
+                    }
                 } else {
-                    push_op!(OpKind::Load {
-                        dst: self.hex_reg(*dst),
-                        addr: smir_addr,
-                        width: mem_width,
-                        sign: sign_ext,
-                    });
+                    if staged_update.is_some() {
+                        let loaded = ctx.alloc_vreg();
+                        push_op!(OpKind::Load {
+                            dst: loaded,
+                            addr: smir_addr,
+                            width: mem_width,
+                            sign: sign_ext,
+                        });
+                        self.emit_commit_postinc_update(
+                            &mut ops,
+                            &mut op_id,
+                            addr,
+                            staged_update,
+                        );
+                        push_op!(OpKind::Mov {
+                            dst: self.hex_reg(*dst),
+                            src: SrcOperand::Reg(loaded),
+                            width: OpWidth::W32,
+                        });
+                    } else {
+                        push_op!(OpKind::Load {
+                            dst: self.hex_reg(*dst),
+                            addr: smir_addr,
+                            width: mem_width,
+                            sign: sign_ext,
+                        });
+                    }
                 }
                 ControlFlow::Fallthrough
             }
@@ -1830,9 +2016,16 @@ impl HexagonLifter {
                     });
                 }
 
-                // Post-increment write-back happens before the Ryy read and final
-                // pair write. The EA above is already independent of the base.
-                self.emit_load_postinc_update(&mut ops, &mut op_id, addr, ctx, am);
+                let staged_update =
+                    self.emit_postinc_update_value(&mut ops, &mut op_id, addr, ctx, am);
+                let even_src = match staged_update {
+                    Some((base, update)) if base == even => update,
+                    _ => self.hex_reg(even),
+                };
+                let odd_src = match staged_update {
+                    Some((base, update)) if base == odd => update,
+                    _ => self.hex_reg(odd),
+                };
 
                 // --- load (zero-extended) into a temp ---
                 let loaded = ctx.alloc_vreg();
@@ -1852,14 +2045,14 @@ impl HexagonLifter {
                 let old64 = ctx.alloc_vreg();
                 push_op!(OpKind::Shl {
                     dst: hi,
-                    src: self.hex_reg(odd),
+                    src: odd_src,
                     amount: SrcOperand::Imm(32),
                     width: OpWidth::W64,
                     flags: FlagUpdate::None,
                 });
                 push_op!(OpKind::Or {
                     dst: old64,
-                    src1: self.hex_reg(even),
+                    src1: even_src,
                     src2: SrcOperand::Reg(hi),
                     width: OpWidth::W64,
                     flags: FlagUpdate::None,
@@ -1892,6 +2085,7 @@ impl HexagonLifter {
                 });
 
                 // --- write back the pair: even = result[31:0], odd = result[63:32] ---
+                self.emit_commit_postinc_update(&mut ops, &mut op_id, addr, staged_update);
                 push_op!(OpKind::Mov {
                     dst: self.hex_reg(even),
                     src: SrcOperand::Reg(result),
@@ -1956,10 +2150,8 @@ impl HexagonLifter {
                     });
                 }
 
-                // Post-increment write-back precedes the destination write. The
-                // unpack result is staged in vregs, so aliases with dst/even/odd
-                // are resolved by the final Movs below.
-                self.emit_load_postinc_update(&mut ops, &mut op_id, addr, ctx, am);
+                let staged_update =
+                    self.emit_postinc_update_value(&mut ops, &mut op_id, addr, ctx, am);
 
                 // Accumulate the unpacked halfword lanes into a 64-bit temp.
                 // `result |= zxt16(sxt/zxt-byte(load(EA+i))) << (16*i)`.
@@ -2067,6 +2259,7 @@ impl HexagonLifter {
                 }
 
                 // --- write the destination register(s) ---
+                self.emit_commit_postinc_update(&mut ops, &mut op_id, addr, staged_update);
                 if count == 2 {
                     push_op!(OpKind::Mov {
                         dst: self.hex_reg(*dst),
@@ -20856,6 +21049,19 @@ mod tests {
     }
 
     #[track_caller]
+    fn op_index_after<F>(ops: &[SmirOp], start: usize, mut pred: F) -> usize
+    where
+        F: FnMut(&OpKind) -> bool,
+    {
+        start
+            + 1
+            + ops[start + 1..]
+                .iter()
+                .position(|op| pred(&op.kind))
+                .unwrap_or_else(|| panic!("operation after {start} not found in {ops:#?}"))
+    }
+
+    #[track_caller]
     fn materialized_ea_from(ops: &[SmirOp], base: VReg) -> (usize, VReg) {
         ops.iter()
             .enumerate()
@@ -20933,7 +21139,45 @@ mod tests {
     }
 
     #[test]
-    fn postinc_imm_load_alias_materializes_ea_before_writeback() {
+    fn faulting_postinc_imm_load_does_not_commit_base_update() {
+        let ops = lift_decoded(DecodedInsn::Load {
+            dst: 0,
+            addr: AddrMode::PostIncImm { base: 0, offset: 4 },
+            width: HexMemWidth::Word,
+            sign: MemSign::Unsigned,
+            pred: None,
+        });
+        let block = SmirBlock {
+            id: BlockId(0),
+            guest_pc: 0x1000,
+            phis: vec![],
+            ops,
+            terminator: Terminator::Trap {
+                kind: TrapKind::Halt,
+            },
+            exec_count: 0,
+        };
+        let mut ctx = crate::smir::context::SmirContext::new_hexagon();
+        ctx.write_arch_reg(ArchReg::Hexagon(HexagonReg::R(0)), 0x2000);
+        let mut memory = crate::smir::FlatMemory::new(0x1000);
+        let interp = crate::smir::interp::SmirInterpreter::new();
+
+        let exit = interp.execute_block(&mut ctx, &mut memory, &block);
+
+        match exit {
+            crate::smir::interp::BlockResult::Exit(
+                crate::smir::context::ExitReason::MemoryFault { addr, write },
+            ) => {
+                assert_eq!(addr, 0x2000);
+                assert!(!write);
+            }
+            other => panic!("expected memory fault, got {other:?}"),
+        }
+        assert_eq!(ctx.read_arch_reg(ArchReg::Hexagon(HexagonReg::R(0))), 0x2000);
+    }
+
+    #[test]
+    fn postinc_imm_load_alias_commits_writeback_after_successful_load() {
         let ops = lift_decoded(DecodedInsn::Load {
             dst: 0,
             addr: AddrMode::PostIncImm { base: 0, offset: 4 },
@@ -20943,7 +21187,7 @@ mod tests {
         });
         let r0 = hex_r(0);
         let (ea_idx, ea) = materialized_ea_from(&ops, r0);
-        let update_idx = op_index(&ops, |kind| {
+        let staged_idx = op_index(&ops, |kind| {
             matches!(
                 kind,
                 OpKind::Add {
@@ -20952,7 +21196,7 @@ mod tests {
                     src2: SrcOperand::Imm(4),
                     width: OpWidth::W32,
                     flags: FlagUpdate::None,
-                } if *dst == r0 && *src1 == r0
+                } if dst.is_virtual() && *src1 == r0
             )
         });
         let load_idx = op_index(&ops, |kind| {
@@ -20963,18 +21207,41 @@ mod tests {
                     addr: Address::Direct(addr),
                     width: MemWidth::B4,
                     sign: SignExtend::Zero,
-                } if *dst == r0 && *addr == ea
+                } if dst.is_virtual() && *addr == ea
+            )
+        });
+        let commit_idx = op_index_after(&ops, load_idx, |kind| {
+            matches!(
+                kind,
+                OpKind::Mov {
+                    dst,
+                    src: SrcOperand::Reg(_),
+                    width: OpWidth::W32,
+                } if *dst == r0
+            )
+        });
+        let final_idx = op_index_after(&ops, commit_idx, |kind| {
+            matches!(
+                kind,
+                OpKind::Mov {
+                    dst,
+                    src: SrcOperand::Reg(_),
+                    width: OpWidth::W32,
+                } if *dst == r0
             )
         });
 
         assert!(
-            ea_idx < update_idx && update_idx < load_idx,
-            "expected EA materialization, base update, then aliased load: {ops:#?}"
+            ea_idx < staged_idx
+                && staged_idx < load_idx
+                && load_idx < commit_idx
+                && commit_idx < final_idx,
+            "expected staged update, load, committed update, then aliased destination: {ops:#?}"
         );
     }
 
     #[test]
-    fn predicated_postinc_imm_load_alias_updates_before_predload() {
+    fn predicated_postinc_imm_load_alias_commits_after_predload() {
         let ops = lift_decoded(DecodedInsn::Load {
             dst: 0,
             addr: AddrMode::PostIncImm { base: 0, offset: 4 },
@@ -20988,7 +21255,19 @@ mod tests {
         });
         let r0 = hex_r(0);
         let (ea_idx, ea) = materialized_ea_from(&ops, r0);
-        let select_idx = op_index(&ops, |kind| {
+        let load_idx = op_index(&ops, |kind| {
+            matches!(
+                kind,
+                OpKind::PredLoad {
+                    dst,
+                    addr: Address::Direct(addr),
+                    width: MemWidth::B4,
+                    signed: SignExtend::Zero,
+                    ..
+                } if dst.is_virtual() && *addr == ea
+            )
+        });
+        let update_idx = op_index_after(&ops, load_idx, |kind| {
             matches!(
                 kind,
                 OpKind::Select {
@@ -20999,27 +21278,26 @@ mod tests {
                 } if *dst == r0 && *src_false == r0
             )
         });
-        let load_idx = op_index(&ops, |kind| {
+        let final_idx = op_index_after(&ops, update_idx, |kind| {
             matches!(
                 kind,
-                OpKind::PredLoad {
+                OpKind::Select {
                     dst,
-                    addr: Address::Direct(addr),
-                    width: MemWidth::B4,
-                    signed: SignExtend::Zero,
+                    src_false,
+                    width: OpWidth::W32,
                     ..
-                } if *dst == r0 && *addr == ea
+                } if *dst == r0 && *src_false == r0
             )
         });
 
         assert!(
-            ea_idx < select_idx && select_idx < load_idx,
-            "expected EA materialization, gated base update, then aliased predload: {ops:#?}"
+            ea_idx < load_idx && load_idx < update_idx && update_idx < final_idx,
+            "expected predload, gated base update, then gated aliased destination: {ops:#?}"
         );
     }
 
     #[test]
-    fn postinc_reg_loadpair_alias_updates_before_pair_write() {
+    fn postinc_reg_loadpair_alias_commits_writeback_after_loadpair() {
         let ops = lift_decoded(DecodedInsn::Load {
             dst: 0,
             addr: AddrMode::PostIncReg { base: 0, modsel: 0 },
@@ -21029,7 +21307,7 @@ mod tests {
         });
         let r0 = hex_r(0);
         let (ea_idx, ea) = materialized_ea_from(&ops, r0);
-        let update_idx = op_index(&ops, |kind| {
+        let staged_idx = op_index(&ops, |kind| {
             matches!(
                 kind,
                 OpKind::Add {
@@ -21038,7 +21316,7 @@ mod tests {
                     src2: SrcOperand::Reg(src2),
                     width: OpWidth::W32,
                     flags: FlagUpdate::None,
-                } if *dst == r0 && *src1 == r0 && *src2 == hex_m(0)
+                } if dst.is_virtual() && *src1 == r0 && *src2 == hex_m(0)
             )
         });
         let load_idx = op_index(&ops, |kind| {
@@ -21049,18 +21327,41 @@ mod tests {
                     dst2,
                     addr: Address::Direct(addr),
                     width: MemWidth::B4,
-                } if *dst1 == r0 && *dst2 == hex_r(1) && *addr == ea
+                } if dst1.is_virtual() && dst2.is_virtual() && *addr == ea
+            )
+        });
+        let commit_idx = op_index_after(&ops, load_idx, |kind| {
+            matches!(
+                kind,
+                OpKind::Mov {
+                    dst,
+                    src: SrcOperand::Reg(_),
+                    width: OpWidth::W32,
+                } if *dst == r0
+            )
+        });
+        let final_idx = op_index_after(&ops, commit_idx, |kind| {
+            matches!(
+                kind,
+                OpKind::Mov {
+                    dst,
+                    src: SrcOperand::Reg(_),
+                    width: OpWidth::W32,
+                } if *dst == r0
             )
         });
 
         assert!(
-            ea_idx < update_idx && update_idx < load_idx,
-            "expected EA materialization, M0 writeback, then aliased load pair: {ops:#?}"
+            ea_idx < staged_idx
+                && staged_idx < load_idx
+                && load_idx < commit_idx
+                && commit_idx < final_idx,
+            "expected staged M0 writeback, load pair, committed update, then aliased pair write: {ops:#?}"
         );
     }
 
     #[test]
-    fn loadalign_postinc_alias_updates_before_old_pair_read() {
+    fn loadalign_postinc_alias_uses_staged_update_before_pair_write() {
         let ops = lift_decoded(DecodedInsn::LoadAlign {
             dst_pair: 0,
             addr: AddrMode::PostIncImm { base: 0, offset: 1 },
@@ -21069,18 +21370,20 @@ mod tests {
         });
         let r0 = hex_r(0);
         let (ea_idx, ea) = materialized_ea_from(&ops, r0);
-        let update_idx = op_index(&ops, |kind| {
-            matches!(
-                kind,
+        let (staged_idx, staged_update) = ops
+            .iter()
+            .enumerate()
+            .find_map(|(idx, op)| match &op.kind {
                 OpKind::Add {
                     dst,
                     src1,
                     src2: SrcOperand::Imm(1),
                     width: OpWidth::W32,
                     flags: FlagUpdate::None,
-                } if *dst == r0 && *src1 == r0
-            )
-        });
+                } if dst.is_virtual() && *src1 == r0 => Some((idx, *dst)),
+                _ => None,
+            })
+            .unwrap_or_else(|| panic!("staged loadalign update not found in {ops:#?}"));
         let load_idx = op_index(&ops, |kind| {
             matches!(
                 kind,
@@ -21100,18 +21403,41 @@ mod tests {
                     width: OpWidth::W64,
                     flags: FlagUpdate::None,
                     ..
-                } if *src1 == r0
+                } if *src1 == staged_update
+            )
+        });
+        let commit_idx = op_index_after(&ops, load_idx, |kind| {
+            matches!(
+                kind,
+                OpKind::Mov {
+                    dst,
+                    src: SrcOperand::Reg(_),
+                    width: OpWidth::W32,
+                } if *dst == r0
+            )
+        });
+        let final_idx = op_index_after(&ops, commit_idx, |kind| {
+            matches!(
+                kind,
+                OpKind::Mov {
+                    dst,
+                    src: SrcOperand::Reg(_),
+                    width: OpWidth::W32,
+                } if *dst == r0
             )
         });
 
         assert!(
-            ea_idx < update_idx && update_idx < load_idx && update_idx < old_pair_read_idx,
-            "expected loadalign EA to be saved before base update and old pair read: {ops:#?}"
+            ea_idx < staged_idx
+                && staged_idx < old_pair_read_idx
+                && load_idx < commit_idx
+                && commit_idx < final_idx,
+            "expected loadalign to use staged base for alias, then commit after load: {ops:#?}"
         );
     }
 
     #[test]
-    fn loadunpack_postinc_alias_updates_before_destination_write() {
+    fn loadunpack_postinc_alias_commits_writeback_after_byte_loads() {
         let ops = lift_decoded(DecodedInsn::LoadUnpack {
             dst: 0,
             addr: AddrMode::PostIncReg { base: 0, modsel: 0 },
@@ -21121,7 +21447,7 @@ mod tests {
         });
         let r0 = hex_r(0);
         let (ea_idx, ea) = materialized_ea_from(&ops, r0);
-        let update_idx = op_index(&ops, |kind| {
+        let staged_idx = op_index(&ops, |kind| {
             matches!(
                 kind,
                 OpKind::Add {
@@ -21130,7 +21456,7 @@ mod tests {
                     src2: SrcOperand::Reg(src2),
                     width: OpWidth::W32,
                     flags: FlagUpdate::None,
-                } if *dst == r0 && *src1 == r0 && *src2 == hex_m(0)
+                } if dst.is_virtual() && *src1 == r0 && *src2 == hex_m(0)
             )
         });
         let first_load_idx = op_index(&ops, |kind| {
@@ -21144,7 +21470,17 @@ mod tests {
                 } if *addr == ea
             )
         });
-        let final_write_idx = op_index(&ops, |kind| {
+        let commit_idx = op_index_after(&ops, first_load_idx, |kind| {
+            matches!(
+                kind,
+                OpKind::Mov {
+                    dst,
+                    src: SrcOperand::Reg(_),
+                    width: OpWidth::W32,
+                } if *dst == r0
+            )
+        });
+        let final_write_idx = op_index_after(&ops, commit_idx, |kind| {
             matches!(
                 kind,
                 OpKind::Mov {
@@ -21156,8 +21492,11 @@ mod tests {
         });
 
         assert!(
-            ea_idx < update_idx && update_idx < first_load_idx && update_idx < final_write_idx,
-            "expected unpack EA to be saved and base updated before aliased write: {ops:#?}"
+            ea_idx < staged_idx
+                && staged_idx < first_load_idx
+                && first_load_idx < commit_idx
+                && commit_idx < final_write_idx,
+            "expected unpack byte load before committed update and aliased write: {ops:#?}"
         );
     }
 
