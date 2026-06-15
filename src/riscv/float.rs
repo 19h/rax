@@ -68,9 +68,16 @@ pub const CANONICAL_NAN_F64: u64 = 0x7ff8_0000_0000_0000;
 // Float abstraction shared by f32 and f64.
 // ===========================================================================
 
+/// Private supertrait that seals `Sf`: only types in this crate (`f32`/`f64`)
+/// can implement it, so the `Bits`/`WIDTH` invariants the unsafe byte-copy
+/// helpers rely on cannot be violated by a downstream implementation.
+mod sealed {
+    pub trait Sealed {}
+}
+
 /// Operations needed by the generic arithmetic core, implemented for `f32`
-/// and `f64`.
-pub trait Sf: Copy + PartialOrd {
+/// and `f64`. Sealed (see [`sealed::Sealed`]); not implementable downstream.
+pub trait Sf: Copy + PartialOrd + sealed::Sealed {
     /// Underlying bit representation (`u32` / `u64`).
     type Bits: Copy + Eq;
 
@@ -116,6 +123,7 @@ pub trait Sf: Copy + PartialOrd {
 
 macro_rules! impl_sf {
     ($t:ty, $b:ty, $canon:expr, $mant:expr, $width:expr, $maxf:expr, $minn:expr) => {
+        impl sealed::Sealed for $t {}
         impl Sf for $t {
             type Bits = $b;
             const CANON_NAN: $b = $canon;
@@ -287,9 +295,11 @@ fn add_bits<F: Sf>(b: F::Bits, delta: u64) -> F::Bits {
 
 // Helpers to move between the associated Bits type and u64 generically.
 fn bits_to_u64<F: Sf>(b: F::Bits) -> u64 {
-    // SAFETY: Bits is u32 or u64 (Copy, no padding); read its bytes.
+    // SAFETY: Bits is u32 or u64 (Copy, no padding, sealed trait); copy exactly
+    // its byte size (never more than the 8-byte `out`) so a mismatched WIDTH
+    // cannot drive an out-of-bounds read/write.
     let mut out: u64 = 0;
-    let n = (F::WIDTH / 8) as usize;
+    let n = core::mem::size_of::<F::Bits>().min(core::mem::size_of::<u64>());
     unsafe {
         std::ptr::copy_nonoverlapping(
             &b as *const F::Bits as *const u8,
@@ -301,7 +311,8 @@ fn bits_to_u64<F: Sf>(b: F::Bits) -> u64 {
 }
 fn u64_to_bits<F: Sf>(v: u64) -> F::Bits {
     let mut out: F::Bits = F::CANON_NAN;
-    let n = (F::WIDTH / 8) as usize;
+    // Copy exactly the destination's byte size (capped at the 8-byte source).
+    let n = core::mem::size_of::<F::Bits>().min(core::mem::size_of::<u64>());
     unsafe {
         std::ptr::copy_nonoverlapping(
             &v as *const u64 as *const u8,
@@ -2183,4 +2194,25 @@ pub fn eval_scalar_fp(
     };
 
     Some((result, fcsr | (flags & 0x1f)))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bits_u64_copy_respects_bits_width() {
+        // `Sf` is sealed, so `Bits` is always u32 (f32) or u64 (f64). The
+        // byte-copy helpers must move exactly the `Bits` size and never spill
+        // past it; a u32 `Bits` must not absorb the high 32 bits of a u64.
+        let x32: u32 = 0x1234_5678;
+        assert_eq!(bits_to_u64::<f32>(x32), x32 as u64);
+        assert_eq!(u64_to_bits::<f32>(x32 as u64), x32);
+        // High word must be dropped, not written past the 4-byte destination.
+        assert_eq!(u64_to_bits::<f32>(0xFFFF_FFFF_1234_5678), 0x1234_5678u32);
+
+        let x64: u64 = 0x0123_4567_89AB_CDEF;
+        assert_eq!(bits_to_u64::<f64>(x64), x64);
+        assert_eq!(u64_to_bits::<f64>(x64), x64);
+    }
 }
