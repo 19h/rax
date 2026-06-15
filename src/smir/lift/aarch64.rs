@@ -1882,26 +1882,11 @@ impl Aarch64Lifter {
                 control = ControlFlow::IndirectBranch { target };
             }
 
-            Mnemonic::BLRAA | Mnemonic::BLRAB => {
-                if let Some(Operand::Reg(rn)) = insn.operands.get(0) {
-                    let ret_addr = pc + 4;
-                    push_op!(OpKind::Mov {
-                        dst: VReg::Arch(ArchReg::Arm(ArmReg::X(30))),
-                        src: SrcOperand::Imm(ret_addr as i64),
-                        width: OpWidth::W64,
-                    });
-                    control = ControlFlow::Call {
-                        target: CallTarget::Indirect(self.arm_reg(rn)),
-                    };
-                }
-            }
-
-            Mnemonic::RETAA | Mnemonic::RETAB => {
-                let target = VReg::Arch(ArchReg::Arm(ArmReg::X(30)));
-                control = ControlFlow::IndirectBranch { target };
-            }
-
-            Mnemonic::PACIA
+            Mnemonic::BLRAA
+            | Mnemonic::BLRAB
+            | Mnemonic::RETAA
+            | Mnemonic::RETAB
+            | Mnemonic::PACIA
             | Mnemonic::PACIB
             | Mnemonic::PACDA
             | Mnemonic::PACDB
@@ -1922,7 +1907,10 @@ impl Aarch64Lifter {
             | Mnemonic::PACGA
             | Mnemonic::IRG
             | Mnemonic::GMI => {
-                push_op!(OpKind::Nop);
+                return Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("{:?}", insn.mnemonic),
+                });
             }
 
             Mnemonic::BCC => {
@@ -5426,6 +5414,57 @@ mod tests {
         let mut ctx = LiftContext::new(SourceArch::Aarch64);
         let result = lifter.lift_insn(0x1000, &bytes, &mut ctx).unwrap();
         (result.ops, result.control_flow)
+    }
+
+    fn assert_mnemonic_unsupported(mnemonic: Mnemonic) {
+        let lifter = Aarch64Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Aarch64);
+        let insn = DecodedInsn::new(mnemonic, crate::arm::ExecutionState::Aarch64, 0, 4);
+        let err = lifter
+            .lift_insn_inner(&insn, 0x1000, &mut ctx)
+            .unwrap_err();
+        assert!(
+            matches!(err, LiftError::Unsupported { .. }),
+            "{mnemonic:?} must not lift as a NOP or unauthenticated branch: {err:?}"
+        );
+    }
+
+    #[test]
+    fn issue_44_rejects_pointer_authentication_lifts() {
+        for mnemonic in [
+            Mnemonic::BLRAA,
+            Mnemonic::BLRAB,
+            Mnemonic::RETAA,
+            Mnemonic::RETAB,
+            Mnemonic::PACIA,
+            Mnemonic::PACIB,
+            Mnemonic::PACDA,
+            Mnemonic::PACDB,
+            Mnemonic::AUTIA,
+            Mnemonic::AUTIB,
+            Mnemonic::AUTDA,
+            Mnemonic::AUTDB,
+            Mnemonic::PACIZA,
+            Mnemonic::PACIZB,
+            Mnemonic::PACDZA,
+            Mnemonic::PACDZB,
+            Mnemonic::AUTIZA,
+            Mnemonic::AUTIZB,
+            Mnemonic::AUTDZA,
+            Mnemonic::AUTDZB,
+            Mnemonic::XPACI,
+            Mnemonic::XPACD,
+            Mnemonic::PACGA,
+        ] {
+            assert_mnemonic_unsupported(mnemonic);
+        }
+    }
+
+    #[test]
+    fn issue_44_rejects_tag_generation_lifts() {
+        for mnemonic in [Mnemonic::IRG, Mnemonic::GMI] {
+            assert_mnemonic_unsupported(mnemonic);
+        }
     }
 
     #[test]
