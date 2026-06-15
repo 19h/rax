@@ -1479,6 +1479,18 @@ impl HexagonVcpu {
                 src,
             } => {
                 let ea = self.regs.r[base as usize].wrapping_add(offset as u32);
+                // A read-modify-write memop on the serial/debug MMIO range would
+                // need two device transactions (an MMIO read and an MMIO write)
+                // that the single-exit MMIO model can't express, and these
+                // output devices have no meaningful RMW semantics. Reject it
+                // rather than silently read-modify-write the RAM that may back
+                // the MMIO address (the load/store paths dispatch via is_mmio;
+                // this path must not bypass that). (#170)
+                if Self::is_mmio(ea) {
+                    return Err(Error::Emulator(
+                        "hexagon memop on MMIO address not supported".to_string(),
+                    ));
+                }
                 let cur = self.load_mem(ea, width, MemSign::Unsigned)?;
                 let srcval = match src {
                     MemOpSrc::Reg(reg) => self.regs.r[reg as usize],

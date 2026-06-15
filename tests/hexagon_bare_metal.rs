@@ -736,6 +736,59 @@ fn hexagon_bare_metal_debug_mmio_write() {
 }
 
 #[test]
+fn hexagon_memop_on_mmio_does_not_touch_backing_ram() {
+    // #170: a read-modify-write memop must not bypass MMIO dispatch and
+    // silently read/modify the RAM that can back a serial/debug MMIO address
+    // (the production allocator's 4 GiB padding makes the high MMIO addresses
+    // GuestMemoryMmap-backed). Here the MMIO address is deliberately backed by
+    // a guest-memory region; the memop must NOT RMW it. The normal load/store
+    // paths already dispatch via is_mmio; this path must too (or reject).
+    const MMIO: u32 = HEXAGON_DEBUG_MMIO_BASE as u32; // 0xf000_1000
+    const SENTINEL: u32 = 0x1122_3344;
+    let code = [
+        encode_movimm(1, 0x3000),     // r1 = 0x3000 (scratch holding the address)
+        encode_load(1, 4, 0b1100, 0), // r4 = [r1]  (= MMIO address)
+        encode_movimm(5, 1),          // r5 = 1
+        0x3e44_c005,                  // { memw(r4+#0) += r5 }
+        encode_trap0(),
+    ];
+    // Back the MMIO address with a guest-memory region (plus the code region).
+    let regions = vec![
+        (GuestAddress(0), 64 * 1024),
+        (GuestAddress(MMIO as u64), 0x1000),
+    ];
+    let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&regions).unwrap());
+    write_words(&mem, CODE_ADDR, &code, Endianness::Little);
+    write_bytes(&mem, 0x3000, &MMIO.to_le_bytes());
+    write_bytes(&mem, MMIO, &SENTINEL.to_le_bytes());
+
+    let mut vcpu = HexagonVcpu::new(0, mem.clone(), HexagonIsa::V68, Endianness::Little);
+    let mut regs = HexagonRegisters::default();
+    regs.set_pc(CODE_ADDR);
+    vcpu.set_state(&CpuState::hexagon(regs)).unwrap();
+
+    // The memop targets the MMIO range. A correct emulation rejects it or
+    // dispatches an MMIO transaction; either way the backing RAM stays
+    // untouched. A buggy RMW writes SENTINEL+1 into that RAM.
+    for _ in 0..16 {
+        match vcpu.run() {
+            Ok(VcpuExit::Shutdown) => break,
+            Ok(VcpuExit::MmioRead { .. }) | Ok(VcpuExit::MmioWrite { .. }) => break,
+            Ok(_) => continue,
+            Err(_) => break,
+        }
+    }
+
+    let mut after = [0u8; 4];
+    mem.read_slice(&mut after, GuestAddress(MMIO as u64)).unwrap();
+    assert_eq!(
+        u32::from_le_bytes(after),
+        SENTINEL,
+        "memop must not read-modify-write the RAM backing an MMIO address",
+    );
+}
+
+#[test]
 fn hexagon_bare_metal_debug_mmio_read() {
     let code = [
         encode_movimm(1, 0x5000),
