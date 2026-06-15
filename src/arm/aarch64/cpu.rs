@@ -10467,8 +10467,9 @@ impl AArch64Cpu {
     /// would have, scaled by MUL #(imm4+1).
     fn exec_sve_elem_count(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let rd = (insn & 0x1F) as u8;
-        // Stack-allocation forms (ADDVL/ADDPL/RDVL): bits[15:11]==01010. These
-        // use the stack-pointer register encoding (reg 31 == SP, not XZR).
+        // Stack-allocation forms (ADDVL/ADDPL/RDVL): bits[15:11]==01010.
+        // ADDVL/ADDPL use the stack-pointer destination encoding; RDVL writes an
+        // X register, so rd==31 is XZR and the write is discarded.
         if (insn >> 11) & 0x1F == 0b01010 {
             let imm6 = (((insn >> 5) & 0x3F) as i64) << 58 >> 58; // sign-extend 6
             let vl_bytes = (self.sve_vl / 8) as i64;
@@ -10478,13 +10479,14 @@ impl AArch64Cpu {
             } else {
                 self.get_x(rn)
             };
-            let val = match (insn >> 21) & 0x7 {
+            let op = (insn >> 21) & 0x7;
+            let val = match op {
                 0b001 => base.wrapping_add((imm6 * vl_bytes) as u64), // ADDVL
                 0b011 => base.wrapping_add((imm6 * (vl_bytes / 8)) as u64), // ADDPL
                 0b101 => (imm6 * vl_bytes) as u64,                    // RDVL (rn==31)
                 _ => return Ok(CpuExit::Undefined(insn)),
             };
-            if rd == 31 {
+            if rd == 31 && op != 0b101 {
                 self.set_sp(val);
             } else {
                 self.set_x(rd, val);
@@ -20842,6 +20844,26 @@ mod tests {
 
         assert_eq!(cpu.step().unwrap(), CpuExit::Undefined(0x2543_4650));
         assert_eq!(cpu.sve_pred(0), 0xaaaa);
+    }
+
+    #[test]
+    fn rdvl_xzr_does_not_update_sp() {
+        let mut cpu = create_cpu_with_insn(0x04bf_503f); // RDVL XZR, #1
+        cpu.sysregs.el1.cpacr |= 0b11 << 16; // ZEN
+        cpu.set_sp(0x1234_5678_9abc_def0);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.get_sp(), 0x1234_5678_9abc_def0);
+    }
+
+    #[test]
+    fn addvl_sp_still_updates_sp() {
+        let mut cpu = create_cpu_with_insn(0x043f_503f); // ADDVL SP, SP, #1
+        cpu.sysregs.el1.cpacr |= 0b11 << 16; // ZEN
+        cpu.set_sp(0x1000);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.get_sp(), 0x1010);
     }
 
     // -------------------------------------------------------------------------
