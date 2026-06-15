@@ -2077,12 +2077,9 @@ impl Aarch64Decoder {
             return Self::decode_scalar_fp_3source(raw);
         }
 
-        // Scalar FP 2-source: [31:30]=00, [28:24]=11110, [21]=1
-        if (raw >> 30) & 0x3 == 0b00 && (raw >> 24) & 0x1F == 0b11110 && ((raw >> 21) & 1) == 1 {
-            return Self::decode_scalar_fp_2source(raw);
-        }
-
-        // Scalar FP unary: [31:30]=00, [28:24]=11110, [21]=0
+        // Scalar FP data-processing: [31:30]=00, [28:24]=11110. Subclasses
+        // under bit 21 use overlapping encodings, so dispatch by their specific
+        // opcode subfields instead of treating bit 21 as "2 source".
         if (raw >> 30) & 0x3 == 0b00 && (raw >> 24) & 0x1F == 0b11110 {
             return Self::decode_scalar_fp(raw);
         }
@@ -2492,14 +2489,13 @@ impl Aarch64Decoder {
         let o0 = (raw >> 15) & 1;
         let o1 = (raw >> 21) & 1;
 
-        // The 3-source `type` field [23:22]: 00=S, 01=D, 11=H, 10=reserved.
-        // The old `size & 1` test aliased reserved 0b10 to single and
-        // half-precision 0b11 to double; decode the real precision instead.
-        let fp_size = match size {
-            0b00 => FpRegSize::S,
-            0b01 => FpRegSize::D,
-            0b11 => FpRegSize::H,
-            _ => return Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Aarch64, raw, 4)),
+        let Some(fp_size) = Self::scalar_fp_size(size) else {
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         };
         let fp_reg = |num| Operand::FpReg(FpRegister { num, size: fp_size });
 
@@ -2553,21 +2549,149 @@ impl Aarch64Decoder {
             .with_operand(Operand::Mem(MemOperand::base(Register::x(rn)))))
     }
 
+    fn scalar_fp_size(ptype: u32) -> Option<FpRegSize> {
+        match ptype {
+            0b00 => Some(FpRegSize::S),
+            0b01 => Some(FpRegSize::D),
+            0b11 => Some(FpRegSize::H),
+            _ => None,
+        }
+    }
+
     fn decode_scalar_fp(raw: u32) -> Result<DecodedInsn, DecodeError> {
+        if (raw >> 21) & 1 == 0 {
+            return Self::decode_scalar_fp_legacy(raw);
+        }
+
+        // Scalar FP immediate (FMOV #imm). The decoder has no FP-immediate
+        // operand representation, so leave valid forms for the interpreter
+        // instead of emitting an FMOV that the lifter treats as register-source.
+        if (raw >> 10) & 0x7 == 0b100 && (raw >> 5) & 0x1F == 0 {
+            return Self::decode_scalar_fp_immediate(raw);
+        }
+
+        if (raw >> 10) & 0x3 == 0b10 {
+            return Self::decode_scalar_fp_2source(raw);
+        }
+
+        if (raw >> 10) & 0x1F == 0b10000 {
+            return Self::decode_scalar_fp_1source(raw);
+        }
+
+        if (raw >> 14) & 0x3 == 0 && (raw >> 10) & 0xF == 0b1000 && (raw & 0x7) == 0 {
+            return Self::decode_scalar_fp_compare(raw);
+        }
+
+        if (raw >> 10) & 0x3 == 0b01 {
+            return Self::decode_scalar_fp_cond_compare(raw);
+        }
+
+        if (raw >> 10) & 0x3 == 0b11 {
+            return Self::decode_scalar_fp_cond_select(raw);
+        }
+
+        Ok(DecodedInsn::new(
+            Mnemonic::UNKNOWN,
+            ExecutionState::Aarch64,
+            raw,
+            4,
+        ))
+    }
+
+    fn decode_scalar_fp_legacy(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let ptype = (raw >> 22) & 0x3;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        let rm = ((raw >> 16) & 0x1F) as u8;
 
-        let fp_size = match ptype {
-            0b00 => FpRegSize::S,
-            0b01 => FpRegSize::D,
-            0b11 => FpRegSize::H,
-            _ => FpRegSize::S,
+        let Some(fp_size) = Self::scalar_fp_size(ptype) else {
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         };
         let fp_reg = |num, size| Operand::FpReg(FpRegister { num, size });
 
         let mnemonic = Mnemonic::FMOV;
+
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            .with_operand(fp_reg(rd, fp_size))
+            .with_operand(fp_reg(rn, fp_size)))
+    }
+
+    fn decode_scalar_fp_immediate(raw: u32) -> Result<DecodedInsn, DecodeError> {
+        let ptype = (raw >> 22) & 0x3;
+        let mnemonic = if Self::scalar_fp_size(ptype).is_some() {
+            Mnemonic::UNKNOWN
+        } else {
+            Mnemonic::UNDEFINED
+        };
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4))
+    }
+
+    fn decode_scalar_fp_1source(raw: u32) -> Result<DecodedInsn, DecodeError> {
+        let ptype = (raw >> 22) & 0x3;
+        let rn = ((raw >> 5) & 0x1F) as u8;
+        let rd = (raw & 0x1F) as u8;
+        let opc6 = (raw >> 15) & 0x3F;
+
+        let Some(fp_size) = Self::scalar_fp_size(ptype) else {
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
+        };
+        let fp_reg = |num, size| Operand::FpReg(FpRegister { num, size });
+
+        let mnemonic = match opc6 {
+            0b000000 => Mnemonic::FMOV,
+            0b000001 => Mnemonic::FABS,
+            0b000010 => Mnemonic::FNEG,
+            0b000011 => Mnemonic::FSQRT,
+            0b000100 | 0b000101 | 0b000111 => Mnemonic::FCVT,
+            0b001000 => Mnemonic::FRINTN,
+            0b001001 => Mnemonic::FRINTP,
+            0b001010 => Mnemonic::FRINTM,
+            0b001011 => Mnemonic::FRINTZ,
+            0b001100 => Mnemonic::FRINTA,
+            0b001110 => Mnemonic::FRINTX,
+            0b001111 => Mnemonic::FRINTI,
+            _ => Mnemonic::UNKNOWN,
+        };
+
+        if mnemonic == Mnemonic::UNKNOWN {
+            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4));
+        }
+
+        if mnemonic == Mnemonic::FCVT {
+            let dst_size = match opc6 & 0b11 {
+                0b00 => FpRegSize::S,
+                0b01 => FpRegSize::D,
+                0b11 => FpRegSize::H,
+                _ => {
+                    return Ok(DecodedInsn::new(
+                        Mnemonic::UNDEFINED,
+                        ExecutionState::Aarch64,
+                        raw,
+                        4,
+                    ));
+                }
+            };
+            if dst_size == fp_size {
+                return Ok(DecodedInsn::new(
+                    Mnemonic::UNDEFINED,
+                    ExecutionState::Aarch64,
+                    raw,
+                    4,
+                ));
+            }
+            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                .with_operand(fp_reg(rd, dst_size))
+                .with_operand(fp_reg(rn, fp_size)));
+        }
 
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(fp_reg(rd, fp_size))
@@ -2579,97 +2703,104 @@ impl Aarch64Decoder {
         let rm = ((raw >> 16) & 0x1F) as u8;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        // ptype 0b10 is reserved; the executor treats it as undefined/reserved,
-        // so reject it here rather than aliasing it to single precision.
-        let fp_size = match ptype {
-            0b00 => FpRegSize::S,
-            0b01 => FpRegSize::D,
-            0b11 => FpRegSize::H,
-            _ => return Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Aarch64, raw, 4)),
+        let Some(fp_size) = Self::scalar_fp_size(ptype) else {
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         };
         let fp_reg = |num, size| Operand::FpReg(FpRegister { num, size });
 
-        // FP data-processing (2 source): bits[11:10] == 0b10. The real opcode is
-        // the 4-bit field bits[15:12]; decode it directly here. (The legacy
-        // `(opcode = bits[15:10], ptype, rm)` table below mis-mapped every entry
-        // for these — e.g. it read double FADD's 0x0A as UNKNOWN and FDIV's 0x06
-        // as FADD — so scalar FP arithmetic mis-decoded for all ptypes except
-        // single FADD.)
-        if (raw >> 10) & 0x3 == 0b10 {
-            let mnemonic = match (raw >> 12) & 0xF {
-                0b0000 => Mnemonic::FMUL,
-                0b0001 => Mnemonic::FDIV,
-                0b0010 => Mnemonic::FADD,
-                0b0011 => Mnemonic::FSUB,
-                0b0100 => Mnemonic::FMAX,
-                0b0101 => Mnemonic::FMIN,
-                0b0110 => Mnemonic::FMAXNM,
-                0b0111 => Mnemonic::FMINNM,
-                0b1000 => Mnemonic::FNMUL,
-                _ => Mnemonic::UNKNOWN,
-            };
-            if mnemonic == Mnemonic::UNKNOWN {
-                return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4));
-            }
-            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
-                .with_operand(fp_reg(rd, fp_size))
-                .with_operand(fp_reg(rn, fp_size))
-                .with_operand(fp_reg(rm, fp_size)));
+        let mnemonic = match (raw >> 12) & 0xF {
+            0b0000 => Mnemonic::FMUL,
+            0b0001 => Mnemonic::FDIV,
+            0b0010 => Mnemonic::FADD,
+            0b0011 => Mnemonic::FSUB,
+            0b0100 => Mnemonic::FMAX,
+            0b0101 => Mnemonic::FMIN,
+            0b0110 => Mnemonic::FMAXNM,
+            0b0111 => Mnemonic::FMINNM,
+            0b1000 => Mnemonic::FNMUL,
+            _ => Mnemonic::UNKNOWN,
+        };
+
+        if mnemonic == Mnemonic::UNKNOWN {
+            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4));
         }
 
-        // FP data-processing (1 source): bits[14:10] == 0b10000. The real opcode
-        // is the 6-bit field bits[20:15]. The legacy `(opcode = bits[15:10],
-        // ptype, rm)` table below mis-decoded these — bits[15:10] folds the
-        // opcode LSB into the 0b10000 marker, so real FABS (opcode 000001)
-        // landed at (0x30,..) → UNKNOWN and FNEG (000010) landed at (0x10,_,1)
-        // → FABS. Decode the simple unary forms (FMOV/FABS/FNEG/FSQRT, which
-        // operate at the source precision) directly; FCVT/FRINT and friends
-        // fall through to the table, which scales the destination size.
-        if (raw >> 10) & 0x1F == 0b10000 {
-            // Authoritative for the 1-source class so nothing falls through to
-            // the legacy table below (which mislabeled e.g. FRINTN as FNEG).
-            let opc6 = (raw >> 15) & 0x3F;
-            let mnemonic = match opc6 {
-                0b000000 => Mnemonic::FMOV,
-                0b000001 => Mnemonic::FABS,
-                0b000010 => Mnemonic::FNEG,
-                0b000011 => Mnemonic::FSQRT,
-                0b000100 | 0b000101 | 0b000111 => Mnemonic::FCVT,
-                // FRINT[NPMZAXI], FRINT32/64[XZ] and BFCVT are not modeled →
-                // UNKNOWN (bail cleanly to the interpreter).
-                _ => Mnemonic::UNKNOWN,
-            };
-            if mnemonic == Mnemonic::UNKNOWN {
-                return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4));
-            }
-            if mnemonic == Mnemonic::FCVT {
-                // FCVT precision convert; destination type = opcode<1:0> (bits
-                // [16:15]): 00=S, 01=D, 11=H. Source type is ptype.
-                let dst_size = match opc6 & 0b11 {
-                    0b00 => FpRegSize::S,
-                    0b01 => FpRegSize::D,
-                    _ => FpRegSize::H,
-                };
-                return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
-                    .with_operand(fp_reg(rd, dst_size))
-                    .with_operand(fp_reg(rn, fp_size)));
-            }
-            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
-                .with_operand(fp_reg(rd, fp_size))
-                .with_operand(fp_reg(rn, fp_size)));
-        }
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            .with_operand(fp_reg(rd, fp_size))
+            .with_operand(fp_reg(rn, fp_size))
+            .with_operand(fp_reg(rm, fp_size)))
+    }
 
-        // Anything reaching here has bits[11:10] != 0b10 and bits[14:10] !=
-        // 0b10000, so it is a *different* scalar FP class that merely shares
-        // bit 21 with the 2-source group: floating-point compare ([13:10]=1000),
-        // conditional compare ([11:10]=01), conditional select ([11:10]=11) or
-        // immediate ([12:10]=100). None of these are modeled by the SMIR
-        // decoder, and the old `(opcode=bits[15:10], ptype, rm)` table actively
-        // mis-decoded them — e.g. FCSEL with cond=0001 ([15:10]=0x07) became
-        // FCMP and FCCMP with cond=0000 ([15:10]=0x01) became FCMP. Return
-        // UNKNOWN so the lifter bails to the interpreter, which decodes and
-        // executes these classes correctly.
-        Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Aarch64, raw, 4))
+    fn decode_scalar_fp_compare(raw: u32) -> Result<DecodedInsn, DecodeError> {
+        let ptype = (raw >> 22) & 0x3;
+        let rm = ((raw >> 16) & 0x1F) as u8;
+        let rn = ((raw >> 5) & 0x1F) as u8;
+
+        let Some(fp_size) = Self::scalar_fp_size(ptype) else {
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
+        };
+
+        let fp_reg = |num| Operand::FpReg(FpRegister { num, size: fp_size });
+        let mnemonic = if (raw >> 4) & 1 == 1 {
+            Mnemonic::FCMPE
+        } else {
+            Mnemonic::FCMP
+        };
+
+        let mut insn =
+            DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4).with_operand(fp_reg(rn));
+        if (raw & 0x8) == 0 {
+            insn = insn.with_operand(fp_reg(rm));
+        }
+        Ok(insn)
+    }
+
+    fn decode_scalar_fp_cond_compare(raw: u32) -> Result<DecodedInsn, DecodeError> {
+        let ptype = (raw >> 22) & 0x3;
+        let mnemonic = if Self::scalar_fp_size(ptype).is_some() {
+            // FCCMP/FCCMPE need condition-false NZCV semantics in SMIR. Until
+            // that is modeled, do not emit an actionable compare instruction.
+            Mnemonic::UNKNOWN
+        } else {
+            Mnemonic::UNDEFINED
+        };
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4))
+    }
+
+    fn decode_scalar_fp_cond_select(raw: u32) -> Result<DecodedInsn, DecodeError> {
+        let ptype = (raw >> 22) & 0x3;
+        let rm = ((raw >> 16) & 0x1F) as u8;
+        let cond = ((raw >> 12) & 0xF) as u8;
+        let rn = ((raw >> 5) & 0x1F) as u8;
+        let rd = (raw & 0x1F) as u8;
+
+        let Some(fp_size) = Self::scalar_fp_size(ptype) else {
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
+        };
+        let fp_reg = |num| Operand::FpReg(FpRegister { num, size: fp_size });
+
+        Ok(
+            DecodedInsn::new(Mnemonic::FCSEL, ExecutionState::Aarch64, raw, 4)
+                .with_operand(fp_reg(rd))
+                .with_operand(fp_reg(rn))
+                .with_operand(fp_reg(rm))
+                .with_operand(Operand::Cond(Condition::from_bits(cond))),
+        )
     }
 
     // =========================================================================
@@ -3185,6 +3316,91 @@ mod tests {
     }
 
     #[test]
+    fn issue_48_decodes_scalar_fp_subclasses_by_subfields() {
+        let frintn = decode_bytes(&[0x20, 0x40, 0x24, 0x1e]).unwrap();
+        assert_eq!(frintn.mnemonic, Mnemonic::FRINTN);
+        assert_eq!(frintn.operands.len(), 2);
+        assert!(matches!(
+            frintn.operands.first(),
+            Some(Operand::FpReg(FpRegister {
+                num: 0,
+                size: FpRegSize::S
+            }))
+        ));
+        assert!(matches!(
+            frintn.operands.get(1),
+            Some(Operand::FpReg(FpRegister {
+                num: 1,
+                size: FpRegSize::S
+            }))
+        ));
+
+        let fcmp = decode_bytes(&[0x20, 0x20, 0x22, 0x1e]).unwrap();
+        assert_eq!(fcmp.mnemonic, Mnemonic::FCMP);
+        assert_eq!(fcmp.operands.len(), 2);
+        assert!(matches!(
+            fcmp.operands.first(),
+            Some(Operand::FpReg(FpRegister {
+                num: 1,
+                size: FpRegSize::S
+            }))
+        ));
+        assert!(matches!(
+            fcmp.operands.get(1),
+            Some(Operand::FpReg(FpRegister {
+                num: 2,
+                size: FpRegSize::S
+            }))
+        ));
+
+        let fcmp_zero = decode_bytes(&[0x28, 0x20, 0x20, 0x1e]).unwrap();
+        assert_eq!(fcmp_zero.mnemonic, Mnemonic::FCMP);
+        assert_eq!(fcmp_zero.operands.len(), 1);
+        assert!(matches!(
+            fcmp_zero.operands.first(),
+            Some(Operand::FpReg(FpRegister {
+                num: 1,
+                size: FpRegSize::S
+            }))
+        ));
+
+        let fcsel = decode_bytes(&[0x20, 0x1c, 0x22, 0x1e]).unwrap();
+        assert_eq!(fcsel.mnemonic, Mnemonic::FCSEL);
+        assert_eq!(fcsel.operands.len(), 4);
+        assert!(matches!(
+            fcsel.operands.get(3),
+            Some(Operand::Cond(Condition::NE))
+        ));
+
+        let fmov_imm = decode_bytes(&[0x00, 0x10, 0x2e, 0x1e]).unwrap();
+        assert_eq!(fmov_imm.mnemonic, Mnemonic::UNKNOWN);
+
+        let fccmp = decode_bytes(&[0x27, 0x14, 0x22, 0x1e]).unwrap();
+        assert_eq!(fccmp.mnemonic, Mnemonic::UNKNOWN);
+    }
+
+    #[test]
+    fn issue_48_rejects_reserved_scalar_fp_ptype() {
+        let reserved_ptype = 0b10 << 22;
+
+        let fadd_reserved = 0x1e22_2820 | reserved_ptype;
+        let insn = Aarch64Decoder::decode(fadd_reserved).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::UNDEFINED);
+
+        let fneg_reserved = 0x1e21_4020 | reserved_ptype;
+        let insn = Aarch64Decoder::decode(fneg_reserved).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::UNDEFINED);
+
+        let fcsel_reserved = 0x1e22_1c20 | reserved_ptype;
+        let insn = Aarch64Decoder::decode(fcsel_reserved).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::UNDEFINED);
+
+        let fmadd_reserved = 0x1f02_0c20 | reserved_ptype;
+        let insn = Aarch64Decoder::decode(fmadd_reserved).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::UNDEFINED);
+    }
+
+    #[test]
     fn test_atomic_swp_decode() {
         // SWP X2, X0, [X1].
         let insn = Aarch64Decoder::decode(
@@ -3590,15 +3806,24 @@ mod tests {
 
         // --- the fix: classes that merely share bit 21 must not mis-decode ---
         // FCSEL S0,S1,S2,NE ([11:10]=11): old table read [15:10]=0x07 as FCMP.
-        assert_eq!(Aarch64Decoder::decode(0x1E22_1C20).unwrap().mnemonic, Mnemonic::UNKNOWN);
+        let fcsel = Aarch64Decoder::decode(0x1E22_1C20).unwrap();
+        assert_eq!(fcsel.mnemonic, Mnemonic::FCSEL);
+        assert_eq!(fp_size(&fcsel, 0), FpRegSize::S);
+        assert!(matches!(
+            fcsel.operands.get(3),
+            Some(Operand::Cond(Condition::NE))
+        ));
         // FCCMP S1,S2,#0,EQ ([11:10]=01): old table read [15:10]=0x01 as FCMP.
         assert_eq!(Aarch64Decoder::decode(0x1E22_0420).unwrap().mnemonic, Mnemonic::UNKNOWN);
-        // FCMP S1,S2 ([13:10]=1000): compare class, not modeled by this decoder.
-        assert_eq!(Aarch64Decoder::decode(0x1E22_2020).unwrap().mnemonic, Mnemonic::UNKNOWN);
+        // FCMP S1,S2 ([13:10]=1000): compare class, not 2-source arithmetic.
+        let fcmp = Aarch64Decoder::decode(0x1E22_2020).unwrap();
+        assert_eq!(fcmp.mnemonic, Mnemonic::FCMP);
+        assert_eq!(fcmp.operands.len(), 2);
+        assert_eq!(fp_size(&fcmp, 0), FpRegSize::S);
 
         // --- reserved type 0b10 must be undefined, not aliased to single ---
         // 2-source FADD-shaped word with ptype=0b10.
-        assert_eq!(Aarch64Decoder::decode(0x1EA2_2820).unwrap().mnemonic, Mnemonic::UNKNOWN);
+        assert_eq!(Aarch64Decoder::decode(0x1EA2_2820).unwrap().mnemonic, Mnemonic::UNDEFINED);
 
         // --- 3-source: half precision keeps H, reserved 0b10 is undefined ---
         // FMADD H0,H1,H2,H3 (type=0b11): old `size & 1` mislabeled the size as D.
@@ -3606,7 +3831,7 @@ mod tests {
         assert_eq!(fmadd_h.mnemonic, Mnemonic::FMADD);
         assert_eq!(fp_size(&fmadd_h, 0), FpRegSize::H);
         // type=0b10 reserved → undefined (old `size & 1` aliased it to single).
-        assert_eq!(Aarch64Decoder::decode(0x1F82_0C20).unwrap().mnemonic, Mnemonic::UNKNOWN);
+        assert_eq!(Aarch64Decoder::decode(0x1F82_0C20).unwrap().mnemonic, Mnemonic::UNDEFINED);
     }
 
     #[test]

@@ -2795,6 +2795,7 @@ impl Aarch64Lifter {
                 let width = match Self::fp_precision(&rd.size) {
                     FpPrecision::F32 => OpWidth::W32,
                     FpPrecision::F64 => OpWidth::W64,
+                    FpPrecision::F16 => OpWidth::W16,
                     _ => OpWidth::W32,
                 };
                 Self::push_lifted_op(
@@ -5420,9 +5421,7 @@ mod tests {
         let lifter = Aarch64Lifter::new();
         let mut ctx = LiftContext::new(SourceArch::Aarch64);
         let insn = DecodedInsn::new(mnemonic, crate::arm::ExecutionState::Aarch64, 0, 4);
-        let err = lifter
-            .lift_insn_inner(&insn, 0x1000, &mut ctx)
-            .unwrap_err();
+        let err = lifter.lift_insn_inner(&insn, 0x1000, &mut ctx).unwrap_err();
         assert!(
             matches!(err, LiftError::Unsupported { .. }),
             "{mnemonic:?} must not lift as a NOP or unauthenticated branch: {err:?}"
@@ -5548,6 +5547,21 @@ mod tests {
     }
 
     #[test]
+    fn test_lift_frintn_scalar() {
+        let (ops, _) = lift_single([0x20, 0x40, 0x24, 0x1e]);
+        assert_eq!(ops.len(), 1);
+        match &ops[0].kind {
+            OpKind::FRound {
+                precision, mode, ..
+            } => {
+                assert_eq!(*precision, FpPrecision::F32);
+                assert_eq!(*mode, FpRoundMode::RoundNearest);
+            }
+            other => panic!("expected FRound, got {:?}", other),
+        }
+    }
+
+    #[test]
     fn test_lift_fmadd_scalar() {
         let (ops, _) = lift_single([0x20, 0x0c, 0x02, 0x1f]);
         assert_eq!(ops.len(), 1);
@@ -5559,12 +5573,42 @@ mod tests {
 
     #[test]
     fn test_lift_fcmp_scalar() {
-        let (ops, _) = lift_single([0x20, 0x1c, 0x22, 0x1e]);
+        let (ops, _) = lift_single([0x20, 0x20, 0x22, 0x1e]);
         assert_eq!(ops.len(), 1);
         match &ops[0].kind {
             OpKind::FCmp { precision, .. } => assert_eq!(*precision, FpPrecision::F32),
             other => panic!("expected FCmp, got {:?}", other),
         }
+    }
+
+    #[test]
+    fn test_lift_fcsel_scalar() {
+        let (ops, _) = lift_single([0x20, 0x1c, 0x22, 0x1e]);
+        assert_eq!(ops.len(), 2);
+        match &ops[0].kind {
+            OpKind::Mov { width, .. } => assert_eq!(*width, OpWidth::W32),
+            other => panic!("expected Mov, got {:?}", other),
+        }
+        match &ops[1].kind {
+            OpKind::CMove { width, .. } => assert_eq!(*width, OpWidth::W32),
+            other => panic!("expected CMove, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn issue_48_does_not_lift_fccmp_as_unconditional_compare() {
+        let mut lifter = Aarch64Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Aarch64);
+        let result = lifter
+            .lift_insn(0x1000, &[0x27, 0x14, 0x22, 0x1e], &mut ctx)
+            .unwrap();
+        assert!(result.ops.is_empty());
+        assert!(matches!(
+            result.control_flow,
+            ControlFlow::Trap {
+                kind: TrapKind::Undefined
+            }
+        ));
     }
 
     #[test]
