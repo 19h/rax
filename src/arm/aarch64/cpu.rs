@@ -16292,18 +16292,21 @@ unsafe extern "C" fn rax_a64_vec_load(
 ) -> u64 {
     let st = unsafe { &mut *state };
     let cpu = unsafe { &*(st.ctx as *const AArch64Cpu) };
-    let lo = match cpu.mem_read_u64(addr) {
-        Ok(v) => v,
-        Err(_) => return 0,
-    };
-    let hi = if size > 8 {
-        match cpu.mem_read_u64(addr.wrapping_add(8)) {
-            Ok(v) => v,
+    // Translate and permission-check each byte independently, exactly like the
+    // interpreter's SIMD load path. A single mem_read_u64 per 8-byte chunk would
+    // translate only the chunk's first byte, so a vector load straddling a guest
+    // page boundary would read the second page from adjacent PHYSICAL memory,
+    // bypassing that page's mapping/permissions. (#45)
+    let mut bytes = [0u8; 16];
+    for j in 0..(size as usize).min(16) {
+        match cpu.mem_read_u8(addr.wrapping_add(j as u64)) {
+            Ok(b) => bytes[j] = b,
             Err(_) => return 0,
         }
-    } else {
-        0 // D-register load zeroes the upper 64 bits
-    };
+    }
+    // bytes[8..16] stay zero for an 8-byte (D-register) load, zeroing the top half.
+    let lo = u64::from_le_bytes(bytes[0..8].try_into().unwrap());
+    let hi = u64::from_le_bytes(bytes[8..16].try_into().unwrap());
     let i = (dst_idx as usize) * 2;
     st.v[i] = lo;
     st.v[i + 1] = hi;
@@ -16326,15 +16329,17 @@ unsafe extern "C" fn rax_a64_vec_store(
     let st = unsafe { &*state };
     let cpu = unsafe { &mut *(st.ctx as *mut AArch64Cpu) };
     let i = (src_idx as usize) * 2;
-    if cpu.mem_write_u64(addr, st.v[i]).is_err() {
-        return 0;
-    }
-    if size > 8
-        && cpu
-            .mem_write_u64(addr.wrapping_add(8), st.v[i + 1])
-            .is_err()
-    {
-        return 0;
+    // Translate and permission-check each byte independently, like the
+    // interpreter's SIMD store path — a per-8-byte mem_write_u64 would translate
+    // only the first byte and let a page-straddling vector store overwrite the
+    // second page's adjacent physical memory, bypassing its mapping. (#45)
+    let mut bytes = [0u8; 16];
+    bytes[0..8].copy_from_slice(&st.v[i].to_le_bytes());
+    bytes[8..16].copy_from_slice(&st.v[i + 1].to_le_bytes());
+    for j in 0..(size as usize).min(16) {
+        if cpu.mem_write_u8(addr.wrapping_add(j as u64), bytes[j]).is_err() {
+            return 0;
+        }
     }
     1
 }
@@ -22677,6 +22682,39 @@ mod tests {
             cpu.mem_read_u64_unprivileged(data_va).is_err(),
             "unprivileged access to an EL0-no-access page must fault even at EL1"
         );
+    }
+
+    // Regression for issue #45: the JIT vector load/store helpers must translate and
+    // permission-check every byte (like the interpreter), so a vector access that
+    // straddles a guest page boundary faults on the second page instead of reading/
+    // writing adjacent physical memory. Here page 0x1000 is mapped but 0x2000 is not.
+    #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+    #[test]
+    fn issue_45_vector_helper_translates_each_page() {
+        use crate::smir::lower::runtime::Aarch64GuestRegs;
+
+        let mut cpu = create_test_cpu();
+        // 4KB-page MMU, single L3 level (T0SZ=43): L3 index = va[20:12]. Map page
+        // 0x1000 -> PA frame 1, AP=01 (RW); leave page 0x2000 invalid (unmapped).
+        let l3 = 0x8000u64;
+        cpu.mem_write_u64(l3 + 8, 0x1443).unwrap(); // L3[1]: page, AF, AP=01, PA frame 1
+        cpu.mem_write_u64(0x1000, 0x1122_3344_5566_7788).unwrap();
+        cpu.sysregs.el1.ttbr0 = l3;
+        cpu.sysregs.el1.tcr = 43; // T0SZ=43, TG0=0 (4KB)
+        cpu.sysregs.el1.sctlr |= sctlr::M;
+        cpu.update_mmu_config();
+
+        let mut regs = Aarch64GuestRegs::default();
+        regs.ctx = &cpu as *const AArch64Cpu as usize as u64;
+
+        // A vector load fully inside the mapped page succeeds.
+        let ok = unsafe { rax_a64_vec_load(&mut regs, 0x1000, 0, 8) };
+        assert_eq!(ok, 1, "in-page vector load succeeds");
+        assert_eq!(regs.v[0], 0x1122_3344_5566_7788);
+
+        // A vector load straddling into the UNMAPPED page 0x2000 must fault.
+        let ok = unsafe { rax_a64_vec_load(&mut regs, 0x1FF9, 1, 8) };
+        assert_eq!(ok, 0, "page-straddling vector load must fault on the unmapped page");
     }
 
     // -------------------------------------------------------------------------
