@@ -13094,6 +13094,32 @@ impl Aarch64Lowerer {
             return self.lower_cmove_imm(dst, value, cond, width);
         }
 
+        // W8/W16 conditional moves write only a sub-register. A false condition must
+        // leave the ENTIRE destination unchanged (SMIR CMove does nothing on the
+        // false path). Lower as a branch over a partial write so nothing is written
+        // when the condition fails: for an x86 destination the true path MERGES the
+        // low bits (upper bits preserved, matching `write_x86_partial`); for a
+        // non-x86 destination it zero-extends the low bits. The previous
+        // CSEL-then-UXTB always wrote (and truncated) the destination — corrupting it
+        // on the false path. (#15)
+        if matches!(width, OpWidth::W8 | OpWidth::W16) && cond != Condition::Always {
+            let is_x86_dst = matches!(dst, VReg::Arch(ArchReg::X86(_)));
+            let dst_reg = Self::dst_gpr_arm_or_x86(dst)?;
+            let src_reg = Self::gpr_arm_or_x86(src)?;
+            let imms = if width == OpWidth::W8 { 7 } else { 15 };
+            let inverted = Self::inverted_arm_cond_code(cond)?;
+            let skip = self.code.position();
+            self.emit(0x5400_0000 | inverted); // B.<!cond> over the partial write
+            if is_x86_dst {
+                // BFI Xdst, Xsrc, #0, #n: insert the low n bits, preserve the rest.
+                self.emit_bitfield(dst_reg, src_reg, 0b01, 0, imms, OpWidth::W64)?;
+            } else {
+                // UBFX Wdst, Wsrc, #0, #n: zero-extend the low n bits.
+                self.emit_bitfield(dst_reg, src_reg, 0b10, 0, imms, OpWidth::W32)?;
+            }
+            return self.patch_cond_branch_to_current(skip, inverted);
+        }
+
         if src == dst {
             let dst = Self::dst_gpr_arm_or_x86(dst)?;
             return self.finish_cmove_width(dst, width);
@@ -13105,19 +13131,6 @@ impl Aarch64Lowerer {
 
         let dst = Self::dst_gpr_arm_or_x86(dst)?;
         let src = Self::gpr_arm_or_x86(src)?;
-        if matches!(width, OpWidth::W8 | OpWidth::W16) {
-            self.emit_cond_select(
-                dst,
-                src,
-                dst,
-                Self::arm_cond_code(cond)?,
-                0,
-                0,
-                OpWidth::W32,
-            )?;
-            let imms = if width == OpWidth::W8 { 7 } else { 15 };
-            return self.emit_bitfield(dst, dst, 0b10, 0, imms, OpWidth::W32);
-        }
         self.emit_cond_select(dst, src, dst, Self::arm_cond_code(cond)?, 0, 0, width)
     }
 
@@ -17463,6 +17476,42 @@ mod tests {
         );
         assert_eq!(regs[0], 0x140, "Add must write x0 (mem-offset fusion must not drop it)");
         assert_eq!(regs[3], 0xCAFE, "loaded value");
+    }
+
+    // Regression for issue #15: a W8 CMove must leave the FULL destination
+    // unchanged on the false path and MERGE the low byte (preserving the upper 56
+    // bits) on the true path for an x86 destination — not CSEL+UXTB, which zeroed
+    // the upper bits and truncated even when the condition was false.
+    #[test]
+    fn issue_15_w8_cmove_preserves_x86_dst_on_false_and_merges_on_true() {
+        let dst = x86(X86Reg::Rax);
+        let src = x86(X86Reg::Rcx);
+        let host_dst = Aarch64Lowerer::gpr_arm_or_x86(dst).unwrap();
+        let host_src = Aarch64Lowerer::gpr_arm_or_x86(src).unwrap();
+        assert_ne!(host_dst, host_src);
+
+        let code = lower_single_op(OpKind::CMove {
+            dst,
+            src,
+            cond: Condition::Eq,
+            width: OpWidth::W8,
+        });
+
+        let sentinel = 0xBBBB_CCCC_DDDD_EE7Fu64;
+        // ZF clear -> Eq false -> RAX must be FULLY unchanged.
+        let (regs_false, _, _) =
+            run_aarch64_code(&code, &[(host_dst, sentinel), (host_src, 0x12)], 0b0000);
+        assert_eq!(
+            regs_false[host_dst as usize], sentinel,
+            "false W8 CMove must leave the destination fully unchanged",
+        );
+        // ZF set (0b0100) -> Eq true -> low byte = src low byte, upper bits kept.
+        let (regs_true, _, _) =
+            run_aarch64_code(&code, &[(host_dst, sentinel), (host_src, 0x12)], 0b0100);
+        assert_eq!(
+            regs_true[host_dst as usize], 0xBBBB_CCCC_DDDD_EE12,
+            "true W8 CMove merges the low byte and preserves the upper bits",
+        );
     }
 
     #[test]
@@ -45177,7 +45226,7 @@ mod tests {
     }
 
     #[test]
-    fn lowers_cmove_w8_same_reg_as_uxtb() {
+    fn lowers_cmove_w8_same_reg_as_cond_branch_ubfx() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(
             0,
@@ -45195,7 +45244,11 @@ mod tests {
         lowerer.lower_function(&func).unwrap();
         let code = lowerer.finalize().unwrap();
 
+        // ARM dst W8 CMove: branch over a UBFX so a false condition writes nothing
+        // (the destination is fully preserved), instead of an unconditional UXTB
+        // that truncated it on the false path. (#15)
         let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_b_cond(1, 2).to_le_bytes());
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
@@ -45254,7 +45307,7 @@ mod tests {
     }
 
     #[test]
-    fn lowers_cmove_w16_as_csel_uxth() {
+    fn lowers_cmove_w16_arm_dst_as_cond_branch_ubfx() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(
             0,
@@ -45272,15 +45325,17 @@ mod tests {
         lowerer.lower_function(&func).unwrap();
         let code = lowerer.finalize().unwrap();
 
+        // ARM dst W16 CMove: branch over a UBFX (zero-extend low 16) so the false
+        // path leaves the full destination unchanged. (#15)
         let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_csel_regs(0, 0, 0, 1, 0, 0, 0).to_le_bytes());
-        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 15, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&enc_b_cond(1, 2).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 15, 1, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
 
     #[test]
-    fn lowers_cmove_w8_as_csel_uxtb() {
+    fn lowers_cmove_w8_arm_dst_as_cond_branch_ubfx() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(
             0,
@@ -45298,9 +45353,11 @@ mod tests {
         lowerer.lower_function(&func).unwrap();
         let code = lowerer.finalize().unwrap();
 
+        // ARM dst W8 CMove: branch over a UBFX (zero-extend low 8) so the false path
+        // leaves the full destination unchanged. (#15)
         let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_csel_regs(0, 0, 0, 1, 0, 0, 0).to_le_bytes());
-        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&enc_b_cond(1, 2).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 1, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
