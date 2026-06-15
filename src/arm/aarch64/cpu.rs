@@ -610,12 +610,38 @@ impl AArch64Cpu {
         Ok(())
     }
 
-    /// Translate virtual address to physical address.
+    /// Translate virtual address to physical address, using the privilege level
+    /// implied by the current EL (EL0 ⇒ unprivileged, EL1+ ⇒ privileged).
     fn translate_address(
         &self,
         va: u64,
         is_write: bool,
         is_execute: bool,
+    ) -> Result<u64, ArmError> {
+        self.translate_address_at(va, is_write, is_execute, self.current_el > 0)
+    }
+
+    /// Translate as an UNPRIVILEGED (EL0) access regardless of the current EL.
+    /// Used by the unprivileged load/store instructions (the FEAT_LRCPC3
+    /// unprivileged pairs LDTP/STTP/LDTNP/STTNP), which must check permissions as
+    /// if executed at EL0 even when the guest runs them at EL1 — otherwise a guest
+    /// kernel could be tricked into accessing a kernel-only address on behalf of a
+    /// user that supplied it. (#39)
+    fn translate_address_unprivileged(
+        &self,
+        va: u64,
+        is_write: bool,
+        is_execute: bool,
+    ) -> Result<u64, ArmError> {
+        self.translate_address_at(va, is_write, is_execute, false)
+    }
+
+    fn translate_address_at(
+        &self,
+        va: u64,
+        is_write: bool,
+        is_execute: bool,
+        privileged: bool,
     ) -> Result<u64, ArmError> {
         // Check alignment for execute
         if is_execute && (va & 3) != 0 {
@@ -634,7 +660,6 @@ impl AArch64Cpu {
         }
 
         // Use MMU if enabled
-        let privileged = self.current_el > 0;
         match self.mmu.translate(
             va,
             self.memory.as_ref(),
@@ -646,6 +671,25 @@ impl AArch64Cpu {
             Ok(desc) => Ok(desc.pa),
             Err(fault) => Err(self.translation_fault_to_error(fault, is_write)),
         }
+    }
+
+    /// Read a doubleword as an UNPRIVILEGED (EL0) access. See
+    /// [`Self::translate_address_unprivileged`]. (#39)
+    fn mem_read_u64_unprivileged(&self, va: u64) -> Result<u64, ArmError> {
+        let pa = self.translate_address_unprivileged(va, false, false)?;
+        self.memory.read_u64(pa).map_err(|e| e.into())
+    }
+
+    /// Write a doubleword as an UNPRIVILEGED (EL0) access. See
+    /// [`Self::translate_address_unprivileged`]. (#39)
+    fn mem_write_u64_unprivileged(&mut self, va: u64, value: u64) -> Result<(), ArmError> {
+        let pa = self.translate_address_unprivileged(va, true, false)?;
+        self.memory
+            .write_u64(pa, value)
+            .map_err(|e| -> ArmError { e.into() })?;
+        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+        self.jit_note_write(va);
+        Ok(())
     }
 
     /// Convert translation fault to ArmError.
@@ -14329,6 +14373,10 @@ impl AArch64Cpu {
                 _ => unreachable!(),
             }
         };
+        // opc=0b11, V=0 is the FEAT_LRCPC3 unprivileged 64-bit pair (LDTP/STTP/
+        // LDTNP/STTNP): its memory accesses are checked at EL0 even when run at
+        // EL1, so route them through the unprivileged translation. (#39)
+        let unpriv = v == 0 && opc == 0b11;
         // opc=01, V=0 splits by the L bit: L=1 is LDPSW, L=0 is STGP
         // (FEAT_MTE store-allocation-tag pair). STGP stores two 64-bit
         // registers; the tag write is a no-op in our flat memory model, and
@@ -14413,8 +14461,19 @@ impl AArch64Cpu {
                 self.mem_write_u32(addr2, self.get_w(rt2))?;
             }
         } else if l != 0 {
-            self.set_x(rt, self.mem_read_u64(address)?);
-            self.set_x(rt2, self.mem_read_u64(addr2)?);
+            let (v1, v2) = if unpriv {
+                (
+                    self.mem_read_u64_unprivileged(address)?,
+                    self.mem_read_u64_unprivileged(addr2)?,
+                )
+            } else {
+                (self.mem_read_u64(address)?, self.mem_read_u64(addr2)?)
+            };
+            self.set_x(rt, v1);
+            self.set_x(rt2, v2);
+        } else if unpriv {
+            self.mem_write_u64_unprivileged(address, self.get_x(rt))?;
+            self.mem_write_u64_unprivileged(addr2, self.get_x(rt2))?;
         } else {
             self.mem_write_u64(address, self.get_x(rt))?;
             self.mem_write_u64(addr2, self.get_x(rt2))?;
@@ -22582,6 +22641,42 @@ mod tests {
 
         assert_eq!(cpu.get_x(0), 0);
         assert_eq!(cpu.get_x(2), 0xABCD);
+    }
+
+    // Regression for issue #39: the FEAT_LRCPC3 unprivileged pair load/stores must
+    // perform their permission checks as EL0 accesses even when run at EL1. With an
+    // AP=00 page (EL1 RW, EL0 no-access), a privileged access succeeds but an
+    // unprivileged access must fault — exercising the translate helper the
+    // unprivileged-pair path now uses.
+    #[test]
+    fn issue_39_unprivileged_access_uses_el0_permission_checks() {
+        let mut cpu = create_test_cpu(); // EL1, flat memory, MMU initially disabled.
+
+        // Single-level L1-block identity map for the low 1GB, AP=00 (EL1 RW, EL0
+        // no-access). Tables/data are written while the MMU is disabled (identity).
+        let table = 0x8000u64;
+        cpu.mem_write_u64(table, 0x401).unwrap(); // L1[0]: block, AP=00, AF, PA[47:30]=0
+        let data_va = 0x1000u64;
+        cpu.mem_write_u64(data_va, 0xCAFE_F00D_DEAD_BEEF).unwrap();
+
+        // Enable the MMU: 4KB granule (TG0=0), T0SZ=25 (walk starts at L1).
+        cpu.sysregs.el1.ttbr0 = table;
+        cpu.sysregs.el1.tcr = 25;
+        cpu.sysregs.el1.sctlr |= sctlr::M;
+        cpu.update_mmu_config();
+        assert_eq!(cpu.current_el(), 1, "test runs at EL1");
+
+        // Privileged (EL1) access succeeds...
+        assert_eq!(
+            cpu.mem_read_u64(data_va).unwrap(),
+            0xCAFE_F00D_DEAD_BEEF,
+            "EL1 privileged access to an AP=00 page is allowed"
+        );
+        // ...unprivileged (EL0) access to the same page must fault, even at EL1.
+        assert!(
+            cpu.mem_read_u64_unprivileged(data_va).is_err(),
+            "unprivileged access to an EL0-no-access page must fault even at EL1"
+        );
     }
 
     // -------------------------------------------------------------------------
