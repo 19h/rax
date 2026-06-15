@@ -703,145 +703,31 @@ impl Aarch64X86_64Lowerer {
 
     fn lower_atomic_rmw(
         &mut self,
-        dst: VReg,
-        addr: &Address,
-        src: VReg,
+        _dst: VReg,
+        _addr: &Address,
+        _src: VReg,
         op: AtomicOp,
         width: MemWidth,
     ) -> Result<(), LowerError> {
-        if op == AtomicOp::Nand {
-            return Err(LowerError::UnsupportedOp {
-                op: format!("AArch64 AtomicRmw op {op:?}"),
-            });
-        }
-
-        let (op_width, size) = Self::scalar_mem_width(width)?;
-        self.load_addr_to(addr, ADDR)?;
-        {
-            let mut e = X86Emitter::new(&mut self.code);
-            e.emit_mov_rm(B3, STATE, A64_LOAD_FN_OFFSET, OpWidth::W64);
-            e.emit_mov_ri(HI, size, OpWidth::W64);
-            e.emit_mov_ri(RHS, 0, OpWidth::W64);
-        }
-        self.emit_mem_helper_call(B3);
-
-        {
-            let mut e = X86Emitter::new(&mut self.code);
-            e.emit_sub_ri(PhysReg::Rsp, 16, OpWidth::W64);
-            e.emit_mov_mr(PhysReg::Rsp, 0, ACC, OpWidth::W64);
-        }
-
-        self.load_vreg_to(src, HI, op_width)?;
-        {
-            let mut e = X86Emitter::new(&mut self.code);
-            e.emit_mov_rm(ACC, PhysReg::Rsp, 0, OpWidth::W64);
-            match op {
-                AtomicOp::Add => e.emit_add_rr(ACC, HI, op_width),
-                AtomicOp::Sub => e.emit_sub_rr(ACC, HI, op_width),
-                AtomicOp::And => e.emit_and_rr(ACC, HI, op_width),
-                AtomicOp::Or => e.emit_or_rr(ACC, HI, op_width),
-                AtomicOp::Xor => e.emit_xor_rr(ACC, HI, op_width),
-                AtomicOp::Swap => e.emit_mov_rr(ACC, HI, op_width),
-                AtomicOp::Max | AtomicOp::Min | AtomicOp::Umax | AtomicOp::Umin => {
-                    let signed = matches!(op, AtomicOp::Max | AtomicOp::Min);
-                    match (op_width, signed) {
-                        (OpWidth::W8 | OpWidth::W16 | OpWidth::W32, true) => {
-                            e.emit_movsx(ACC, ACC, op_width, OpWidth::W64);
-                            e.emit_movsx(HI, HI, op_width, OpWidth::W64);
-                        }
-                        (OpWidth::W8 | OpWidth::W16, false) => {
-                            e.emit_movzx(ACC, ACC, op_width, OpWidth::W64);
-                            e.emit_movzx(HI, HI, op_width, OpWidth::W64);
-                        }
-                        (OpWidth::W32, false) => {
-                            e.emit_mov_rr(ACC, ACC, OpWidth::W32);
-                            e.emit_mov_rr(HI, HI, OpWidth::W32);
-                        }
-                        (OpWidth::W64, _) => {}
-                        (OpWidth::W128, _) => unreachable!(),
-                    }
-                    e.emit_cmp_rr(ACC, HI, OpWidth::W64);
-                    let take_operand = match op {
-                        AtomicOp::Max => X86Cond::L,
-                        AtomicOp::Min => X86Cond::G,
-                        AtomicOp::Umax => X86Cond::B,
-                        AtomicOp::Umin => X86Cond::A,
-                        _ => unreachable!(),
-                    };
-                    e.emit_cmovcc(take_operand, ACC, HI, OpWidth::W64);
-                }
-                AtomicOp::Nand => unreachable!(),
-            }
-            e.emit_mov_rr(HI, ACC, OpWidth::W64);
-        }
-        self.load_addr_to(addr, ADDR)?;
-        {
-            let mut e = X86Emitter::new(&mut self.code);
-            e.emit_mov_rm(B3, STATE, A64_STORE_FN_OFFSET, OpWidth::W64);
-            e.emit_mov_ri(RHS, size, OpWidth::W64);
-        }
-        self.emit_mem_helper_call(B3);
-
-        {
-            let mut e = X86Emitter::new(&mut self.code);
-            e.emit_mov_rm(ACC, PhysReg::Rsp, 0, OpWidth::W64);
-            e.emit_add_ri(PhysReg::Rsp, 16, OpWidth::W64);
-        }
-        self.store_reg_to(dst, ACC, OpWidth::W64)
+        Err(LowerError::UnsupportedOp {
+            op: format!(
+                "AArch64 AtomicRmw {op:?} {width:?} requires an atomic memory helper"
+            ),
+        })
     }
 
     fn lower_cas(
         &mut self,
-        dst: VReg,
-        success: VReg,
-        addr: &Address,
-        expected: VReg,
-        new_val: VReg,
+        _dst: VReg,
+        _success: VReg,
+        _addr: &Address,
+        _expected: VReg,
+        _new_val: VReg,
         width: MemWidth,
     ) -> Result<(), LowerError> {
-        let (op_width, size) = Self::scalar_mem_width(width)?;
-        self.load_addr_to(addr, ADDR)?;
-        {
-            let mut e = X86Emitter::new(&mut self.code);
-            e.emit_mov_rm(B3, STATE, A64_LOAD_FN_OFFSET, OpWidth::W64);
-            e.emit_mov_ri(HI, size, OpWidth::W64);
-            e.emit_mov_ri(RHS, 0, OpWidth::W64);
-        }
-        self.emit_mem_helper_call(B3);
-
-        {
-            let mut e = X86Emitter::new(&mut self.code);
-            e.emit_sub_ri(PhysReg::Rsp, 16, OpWidth::W64);
-            e.emit_mov_mr(PhysReg::Rsp, 0, ACC, OpWidth::W64);
-        }
-
-        self.load_vreg_to(expected, RHS, op_width)?;
-        {
-            let mut e = X86Emitter::new(&mut self.code);
-            e.emit_cmp_rr(ACC, RHS, op_width);
-            e.emit_setcc(X86Cond::E, B0);
-            e.emit_movzx(B0, B0, OpWidth::W8, OpWidth::W64);
-            e.emit_mov_mr(PhysReg::Rsp, 8, B0, OpWidth::W64);
-        }
-        let skip_store = self.emit_jcc_placeholder(X86Cond::Ne);
-        self.load_vreg_to(new_val, HI, op_width)?;
-        self.load_addr_to(addr, ADDR)?;
-        {
-            let mut e = X86Emitter::new(&mut self.code);
-            e.emit_mov_rm(B3, STATE, A64_STORE_FN_OFFSET, OpWidth::W64);
-            e.emit_mov_ri(RHS, size, OpWidth::W64);
-        }
-        self.emit_mem_helper_call(B3);
-        self.patch_rel32_to_current(skip_store)?;
-
-        {
-            let mut e = X86Emitter::new(&mut self.code);
-            e.emit_mov_rm(B0, PhysReg::Rsp, 8, OpWidth::W64);
-            e.emit_mov_rm(ACC, PhysReg::Rsp, 0, OpWidth::W64);
-            e.emit_add_ri(PhysReg::Rsp, 16, OpWidth::W64);
-        }
-        self.store_reg_to(success, B0, OpWidth::W64)?;
-        self.store_reg_to(dst, ACC, OpWidth::W64)
+        Err(LowerError::UnsupportedOp {
+            op: format!("AArch64 CAS {width:?} requires an atomic compare-and-swap helper"),
+        })
     }
 
     fn emit_jcc_placeholder(&mut self, cond: X86Cond) -> usize {
@@ -2012,10 +1898,58 @@ fn fallthrough_pc(block: &SmirBlock) -> Option<u64> {
 mod codegen_tests {
     use super::*;
     use crate::smir::ir::{FunctionBuilder, Terminator};
-    use crate::smir::types::FunctionId;
+    use crate::smir::types::{FunctionId, MemoryOrder};
 
     fn x(n: u8) -> VReg {
         VReg::Arch(ArchReg::Arm(ArmReg::X(n)))
+    }
+
+    fn lower_single_op_unsupported(kind: OpKind) -> String {
+        let mut b = FunctionBuilder::new(FunctionId(0), 0x2fa0);
+        b.push_op(0x2fa0, kind);
+        b.set_terminator(Terminator::Return { values: vec![] });
+
+        let mut lowerer = Aarch64X86_64Lowerer::new();
+        match lowerer.lower_function(&b.finish()) {
+            Err(LowerError::UnsupportedOp { op }) => op,
+            Err(err) => panic!("unexpected lower error: {err:?}"),
+            Ok(_) => panic!("operation lowered but should require atomic helper support"),
+        }
+    }
+
+    #[test]
+    fn atomic_rmw_requires_atomic_memory_helper() {
+        let op = lower_single_op_unsupported(OpKind::AtomicRmw {
+            dst: x(0),
+            addr: Address::Direct(x(1)),
+            src: x(2),
+            op: AtomicOp::Swap,
+            width: MemWidth::B8,
+            order: MemoryOrder::AcqRel,
+        });
+
+        assert!(
+            op.contains("AtomicRmw") && op.contains("atomic memory helper"),
+            "unexpected unsupported op: {op}"
+        );
+    }
+
+    #[test]
+    fn cas_requires_atomic_compare_exchange_helper() {
+        let op = lower_single_op_unsupported(OpKind::Cas {
+            dst: x(2),
+            success: x(3),
+            addr: Address::Direct(x(1)),
+            expected: x(2),
+            new_val: x(0),
+            width: MemWidth::B8,
+            order: MemoryOrder::AcqRel,
+        });
+
+        assert!(
+            op.contains("CAS") && op.contains("atomic compare-and-swap helper"),
+            "unexpected unsupported op: {op}"
+        );
     }
 
     #[test]
