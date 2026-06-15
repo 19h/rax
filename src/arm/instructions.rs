@@ -2406,6 +2406,9 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         }
 
         if cp == 15 {
+            if !self.cpu.is_privileged() {
+                return ExecResult::Undefined;
+            }
             let crm = (insn.raw & 0xF) as u8;
             let opc2 = ((insn.raw >> 5) & 0x7) as u8;
             let value = self.reg(t);
@@ -2463,6 +2466,9 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         }
 
         if cp == 15 {
+            if !self.cpu.is_privileged() {
+                return ExecResult::Undefined;
+            }
             let crm = (insn.raw & 0xF) as u8;
             let opc2 = ((insn.raw >> 5) & 0x7) as u8;
             let enc = crate::arm::sysreg::Cp15Encoding::new(reg, opc1, crm, opc2);
@@ -10072,6 +10078,10 @@ mod tests {
         (rd << 12) | (lsb << 7) | (top << 16) | rn
     }
 
+    fn cp15_transfer_raw(rt: u32, crn: u32, opc1: u32, crm: u32, opc2: u32) -> u32 {
+        (opc1 << 21) | (crn << 16) | (rt << 12) | (15 << 8) | (opc2 << 5) | crm
+    }
+
     #[test]
     fn test_add_immediate() {
         let mut cpu = make_cpu();
@@ -10226,6 +10236,76 @@ mod tests {
         assert!(cpu.cpsr.f);
         assert!(!cpu.cpsr.t);
         assert_eq!(cpu.regs[13], 0x3000);
+    }
+
+    #[test]
+    fn test_user_mode_mcr_cp15_is_undefined_and_does_not_mutate_state() {
+        let mut cpu = make_cpu();
+        let mut mem = make_mem();
+
+        cpu.cpsr.mode = ProcessorMode::User as u8;
+        cpu.regs[0] = 0xffff_ffff;
+        let original_sctlr = cpu.cp15.sctlr.bits();
+
+        let insn = make_insn(
+            Mnemonic::MCR,
+            cp15_transfer_raw(0, 1, 0, 0, 0),
+            false,
+        );
+        let mut exec = Executor::new(&mut cpu, &mut mem);
+        let result = exec.execute(&insn);
+
+        assert!(matches!(result, ExecResult::Undefined));
+        assert_eq!(cpu.cp15.sctlr.bits(), original_sctlr);
+    }
+
+    #[test]
+    fn test_user_mode_mrc_cp15_is_undefined_and_does_not_expose_state() {
+        let mut cpu = make_cpu();
+        let mut mem = make_mem();
+
+        cpu.cpsr.mode = ProcessorMode::User as u8;
+        cpu.cp15.ttbr0 = 0x1234_5000;
+        cpu.regs[1] = 0xdead_beef;
+
+        let insn = make_insn(
+            Mnemonic::MRC,
+            cp15_transfer_raw(1, 2, 0, 0, 0),
+            false,
+        );
+        let mut exec = Executor::new(&mut cpu, &mut mem);
+        let result = exec.execute(&insn);
+
+        assert!(matches!(result, ExecResult::Undefined));
+        assert_eq!(cpu.regs[1], 0xdead_beef);
+    }
+
+    #[test]
+    fn test_privileged_mcr_mrc_cp15_still_access_state() {
+        let mut cpu = make_cpu();
+        let mut mem = make_mem();
+
+        cpu.cpsr.mode = ProcessorMode::Supervisor as u8;
+        cpu.regs[0] = 0x1;
+
+        let write_sctlr = make_insn(
+            Mnemonic::MCR,
+            cp15_transfer_raw(0, 1, 0, 0, 0),
+            false,
+        );
+        let mut exec = Executor::new(&mut cpu, &mut mem);
+        let result = exec.execute(&write_sctlr);
+        assert!(matches!(result, ExecResult::Continue));
+
+        let read_sctlr = make_insn(
+            Mnemonic::MRC,
+            cp15_transfer_raw(1, 1, 0, 0, 0),
+            false,
+        );
+        let result = exec.execute(&read_sctlr);
+
+        assert!(matches!(result, ExecResult::Continue));
+        assert_eq!(cpu.regs[1], 0x1);
     }
 
     #[test]
