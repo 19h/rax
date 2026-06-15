@@ -852,7 +852,7 @@ impl RiscVLifter {
             Some(dst) => dst,
             None => return Ok((ops, ControlFlow::NextInsn)),
         };
-        let w = OpWidth::W64;
+        let w = self.op_width();
         let bit = 1i64.wrapping_shl(shamt as u32);
 
         match d.op {
@@ -1616,7 +1616,7 @@ impl RiscVLifter {
             Some(dst) => dst,
             None => return Ok((ops, ControlFlow::NextInsn)), // rd == x0: pure no-op
         };
-        let w = OpWidth::W64;
+        let w = self.op_width();
 
         // Helper: dst = min/max(rs1, rs2) using a compare + select.
         let mut minmax = |ctx: &mut LiftContext, ops: &mut Vec<SmirOp>, cond: Condition| {
@@ -2022,13 +2022,19 @@ impl RiscVLifter {
             // (zext.w on RV64), packh uses bytes, packw uses 16-bit halves with
             // a sign-extended 32-bit result.
             RvOp::Pack => {
+                let half_width = if self.xlen == 64 {
+                    OpWidth::W32
+                } else {
+                    OpWidth::W16
+                };
+                let half_bits = (self.xlen / 2) as i64;
                 let a = ctx.alloc_vreg();
                 ops.push(mk(
                     ctx,
                     OpKind::ZeroExtend {
                         dst: a,
                         src: rs1,
-                        from_width: OpWidth::W32,
+                        from_width: half_width,
                         to_width: w,
                     },
                 ));
@@ -2038,7 +2044,7 @@ impl RiscVLifter {
                     OpKind::ZeroExtend {
                         dst: b,
                         src: rs2,
-                        from_width: OpWidth::W32,
+                        from_width: half_width,
                         to_width: w,
                     },
                 ));
@@ -2048,7 +2054,7 @@ impl RiscVLifter {
                     OpKind::Shl {
                         dst: bsh,
                         src: b,
-                        amount: SrcOperand::Imm(32),
+                        amount: SrcOperand::Imm(half_bits),
                         width: w,
                         flags: FlagUpdate::None,
                     },
@@ -5589,6 +5595,54 @@ mod tests {
             "enabled Zbb RORI did not produce a rotate: {:?}",
             result.ops
         );
+    }
+
+    #[test]
+    fn rv32_pack_uses_16_bit_halves_and_32_bit_result() {
+        let pack = r_type(0b0000100, 2, 1, 0b100, 3, 0x33);
+        let mut lifter = RiscVLifter::new_rv32(RiscVExtensions {
+            zbkb: true,
+            ..RiscVExtensions::rv64i()
+        });
+        let mut ctx = LiftContext::new(SourceArch::RiscV32);
+        let result = lifter
+            .lift_insn(0x1000, &pack.to_le_bytes(), &mut ctx)
+            .expect("RV32 Zbkb pack should lift");
+
+        let zero_extend_halves = result
+            .ops
+            .iter()
+            .filter(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::ZeroExtend {
+                        from_width: OpWidth::W16,
+                        to_width: OpWidth::W32,
+                        ..
+                    }
+                )
+            })
+            .count();
+        assert_eq!(zero_extend_halves, 2, "RV32 pack must use two 16-bit halves");
+        assert!(result.ops.iter().any(|op| {
+            matches!(
+                op.kind,
+                OpKind::Shl {
+                    amount: SrcOperand::Imm(16),
+                    width: OpWidth::W32,
+                    ..
+                }
+            )
+        }));
+        assert!(result.ops.iter().any(|op| {
+            matches!(
+                op.kind,
+                OpKind::Or {
+                    width: OpWidth::W32,
+                    ..
+                }
+            )
+        }));
     }
 
     #[test]
