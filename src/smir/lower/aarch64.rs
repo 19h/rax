@@ -13099,13 +13099,37 @@ impl Aarch64Lowerer {
                 };
                 let shift = if left { ShiftOp::Lsl } else { ShiftOp::Lsr };
                 if injected == 0 {
-                    self.lower_shift_imm(dst_reg, rn, i64::from(amount), shift, OpWidth::W32)?;
+                    let shift_src = if left {
+                        rn
+                    } else {
+                        self.emit_bitfield(dst_reg, rn, 0b10, 0, top_bit, OpWidth::W32)?;
+                        dst_reg
+                    };
+                    self.lower_shift_imm(
+                        dst_reg,
+                        shift_src,
+                        i64::from(amount),
+                        shift,
+                        OpWidth::W32,
+                    )?;
                     return self.emit_bitfield(dst_reg, dst_reg, 0b10, 0, top_bit, OpWidth::W32);
                 }
                 if let Ok((n, immr, imms)) =
                     Self::logical_bitmask_imm(injected as i64, OpWidth::W32)
                 {
-                    self.lower_shift_imm(dst_reg, rn, i64::from(amount), shift, OpWidth::W32)?;
+                    let shift_src = if left {
+                        rn
+                    } else {
+                        self.emit_bitfield(dst_reg, rn, 0b10, 0, top_bit, OpWidth::W32)?;
+                        dst_reg
+                    };
+                    self.lower_shift_imm(
+                        dst_reg,
+                        shift_src,
+                        i64::from(amount),
+                        shift,
+                        OpWidth::W32,
+                    )?;
                     self.emit_logic_imm(dst_reg, dst_reg, 0b01, n, immr, imms, OpWidth::W32)?;
                     return self.emit_bitfield(dst_reg, dst_reg, 0b10, 0, top_bit, OpWidth::W32);
                 }
@@ -19310,6 +19334,41 @@ mod tests {
             if reg != src_reg && reg != dst_reg {
                 assert_eq!(out[reg as usize], value, "{label}: x{reg} restored");
             }
+        }
+    }
+
+    fn assert_shrd_imm_src_lowering(
+        label: &str,
+        dst_value: u64,
+        src_value: i64,
+        amount: i64,
+        width: OpWidth,
+    ) {
+        let op = OpKind::Shrd {
+            dst: x(0),
+            src: VReg::Imm(src_value),
+            amount: SrcOperand::Imm(amount),
+            width,
+            flags: FlagUpdate::None,
+        };
+        let code = lower_single_op(op);
+        let expected = ref_double_shift_imm(dst_value, src_value as u64, amount, false, width);
+        let sentinels = [
+            (16, 0x1616_1616_1616_1616),
+            (17, 0x1717_1717_1717_1717),
+            (15, 0x1515_1515_1515_1515),
+            (14, 0x1414_1414_1414_1414),
+        ];
+        let mut regs = sentinels.to_vec();
+        regs.push((0, dst_value));
+
+        let old_nzcv = 0b1001;
+        let (out, out_nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
+        assert_eq!(out[0] & width_mask(width), expected, "{label}: result");
+        assert_eq!(out_nzcv, old_nzcv, "{label}: NZCV preserved");
+        assert_eq!(sp, 0x8000, "{label}: stack restored");
+        for (reg, value) in sentinels {
+            assert_eq!(out[reg as usize], value, "{label}: x{reg} restored");
         }
     }
 
@@ -50701,6 +50760,7 @@ mod tests {
         let code = lowerer.finalize().unwrap();
 
         let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 3, 31, 0, 0).to_le_bytes());
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
@@ -50728,6 +50788,7 @@ mod tests {
         let code = lowerer.finalize().unwrap();
 
         let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 3, 31, 0, 0).to_le_bytes());
         expected.extend_from_slice(&enc_logical_imm(0, 0b01, 0, 27, 2, 0, 0).to_le_bytes());
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
@@ -50761,6 +50822,38 @@ mod tests {
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 15, 0, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_shrd_subword_imm_src_masks_destination_before_right_shift() {
+        assert_shrd_imm_src_lowering(
+            "shrd_w8_imm_src_zero_insert_masks_dst",
+            0xffff_ffff_ffff_12a5,
+            0x18,
+            3,
+            OpWidth::W8,
+        );
+        assert_shrd_imm_src_lowering(
+            "shrd_w8_imm_src_encodable_masks_dst",
+            0x200,
+            1,
+            3,
+            OpWidth::W8,
+        );
+        assert_shrd_imm_src_lowering(
+            "shrd_w16_imm_src_zero_insert_masks_dst",
+            0xffff_ffff_ffff_92a5,
+            0x1800,
+            5,
+            OpWidth::W16,
+        );
+        assert_shrd_imm_src_lowering(
+            "shrd_w16_imm_src_encodable_masks_dst",
+            0x2_0000,
+            1,
+            5,
+            OpWidth::W16,
+        );
     }
 
     #[test]
