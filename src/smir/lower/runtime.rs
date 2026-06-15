@@ -820,7 +820,7 @@ pub fn is_native_clobber_safe_excluding(
 fn block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) -> bool {
     use crate::smir::ir::Terminator;
     use crate::smir::ops::OpKind;
-    use crate::smir::types::{ArchReg, VReg, X86Reg};
+    use crate::smir::types::{ArchReg, SrcOperand, VReg, X86Reg};
 
     // The native trampoline runs the region on the HOST stack: guest RSP is
     // never loaded into the host RSP, and the lowerer's prologue repurposes RBP
@@ -879,6 +879,19 @@ fn block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) ->
             return false;
         }
         if !mem_ok && op.kind.source_vregs().iter().any(touches_sp_bp) {
+            return false;
+        }
+        // (4) An APX NDD ADC/SBB whose destination aliases its SECOND source. The
+        // lowerer emits `mov dst, src1; adc/sbb dst, src2`, which destroys src2
+        // before reading it when dst == src2 (e.g. `adcq %r8, %rax, %r8` becomes
+        // `mov r8, rax; adc r8, r8`). The lifter inserts a preservation temp, but
+        // O2 copy-propagation + DCE can remove it, producing this alias. The
+        // interpreter reads src2 first and is correct, so deopt these forms. (#14)
+        if matches!(
+            &op.kind,
+            OpKind::Adc { dst, src2: SrcOperand::Reg(r), .. }
+            | OpKind::Sbb { dst, src2: SrcOperand::Reg(r), .. } if dst == r
+        ) {
             return false;
         }
     }
@@ -1058,6 +1071,51 @@ mod jit_gate_tests {
         assert!(
             !is_native_clobber_safe(&func),
             "MULX-shaped MulU must not enter the destructive native MUL lowering"
+        );
+    }
+
+    // Regression for issue #14: an APX NDD ADC/SBB whose destination aliases its
+    // SECOND source must not be JIT'd — the destructive `mov dst,src1; adc/sbb
+    // dst,src2` lowering would clobber src2 (e.g. `adc r8, rax, r8` -> rax+rax+CF).
+    // Such forms must deopt to the interpreter, which is correct.
+    #[test]
+    fn clobber_gate_rejects_adc_sbb_dst_aliasing_src2() {
+        fn gate(op: OpKind) -> bool {
+            let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
+            b.push_op(0x1000, op);
+            b.set_terminator(Terminator::Return { values: vec![] });
+            is_native_clobber_safe(&b.finish())
+        }
+
+        for op in [
+            OpKind::Adc {
+                dst: x86(X86Reg::R8),
+                src1: x86(X86Reg::Rax),
+                src2: SrcOperand::Reg(x86(X86Reg::R8)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+            OpKind::Sbb {
+                dst: x86(X86Reg::R8),
+                src1: x86(X86Reg::Rax),
+                src2: SrcOperand::Reg(x86(X86Reg::R8)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+        ] {
+            assert!(!gate(op), "ADC/SBB with dst==src2 must deopt to the interpreter");
+        }
+
+        // A non-aliased ADC (dst != src2) stays native-eligible.
+        assert!(
+            gate(OpKind::Adc {
+                dst: x86(X86Reg::R8),
+                src1: x86(X86Reg::Rax),
+                src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            }),
+            "non-aliased ADC must stay native-eligible"
         );
     }
 }
