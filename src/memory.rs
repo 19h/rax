@@ -10,6 +10,8 @@ use vm_memory::{Address, GuestAddress, GuestMemory, GuestMemoryMmap, GuestMemory
 use vm_memory::{GuestAddress, GuestMemoryMmap};
 
 pub const PAGE_SIZE: u64 = 4096;
+pub const GUEST_MEMORY_PADDING: u64 = 4 * 1024 * 1024 * 1024u64;
+pub const MAX_GUEST_MEMORY_BYTES: u64 = 64 * 1024 * 1024 * 1024u64;
 
 /// Start of the gap for KVM's TSS and identity map (must not be registered as guest memory)
 /// This is in the MMIO gap below 4GB. KVM needs space for TSS (3 pages) + identity map pages.
@@ -26,11 +28,54 @@ pub fn align_up(value: u64, align: u64) -> u64 {
     (value + mask) & !mask
 }
 
+fn checked_align_up(value: u64, align: u64) -> Option<u64> {
+    if align == 0 {
+        return Some(value);
+    }
+    let mask = align.checked_sub(1)?;
+    value.checked_add(mask).map(|v| v & !mask)
+}
+
 pub fn align_down(value: u64, align: u64) -> u64 {
     if align == 0 {
         return value;
     }
     value & !(align - 1)
+}
+
+pub fn validate_guest_memory_size(size_bytes: u64) -> Result<()> {
+    let _ = checked_guest_memory_sizes(size_bytes)?;
+    Ok(())
+}
+
+fn checked_guest_memory_sizes(size_bytes: u64) -> Result<(u64, u64)> {
+    let reported_size = checked_align_up(size_bytes, PAGE_SIZE).ok_or_else(|| {
+        crate::error::Error::InvalidConfig("guest memory size overflow".to_string())
+    })?;
+
+    if reported_size > MAX_GUEST_MEMORY_BYTES {
+        return Err(crate::error::Error::InvalidConfig(format!(
+            "guest memory must not exceed {} GiB",
+            MAX_GUEST_MEMORY_BYTES >> 30
+        )));
+    }
+
+    let padded = reported_size
+        .checked_add(GUEST_MEMORY_PADDING)
+        .ok_or_else(|| {
+            crate::error::Error::InvalidConfig("guest memory size overflow".to_string())
+        })?;
+    let actual_size = checked_align_up(padded, PAGE_SIZE).ok_or_else(|| {
+        crate::error::Error::InvalidConfig("guest memory size overflow".to_string())
+    })?;
+
+    if actual_size > usize::MAX as u64 {
+        return Err(crate::error::Error::InvalidConfig(
+            "guest memory does not fit in host address size".to_string(),
+        ));
+    }
+
+    Ok((reported_size, actual_size))
 }
 
 pub struct GuestMemoryWrapper {
@@ -43,7 +88,7 @@ pub struct GuestMemoryWrapper {
 
 impl GuestMemoryWrapper {
     pub fn new(size_bytes: u64) -> Result<Self> {
-        let reported_size = align_up(size_bytes, PAGE_SIZE);
+        let (reported_size, actual_size) = checked_guest_memory_sizes(size_bytes)?;
 
         // Add extra padding for per-CPU allocation that may end up slightly past
         // the reported memory size. The Linux kernel's per-CPU allocator sometimes
@@ -56,13 +101,10 @@ impl GuestMemoryWrapper {
         // - 32GB guest: ~1.5GB past end
         // - 1GB guest: ~2GB past end
         // Use 4GB padding as a safe margin.
-        let padding = 4 * 1024 * 1024 * 1024u64; // 4GB
-        let actual_size = align_up(reported_size + padding, PAGE_SIZE);
-
         info!(
             reported_bytes = reported_size,
             actual_bytes = actual_size,
-            padding_bytes = padding,
+            padding_bytes = GUEST_MEMORY_PADDING,
             "allocating guest memory with per-CPU padding"
         );
         let mem = GuestMemoryMmap::from_ranges(&[(GuestAddress(0), actual_size as usize)])?;
@@ -180,5 +222,24 @@ mod tests {
     fn align_up_down() {
         assert_eq!(align_up(1, 4096), 4096);
         assert_eq!(align_down(4097, 4096), 4096);
+    }
+
+    #[test]
+    fn guest_memory_size_checks_overflow_before_padding() {
+        let err = validate_guest_memory_size(u64::MAX).unwrap_err();
+        assert!(err.to_string().contains("guest memory size overflow"));
+    }
+
+    #[test]
+    fn guest_memory_size_rejects_values_above_cap() {
+        let err = validate_guest_memory_size(MAX_GUEST_MEMORY_BYTES + PAGE_SIZE).unwrap_err();
+        assert!(err.to_string().contains("guest memory must not exceed"));
+    }
+
+    #[test]
+    fn guest_memory_size_allows_configured_cap() {
+        let (reported, actual) = checked_guest_memory_sizes(MAX_GUEST_MEMORY_BYTES).unwrap();
+        assert_eq!(reported, MAX_GUEST_MEMORY_BYTES);
+        assert_eq!(actual, MAX_GUEST_MEMORY_BYTES + GUEST_MEMORY_PADDING);
     }
 }

@@ -163,7 +163,11 @@ fn main() -> Result<()> {
             let snapshot = Snapshot::load(&ckpt_path)?;
             tracing::info!("resuming from checkpoint {:?}", ckpt_path);
             tracing::info!("{}", snapshot.summary());
-            let config = VmConfig::from_checkpoint(snapshot.config.clone(), cli_config)?;
+            let config = VmConfig::from_checkpoint(
+                snapshot.config.clone(),
+                cli_config,
+                snapshot.memory_size,
+            )?;
             (config, Some(snapshot), true)
         } else {
             let config = VmConfig::from_sources(cli_config, file_config)?;

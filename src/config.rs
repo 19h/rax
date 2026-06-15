@@ -1,4 +1,5 @@
 use crate::error::{Error, Result};
+use crate::memory::validate_guest_memory_size;
 use clap::ValueEnum;
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Serialize};
@@ -958,7 +959,18 @@ impl VmConfig {
     /// the checkpoint, so the embedded kernel path is informational only. The
     /// user may still override any field (memory size, cmdline, even the arch)
     /// — including in ways that will not work — which is intentional.
-    pub fn from_checkpoint(cp: CheckpointConfig, cli: CliConfig) -> Result<Self> {
+    pub fn from_checkpoint(
+        cp: CheckpointConfig,
+        cli: CliConfig,
+        checkpoint_memory_size: u64,
+    ) -> Result<Self> {
+        if cp.memory_bytes != checkpoint_memory_size {
+            return Err(Error::InvalidConfig(format!(
+                "checkpoint config memory_bytes ({}) does not match snapshot memory_size ({})",
+                cp.memory_bytes, checkpoint_memory_size
+            )));
+        }
+
         let config = VmConfig {
             arch: cli.arch.unwrap_or(cp.arch),
             backend: cli.backend.unwrap_or(cp.backend),
@@ -1043,6 +1055,7 @@ impl VmConfig {
                 "memory must be at least {MIN_MEM_MIB} MiB"
             )));
         }
+        validate_guest_memory_size(self.memory.bytes())?;
         if check_files && !self.kernel.exists() {
             return Err(Error::InvalidConfig(format!(
                 "kernel not found: {}",
@@ -1200,5 +1213,57 @@ mod tests {
     fn address_parses_hex_and_decimal() {
         assert_eq!(Address::from_str("0x10").unwrap().raw(), 16);
         assert_eq!(Address::from_str("32").unwrap().raw(), 32);
+    }
+
+    fn checkpoint_config(memory_bytes: u64) -> CheckpointConfig {
+        CheckpointConfig {
+            arch: ArchKind::X86_64,
+            backend: BackendKind::Emulator,
+            memory_bytes,
+            vcpus: 1,
+            kernel: PathBuf::from("/checkpoint/kernel"),
+            initrd: None,
+            cmdline: "console=ttyS0".to_string(),
+            hexagon_isa: HexagonIsa::default(),
+            hexagon_endian: Endianness::default(),
+            hexagon_entry: None,
+            hexagon_load_addr: None,
+            aarch64_isa: Aarch64Isa::default(),
+            aarch32_isa: Aarch32Isa::default(),
+            cortexm_isa: CortexMIsa::default(),
+            cortexr_isa: CortexRIsa::default(),
+            arm_entry: None,
+            arm_load_addr: None,
+            arm_dtb: None,
+        }
+    }
+
+    #[test]
+    fn from_checkpoint_rejects_config_memory_mismatch() {
+        let cp = checkpoint_config(512 << 20);
+        let err = VmConfig::from_checkpoint(cp, CliConfig::default(), 256 << 20).unwrap_err();
+        assert!(
+            err.to_string()
+                .contains("does not match snapshot memory_size")
+        );
+    }
+
+    #[test]
+    fn from_checkpoint_rejects_oversized_embedded_memory() {
+        let memory_bytes = crate::memory::MAX_GUEST_MEMORY_BYTES + crate::memory::PAGE_SIZE;
+        let cp = checkpoint_config(memory_bytes);
+        let err = VmConfig::from_checkpoint(cp, CliConfig::default(), memory_bytes).unwrap_err();
+        assert!(err.to_string().contains("guest memory must not exceed"));
+    }
+
+    #[test]
+    fn from_checkpoint_allows_cli_memory_override_after_metadata_match() {
+        let cp = checkpoint_config(512 << 20);
+        let mut cli = CliConfig::default();
+        cli.memory = Some(MemorySize(1024 << 20));
+
+        let config = VmConfig::from_checkpoint(cp, cli, 512 << 20).unwrap();
+
+        assert_eq!(config.memory.bytes(), 1024 << 20);
     }
 }

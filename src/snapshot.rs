@@ -31,6 +31,7 @@ use crate::devices::pic::DualPic;
 use crate::devices::pit::Pit;
 use crate::devices::serial::Serial16550;
 use crate::error::{Error, Result};
+use crate::memory::validate_guest_memory_size;
 
 /// Magic number for checkpoint files: "RAXCKPT\0"
 const CHECKPOINT_MAGIC: [u8; 8] = *b"RAXCKPT\0";
@@ -234,17 +235,32 @@ impl Snapshot {
                 snapshot.version, CHECKPOINT_VERSION
             )));
         }
+        snapshot.validate_memory_metadata()?;
 
         Ok(snapshot)
     }
 
+    pub fn validate_memory_metadata(&self) -> Result<()> {
+        if self.config.memory_bytes != self.memory_size {
+            return Err(Error::InvalidConfig(format!(
+                "checkpoint config memory_bytes ({}) does not match snapshot memory_size ({})",
+                self.config.memory_bytes, self.memory_size
+            )));
+        }
+        validate_guest_memory_size(self.memory_size)
+    }
+
     /// Decompress and return memory contents
     pub fn decompress_memory(&self) -> Result<Vec<u8>> {
-        let mut decompressed = Vec::with_capacity(self.memory_size as usize);
+        self.validate_memory_metadata()?;
+        let capacity = usize::try_from(self.memory_size).map_err(|_| {
+            Error::InvalidConfig("checkpoint memory does not fit in host address size".to_string())
+        })?;
+        let mut decompressed = Vec::with_capacity(capacity);
         zstd::stream::copy_decode(&self.memory_data[..], &mut decompressed)
             .map_err(|e| Error::Emulator(format!("Failed to decompress memory: {}", e)))?;
 
-        if decompressed.len() != self.memory_size as usize {
+        if decompressed.len() as u64 != self.memory_size {
             return Err(Error::Emulator(format!(
                 "Memory size mismatch: expected {} bytes, got {}",
                 self.memory_size,
@@ -325,6 +341,50 @@ impl SnapshotConfig {
 mod tests {
     use super::*;
 
+    fn checkpoint_config(memory_bytes: u64) -> CheckpointConfig {
+        use crate::config::{ArchKind, BackendKind, Endianness, HexagonIsa};
+        CheckpointConfig {
+            arch: ArchKind::X86_64,
+            backend: BackendKind::Emulator,
+            memory_bytes,
+            vcpus: 1,
+            kernel: std::path::PathBuf::from("/some/vmlinux"),
+            initrd: Some(std::path::PathBuf::from("/some/initrd.cpio")),
+            cmdline: "console=ttyS0 root=/dev/ram0".to_string(),
+            hexagon_isa: HexagonIsa::V68,
+            hexagon_endian: Endianness::Little,
+            hexagon_entry: None,
+            hexagon_load_addr: None,
+            aarch64_isa: Default::default(),
+            aarch32_isa: Default::default(),
+            cortexm_isa: Default::default(),
+            cortexr_isa: Default::default(),
+            arm_entry: None,
+            arm_load_addr: None,
+            arm_dtb: None,
+        }
+    }
+
+    fn snapshot_with_memory_metadata(config_memory_bytes: u64, memory_size: u64) -> Snapshot {
+        crate::timing::init();
+        Snapshot {
+            version: CHECKPOINT_VERSION,
+            config: checkpoint_config(config_memory_bytes),
+            instruction_count: 0,
+            elapsed_nanos: 0,
+            cpu_state: CpuState::x86_64(Default::default(), Default::default()),
+            emulator_state: EmulatorState::default(),
+            devices: DeviceState {
+                pic: DualPic::new(),
+                pit: Pit::new(),
+                serial: Serial16550::new(0x3f8),
+                lapic: LocalApic::new(0),
+            },
+            memory_size,
+            memory_data: Vec::new(),
+        }
+    }
+
     #[test]
     fn device_state_bincode_roundtrip() {
         crate::timing::init();
@@ -344,33 +404,31 @@ mod tests {
 
     #[test]
     fn checkpoint_config_bincode_roundtrip() {
-        use crate::config::{ArchKind, BackendKind, CheckpointConfig, Endianness, HexagonIsa};
-        let cp = CheckpointConfig {
-            arch: ArchKind::X86_64,
-            backend: BackendKind::Emulator,
-            memory_bytes: 512 << 20,
-            vcpus: 1,
-            kernel: std::path::PathBuf::from("/some/vmlinux"),
-            initrd: Some(std::path::PathBuf::from("/some/initrd.cpio")),
-            cmdline: "console=ttyS0 root=/dev/ram0".to_string(),
-            hexagon_isa: HexagonIsa::V68,
-            hexagon_endian: Endianness::Little,
-            hexagon_entry: None,
-            hexagon_load_addr: None,
-            aarch64_isa: Default::default(),
-            aarch32_isa: Default::default(),
-            cortexm_isa: Default::default(),
-            cortexr_isa: Default::default(),
-            arm_entry: None,
-            arm_load_addr: None,
-            arm_dtb: None,
-        };
+        let cp = checkpoint_config(512 << 20);
         let bytes = bincode::serialize(&cp).expect("serialize checkpoint config");
         let back: CheckpointConfig = bincode::deserialize(&bytes).expect("deserialize");
         assert_eq!(back.memory_bytes, cp.memory_bytes);
         assert_eq!(back.cmdline, cp.cmdline);
         assert_eq!(back.arch, cp.arch);
         assert_eq!(back.backend, cp.backend);
+    }
+
+    #[test]
+    fn snapshot_rejects_config_memory_size_mismatch() {
+        let snapshot = snapshot_with_memory_metadata(512 << 20, 256 << 20);
+        let err = snapshot.validate_memory_metadata().unwrap_err();
+        assert!(
+            err.to_string()
+                .contains("does not match snapshot memory_size")
+        );
+    }
+
+    #[test]
+    fn snapshot_rejects_oversized_memory_metadata() {
+        let memory_size = crate::memory::MAX_GUEST_MEMORY_BYTES + crate::memory::PAGE_SIZE;
+        let snapshot = snapshot_with_memory_metadata(memory_size, memory_size);
+        let err = snapshot.validate_memory_metadata().unwrap_err();
+        assert!(err.to_string().contains("guest memory must not exceed"));
     }
 
     #[test]
