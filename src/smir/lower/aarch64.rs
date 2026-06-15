@@ -4142,6 +4142,18 @@ impl Aarch64Lowerer {
         let rs = Self::dst_gpr_arm_or_x86(status)?;
         let rt = Self::gpr_arm_or_x86(src)?;
         let rn = Self::exclusive_base_gpr(addr)?;
+        // STXR/STLXR are CONSTRAINED UNPREDICTABLE when the status register Rs is
+        // the same register as the stored data Rt or the address base Rn. Emitting
+        // such an encoding is rejected by assemblers and can trap (SIGILL) on the
+        // host. Bail to the interpreter, which handles the overlap with defined
+        // behavior, rather than emitting an unpredictable native instruction. (#10)
+        if rs == rt || rs == rn {
+            return Err(LowerError::UnsupportedOp {
+                op: format!(
+                    "AArch64 STXR status register overlap (Rs={rs}, Rt={rt}, Rn={rn})"
+                ),
+            });
+        }
         let size = Self::mem_size(width)?;
         self.emit_store_exclusive(rs, rt, rn, size);
         Ok(())
@@ -35548,6 +35560,52 @@ mod tests {
         expected.extend_from_slice(&enc_stxr(2).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    // Regression for issue #10: STXR/STLXR are CONSTRAINED UNPREDICTABLE when the
+    // status register Rs aliases the data register Rt or the base register Rn.
+    // Emitting such an encoding can SIGILL on the host, so these forms must bail to
+    // the interpreter instead of lowering natively. Non-overlapping forms still
+    // lower.
+    #[test]
+    fn issue_10_rejects_store_exclusive_status_register_overlap() {
+        // Rs == Rt (status aliases the stored data register).
+        let err = try_lower_single_op(OpKind::StoreExclusive {
+            status: x(2),
+            src: x(2),
+            addr: Address::Direct(x(1)),
+            width: MemWidth::B4,
+        })
+        .unwrap_err();
+        assert!(
+            matches!(err, LowerError::UnsupportedOp { .. }),
+            "Rs==Rt must be rejected: {err:?}"
+        );
+
+        // Rs == Rn (status aliases the address base register).
+        let err = try_lower_single_op(OpKind::StoreExclusive {
+            status: x(1),
+            src: x(3),
+            addr: Address::Direct(x(1)),
+            width: MemWidth::B4,
+        })
+        .unwrap_err();
+        assert!(
+            matches!(err, LowerError::UnsupportedOp { .. }),
+            "Rs==Rn must be rejected: {err:?}"
+        );
+
+        // No overlap (Rs, Rt, Rn all distinct): must still lower natively.
+        assert!(
+            try_lower_single_op(OpKind::StoreExclusive {
+                status: x(2),
+                src: x(3),
+                addr: Address::Direct(x(1)),
+                width: MemWidth::B4,
+            })
+            .is_ok(),
+            "non-overlapping STXR must lower"
+        );
     }
 
     #[test]
