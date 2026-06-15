@@ -7906,7 +7906,15 @@ impl AArch64Cpu {
                     && (insn >> 13) & 0x3F == 0b000010 =>
             {
                 let tsz = (((insn >> 22) & 1) << 2) | ((insn >> 19) & 0x3);
-                if tsz == 0 {
+                // Only the one-hot tsz values 0b001/0b010/0b100 are allocated;
+                // 0b000 and the non-one-hot 0b011/0b101/0b110/0b111 are reserved.
+                if !tsz.is_power_of_two() {
+                    return Ok(CpuExit::Undefined(insn));
+                }
+                // Only variants 0b00 (SQXTN), 0b01 (UQXTN), 0b10 (SQXTUN) are
+                // defined; 0b11 is reserved and must trap.
+                let variant = (insn >> 11) & 0x3;
+                if variant == 0b11 {
                     return Ok(CpuExit::Undefined(insn));
                 }
                 let hsb = 31 - tsz.leading_zeros();
@@ -7915,7 +7923,6 @@ impl AArch64Cpu {
                 let dst_bits = (dst_esize * 8) as u32;
                 let src_bits = (src_esize * 8) as u32;
                 let dmask = elem_mask(dst_bits);
-                let variant = (insn >> 11) & 0x3;
                 let top = (insn >> 10) & 1 == 1;
                 let n_src = 16 / src_esize;
                 let a = self.v[zn].to_le_bytes();
@@ -20984,6 +20991,29 @@ mod tests {
 
         assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
         assert_eq!(cpu.get_simd_reg(0), Some((src_lo, src_hi)));
+    }
+
+    #[test]
+    fn sve2_xtn_rejects_reserved_encodings() {
+        // SVE2 saturating extract-narrow (SQXTN/UQXTN/SQXTUN) only allocates
+        // one-hot tsz (001/010/100) and variants 00/01/10. Non-one-hot tsz and
+        // variant 11 are reserved and must trap, not execute as H/S forms.
+        let setup = |insn: u32| {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+            cpu
+        };
+        // tsz=011 (non-one-hot) and variant=11 are both reserved.
+        for insn in [0x4538_4020u32, 0x4528_5820] {
+            assert_eq!(
+                setup(insn).step().unwrap(),
+                CpuExit::Undefined(insn),
+                "reserved XTN encoding {insn:#x} must trap"
+            );
+        }
+        // Valid SQXTNB (tsz=001,vv=00) and SQXTUNB (tsz=001,vv=10) still execute.
+        assert_eq!(setup(0x4528_4020).step().unwrap(), CpuExit::Continue);
+        assert_eq!(setup(0x4528_5020).step().unwrap(), CpuExit::Continue);
     }
 
     #[test]
