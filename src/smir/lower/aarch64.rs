@@ -1874,14 +1874,6 @@ impl Aarch64Lowerer {
         self.emit(0xd500_401f | (op2 << 5));
     }
 
-    fn emit_svc(&mut self, imm16: u16) {
-        self.emit(0xd400_0001 | (u32::from(imm16) << 5));
-    }
-
-    fn emit_hlt(&mut self, imm16: u16) {
-        self.emit(0xd440_0000 | (u32::from(imm16) << 5));
-    }
-
     fn emit_prfm_literal(&mut self, prfop: u8, imm19: i32) {
         self.emit(
             (0b11 << 30)
@@ -1889,13 +1881,6 @@ impl Aarch64Lowerer {
                 | (((imm19 as u32) & 0x7ffff) << 5)
                 | u32::from(prfop & 0x1f),
         );
-    }
-
-    fn exception_imm16(op: &str, imm: u32) -> Result<u16, LowerError> {
-        u16::try_from(imm).map_err(|_| LowerError::InvalidOperand {
-            op: format!("AArch64 native {op}"),
-            operand: format!("imm={imm:#x}"),
-        })
     }
 
     fn bitfield_args(
@@ -14691,11 +14676,9 @@ impl Aarch64Lowerer {
             OpKind::Undefined { .. } => Err(LowerError::UnsupportedOp {
                 op: "AArch64 native Undefined (host UDF would SIGILL); deopt to interpreter".into(),
             }),
-            OpKind::Swi { imm } => {
-                let imm = Self::exception_imm16("SVC", *imm)?;
-                self.emit_svc(imm);
-                Ok(())
-            }
+            OpKind::Swi { .. } => Err(LowerError::UnsupportedOp {
+                op: "AArch64 native SWI/SVC guest syscall trap".into(),
+            }),
             OpKind::MaterializeFlags => Ok(()),
             OpKind::ClearExclusive => {
                 self.emit(0xd503_3f5f);
@@ -15730,16 +15713,14 @@ impl Aarch64Lowerer {
             }),
             Terminator::Trap {
                 kind: TrapKind::SystemCall,
-            } => {
-                self.emit_svc(0);
-                Ok(())
-            }
+            } => Err(LowerError::UnsupportedOp {
+                op: "AArch64 native SystemCall trap".into(),
+            }),
             Terminator::Trap {
                 kind: TrapKind::Halt,
-            } => {
-                self.emit_hlt(0);
-                Ok(())
-            }
+            } => Err(LowerError::UnsupportedOp {
+                op: "AArch64 native Halt trap".into(),
+            }),
             Terminator::Trap {
                 kind: TrapKind::Undefined | TrapKind::InvalidOpcode,
             }
@@ -20636,14 +20617,6 @@ mod tests {
             | ((imm as u32) << 11)
             | (rn << 5)
             | (nzcv & 0xf)
-    }
-
-    fn enc_svc(imm16: u32) -> u32 {
-        0xd400_0001 | ((imm16 & 0xffff) << 5)
-    }
-
-    fn enc_hlt(imm16: u32) -> u32 {
-        0xd440_0000 | ((imm16 & 0xffff) << 5)
     }
 
     fn enc_mrs_sysreg(rt: u32, op1: u32, crn: u32, crm: u32, op2: u32) -> u32 {
@@ -46461,32 +46434,18 @@ mod tests {
     }
 
     #[test]
-    fn lowers_swi_op_as_svc() {
-        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
-        builder.push_op(0, OpKind::Swi { imm: 0x1234 });
-        builder.set_terminator(Terminator::Return { values: vec![] });
-        let func = builder.finish();
+    fn rejects_swi_op_in_native_lowerer() {
+        for imm in [0x1234, 0x1_0000] {
+            let func = func_with_ops(vec![OpKind::Swi { imm }]);
 
-        let mut lowerer = Aarch64Lowerer::new();
-        lowerer.lower_function(&func).unwrap();
-        let code = lowerer.finalize().unwrap();
-
-        let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_svc(0x1234).to_le_bytes());
-        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
-        assert_eq!(code, expected);
-    }
-
-    #[test]
-    fn rejects_swi_imm_out_of_range() {
-        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
-        builder.push_op(0, OpKind::Swi { imm: 0x1_0000 });
-        builder.set_terminator(Terminator::Return { values: vec![] });
-        let func = builder.finish();
-
-        let mut lowerer = Aarch64Lowerer::new();
-        let err = lowerer.lower_function(&func).unwrap_err();
-        assert!(matches!(err, LowerError::InvalidOperand { .. }));
+            let mut lowerer = Aarch64Lowerer::new();
+            let err = lowerer.lower_function(&func).unwrap_err();
+            assert!(
+                matches!(err, LowerError::UnsupportedOp { .. }),
+                "SWI imm {imm:#x}: {err:?}"
+            );
+            assert_eq!(lowerer.finalize().unwrap(), Vec::<u8>::new());
+        }
     }
 
     #[test]
@@ -46504,7 +46463,7 @@ mod tests {
     }
 
     #[test]
-    fn lowers_system_call_trap_terminator_as_svc() {
+    fn rejects_system_call_trap_terminator_in_native_lowerer() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.set_terminator(Terminator::Trap {
             kind: TrapKind::SystemCall,
@@ -46512,16 +46471,13 @@ mod tests {
         let func = builder.finish();
 
         let mut lowerer = Aarch64Lowerer::new();
-        lowerer.lower_function(&func).unwrap();
-        let code = lowerer.finalize().unwrap();
-
-        let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_svc(0).to_le_bytes());
-        assert_eq!(code, expected);
+        let err = lowerer.lower_function(&func).unwrap_err();
+        assert!(matches!(err, LowerError::UnsupportedOp { .. }));
+        assert_eq!(lowerer.finalize().unwrap(), Vec::<u8>::new());
     }
 
     #[test]
-    fn lowers_halt_trap_terminator_as_hlt() {
+    fn rejects_halt_trap_terminator_in_native_lowerer() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.set_terminator(Terminator::Trap {
             kind: TrapKind::Halt,
@@ -46529,12 +46485,9 @@ mod tests {
         let func = builder.finish();
 
         let mut lowerer = Aarch64Lowerer::new();
-        lowerer.lower_function(&func).unwrap();
-        let code = lowerer.finalize().unwrap();
-
-        let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_hlt(0).to_le_bytes());
-        assert_eq!(code, expected);
+        let err = lowerer.lower_function(&func).unwrap_err();
+        assert!(matches!(err, LowerError::UnsupportedOp { .. }));
+        assert_eq!(lowerer.finalize().unwrap(), Vec::<u8>::new());
     }
 
     #[test]
