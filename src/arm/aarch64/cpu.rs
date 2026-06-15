@@ -14164,29 +14164,31 @@ impl AArch64Cpu {
             let t = rt as usize;
             if sz == 0 {
                 // 32-bit pair: low element at addr, high element at addr+4.
+                let hi_addr = addr.wrapping_add(4);
                 let lo = self.mem_read_u32(addr)?;
-                let hi = self.mem_read_u32(addr + 4)?;
+                let hi = self.mem_read_u32(hi_addr)?;
                 let s1 = self.get_x(rs) as u32; // compare low
                 let s2 = self.get_x((s + 1) as u8) as u32; // compare high
                 if lo == s1 && hi == s2 {
                     let t1 = self.get_x(rt) as u32;
                     let t2 = self.get_x((t + 1) as u8) as u32;
                     self.mem_write_u32(addr, t1)?;
-                    self.mem_write_u32(addr + 4, t2)?;
+                    self.mem_write_u32(hi_addr, t2)?;
                 }
                 self.set_w(rs, lo);
                 self.set_w((s + 1) as u8, hi);
             } else {
                 // 64-bit pair: low element at addr, high element at addr+8.
+                let hi_addr = addr.wrapping_add(8);
                 let lo = self.mem_read_u64(addr)?;
-                let hi = self.mem_read_u64(addr + 8)?;
+                let hi = self.mem_read_u64(hi_addr)?;
                 let s1 = self.get_x(rs);
                 let s2 = self.get_x((s + 1) as u8);
                 if lo == s1 && hi == s2 {
                     let t1 = self.get_x(rt);
                     let t2 = self.get_x((t + 1) as u8);
                     self.mem_write_u64(addr, t1)?;
-                    self.mem_write_u64(addr + 8, t2)?;
+                    self.mem_write_u64(hi_addr, t2)?;
                 }
                 self.set_x(rs, lo);
                 self.set_x((s + 1) as u8, hi);
@@ -14773,17 +14775,20 @@ impl AArch64Cpu {
                     if l != 0 {
                         let mut bytes = [0u8; 8];
                         for (b, slot) in bytes.iter_mut().enumerate().take(ebytes as usize) {
-                            *slot = self.mem_read_u8(addr + b as u64)?;
+                            *slot = self.mem_read_u8(addr.wrapping_add(b as u64))?;
                         }
                         let val = u64::from_le_bytes(bytes) as u128 & emask;
                         self.v[reg] = (self.v[reg] & !(emask << shift)) | (val << shift);
                     } else {
                         let val = (self.v[reg] >> shift) & emask;
                         for b in 0..ebytes as usize {
-                            self.mem_write_u8(addr + b as u64, (val >> (b * 8)) as u8)?;
+                            self.mem_write_u8(
+                                addr.wrapping_add(b as u64),
+                                (val >> (b * 8)) as u8,
+                            )?;
                         }
                     }
-                    addr += ebytes;
+                    addr = addr.wrapping_add(ebytes);
                 }
             }
         }
@@ -20855,11 +20860,69 @@ fn aes_mix_columns(state: u128, inverse: bool) -> u128 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::arm::memory::FlatMemory;
+    use crate::arm::memory::{ArmMemory, FlatMemory, MemResult, MmioHandler};
+
+    #[derive(Debug)]
+    struct WrappingMemory {
+        data: Vec<u8>,
+    }
+
+    impl WrappingMemory {
+        fn with_pattern(size: usize) -> Self {
+            assert!(size > 0);
+            Self {
+                data: (0..size).map(|i| i as u8).collect(),
+            }
+        }
+
+        fn offset(&self, addr: u64) -> usize {
+            (addr as usize) % self.data.len()
+        }
+    }
+
+    impl ArmMemory for WrappingMemory {
+        fn read(&self, addr: u64, buf: &mut [u8]) -> MemResult<()> {
+            for (i, byte) in buf.iter_mut().enumerate() {
+                *byte = self.data[self.offset(addr.wrapping_add(i as u64))];
+            }
+            Ok(())
+        }
+
+        fn write(&mut self, addr: u64, data: &[u8]) -> MemResult<()> {
+            for (i, byte) in data.iter().enumerate() {
+                let offset = self.offset(addr.wrapping_add(i as u64));
+                self.data[offset] = *byte;
+            }
+            Ok(())
+        }
+
+        fn mark_exclusive(&mut self, _addr: u64, _size: u8) {}
+
+        fn check_exclusive(&mut self, _addr: u64, _size: u8) -> bool {
+            true
+        }
+
+        fn clear_exclusive(&mut self) {}
+
+        fn requires_alignment(&self) -> bool {
+            false
+        }
+
+        fn register_mmio(&mut self, _base: u64, _size: u64, _handler: Box<dyn MmioHandler>) {}
+
+        fn unregister_mmio(&mut self, _base: u64) {}
+    }
 
     fn create_test_cpu() -> AArch64Cpu {
         let memory = FlatMemory::new(0, 0x1000_0000);
         AArch64Cpu::new(AArch64Config::default(), Box::new(memory))
+    }
+
+    fn create_wrapping_memory_cpu() -> AArch64Cpu {
+        AArch64Cpu::new(
+            AArch64Config::default(),
+            Box::new(WrappingMemory::with_pattern(64)),
+        )
     }
 
     #[test]
@@ -21020,6 +21083,29 @@ mod tests {
         cpu.write_memory(addr, &insn.to_le_bytes()).unwrap();
     }
 
+    fn encode_casp(sz: u32, rn: u8, rs: u8, rt: u8) -> u32 {
+        debug_assert!(sz <= 1);
+        (sz << 30)
+            | (0b001000 << 24)
+            | (1 << 21)
+            | ((rs as u32) << 16)
+            | (0b11111 << 10)
+            | ((rn as u32) << 5)
+            | rt as u32
+    }
+
+    fn encode_ld1_structure(q: u32, size: u32, rn: u8, rt: u8) -> u32 {
+        debug_assert!(q <= 1);
+        debug_assert!(size <= 3);
+        (q << 30)
+            | (0b001100 << 24)
+            | (1 << 22)
+            | (0b0111 << 12)
+            | (size << 10)
+            | ((rn as u32) << 5)
+            | rt as u32
+    }
+
     fn pack_h_lanes(lanes: [u16; 8]) -> u128 {
         lanes
             .into_iter()
@@ -21055,6 +21141,79 @@ mod tests {
         cpu.set_sve_pred(0, 0b10); // lane 0 inactive, lane 1 active
         // Must not panic; the wrapped lane addresses resolve normally here.
         assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+    }
+
+    #[test]
+    fn neon_ldst_structures_effective_addresses_wrap() {
+        let mut cpu = create_wrapping_memory_cpu();
+
+        // LD1 {V0.8B}, [X5]. Starting at u64::MAX makes the inter-element
+        // address increment wrap after the first byte.
+        cpu.set_x(5, u64::MAX);
+        assert_eq!(
+            cpu.exec_ldst_structures(encode_ld1_structure(0, 0, 5, 0))
+                .unwrap(),
+            CpuExit::Continue
+        );
+        assert_eq!(cpu.get_simd_reg(0), Some((0x0605_0403_0201_003f, 0)));
+
+        // LD1 {V1.2S}, [X5]. Starting near u64::MAX makes the per-element
+        // byte address wrap while assembling the first 32-bit element.
+        cpu.set_x(5, u64::MAX - 2);
+        assert_eq!(
+            cpu.exec_ldst_structures(encode_ld1_structure(0, 2, 5, 1))
+                .unwrap(),
+            CpuExit::Continue
+        );
+        assert_eq!(cpu.get_simd_reg(1), Some((0x0403_0201_003f_3e3d, 0)));
+    }
+
+    #[test]
+    fn casp32_effective_addresses_wrap() {
+        let mut cpu = create_wrapping_memory_cpu();
+        let base = u64::MAX - 3;
+        let lo = cpu.mem_read_u32(base).unwrap();
+        let hi = cpu.mem_read_u32(base.wrapping_add(4)).unwrap();
+
+        cpu.set_x(10, base);
+        cpu.set_x(0, lo as u64);
+        cpu.set_x(1, hi as u64);
+        cpu.set_x(2, 0xAABB_CCDD);
+        cpu.set_x(3, 0x1122_3344);
+
+        assert_eq!(
+            cpu.exec_ldst_exclusive(encode_casp(0, 10, 0, 2)).unwrap(),
+            CpuExit::Continue
+        );
+        assert_eq!(cpu.get_w(0), lo);
+        assert_eq!(cpu.get_w(1), hi);
+        assert_eq!(cpu.mem_read_u32(base).unwrap(), 0xAABB_CCDD);
+        assert_eq!(cpu.mem_read_u32(base.wrapping_add(4)).unwrap(), 0x1122_3344);
+    }
+
+    #[test]
+    fn casp64_effective_addresses_wrap() {
+        let mut cpu = create_wrapping_memory_cpu();
+        let base = u64::MAX - 7;
+        let lo = cpu.mem_read_u64(base).unwrap();
+        let hi = cpu.mem_read_u64(base.wrapping_add(8)).unwrap();
+        let new_lo = 0xAABB_CCDD_EEFF_0011;
+        let new_hi = 0x2233_4455_6677_8899;
+
+        cpu.set_x(10, base);
+        cpu.set_x(4, lo);
+        cpu.set_x(5, hi);
+        cpu.set_x(6, new_lo);
+        cpu.set_x(7, new_hi);
+
+        assert_eq!(
+            cpu.exec_ldst_exclusive(encode_casp(1, 10, 4, 6)).unwrap(),
+            CpuExit::Continue
+        );
+        assert_eq!(cpu.get_x(4), lo);
+        assert_eq!(cpu.get_x(5), hi);
+        assert_eq!(cpu.mem_read_u64(base).unwrap(), new_lo);
+        assert_eq!(cpu.mem_read_u64(base.wrapping_add(8)).unwrap(), new_hi);
     }
 
     #[test]
