@@ -10693,6 +10693,13 @@ impl AArch64Cpu {
         esize: usize,
     ) -> Result<CpuExit, ArmError> {
         let opc = (insn >> 10) & 0x7;
+        // Only six opc values are defined for the SVE unpredicated permute:
+        // ZIP1/ZIP2 (000/001), UZP1/UZP2 (010/011), TRN1/TRN2 (100/101). opc
+        // 0b110/0b111 are reserved — reject them as UNDEFINED rather than
+        // writing a zeroed Zd and reporting success. (#167)
+        if opc >= 0b110 {
+            return Ok(CpuExit::Undefined(insn));
+        }
         let n = 16 / esize;
         let half = n / 2;
         let a = self.v[zn].to_le_bytes();
@@ -21047,6 +21054,30 @@ mod tests {
         cpu.set_sve_pred(0, 0b10); // lane 0 inactive, lane 1 active
         // Must not panic; the wrapped lane addresses resolve normally here.
         assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+    }
+
+    #[test]
+    fn sve_zip_uzp_trn_rejects_reserved_opc() {
+        // #167: the SVE unpredicated permute (00000101 size 1 Zm 011 opc Zn Zd)
+        // defines only opc 000..101 — ZIP1/ZIP2 (000/001), UZP1/UZP2 (010/011),
+        // TRN1/TRN2 (100/101). opc 0b110/0b111 are reserved and must trap
+        // UNDEFINED, not silently zero-write Zd and report success.
+        let setup = |insn: u32| {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+            cpu
+        };
+        // Reserved opc 0b110 (0x05227820) and 0b111 (0x05227C20) (size=00, Zm=2,
+        // Zn=1, Zd=0) must be UNDEFINED.
+        for insn in [0x0522_7820u32, 0x0522_7C20u32] {
+            assert_eq!(
+                setup(insn).step().unwrap(),
+                CpuExit::Undefined(insn),
+                "reserved SVE permute opc must be UNDEFINED: {insn:#010x}",
+            );
+        }
+        // Sanity: a valid opc (ZIP1, opc 000) still executes.
+        assert_eq!(setup(0x0522_6020).step().unwrap(), CpuExit::Continue);
     }
 
     #[test]
