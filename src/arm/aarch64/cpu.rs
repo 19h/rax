@@ -10412,6 +10412,8 @@ impl AArch64Cpu {
             && (insn >> 23) & 1 == 0
             && (insn >> 16) & 0x3F == 0b011000
             && (insn >> 14) & 0x3 == 0b01
+            && (insn >> 9) & 1 == 0 // fixed 0 between Pg and Pn
+            && (insn >> 4) & 1 == 0 // fixed 0 between Pn and Pdm
         {
             let setflags = (insn >> 22) & 1 == 1;
             let pg = ((insn >> 10) & 0xF) as usize;
@@ -21167,6 +21169,28 @@ mod tests {
         for insn in [gather_d(3, false, 1), gather_d(1, true, 1), scatter_d(2, true)] {
             assert_eq!(run(insn), CpuExit::Continue, "encoding {insn:#x} should execute");
         }
+    }
+
+    #[test]
+    fn sve_brkn_rejects_reserved_bits() {
+        // BRKN has fixed 0 bits at bit9 and bit4. Setting either yields an
+        // unallocated encoding that must NOT execute as BRKN (which would
+        // mutate predicate state); it falls through to a rejection instead.
+        let setup = |insn: u32| {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16);
+            cpu.set_sve_pred(0, 0xABCD); // Pdm sentinel
+            cpu
+        };
+        for insn in [0x2518_4200u32, 0x2518_4010] {
+            let mut cpu = setup(insn);
+            // Not executed as BRKN (BRKN with these operands would zero Pdm).
+            assert!(!matches!(cpu.step(), Ok(CpuExit::Continue)));
+            assert_eq!(cpu.sve_pred(0), 0xABCD, "{insn:#x} mutated predicate state");
+        }
+        // The valid BRKN still executes (last-active false -> result all-false).
+        let mut ok = setup(0x2518_4000);
+        assert_eq!(ok.step().unwrap(), CpuExit::Continue);
     }
 
     #[test]
