@@ -123,6 +123,11 @@ impl HexagonLifter {
         VReg::Arch(ArchReg::Hexagon(HexagonReg::V(n)))
     }
 
+    /// Normalize a decoded HVX vector-pair field to its even architectural base.
+    fn hex_v_pair_base(n: u8) -> u8 {
+        n & !1
+    }
+
     /// Convert an HVX vector predicate register Q0..Q3 to an SMIR vector VReg.
     fn hex_q(&self, n: u8) -> VReg {
         VReg::Arch(ArchReg::Hexagon(HexagonReg::Q(n)))
@@ -5255,11 +5260,15 @@ impl HexagonLifter {
 
         // Emit a dual-vector HVX elementwise op `Vdd = op(Vuu, Vvv)` as two
         // independent elementwise ops over the even and odd registers of each
-        // pair, matching the sem's `dv_*` dispatch (bases d/u/v and d+1/u+1/v+1;
-        // the encoded pair base is even, so `+1` and `|1` coincide).
+        // pair, matching the sem's `dv_*` dispatch. Decode exposes raw full-width
+        // fields, so normalize each pair base before emitting base and base+1.
         macro_rules! vlane_dv {
             ($op:expr, $elem:expr, $lanes:expr, $signed:expr) => {{
-                let (dd, uu, vv) = (fld(b'd'), fld(b'u'), fld(b'v'));
+                let (dd, uu, vv) = (
+                    Self::hex_v_pair_base(fld(b'd')),
+                    Self::hex_v_pair_base(fld(b'u')),
+                    Self::hex_v_pair_base(fld(b'v')),
+                );
                 // The `_dv` saturating add/sub use a bare `clamp` in their sem and
                 // set NO USR:OVF, so set_ovf stays false here.
                 push_op!(OpKind::VLane {
@@ -9465,9 +9474,8 @@ impl HexagonLifter {
             // `vlane!`     — single-vector  Vd = op(Vu, Vv).
             // `vlane_dv!`  — dual-vector    Vdd = op(Vuu, Vvv): two independent
             //                elementwise ops over the even/odd register of each
-            //                pair (sem dispatches via `dv_*` on bases d/u/v and
-            //                d+1/u+1/v+1; the pair base from the encoding is even
-            //                so `+1` and `|1` coincide).
+            //                pair (sem dispatches via `dv_*`; raw decoded fields
+            //                are normalized to even pair bases before `+1`).
             // ============================================================
             // ---- bitwise logical (elem/lanes irrelevant; span 1024 bits as
             // 32 x I32). sem: map_w(a&b / a|b / a^b). ----
@@ -20808,6 +20816,27 @@ mod tests {
         VReg::Arch(ArchReg::Hexagon(HexagonReg::M(reg)))
     }
 
+    fn hex_v(reg: u8) -> VReg {
+        VReg::Arch(ArchReg::Hexagon(HexagonReg::V(reg)))
+    }
+
+    fn set_decoded_field(word: &mut u32, dop: &DecodedOp, letter: u8, value: u32) {
+        let field = dop
+            .fields
+            .iter()
+            .find(|field| field.letter == letter)
+            .unwrap_or_else(|| panic!("field {} not found in {dop:?}", letter as char));
+        assert!((value as u64) < (1u64 << field.bits.len()));
+        for (idx, &bit) in field.bits.iter().enumerate() {
+            let shift = field.bits.len() - 1 - idx;
+            if ((value >> shift) & 1) != 0 {
+                *word |= 1u32 << bit;
+            } else {
+                *word &= !(1u32 << bit);
+            }
+        }
+    }
+
     fn lift_decoded(insn: DecodedInsn) -> Vec<SmirOp> {
         let mut lifter = HexagonLifter::default_isa();
         let mut ctx = LiftContext::new(SourceArch::Hexagon);
@@ -20839,6 +20868,68 @@ mod tests {
                 _ => None,
             })
             .unwrap_or_else(|| panic!("EA materialization from {base:?} not found in {ops:#?}"))
+    }
+
+    #[track_caller]
+    fn assert_vaddb_lane(kind: &OpKind, reg: u8) {
+        match kind {
+            OpKind::VLane {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                op,
+                signed,
+                set_ovf,
+            } => {
+                assert_eq!(*dst, hex_v(reg));
+                assert_eq!(*src1, hex_v(reg));
+                assert_eq!(*src2, hex_v(reg));
+                assert_eq!(*elem, VecElementType::I8);
+                assert_eq!(*lanes, 128);
+                assert_eq!(*op, VLaneOp::Add);
+                assert!(!signed);
+                assert!(!set_ovf);
+            }
+            other => panic!("expected VLane vaddb for V{reg}, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn hvx_vlane_dv_normalizes_raw_odd_pair_fields() {
+        // `lift_unknown_op` has a very large stack frame in debug builds.
+        std::thread::Builder::new()
+            .stack_size(64 * 1024 * 1024)
+            .spawn(|| {
+                let mut word = 0x1c60_0080u32;
+                let base = decode_word(word).expect("V6_vaddb_dv base word decodes");
+                assert_eq!(base.opcode, Opcode::V6_vaddb_dv);
+
+                for letter in [b'd', b'u', b'v'] {
+                    set_decoded_field(&mut word, &base, letter, 31);
+                }
+
+                let dop = decode_word(word).expect("mutated V6_vaddb_dv word decodes");
+                assert_eq!(dop.opcode, Opcode::V6_vaddb_dv);
+                assert_eq!(dop.field(b'd').unwrap().value, 31);
+                assert_eq!(dop.field(b'u').unwrap().value, 31);
+                assert_eq!(dop.field(b'v').unwrap().value, 31);
+
+                let mut lifter = HexagonLifter::default_isa();
+                let mut ctx = LiftContext::new(SourceArch::Hexagon);
+                let (ops, flow) = lifter
+                    .lift_insn_inner(&DecodedInsn::Unknown(word), 0x1000, &mut ctx)
+                    .unwrap();
+
+                assert!(matches!(flow, ControlFlow::Fallthrough));
+                assert_eq!(ops.len(), 2);
+                assert_vaddb_lane(&ops[0].kind, 30);
+                assert_vaddb_lane(&ops[1].kind, 31);
+            })
+            .unwrap()
+            .join()
+            .unwrap();
     }
 
     #[test]
