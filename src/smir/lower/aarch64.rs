@@ -4926,12 +4926,17 @@ impl Aarch64Lowerer {
             return self.emit_add_signed_imm(dst, dst, disp, OpWidth::W64);
         }
 
-        let scratches = Self::scratch_regs(&[dst], 1)?;
-        let scratch = scratches[0];
-        self.emit_scratch_save(&scratches);
+        // LEA is address arithmetic and must NOT touch the guest stack: a stack
+        // save/restore would `str`/`ldr` at [SP-16], clobbering the word below SP
+        // and faulting if guest SP is unmapped or misaligned. Preserve the scratch
+        // via its own slot in the always-mapped guest state struct (x28-relative)
+        // instead. The scratch must avoid the reserved host registers — especially
+        // x28 (the state pointer used as the spill base). (#35)
+        let scratch = Self::scratch_regs(&[dst, 18, 28, 30], 1)?[0];
+        self.emit_ldst_unsigned(scratch, A64_STATE_REG, 3, 0b00, scratch as u32); // str scratch, [x28,#slot]
         self.emit_mov_imm(scratch, disp, OpWidth::W64)?;
         self.emit_addsub_reg(dst, dst, scratch, false, false, OpWidth::W64)?;
-        self.emit_scratch_restore(&scratches);
+        self.emit_ldst_unsigned(scratch, A64_STATE_REG, 3, 0b01, scratch as u32); // ldr scratch, [x28,#slot]
         Ok(())
     }
 
@@ -33644,6 +33649,30 @@ mod tests {
             guest_pc.wrapping_add(offset as u64),
             "base-less PC-relative LEA must resolve to guest_pc + offset, not 0 + offset"
         );
+    }
+
+    // Regression for issue #35: a large LEA displacement that does not fit an
+    // add/sub immediate takes the scratch path, which must NOT spill to the guest
+    // stack ([SP-16]) — that corrupts the word below SP and can fault on an
+    // unmapped/misaligned SP. The result must be correct, SP unchanged, and the
+    // word below SP untouched.
+    #[test]
+    fn issue_35_large_disp_lea_does_not_touch_stack() {
+        let code = lower_ops(vec![OpKind::Lea {
+            dst: x(0),
+            addr: Address::BaseOffset {
+                base: x(1),
+                offset: 0x1_2345,
+                disp_size: DispSize::Auto,
+            },
+        }]);
+        let sentinel = 0xDEAD_BEEF_CAFE_F00Du64;
+        // SP = 0x8000 in the harness; the buggy stack spill targets [SP-16] = 0x7ff0.
+        let (regs, _, sp, below_sp) =
+            run_aarch64_code_with_memory(&code, &[(1, 0x1000)], 0, 0x7ff0, sentinel, MemWidth::B8);
+        assert_eq!(regs[0], 0x1000 + 0x1_2345, "LEA result must be base + displacement");
+        assert_eq!(sp, 0x8000, "LEA must not modify SP");
+        assert_eq!(below_sp, sentinel, "LEA must not write the word below SP");
     }
 
     #[test]
