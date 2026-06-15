@@ -5348,7 +5348,7 @@ impl AArch64Cpu {
 
         // ---- SADDLP/UADDLP (00010), SADALP/UADALP (00110): pairwise widening. ----
         if opcode == 0b00010 || opcode == 0b00110 {
-            if size == 0b11 {
+            if scalar || size == 0b11 {
                 return Err(ArmError::UndefinedInstruction(insn));
             }
             let bits = 8u32 << size;
@@ -5384,8 +5384,11 @@ impl AArch64Cpu {
             if size == 0b11 {
                 return Err(ArmError::UndefinedInstruction(insn));
             }
-            let bits = 8u32 << size; // destination element size
-            let dbits = 2 * bits; // source element size
+            if scalar && u == 0 && opcode == 0b10010 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
+            let bits = 8u32 << size;
+            let dbits = 2 * bits;
             // Scalar narrowing (SQXTN/UQXTN/SQXTUN <Bd>,<Hn> etc.) writes a single
             // element into lane 0 and zeroes the rest; the vector form fills the
             // low (part=0) or high (part=1, the "2" variant) 64-bit half.
@@ -5414,7 +5417,7 @@ impl AArch64Cpu {
 
         // ---- SHLL/SHLL2 (U==1, 10011): shift left long by the element size. ----
         if u == 1 && opcode == 0b10011 {
-            if size == 0b11 {
+            if scalar || size == 0b11 {
                 return Err(ArmError::UndefinedInstruction(insn));
             }
             let bits = 8u32 << size;
@@ -21113,6 +21116,32 @@ mod tests {
             | rt as u32
     }
 
+    fn encode_simd_two_reg_misc(
+        scalar: bool,
+        q: u32,
+        u: u32,
+        size: u32,
+        opcode: u32,
+        rn: u8,
+        rd: u8,
+    ) -> u32 {
+        debug_assert!(q <= 1);
+        debug_assert!(u <= 1);
+        debug_assert!(size <= 3);
+        debug_assert!(opcode <= 0x1f);
+        let q = if scalar { 1 } else { q };
+        let op_bits = if scalar { 0b11110 } else { 0b01110 };
+        (q << 30)
+            | (u << 29)
+            | (op_bits << 24)
+            | (size << 22)
+            | (0b10000 << 17)
+            | (opcode << 12)
+            | (0b10 << 10)
+            | ((rn as u32) << 5)
+            | rd as u32
+    }
+
     fn pack_h_lanes(lanes: [u16; 8]) -> u128 {
         lanes
             .into_iter()
@@ -21415,6 +21444,65 @@ mod tests {
         let mut good = create_cpu_with_insn(0x4f82_e020);
         good.sysregs.el1.cpacr |= 0b11 << 20;
         assert_eq!(good.step().unwrap(), CpuExit::Continue);
+    }
+
+    #[test]
+    fn simd_two_reg_scalar_narrowing_writes_low_lane() {
+        let cases = [
+            (
+                "sqxtun",
+                encode_simd_two_reg_misc(true, 0, 1, 0, 0b10010, 1, 0),
+                0xff80u64,
+                0x00u64,
+            ),
+            (
+                "sqxtn",
+                encode_simd_two_reg_misc(true, 0, 0, 0, 0b10100, 1, 0),
+                0xff80u64,
+                0x80u64,
+            ),
+            (
+                "uqxtn",
+                encode_simd_two_reg_misc(true, 0, 1, 0, 0b10100, 1, 0),
+                0x0123u64,
+                0xffu64,
+            ),
+        ];
+
+        for (name, insn, src, expected) in cases {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+            cpu.set_simd_reg(0, 0xaaaa_aaaa_aaaa_aaaa, 0xbbbb_bbbb_bbbb_bbbb)
+                .unwrap();
+            cpu.set_simd_reg(1, src, 0).unwrap();
+
+            assert_eq!(cpu.step().unwrap(), CpuExit::Continue, "{name}");
+            assert_eq!(cpu.get_simd_reg(0), Some((expected, 0)), "{name}");
+        }
+    }
+
+    #[test]
+    fn simd_two_reg_scalar_rejects_vector_only_narrow_widen_slots() {
+        let bad = [
+            encode_simd_two_reg_misc(true, 0, 0, 0, 0b00010, 1, 0), // SADDLP
+            encode_simd_two_reg_misc(true, 0, 1, 0, 0b00110, 1, 0), // UADALP
+            encode_simd_two_reg_misc(true, 0, 1, 0, 0b10011, 1, 0), // SHLL
+            encode_simd_two_reg_misc(true, 0, 0, 0, 0b10010, 1, 0), // XTN
+        ];
+
+        for insn in bad {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+            assert!(
+                matches!(cpu.step(), Err(ArmError::UndefinedInstruction(got)) if got == insn),
+                "{insn:#010x} must trap"
+            );
+        }
+
+        let mut valid_vector_xtn =
+            create_cpu_with_insn(encode_simd_two_reg_misc(false, 0, 0, 0, 0b10010, 1, 0));
+        valid_vector_xtn.sysregs.el1.cpacr |= 0b11 << 20;
+        assert_eq!(valid_vector_xtn.step().unwrap(), CpuExit::Continue);
     }
 
     #[test]
