@@ -8,7 +8,7 @@
 use crate::cpu::VcpuExit;
 use crate::error::Result;
 
-use super::cpu::{DECODE_CACHE_MASK, InsnContext, MAX_INSN_LEN, X86_64Vcpu};
+use super::cpu::{DECODE_CACHE_MASK, InsnContext, X86_64Vcpu};
 use super::decoder::Decoder;
 
 /// Batch size for threaded execution before checking for exits
@@ -67,40 +67,49 @@ impl X86_64Vcpu {
     fn threaded_step(&mut self) -> Result<Option<VcpuExit>> {
         let rip = self.regs.rip;
         let cache_idx = (rip as usize) & DECODE_CACHE_MASK;
-        let mode_tag =
-            (self.sregs.cr3 & !0xFFF) | (self.sregs.cs.l as u64) | ((self.sregs.cs.db as u64) << 1);
+        let mode_tag = self.decode_mode_tag();
 
         // Check decode cache
         let cached = self.decode_cache[cache_idx];
-        if cached.rip == rip && cached.mode_tag == mode_tag {
-            // Cache hit - fast path (reuse cached bytes, skip fetch)
-            let mut ctx = InsnContext {
-                bytes: cached.bytes,
-                bytes_len: cached.bytes_len,
-                cursor: if cached.rex2.map_or(false, |r| r.m) {
-                    cached.cursor
-                } else {
-                    cached.cursor + 1
-                },
-                rex: cached.rex,
-                rex2: cached.rex2,
-                operand_size_override: cached.operand_size_override,
-                address_size_override: cached.address_size_override,
-                rep_prefix: cached.rep_prefix,
-                op_size: cached.op_size,
-                rip_relative_offset: 0,
-                segment_override: cached.segment_override,
-                evex: None,
-                opcode: cached.opcode,
-                // Boundary-truncated instructions are never cached, so a hit
-                // always carries the full instruction.
-                boundary_gp: false,
-            };
-            return self.dispatch_threaded(cached.opcode, &mut ctx);
+        let mut fetched_miss = None;
+        if cached.bytes_len != 0 && cached.rip == rip && cached.mode_tag == mode_tag {
+            let (bytes, bytes_len, boundary_gp) = self.fetch()?;
+
+            if Self::decode_cache_bytes_current(&cached, &bytes, bytes_len, boundary_gp) {
+                let mut ctx = InsnContext {
+                    bytes,
+                    bytes_len,
+                    cursor: if cached.rex2.map_or(false, |r| r.m) {
+                        cached.cursor
+                    } else {
+                        cached.cursor + 1
+                    },
+                    rex: cached.rex,
+                    rex2: cached.rex2,
+                    operand_size_override: cached.operand_size_override,
+                    address_size_override: cached.address_size_override,
+                    rep_prefix: cached.rep_prefix,
+                    op_size: cached.op_size,
+                    rip_relative_offset: 0,
+                    segment_override: cached.segment_override,
+                    evex: None,
+                    opcode: cached.opcode,
+                    // Boundary-truncated instructions are never cached, so a hit
+                    // always carries the full instruction.
+                    boundary_gp: false,
+                };
+                return self.dispatch_threaded(cached.opcode, &mut ctx);
+            }
+
+            self.decode_cache[cache_idx] = Default::default();
+            fetched_miss = Some((bytes, bytes_len, boundary_gp));
         }
 
         // Cache miss - full decode
-        let (bytes, bytes_len, boundary_gp) = self.fetch()?;
+        let (bytes, bytes_len, boundary_gp) = match fetched_miss {
+            Some(fetched) => fetched,
+            None => self.fetch()?,
+        };
         let mut ctx = Decoder::decode_prefixes(bytes, bytes_len, boundary_gp, self.sregs.cs.l)?;
 
         // Determine operand size

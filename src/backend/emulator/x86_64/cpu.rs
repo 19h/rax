@@ -381,8 +381,8 @@ pub(super) struct DecodeCacheEntry {
     pub(super) rep_prefix: Option<u8>,
     /// Segment override prefix (0x64=FS, 0x65=GS, etc.)
     pub(super) segment_override: Option<u8>,
-    /// Address-space + CPU-mode tag (CR3 base | cs.l | cs.db<<1): part of the key
-    /// so a hit never reuses stale bytes/decode across a context or mode switch.
+    /// Address-space + CPU-mode tag: part of the key so a hit never reuses
+    /// stale bytes/decode across a context or mode switch.
     pub(super) mode_tag: u64,
     /// Raw instruction bytes captured at fill time. Hits re-fetch and compare
     /// against this window before reusing the cached decode.
@@ -1326,6 +1326,34 @@ impl X86_64Vcpu {
         (rip as usize) & DECODE_CACHE_MASK
     }
 
+    /// Address-space + CPU-mode discriminator for decode-cache entries.
+    #[inline(always)]
+    pub(super) fn decode_mode_tag(&self) -> u64 {
+        let real_mode_cs_base = if self.sregs.cr0 & 1 == 0 {
+            self.sregs.cs.base
+        } else {
+            0
+        };
+        (self.sregs.cr3 & !0xFFF)
+            | (self.sregs.cs.l as u64)
+            | ((self.sregs.cs.db as u64) << 1)
+            | real_mode_cs_base
+    }
+
+    /// A key match is not enough for a safe cache hit: the current MMU fetch
+    /// must still succeed and return the same byte window that was decoded.
+    #[inline(always)]
+    pub(super) fn decode_cache_bytes_current(
+        cached: &DecodeCacheEntry,
+        bytes: &[u8; MAX_INSN_LEN],
+        bytes_len: usize,
+        boundary_gp: bool,
+    ) -> bool {
+        !boundary_gp
+            && cached.bytes_len == bytes_len
+            && cached.bytes[..bytes_len] == bytes[..bytes_len]
+    }
+
     /// Execute a single instruction.
     #[inline]
     /// Per-vCPU timestamp counter. Real-time: tracks host wall-clock elapsed
@@ -1363,14 +1391,7 @@ impl X86_64Vcpu {
         // CS.base must be part of the key — otherwise the same offset under
         // different segments (common in real-mode relocators) would alias to one
         // cached decode. CS.base is 0 in long mode, so this is a no-op there.
-        let mode_tag = (self.sregs.cr3 & !0xFFF)
-            | (self.sregs.cs.l as u64)
-            | ((self.sregs.cs.db as u64) << 1)
-            | if self.sregs.cr0 & 1 == 0 {
-                self.sregs.cs.base
-            } else {
-                0
-            };
+        let mode_tag = self.decode_mode_tag();
 
         // Check decode cache for a hit (copy to avoid borrow issues). A filled
         // entry always has bytes_len >= 1; default/invalidated entries have
@@ -1378,15 +1399,13 @@ impl X86_64Vcpu {
         // sentinel (rip==0, mode_tag==0) would otherwise collide with a guest
         // legitimately executing at offset 0 of a segment.
         let cached = self.decode_cache[cache_idx];
+        let mut fetched_miss = None;
         if cached.bytes_len != 0 && cached.rip == rip && cached.mode_tag == mode_tag {
             // Validate the hit against the current MMU state. This preserves
             // instruction-fetch faults and catches remaps or permission changes
             // that are not represented in the cache key.
             let (bytes, bytes_len, boundary_gp) = self.fetch()?;
-            if !boundary_gp
-                && bytes_len == cached.bytes_len
-                && bytes[..bytes_len] == cached.bytes[..cached.bytes_len]
-            {
+            if Self::decode_cache_bytes_current(&cached, &bytes, bytes_len, boundary_gp) {
                 // Cache hit! Record for profiling only after validation, so a
                 // stale entry that falls through to full decode counts as a miss.
                 #[cfg(feature = "profiling")]
@@ -1446,15 +1465,19 @@ impl X86_64Vcpu {
 
             // Fetched bytes no longer match the cached decode, or the fetch is
             // now boundary-truncated. Drop the stale entry and fall through to a
-            // full decode using a fresh fetch.
+            // full decode using the fresh fetch.
             self.decode_cache[cache_idx] = DecodeCacheEntry::default();
+            fetched_miss = Some((bytes, bytes_len, boundary_gp));
         }
 
         // Cache miss - do full decode
         #[cfg(feature = "profiling")]
         profiling::record_cache_miss();
 
-        let (bytes, bytes_len, boundary_gp) = self.fetch()?;
+        let (bytes, bytes_len, boundary_gp) = match fetched_miss {
+            Some(fetched) => fetched,
+            None => self.fetch()?,
+        };
 
         // Decode prefixes (mode-aware: 0xD5 is REX2 in long mode, AAD otherwise)
         let mut ctx = Decoder::decode_prefixes(bytes, bytes_len, boundary_gp, self.sregs.cs.l)?;
@@ -1497,7 +1520,7 @@ impl X86_64Vcpu {
         // verdict so hits skip the prefix-byte scan entirely.
         let has_lock = ctx.bytes[..opcode_cursor.min(ctx.bytes_len)].contains(&0xF0);
 
-        // Cache the decoded instruction (incl. raw bytes so hits skip fetch()).
+        // Cache the decoded instruction and the byte window it was decoded from.
         // Never cache a boundary-truncated fetch: its byte window is short, so a
         // later cache hit would re-run the handler and hit "instruction too short"
         // without the boundary_gp flag, turning the architectural #GP back into a
@@ -4505,12 +4528,16 @@ mod stack_segment_tests {
 mod decode_cache_invalidation_tests {
     use super::*;
     use std::sync::Arc;
-    use vm_memory::{GuestAddress, GuestMemoryMmap};
+    use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
-    fn test_vcpu() -> X86_64Vcpu {
+    fn test_vcpu_with_mem() -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
         let mem =
             Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
-        X86_64Vcpu::new(0, mem)
+        (X86_64Vcpu::new(0, mem.clone()), mem)
+    }
+
+    fn test_vcpu() -> X86_64Vcpu {
+        test_vcpu_with_mem().0
     }
 
     // Regression for issue #77: the decode-cache validity sentinel is bytes_len
@@ -4550,6 +4577,37 @@ mod decode_cache_invalidation_tests {
         assert_eq!(
             vcpu.decode_cache[other_idx].bytes_len, 4,
             "an entry on a different page must survive a page-0 invalidation",
+        );
+    }
+
+    #[test]
+    fn decode_cache_hit_refetches_current_guest_bytes() {
+        let (mut vcpu, mem) = test_vcpu_with_mem();
+        vcpu.sregs.efer = 1 << 10;
+        vcpu.sregs.cs.l = true;
+
+        // MOV EAX,1. This fills the decode cache for RIP 0.
+        mem.write_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00], GuestAddress(0))
+            .unwrap();
+        assert!(vcpu.step().unwrap().is_none());
+        assert_eq!(vcpu.regs.rax, 1);
+        assert_ne!(
+            vcpu.decode_cache[X86_64Vcpu::decode_cache_index(0)].bytes_len,
+            0,
+            "first execution should fill the RIP 0 decode-cache entry",
+        );
+
+        // Rewrite guest RAM directly, bypassing MMU write journaling. A key-only
+        // cache hit would keep executing the stale immediate from cached bytes.
+        mem.write_slice(&[0xB8, 0x02, 0x00, 0x00, 0x00], GuestAddress(0))
+            .unwrap();
+        vcpu.regs.rip = 0;
+        vcpu.regs.rax = 0;
+
+        assert!(vcpu.step().unwrap().is_none());
+        assert_eq!(
+            vcpu.regs.rax, 2,
+            "decode-cache hit must validate against the current fetched bytes",
         );
     }
 }
