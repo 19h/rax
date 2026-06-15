@@ -9507,17 +9507,16 @@ impl AArch64Cpu {
                 break;
             }
         }
-        let res = if conditional && last < 0 {
-            self.get_x(rd) & em
+        if conditional && last < 0 {
+            return Ok(CpuExit::Continue);
+        }
+        let idx = if before {
+            if last < 0 { n - 1 } else { last as usize }
         } else {
-            let idx = if before {
-                if last < 0 { n - 1 } else { last as usize }
-            } else {
-                let i = (last + 1) as usize;
-                if i >= n { 0 } else { i }
-            };
-            read_elem(&op, idx * esize, esize) & em
+            let i = (last + 1) as usize;
+            if i >= n { 0 } else { i }
         };
+        let res = read_elem(&op, idx * esize, esize) & em;
         self.set_x(rd, res);
         Ok(CpuExit::Continue)
     }
@@ -21078,6 +21077,22 @@ mod tests {
         }
         // Sanity: a valid opc (ZIP1, opc 000) still executes.
         assert_eq!(setup(0x0522_6020).step().unwrap(), CpuExit::Continue);
+    }
+
+    #[test]
+    fn sve_clast_no_active_preserves_gpr() {
+        // CLASTB X0, P0, Z1.B. Conditional LAST forms preserve Rdn when the
+        // governing predicate has no active elements.
+        let mut cpu = create_cpu_with_insn(0x0531_A020);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        let sentinel = 0xDEAD_BEEF_CAFE_55AA;
+        cpu.set_x(0, sentinel);
+        cpu.set_simd_reg(1, 0x8877_6655_4433_2211, 0x00ff_eedd_ccbb_aa99)
+            .unwrap();
+        cpu.set_sve_pred(0, 0);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.get_x(0), sentinel);
     }
 
     #[test]
