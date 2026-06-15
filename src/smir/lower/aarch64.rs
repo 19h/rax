@@ -1047,6 +1047,57 @@ impl Aarch64Lowerer {
         self.emit_addsub_shifted(dst, rn, rm, subtract, set_flags, 0, 0, width)
     }
 
+    /// Emit `dst = extend(src) << amount` for an add/sub *extended-register*
+    /// zero base. In the extended-register and immediate add/sub encodings
+    /// `Rn = 31` denotes SP/WSP (not XZR/WZR), so a zero base must never be
+    /// routed through them: doing so computes `SP ± extend(src)` and leaks the
+    /// host stack pointer into guest-visible state (#58). Realize the
+    /// extend+shift directly with UBFIZ / SBFIZ / LSL, none of which reference
+    /// SP. `option` is the 3-bit add/sub extend field (bit2 = signed, bits[1:0]
+    /// = source size: 00=B, 01=H, 10=W, 11=X); `amount` is the 0..4 shift.
+    fn emit_zero_base_extended(
+        &mut self,
+        dst: u8,
+        src: u8,
+        option: u32,
+        amount: u32,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
+        let regbits = width.bits();
+        let signed = (option & 0b100) != 0;
+        let ext_bits: u32 = match option & 0b011 {
+            0b00 => 8,
+            0b01 => 16,
+            0b10 => 32,
+            _ => 64,
+        };
+        let emit_width = if width == OpWidth::W64 {
+            OpWidth::W64
+        } else {
+            OpWidth::W32
+        };
+        if ext_bits >= regbits {
+            // No narrowing extension applies (UXTX/SXTX, or *XTW at W32): the
+            // value is simply `src << amount`.
+            if amount == 0 {
+                return self.emit_mov_reg(dst, src, emit_width);
+            }
+            return self.lower_shift_imm(dst, src, i64::from(amount), ShiftOp::Lsl, emit_width);
+        }
+        // UBFIZ/SBFIZ dst, src, #amount, #ext_bits == (extend low ext_bits bits
+        // of src) << amount, with the rest of the register zeroed.
+        let immr = (regbits - amount) & (regbits - 1);
+        let imms = ext_bits - 1;
+        self.emit_bitfield(
+            dst,
+            src,
+            if signed { 0b00 } else { 0b10 },
+            immr,
+            imms,
+            emit_width,
+        )
+    }
+
     fn emit_addsub_extended(
         &mut self,
         dst: u8,
@@ -5184,10 +5235,24 @@ impl Aarch64Lowerer {
                             op: format!("AArch64 native zero-base add/sub width {width:?}"),
                         });
                     }
+                    if dst == 31 {
+                        // Flag-only zero-base extended add/sub would need a
+                        // destination scratch to hold extend(rm); bail to the
+                        // interpreter rather than encode SP as the base.
+                        return Err(LowerError::UnsupportedOp {
+                            op: "AArch64 native flag-setting zero-base extended add/sub".into(),
+                        });
+                    }
                     let (rm, option, amount) = Self::addsub_ext_src2(src2)?;
-                    return self.emit_addsub_extended(
-                        dst, 31, rm, subtract, set_flags, option, amount, width,
-                    );
+                    // dst = extend(rm) << amount (no SP). Fold in the subtract
+                    // sign and/or flag update with an XZR-based shifted add/sub
+                    // (Rn = 31 is XZR in the shifted-register encoding).
+                    self.emit_zero_base_extended(dst, rm, option, amount, width)?;
+                    if subtract || set_flags {
+                        return self
+                            .emit_addsub_reg(dst, 31, dst, subtract, set_flags, width);
+                    }
+                    return Ok(());
                 }
                 _ => {}
             }
@@ -5413,16 +5478,14 @@ impl Aarch64Lowerer {
                 }
                 SrcOperand::Extended { .. } => {
                     let (rm, option, amount) = Self::addsub_ext_src2(src2)?;
-                    self.emit_addsub_extended(
-                        dst,
-                        31,
-                        rm,
-                        subtract,
-                        false,
-                        option,
-                        amount,
-                        OpWidth::W64,
-                    )?;
+                    // dst = extend(rm) << amount (no SP); negate via an
+                    // XZR-based reg sub when subtracting, then truncate to the
+                    // subword width. The old `emit_addsub_extended(dst, 31, ..)`
+                    // used SP (Rn = 31) as the base.
+                    self.emit_zero_base_extended(dst, rm, option, amount, OpWidth::W64)?;
+                    if subtract {
+                        self.emit_addsub_reg(dst, 31, dst, true, false, OpWidth::W64)?;
+                    }
                     return self.emit_bitfield(dst, dst, 0b10, 0, top_bit, OpWidth::W32);
                 }
                 _ => {}
@@ -5863,9 +5926,20 @@ impl Aarch64Lowerer {
                         }
                         SrcOperand::Extended { .. } => {
                             let (src, option, amount) = Self::addsub_ext_src2(src2)?;
-                            return self.emit_addsub_extended(
-                                dst, 31, src, false, set_flags, option, amount, width,
-                            );
+                            // `all_ones AND[S] extend(src)` == extend(src); the
+                            // zero base must not be SP, so realize the value
+                            // directly and derive ANDS flags (N/Z from the
+                            // result, C=V=0) from it.
+                            if set_flags {
+                                if dst == 31 {
+                                    return Err(LowerError::UnsupportedOp {
+                                        op: "AArch64 native flag-only ANDS all-ones with extended source".into(),
+                                    });
+                                }
+                                self.emit_zero_base_extended(dst, src, option, amount, width)?;
+                                return self.emit_logic_reg_n(dst, dst, dst, 0b11, false, width);
+                            }
+                            return self.emit_zero_base_extended(dst, src, option, amount, width);
                         }
                         _ => {}
                     }
@@ -5901,9 +5975,7 @@ impl Aarch64Lowerer {
                         SrcOperand::Extended { .. } => {
                             let dst = Self::dst_gpr(dst)?;
                             let (src, option, amount) = Self::addsub_ext_src2(src2)?;
-                            self.emit_addsub_extended(
-                                dst, 31, src, false, false, option, amount, width,
-                            )?;
+                            self.emit_zero_base_extended(dst, src, option, amount, width)?;
                             self.emit_logic_reg_n(dst, 31, dst, 0b01, true, width)?;
                             if set_flags {
                                 return self.lower_bmi_result_flags(dst, width, false);
@@ -5953,9 +6025,7 @@ impl Aarch64Lowerer {
                         SrcOperand::Extended { .. } => {
                             let dst = Self::dst_gpr(dst)?;
                             let (src, option, amount) = Self::addsub_ext_src2(src2)?;
-                            self.emit_addsub_extended(
-                                dst, 31, src, false, false, option, amount, width,
-                            )?;
+                            self.emit_zero_base_extended(dst, src, option, amount, width)?;
                             return self.emit_logic_reg_n(dst, 31, dst, 0b10, true, width);
                         }
                         _ => {}
@@ -5977,9 +6047,9 @@ impl Aarch64Lowerer {
                     }
                     if !n && matches!(opc, 0b01 | 0b10) {
                         let (src, option, amount) = Self::addsub_ext_src2(src2)?;
-                        return self.emit_addsub_extended(
-                            dst, 31, src, false, false, option, amount, width,
-                        );
+                        // `0 OR/XOR extend(src)` == extend(src); realize the
+                        // value directly so the zero base is not encoded as SP.
+                        return self.emit_zero_base_extended(dst, src, option, amount, width);
                     }
                 }
             }
@@ -7464,14 +7534,15 @@ impl Aarch64Lowerer {
                     return self.emit_addsub_shifted(31, 31, rm, true, true, shift, amount, width);
                 }
                 SrcOperand::Extended { .. } => {
-                    if !matches!(width, OpWidth::W32 | OpWidth::W64) {
-                        return Err(LowerError::UnsupportedOp {
-                            op: format!("AArch64 native CMP zero base source width {width:?}"),
-                        });
-                    }
-                    let (rm, option, amount) = Self::addsub_ext_src2(src2)?;
-                    return self
-                        .emit_addsub_extended(31, 31, rm, true, true, option, amount, width);
+                    // `CMP 0, extend(rm)` sets flags from `0 - extend(rm)`, but
+                    // the extended encoding's Rn = 31 is SP, not XZR, so it
+                    // cannot be emitted directly and the narrowing extend needs
+                    // a scratch register to materialize. The destination here is
+                    // the discard register (31), so bail to the interpreter
+                    // rather than compare against SP.
+                    return Err(LowerError::UnsupportedOp {
+                        op: "AArch64 native zero-base extended CMP".into(),
+                    });
                 }
                 _ => {}
             }
@@ -7529,7 +7600,9 @@ impl Aarch64Lowerer {
         match nzcv & 0xf {
             0b0000 => self.emit_sysreg(31, ArmReg::Nzcv, false),
             0b0110 => self.emit_addsub_reg(31, 31, 31, true, true, emit_width),
-            0b1000 => self.emit_addsub_imm(31, 31, 1, true, true, emit_width),
+            // 0b1000 deliberately falls through to the ccmp fallback: encoding
+            // it as `emit_addsub_imm(31, 31, 1, ..)` assembles `cmp sp, #1`,
+            // taking NZCV from SP - 1 (Rn = 31 is SP in add/sub-immediate).
             fallback => {
                 self.emit_addsub_reg(31, 31, 31, true, true, emit_width)?;
                 self.emit_cond_compare(31, 31, 1, fallback, true, false, emit_width)
@@ -7656,10 +7729,14 @@ impl Aarch64Lowerer {
                             );
                         }
                         SrcOperand::Extended { .. } => {
-                            let (src, option, amount) = Self::addsub_ext_src2(src2)?;
-                            return self.emit_addsub_extended(
-                                31, 31, src, false, true, option, amount, width,
-                            );
+                            // Flags from `extend(src)` with a discard
+                            // destination (Rd = 31) would need a scratch to hold
+                            // the extended value; the extended encoding's
+                            // Rn = 31 is SP, so bail to the interpreter rather
+                            // than set flags from `SP + extend(src)`.
+                            return Err(LowerError::UnsupportedOp {
+                                op: "AArch64 native zero-base extended test flags".into(),
+                            });
                         }
                         _ => {}
                     }
@@ -7716,7 +7793,10 @@ impl Aarch64Lowerer {
             return self.emit_logic_reg_n(31, 31, 31, 0b11, false, emit_width);
         }
         if (result & width.sign_bit()) != 0 {
-            return self.emit_addsub_imm(31, 31, 1, true, true, emit_width);
+            // Logical result is negative: N=1, Z=C=V=0. Route through the
+            // constant-NZCV helper (ccmp fallback) instead of `cmp sp, #1`,
+            // whose Rn = 31 is SP and would take the flags from SP - 1.
+            return self.lower_constant_cmp_nzcv(0b1000, emit_width);
         }
         self.emit_sysreg(31, ArmReg::Nzcv, false)
     }
@@ -21343,6 +21423,84 @@ mod tests {
     }
 
     #[test]
+    fn zero_base_extended_lowering_is_sp_independent() {
+        // #58: a zero base (src1 == Imm(0), or an all-ones logical identity) was
+        // encoded as Rn = 31 in the add/sub extended-register and immediate
+        // encodings, where 31 means SP/WSP (not XZR/WZR). The lowered code then
+        // computed `SP +/- extend(src)`, leaking the (here, emulated) stack
+        // pointer into guest state. The harness runs with SP = 0x8000, so a
+        // correct lowering must produce SP-independent results.
+        let x10: u64 = 0x1_2345_6789;
+        let uxtw = x10 & 0xFFFF_FFFF; // 0x2345_6789
+        let sxtb = ((x10 as u8) as i8 as i64) as u64; // sign-extend low byte
+
+        let ext = |reg, extend, shift| SrcOperand::Extended {
+            reg,
+            extend,
+            shift,
+        };
+        let code = lower_ops(vec![
+            // 036: 0 + (uxtw(x10) << 2)  -> UBFIZ, no SP.
+            OpKind::Add {
+                dst: x(0),
+                src1: VReg::Imm(0),
+                src2: ext(x(10), ExtendOp::Uxtw, 2),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            // 036: 0 - uxtw(x10)  -> UBFIZ then XZR-based negate.
+            OpKind::Sub {
+                dst: x(1),
+                src1: VReg::Imm(0),
+                src2: ext(x(10), ExtendOp::Uxtw, 0),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            // 030: 0 | (uxtw(x10) << 1)  -> zero-base logical, value == src.
+            OpKind::Or {
+                dst: x(2),
+                src1: VReg::Imm(0),
+                src2: ext(x(10), ExtendOp::Uxtw, 1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            // 030: 0 ^ uxtw(x10).
+            OpKind::Xor {
+                dst: x(3),
+                src1: VReg::Imm(0),
+                src2: ext(x(10), ExtendOp::Uxtw, 0),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            // 036: 0 + sxtb(x10)  -> SBFIZ, no SP.
+            OpKind::Add {
+                dst: x(4),
+                src1: VReg::Imm(0),
+                src2: ext(x(10), ExtendOp::Sxtb, 0),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            // 035: subword (W16) 0 + (uxtw(x10) << 1); SP's bit 15 would land in
+            // the 16-bit result window if the base were SP.
+            OpKind::Add {
+                dst: x(5),
+                src1: VReg::Imm(0),
+                src2: ext(x(10), ExtendOp::Uxtw, 1),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+        ]);
+
+        let (out, _nzcv, _sp) = run_aarch64_code(&code, &[(10, x10)], 0);
+        assert_eq!(out[0], uxtw << 2, "add uxtw<<2");
+        assert_eq!(out[1], 0u64.wrapping_sub(uxtw), "sub uxtw (negate)");
+        assert_eq!(out[2], uxtw << 1, "or uxtw<<1");
+        assert_eq!(out[3], uxtw, "xor uxtw");
+        assert_eq!(out[4], sxtb, "add sxtb");
+        assert_eq!(out[5], (uxtw << 1) & 0xFFFF, "subword add uxtw<<1 (W16)");
+    }
+
+    #[test]
     fn lowers_zero_base_addsub_register_sources() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(
@@ -21468,7 +21626,8 @@ mod tests {
         let code = lowerer.finalize().unwrap();
 
         let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_addsub_ext_regs(1, 0, 0, 0b010, 2, 0, 31, 1).to_le_bytes());
+        // 0 + uxtw(x1)<<2 == UBFIZ x0, x1, #2, #32 (no SP base).
+        expected.extend_from_slice(&enc_bitfield_regs(1, 0b10, 62, 31, 1, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
@@ -21870,8 +22029,10 @@ mod tests {
                     width: OpWidth::W8,
                     flags: FlagUpdate::None,
                 },
-                enc_addsub_shift_regs(0, 1, 0, 0, 0, 0, 31, 1),
-                enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
+                vec![
+                    enc_addsub_shift_regs(0, 1, 0, 0, 0, 0, 31, 1),
+                    enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
+                ],
             ),
             (
                 OpKind::Add {
@@ -21885,8 +22046,10 @@ mod tests {
                     width: OpWidth::W16,
                     flags: FlagUpdate::None,
                 },
-                enc_addsub_shift_regs(1, 0, 0, 0, 3, 0, 31, 1),
-                enc_bitfield_regs(0, 0b10, 0, 15, 0, 0),
+                vec![
+                    enc_addsub_shift_regs(1, 0, 0, 0, 3, 0, 31, 1),
+                    enc_bitfield_regs(0, 0b10, 0, 15, 0, 0),
+                ],
             ),
             (
                 OpKind::Sub {
@@ -21900,8 +22063,10 @@ mod tests {
                     width: OpWidth::W8,
                     flags: FlagUpdate::None,
                 },
-                enc_addsub_shift_regs(1, 1, 0, 2, 40, 0, 31, 1),
-                enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
+                vec![
+                    enc_addsub_shift_regs(1, 1, 0, 2, 40, 0, 31, 1),
+                    enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
+                ],
             ),
             (
                 OpKind::Sub {
@@ -21915,12 +22080,17 @@ mod tests {
                     width: OpWidth::W8,
                     flags: FlagUpdate::None,
                 },
-                enc_addsub_ext_regs(1, 1, 0, 0b000, 1, 0, 31, 1),
-                enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
+                // zero-base extended Sub: UBFIZ x0, x1, #1, #8 (extend+shift,
+                // no SP), then NEG via XZR-based sub, then truncate to W8.
+                vec![
+                    enc_bitfield_regs(1, 0b10, 63, 7, 1, 0),
+                    enc_addsub_shift_regs(1, 1, 0, 0, 0, 0, 31, 0),
+                    enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
+                ],
             ),
         ];
 
-        for (kind, first, trunc) in cases {
+        for (kind, words) in cases {
             let mut builder = FunctionBuilder::new(FunctionId(0), 0);
             builder.push_op(0, kind);
             builder.set_terminator(Terminator::Return { values: vec![] });
@@ -21931,8 +22101,9 @@ mod tests {
             let code = lowerer.finalize().unwrap();
 
             let mut expected = Vec::new();
-            expected.extend_from_slice(&first.to_le_bytes());
-            expected.extend_from_slice(&trunc.to_le_bytes());
+            for word in words {
+                expected.extend_from_slice(&word.to_le_bytes());
+            }
             expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
             assert_eq!(code, expected);
         }
@@ -22311,7 +22482,11 @@ mod tests {
         let code = lowerer.finalize().unwrap();
 
         let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_addsub_imm_regs(1, 1, 1, 0, 1, 31, 31).to_le_bytes());
+        // CMP 0, 1 sets NZCV = 0b1000; routed through the ccmp fallback
+        // (subs xzr,xzr,xzr; ccmp ...) instead of `cmp sp, #1`, whose Rn = 31
+        // is SP and would take the flags from SP - 1.
+        expected.extend_from_slice(&enc_addsub_shift_regs(1, 1, 1, 0, 0, 31, 31, 31).to_le_bytes());
+        expected.extend_from_slice(&0xfa5f_13e8u32.to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
@@ -22427,15 +22602,12 @@ mod tests {
         builder.set_terminator(Terminator::Return { values: vec![] });
         let func = builder.finish();
 
+        // A zero-base extended CMP would compute flags from `SP - extend(x1)`
+        // (Rn = 31 is SP in the extended encoding), and the discard destination
+        // leaves no scratch to materialize extend(x1) first; the lowerer bails
+        // to the interpreter instead of comparing against SP.
         let mut lowerer = Aarch64Lowerer::new();
-        lowerer.lower_function(&func).unwrap();
-        let code = lowerer.finalize().unwrap();
-
-        let mut expected = Vec::new();
-        expected
-            .extend_from_slice(&enc_addsub_ext_regs(1, 1, 1, 0b010, 2, 31, 31, 1).to_le_bytes());
-        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
-        assert_eq!(code, expected);
+        assert!(lowerer.lower_function(&func).is_err());
     }
 
     #[test]
@@ -41655,7 +41827,8 @@ mod tests {
                     width: OpWidth::W64,
                     flags: FlagUpdate::None,
                 },
-                enc_addsub_ext_regs(1, 0, 0, 0b010, 0, 0, 31, 2),
+                // all_ones AND uxtw(x2) == uxtw(x2): UBFIZ x0, x2, #0, #32.
+                vec![enc_bitfield_regs(1, 0b10, 0, 31, 2, 0)],
             ),
             (
                 OpKind::And {
@@ -41669,7 +41842,12 @@ mod tests {
                     width: OpWidth::W64,
                     flags: FlagUpdate::All,
                 },
-                enc_addsub_ext_regs(1, 0, 1, 0b110, 2, 0, 31, 2),
+                // all_ones ANDS sxtw(x2)<<2: SBFIZ x0, x2, #2, #32 then
+                // ANDS x0, x0, x0 (flags from result, not from SP).
+                vec![
+                    enc_bitfield_regs(1, 0b00, 62, 31, 2, 0),
+                    enc_logical_reg_n(1, 0b11, 0, 0, 0, 0),
+                ],
             ),
             (
                 OpKind::And {
@@ -41683,11 +41861,16 @@ mod tests {
                     width: OpWidth::W32,
                     flags: FlagUpdate::All,
                 },
-                enc_addsub_ext_regs(0, 0, 1, 0b000, 1, 0, 31, 2),
+                // all_ones ANDS uxtb(x2)<<1 (W32): UBFIZ w0, w2, #1, #8 then
+                // ANDS w0, w0, w0.
+                vec![
+                    enc_bitfield_regs(0, 0b10, 31, 7, 2, 0),
+                    enc_logical_reg_n(0, 0b11, 0, 0, 0, 0),
+                ],
             ),
         ];
 
-        for (op, expected_insn) in cases {
+        for (op, expected_words) in cases {
             let mut builder = FunctionBuilder::new(FunctionId(0), 0);
             builder.push_op(0, op);
             builder.set_terminator(Terminator::Return { values: vec![] });
@@ -41698,7 +41881,9 @@ mod tests {
             let code = lowerer.finalize().unwrap();
 
             let mut expected = Vec::new();
-            expected.extend_from_slice(&expected_insn.to_le_bytes());
+            for word in expected_words {
+                expected.extend_from_slice(&word.to_le_bytes());
+            }
             expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
             assert_eq!(code, expected);
         }
@@ -41884,7 +42069,7 @@ mod tests {
                     flags: FlagUpdate::None,
                 },
                 vec![
-                    enc_addsub_ext_regs(1, 0, 0, 0b010, 0, 0, 31, 2),
+                    enc_bitfield_regs(1, 0b10, 0, 31, 2, 0),
                     enc_logical_reg_n(1, 0b01, 1, 0, 31, 0),
                     0xd65f_03c0u32,
                 ],
@@ -41902,7 +42087,7 @@ mod tests {
                     flags: FlagUpdate::None,
                 },
                 vec![
-                    enc_addsub_ext_regs(0, 0, 0, 0b000, 1, 0, 31, 2),
+                    enc_bitfield_regs(0, 0b10, 31, 7, 2, 0),
                     enc_logical_reg_n(0, 0b01, 1, 0, 31, 0),
                     0xd65f_03c0u32,
                 ],
@@ -41920,7 +42105,7 @@ mod tests {
                     flags: FlagUpdate::All,
                 },
                 vec![
-                    enc_addsub_ext_regs(1, 0, 0, 0b110, 2, 0, 31, 2),
+                    enc_bitfield_regs(1, 0b00, 62, 31, 2, 0),
                     enc_logical_reg_n(1, 0b01, 1, 0, 31, 0),
                     enc_logical_reg_n(1, 0b11, 0, 31, 0, 0),
                     0xd65f_03c0u32,
@@ -41939,7 +42124,7 @@ mod tests {
                     flags: FlagUpdate::All,
                 },
                 vec![
-                    enc_addsub_ext_regs(0, 0, 0, 0b100, 1, 0, 31, 2),
+                    enc_bitfield_regs(0, 0b00, 31, 7, 2, 0),
                     enc_logical_reg_n(0, 0b01, 1, 0, 31, 0),
                     enc_logical_reg_n(0, 0b11, 0, 31, 0, 0),
                     0xd65f_03c0u32,
@@ -42390,7 +42575,7 @@ mod tests {
                     flags: FlagUpdate::None,
                 },
                 vec![
-                    enc_addsub_ext_regs(1, 0, 0, 0b010, 0, 0, 31, 2),
+                    enc_bitfield_regs(1, 0b10, 0, 31, 2, 0),
                     enc_logical_reg_n(1, 0b10, 1, 0, 31, 0),
                     0xd65f_03c0u32,
                 ],
@@ -42408,7 +42593,7 @@ mod tests {
                     flags: FlagUpdate::None,
                 },
                 vec![
-                    enc_addsub_ext_regs(0, 0, 0, 0b000, 1, 0, 31, 2),
+                    enc_bitfield_regs(0, 0b10, 31, 7, 2, 0),
                     enc_logical_reg_n(0, 0b10, 1, 0, 31, 0),
                     0xd65f_03c0u32,
                 ],
@@ -42426,7 +42611,7 @@ mod tests {
                     flags: FlagUpdate::All,
                 },
                 vec![
-                    enc_addsub_ext_regs(1, 0, 0, 0b110, 2, 0, 31, 2),
+                    enc_bitfield_regs(1, 0b00, 62, 31, 2, 0),
                     enc_logical_reg_n(1, 0b10, 1, 0, 31, 0),
                     enc_logical_reg_n(1, 0b11, 0, 31, 0, 0),
                     0xd65f_03c0u32,
@@ -42445,7 +42630,7 @@ mod tests {
                     flags: FlagUpdate::All,
                 },
                 vec![
-                    enc_addsub_ext_regs(0, 0, 0, 0b100, 1, 0, 31, 2),
+                    enc_bitfield_regs(0, 0b00, 31, 7, 2, 0),
                     enc_logical_reg_n(0, 0b10, 1, 0, 31, 0),
                     enc_logical_reg_n(0, 0b11, 0, 31, 0, 0),
                     0xd65f_03c0u32,
@@ -42844,7 +43029,7 @@ mod tests {
                     flags: FlagUpdate::None,
                 },
                 vec![
-                    enc_addsub_ext_regs(1, 0, 0, 0b010, 0, 0, 31, 2),
+                    enc_bitfield_regs(1, 0b10, 0, 31, 2, 0),
                     0xd65f_03c0u32,
                 ],
             ),
@@ -42861,7 +43046,7 @@ mod tests {
                     flags: FlagUpdate::None,
                 },
                 vec![
-                    enc_addsub_ext_regs(0, 0, 0, 0b000, 1, 0, 31, 2),
+                    enc_bitfield_regs(0, 0b10, 31, 7, 2, 0),
                     0xd65f_03c0u32,
                 ],
             ),
@@ -42878,7 +43063,7 @@ mod tests {
                     flags: FlagUpdate::All,
                 },
                 vec![
-                    enc_addsub_ext_regs(1, 0, 0, 0b110, 2, 0, 31, 2),
+                    enc_bitfield_regs(1, 0b00, 62, 31, 2, 0),
                     enc_logical_reg_n(1, 0b11, 0, 31, 0, 0),
                     0xd65f_03c0u32,
                 ],
@@ -42896,7 +43081,7 @@ mod tests {
                     flags: FlagUpdate::All,
                 },
                 vec![
-                    enc_addsub_ext_regs(0, 0, 0, 0b000, 1, 0, 31, 2),
+                    enc_bitfield_regs(0, 0b10, 31, 7, 2, 0),
                     enc_logical_reg_n(0, 0b11, 0, 31, 0, 0),
                     0xd65f_03c0u32,
                 ],
@@ -43591,7 +43776,7 @@ mod tests {
                     src2: SrcOperand::Imm(0x20),
                     width: OpWidth::W8,
                 },
-                enc_logical_reg_n(0, 0b11, 0, 31, 31, 31),
+                vec![enc_logical_reg_n(0, 0b11, 0, 31, 31, 31)],
             ),
             (
                 OpKind::Test {
@@ -43599,7 +43784,7 @@ mod tests {
                     src2: SrcOperand::Imm(0x05),
                     width: OpWidth::W64,
                 },
-                enc_msr_sysreg(31, 3, 4, 2, 0),
+                vec![enc_msr_sysreg(31, 3, 4, 2, 0)],
             ),
             (
                 OpKind::Test {
@@ -43607,11 +43792,17 @@ mod tests {
                     src2: SrcOperand::Imm(0x8000),
                     width: OpWidth::W16,
                 },
-                enc_addsub_imm_regs(0, 1, 1, 0, 1, 31, 31),
+                // 0x8001 & 0x8000 = 0x8000: negative W16 result (N=1, Z=C=V=0).
+                // Routed through the ccmp fallback (subs wzr,wzr,wzr; ccmp ...)
+                // instead of `cmp wsp, #1`, whose Rn = 31 is WSP.
+                vec![
+                    enc_addsub_shift_regs(0, 1, 1, 0, 0, 31, 31, 31),
+                    0x7a5f_13e8u32,
+                ],
             ),
         ];
 
-        for (kind, expected_word) in cases {
+        for (kind, expected_words) in cases {
             let mut builder = FunctionBuilder::new(FunctionId(0), 0);
             builder.push_op(0, kind);
             builder.set_terminator(Terminator::Return { values: vec![] });
@@ -43622,7 +43813,9 @@ mod tests {
             let code = lowerer.finalize().unwrap();
 
             let mut expected = Vec::new();
-            expected.extend_from_slice(&expected_word.to_le_bytes());
+            for word in expected_words {
+                expected.extend_from_slice(&word.to_le_bytes());
+            }
             expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
             assert_eq!(code, expected);
         }
@@ -43725,60 +43918,49 @@ mod tests {
     }
 
     #[test]
-    fn lowers_test_all_ones_left_imm_extended_as_adds_zero_base() {
+    fn rejects_test_all_ones_left_imm_extended_zero_base() {
+        // #58: a flag-only TST with an all-ones mask and an extended source
+        // would set flags from `SP + extend(x2)` (Rn = 31 is SP in the extended
+        // add) and, with a discard destination, has no scratch to materialize
+        // extend(x2); the lowerer bails to the interpreter instead of using SP.
         let cases = [
-            (
-                OpKind::Test {
-                    src1: VReg::Imm(-1),
-                    src2: SrcOperand::Extended {
-                        reg: x(2),
-                        extend: ExtendOp::Uxtw,
-                        shift: 0,
-                    },
-                    width: OpWidth::W64,
+            OpKind::Test {
+                src1: VReg::Imm(-1),
+                src2: SrcOperand::Extended {
+                    reg: x(2),
+                    extend: ExtendOp::Uxtw,
+                    shift: 0,
                 },
-                enc_addsub_ext_regs(1, 0, 1, 0b010, 0, 31, 31, 2),
-            ),
-            (
-                OpKind::Test {
-                    src1: VReg::Imm(-1),
-                    src2: SrcOperand::Extended {
-                        reg: x(2),
-                        extend: ExtendOp::Sxtw,
-                        shift: 2,
-                    },
-                    width: OpWidth::W64,
+                width: OpWidth::W64,
+            },
+            OpKind::Test {
+                src1: VReg::Imm(-1),
+                src2: SrcOperand::Extended {
+                    reg: x(2),
+                    extend: ExtendOp::Sxtw,
+                    shift: 2,
                 },
-                enc_addsub_ext_regs(1, 0, 1, 0b110, 2, 31, 31, 2),
-            ),
-            (
-                OpKind::Test {
-                    src1: VReg::Imm(0x1_ffff_ffff),
-                    src2: SrcOperand::Extended {
-                        reg: x(2),
-                        extend: ExtendOp::Uxtb,
-                        shift: 1,
-                    },
-                    width: OpWidth::W32,
+                width: OpWidth::W64,
+            },
+            OpKind::Test {
+                src1: VReg::Imm(0x1_ffff_ffff),
+                src2: SrcOperand::Extended {
+                    reg: x(2),
+                    extend: ExtendOp::Uxtb,
+                    shift: 1,
                 },
-                enc_addsub_ext_regs(0, 0, 1, 0b000, 1, 31, 31, 2),
-            ),
+                width: OpWidth::W32,
+            },
         ];
 
-        for (kind, expected_word) in cases {
+        for kind in cases {
             let mut builder = FunctionBuilder::new(FunctionId(0), 0);
             builder.push_op(0, kind);
             builder.set_terminator(Terminator::Return { values: vec![] });
             let func = builder.finish();
 
             let mut lowerer = Aarch64Lowerer::new();
-            lowerer.lower_function(&func).unwrap();
-            let code = lowerer.finalize().unwrap();
-
-            let mut expected = Vec::new();
-            expected.extend_from_slice(&expected_word.to_le_bytes());
-            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
-            assert_eq!(code, expected);
+            assert!(lowerer.lower_function(&func).is_err());
         }
     }
 
