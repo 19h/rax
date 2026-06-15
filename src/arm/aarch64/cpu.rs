@@ -6133,6 +6133,9 @@ impl AArch64Cpu {
                     && (insn >> 20) & 0x3 == 0b10
                     && (insn >> 13) & 0x7 == 0b010 =>
             {
+                if (insn & ((1 << 9) | (1 << 4))) != 0 {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 let opc = (insn >> 10) & 0x7;
                 let esize = 1usize << ((insn >> 22) & 0x3);
                 let n = 16 / esize;
@@ -6179,6 +6182,9 @@ impl AArch64Cpu {
                     && (insn >> 16) & 0x3F == 0b110100
                     && (insn >> 10) & 0x3F == 0b010000 =>
             {
+                if (insn & ((1 << 9) | (1 << 4))) != 0 {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 let esize = 1usize << ((insn >> 22) & 0x3);
                 let n = 16 / esize;
                 let cmask = (1u32 << esize) - 1;
@@ -20844,6 +20850,40 @@ mod tests {
 
         assert_eq!(cpu.step().unwrap(), CpuExit::Undefined(0x2543_4650));
         assert_eq!(cpu.sve_pred(0), 0xaaaa);
+    }
+
+    #[test]
+    fn sve_predicate_permute_rejects_reserved_predicate_bits() {
+        let canonical =
+            (0x05 << 24) | (0b10 << 20) | (2 << 16) | (0b010 << 13) | (1 << 5);
+
+        for bit in [9, 4] {
+            let insn = canonical | (1 << bit);
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 16; // ZEN
+            cpu.set_sve_pred(0, 0xaaaa);
+            cpu.set_sve_pred(1, 0xf0f0);
+            cpu.set_sve_pred(2, 0xcccc);
+
+            assert_eq!(cpu.step().unwrap(), CpuExit::Undefined(insn), "bit {bit}");
+            assert_eq!(cpu.sve_pred(0), 0xaaaa, "bit {bit}: p0 unchanged");
+        }
+    }
+
+    #[test]
+    fn sve_predicate_rev_rejects_reserved_predicate_bits() {
+        let canonical = (0x05 << 24) | (0b110100 << 16) | (0b010000 << 10) | (1 << 5);
+
+        for bit in [9, 4] {
+            let insn = canonical | (1 << bit);
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 16; // ZEN
+            cpu.set_sve_pred(0, 0xaaaa);
+            cpu.set_sve_pred(1, 0xf0f0);
+
+            assert_eq!(cpu.step().unwrap(), CpuExit::Undefined(insn), "bit {bit}");
+            assert_eq!(cpu.sve_pred(0), 0xaaaa, "bit {bit}: p0 unchanged");
+        }
     }
 
     #[test]
