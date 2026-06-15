@@ -4687,7 +4687,11 @@ impl AArch64Cpu {
         let emask = elem_mask_u128(esize);
 
         if op == 1 {
-            // INS (element): Vd[index] = Vn[src_index].
+            // INS (element): Vd[index] = Vn[src_index]. INS is a 128-bit-only
+            // operation; the Q==0 encoding is unallocated and must trap.
+            if q == 0 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
             let src_index = (imm4 >> size) as usize;
             let vn = self.v[rn as usize];
             let elem = (vn >> (src_index * shift)) & emask;
@@ -4736,7 +4740,11 @@ impl AArch64Cpu {
                 self.v[rd as usize] = result;
             }
             0b0011 => {
-                // INS (general): Vd[index] = Xn/Wn.
+                // INS (general): Vd[index] = Xn/Wn. INS is 128-bit-only; the
+                // Q==0 encoding is unallocated and must trap.
+                if q == 0 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
                 let v = (self.get_x(rn) as u128) & emask;
                 let mut vd = self.v[rd as usize];
                 vd &= !(emask << (index * shift));
@@ -21424,6 +21432,29 @@ mod tests {
         for insn in [gather_d(3, false, 1), gather_d(1, true, 1), scatter_d(2, true)] {
             assert_eq!(run(insn), CpuExit::Continue, "encoding {insn:#x} should execute");
         }
+    }
+
+    #[test]
+    fn simd_copy_ins_rejects_q0() {
+        // INS (element/general) is 128-bit-only (Q=1). The Q=0 encodings are
+        // unallocated and must trap; the valid Q=1 forms still execute.
+        let setup = |insn: u32| {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+            cpu
+        };
+        // INS element Q=0 (0x2e0c0420) and INS general Q=0 (0x0e0c1c40) -> trap.
+        assert!(matches!(
+            setup(0x2e0c_0420).step(),
+            Err(ArmError::UndefinedInstruction(0x2e0c_0420))
+        ));
+        assert!(matches!(
+            setup(0x0e0c_1c40).step(),
+            Err(ArmError::UndefinedInstruction(0x0e0c_1c40))
+        ));
+        // Valid Q=1 forms still execute.
+        assert_eq!(setup(0x6e0c_0420).step().unwrap(), CpuExit::Continue);
+        assert_eq!(setup(0x4e0c_1c40).step().unwrap(), CpuExit::Continue);
     }
 
     #[test]
