@@ -9990,6 +9990,9 @@ impl AArch64Cpu {
             let vn = self.sve_p[pn];
             let vm = self.sve_p[pm];
             let sel = (insn >> 23) & 1 == 0 && (insn >> 9) & 1 == 1 && (insn >> 4) & 1 == 1;
+            if sel && s == 1 {
+                return Ok(CpuExit::Undefined(insn));
+            }
             let r = if sel {
                 // SEL Pd = Pg ? Pn : Pm (per bit). Not zeroing, never sets flags.
                 ((vg & vn) | (!vg & vm)) & 0xFFFF
@@ -20826,6 +20829,19 @@ mod tests {
         assert_eq!(h_lane(z0, 0), 0x4600); // 2.0 * 3.0 = 6.0
         assert_eq!(h_lane(z0, 1), 0x4000); // FMULX special case
         assert_eq!(h_lane(z0, 2), 0x3555); // inactive merge
+    }
+
+    #[test]
+    fn sve_predicate_sel_s_form_is_undefined() {
+        let mut cpu = create_cpu_with_insn(0x2543_4650); // invalid SELS P0, P1, P2, P3
+        cpu.sysregs.el1.cpacr |= 0b11 << 16; // ZEN
+        cpu.set_sve_pred(0, 0xaaaa);
+        cpu.set_sve_pred(1, 0xf0f0);
+        cpu.set_sve_pred(2, 0xcccc);
+        cpu.set_sve_pred(3, 0x3333);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Undefined(0x2543_4650));
+        assert_eq!(cpu.sve_pred(0), 0xaaaa);
     }
 
     // -------------------------------------------------------------------------
