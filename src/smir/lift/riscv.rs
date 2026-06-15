@@ -3312,7 +3312,11 @@ impl RiscVLifter {
                 // divisor and don't implement RISC-V's div-by-zero/overflow
                 // results; lifted via a non-trapping sequence below instead.
                 0b100 | 0b101 | 0b110 | 0b111 => {
-                    return self.lift_div_rem(insn, addr, dst, rs1, rs2, width, i64::MIN, ctx);
+                    let ovf_min = match width {
+                        OpWidth::W32 => i32::MIN as i64,
+                        _ => i64::MIN,
+                    };
+                    return self.lift_div_rem(insn, addr, dst, rs1, rs2, width, ovf_min, ctx);
                 }
                 _ => unreachable!(),
             };
@@ -3326,7 +3330,7 @@ impl RiscVLifter {
     /// Lift DIV/DIVU/REM/REMU via a non-trapping sequence implementing RISC-V's
     /// divide-by-zero and signed MIN/-1 overflow results (SMIR's DivS/DivU trap
     /// like x86 #DE, so the divisor is first sanitized and the special results
-    /// are selected afterward). `width` is W64 (64-bit forms only).
+    /// are selected afterward). `width` is the operation width.
     fn lift_div_rem(
         &mut self,
         insn: u32,
@@ -3456,7 +3460,7 @@ impl RiscVLifter {
 
         // Apply the overflow special-case for signed forms.
         let after_ovf = if let Some(ovf) = ovf {
-            let ov_val = mov(ctx, &mut ops, if is_rem { 0 } else { i64::MIN });
+            let ov_val = mov(ctx, &mut ops, if is_rem { 0 } else { ovf_min });
             let t = ctx.alloc_vreg();
             ops.push(mk(
                 ctx,
@@ -5558,6 +5562,48 @@ mod tests {
         );
     }
 
+    fn execute_lifted_gpr_result(
+        mut lifter: RiscVLifter,
+        source: SourceArch,
+        word: u32,
+        rs1: u64,
+        rs2: u64,
+        rd: u8,
+    ) -> u64 {
+        let mut lift_ctx = LiftContext::new(source);
+        let result = lifter
+            .lift_insn(0x1000, &word.to_le_bytes(), &mut lift_ctx)
+            .expect("instruction should lift");
+        let mut ops = result.ops;
+        for (idx, op) in ops.iter_mut().enumerate() {
+            op.id = OpId(idx as u16);
+        }
+        let block = SmirBlock {
+            id: BlockId(0),
+            guest_pc: 0x1000,
+            phis: vec![],
+            ops,
+            terminator: Terminator::Trap {
+                kind: crate::smir::TrapKind::Breakpoint,
+            },
+            exec_count: 0,
+        };
+
+        let mut ctx = crate::smir::SmirContext::new_riscv();
+        ctx.source_arch = source;
+        ctx.pc = 0x1000;
+        ctx.arch_regs.set_pc(0x1000);
+        ctx.write_arch_reg(ArchReg::RiscV(RiscVReg::X(1)), rs1);
+        ctx.write_arch_reg(ArchReg::RiscV(RiscVReg::X(2)), rs2);
+
+        let mut memory = crate::smir::FlatMemory::with_base(0, 0x10000);
+        let interp = crate::smir::SmirInterpreter::new();
+        interp.execute_block(&mut ctx, &mut memory, &block);
+
+        let final_reg = lift_ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::X(rd)));
+        ctx.read_vreg(final_reg)
+    }
+
     #[test]
     fn zb_helpers_reject_illegal_rd_x0_before_noop() {
         let cases = [
@@ -5643,6 +5689,40 @@ mod tests {
                 }
             )
         }));
+    }
+
+    #[test]
+    fn divw_overflow_returns_sign_extended_i32_min() {
+        let divw = r_type(0b0000001, 2, 1, 0b100, 3, 0x3b);
+        let result = execute_lifted_gpr_result(
+            RiscVLifter::rv64gc(),
+            SourceArch::RiscV64,
+            divw,
+            0x8000_0000,
+            0xffff_ffff,
+            3,
+        );
+
+        assert_eq!(result, 0xffff_ffff_8000_0000);
+    }
+
+    #[test]
+    fn rv32_div_overflow_returns_i32_min() {
+        let div = r_type(0b0000001, 2, 1, 0b100, 3, 0x33);
+        let lifter = RiscVLifter::new_rv32(RiscVExtensions {
+            m: true,
+            ..RiscVExtensions::rv64i()
+        });
+        let result = execute_lifted_gpr_result(
+            lifter,
+            SourceArch::RiscV32,
+            div,
+            0x8000_0000,
+            0xffff_ffff,
+            3,
+        );
+
+        assert_eq!(result, 0x8000_0000);
     }
 
     #[test]
