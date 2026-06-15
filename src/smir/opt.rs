@@ -2746,9 +2746,18 @@ impl OpKind {
                 result.push(*amount);
             }
 
-            OpKind::VCmpToQ { src1, src2, .. } => {
+            OpKind::VCmpToQ {
+                dst,
+                src1,
+                src2,
+                accumulate,
+                ..
+            } => {
                 result.push(*src1);
                 result.push(*src2);
+                if accumulate.is_some() {
+                    result.push(*dst);
+                }
             }
 
             OpKind::VBlend {
@@ -3054,7 +3063,9 @@ impl OpKind {
 mod tests {
     use super::*;
     use crate::smir::ops::OpKind;
-    use crate::smir::types::{Condition, FunctionId, OpId};
+    use crate::smir::types::{
+        Condition, FunctionId, OpId, VLaneOp, VecCmpCond, VecElementType,
+    };
 
     fn make_op(id: u16, kind: OpKind) -> SmirOp {
         SmirOp::new(OpId(id), 0x1000, kind)
@@ -3146,6 +3157,28 @@ mod tests {
 
         let removed = dead_code_elimination(&mut block);
         assert_eq!(removed, 0);
+    }
+
+    #[test]
+    fn accumulating_vcmp_to_q_reports_dst_as_source() {
+        let dst = VReg::virt(0);
+        let src1 = VReg::virt(1);
+        let src2 = VReg::virt(2);
+        let make_vcmp = |accumulate| OpKind::VCmpToQ {
+            dst,
+            src1,
+            src2,
+            cond: VecCmpCond::Eq,
+            elem: VecElementType::I8,
+            lanes: 16,
+            accumulate,
+        };
+
+        let overwrite_sources = make_vcmp(None).source_vregs();
+        assert_eq!(overwrite_sources, vec![src1, src2]);
+
+        let accumulate_sources = make_vcmp(Some(VLaneOp::Or)).source_vregs();
+        assert_eq!(accumulate_sources, vec![src1, src2, dst]);
     }
 
     #[test]
