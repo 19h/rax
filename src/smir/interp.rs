@@ -2360,11 +2360,31 @@ impl SmirInterpreter {
                 elem,
                 lanes,
             } => match elem {
+                // VMax is architectural vector FMAX: NaN-PROPAGATING (a lone
+                // quiet NaN wins), distinct from the numeric VFMinMaxNm. Rust's
+                // `a.max(b)` is numeric (drops a lone NaN), so propagate
+                // explicitly. (#159)
                 VecElementType::F32 => {
-                    self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| a.max(b));
+                    self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| {
+                        if a.is_nan() {
+                            a
+                        } else if b.is_nan() {
+                            b
+                        } else {
+                            a.max(b)
+                        }
+                    });
                 }
                 VecElementType::F64 => {
-                    self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| a.max(b));
+                    self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| {
+                        if a.is_nan() {
+                            a
+                        } else if b.is_nan() {
+                            b
+                        } else {
+                            a.max(b)
+                        }
+                    });
                 }
                 _ => {
                     self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| a.max(b));

@@ -3038,14 +3038,15 @@ impl Aarch64Lowerer {
             SimdArithmeticOp::Sub => (0, elem_size | 0b10, 0b11010),
             SimdArithmeticOp::Mul => (1, elem_size, 0b11011),
             SimdArithmeticOp::Div => (1, elem_size, 0b11111),
-            // The SMIR interpreter models vector float min/max with Rust
-            // `a.min(b)`/`a.max(b)`, which ignore a lone quiet NaN and return
-            // the numeric operand — i.e. AArch64 FMINNM/FMAXNM ("numeric")
-            // semantics. Emit the numeric opcode (0b11000) rather than the
-            // NaN-propagating FMIN/FMAX (0b11110) so the JIT matches the
-            // interpreter for guest-controlled NaN inputs.
-            SimdArithmeticOp::Max => (0, elem_size, 0b11000),
-            SimdArithmeticOp::Min { .. } => (0, elem_size | 0b10, 0b11000),
+            // The lifter maps architectural vector FMAX/FMIN (NaN-PROPAGATING)
+            // to VMax/VMin, and FMAXNM/FMINNM (numeric, NaN-quiet) to the
+            // separate VFMinMaxNm op. So VMax/VMin must emit the propagating
+            // opcode 0b11110 (FMAX/FMIN), NOT the numeric 0b11000 (FMAXNM/FMINNM
+            // — which VFMinMaxNm already uses). The interpreter's VMax/VMin are
+            // fixed to propagate NaN to match. (See #159; the earlier #56
+            // change to 0b11000 collapsed the FMAX-vs-FMAXNM distinction.)
+            SimdArithmeticOp::Max => (0, elem_size, 0b11110),
+            SimdArithmeticOp::Min { .. } => (0, elem_size | 0b10, 0b11110),
         };
         self.emit_simd_three_same(rd, rn, rm, q, u, size, opcode);
         Ok(())
@@ -27006,16 +27007,16 @@ mod tests {
     }
 
     #[test]
-    fn lowers_fp_minmax_uses_numeric_nan_semantics() {
-        // #56: the SMIR interpreter models FMin/FMax/VMin/VMax with Rust
-        // `a.min(b)`/`a.max(b)`, which drop a lone quiet NaN and return the
-        // numeric operand — AArch64 FMINNM/FMAXNM ("numeric") semantics. The
-        // lowering previously emitted the NaN-*propagating* FMIN/FMAX opcodes
-        // (scalar 0b0101/0b0100, vector three-same 0b11110), so a guest with a
-        // NaN operand diverged between JIT and interpreter. With exactly one
-        // NaN operand the numeric result is the finite number, so these
-        // differential checks pin the JIT to the interpreter oracle
-        // (`f32::max`/`f64::max`); the old propagating opcodes returned NaN.
+    fn lowers_fp_minmax_nan_semantics() {
+        // The scalar path lifts both FMAX/FMAXNM -> OpKind::FMax (and FMIN/
+        // FMINNM -> FMin), so scalar FMax/FMin lower to the numeric FMAXNM/
+        // FMINNM opcodes to match the interpreter's `a.max(b)`/`a.min(b)`.
+        //
+        // The vector path is DISTINCT: the lifter maps architectural FMAX/FMIN
+        // -> VMax/VMin (NaN-PROPAGATING) and FMAXNM/FMINNM -> VFMinMaxNm
+        // (numeric). So vector VMax/VMin must keep the propagating opcode
+        // (0b11110) and a lone NaN lane WINS, while VFMinMaxNm stays numeric.
+        // (#159 — the earlier #56 change wrongly made VMax/VMin numeric too.)
         let n32 = f32::NAN;
         let n64 = f64::NAN;
 
@@ -27056,10 +27057,14 @@ mod tests {
             (-3.0_f64).min(n64),
         );
 
-        // Vector: a NaN lane must lose to the finite lane (matches interp).
+        // Vector: VMax/VMin PROPAGATE a NaN lane; VFMinMaxNm is numeric.
         fn apply_f32<F: Fn(f32, f32) -> f32>(a: [f32; 4], b: [f32; 4], op: F) -> (u64, u64) {
             simd_pair_from_f32([op(a[0], b[0]), op(a[1], b[1]), op(a[2], b[2]), op(a[3], b[3])])
         }
+        // NaN-propagating max/min (architectural FMAX/FMIN): a lone quiet NaN
+        // wins. Matches hardware FMAX/FMIN for quiet-NaN inputs.
+        let fmax_prop = |a: f32, b: f32| if a.is_nan() { a } else if b.is_nan() { b } else { a.max(b) };
+        let fmin_prop = |a: f32, b: f32| if a.is_nan() { a } else if b.is_nan() { b } else { a.min(b) };
         let a32 = [f32::NAN, -2.25, 8.0, -0.5];
         let b32 = [2.25, f32::NAN, -1.5, 4.0];
         let code = lower_ops(vec![
@@ -27078,6 +27083,15 @@ mod tests {
                 lanes: 4,
                 signed: false,
             },
+            // VFMinMaxNm (architectural FMAXNM): numeric — a lone NaN lane loses.
+            OpKind::VFMinMaxNm {
+                dst: v(7),
+                src1: v(1),
+                src2: v(2),
+                elem: VecElementType::F32,
+                lanes: 4,
+                min: false,
+            },
         ]);
         let (_, simd, _) = run_aarch64_code_with_regs_and_simd(
             &code,
@@ -27087,8 +27101,11 @@ mod tests {
                 (2, simd_pair_from_f32(b32).0, simd_pair_from_f32(b32).1),
             ],
         );
-        assert_eq!(simd[5], apply_f32(a32, b32, f32::max), "vmax f32 numeric NaN");
-        assert_eq!(simd[6], apply_f32(a32, b32, f32::min), "vmin f32 numeric NaN");
+        // VMax/VMin propagate the NaN lanes (lanes 0,1 are NaN in the inputs).
+        assert_eq!(simd[5], apply_f32(a32, b32, fmax_prop), "vmax f32 propagates NaN");
+        assert_eq!(simd[6], apply_f32(a32, b32, fmin_prop), "vmin f32 propagates NaN");
+        // VFMinMaxNm stays numeric: the NaN lane loses to the finite lane.
+        assert_eq!(simd[7], apply_f32(a32, b32, f32::max), "vfminmaxnm f32 numeric NaN");
     }
 
     #[test]
