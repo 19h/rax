@@ -19410,8 +19410,14 @@ fn sve_flogb(esize: usize, bits: u64) -> i64 {
     let exp = (bits >> fracbits) & exp_mask;
     let mant = bits & ((1u64 << fracbits) - 1);
     let int_bits = (esize as u32) * 8;
-    let most_neg = -(1i64 << (int_bits - 1));
-    let most_pos = (1i64 << (int_bits - 1)) - 1;
+    // For 64-bit elements the saturation bounds are i64::MIN / i64::MAX;
+    // computing them as `-(1 << 63)` / `(1 << 63) - 1` would overflow i64 and
+    // panic in checked builds, so derive them without overflowing.
+    let (most_neg, most_pos) = if int_bits >= 64 {
+        (i64::MIN, i64::MAX)
+    } else {
+        (-(1i64 << (int_bits - 1)), (1i64 << (int_bits - 1)) - 1)
+    };
     if exp == exp_mask {
         // mant==0 is +/-infinity (most-positive); otherwise NaN (most-negative).
         return if mant == 0 { most_pos } else { most_neg };
@@ -20956,6 +20962,25 @@ mod tests {
 
         assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
         assert_eq!(cpu.get_simd_reg(0), Some((src_lo, src_hi)));
+    }
+
+    #[test]
+    fn test_sve2_flogb_double_no_panic() {
+        // FLOGB Z0.D, P0/M, Z1.D. For 64-bit elements the saturation bounds were
+        // computed as `-(1<<63)` / `(1<<63)-1`, which overflow i64 and panic in
+        // checked builds for *any* active lane. A NaN input drives the
+        // most-negative result path, so the lane must come out as i64::MIN.
+        let mut cpu = create_cpu_with_insn(0x651e_a020);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_sve_pred(0, 0xffff); // all lanes active
+        let nan = 0x7ff8_0000_0000_0000u64; // quiet NaN (double)
+        cpu.set_simd_reg(1, nan, nan).unwrap();
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(
+            cpu.get_simd_reg(0),
+            Some((i64::MIN as u64, i64::MIN as u64))
+        );
     }
 
     #[test]
