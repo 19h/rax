@@ -5394,6 +5394,9 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                     (Mnemonic::VRECPE, true) if size == 0b01 => {
                         let input = vcvt_f32_f16_bits(elem as u16).to_bits();
                         let result = f32::from_bits(Self::neon_fp_recip_estimate_f32(input));
+                        // The estimate uses StandardFPSCRValue and must not
+                        // raise cumulative exceptions; discard the narrowing's
+                        // flag side effects via a throwaway FPSCR.
                         let mut standard_fpscr = Fpscr::default();
                         u64::from(vcvt_f16_bits_f32(result, &mut standard_fpscr))
                     }

@@ -5923,6 +5923,40 @@ fn neon_compare_zero_writes_integer_and_fp_lane_masks() {
 }
 
 #[test]
+fn neon_fp16_recip_estimate_does_not_mutate_fpscr() {
+    // VRECPE/VRSQRTE are computed with StandardFPSCRValue and must not raise
+    // cumulative exceptions. The FP16 forms narrow the f32 estimate back to
+    // half; that narrowing must not leak its flags into the guest FPSCR.
+    let mut cpu = Armv7Cpu::new();
+    let mut mem = FlatMemory::new(0x1000, 0);
+
+    // 0xF3B70501 = VRECPE.F16 d0, d1 ; 0xF3B70581 = VRSQRTE.F16 d0, d1.
+    for insn in [0xF3B7_0501u32, 0xF3B7_0581] {
+        assert_eq!(
+            Aarch32Decoder::decode(insn).unwrap().mnemonic,
+            if insn == 0xF3B7_0501 {
+                Mnemonic::VRECPE
+            } else {
+                Mnemonic::VRSQRTE
+            }
+        );
+        // Lane 0 = half qNaN (0x7E00); the estimate stays NaN and the f16
+        // narrowing would otherwise set IOC. Start with all flags clear.
+        cpu.vfp.write_d_bits(1, 0x0000_0000_0000_7E00);
+        cpu.vfp.fpscr = rax::arm::vfp::Fpscr::from_bits(0);
+        assert!(matches!(exec_one(&mut cpu, &mut mem, insn), ExecResult::Continue));
+        assert!(
+            !cpu.vfp.fpscr.ioc()
+                && !cpu.vfp.fpscr.ofc()
+                && !cpu.vfp.fpscr.ufc()
+                && !cpu.vfp.fpscr.ixc(),
+            "{insn:#x} mutated FPSCR cumulative flags: {:#x}",
+            cpu.vfp.fpscr.bits()
+        );
+    }
+}
+
+#[test]
 fn neon_recip_estimate_handles_unsigned_f32_and_f16_forms() {
     let mut cpu = Armv7Cpu::new();
     let mut mem = FlatMemory::new(0x1000, 0);
