@@ -11958,12 +11958,20 @@ impl AArch64Cpu {
         // Interleaves the pairwise results of Zdn and Zm (even = Zdn pair, odd =
         // Zm pair), merged into Zdn under Pg. opc=bits[18:16].
         if (insn >> 24) & 0xFF == 0b01100100 && (insn >> 19) & 0x7 == 0b010 {
+            // FP pairwise (FADDP/FMAXNMP/FMINNMP/FMAXP/FMINP) is only defined for
+            // H/S/D elements, so size==00 is reserved, and only opc values 000,
+            // 100, 101, 110, 111 are allocated. Reject the reserved size and the
+            // reserved opc values (001/010/011) instead of executing them.
+            if (insn >> 22) & 0x3 == 0b00 {
+                return Ok(CpuExit::Undefined(insn));
+            }
             let kind = match (insn >> 16) & 0x7 {
                 0b000 => FpKind::Add,
                 0b100 => FpKind::MaxNm,
                 0b101 => FpKind::MinNm,
                 0b110 => FpKind::Max,
-                _ => FpKind::Min,
+                0b111 => FpKind::Min,
+                _ => return Ok(CpuExit::Undefined(insn)),
             };
             let pred = self.sve_p[pg];
             let elements = 16 / esize;
@@ -20970,6 +20978,33 @@ mod tests {
 
         assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
         assert_eq!(cpu.get_simd_reg(0), Some((src_lo, src_hi)));
+    }
+
+    #[test]
+    fn sve_fp_pairwise_rejects_reserved_encodings() {
+        // FP pairwise (FADDP/.../FMINP) is defined only for H/S/D elements and
+        // opc in {000,100,101,110,111}. Reserved size==00 and reserved opc
+        // values (001/010/011) must trap as UNDEFINED, not execute as FMINP.
+        let setup = |insn: u32| {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+            cpu.set_sve_pred(0, 0xffff);
+            cpu
+        };
+
+        // Reserved size==00 (byte elements): 0x64108040.
+        assert_eq!(
+            setup(0x6410_8040).step().unwrap(),
+            CpuExit::Undefined(0x6410_8040)
+        );
+        // Reserved opc==001 (S elements): 0x64918040.
+        assert_eq!(
+            setup(0x6491_8040).step().unwrap(),
+            CpuExit::Undefined(0x6491_8040)
+        );
+
+        // Valid FADDP z0.s, p0/m, z0.s, z2.s (opc 000, S) still executes.
+        assert_eq!(setup(0x6490_8040).step().unwrap(), CpuExit::Continue);
     }
 
     #[test]
