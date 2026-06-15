@@ -9968,6 +9968,12 @@ impl X86_64Lowerer {
         // Initialize register allocator for this block
         self.regalloc.begin_block(block);
 
+        // Validate before peepholes adjust `end_idx`; the return-shape fold can
+        // otherwise hide a guest RSP write before the normal per-op guard sees it.
+        for op in &block.ops {
+            Self::ensure_native_stack_dests_safe(op)?;
+        }
+
         let mut end_idx = block.ops.len();
         if matches!(block.terminator, Terminator::Return { .. }) && block.ops.len() >= 2 {
             if let (
@@ -10029,7 +10035,6 @@ impl X86_64Lowerer {
         let mut idx = 0;
         while idx < end_idx {
             self.regalloc.set_current_idx(idx);
-            Self::ensure_native_stack_dests_safe(&block.ops[idx])?;
             // The memory-fusion peepholes emit direct host-pointer accesses,
             // which are invalid under the JIT's MMU helper-call mode. In that
             // mode each Load/Store is lowered individually via the helper path
@@ -10385,6 +10390,44 @@ mod tests {
                 "{name} should reject {expected}, got {err:?}"
             );
         }
+    }
+
+    #[test]
+    fn rejects_guest_rsp_write_hidden_by_return_shape_fold() {
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let tmp = VReg::virt(0);
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Load {
+                dst: tmp,
+                addr: Address::Direct(rsp),
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.push_op(
+            0x1004,
+            OpKind::Add {
+                dst: rsp,
+                src1: rsp,
+                src2: SrcOperand::Imm(8),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = X86_64Lowerer::new();
+        let err = lowerer
+            .lower_function(&func)
+            .expect_err("return-shape fold must not hide guest RSP writes");
+        assert!(
+            matches!(err, LowerError::InvalidRegister(ref reg) if reg.contains("Rsp")),
+            "return-shape fold must reject guest RSP writes, got {err:?}"
+        );
     }
 
     #[test]
