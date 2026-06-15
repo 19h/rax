@@ -348,7 +348,10 @@ impl Hpet {
             return false;
         }
 
-        let now = self.main_counter();
+        self.tick_at_counter(self.main_counter())
+    }
+
+    fn tick_at_counter(&mut self, now: u64) -> bool {
         let prev = self.last_counter;
         self.last_counter = now;
 
@@ -365,19 +368,7 @@ impl Hpet {
                 self.int_status |= 1 << idx;
 
                 if timer.is_periodic() && timer.period != 0 {
-                    // Re-arm: advance the comparator by whole periods until it
-                    // is strictly ahead of the current counter.
-                    let mut next = timer.comparator;
-                    loop {
-                        next = next.wrapping_add(timer.period);
-                        if crossed(prev, now, next) {
-                            // Multiple periods elapsed in one tick window; keep
-                            // advancing but we only latch a single pending bit.
-                            continue;
-                        }
-                        break;
-                    }
-                    timer.comparator = next;
+                    timer.comparator = periodic_rearm_after(timer.comparator, timer.period, now);
                 }
             }
         }
@@ -402,6 +393,13 @@ impl Hpet {
             self.int_status &= !(1 << timer);
         }
     }
+}
+
+fn periodic_rearm_after(comparator: u64, period: u64, now: u64) -> u64 {
+    debug_assert_ne!(period, 0);
+    let elapsed = now.wrapping_sub(comparator) as u128;
+    let periods = elapsed / period as u128 + 1;
+    comparator.wrapping_add((periods * period as u128) as u64)
 }
 
 /// Returns true if `target` lies in the half-open crossing window such that a
@@ -691,6 +689,28 @@ mod tests {
         sleep(Duration::from_millis(2));
         assert!(d.tick());
         assert_eq!(d.pending_timers() & 0b10, 0b10);
+    }
+
+    #[test]
+    fn test_periodic_rearm_after_large_elapsed_window() {
+        assert_eq!(periodic_rearm_after(1, 1, 10_000_000), 10_000_001);
+        assert_eq!(periodic_rearm_after(100, 100, 10_050), 10_100);
+        assert_eq!(periodic_rearm_after(u64::MAX - 2, 5, 10), 12);
+    }
+
+    #[test]
+    fn test_periodic_one_tick_gap_rearms_without_iterating_missed_ticks() {
+        let mut hpet = Hpet::new();
+        hpet.running = true;
+        hpet.last_counter = 0;
+        hpet.timers[0].config |= TN_INT_ENB_CNF | TN_TYPE_CNF;
+        hpet.timers[0].comparator = 1;
+        hpet.timers[0].period = 1;
+
+        assert!(hpet.tick_at_counter(10_000_000));
+        assert_eq!(hpet.pending_timers() & 1, 1);
+        assert_eq!(hpet.timers[0].comparator, 10_000_001);
+        assert_eq!(hpet.last_counter, 10_000_000);
     }
 
     // ---- Timer config capability bits ---------------------------------------
