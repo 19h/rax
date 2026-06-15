@@ -40,6 +40,15 @@ const SYSCON_BASE: u32 = 0x7E00_F000;
 const UART0_BASE: u32 = 0x7F00_5000;
 const PWM_BASE: u32 = 0x7F00_6000;
 
+/// Synthetic power-off port for bare-metal guests (NOT real S3C64xx hardware).
+/// A 32-bit store of [`POWEROFF_MAGIC`] to this physical address cleanly
+/// terminates the machine, mirroring x86 ACPI port `0x604` and AArch64 PSCI
+/// `SYSTEM_OFF`. It lives in an otherwise-unused open-bus window one page below
+/// SYSCON, which the S3C64xx SoC and 32-bit Linux never touch, so real kernel
+/// boots are unaffected — only a guest that deliberately writes the magic exits.
+const POWEROFF_BASE: u32 = 0x7E00_E000;
+const POWEROFF_MAGIC: u32 = 0xDEAD_0FF0;
+
 /// VIC line assignments (S3C64xx interrupt map).
 const VIC0_TIMER_LINES: [u32; 5] = [23, 24, 25, 27, 28];
 const VIC1_UART0_LINE: u32 = 5;
@@ -74,6 +83,9 @@ struct BridgeInner {
     pwm: S3cPwmTimer,
     syscon: S3cSyscon,
     uart: Arc<OnceLock<Arc<Mutex<S3cUart>>>>,
+    /// Set when the guest stores [`POWEROFF_MAGIC`] to [`POWEROFF_BASE`];
+    /// surfaced by [`Armv6Vcpu::run`] as [`VcpuExit::Shutdown`].
+    poweroff: bool,
     /// Debug: user-mode write watchpoint (RAX_WATCH_WRITE=<hex VA>).
     watch_va: Option<u32>,
     watch_hit: bool,
@@ -164,6 +176,12 @@ impl BridgeInner {
             }
             _ if (PWM_BASE..PWM_BASE + 0x1000).contains(&pa) => {
                 self.pwm.write(pa - PWM_BASE, value);
+                true
+            }
+            _ if (POWEROFF_BASE..POWEROFF_BASE + 0x1000).contains(&pa) => {
+                if value == POWEROFF_MAGIC {
+                    self.poweroff = true;
+                }
                 true
             }
             _ if (S3C_RAM_BASE..S3C_RAM_BASE + S3C_RAM_SIZE).contains(&pa) => false,
@@ -315,6 +333,7 @@ impl Armv6Vcpu {
                 watch_va: std::env::var("RAX_WATCH_WRITE")
                     .ok()
                     .and_then(|v| u32::from_str_radix(v.trim_start_matches("0x"), 16).ok()),
+                poweroff: false,
                 watch_hit: false,
                 watch_pa: 0,
                 watch_access: 0,
@@ -731,6 +750,10 @@ impl VCpu for Armv6Vcpu {
             return Ok(VcpuExit::Shutdown);
         }
         for _ in 0..BATCH {
+            if self.bridge.inner.borrow().poweroff {
+                self.shutdown = true;
+                return Ok(VcpuExit::Shutdown);
+            }
             match self.step() {
                 StepOutcome::Progress => {}
                 StepOutcome::Idle => {

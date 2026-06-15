@@ -1,4 +1,23 @@
-# Default target for bare-metal builds
+# Bare-metal multi-architecture microkernel build configuration.
+#
+# All three bare-metal targets are built from source with `build-std` so that
+# the compiler-builtins memory intrinsics (memcpy/memset/memcmp/bcmp) and the
+# 64/128-bit arithmetic helpers are always linked in — the expanded test suite
+# uses slices, large integers and division that emit calls to them on every
+# arch (notably 32-bit ARMv6).
+#
+# Per-arch builds (see ./build.sh and the top-level Makefile):
+#   x86_64:  cargo +nightly build --release --target x86_64-unknown-none
+#   aarch64: cargo +nightly build --release --target aarch64-unknown-none-softfloat
+#   armv6:   cargo +nightly build --release --target ./armv6-rax-none-eabi.json \
+#               -Z unstable-options -Z json-target-spec
+#   usermode (Intel SDE): cargo +nightly build --release --features usermode \
+#               --target x86_64-unknown-linux-gnu
+
+# Default target so a bare `cargo build` still produces the x86_64 kernel.
+# NOTE: build-std is passed on the command line by build.sh (per bare-metal
+# target) rather than configured here, so the hosted `usermode` build keeps using
+# the prebuilt std.
 [build]
 target = "x86_64-unknown-none"
 
@@ -6,8 +25,7 @@ target = "x86_64-unknown-none"
 linker = "rust-lld"
 rustflags = ["-C", "relocation-model=static"]
 
-# Build commands:
-# Bare-metal:  cargo build --release -Z build-std=core -Z build-std-features=compiler-builtins-mem
-# Usermode:    cargo build --release --features usermode --target x86_64-unknown-linux-gnu
+# Build commands for reference:
+# Usermode:  cargo build --release --features usermode --target x86_64-unknown-linux-gnu
 [target.x86_64-unknown-linux-gnu]
 linker = "x86_64-linux-gnu-gcc"

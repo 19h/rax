@@ -17,18 +17,18 @@ fn main() {
     println!("  RAX Emulator - Microkernel Example Runner");
     println!("==============================================\n");
 
-    // Load the microkernel binary
-    let bin_path = concat!(env!("CARGO_MANIFEST_DIR"), "/microkernel/microkernel.bin");
+    // Load the microkernel binary (x86_64 flat image built by microkernel/build.sh)
+    let bin_path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/microkernel/microkernel-x86_64.bin"
+    );
 
     let code = match std::fs::read(bin_path) {
         Ok(data) => data,
         Err(e) => {
             eprintln!("Failed to read microkernel binary: {}", e);
             eprintln!("Make sure to build it first:");
-            eprintln!("  cd microkernel && cargo +nightly build --release");
-            eprintln!(
-                "  llvm-objcopy -O binary target/x86_64-unknown-none/release/microkernel microkernel.bin"
-            );
+            eprintln!("  ./microkernel/build.sh x86_64   (or: make microkernel-x86_64)");
             std::process::exit(1);
         }
     };

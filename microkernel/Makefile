@@ -1,41 +1,44 @@
-# Microkernel Build System
+# Multi-architecture bare-metal microkernel.
 #
-# Targets:
-#   make           - Build bare-metal version for rax emulator
-#   make usermode  - Build usermode version for Intel SDE
-#   make all       - Build both versions
-#   make test-sde  - Run usermode version under Intel SDE (requires SDE installed)
-#   make test-rax  - Run bare-metal version under rax emulator
-#   make clean     - Clean build artifacts
+#   make            build all three bare-metal kernels (x86_64, aarch64, armv6)
+#   make x86_64     build just the x86_64 kernel  -> microkernel-x86_64.bin
+#   make aarch64    build just the aarch64 kernel -> microkernel-aarch64.bin
+#   make armv6      build just the armv6 kernel   -> microkernel-armv6.bin
+#   make run        build + boot all three under rax and assert RESULT PASS
+#   make usermode   build the x86_64 usermode binary (for Intel SDE)
+#   make test-sde   run the usermode binary under Intel SDE
+#   make clean      remove build artifacts
+#
+# Bare-metal builds need a nightly toolchain with the rust-src component (used by
+# build-std) and llvm-objcopy on PATH.
 
-.PHONY: all baremetal usermode test-sde test-rax clean
+.PHONY: all x86_64 aarch64 armv6 run usermode test-sde test-native clean
 
-OBJCOPY ?= $(shell command -v objcopy 2>/dev/null || command -v llvm-objcopy 2>/dev/null)
-ifeq ($(OBJCOPY),)
-$(error objcopy not found; install binutils or llvm-objcopy)
-endif
+all:
+	./build.sh all
 
-# Default: build bare-metal
-all: baremetal usermode
+x86_64:
+	./build.sh x86_64
+aarch64:
+	./build.sh aarch64
+armv6:
+	./build.sh armv6
 
-baremetal: microkernel.bin
+# Boot all three under rax and check the result sentinels + cross-arch checksum.
+run:
+	./run-all.sh
 
+# ---------------------------------------------------------------------------
+# Usermode (Intel SDE) build: the same suite as a hosted x86_64 Linux binary.
+# ---------------------------------------------------------------------------
 usermode: target/x86_64-unknown-linux-gnu/release/microkernel
 
-microkernel.bin: target/x86_64-unknown-none/release/microkernel
-	$(OBJCOPY) -O binary $< $@
+target/x86_64-unknown-linux-gnu/release/microkernel: src/*.rs Cargo.toml
+	cargo +nightly build --release --features usermode --target x86_64-unknown-linux-gnu
 
-target/x86_64-unknown-none/release/microkernel: src/main.rs Cargo.toml linker.ld
-	cargo build --release -Z build-std=core -Z build-std-features=compiler-builtins-mem
-
-target/x86_64-unknown-linux-gnu/release/microkernel: src/main.rs Cargo.toml
-	cargo build --release --features usermode --target x86_64-unknown-linux-gnu
-
-# Run usermode version directly (for quick testing)
 test-native: usermode
 	./target/x86_64-unknown-linux-gnu/release/microkernel
 
-# Run under Intel SDE (requires SDE_PATH environment variable or sde64 in PATH)
 test-sde: usermode
 	@if command -v sde64 >/dev/null 2>&1; then \
 		sde64 -- ./target/x86_64-unknown-linux-gnu/release/microkernel; \
@@ -46,10 +49,6 @@ test-sde: usermode
 		exit 1; \
 	fi
 
-# Run under rax emulator
-test-rax: baremetal
-	cd .. && cargo run --release --bin rax -- --backend emulator --vcpus 1 --memory 256M --kernel microkernel/microkernel.bin
-
 clean:
 	cargo clean
-	rm -f microkernel.bin
+	rm -f microkernel-x86_64.bin microkernel-aarch64.bin microkernel-armv6.bin

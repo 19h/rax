@@ -1,0 +1,58 @@
+# Multi-architecture microkernel gate.
+#
+# Builds the bare-metal microkernel test suite for x86_64, AArch64 and ARMv6 and
+# boots each one under the rax emulator, asserting every in-guest check passes
+# (the `RAX-MK: RESULT PASS` sentinel) and that the n-body checksum is identical
+# across architectures (cross-arch integer determinism).
+#
+# Runs on EVERY push (any branch) and on pull requests, so no change lands
+# without all three architectures building and executing green.
+name: Microkernel
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: microkernel-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  microkernel:
+    name: build + boot (x86_64 · aarch64 · armv6)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      # Nightly + rust-src (build-std) and llvm-tools (llvm-objcopy for the flat
+      # binaries). The two built-in bare-metal targets are installed for speed;
+      # the ARMv6 target is a custom JSON spec built purely via build-std.
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: nightly
+          components: rust-src, llvm-tools-preview
+          targets: x86_64-unknown-none, aarch64-unknown-none-softfloat
+          cache-key: microkernel
+
+      - name: Locate llvm-objcopy
+        shell: bash
+        run: |
+          OBJCOPY="$(find "$(rustc +nightly --print sysroot)" -name 'llvm-objcopy' | head -1)"
+          echo "Using OBJCOPY=$OBJCOPY"
+          echo "OBJCOPY=$OBJCOPY" >> "$GITHUB_ENV"
+
+      - name: Build microkernel for all three architectures
+        run: ./microkernel/build.sh all
+
+      - name: Boot each kernel under rax and assert RESULT PASS + cross-arch determinism
+        env:
+          MICROKERNEL_REQUIRE: "1"
+        run: cargo test --no-default-features --test microkernel_multiarch -- --nocapture

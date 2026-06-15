@@ -19,7 +19,7 @@ LINUX_DIR     := linux/kernel/linux
 LINUX_VMLINUX := linux/vmlinux
 NPROC         := $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 
-.PHONY: all build build-debug pgo bench test tests test-quick microkernel run-microkernel linux run-linux clean clean-linux help
+.PHONY: all build build-debug pgo bench test tests test-quick microkernel microkernel-x86_64 microkernel-aarch64 microkernel-armv6 test-microkernel run-microkernel linux run-linux clean clean-linux help
 
 # Default target
 all: build
@@ -55,16 +55,26 @@ tests: test
 test-quick:
 	cargo test --release
 
-# Build the bare-metal microkernel
-microkernel: microkernel/microkernel.bin
+# Build the bare-metal microkernel for all three architectures
+# (x86_64, aarch64, armv6). Requires a nightly toolchain with rust-src.
+microkernel:
+	./microkernel/build.sh all
 
-microkernel/microkernel.bin: microkernel/src/main.rs microkernel/Cargo.toml microkernel/linker.ld
-	cd microkernel && cargo +nightly build --release
-	llvm-objcopy -O binary microkernel/target/x86_64-unknown-none/release/microkernel microkernel/microkernel.bin
-	@echo "Built microkernel/microkernel.bin ($$(stat -c%s microkernel/microkernel.bin 2>/dev/null || stat -f%z microkernel/microkernel.bin) bytes)"
+microkernel-x86_64:
+	./microkernel/build.sh x86_64
+microkernel-aarch64:
+	./microkernel/build.sh aarch64
+microkernel-armv6:
+	./microkernel/build.sh armv6
 
-# Build and run the microkernel in the emulator
-run-microkernel: microkernel
+# Build + boot the microkernel on x86_64, aarch64 and armv6 under rax and assert
+# every in-guest check passes and the n-body checksum matches across arches.
+# This is exactly the gate the `microkernel` CI workflow runs on every push.
+test-microkernel:
+	./microkernel/run-all.sh
+
+# Build and run the x86_64 microkernel in the emulator (interactive demo)
+run-microkernel: microkernel-x86_64
 	cargo run --release --no-default-features --example run_microkernel
 
 # Fetch Linux kernel source

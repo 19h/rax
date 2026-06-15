@@ -1,0 +1,26 @@
+{
+  "abi": "eabi",
+  "arch": "arm",
+  "c-enum-min-bits": 8,
+  "cpu": "arm1176jzf-s",
+  "crt-objects-fallback": "false",
+  "data-layout": "e-m:e-p:32:32-Fi8-i64:64-v128:64:128-a:0:32-n32-S64",
+  "emit-debug-gdb-scripts": false,
+  "features": "+soft-float,-neon,+strict-align,+v6",
+  "frame-pointer": "always",
+  "has-thumb-interworking": true,
+  "linker": "rust-lld",
+  "linker-flavor": "gnu-lld",
+  "llvm-floatabi": "soft",
+  "llvm-target": "armv6-none-eabi",
+  "max-atomic-width": 32,
+  "metadata": {
+    "description": "Bare Armv7-A",
+    "host_tools": false,
+    "std": false,
+    "tier": 2
+  },
+  "panic-strategy": "abort",
+  "relocation-model": "static",
+  "target-pointer-width": 32
+}

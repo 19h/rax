@@ -14,6 +14,7 @@ build sweep over many more ISAs via cross-compilation.
 | [`differential.yml`](differential.yml) | nightly, dispatch | Installs the **QEMU/llvm-mc/clang oracles** so the differential harnesses actually diff (they skip otherwise). One job per guest arch. |
 | [`kvm.yml`](kvm.yml) | push (kvm paths), nightly | Enables `/dev/kvm` and exercises the **KVM backend** + a release build with default features. |
 | [`sanitizers.yml`](sanitizers.yml) | nightly, dispatch | **ASan/UBSan** on a core slice + a **stable/beta/nightly** toolchain sweep. |
+| [`microkernel.yml`](microkernel.yml) | every push, PR | Builds the **bare-metal microkernel test suite** for **x86_64, AArch64 and ARMv6** (nightly + build-std; custom ARMv6 target) and **boots each under the emulator**, asserting `RESULT PASS` and an identical cross-arch n-body checksum. |
 
 ## Platform coverage
 
