@@ -15773,6 +15773,41 @@ struct SysRegInfo {
     write_width: OpWidth,
 }
 
+fn is_aarch64_fp_trampoline_vreg(vreg: &VReg) -> bool {
+    matches!(
+        vreg,
+        VReg::Arch(ArchReg::Arm(ArmReg::V(_) | ArmReg::Fpcr | ArmReg::Fpsr))
+    )
+}
+
+fn is_aarch64_fp_sysreg(reg: u32) -> bool {
+    matches!(reg, SYSREG_FPCR | SYSREG_FPSR)
+}
+
+/// Return true when a native AArch64 region needs the FP/SIMD trampoline.
+///
+/// Besides V-register ops, direct FPCR/FPSR sysreg access must use this path so
+/// guest FP state is loaded from/stored to `Aarch64GuestRegs` and host FPCR/FPSR
+/// are restored before returning to Rust.
+pub fn uses_aarch64_fp_trampoline(func: &SmirFunction) -> bool {
+    func.blocks.iter().flat_map(|b| &b.ops).any(|op| {
+        let touches_raw_fp_sysreg = match &op.kind {
+            OpKind::ReadSysReg { reg, .. } | OpKind::WriteSysReg { reg, .. } => {
+                is_aarch64_fp_sysreg(*reg)
+            }
+            _ => false,
+        };
+
+        touches_raw_fp_sysreg
+            || op.kind.dests().iter().any(is_aarch64_fp_trampoline_vreg)
+            || op
+                .kind
+                .source_vregs()
+                .iter()
+                .any(is_aarch64_fp_trampoline_vreg)
+    })
+}
+
 impl Default for Aarch64Lowerer {
     fn default() -> Self {
         Self::new()
@@ -15821,7 +15856,7 @@ mod tests {
     use crate::arm::memory::FlatMemory;
     use crate::riscv::float::{F16, F32, RoundingMode, fcvt_round, sf_add, sf_div, sf_mul, sf_sub};
     use crate::smir::flags::{FlagSet, FlagUpdate};
-    use crate::smir::ir::{FunctionBuilder, Terminator, TrapKind};
+    use crate::smir::ir::{FunctionBuilder, SmirFunction, Terminator, TrapKind};
     use crate::smir::types::{DispSize, FunctionId, SrcOperand, X86Reg};
 
     fn x(n: u8) -> VReg {
@@ -15885,6 +15920,15 @@ mod tests {
         let mut lowerer = Aarch64Lowerer::new();
         lowerer.lower_function(&func).unwrap();
         lowerer.finalize().unwrap()
+    }
+
+    fn func_with_ops(kinds: Vec<OpKind>) -> SmirFunction {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        for kind in kinds {
+            builder.push_op(0, kind);
+        }
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        builder.finish()
     }
 
     fn code_words(code: &[u8]) -> Vec<u32> {
@@ -46863,6 +46907,65 @@ mod tests {
         assert_eq!(out_nzcv, 0b0101);
         assert_eq!(out[16], 0x1616_1616_1616_1616);
         assert_eq!(sp, 0x8000);
+    }
+
+    #[test]
+    fn fp_trampoline_detection_includes_named_fp_state_regs() {
+        let fpcr = VReg::Arch(ArchReg::Arm(ArmReg::Fpcr));
+        let fpsr = VReg::Arch(ArchReg::Arm(ArmReg::Fpsr));
+        let nzcv = VReg::Arch(ArchReg::Arm(ArmReg::Nzcv));
+
+        let read_fpcr = func_with_ops(vec![OpKind::Mov {
+            dst: x(0),
+            src: SrcOperand::Reg(fpcr),
+            width: OpWidth::W64,
+        }]);
+        assert!(uses_aarch64_fp_trampoline(&read_fpcr));
+
+        let write_fpsr = func_with_ops(vec![OpKind::Mov {
+            dst: fpsr,
+            src: SrcOperand::Reg(x(1)),
+            width: OpWidth::W64,
+        }]);
+        assert!(uses_aarch64_fp_trampoline(&write_fpsr));
+
+        let read_nzcv = func_with_ops(vec![OpKind::Mov {
+            dst: x(0),
+            src: SrcOperand::Reg(nzcv),
+            width: OpWidth::W64,
+        }]);
+        assert!(!uses_aarch64_fp_trampoline(&read_nzcv));
+    }
+
+    #[test]
+    fn fp_trampoline_detection_includes_raw_fp_state_sysregs() {
+        let read_fpcr = func_with_ops(vec![OpKind::ReadSysReg {
+            dst: x(0),
+            reg: SYSREG_FPCR,
+        }]);
+        assert!(uses_aarch64_fp_trampoline(&read_fpcr));
+
+        let write_fpsr = func_with_ops(vec![OpKind::WriteSysReg {
+            reg: SYSREG_FPSR,
+            src: x(1),
+        }]);
+        assert!(uses_aarch64_fp_trampoline(&write_fpsr));
+
+        let read_nzcv = func_with_ops(vec![OpKind::ReadSysReg {
+            dst: x(0),
+            reg: SYSREG_NZCV,
+        }]);
+        assert!(!uses_aarch64_fp_trampoline(&read_nzcv));
+    }
+
+    #[test]
+    fn fp_trampoline_detection_still_includes_vector_regs() {
+        let func = func_with_ops(vec![OpKind::Mov {
+            dst: v(0),
+            src: SrcOperand::Reg(v(1)),
+            width: OpWidth::W128,
+        }]);
+        assert!(uses_aarch64_fp_trampoline(&func));
     }
 
     #[test]

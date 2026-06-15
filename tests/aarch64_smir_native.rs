@@ -18,7 +18,7 @@ use rax::smir::ir::{FunctionBuilder, Terminator};
 use rax::smir::lift::aarch64::Aarch64Lifter;
 use rax::smir::lift::{LiftContext, SmirLifter};
 use rax::smir::lower::SmirLowerer;
-use rax::smir::lower::aarch64::Aarch64Lowerer;
+use rax::smir::lower::aarch64::{Aarch64Lowerer, uses_aarch64_fp_trampoline};
 use rax::smir::lower::runtime::{Aarch64GuestRegs, ExecMem};
 use rax::smir::ops::OpKind;
 use rax::smir::types::{
@@ -57,12 +57,7 @@ fn jit_run(insns: &[u32], regs: &mut Aarch64GuestRegs) -> Result<(), String> {
         .finalize()
         .map_err(|e| format!("finalize failed: {e:?}"))?;
     let mem = ExecMem::new(&code).map_err(|e| format!("exec map failed: {e:?}"))?;
-    // Pick the FP trampoline iff any op touches a V register.
-    let touches_v = |v: &VReg| matches!(v, VReg::Arch(ArchReg::Arm(ArmReg::V(_))));
-    let uses_fp = func.blocks.iter().flat_map(|b| &b.ops).any(|op| {
-        op.kind.dests().iter().any(touches_v) || op.kind.source_vregs().iter().any(touches_v)
-    });
-    if uses_fp {
+    if uses_aarch64_fp_trampoline(&func) {
         mem.run_aarch64_identity_fp(result.entry_offset, regs);
     } else {
         mem.run_aarch64_identity(result.entry_offset, regs);
@@ -153,6 +148,18 @@ fn flags_subs_then_cset() {
     });
     assert_eq!(ne.x[0], 2);
     assert_eq!(ne.x[3], 0, "Z clear => cset eq = 0");
+}
+
+#[test]
+fn fpcr_sysreg_only_block_uses_fp_trampoline() {
+    // d51b4401  msr fpcr, x1
+    // d53b4400  mrs x0, fpcr
+    let r = run(&[0xd51b_4401, 0xd53b_4400], |g| {
+        g.x[1] = 0x00c0_0000;
+        g.fpcr = 0;
+    });
+    assert_eq!(r.x[0] & 0xffff_ffff, 0x00c0_0000);
+    assert_eq!(r.fpcr & 0xffff_ffff, 0x00c0_0000);
 }
 
 #[test]

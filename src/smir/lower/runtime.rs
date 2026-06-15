@@ -501,6 +501,8 @@ core::arch::global_asm!(
     "str x29, [x28, #232]",
     "mrs x9, nzcv",
     "str x9, [x28, #264]",
+    "mrs x9, fpcr", // guest FPCR out (MSR FPCR inside region may update it)
+    "str x9, [x28, #272]",
     "mrs x9, fpsr", // guest FPSR (accumulated exception flags) out
     "str x9, [x28, #280]",
     "ldr x9, [sp, #104]", // restore host FPCR/FPSR
@@ -1343,6 +1345,33 @@ mod tests_aarch64 {
         regs.v[4] = (3.0_f64).to_bits(); // V2 low (d2)
         mem.run_aarch64_identity_fp(0, &mut regs);
         assert_eq!(f64::from_bits(regs.v[0]), 5.0, "V0 = V1 + V2 (f64)");
+    }
+
+    fn read_host_fpcr() -> u64 {
+        let value: u64;
+        unsafe {
+            core::arch::asm!(
+                "mrs {value}, fpcr",
+                value = out(reg) value,
+                options(nomem, nostack, preserves_flags)
+            );
+        }
+        value
+    }
+
+    #[test]
+    fn exec_mem_fp_trampoline_roundtrips_fpcr_aarch64() {
+        // d51b4400 msr fpcr, x0 ; d65f03c0 ret
+        let code: [u8; 8] = [0x00, 0x44, 0x1b, 0xd5, 0xc0, 0x03, 0x5f, 0xd6];
+        let mem = ExecMem::new(&code).expect("ExecMem map");
+        let mut regs = Aarch64GuestRegs::default();
+        regs.x[0] = 0x00c0_0000;
+        let host_fpcr = read_host_fpcr();
+
+        mem.run_aarch64_identity_fp(0, &mut regs);
+
+        assert_eq!(regs.fpcr & 0xffff_ffff, 0x00c0_0000);
+        assert_eq!(read_host_fpcr(), host_fpcr, "host FPCR must be restored");
     }
 
     // The FP trampoline must still marshal GPRs/NZCV exactly like the scalar one.

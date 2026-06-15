@@ -16406,7 +16406,7 @@ impl AArch64Cpu {
         use crate::smir::lift::aarch64::Aarch64Lifter;
         use crate::smir::lift::{LiftContext, MemoryReader, SmirLifter};
         use crate::smir::lower::SmirLowerer;
-        use crate::smir::lower::aarch64::Aarch64Lowerer;
+        use crate::smir::lower::aarch64::{Aarch64Lowerer, uses_aarch64_fp_trampoline};
         use crate::smir::lower::runtime::{ExecMem, is_aarch64_native_clobber_safe_excluding};
         use crate::smir::memory::MemoryError;
         use crate::smir::opt::{OptLevel, optimize_function};
@@ -16481,13 +16481,7 @@ impl AArch64Cpu {
         let code = lowerer.finalize().ok()?;
         let exec = ExecMem::new(&code).ok()?;
 
-        // A region needs the V-register-marshaling trampoline iff any op reads or
-        // writes a guest V (SIMD/FP) register.
-        use crate::smir::types::{ArchReg, ArmReg, VReg};
-        let touches_v = |v: &VReg| matches!(v, VReg::Arch(ArchReg::Arm(ArmReg::V(_))));
-        let uses_fp = func.blocks.iter().flat_map(|b| &b.ops).any(|op| {
-            op.kind.dests().iter().any(touches_v) || op.kind.source_vregs().iter().any(touches_v)
-        });
+        let uses_fp = uses_aarch64_fp_trampoline(&func);
 
         Some(JitRegion {
             exec,
