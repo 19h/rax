@@ -7610,7 +7610,10 @@ impl AArch64Cpu {
                                     hk += 1;
                                 }
                             }
-                            low | (high << lk)
+                            // When every mask bit is set, `lk` reaches `bits`
+                            // (up to 64) and `high` stays 0; guard the shift so
+                            // an all-ones 64-bit mask element cannot overflow.
+                            low | high.checked_shl(lk).unwrap_or(0)
                         }
                         _ => return Ok(CpuExit::Undefined(insn)),
                     };
@@ -20950,6 +20953,23 @@ mod tests {
         let src_hi = 0xfedc_ba98_7654_3210;
 
         cpu.set_simd_reg(1, src_lo, src_hi).unwrap();
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.get_simd_reg(0), Some((src_lo, src_hi)));
+    }
+
+    #[test]
+    fn test_sve2_bgrp_all_ones_mask_no_panic() {
+        // BGRP Z0.D, Z1.D, Z2.D. With a 64-bit mask element of all ones every
+        // bit of Zn is "selected", so the per-element selected-bit counter `lk`
+        // reaches 64. Shifting a u64 by 64 panics under overflow checks, so a
+        // guest could crash a checked build; the handler must guard the shift.
+        // With every mask bit set the grouped result is just Zn unchanged.
+        let mut cpu = create_cpu_with_insn(0x45c2_b820);
+        let src_lo = 0x0123_4567_89ab_cdef;
+        let src_hi = 0xfedc_ba98_7654_3210;
+        cpu.set_simd_reg(1, src_lo, src_hi).unwrap();
+        cpu.set_simd_reg(2, u64::MAX, u64::MAX).unwrap();
 
         assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
         assert_eq!(cpu.get_simd_reg(0), Some((src_lo, src_hi)));
