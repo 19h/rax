@@ -2221,6 +2221,9 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
     /// SRS: store return state (LR and SPSR of the current mode) to the
     /// stack of the mode given in the instruction.
     fn exec_srs(&mut self, insn: &DecodedInsn) -> ExecResult {
+        if self.cpu.is_user_or_system() {
+            return ExecResult::Undefined;
+        }
         let raw = insn.raw;
         let p = (raw >> 24) & 1 == 1;
         let u = (raw >> 23) & 1 == 1;
@@ -2256,6 +2259,9 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
 
     /// RFE: return from exception — load PC and CPSR from [Rn].
     fn exec_rfe(&mut self, insn: &DecodedInsn) -> ExecResult {
+        if self.cpu.is_user_or_system() {
+            return ExecResult::Undefined;
+        }
         let raw = insn.raw;
         let p = (raw >> 24) & 1 == 1;
         let u = (raw >> 23) & 1 == 1;
@@ -10082,6 +10088,14 @@ mod tests {
         (opc1 << 21) | (crn << 16) | (rt << 12) | (15 << 8) | (opc2 << 5) | crm
     }
 
+    fn rfe_raw(rn: u32, p: bool, u: bool, w: bool) -> u32 {
+        ((p as u32) << 24) | ((u as u32) << 23) | ((w as u32) << 21) | (rn << 16)
+    }
+
+    fn srs_raw(mode: ProcessorMode, p: bool, u: bool, w: bool) -> u32 {
+        ((p as u32) << 24) | ((u as u32) << 23) | ((w as u32) << 21) | mode as u32
+    }
+
     #[test]
     fn test_add_immediate() {
         let mut cpu = make_cpu();
@@ -10306,6 +10320,76 @@ mod tests {
 
         assert!(matches!(result, ExecResult::Continue));
         assert_eq!(cpu.regs[1], 0x1);
+    }
+
+    #[test]
+    fn test_user_or_system_mode_rfe_is_undefined_and_does_not_change_mode() {
+        for mode in [ProcessorMode::User, ProcessorMode::System] {
+            let mut cpu = make_cpu();
+            let mut mem = make_mem();
+
+            cpu.cpsr.mode = mode as u8;
+            cpu.regs[0] = 0x200;
+            mem.write_word(0x200, 0x1234_5678).unwrap();
+            mem.write_word(0x204, ProcessorMode::Supervisor as u32)
+                .unwrap();
+
+            let insn = make_insn(Mnemonic::RFE, rfe_raw(0, false, true, true), false);
+            let mut exec = Executor::new(&mut cpu, &mut mem);
+            let result = exec.execute(&insn);
+
+            assert!(matches!(result, ExecResult::Undefined), "{mode:?}");
+            assert_eq!(cpu.cpsr.mode, mode as u8, "{mode:?}");
+            assert_eq!(cpu.regs[0], 0x200, "{mode:?}");
+        }
+    }
+
+    #[test]
+    fn test_user_or_system_mode_srs_is_undefined_and_does_not_write_memory() {
+        for mode in [ProcessorMode::User, ProcessorMode::System] {
+            let mut cpu = make_cpu();
+            let mut mem = make_mem();
+
+            cpu.cpsr.mode = mode as u8;
+            cpu.regs[14] = 0x1234_5678;
+            cpu.regs_svc[0] = 0x200;
+            mem.write_word(0x200, 0xfeed_face).unwrap();
+            mem.write_word(0x204, 0xcafe_beef).unwrap();
+
+            let insn = make_insn(
+                Mnemonic::SRS,
+                srs_raw(ProcessorMode::Supervisor, false, true, true),
+                false,
+            );
+            let mut exec = Executor::new(&mut cpu, &mut mem);
+            let result = exec.execute(&insn);
+
+            assert!(matches!(result, ExecResult::Undefined), "{mode:?}");
+            assert_eq!(cpu.cpsr.mode, mode as u8, "{mode:?}");
+            assert_eq!(cpu.regs_svc[0], 0x200, "{mode:?}");
+            assert_eq!(mem.read_word(0x200).unwrap(), 0xfeed_face, "{mode:?}");
+            assert_eq!(mem.read_word(0x204).unwrap(), 0xcafe_beef, "{mode:?}");
+        }
+    }
+
+    #[test]
+    fn test_privileged_rfe_still_restores_cpsr_and_branches() {
+        let mut cpu = make_cpu();
+        let mut mem = make_mem();
+
+        cpu.cpsr.mode = ProcessorMode::Irq as u8;
+        cpu.regs[0] = 0x200;
+        mem.write_word(0x200, 0x1234_5678).unwrap();
+        mem.write_word(0x204, ProcessorMode::Supervisor as u32)
+            .unwrap();
+
+        let insn = make_insn(Mnemonic::RFE, rfe_raw(0, false, true, true), false);
+        let mut exec = Executor::new(&mut cpu, &mut mem);
+        let result = exec.execute(&insn);
+
+        assert!(matches!(result, ExecResult::Branch(0x1234_5678)));
+        assert_eq!(cpu.cpsr.mode, ProcessorMode::Supervisor as u8);
+        assert_eq!(cpu.regs[0], 0x208);
     }
 
     #[test]
