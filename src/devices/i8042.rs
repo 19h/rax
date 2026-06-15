@@ -29,6 +29,11 @@ pub const DATA_PORT: u16 = 0x60;
 /// Status register (read) / command register (write).
 pub const STATUS_PORT: u16 = 0x64;
 
+/// Maximum queued bytes per PS/2 device behind the output latch. The real 8042
+/// has tiny buffering; this generous bound preserves normal guest/device bursts
+/// while preventing guest-triggered unbounded host allocation.
+const DEVICE_QUEUE_CAPACITY: usize = 256;
+
 // ---------------------------------------------------------------------------
 // Status register bits (read from 0x64)
 // ---------------------------------------------------------------------------
@@ -312,7 +317,7 @@ impl I8042 {
         if !self.kbd_enabled {
             return;
         }
-        self.kbd_queue.push_back(scancode);
+        self.enqueue_keyboard_byte(scancode);
         self.refill_output_buffer();
     }
 
@@ -324,7 +329,7 @@ impl I8042 {
         if !self.aux_enabled {
             return;
         }
-        self.aux_queue.push_back(byte);
+        self.enqueue_aux_byte(byte);
         self.refill_output_buffer();
     }
 
@@ -435,6 +440,18 @@ impl I8042 {
 
     // ----- Internal helpers ------------------------------------------------
 
+    fn enqueue_keyboard_byte(&mut self, byte: u8) {
+        if self.kbd_queue.len() < DEVICE_QUEUE_CAPACITY {
+            self.kbd_queue.push_back(byte);
+        }
+    }
+
+    fn enqueue_aux_byte(&mut self, byte: u8) {
+        if self.aux_queue.len() < DEVICE_QUEUE_CAPACITY {
+            self.aux_queue.push_back(byte);
+        }
+    }
+
     /// Compute the status register value presented on a read of 0x64.
     fn status(&self) -> u8 {
         let mut status = self.status_extra & (STATUS_INH | STATUS_TIMEOUT | STATUS_PARITY);
@@ -526,7 +543,7 @@ impl I8042 {
                 // Plain keyboard command byte from the guest. Most keyboards
                 // ACK with 0xFA. We surface that so guest drivers progress.
                 if self.kbd_enabled {
-                    self.kbd_queue.push_back(0xFA);
+                    self.enqueue_keyboard_byte(0xFA);
                     self.refill_output_buffer();
                 }
             }
@@ -1000,6 +1017,24 @@ mod tests {
     }
 
     #[test]
+    fn i8042_keyboard_ack_queue_is_bounded() {
+        let mut kbc = fresh();
+
+        for _ in 0..(DEVICE_QUEUE_CAPACITY + 32) {
+            kbc.write(DATA_PORT, 0xFF);
+        }
+
+        assert!(kbc.output_byte.is_some());
+        assert_eq!(kbc.kbd_queue.len(), DEVICE_QUEUE_CAPACITY);
+
+        for _ in 0..32 {
+            kbc.write(DATA_PORT, 0xFF);
+        }
+
+        assert_eq!(kbc.kbd_queue.len(), DEVICE_QUEUE_CAPACITY);
+    }
+
+    #[test]
     fn i8042_unknown_ports_read_ff() {
         let mut kbc = fresh();
         assert_eq!(kbc.read(0x61), 0xFF);
@@ -1018,6 +1053,24 @@ mod tests {
     fn mouse_cmd(kbc: &mut I8042, byte: u8) {
         kbc.write(STATUS_PORT, CMD_WRITE_AUX);
         kbc.write(DATA_PORT, byte);
+    }
+
+    #[test]
+    fn i8042_aux_reply_queue_is_bounded() {
+        let mut kbc = fresh();
+
+        for _ in 0..(DEVICE_QUEUE_CAPACITY + 32) {
+            mouse_cmd(&mut kbc, MOUSE_CMD_GET_DEVICE_ID);
+        }
+
+        assert!(kbc.output_byte.is_some());
+        assert_eq!(kbc.aux_queue.len(), DEVICE_QUEUE_CAPACITY);
+
+        for _ in 0..32 {
+            mouse_cmd(&mut kbc, MOUSE_CMD_GET_DEVICE_ID);
+        }
+
+        assert_eq!(kbc.aux_queue.len(), DEVICE_QUEUE_CAPACITY);
     }
 
     /// Read one byte off the auxiliary stream, asserting OBF+AUX are set first.
