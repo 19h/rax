@@ -9761,15 +9761,20 @@ impl AArch64Cpu {
             self.sve_ffr = self.sve_p[((insn >> 5) & 0xF) as usize];
             return Ok(CpuExit::Continue);
         }
-        // RDFFR Pd (unpredicated): P[Pd] = FFR.
-        if (insn >> 10) & 0x3FFF == 0x67C && (insn >> 4) & 0x3F == 0 {
+        // RDFFR Pd (unpredicated): P[Pd] = FFR. Requires top byte 0x25 (bit24==1);
+        // the 0x24 family is a distinct (unallocated here) encoding space.
+        if (insn >> 24) & 1 == 1 && (insn >> 10) & 0x3FFF == 0x67C && (insn >> 4) & 0x3F == 0 {
             self.sve_p[pd] = self.sve_ffr;
             return Ok(CpuExit::Continue);
         }
         // RDFFR/RDFFRS Pd, Pg/Z (predicated): P[Pd] = FFR & P[Pg] (zeroing). The
         // S-bit form (bit22, RDFFRS) also sets NZCV = PredTest(Pg, result). The
-        // mask ignores bit22 (==bit12 of the shifted field).
-        if (insn >> 10) & 0x2FFF == 0x63C && (insn >> 9) & 1 == 0 && (insn >> 4) & 1 == 0 {
+        // mask ignores bit22 (==bit12 of the shifted field). Requires bit24==1.
+        if (insn >> 24) & 1 == 1
+            && (insn >> 10) & 0x2FFF == 0x63C
+            && (insn >> 9) & 1 == 0
+            && (insn >> 4) & 1 == 0
+        {
             let pgl = ((insn >> 5) & 0xF) as usize;
             let r = self.sve_ffr & self.sve_p[pgl];
             self.sve_p[pd] = r;
@@ -21051,6 +21056,27 @@ mod tests {
         // Valid ADDP (00,1) and UMINP (11,1) still execute.
         assert_eq!(setup(0x4411_a020).step().unwrap(), CpuExit::Continue);
         assert_eq!(setup(0x4417_a020).step().unwrap(), CpuExit::Continue);
+    }
+
+    #[test]
+    fn rdffr_rejects_0x24_family() {
+        // RDFFR requires top byte 0x25. 0x2419f000 is actually CMPLO (a 0x24
+        // compare), which must NOT be executed as RDFFR (copying FFR into Pd).
+        let mut cpu = create_cpu_with_insn(0x2419_f000);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.sve_ffr = 0xFFFF;
+        cpu.set_sve_pred(0, 0x0000);
+        let _ = cpu.step();
+        // RDFFR would have set p0 = FFR = 0xFFFF; the fix must prevent that.
+        assert_ne!(cpu.sve_pred(0), 0xFFFF, "0x24 encoding executed as RDFFR");
+
+        // The genuine RDFFR (top byte 0x25) still copies FFR into Pd.
+        let mut ok = create_cpu_with_insn(0x2519_f000);
+        ok.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16);
+        ok.sve_ffr = 0xABCD;
+        ok.set_sve_pred(0, 0);
+        assert_eq!(ok.step().unwrap(), CpuExit::Continue);
+        assert_eq!(ok.sve_pred(0), 0xABCD);
     }
 
     #[test]
