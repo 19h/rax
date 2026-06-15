@@ -14625,6 +14625,13 @@ impl AArch64Cpu {
         let rn = ((insn >> 5) & 0x1F) as u8;
         let rt = (insn & 0x1F) as usize;
 
+        // No-offset form (post==0): the Rm field (bits[20:16]) is reserved and
+        // must be 0. A non-zero Rm here is an unallocated encoding that must
+        // trap rather than execute a memory access.
+        if post == 0 && rm != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+
         let scale = opcode >> 1; // bits[15:14]
         let selem = (((opcode & 1) << 1) | r) as usize + 1;
 
@@ -21376,6 +21383,24 @@ mod tests {
         for insn in [gather_d(3, false, 1), gather_d(1, true, 1), scatter_d(2, true)] {
             assert_eq!(run(insn), CpuExit::Continue, "encoding {insn:#x} should execute");
         }
+    }
+
+    #[test]
+    fn neon_ldst_single_rejects_nonzero_rm_no_offset() {
+        // LD/ST single-structure no-offset form (bit23==0) reserves Rm (bits
+        // [20:16]) as 0. A non-zero Rm (e.g. 0x0d410020) is unallocated and must
+        // trap; the valid Rm==0 form (0x0d400020) still executes.
+        let mut bad = create_cpu_with_insn(0x0d41_0020);
+        bad.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        assert!(matches!(
+            bad.step(),
+            Err(ArmError::UndefinedInstruction(0x0d41_0020))
+        ));
+
+        let mut good = create_cpu_with_insn(0x0d40_0020);
+        good.sysregs.el1.cpacr |= 0b11 << 20;
+        good.set_x(1, 0x1000); // base address in mapped scratch
+        assert_eq!(good.step().unwrap(), CpuExit::Continue);
     }
 
     #[test]
