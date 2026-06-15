@@ -3363,6 +3363,10 @@ fn neon_integer_vabdl_vabal_widen_absolute_differences() {
         Mnemonic::VABDL
     );
     assert_eq!(
+        Aarch32Decoder::decode(0xF3AB_0700).unwrap().mnemonic,
+        Mnemonic::VABDL
+    );
+    assert_eq!(
         Aarch32Decoder::decode(0xF2E2_05A3).unwrap().mnemonic,
         Mnemonic::VABAL
     );
