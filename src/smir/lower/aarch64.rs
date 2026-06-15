@@ -15514,14 +15514,31 @@ impl Aarch64Lowerer {
         }
 
         let index = Self::gpr_arm_or_x86(index)?;
+        // Compare each case WITHOUT touching NZCV: a flag-setting CMP (SUBS) would
+        // corrupt guest condition flags that may be live across the Switch (later
+        // blocks read native NZCV as architectural state). Instead subtract into a
+        // saved scratch (no flags) and branch on zero via CBZ/CBNZ. The scratch is
+        // restored on every exit path so neither NZCV nor any guest register is
+        // clobbered. (#20)
+        let scratch = Self::scratch_regs(&[index], 1)?[0];
+        self.emit_scratch_save(&[scratch]); // str scratch, [sp, #-16]!
         for (case, target) in targets.iter().enumerate() {
             let case = i64::try_from(case).map_err(|_| LowerError::InvalidOperand {
                 op: "AArch64 native switch case".into(),
                 operand: format!("case index {case}"),
             })?;
-            self.emit_addsub_imm(31, index, case, true, true, OpWidth::W64)?;
-            self.emit_cond_branch_placeholder(Self::arm_cond_code(Condition::Eq)?, *target);
+            // scratch = index - case  (no flags).
+            self.emit_addsub_imm(scratch, index, case, true, false, OpWidth::W64)?;
+            // CBNZ scratch, <skip>: if index != case, fall through to the next case.
+            let skip = self.code.position();
+            self.emit(0xb500_0000 | (scratch as u32));
+            // Match path: restore the scratch (and SP) before branching to the case.
+            self.emit_scratch_restore(&[scratch]); // ldr scratch, [sp], #16
+            self.emit_branch_placeholder(*target);
+            self.patch_compare_branch_to_current(skip, scratch, true)?;
         }
+        // No case matched: restore the scratch and take the default edge.
+        self.emit_scratch_restore(&[scratch]);
         self.emit_branch_placeholder(default);
         Ok(())
     }
@@ -46291,38 +46308,48 @@ mod tests {
     }
 
     #[test]
-    fn lowers_register_switch_as_compare_branch_chain() {
-        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
-        let case0 = builder.create_block(4);
-        let case1 = builder.create_block(8);
-        let default = builder.create_block(12);
-        builder.set_terminator(Terminator::Switch {
-            index: x(1),
-            targets: vec![case0, case1],
-            default,
-        });
-        builder.switch_to_block(case0);
-        builder.set_terminator(Terminator::Return { values: vec![] });
-        builder.switch_to_block(case1);
-        builder.set_terminator(Terminator::Return { values: vec![] });
-        builder.switch_to_block(default);
-        builder.set_terminator(Terminator::Return { values: vec![] });
-        let func = builder.finish();
+    // Regression for issue #20: a register Switch must select the correct edge AND
+    // preserve guest NZCV (later blocks read native flags as architectural state).
+    // The old lowering compared each case with a flag-setting CMP (SUBS), corrupting
+    // live flags. Each case block writes a distinct value so we can confirm the edge
+    // taken; the seeded NZCV must be unchanged on every path.
+    #[test]
+    fn issue_20_register_switch_preserves_nzcv_and_branches() {
+        fn run_switch(index: u64, nzcv_in: u8) -> (u64, u8) {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            let case0 = builder.create_block(4);
+            let case1 = builder.create_block(8);
+            let default = builder.create_block(12);
+            builder.set_terminator(Terminator::Switch {
+                index: x(1),
+                targets: vec![case0, case1],
+                default,
+            });
+            for (block, marker) in [(case0, 0xAAu64), (case1, 0xBB), (default, 0xCC)] {
+                builder.switch_to_block(block);
+                builder.push_op(
+                    0,
+                    OpKind::Mov {
+                        dst: x(0),
+                        src: SrcOperand::Imm(marker as i64),
+                        width: OpWidth::W64,
+                    },
+                );
+                builder.set_terminator(Terminator::Return { values: vec![] });
+            }
+            let func = builder.finish();
 
-        let mut lowerer = Aarch64Lowerer::new();
-        lowerer.lower_function(&func).unwrap();
-        let code = lowerer.finalize().unwrap();
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+            let (out, out_nzcv, _) = run_aarch64_code(&code, &[(1, index)], nzcv_in);
+            (out[0], out_nzcv)
+        }
 
-        let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_addsub_imm_regs(1, 1, 1, 0, 0, 31, 1).to_le_bytes());
-        expected.extend_from_slice(&enc_b_cond(0, 4).to_le_bytes());
-        expected.extend_from_slice(&enc_addsub_imm_regs(1, 1, 1, 0, 1, 31, 1).to_le_bytes());
-        expected.extend_from_slice(&enc_b_cond(0, 3).to_le_bytes());
-        expected.extend_from_slice(&enc_b(3).to_le_bytes());
-        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
-        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
-        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
-        assert_eq!(code, expected);
+        let sentinel = 0b1011u8;
+        assert_eq!(run_switch(0, sentinel), (0xAA, sentinel), "index 0 -> case 0");
+        assert_eq!(run_switch(1, sentinel), (0xBB, sentinel), "index 1 -> case 1");
+        assert_eq!(run_switch(5, sentinel), (0xCC, sentinel), "out-of-range -> default");
     }
 
     #[test]
