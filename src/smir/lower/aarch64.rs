@@ -50503,6 +50503,60 @@ mod tests {
         );
     }
 
+    // Regression for issue #36: RCR-by-1 OF is the XOR of the two MOST-significant
+    // bits of the result. A lowering that XORed the MSB with the (out-of-range) bit
+    // ABOVE it would collapse to just the MSB and diverge here — e.g. src=0x80,
+    // CF=0 rotates to 0x40, whose two MSBs (0,1) differ, so OF MUST be 1 (the
+    // alleged bug would yield 0). The helper compares the executed NZCV against the
+    // x86 reference, so a wrong OF fails. (#36)
+    #[test]
+    fn rcr_count1_overflow_flag_matches_reference() {
+        for &(src, nzcv) in &[
+            (0x80u64, 0b0000u8),
+            (0x40, 0b0010),
+            (0x01, 0b0000),
+            (0xff, 0b0010),
+        ] {
+            assert_rotate_carry_lowering(
+                "rcr_w8_imm1_of",
+                OpKind::Rcr {
+                    dst: x(0),
+                    src: x(1),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W8,
+                    flags: rotate_flags(),
+                },
+                src,
+                1,
+                nzcv,
+                OpWidth::W8,
+                rotate_flags(),
+                true,
+                0,
+                None,
+            );
+        }
+
+        assert_rotate_carry_lowering(
+            "rcr_x_imm1_of",
+            OpKind::Rcr {
+                dst: x(0),
+                src: x(1),
+                amount: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+                flags: rotate_flags(),
+            },
+            0x8000_0000_0000_0000,
+            1,
+            0b0000,
+            OpWidth::W64,
+            rotate_flags(),
+            true,
+            0,
+            None,
+        );
+    }
+
     #[test]
     fn lowers_rcl_rcr_register_counts_and_preserves_scratch_state() {
         assert_rotate_carry_lowering(
