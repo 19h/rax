@@ -858,6 +858,13 @@ fn block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) ->
         if !op.is_jit_safe() && !mem_ok {
             return false;
         }
+        // The x86_64 lowerer emits ordinary native ALU/shift/rotate
+        // instructions for these SMIR ops. Those instructions update host
+        // RFLAGS, so flag-preserving forms cannot run inside a native region
+        // whose branches and exit state read live host flags.
+        if x86_native_op_would_clobber_preserved_flags(&op.kind) {
+            return false;
+        }
         // (2) no virtual-temp writes (would clobber a guest GPR).
         if op
             .kind
@@ -896,6 +903,58 @@ fn block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) ->
         }
     }
     true
+}
+
+fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ops::OpKind) -> bool {
+    use crate::smir::flags::FlagUpdate;
+    use crate::smir::ops::OpKind;
+
+    matches!(
+        op,
+        OpKind::Add {
+            flags: FlagUpdate::None,
+            ..
+        } | OpKind::Sub {
+            flags: FlagUpdate::None,
+            ..
+        } | OpKind::Adc {
+            flags: FlagUpdate::None,
+            ..
+        } | OpKind::Sbb {
+            flags: FlagUpdate::None,
+            ..
+        } | OpKind::And {
+            flags: FlagUpdate::None,
+            ..
+        } | OpKind::Or {
+            flags: FlagUpdate::None,
+            ..
+        } | OpKind::Xor {
+            flags: FlagUpdate::None,
+            ..
+        } | OpKind::Shl {
+            flags: FlagUpdate::None,
+            ..
+        } | OpKind::Shr {
+            flags: FlagUpdate::None,
+            ..
+        } | OpKind::Sar {
+            flags: FlagUpdate::None,
+            ..
+        } | OpKind::Shld {
+            flags: FlagUpdate::None,
+            ..
+        } | OpKind::Shrd {
+            flags: FlagUpdate::None,
+            ..
+        } | OpKind::Rol {
+            flags: FlagUpdate::None,
+            ..
+        } | OpKind::Ror {
+            flags: FlagUpdate::None,
+            ..
+        }
+    )
 }
 
 /// AArch64 analogue of [`is_native_clobber_safe_excluding`]: decide whether the
@@ -1106,6 +1165,13 @@ mod jit_gate_tests {
         VReg::Arch(ArchReg::Arm(ArmReg::V(n)))
     }
 
+    fn x86_gate(op: OpKind) -> bool {
+        let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
+        b.push_op(0x1000, op);
+        b.set_terminator(Terminator::Return { values: vec![] });
+        is_native_clobber_safe(&b.finish())
+    }
+
     fn aarch64_gate(ops: Vec<OpKind>, allow_mem: bool) -> bool {
         let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
         for (i, op) in ops.into_iter().enumerate() {
@@ -1144,6 +1210,169 @@ mod jit_gate_tests {
             !is_native_clobber_safe(&func),
             "MULX-shaped MulU must not enter the destructive native MUL lowering"
         );
+    }
+
+    #[test]
+    fn clobber_gate_rejects_flag_preserving_x86_native_flag_clobber_ops() {
+        for (name, op) in [
+            (
+                "add",
+                OpKind::Add {
+                    dst: x86(X86Reg::Rax),
+                    src1: x86(X86Reg::Rax),
+                    src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "sub",
+                OpKind::Sub {
+                    dst: x86(X86Reg::Rax),
+                    src1: x86(X86Reg::Rax),
+                    src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "adc",
+                OpKind::Adc {
+                    dst: x86(X86Reg::Rax),
+                    src1: x86(X86Reg::Rax),
+                    src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "sbb",
+                OpKind::Sbb {
+                    dst: x86(X86Reg::Rax),
+                    src1: x86(X86Reg::Rax),
+                    src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "and",
+                OpKind::And {
+                    dst: x86(X86Reg::Rax),
+                    src1: x86(X86Reg::Rax),
+                    src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "or",
+                OpKind::Or {
+                    dst: x86(X86Reg::Rax),
+                    src1: x86(X86Reg::Rax),
+                    src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "xor",
+                OpKind::Xor {
+                    dst: x86(X86Reg::Rax),
+                    src1: x86(X86Reg::Rax),
+                    src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "shl",
+                OpKind::Shl {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "shr",
+                OpKind::Shr {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "sar",
+                OpKind::Sar {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "shld",
+                OpKind::Shld {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rdx),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "shrd",
+                OpKind::Shrd {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rdx),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "rol",
+                OpKind::Rol {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "ror",
+                OpKind::Ror {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+        ] {
+            assert!(op.is_jit_safe(), "{name} remains on the generic whitelist");
+            assert!(
+                !x86_gate(op),
+                "{name} must preserve guest flags by deopting"
+            );
+        }
+    }
+
+    #[test]
+    fn clobber_gate_allows_flag_updating_x86_alu() {
+        assert!(x86_gate(OpKind::Add {
+            dst: x86(X86Reg::Rax),
+            src1: x86(X86Reg::Rax),
+            src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+            width: OpWidth::W64,
+            flags: FlagUpdate::All,
+        }));
     }
 
     // Regression for issue #14: an APX NDD ADC/SBB whose destination aliases its
@@ -1323,7 +1552,7 @@ mod tests {
                 src1: rax(),
                 src2: SrcOperand::Reg(rcx()),
                 width: OpWidth::W64,
-                flags: FlagUpdate::None,
+                flags: FlagUpdate::All,
             },
         );
         b.set_terminator(Terminator::Return { values: vec![] });
@@ -1341,7 +1570,7 @@ mod tests {
                 src1: rax(),
                 src2: SrcOperand::Reg(rcx()),
                 width: OpWidth::W64,
-                flags: FlagUpdate::None,
+                flags: FlagUpdate::All,
             },
         );
         b.set_terminator(Terminator::Return { values: vec![] });
@@ -1361,7 +1590,7 @@ mod tests {
                 src1: rax(),
                 src2: SrcOperand::Reg(rcx()),
                 width: OpWidth::W64,
-                flags: FlagUpdate::None,
+                flags: FlagUpdate::All,
             },
         );
         b.set_terminator(Terminator::Branch { target: exit_blk });
@@ -1374,7 +1603,7 @@ mod tests {
                 src1: rax(),
                 src2: SrcOperand::Reg(rcx()),
                 width: OpWidth::W64,
-                flags: FlagUpdate::None,
+                flags: FlagUpdate::All,
             },
         );
         b.set_terminator(Terminator::Trap {
