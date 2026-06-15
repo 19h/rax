@@ -11321,7 +11321,7 @@ mod tests {
     // its OVF side effect) must survive end-to-end through the interpreter.
     #[test]
     fn issue_108_optimized_satn_keeps_usr_ovf_when_result_dead() {
-        use crate::smir::opt::{optimize_function, OptLevel};
+        use crate::smir::opt::{OptLevel, optimize_function};
 
         let mut ctx = SmirContext::new_hexagon();
         let mut memory = FlatMemory::new(0x1000);
@@ -11923,7 +11923,7 @@ mod tests {
     // forwarded from the first load.
     #[test]
     fn issue_112_optimized_load_after_pred_store_reads_fresh_memory() {
-        use crate::smir::opt::{optimize_function, OptLevel};
+        use crate::smir::opt::{OptLevel, optimize_function};
 
         let addr = 0x800u64;
         let mut ctx = SmirContext::new_hexagon();
