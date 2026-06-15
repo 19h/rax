@@ -25,6 +25,12 @@ fn paddr_is_mmio(paddr: u64) -> bool {
 }
 
 #[inline(always)]
+fn forward_propagating_overlap(src: u64, dst: u64, bytes: u64) -> bool {
+    let distance = dst.wrapping_sub(src);
+    distance != 0 && distance < bytes
+}
+
+#[inline(always)]
 fn movs_source_segment_base(vcpu: &X86_64Vcpu, segment_override: Option<u8>) -> u64 {
     if !vcpu.sregs.cs.l {
         return vcpu.get_segment_base(segment_override);
@@ -169,8 +175,7 @@ fn movs_fast_path(vcpu: &mut X86_64Vcpu, op_size: u8) -> Result<()> {
         // ahead of the source within the chunk the copied bytes propagate
         // (e.g. "ABCD" with dst=src+2 yields "ABAB..."). A bulk read-then-write
         // cannot reproduce that, so defer to the element-by-element path.
-        let distance = dst.wrapping_sub(src);
-        if distance != 0 && distance < bytes as u64 {
+        if forward_propagating_overlap(src, dst, bytes as u64) {
             return Ok(());
         }
 
@@ -178,6 +183,10 @@ fn movs_fast_path(vcpu: &mut X86_64Vcpu, op_size: u8) -> Result<()> {
         // raises #PF at the correct element on failure).
         let src_paddr = vcpu.mmu.translate(src, AccessType::Read, &vcpu.sregs)?;
         let dst_paddr = vcpu.mmu.translate(dst, AccessType::Write, &vcpu.sregs)?;
+
+        if forward_propagating_overlap(src_paddr, dst_paddr, bytes as u64) {
+            return Ok(());
+        }
 
         // Code page (SMC) or MMIO: defer the rest to the slow path so writes go
         // through the decode-cache invalidation and device emulation.

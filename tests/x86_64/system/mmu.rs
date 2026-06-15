@@ -1383,6 +1383,54 @@ fn test_decode_cache_hit_revalidates_instruction_fetch_after_invlpg() {
     );
 }
 
+#[test]
+fn test_rep_movsb_fast_path_detects_aliased_physical_overlap() {
+    let mem = create_memory(8);
+    setup_identity_page_tables(&mem, pte_flags::WRITABLE | pte_flags::USER);
+
+    const SRC_VADDR: u64 = 0x70000;
+    const DST_VADDR: u64 = 0x81002;
+    const ALIAS_PAGE_VADDR: u64 = DST_VADDR & !0xfff;
+    const SRC_PADDR: u64 = 0x70000;
+
+    let alias_pte = SRC_PADDR | pte_flags::PRESENT | pte_flags::WRITABLE | pte_flags::USER;
+    mem.write_slice(
+        &alias_pte.to_le_bytes(),
+        GuestAddress(PT_ADDR + (ALIAS_PAGE_VADDR >> 12) * 8),
+    )
+    .unwrap();
+
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x00, 0x07, 0x00, // mov rsi, SRC_VADDR
+        0x48, 0xc7, 0xc7, 0x02, 0x10, 0x08, 0x00, // mov rdi, DST_VADDR
+        0x48, 0xc7, 0xc1, 0x06, 0x00, 0x00, 0x00, // mov rcx, 6
+        0xfc, // cld
+        0xf3, 0xa4, // rep movsb
+        0xf4, // hlt
+    ];
+    mem.write_slice(&code, GuestAddress(CODE_PADDR)).unwrap();
+    mem.write_slice(b"ABCDEF", GuestAddress(SRC_PADDR)).unwrap();
+
+    let mut vcpu = create_paged_vcpu(mem.clone());
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rip = CODE_PADDR;
+    vcpu.set_regs(&regs).unwrap();
+
+    run_until_hlt(&mut vcpu).unwrap();
+    let regs = vcpu.get_regs().unwrap();
+
+    let mut actual = [0u8; 8];
+    mem.read_slice(&mut actual, GuestAddress(SRC_PADDR))
+        .unwrap();
+    assert_eq!(
+        &actual, b"ABABABAB",
+        "aliased forward copy must propagate through serial REP MOVSB reads",
+    );
+    assert_eq!(regs.rcx, 0);
+    assert_eq!(regs.rsi, SRC_VADDR + 6);
+    assert_eq!(regs.rdi, DST_VADDR + 6);
+}
+
 // ============================================================================
 // STRESS TESTS
 // ============================================================================
