@@ -1,6 +1,6 @@
 use rax::arm::decoder::{Aarch32Decoder, DecodedInsn, Mnemonic};
 use rax::arm::execution::{ArmMemory, FlatMemory};
-use rax::arm::vfp::RoundingMode;
+use rax::arm::vfp::{Fpscr, RoundingMode};
 use rax::arm::{Armv7Cpu, ExceptionType, ExecResult, ExecutionState, Executor};
 
 fn exec_one(cpu: &mut Armv7Cpu, mem: &mut FlatMemory, raw: u32) -> ExecResult {
@@ -6045,6 +6045,22 @@ fn neon_recip_estimate_handles_unsigned_f32_and_f16_forms() {
         ExecResult::Continue
     ));
     assert_eq!(cpu.vfp.read_d_bits(0), 0x7e00_0000_37fc_3bfc);
+
+    cpu.vfp.fpscr = Fpscr::from_bits(0);
+    cpu.vfp.write_d_bits(1, 0x0000_0000_0000_7e00);
+    assert!(matches!(
+        exec_one(&mut cpu, &mut mem, 0xF3B7_0501),
+        ExecResult::Continue
+    ));
+    assert_eq!(cpu.vfp.fpscr.bits(), 0);
+
+    cpu.vfp.fpscr = Fpscr::from_bits(0);
+    cpu.vfp.write_d_bits(1, 0x0000_0000_0000_bc00);
+    assert!(matches!(
+        exec_one(&mut cpu, &mut mem, 0xF3B7_0581),
+        ExecResult::Continue
+    ));
+    assert_eq!(cpu.vfp.fpscr.bits(), 0);
 
     assert_eq!(
         Aarch32Decoder::decode(0xF3BB_1442).unwrap().mnemonic,

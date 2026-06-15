@@ -5394,12 +5394,14 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                     (Mnemonic::VRECPE, true) if size == 0b01 => {
                         let input = vcvt_f32_f16_bits(elem as u16).to_bits();
                         let result = f32::from_bits(Self::neon_fp_recip_estimate_f32(input));
-                        u64::from(vcvt_f16_bits_f32(result, &mut self.cpu.vfp.fpscr))
+                        let mut standard_fpscr = Fpscr::default();
+                        u64::from(vcvt_f16_bits_f32(result, &mut standard_fpscr))
                     }
                     (Mnemonic::VRSQRTE, true) if size == 0b01 => {
                         let input = vcvt_f32_f16_bits(elem as u16).to_bits();
                         let result = f32::from_bits(Self::neon_fp_rsqrt_estimate_f32(input));
-                        u64::from(vcvt_f16_bits_f32(result, &mut self.cpu.vfp.fpscr))
+                        let mut standard_fpscr = Fpscr::default();
+                        u64::from(vcvt_f16_bits_f32(result, &mut standard_fpscr))
                     }
                     (Mnemonic::VRECPE, true) => {
                         u64::from(Self::neon_fp_recip_estimate_f32(elem as u32))
