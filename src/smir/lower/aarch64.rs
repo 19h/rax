@@ -7066,16 +7066,27 @@ impl Aarch64Lowerer {
 
         if matches!(width, OpWidth::W8 | OpWidth::W16) {
             let sign_bit = width.bits() - 1;
-            let dst = Self::dst_gpr_arm_or_x86(dst)?;
-            self.emit_bitfield(
-                dst,
-                Self::gpr_arm_or_x86(src)?,
-                0b00,
-                sign_bit,
-                sign_bit,
-                OpWidth::W32,
-            )?;
-            return self.emit_bitfield(dst, dst, 0b10, 0, sign_bit, OpWidth::W32);
+            let dst_reg = Self::dst_gpr_arm_or_x86(dst)?;
+            let src_reg = Self::gpr_arm_or_x86(src)?;
+            // For an x86 destination, a W8/W16 write is PARTIAL: only the low 8/16
+            // bits receive the sign mask; the rest of the register is preserved
+            // (matching the interpreter's `write_x86_partial`). Build the sign mask
+            // in a scratch register and merge it with BFI rather than overwriting
+            // the whole destination (which cleared the preserved upper bits). (#31)
+            if matches!(dst, VReg::Arch(ArchReg::X86(_))) {
+                let scratch = Self::scratch_regs(&[dst_reg, src_reg], 1)?[0];
+                self.emit_scratch_save(&[scratch]);
+                // scratch = sign-extend(src[sign_bit]) -> 0 or all-ones; its low
+                // `width` bits are the x86 sign mask (0x00.. or 0xff/0xffff).
+                self.emit_bitfield(scratch, src_reg, 0b00, sign_bit, sign_bit, OpWidth::W32)?;
+                // BFI Xdst, Xscratch, #0, #width: merge low bits, preserve the rest.
+                self.emit_bitfield(dst_reg, scratch, 0b01, 0, sign_bit, OpWidth::W64)?;
+                self.emit_scratch_restore(&[scratch]);
+                return Ok(());
+            }
+            // Non-x86 destination: full zero-extended write of the sign mask.
+            self.emit_bitfield(dst_reg, src_reg, 0b00, sign_bit, sign_bit, OpWidth::W32)?;
+            return self.emit_bitfield(dst_reg, dst_reg, 0b10, 0, sign_bit, OpWidth::W32);
         }
         let bits = width.bits();
         self.lower_shift_imm(
@@ -17511,6 +17522,50 @@ mod tests {
         assert_eq!(
             regs_true[host_dst as usize], 0xBBBB_CCCC_DDDD_EE12,
             "true W8 CMove merges the low byte and preserves the upper bits",
+        );
+    }
+
+    // Regression for issue #31: a W8/W16 CWD (sign-mask broadcast) into an x86
+    // destination is a PARTIAL write — only the low 8/16 bits receive the sign mask
+    // and the upper bits are preserved. The previous lowering wrote the whole
+    // register, zeroing the preserved bits.
+    #[test]
+    fn issue_31_cwd_subword_x86_dst_merges_low_bits_preserves_upper() {
+        let dst = x86(X86Reg::Rax);
+        let src = x86(X86Reg::Rcx);
+        let hd = Aarch64Lowerer::gpr_arm_or_x86(dst).unwrap();
+        let hs = Aarch64Lowerer::gpr_arm_or_x86(src).unwrap();
+        assert_ne!(hd, hs);
+
+        let code8 = lower_single_op(OpKind::Cwd {
+            dst,
+            src,
+            width: OpWidth::W8,
+        });
+        // Negative low byte (bit 7 set) -> sign mask 0xff; upper bits preserved.
+        let (regs, _, _) = run_aarch64_code(&code8, &[(hd, 0xDEAD_BEEF_0000_1234), (hs, 0x80)], 0);
+        assert_eq!(
+            regs[hd as usize], 0xDEAD_BEEF_0000_12FF,
+            "W8 CWD merges 0xff into the low byte, preserving the upper bits",
+        );
+        // Non-negative low byte -> sign mask 0x00; upper bits preserved.
+        let (regs, _, _) = run_aarch64_code(&code8, &[(hd, 0xDEAD_BEEF_0000_1234), (hs, 0x7F)], 0);
+        assert_eq!(
+            regs[hd as usize], 0xDEAD_BEEF_0000_1200,
+            "W8 CWD merges 0x00 into the low byte, preserving the upper bits",
+        );
+
+        // W16: sign mask fills the low 16 bits only.
+        let code16 = lower_single_op(OpKind::Cwd {
+            dst,
+            src,
+            width: OpWidth::W16,
+        });
+        let (regs, _, _) =
+            run_aarch64_code(&code16, &[(hd, 0xDEAD_BEEF_0000_1234), (hs, 0x8000)], 0);
+        assert_eq!(
+            regs[hd as usize], 0xDEAD_BEEF_0000_FFFF,
+            "W16 CWD merges 0xffff into the low 16 bits, preserving the upper bits",
         );
     }
 
