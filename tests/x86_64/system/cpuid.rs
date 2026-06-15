@@ -227,13 +227,15 @@ fn test_cpuid_function_7_extended_features() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Leaf 7 subleaf 0: EAX=1 (max subleaf), EBX has SMAP(20) + AVX2(5),
-    // ECX has GFNI(8), EDX has SERIALIZE(14) + IBT(20).
+    // ECX has GFNI(8), EDX has SERIALIZE(14) only. IBT (bit 20) must NOT be
+    // advertised because the emulator does not enforce CET branch tracking.
     assert_eq!(regs.rax as u32, 1, "leaf 7 max subleaf");
     assert_eq!(regs.rbx as u32, 0x00100020, "leaf 7 EBX (SMAP|AVX2)");
     assert!(regs.rbx as u32 & (1 << 5) != 0, "AVX2 advertised");
     assert!(regs.rbx as u32 & (1 << 20) != 0, "SMAP advertised");
     assert_eq!(regs.rcx as u32, 0x00000100, "leaf 7 ECX (GFNI)");
-    assert_eq!(regs.rdx as u32, 0x00104000, "leaf 7 EDX (SERIALIZE|IBT)");
+    assert_eq!(regs.rdx as u32, 0x0000_4000, "leaf 7 EDX (SERIALIZE only)");
+    assert_eq!(regs.rdx as u32 & (1 << 20), 0, "IBT must not be advertised");
 }
 
 // CPUID extended function 0x80000000 - Get Max Extended Function
