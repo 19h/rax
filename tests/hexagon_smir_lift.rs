@@ -3754,6 +3754,44 @@ fn lift_and_run_hist(
 
 /// Lift-verify the histogram family: each (label, single-packet asm) over `n`
 /// random V/Q/P/USR states with `r0` pointed at a populated input region.
+#[test]
+fn hist_requires_tmp_load_and_respects_predicate() {
+    // #160: a bare `{ vhist }` with no same-packet `.tmp` producer must fault
+    //       rather than silently tallying stale architectural V0 bytes.
+    // #146: a false-predicated `.tmp` load is cancelled and must NOT seed the
+    //       histogram scratch, so the consumer also faults.
+    let cases = [
+        "{ v0.tmp = vmem(r0+#0); vhist }",     // valid -> executes
+        "{ vhist }",                            // bare -> faults (#160)
+        "{ if (!p0) v0.tmp = vmem(r0+#0); vhist }", // cancelled load -> faults (#146)
+    ];
+    let asms: Vec<String> = cases.iter().map(|a| a.to_string()).collect();
+    let words_per = match assemble(&asms) {
+        Some(w) => w,
+        None => {
+            eprintln!("[hexagon_smir_lift] hist_requires_tmp: llvm-mc unavailable -> skipping");
+            return;
+        }
+    };
+    let input = [0x11u8; 128];
+    let mut st = State::zeroed();
+    st.r[0] = HIST_INPUT_ADDR;
+    st.p[0] = 0xff; // p0 true => `!p0` false => the `.tmp` load is cancelled
+
+    assert!(
+        run_interp_hist(&words_per[0], &st, &input).is_some(),
+        "valid `v0.tmp = vmem; vhist` should execute"
+    );
+    assert!(
+        run_interp_hist(&words_per[1], &st, &input).is_none(),
+        "bare `{{ vhist }}` must fault (no .tmp producer)"
+    );
+    assert!(
+        run_interp_hist(&words_per[2], &st, &input).is_none(),
+        "cancelled `.tmp` load must not feed vhist"
+    );
+}
+
 fn lift_hist_family(name: &str, cases: &[(&str, &str)], n: usize, seed: u64) {
     let asms: Vec<String> = cases.iter().map(|(_, a)| a.to_string()).collect();
     let words_per = match assemble(&asms) {

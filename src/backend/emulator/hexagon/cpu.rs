@@ -1995,14 +1995,26 @@ impl HexagonVcpu {
                         offset,
                         aligned,
                         commit: false,
+                        pred,
                         ..
                     } => {
-                        let mut ea = self.regs.r[base as usize].wrapping_add(offset as u32);
-                        if aligned {
-                            ea &= !127;
-                        }
-                        if let Ok(vec) = self.read_vec(ea) {
-                            self.new_v_tmp[dst as usize] = Some(vec);
+                        // A scalar-predicated `.tmp` load that is cancelled
+                        // (predicate false) must NOT seed the scratch buffer: a
+                        // same-packet consumer would otherwise observe data from
+                        // a memory access that architecturally did not occur.
+                        let do_load = match pred {
+                            Some(cond) => self.eval_pred(cond, &[None; 4]),
+                            None => true,
+                        };
+                        if do_load {
+                            let mut ea =
+                                self.regs.r[base as usize].wrapping_add(offset as u32);
+                            if aligned {
+                                ea &= !127;
+                            }
+                            if let Ok(vec) = self.read_vec(ea) {
+                                self.new_v_tmp[dst as usize] = Some(vec);
+                            }
                         }
                     }
                     // Pre-run the gather: its result (`gather_tmp`) feeds the

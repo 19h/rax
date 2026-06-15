@@ -109,6 +109,26 @@ fn set_uw(f: &mut File, reg: usize, i: usize, val: u32) {
 
 /// Execute a hvx_hist opcode. Returns `false` if `op` is not handled here.
 pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
+    let is_hist = matches!(
+        op,
+        Opcode::V6_vhist
+            | Opcode::V6_vhistq
+            | Opcode::V6_vwhist128
+            | Opcode::V6_vwhist128m
+            | Opcode::V6_vwhist128q
+            | Opcode::V6_vwhist128qm
+            | Opcode::V6_vwhist256
+            | Opcode::V6_vwhist256_sat
+            | Opcode::V6_vwhist256q
+            | Opcode::V6_vwhist256q_sat
+    );
+    // Every histogram consumes a same-packet `.tmp` vector load forwarded into
+    // V0's scratch slot. If that producer is absent (e.g. a bare `{ vhist }`,
+    // or a `.tmp` load targeting another register), the packet is malformed:
+    // reject it instead of silently tallying stale architectural V0 bytes.
+    if is_hist && ctx.vtmp[0].is_none() {
+        return false;
+    }
     match op {
         // ---- vhist / vhist(Qv): 8 lanes x 16 bytes -> uh bins, +1 ----
         Opcode::V6_vhist | Opcode::V6_vhistq => {
@@ -201,4 +221,45 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         _ => return false,
     }
     true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::backend::emulator::hexagon::opcode::decode_word;
+    use crate::cpu::HexagonRegisters;
+
+    fn run_vhist(vtmp0: Option<[u32; 32]>) -> bool {
+        let decoded = decode_word(0x1e00_2080).expect("decodes to V6_vhist");
+        assert_eq!(decoded.opcode, Opcode::V6_vhist);
+        let regs = HexagonRegisters::default();
+        let mut new_r = [None; 32];
+        let mut new_p = [None; 4];
+        let mut vtmp = [None; 32];
+        vtmp[0] = vtmp0;
+        let vnone = [None; 32];
+        let qnone = [None; 4];
+        let mut ctx = SemCtx {
+            regs: &regs,
+            new_r: &mut new_r,
+            new_p: &mut new_p,
+            immext: None,
+            usr_or: 0,
+            vnew: &vnone,
+            vtmp: &vtmp,
+            qnew: &qnone,
+            v_writes: Vec::new(),
+            q_writes: Vec::new(),
+        };
+        exec(decoded.opcode, &decoded, &mut ctx)
+    }
+
+    #[test]
+    fn vhist_requires_tmp_load_into_v0() {
+        // Without a same-packet `.tmp` load seeding V0, vhist must be rejected
+        // (return false) rather than tallying stale architectural V0 bytes.
+        assert!(!run_vhist(None));
+        // With the `.tmp` producer present, the histogram executes.
+        assert!(run_vhist(Some([0u32; 32])));
+    }
 }
