@@ -2953,8 +2953,14 @@ impl Aarch64Lowerer {
             SimdArithmeticOp::Sub => (0, elem_size | 0b10, 0b11010),
             SimdArithmeticOp::Mul => (1, elem_size, 0b11011),
             SimdArithmeticOp::Div => (1, elem_size, 0b11111),
-            SimdArithmeticOp::Max => (0, elem_size, 0b11110),
-            SimdArithmeticOp::Min { .. } => (0, elem_size | 0b10, 0b11110),
+            // The SMIR interpreter models vector float min/max with Rust
+            // `a.min(b)`/`a.max(b)`, which ignore a lone quiet NaN and return
+            // the numeric operand — i.e. AArch64 FMINNM/FMAXNM ("numeric")
+            // semantics. Emit the numeric opcode (0b11000) rather than the
+            // NaN-propagating FMIN/FMAX (0b11110) so the JIT matches the
+            // interpreter for guest-controlled NaN inputs.
+            SimdArithmeticOp::Max => (0, elem_size, 0b11000),
+            SimdArithmeticOp::Min { .. } => (0, elem_size | 0b10, 0b11000),
         };
         self.emit_simd_three_same(rd, rn, rm, q, u, size, opcode);
         Ok(())
@@ -14858,18 +14864,23 @@ impl Aarch64Lowerer {
                 src3,
                 precision,
             } => self.lower_fp_fma(*dst, *src1, *src2, *src3, *precision),
+            // The interpreter models scalar FMin/FMax with Rust `a.min(b)`/
+            // `a.max(b)` (numeric: a lone quiet NaN loses), matching AArch64
+            // FMINNM (0b0111) / FMAXNM (0b0110). Emit those rather than the
+            // NaN-propagating FMIN (0b0101) / FMAX (0b0100) so the JIT agrees
+            // with the interpreter for guest-controlled NaN inputs.
             OpKind::FMin {
                 dst,
                 src1,
                 src2,
                 precision,
-            } => self.lower_fp_binary(*dst, *src1, *src2, *precision, 0b0101),
+            } => self.lower_fp_binary(*dst, *src1, *src2, *precision, 0b0111),
             OpKind::FMax {
                 dst,
                 src1,
                 src2,
                 precision,
-            } => self.lower_fp_binary(*dst, *src1, *src2, *precision, 0b0100),
+            } => self.lower_fp_binary(*dst, *src1, *src2, *precision, 0b0110),
             OpKind::FCmp {
                 src1,
                 src2,
@@ -26552,6 +26563,92 @@ mod tests {
             1.0,
             1.0,
         );
+    }
+
+    #[test]
+    fn lowers_fp_minmax_uses_numeric_nan_semantics() {
+        // #56: the SMIR interpreter models FMin/FMax/VMin/VMax with Rust
+        // `a.min(b)`/`a.max(b)`, which drop a lone quiet NaN and return the
+        // numeric operand — AArch64 FMINNM/FMAXNM ("numeric") semantics. The
+        // lowering previously emitted the NaN-*propagating* FMIN/FMAX opcodes
+        // (scalar 0b0101/0b0100, vector three-same 0b11110), so a guest with a
+        // NaN operand diverged between JIT and interpreter. With exactly one
+        // NaN operand the numeric result is the finite number, so these
+        // differential checks pin the JIT to the interpreter oracle
+        // (`f32::max`/`f64::max`); the old propagating opcodes returned NaN.
+        let n32 = f32::NAN;
+        let n64 = f64::NAN;
+
+        // Scalar: a lone NaN must lose to the finite operand, both orderings.
+        assert_fp_binary_f32(
+            "fmax_s_nan_lhs",
+            OpKind::FMax { dst: v(0), src1: v(1), src2: v(2), precision: FpPrecision::F32 },
+            n32,
+            2.5,
+            n32.max(2.5),
+        );
+        assert_fp_binary_f32(
+            "fmax_s_nan_rhs",
+            OpKind::FMax { dst: v(0), src1: v(1), src2: v(2), precision: FpPrecision::F32 },
+            2.5,
+            n32,
+            2.5_f32.max(n32),
+        );
+        assert_fp_binary_f32(
+            "fmin_s_nan_lhs",
+            OpKind::FMin { dst: v(0), src1: v(1), src2: v(2), precision: FpPrecision::F32 },
+            n32,
+            2.5,
+            n32.min(2.5),
+        );
+        assert_fp_binary_f64(
+            "fmax_d_nan_lhs",
+            OpKind::FMax { dst: v(0), src1: v(1), src2: v(2), precision: FpPrecision::F64 },
+            n64,
+            -3.0,
+            n64.max(-3.0),
+        );
+        assert_fp_binary_f64(
+            "fmin_d_nan_rhs",
+            OpKind::FMin { dst: v(0), src1: v(1), src2: v(2), precision: FpPrecision::F64 },
+            -3.0,
+            n64,
+            (-3.0_f64).min(n64),
+        );
+
+        // Vector: a NaN lane must lose to the finite lane (matches interp).
+        fn apply_f32<F: Fn(f32, f32) -> f32>(a: [f32; 4], b: [f32; 4], op: F) -> (u64, u64) {
+            simd_pair_from_f32([op(a[0], b[0]), op(a[1], b[1]), op(a[2], b[2]), op(a[3], b[3])])
+        }
+        let a32 = [f32::NAN, -2.25, 8.0, -0.5];
+        let b32 = [2.25, f32::NAN, -1.5, 4.0];
+        let code = lower_ops(vec![
+            OpKind::VMax {
+                dst: v(5),
+                src1: v(1),
+                src2: v(2),
+                elem: VecElementType::F32,
+                lanes: 4,
+            },
+            OpKind::VMin {
+                dst: v(6),
+                src1: v(1),
+                src2: v(2),
+                elem: VecElementType::F32,
+                lanes: 4,
+                signed: false,
+            },
+        ]);
+        let (_, simd, _) = run_aarch64_code_with_regs_and_simd(
+            &code,
+            &[],
+            &[
+                (1, simd_pair_from_f32(a32).0, simd_pair_from_f32(a32).1),
+                (2, simd_pair_from_f32(b32).0, simd_pair_from_f32(b32).1),
+            ],
+        );
+        assert_eq!(simd[5], apply_f32(a32, b32, f32::max), "vmax f32 numeric NaN");
+        assert_eq!(simd[6], apply_f32(a32, b32, f32::min), "vmin f32 numeric NaN");
     }
 
     #[test]
