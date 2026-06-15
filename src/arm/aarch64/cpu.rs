@@ -11915,6 +11915,9 @@ impl AArch64Cpu {
         // FSCALE (opc5==01001): Zdn = Zdn * 2^(signed Zm element), merging. The
         // Zm element is a signed integer exponent, not a float.
         if opc5 == 0b01001 {
+            if (insn >> 22) & 0x3 == 0 {
+                return Ok(CpuExit::Undefined(insn));
+            }
             let pred = self.sve_p[pg];
             let a = self.v[zd].to_le_bytes(); // Zdn
             let b = self.v[zn].to_le_bytes(); // Zm
