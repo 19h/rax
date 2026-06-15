@@ -1795,6 +1795,38 @@ impl X86_64Vcpu {
     }
 
     // Memory access helpers
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[inline(always)]
+    fn push_jit_mem_trace(&mut self, access: (u8, u64, u8, u64)) {
+        let over_limit = match self.jit_mem_trace.as_ref() {
+            Some(trace) => trace.len() >= JIT_VERIFY_MEM_TRACE_LIMIT,
+            None => false,
+        };
+        if over_limit {
+            self.jit_mem_trace = None;
+            return;
+        }
+        if let Some(trace) = self.jit_mem_trace.as_mut() {
+            trace.push(access);
+        }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[inline(always)]
+    fn push_jit_mem_log(&mut self, access: (u64, u8, u64)) {
+        let over_limit = match self.jit_mem_log.as_ref() {
+            Some(log) => log.len() >= JIT_VERIFY_MEM_LOG_LIMIT,
+            None => false,
+        };
+        if over_limit {
+            self.jit_mem_log = None;
+            return;
+        }
+        if let Some(log) = self.jit_mem_log.as_mut() {
+            log.push(access);
+        }
+    }
+
     #[inline(always)]
     pub(super) fn read_mem(&mut self, addr: u64, size: u8) -> Result<u64> {
         let val = match size {
@@ -1810,9 +1842,7 @@ impl X86_64Vcpu {
             }
         };
         #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-        if let Some(t) = self.jit_mem_trace.as_mut() {
-            t.push((0, addr, size, val));
-        }
+        self.push_jit_mem_trace((0, addr, size, val));
         Ok(val)
     }
 
@@ -1882,15 +1912,13 @@ impl X86_64Vcpu {
         };
         #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
         if r.is_ok() {
-            if let Some(t) = self.jit_mem_trace.as_mut() {
-                let mask = match size {
-                    1 => 0xFFu64,
-                    2 => 0xFFFF,
-                    4 => 0xFFFF_FFFF,
-                    _ => u64::MAX,
-                };
-                t.push((1, addr, size, value & mask));
-            }
+            let mask = match size {
+                1 => 0xFFu64,
+                2 => 0xFFFF,
+                4 => 0xFFFF_FFFF,
+                _ => u64::MAX,
+            };
+            self.push_jit_mem_trace((1, addr, size, value & mask));
         }
         r
     }
@@ -3061,6 +3089,18 @@ pub fn publish_instruction_count(count: u64) {
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 const JIT_HOT_THRESHOLD: u32 = 64;
 
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64", not(test)))]
+const JIT_VERIFY_MEM_LOG_LIMIT: usize = 1_000_000;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64", not(test)))]
+const JIT_VERIFY_MEM_TRACE_LIMIT: usize = 1_000_000;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64", test))]
+const JIT_VERIFY_MEM_LOG_LIMIT: usize = 4;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64", test))]
+const JIT_VERIFY_MEM_TRACE_LIMIT: usize = 4;
+
 /// A compiled native hot-block region. The lowered code is register-state
 /// independent (it marshals guest state in/out per run), so one `JitRegion` is
 /// cached by (RIP, mode_tag) and re-run for every later entry to that RIP until
@@ -3239,11 +3279,7 @@ unsafe extern "C" fn rax_jit_mem_store(
         let old = vcpu.read_mem(addr, size as u8);
         vcpu.jit_mem_trace = saved_trace;
         match old {
-            Ok(old) => vcpu
-                .jit_mem_log
-                .as_mut()
-                .unwrap()
-                .push((addr, size as u8, old)),
+            Ok(old) => vcpu.push_jit_mem_log((addr, size as u8, old)),
             // Can't snapshot this store → can't soundly verify; abort logging.
             Err(_) => vcpu.jit_mem_log = None,
         }
@@ -3922,7 +3958,7 @@ impl X86_64Vcpu {
         let jit_rflags = self.regs.rflags; // already materialized by the native bridge
         let exit_pc = self.regs.rip;
         // Take the native trace NOW, before the undo/re-read loops add to it.
-        let jit_trace = self.jit_mem_trace.take().unwrap_or_default();
+        let jit_trace = self.jit_mem_trace.take();
         let log = match self.jit_mem_log.take() {
             Some(l) => l,
             // Logging aborted (unreadable store target) → can't undo → adopt
@@ -3969,13 +4005,13 @@ impl X86_64Vcpu {
             }
             steps += 1;
         }
-        let interp_trace = self.jit_mem_trace.take().unwrap_or_default();
+        let interp_trace = self.jit_mem_trace.take();
 
         if reached {
             // Per-access trace diff: the FIRST point where the native and
             // interpreter memory-access sequences differ pinpoints the exact
             // miscompiled load/store (address or value).
-            {
+            if let (Some(jit_trace), Some(interp_trace)) = (&jit_trace, &interp_trace) {
                 let kindname = |k: u8| if k == 0 { "load " } else { "store" };
                 let n = jit_trace.len().min(interp_trace.len());
                 let mut diff_at: Option<usize> = None;
@@ -4100,10 +4136,15 @@ impl X86_64Vcpu {
                 // The JIT's load trace reconstructs the memory the region reads
                 // (the helper funnels every JIT access through read_mem).
                 let loads: Vec<String> = jit_trace
-                    .iter()
-                    .filter(|&&(k, _, _, _)| k == 0)
-                    .map(|&(_, a, s, v)| format!("[{a:#x}/{s}B]={v:#x}"))
-                    .collect();
+                    .as_ref()
+                    .map(|trace| {
+                        trace
+                            .iter()
+                            .filter(|&&(k, _, _, _)| k == 0)
+                            .map(|&(_, a, s, v)| format!("[{a:#x}/{s}B]={v:#x}"))
+                            .collect()
+                    })
+                    .unwrap_or_default();
                 eprintln!("[JIT-VERIFY] jit loads ({}): {:?}", loads.len(), loads);
                 eprintln!(
                     "[JIT-VERIFY] lifted+optimized region:\n{}",
@@ -4444,6 +4485,33 @@ mod tests {
         let mem =
             Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
         X86_64Vcpu::new(0, mem)
+    }
+
+    #[test]
+    fn jit_verify_diagnostic_buffers_disable_at_caps() {
+        let mut vcpu = test_vcpu();
+
+        vcpu.jit_mem_trace = Some(Vec::new());
+        for i in 0..JIT_VERIFY_MEM_TRACE_LIMIT {
+            vcpu.push_jit_mem_trace((0, i as u64, 8, i as u64));
+        }
+        assert_eq!(
+            vcpu.jit_mem_trace.as_ref().unwrap().len(),
+            JIT_VERIFY_MEM_TRACE_LIMIT
+        );
+        vcpu.push_jit_mem_trace((0, 0xdead, 1, 0));
+        assert!(vcpu.jit_mem_trace.is_none());
+
+        vcpu.jit_mem_log = Some(Vec::new());
+        for i in 0..JIT_VERIFY_MEM_LOG_LIMIT {
+            vcpu.push_jit_mem_log((i as u64, 8, i as u64));
+        }
+        assert_eq!(
+            vcpu.jit_mem_log.as_ref().unwrap().len(),
+            JIT_VERIFY_MEM_LOG_LIMIT
+        );
+        vcpu.push_jit_mem_log((0xbeef, 1, 0));
+        assert!(vcpu.jit_mem_log.is_none());
     }
 
     #[test]
