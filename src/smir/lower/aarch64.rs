@@ -1874,20 +1874,12 @@ impl Aarch64Lowerer {
         self.emit(0xd500_401f | (op2 << 5));
     }
 
-    fn emit_brk(&mut self, imm16: u16) {
-        self.emit(0xd420_0000 | (u32::from(imm16) << 5));
-    }
-
     fn emit_svc(&mut self, imm16: u16) {
         self.emit(0xd400_0001 | (u32::from(imm16) << 5));
     }
 
     fn emit_hlt(&mut self, imm16: u16) {
         self.emit(0xd440_0000 | (u32::from(imm16) << 5));
-    }
-
-    fn emit_udf(&mut self, imm16: u16) {
-        self.emit(u32::from(imm16) << 5);
     }
 
     fn emit_prfm_literal(&mut self, prfop: u8, imm19: i32) {
@@ -14688,14 +14680,17 @@ impl Aarch64Lowerer {
                 self.emit(0xd503_201f);
                 Ok(())
             }
-            OpKind::Breakpoint => {
-                self.emit_brk(0);
-                Ok(())
-            }
-            OpKind::Undefined { .. } => {
-                self.emit_udf(0);
-                Ok(())
-            }
+            // A guest Breakpoint/Undefined must NOT lower to a host BRK/UDF: those
+            // raise SIGTRAP/SIGILL on the host (no native signal-recovery path
+            // exists), letting guest code terminate the emulator. Bail to the
+            // interpreter, which models these as controlled guest exits. (#16)
+            OpKind::Breakpoint => Err(LowerError::UnsupportedOp {
+                op: "AArch64 native Breakpoint (host BRK would SIGTRAP); deopt to interpreter"
+                    .into(),
+            }),
+            OpKind::Undefined { .. } => Err(LowerError::UnsupportedOp {
+                op: "AArch64 native Undefined (host UDF would SIGILL); deopt to interpreter".into(),
+            }),
             OpKind::Swi { imm } => {
                 let imm = Self::exception_imm16("SVC", *imm)?;
                 self.emit_svc(imm);
@@ -15724,12 +15719,15 @@ impl Aarch64Lowerer {
                 self.emit(0xd65f_03c0);
                 Ok(())
             }
+            // See the OpKind::Breakpoint/Undefined note above: a host BRK/UDF would
+            // raise SIGTRAP/SIGILL and kill the emulator. Bail to the interpreter,
+            // which raises the proper guest exception. (#16)
             Terminator::Trap {
                 kind: TrapKind::Breakpoint,
-            } => {
-                self.emit_brk(0);
-                Ok(())
-            }
+            } => Err(LowerError::UnsupportedOp {
+                op: "AArch64 native Breakpoint trap (host BRK would SIGTRAP); deopt to interpreter"
+                    .into(),
+            }),
             Terminator::Trap {
                 kind: TrapKind::SystemCall,
             } => {
@@ -15745,10 +15743,11 @@ impl Aarch64Lowerer {
             Terminator::Trap {
                 kind: TrapKind::Undefined | TrapKind::InvalidOpcode,
             }
-            | Terminator::Unreachable => {
-                self.emit_udf(0);
-                Ok(())
-            }
+            | Terminator::Unreachable => Err(LowerError::UnsupportedOp {
+                op: "AArch64 native Undefined/Unreachable trap (host UDF would SIGILL); deopt to \
+                     interpreter"
+                    .into(),
+            }),
             other => Err(LowerError::UnsupportedOp {
                 op: format!("AArch64 native terminator {other:?}"),
             }),
@@ -20639,20 +20638,12 @@ mod tests {
             | (nzcv & 0xf)
     }
 
-    fn enc_brk(imm16: u32) -> u32 {
-        0xd420_0000 | ((imm16 & 0xffff) << 5)
-    }
-
     fn enc_svc(imm16: u32) -> u32 {
         0xd400_0001 | ((imm16 & 0xffff) << 5)
     }
 
     fn enc_hlt(imm16: u32) -> u32 {
         0xd440_0000 | ((imm16 & 0xffff) << 5)
-    }
-
-    fn enc_udf(imm16: u32) -> u32 {
-        (imm16 & 0xffff) << 5
     }
 
     fn enc_mrs_sysreg(rt: u32, op1: u32, crn: u32, crm: u32, op2: u32) -> u32 {
@@ -46437,24 +46428,23 @@ mod tests {
     }
 
     #[test]
-    fn lowers_breakpoint_op_as_brk() {
+    fn rejects_breakpoint_op_to_deopt() {
+        // A guest Breakpoint must bail to the interpreter, not lower to a host BRK
+        // (which raises SIGTRAP and kills the emulator). (#16)
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(0, OpKind::Breakpoint);
         builder.set_terminator(Terminator::Return { values: vec![] });
         let func = builder.finish();
 
         let mut lowerer = Aarch64Lowerer::new();
-        lowerer.lower_function(&func).unwrap();
-        let code = lowerer.finalize().unwrap();
-
-        let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_brk(0).to_le_bytes());
-        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
-        assert_eq!(code, expected);
+        let err = lowerer.lower_function(&func).unwrap_err();
+        assert!(matches!(err, LowerError::UnsupportedOp { .. }));
     }
 
     #[test]
-    fn lowers_undefined_op_as_udf() {
+    fn rejects_undefined_op_to_deopt() {
+        // A guest Undefined must bail to the interpreter, not lower to a host UDF
+        // (which raises SIGILL). (#16)
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(
             0,
@@ -46466,13 +46456,8 @@ mod tests {
         let func = builder.finish();
 
         let mut lowerer = Aarch64Lowerer::new();
-        lowerer.lower_function(&func).unwrap();
-        let code = lowerer.finalize().unwrap();
-
-        let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_udf(0).to_le_bytes());
-        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
-        assert_eq!(code, expected);
+        let err = lowerer.lower_function(&func).unwrap_err();
+        assert!(matches!(err, LowerError::UnsupportedOp { .. }));
     }
 
     #[test]
@@ -46505,7 +46490,8 @@ mod tests {
     }
 
     #[test]
-    fn lowers_breakpoint_trap_terminator_as_brk() {
+    fn rejects_breakpoint_trap_terminator_to_deopt() {
+        // A Breakpoint trap terminator must bail to the interpreter, not host BRK. (#16)
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.set_terminator(Terminator::Trap {
             kind: TrapKind::Breakpoint,
@@ -46513,12 +46499,8 @@ mod tests {
         let func = builder.finish();
 
         let mut lowerer = Aarch64Lowerer::new();
-        lowerer.lower_function(&func).unwrap();
-        let code = lowerer.finalize().unwrap();
-
-        let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_brk(0).to_le_bytes());
-        assert_eq!(code, expected);
+        let err = lowerer.lower_function(&func).unwrap_err();
+        assert!(matches!(err, LowerError::UnsupportedOp { .. }));
     }
 
     #[test]
@@ -46556,7 +46538,8 @@ mod tests {
     }
 
     #[test]
-    fn lowers_undefined_trap_terminator_as_udf() {
+    fn rejects_undefined_trap_terminator_to_deopt() {
+        // An Undefined trap terminator must bail to the interpreter, not host UDF. (#16)
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.set_terminator(Terminator::Trap {
             kind: TrapKind::Undefined,
@@ -46564,27 +46547,20 @@ mod tests {
         let func = builder.finish();
 
         let mut lowerer = Aarch64Lowerer::new();
-        lowerer.lower_function(&func).unwrap();
-        let code = lowerer.finalize().unwrap();
-
-        let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_udf(0).to_le_bytes());
-        assert_eq!(code, expected);
+        let err = lowerer.lower_function(&func).unwrap_err();
+        assert!(matches!(err, LowerError::UnsupportedOp { .. }));
     }
 
     #[test]
-    fn lowers_unreachable_terminator_as_udf() {
+    fn rejects_unreachable_terminator_to_deopt() {
+        // Unreachable must bail to the interpreter, not host UDF (SIGILL). (#16)
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.set_terminator(Terminator::Unreachable);
         let func = builder.finish();
 
         let mut lowerer = Aarch64Lowerer::new();
-        lowerer.lower_function(&func).unwrap();
-        let code = lowerer.finalize().unwrap();
-
-        let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_udf(0).to_le_bytes());
-        assert_eq!(code, expected);
+        let err = lowerer.lower_function(&func).unwrap_err();
+        assert!(matches!(err, LowerError::UnsupportedOp { .. }));
     }
 
     #[test]
