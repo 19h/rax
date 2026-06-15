@@ -20073,13 +20073,14 @@ fn fp16_maxnum_minnum(a: u16, b: u16, is_min: bool) -> u16 {
 }
 
 /// Dispatch an `FpKind` binary op to the verified binary16 helpers (for SVE
-/// predicated FP). Only the arithmetic/min/max/abd kinds are used here.
+/// predicated FP). Only the arithmetic/min/max/abd/mulx kinds are used here.
 fn sve_fp16_binop(kind: FpKind, x: u16, y: u16) -> u16 {
     use FpKind::*;
     match kind {
         Add => fp16_add(x, y),
         Sub => fp16_sub(x, y),
         Mul => fp16_mul(x, y),
+        Mulx => fp16_mulx(x, y),
         Div => fp16_div(x, y),
         Max => fp16_max(x, y),
         Min => fp16_min(x, y),
@@ -20773,6 +20774,17 @@ mod tests {
         cpu.write_memory(addr, &insn.to_le_bytes()).unwrap();
     }
 
+    fn pack_h_lanes(lanes: [u16; 8]) -> u128 {
+        lanes
+            .into_iter()
+            .enumerate()
+            .fold(0u128, |acc, (i, lane)| acc | ((lane as u128) << (i * 16)))
+    }
+
+    fn h_lane(value: u128, lane: usize) -> u16 {
+        ((value >> (lane * 16)) & 0xffff) as u16
+    }
+
     #[test]
     fn test_sve2_dupq_quadword_no_panic() {
         let mut cpu = create_cpu_with_insn(0x0530_2420); // DUPQ Z0.Q, Z1.Q[0]
@@ -20783,6 +20795,37 @@ mod tests {
 
         assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
         assert_eq!(cpu.get_simd_reg(0), Some((src_lo, src_hi)));
+    }
+
+    #[test]
+    fn sve_fp16_predicated_fmulx_uses_mulx_semantics() {
+        let mut cpu = create_cpu_with_insn(0x654a_8020); // FMULX Z0.H, P0/M, Z0.H, Z1.H
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_sve_pred(0, (1 << 0) | (1 << 2)); // lanes H[0] and H[1]
+        cpu.set_simd(
+            0,
+            pack_h_lanes([
+                0x4000, // 2.0
+                0x0000, // +0.0; FMULX(+0, +inf) => +2.0
+                0x3555, // inactive lane must be preserved
+                0x3c00, 0, 0, 0, 0,
+            ]),
+        );
+        cpu.set_simd(
+            1,
+            pack_h_lanes([
+                0x4200, // 3.0
+                0x7c00, // +inf
+                0x7bff, 0, 0, 0, 0, 0,
+            ]),
+        );
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+
+        let z0 = cpu.get_simd(0);
+        assert_eq!(h_lane(z0, 0), 0x4600); // 2.0 * 3.0 = 6.0
+        assert_eq!(h_lane(z0, 1), 0x4000); // FMULX special case
+        assert_eq!(h_lane(z0, 2), 0x3555); // inactive merge
     }
 
     // -------------------------------------------------------------------------
