@@ -12692,6 +12692,11 @@ impl AArch64Cpu {
             let msz = (insn >> 23) & 0x3;
             let scaled = (insn >> 21) & 0x3 == 0b11;
             let unsigned = (insn >> 14) & 1 == 1;
+            // No scaled-byte gather exists, and there is no signed 64-bit load
+            // (LD1SD); both are unallocated and must trap, not read memory.
+            if (scaled && msz == 0) || (!unsigned && msz == 3) {
+                return Ok(CpuExit::Undefined(insn));
+            }
             let zm = ((insn >> 16) & 0x1F) as usize;
             let mbytes = 1usize << msz;
             let scale = if scaled { msz } else { 0 };
@@ -12731,6 +12736,10 @@ impl AArch64Cpu {
             let xs_signed = (insn >> 22) & 1 == 1;
             let scaled = (insn >> 21) & 1 == 1;
             let unsigned = (insn >> 14) & 1 == 1;
+            // No scaled-byte gather, and no signed 64-bit load (LD1SD); reject.
+            if (scaled && msz == 0) || (!unsigned && msz == 3) {
+                return Ok(CpuExit::Undefined(insn));
+            }
             let zm = ((insn >> 16) & 0x1F) as usize;
             let mbytes = 1usize << msz;
             let scale = if scaled { msz } else { 0 };
@@ -12779,6 +12788,10 @@ impl AArch64Cpu {
             let xs_signed = (insn >> 22) & 1 == 1;
             let scaled = (insn >> 21) & 1 == 1;
             let unsigned = (insn >> 14) & 1 == 1;
+            // No scaled-byte gather, and no signed word->S load (msz==2, U==0).
+            if (scaled && msz == 0) || (!unsigned && msz == 2) {
+                return Ok(CpuExit::Undefined(insn));
+            }
             let zm = ((insn >> 16) & 0x1F) as usize;
             let mbytes = 1usize << msz;
             let scale = if scaled { msz } else { 0 };
@@ -12821,6 +12834,9 @@ impl AArch64Cpu {
         if insn >> 25 == 0b1110010 && (insn >> 22) & 1 == 0 && (insn >> 13) & 0x7 == 0b101 {
             let msz = (insn >> 23) & 0x3;
             let scaled = (insn >> 21) & 0x3 == 0b01;
+            if scaled && msz == 0 {
+                return Ok(CpuExit::Undefined(insn)); // no scaled-byte scatter
+            }
             let zm = ((insn >> 16) & 0x1F) as usize;
             let mbytes = 1usize << msz;
             let scale = if scaled { msz } else { 0 };
@@ -12860,6 +12876,9 @@ impl AArch64Cpu {
                 return Ok(CpuExit::Undefined(insn));
             }
             let scaled = (insn >> 21) & 0x3 == 0b11;
+            if scaled && msz == 0 {
+                return Ok(CpuExit::Undefined(insn)); // no scaled-byte scatter
+            }
             let xs_signed = (insn >> 14) & 1 == 1;
             let zm = ((insn >> 16) & 0x1F) as usize;
             let mbytes = 1usize << msz;
@@ -12899,6 +12918,9 @@ impl AArch64Cpu {
         {
             let msz = (insn >> 23) & 0x3;
             let scaled = (insn >> 21) & 1 == 1;
+            if scaled && msz == 0 {
+                return Ok(CpuExit::Undefined(insn)); // no scaled-byte scatter
+            }
             let xs_signed = (insn >> 14) & 1 == 1;
             let zm = ((insn >> 16) & 0x1F) as usize;
             let mbytes = 1usize << msz;
@@ -12936,6 +12958,10 @@ impl AArch64Cpu {
         if insn >> 25 == 0b1100010 && (insn >> 21) & 0x3 == 0b01 && (insn >> 15) & 1 == 1 {
             let msz = (insn >> 23) & 0x3;
             let unsigned = (insn >> 14) & 1 == 1;
+            // No signed 64-bit load (LD1SD): msz==3 with U==0 is unallocated.
+            if !unsigned && msz == 3 {
+                return Ok(CpuExit::Undefined(insn));
+            }
             let imm5 = (insn >> 16) & 0x1F;
             let zn_base = ((insn >> 5) & 0x1F) as usize;
             let mbytes = 1usize << msz;
@@ -13171,6 +13197,10 @@ impl AArch64Cpu {
                 return Ok(CpuExit::Undefined(insn)); // no doubleword in S-form
             }
             let unsigned = (insn >> 14) & 1 == 1;
+            // No signed word->S load: msz==2 with U==0 is unallocated.
+            if !unsigned && msz == 2 {
+                return Ok(CpuExit::Undefined(insn));
+            }
             let imm5 = (insn >> 16) & 0x1F;
             let zn_base = ((insn >> 5) & 0x1F) as usize;
             let mbytes = 1usize << msz;
@@ -21076,6 +21106,67 @@ mod tests {
         good.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16);
         good.set_sve_pred(0, 0); // no active lanes -> no memory access needed
         assert_eq!(good.step().unwrap(), CpuExit::Continue);
+    }
+
+    #[test]
+    fn sve_gather_scatter_reject_unallocated_combos() {
+        // Encoders mirror tests/arm_diff.rs: Rn=x1, Zm=z2, Zt=z0, Pg=p0.
+        let gather_d = |msz: u32, scaled: bool, u: u32| -> u32 {
+            let ig1 = if scaled { 0b11 } else { 0b10 };
+            (0b1100010 << 25) | (msz << 23) | (ig1 << 21) | (2 << 16) | (1 << 15) | (u << 14) | (1 << 5)
+        };
+        let gather_s = |msz: u32, scaled: bool, u: u32| -> u32 {
+            // 1000010 msz xs scaled Zm 0 U ff Pg Rn Zt (xs=0 unsigned offset).
+            (0b1000010 << 25)
+                | (msz << 23)
+                | ((scaled as u32) << 21)
+                | (2 << 16)
+                | (u << 14)
+                | (1 << 5)
+        };
+        let scatter_d = |msz: u32, scaled: bool| -> u32 {
+            let ig1 = if scaled { 0b01 } else { 0b00 };
+            (0b1110010 << 25) | (msz << 23) | (ig1 << 21) | (2 << 16) | (0b101 << 13) | (1 << 5)
+        };
+        let run = |insn: u32| {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16);
+            cpu.set_sve_pred(0, 0); // no active lanes for the valid-form checks
+            cpu.step().unwrap()
+        };
+
+        // Unallocated: scaled-byte gather/scatter and signed widest-element loads.
+        // Scaled-byte *gather* with Zt=0 is the reused gather-prefetch encoding,
+        // so use Zt=16 (bit4 set) to land in the genuinely unallocated load space.
+        for insn in [
+            gather_d(0, true, 1) | 16, // scaled byte (D), Zt=16
+            gather_d(3, false, 0),     // LD1SD (signed 64-bit) does not exist
+            gather_s(0, true, 1) | 16, // scaled byte (S), Zt=16
+            gather_s(2, false, 0),     // signed word->S does not exist
+            scatter_d(0, true),        // scaled byte scatter (D)
+        ] {
+            assert_eq!(
+                run(insn),
+                CpuExit::Undefined(insn),
+                "encoding {insn:#x} should be unallocated"
+            );
+        }
+
+        // The LDFF1 (first-fault, bit13=1) variant shares these handlers, so the
+        // same scaled-byte rejection applies to it too (Zt=16 to avoid prefetch).
+        let ldff_scaled_byte = gather_d(0, true, 1) | 16 | (1 << 13);
+        assert_eq!(run(ldff_scaled_byte), CpuExit::Undefined(ldff_scaled_byte));
+
+        // x32 ST1 scatter scaled-byte (0xe4228020) is unallocated and must trap.
+        assert_eq!(run(0xe422_8020), CpuExit::Undefined(0xe422_8020));
+
+        // A genuine gather prefetch (PRFB, 0xc4220020) remains a no-op hint.
+        assert_eq!(run(0xc422_0020), CpuExit::Continue);
+
+        // Allocated forms still decode/execute (no active lanes -> no access).
+        for insn in [gather_d(3, false, 1), gather_d(1, true, 1), scatter_d(2, true)] {
+            assert_eq!(run(insn), CpuExit::Continue, "encoding {insn:#x} should execute");
+        }
     }
 
     #[test]
