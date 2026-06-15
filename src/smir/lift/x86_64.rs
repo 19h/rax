@@ -5610,7 +5610,6 @@ impl X86_64Lifter {
         let mem_width = self.size_to_memwidth(op_size);
         let modrm_prefix = prefix.as_modrm_prefix(prefix.bytes + 1);
         let modrm = decode_modrm(bytes, &modrm_prefix, pc)?;
-        let next_pc = pc + prefix.bytes as u64 + 1 + modrm.bytes_consumed as u64;
         let group = (modrm.byte >> 3) & 0x07;
         if group != 0 {
             return Err(LiftError::Unsupported {
@@ -5634,6 +5633,13 @@ impl X86_64Lifter {
                 need: imm_offset + imm_size,
             });
         }
+
+        // A RIP-relative effective address is based on the address of the NEXT
+        // instruction, which for the F6/F7 immediate form includes the immediate
+        // bytes. Compute next_pc only after imm_size is known so RIP-relative CTEST
+        // memory operands are not read `imm_size` bytes too low. (#19)
+        let next_pc =
+            pc + prefix.bytes as u64 + 1 + modrm.bytes_consumed as u64 + imm_size as u64;
 
         let imm = match imm_size {
             1 => bytes[imm_offset] as i8 as i64,
@@ -15361,6 +15367,51 @@ mod tests {
             } => assert_eq!(*src1, x86_gpr(0)),
             other => panic!("expected APX CTEST immediate test, got {other:?}"),
         }
+    }
+
+    // Regression for issue #19: an APX CTEST immediate memory form using a
+    // RIP-relative operand must base its effective address on the address AFTER the
+    // whole instruction — including the immediate bytes. The lifter previously
+    // computed next_pc before adding imm_size, so the RIP-relative base (and thus
+    // the loaded address) was `imm_size` bytes too low.
+    #[test]
+    fn issue_19_apx_ctest_imm_riprel_uses_post_immediate_rip() {
+        let mut lifter = X86_64Lifter::strict();
+        let mut ctx = LiftContext::new(SourceArch::X86_64);
+
+        // ctests {dfv=of,sf} qword ptr [rip + 0x10], 0xf0
+        //   62 F4 E4 08   EVEX prefix
+        //   F7            group-3 opcode (immediate form)
+        //   05            ModRM mod=00 reg=000 (group 0 = CTEST) rm=101 -> RIP-relative
+        //   10 00 00 00   disp32 = 0x10
+        //   F0 00 00 00   imm32 = 0xF0
+        let pc = 0x1000u64;
+        let bytes = [
+            0x62, 0xF4, 0xE4, 0x08, 0xF7, 0x05, 0x10, 0x00, 0x00, 0x00, 0xF0, 0x00, 0x00, 0x00,
+        ];
+        let result = lifter.lift_insn(pc, &bytes, &mut ctx).unwrap();
+        assert_eq!(result.bytes_consumed, 14);
+
+        // The RIP base must be the address one past the entire instruction
+        // (pc + length, immediate included), NOT pc + length - imm_size.
+        let expected_base = pc + result.bytes_consumed as u64;
+        let (offset, base) = result
+            .ops
+            .iter()
+            .find_map(|op| match &op.kind {
+                OpKind::PredLoad {
+                    addr: Address::PcRel { offset, base, .. },
+                    ..
+                } => Some((*offset, *base)),
+                _ => None,
+            })
+            .expect("CTEST imm RIP-relative memory must lift to a PcRel PredLoad");
+        assert_eq!(
+            base,
+            Some(expected_base),
+            "RIP-relative base must include the immediate bytes (post-instruction RIP)",
+        );
+        assert_eq!(offset, 0x10, "RIP-relative displacement must be preserved");
     }
 
     #[test]
