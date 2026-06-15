@@ -4170,6 +4170,11 @@ impl AArch64Cpu {
     /// Execute the SIMD modified-immediate group: MOVI, MVNI, ORR (imm),
     /// BIC (imm) and FMOV (vector immediate).
     fn exec_simd_modified_imm(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        // bit31 is a fixed 0 for the Advanced SIMD modified-immediate group; a
+        // set bit31 is a different (unallocated here) encoding and must trap.
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let op = (insn >> 29) & 1;
         let cmode = (insn >> 12) & 0xF;
@@ -4186,6 +4191,13 @@ impl AArch64Cpu {
             let lane = h | (h << 16) | (h << 32) | (h << 48);
             self.v[rd] = if q == 1 { lane | (lane << 64) } else { lane };
             return Ok(CpuExit::Continue);
+        }
+
+        // Apart from the FP16 FMOV form handled above (cmode==1111, op==0,
+        // o2==1), o2 (bit11) is a fixed 0; any other encoding with o2==1 is
+        // unallocated and must trap rather than execute as an o2==0 instruction.
+        if (insn >> 11) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
         }
 
         // Some (op, cmode, Q) combinations are UNDEFINED.
@@ -21412,6 +21424,32 @@ mod tests {
         for insn in [gather_d(3, false, 1), gather_d(1, true, 1), scatter_d(2, true)] {
             assert_eq!(run(insn), CpuExit::Continue, "encoding {insn:#x} should execute");
         }
+    }
+
+    #[test]
+    fn simd_modified_imm_rejects_reserved_bits() {
+        // SIMD modified-immediate: bit31 is fixed 0 and o2 (bit11) is fixed 0
+        // except for the FP16 FMOV form (cmode=1111, op=0). Reserved encodings
+        // (o2=1 on a MOVI, or bit31 set) must trap; valid forms still execute.
+        let setup = |insn: u32| {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+            cpu
+        };
+        // MOVI v0.4s,#1 with o2=1 (0x4f000c20) -> unallocated.
+        assert!(matches!(
+            setup(0x4f00_0c20).step(),
+            Err(ArmError::UndefinedInstruction(0x4f00_0c20))
+        ));
+        // bit31 set (0xcf000420) -> unallocated.
+        assert!(matches!(
+            setup(0xcf00_0420).step(),
+            Err(ArmError::UndefinedInstruction(0xcf00_0420))
+        ));
+        // Valid MOVI v0.4s,#1 (0x4f000420) still executes.
+        assert_eq!(setup(0x4f00_0420).step().unwrap(), CpuExit::Continue);
+        // Valid FP16 FMOV v0.4h,#1.0 (0x0f03fe00, cmode=1111 op=0 o2=1) executes.
+        assert_eq!(setup(0x0f03_fe00).step().unwrap(), CpuExit::Continue);
     }
 
     #[test]
