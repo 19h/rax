@@ -630,7 +630,13 @@ impl Aarch64Lowerer {
     fn gpr_arm_or_x86(vreg: VReg) -> Result<u8, LowerError> {
         match vreg {
             VReg::Arch(ArchReg::Arm(ArmReg::X(n))) if n < 31 => Ok(n),
-            VReg::Arch(ArchReg::X86(reg)) => reg.gpr_index().filter(|&n| n < 31).ok_or_else(|| {
+            // The identity map sends x86 Rn to host Xn. Reject R30 (host X30 = the
+            // link register the region's `RET` branches through) and R31 (X31 =
+            // SP/XZR): both are reserved and not guest-state-backed, so mapping a
+            // guest operand onto them would corrupt the return address / SP (R30 is
+            // a guest-to-host CFI break and code-pointer leak). Such ops fall back
+            // to the interpreter. (#61)
+            VReg::Arch(ArchReg::X86(reg)) => reg.gpr_index().filter(|&n| n < 30).ok_or_else(|| {
                 LowerError::InvalidRegister(format!(
                     "AArch64 native lowerer expected GPR, got X86({reg:?})"
                 ))
@@ -654,7 +660,10 @@ impl Aarch64Lowerer {
     fn dst_gpr_arm_or_x86(vreg: VReg) -> Result<u8, LowerError> {
         match vreg {
             VReg::Arch(ArchReg::Arm(ArmReg::X(n))) if n < 31 => Ok(n),
-            VReg::Arch(ArchReg::X86(reg)) => reg.gpr_index().filter(|&n| n < 31).ok_or_else(|| {
+            // Reject R30 (host X30 = link register) and R31 (X31 = SP/XZR): reserved
+            // host registers, not guest-state-backed. Writing a guest value onto X30
+            // would overwrite the native return target used by the region's `RET`. (#61)
+            VReg::Arch(ArchReg::X86(reg)) => reg.gpr_index().filter(|&n| n < 30).ok_or_else(|| {
                 LowerError::InvalidRegister(format!(
                     "AArch64 native lowerer expected writable GPR, got X86({reg:?})"
                 ))
@@ -17657,6 +17666,56 @@ mod tests {
             let err = try_lower_single_op(kind).unwrap_err();
             assert!(matches!(err, LowerError::InvalidRegister(_)));
         }
+    }
+
+    // Regression for issue #61: x86 R30 maps to host X30 — the link register the
+    // region's `RET` branches through — so it must be rejected for identity-mapped
+    // operands exactly like R31 (which aliases SP/XZR). Using it as a destination
+    // overwrites the native return address (a guest-to-host CFI break); as a source
+    // it leaks a host code pointer. R29 (host X29, guest-state-backed) must still
+    // lower.
+    #[test]
+    fn rejects_apx_r30_identity_mapping_x30_is_link_register() {
+        for kind in [
+            OpKind::Cmp {
+                src1: x86(X86Reg::R30),
+                src2: SrcOperand::Reg(x86(X86Reg::R16)),
+                width: OpWidth::W64,
+            },
+            OpKind::Cmp {
+                src1: x86(X86Reg::R16),
+                src2: SrcOperand::Reg(x86(X86Reg::R30)),
+                width: OpWidth::W64,
+            },
+            OpKind::Mov {
+                dst: x86(X86Reg::R30),
+                src: SrcOperand::Reg(x86(X86Reg::R16)),
+                width: OpWidth::W64,
+            },
+            OpKind::Test {
+                src1: x86(X86Reg::R16),
+                src2: SrcOperand::Reg(x86(X86Reg::R30)),
+                width: OpWidth::W8,
+            },
+        ] {
+            let err = try_lower_single_op(kind).unwrap_err();
+            assert!(
+                matches!(err, LowerError::InvalidRegister(_)),
+                "R30 must be rejected (host X30 = LR): {err:?}"
+            );
+        }
+
+        // Positive control: R29 is a guest-state-backed host register and must
+        // still lower successfully (the fix must not over-reject).
+        assert!(
+            try_lower_single_op(OpKind::Mov {
+                dst: x86(X86Reg::R29),
+                src: SrcOperand::Reg(x86(X86Reg::R16)),
+                width: OpWidth::W64,
+            })
+            .is_ok(),
+            "R29 (host X29, guest-backed) must still lower"
+        );
     }
 
     fn assert_subword_logic_flags_lowering(
