@@ -181,6 +181,16 @@ pub struct RiscVCpu {
 const VLEN: u64 = 128;
 /// Vector register length in bytes.
 const VLENB: u64 = VLEN / 8;
+const SSTATUS_BASE_MASK: u64 = (1 << 1) // SIE
+    | (1 << 5) // SPIE
+    | (1 << 6) // UBE
+    | (1 << 8) // SPP
+    | (0b11 << 9) // VS
+    | (0b11 << 13) // FS
+    | (0b11 << 15) // XS
+    | (1 << 18) // SUM
+    | (1 << 19); // MXR
+const S_INTERRUPT_MASK: u64 = (1 << 1) | (1 << 5) | (1 << 9); // SSIP, STIP, SEIP
 
 impl RiscVCpu {
     /// Create a hart with the given configuration and memory.
@@ -1326,18 +1336,21 @@ impl RiscVCpu {
             Csr::CycleH => (self.cycle >> 32) & 0xffff_ffff,
             Csr::TimeH => (self.time >> 32) & 0xffff_ffff,
             Csr::InstretH => (self.instret >> 32) & 0xffff_ffff,
-            Csr::Mstatus | Csr::Sstatus => self.mstatus,
+            Csr::Mstatus => self.mstatus,
+            Csr::Sstatus => self.mstatus & self.sstatus_mask(),
             Csr::Misa => self.misa(),
             Csr::Medeleg => self.medeleg,
             Csr::Mideleg => self.mideleg,
-            Csr::Mie | Csr::Sie => self.mie,
+            Csr::Mie => self.mie,
+            Csr::Sie => self.mie & self.supervisor_interrupt_mask(),
             Csr::Mtvec => self.mtvec,
             Csr::Mcounteren => self.mcounteren,
             Csr::Mscratch => self.mscratch,
             Csr::Mepc => self.mepc,
             Csr::Mcause => self.mcause,
             Csr::Mtval => self.mtval,
-            Csr::Mip | Csr::Sip => self.mip,
+            Csr::Mip => self.mip,
+            Csr::Sip => self.mip & self.supervisor_interrupt_mask(),
             Csr::Mvendorid | Csr::Marchid | Csr::Mimpid => 0,
             Csr::Mhartid => self.mhartid,
             Csr::Vl => self.vl,
@@ -1361,17 +1374,29 @@ impl RiscVCpu {
             Csr::Fflags => self.fcsr = (self.fcsr & !0x1f) | (value as u32 & 0x1f),
             Csr::Frm => self.fcsr = (self.fcsr & !0xe0) | (((value as u32) & 0x7) << 5),
             Csr::Fcsr => self.fcsr = value as u32 & 0xff,
-            Csr::Mstatus | Csr::Sstatus => self.mstatus = value,
+            Csr::Mstatus => self.mstatus = value,
+            Csr::Sstatus => {
+                let mask = self.sstatus_mask();
+                self.mstatus = (self.mstatus & !mask) | (value & mask);
+            }
             Csr::Medeleg => self.medeleg = value,
             Csr::Mideleg => self.mideleg = value,
-            Csr::Mie | Csr::Sie => self.mie = value,
+            Csr::Mie => self.mie = value,
+            Csr::Sie => {
+                let mask = self.supervisor_interrupt_mask();
+                self.mie = (self.mie & !mask) | (value & mask);
+            }
             Csr::Mtvec => self.mtvec = value,
             Csr::Mcounteren => self.mcounteren = value,
             Csr::Mscratch => self.mscratch = value,
             Csr::Mepc => self.mepc = value & !1,
             Csr::Mcause => self.mcause = value,
             Csr::Mtval => self.mtval = value,
-            Csr::Mip | Csr::Sip => self.mip = value,
+            Csr::Mip => self.mip = value,
+            Csr::Sip => {
+                let mask = self.supervisor_software_interrupt_mask();
+                self.mip = (self.mip & !mask) | (value & mask);
+            }
             Csr::Vstart => self.vstart = value,
             Csr::Vxsat => self.vxsat = value & 1,
             Csr::Vxrm => self.vxrm = value & 3,
@@ -1383,6 +1408,20 @@ impl RiscVCpu {
             _ => {}
         }
         Ok(())
+    }
+
+    fn sstatus_mask(&self) -> u64 {
+        let sd = 1u64 << (self.xbits() - 1);
+        let uxl = if self.rv32() { 0 } else { 0b11 << 32 };
+        (SSTATUS_BASE_MASK | uxl | sd) & self.xmask()
+    }
+
+    fn supervisor_interrupt_mask(&self) -> u64 {
+        self.mideleg & S_INTERRUPT_MASK & self.xmask()
+    }
+
+    fn supervisor_software_interrupt_mask(&self) -> u64 {
+        self.mideleg & (1 << 1) & self.xmask()
     }
 
     fn misa(&self) -> u64 {
@@ -4656,6 +4695,65 @@ mod tests {
             run_one(&mut c, csr(0xC00, 4, 1, 5)),
             RiscVExit::Trap(_)
         ));
+    }
+
+    #[test]
+    fn sstatus_preserves_machine_only_mstatus_bits() {
+        let mut c = cpu();
+        let machine_only = (0b11 << 11) | (1 << 7) | (1 << 3) | (1 << 17);
+        let supervisor_visible = (1 << 1) | (1 << 5) | (1 << 8) | (0b11 << 13);
+
+        c.csr_write(0x300, machine_only | supervisor_visible)
+            .unwrap();
+        let sstatus = c.csr_read(0x100).unwrap();
+        assert_eq!(sstatus & machine_only, 0);
+        assert_eq!(sstatus & supervisor_visible, supervisor_visible);
+
+        c.csr_write(0x300, 0).unwrap();
+        c.csr_write(0x100, 0b11 << 11).unwrap();
+        assert_eq!(c.csr_read(0x300).unwrap() & (0b11 << 11), 0);
+    }
+
+    #[test]
+    fn sstatus_cannot_escalate_sret_via_mpp() {
+        let mut c = cpu();
+        c.csr_write(0x100, 0b11 << 11).unwrap();
+        assert_eq!(c.csr_read(0x300).unwrap() & (0b11 << 11), 0);
+
+        c.priv_ = Priv::Supervisor;
+        c.mepc = 0x40;
+        c.set_pc(0x100);
+        assert_eq!(run_one(&mut c, 0x1020_0073), RiscVExit::Continue); // sret
+        assert_ne!(c.priv_, Priv::Machine);
+    }
+
+    #[test]
+    fn supervisor_interrupt_csrs_are_delegated_views() {
+        let mut c = cpu();
+        let ssip = 1 << 1;
+        let msip = 1 << 3;
+        let stip = 1 << 5;
+        let mtip = 1 << 7;
+        let seip = 1 << 9;
+
+        c.csr_write(0x303, ssip | stip).unwrap(); // mideleg
+        c.csr_write(0x304, msip | mtip | seip).unwrap(); // mie
+        assert_eq!(c.csr_read(0x104).unwrap(), 0);
+
+        c.csr_write(0x104, ssip | stip | seip | msip | mtip)
+            .unwrap();
+        assert_eq!(c.csr_read(0x304).unwrap() & (ssip | stip), ssip | stip);
+        assert_eq!(
+            c.csr_read(0x304).unwrap() & (msip | mtip | seip),
+            msip | mtip | seip
+        );
+        assert_eq!(c.csr_read(0x104).unwrap(), ssip | stip);
+
+        c.csr_write(0x344, msip | mtip | ssip | stip).unwrap(); // mip
+        assert_eq!(c.csr_read(0x144).unwrap(), ssip | stip);
+        c.csr_write(0x144, 0).unwrap();
+        assert_eq!(c.csr_read(0x344).unwrap() & ssip, 0);
+        assert_eq!(c.csr_read(0x344).unwrap() & (msip | mtip | stip), msip | mtip | stip);
     }
 
     #[test]
