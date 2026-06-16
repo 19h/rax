@@ -12510,7 +12510,7 @@ impl AArch64Cpu {
                 .read_u8(self.translate_address(addr, false, false)?)? as u32;
             let b1 = self
                 .memory
-                .read_u8(self.translate_address(addr + 1, false, false)?)?
+                .read_u8(self.translate_address(addr.wrapping_add(1), false, false)?)?
                 as u32;
             self.sve_p[pt] = b0 | (b1 << 8);
             return Ok(CpuExit::Continue);
@@ -12522,7 +12522,7 @@ impl AArch64Cpu {
             self.memory
                 .write_u8(self.translate_address(addr, true, false)?, p as u8)?;
             self.memory.write_u8(
-                self.translate_address(addr + 1, true, false)?,
+                self.translate_address(addr.wrapping_add(1), true, false)?,
                 (p >> 8) as u8,
             )?;
             return Ok(CpuExit::Continue);
@@ -12536,7 +12536,7 @@ impl AArch64Cpu {
             let (esize, mbytes, signed) = sve_ld1_dtype(dtype);
             let imm6 = (insn >> 16) & 0x3F; // unsigned
             let elements = 16 / esize;
-            let addr = base + (imm6 as u64) * (mbytes as u64);
+            let addr = base.wrapping_add((imm6 as u64).wrapping_mul(mbytes as u64));
             let any_active = (0..elements).any(|e| (pred >> (e * esize)) & 1 == 1);
             let val = if any_active {
                 let pa = self.translate_address(addr, false, false)?;
@@ -12569,7 +12569,10 @@ impl AArch64Cpu {
             let dtype = (insn >> 21) & 0xF;
             let (esize, mbytes, signed) = sve_ld1_dtype(dtype);
             let elements = 16 / esize;
-            let addr0 = base.wrapping_add((imm4 * (elements * mbytes) as i64) as u64);
+            // Scalar+immediate offset scales by VL (=16 bytes here), NOT by the
+            // stored/element byte count, so widening/truncating forms address the
+            // correct location (e.g. LD1B Zt.H must use 16, not 8).
+            let addr0 = base.wrapping_add((imm4 * 16) as u64);
             let mut dst = [0u8; 16];
             for e in 0..elements {
                 if (pred >> (e * esize)) & 1 == 0 {
@@ -12605,7 +12608,10 @@ impl AArch64Cpu {
             let esize = 1usize << size;
             let mbytes = 1usize << msz;
             let elements = 16 / esize;
-            let addr0 = base.wrapping_add((imm4 * (elements * mbytes) as i64) as u64);
+            // Scalar+immediate offset scales by VL (=16 bytes here), NOT by the
+            // stored/element byte count, so widening/truncating forms address the
+            // correct location (e.g. LD1B Zt.H must use 16, not 8).
+            let addr0 = base.wrapping_add((imm4 * 16) as u64);
             let src = self.v[zt].to_le_bytes();
             for e in 0..elements {
                 if (pred >> (e * esize)) & 1 == 0 {
@@ -12677,7 +12683,10 @@ impl AArch64Cpu {
             let dtype = (insn >> 21) & 0xF;
             let (esize, mbytes, signed) = sve_ld1_dtype(dtype);
             let elements = 16 / esize;
-            let addr0 = base.wrapping_add((imm4 * (elements * mbytes) as i64) as u64);
+            // Scalar+immediate offset scales by VL (=16 bytes here), NOT by the
+            // stored/element byte count, so widening/truncating forms address the
+            // correct location (e.g. LD1B Zt.H must use 16, not 8).
+            let addr0 = base.wrapping_add((imm4 * 16) as u64);
             return self.exec_sve_ff_load(addr0, mbytes, esize, signed, elements, pred, zt, true);
         }
 
@@ -12718,9 +12727,8 @@ impl AArch64Cpu {
         // (Zm[e] << scale); scale = msz when scaled (bits[22:21]==11) else 0;
         // load msize bytes and sign(U=0)/zero(U=1)-extend; inactive lanes zero.
         // bit22==1 (ig1 high) separates it from the vector-base form (ig1==01).
-        // ff=bit13 is free: ff=1 is the first-fault LDFF1 gather, which on the
-        // (untestable in this harness) fault path would suppress + clear FFR;
-        // the no-fault path is identical to the plain gather modelled here.
+        // ff=bit13 selects the first-fault LDFF1 gather (faults on non-first active
+        // lanes are suppressed and reflected in FFR; see exec_sve_gather_load).
         if insn >> 25 == 0b1100010 && (insn >> 22) & 1 == 1 && (insn >> 15) & 1 == 1 {
             let msz = (insn >> 23) & 0x3;
             let scaled = (insn >> 21) & 0x3 == 0b11;
@@ -12736,34 +12744,26 @@ impl AArch64Cpu {
             let esize = 8usize; // D
             let elements = 16 / esize;
             let offs = self.v[zm].to_le_bytes();
-            let mut dst = [0u8; 16];
-            for e in 0..elements {
-                if (pred >> (e * esize)) & 1 == 0 {
-                    continue;
-                }
+            let mut addrs = [0u64; 4];
+            for (e, slot) in addrs.iter_mut().enumerate().take(elements) {
                 let off = read_elem(&offs, e * esize, esize); // 64-bit unsigned offset
-                let pa = self.translate_address(base.wrapping_add(off << scale), false, false)?;
-                let raw: u64 = match mbytes {
-                    1 => self.memory.read_u8(pa)? as u64,
-                    2 => self.memory.read_u16(pa)? as u64,
-                    4 => self.memory.read_u32(pa)? as u64,
-                    _ => self.memory.read_u64(pa)?,
-                };
-                let val = if unsigned {
-                    raw
-                } else {
-                    sext_elem(raw, (mbytes * 8) as u32) as u64
-                };
-                write_elem(&mut dst, e * esize, esize, val);
+                *slot = base.wrapping_add(off << scale);
             }
-            self.v[zt] = u128::from_le_bytes(dst);
-            return Ok(CpuExit::Continue);
+            let first_fault = (insn >> 13) & 1 == 1;
+            return self.exec_sve_gather_load(
+                &addrs[..elements],
+                mbytes,
+                esize,
+                !unsigned,
+                pred,
+                zt,
+                first_fault,
+            );
         }
 
         // LD1 gather (unpacked: D elements, 32-bit vector offset): 1100010 msz
         // xs scaled Zm 0 U ff Pg Rn Zt (bit15==0 vs the D.64 form's bit15==1).
-        // esize=64; offset[e] = extend(Zm[e]<31:0>, xs) << scale. ff=bit13 free
-        // (first-fault variant; no-fault path identical).
+        // esize=64; offset[e] = extend(Zm[e]<31:0>, xs) << scale. ff=bit13 selects the first-fault (LDFF1) variant; see exec_sve_gather_load.
         if insn >> 25 == 0b1100010 && (insn >> 15) & 1 == 0 {
             let msz = (insn >> 23) & 0x3;
             let xs_signed = (insn >> 22) & 1 == 1;
@@ -12779,33 +12779,26 @@ impl AArch64Cpu {
             let esize = 8usize; // D
             let elements = 16 / esize;
             let offs = self.v[zm].to_le_bytes();
-            let mut dst = [0u8; 16];
-            for e in 0..elements {
-                if (pred >> (e * esize)) & 1 == 0 {
-                    continue;
-                }
+            let mut addrs = [0u64; 4];
+            for (e, slot) in addrs.iter_mut().enumerate().take(elements) {
                 let off32 = read_elem(&offs, e * esize, 4) as u32; // low 32 bits
                 let off = if xs_signed {
                     off32 as i32 as i64 as u64
                 } else {
                     off32 as u64
                 };
-                let pa = self.translate_address(base.wrapping_add(off << scale), false, false)?;
-                let raw: u64 = match mbytes {
-                    1 => self.memory.read_u8(pa)? as u64,
-                    2 => self.memory.read_u16(pa)? as u64,
-                    4 => self.memory.read_u32(pa)? as u64,
-                    _ => self.memory.read_u64(pa)?,
-                };
-                let val = if unsigned {
-                    raw
-                } else {
-                    sext_elem(raw, (mbytes * 8) as u32) as u64
-                };
-                write_elem(&mut dst, e * esize, esize, val);
+                *slot = base.wrapping_add(off << scale);
             }
-            self.v[zt] = u128::from_le_bytes(dst);
-            return Ok(CpuExit::Continue);
+            let first_fault = (insn >> 13) & 1 == 1;
+            return self.exec_sve_gather_load(
+                &addrs[..elements],
+                mbytes,
+                esize,
+                !unsigned,
+                pred,
+                zt,
+                first_fault,
+            );
         }
 
         // LD1 gather (32-bit scalar base + vector offset, S elements): 1000010
@@ -12831,32 +12824,26 @@ impl AArch64Cpu {
             let esize = 4usize; // S
             let elements = 16 / esize;
             let offs = self.v[zm].to_le_bytes();
-            let mut dst = [0u8; 16];
-            for e in 0..elements {
-                if (pred >> (e * esize)) & 1 == 0 {
-                    continue;
-                }
+            let mut addrs = [0u64; 4];
+            for (e, slot) in addrs.iter_mut().enumerate().take(elements) {
                 let off32 = read_elem(&offs, e * esize, esize) as u32;
                 let off = if xs_signed {
                     off32 as i32 as i64 as u64
                 } else {
                     off32 as u64
                 };
-                let pa = self.translate_address(base.wrapping_add(off << scale), false, false)?;
-                let raw: u64 = match mbytes {
-                    1 => self.memory.read_u8(pa)? as u64,
-                    2 => self.memory.read_u16(pa)? as u64,
-                    _ => self.memory.read_u32(pa)? as u64,
-                };
-                let val = if unsigned {
-                    raw
-                } else {
-                    (sext_elem(raw, (mbytes * 8) as u32) as u64) & elem_mask(32)
-                };
-                write_elem(&mut dst, e * esize, esize, val);
+                *slot = base.wrapping_add(off << scale);
             }
-            self.v[zt] = u128::from_le_bytes(dst);
-            return Ok(CpuExit::Continue);
+            let first_fault = (insn >> 13) & 1 == 1;
+            return self.exec_sve_gather_load(
+                &addrs[..elements],
+                mbytes,
+                esize,
+                !unsigned,
+                pred,
+                zt,
+                first_fault,
+            );
         }
 
         // ST1 scatter (64-bit scalar base + vector offset, D elements):
@@ -12987,7 +12974,7 @@ impl AArch64Cpu {
         // LD1 gather (vector base + immediate, D elements): 1100010 msz 01 imm5
         // 1 U ff Pg Zn Zt. Each element's base IS Zn[e]; addr[e] = Zn[e] +
         // imm5 * mbytes. esize=64; load msize bytes, sign/zero-extend; zeroing.
-        // ff=bit13 free (first-fault variant; no-fault path identical).
+        // ff=bit13 selects the first-fault (LDFF1) variant.
         if insn >> 25 == 0b1100010 && (insn >> 21) & 0x3 == 0b01 && (insn >> 15) & 1 == 1 {
             let msz = (insn >> 23) & 0x3;
             let unsigned = (insn >> 14) & 1 == 1;
@@ -13001,29 +12988,21 @@ impl AArch64Cpu {
             let esize = 8usize; // D
             let elements = 16 / esize;
             let bases = self.v[zn_base].to_le_bytes();
-            let mut dst = [0u8; 16];
-            for e in 0..elements {
-                if (pred >> (e * esize)) & 1 == 0 {
-                    continue;
-                }
+            let mut addrs = [0u64; 4];
+            for (e, slot) in addrs.iter_mut().enumerate().take(elements) {
                 let elem_base = read_elem(&bases, e * esize, esize);
-                let ea = elem_base.wrapping_add((imm5 as u64) * (mbytes as u64));
-                let pa = self.translate_address(ea, false, false)?;
-                let raw: u64 = match mbytes {
-                    1 => self.memory.read_u8(pa)? as u64,
-                    2 => self.memory.read_u16(pa)? as u64,
-                    4 => self.memory.read_u32(pa)? as u64,
-                    _ => self.memory.read_u64(pa)?,
-                };
-                let val = if unsigned {
-                    raw
-                } else {
-                    sext_elem(raw, (mbytes * 8) as u32) as u64
-                };
-                write_elem(&mut dst, e * esize, esize, val);
+                *slot = elem_base.wrapping_add((imm5 as u64) * (mbytes as u64));
             }
-            self.v[zt] = u128::from_le_bytes(dst);
-            return Ok(CpuExit::Continue);
+            let first_fault = (insn >> 13) & 1 == 1;
+            return self.exec_sve_gather_load(
+                &addrs[..elements],
+                mbytes,
+                esize,
+                !unsigned,
+                pred,
+                zt,
+                first_fault,
+            );
         }
 
         // ST1 scatter (vector base + immediate, D elements): 1110010 msz 10 imm5
@@ -13223,7 +13202,7 @@ impl AArch64Cpu {
         // LD1 gather (S-form vector base + immediate): 1000010 msz 01 imm5 1 U
         // ff Pg Zn Zt. esize=32; the per-element base is the 32-bit Zn[e]
         // (zero-extended); addr[e] = Zn[e] + imm5*mbytes. bit22==0 (bits[22:21]
-        // ==01) separates it from LD1R (bit22==1). ff=bit13 free (first-fault).
+        // ==01) separates it from LD1R (bit22==1). ff=bit13 selects the first-fault (LDFF1) variant.
         if insn >> 25 == 0b1000010 && (insn >> 21) & 0x3 == 0b01 && (insn >> 15) & 1 == 1 {
             let msz = (insn >> 23) & 0x3;
             if msz == 3 {
@@ -13240,28 +13219,21 @@ impl AArch64Cpu {
             let esize = 4usize; // S
             let elements = 16 / esize;
             let bases = self.v[zn_base].to_le_bytes();
-            let mut dst = [0u8; 16];
-            for e in 0..elements {
-                if (pred >> (e * esize)) & 1 == 0 {
-                    continue;
-                }
+            let mut addrs = [0u64; 4];
+            for (e, slot) in addrs.iter_mut().enumerate().take(elements) {
                 let elem_base = read_elem(&bases, e * esize, esize); // 32-bit base
-                let ea = elem_base.wrapping_add((imm5 as u64) * (mbytes as u64));
-                let pa = self.translate_address(ea, false, false)?;
-                let raw: u64 = match mbytes {
-                    1 => self.memory.read_u8(pa)? as u64,
-                    2 => self.memory.read_u16(pa)? as u64,
-                    _ => self.memory.read_u32(pa)? as u64,
-                };
-                let val = if unsigned {
-                    raw
-                } else {
-                    (sext_elem(raw, (mbytes * 8) as u32) as u64) & elem_mask(32)
-                };
-                write_elem(&mut dst, e * esize, esize, val);
+                *slot = elem_base.wrapping_add((imm5 as u64) * (mbytes as u64));
             }
-            self.v[zt] = u128::from_le_bytes(dst);
-            return Ok(CpuExit::Continue);
+            let first_fault = (insn >> 13) & 1 == 1;
+            return self.exec_sve_gather_load(
+                &addrs[..elements],
+                mbytes,
+                esize,
+                !unsigned,
+                pred,
+                zt,
+                first_fault,
+            );
         }
 
         // ST1 scatter (S-form vector base + immediate): 1110010 msz 11 imm5 101
@@ -13364,6 +13336,77 @@ impl AArch64Cpu {
                 Err(err) => {
                     if first && !nonfault {
                         return Err(err); // LDFF1's first active element faults normally
+                    }
+                    faulted = true;
+                    self.sve_ffr &= !(1u32 << (e * esize));
+                }
+            }
+        }
+        self.v[zt] = u128::from_le_bytes(dst);
+        Ok(CpuExit::Continue)
+    }
+
+    /// Shared gather-load body with first-fault (LDFF1) modelling. `addrs[e]` is
+    /// the precomputed effective address for lane `e`. For a plain LD1 gather
+    /// (`first_fault == false`) every active lane faults normally; for an LDFF1
+    /// gather (`first_fault == true`) the first active lane faults normally while
+    /// any later faulting lane is suppressed (its result left zero) and the
+    /// corresponding FFR bit is cleared.
+    #[allow(clippy::too_many_arguments)]
+    fn exec_sve_gather_load(
+        &mut self,
+        addrs: &[u64],
+        mbytes: usize,
+        esize: usize,
+        signed: bool,
+        pred: u32,
+        zt: usize,
+        first_fault: bool,
+    ) -> Result<CpuExit, ArmError> {
+        let mut dst = [0u8; 16];
+        let mut first = true;
+        let mut faulted = false;
+        for (e, &ea) in addrs.iter().enumerate() {
+            if (pred >> (e * esize)) & 1 != 1 {
+                continue; // inactive -> zero
+            }
+            if faulted {
+                self.sve_ffr &= !(1u32 << (e * esize));
+                continue;
+            }
+            let read: Result<u64, ArmError> = match self.translate_address(ea, false, false) {
+                Ok(pa) => match mbytes {
+                    1 => self.memory.read_u8(pa).map(|v| v as u64).map_err(Into::into),
+                    2 => self
+                        .memory
+                        .read_u16(pa)
+                        .map(|v| v as u64)
+                        .map_err(Into::into),
+                    4 => self
+                        .memory
+                        .read_u32(pa)
+                        .map(|v| v as u64)
+                        .map_err(Into::into),
+                    _ => self.memory.read_u64(pa).map_err(Into::into),
+                },
+                Err(err) => Err(err),
+            };
+            match read {
+                Ok(raw) => {
+                    let val = if signed {
+                        (sext_elem(raw, (mbytes * 8) as u32) as u64) & elem_mask((esize * 8) as u32)
+                    } else {
+                        raw
+                    };
+                    write_elem(&mut dst, e * esize, esize, val);
+                    first = false;
+                }
+                Err(err) => {
+                    // Plain LD1 gather: any active-lane fault propagates. LDFF1
+                    // gather: the first active lane faults normally; later faults
+                    // are suppressed and reflected in FFR.
+                    if !first_fault || first {
+                        return Err(err);
                     }
                     faulted = true;
                     self.sve_ffr &= !(1u32 << (e * esize));
@@ -21270,6 +21313,91 @@ mod tests {
         assert_eq!(cpu.get_x(5), hi);
         assert_eq!(cpu.mem_read_u64(base).unwrap(), new_lo);
         assert_eq!(cpu.mem_read_u64(base.wrapping_add(8)).unwrap(), new_hi);
+    }
+
+    #[test]
+    fn sve_ld1r_address_addition_wraps_no_panic() {
+        // #18: LD1R computes `base + imm6*mbytes` BEFORE the predicate-active
+        // check; with base near u64::MAX this overflowed and panicked in
+        // checked builds. The add must wrap. imm6=1 forces the overflow even
+        // with no active lanes (so no memory is touched).
+        let mut cpu = create_test_cpu();
+        cpu.set_x(5, u64::MAX); // Rn = X5 = base
+        cpu.set_sve_pred(0, 0); // no active lanes
+        // LD1RB {Z0.B}, P0/Z, [X5, #1]: 1000010 00 1 imm6=1 1 00 Pg=0 Rn=5 Zt=0.
+        let insn = (0b1000010u32 << 25) | (1 << 22) | (1 << 16) | (1 << 15) | (5 << 5);
+        assert_eq!(cpu.exec_sve_ldst(insn).unwrap(), CpuExit::Continue);
+    }
+
+    #[test]
+    fn sve_pred_whole_register_ldst_address_wraps_no_panic() {
+        // #17: SVE LDR/STR of a predicate register accesses addr and addr+1.
+        // With base=u64::MAX the second-byte address (addr+1) overflowed and
+        // panicked; it must wrap. WrappingMemory makes the byte reads/writes
+        // succeed so the addr+1 path is actually exercised (not short-circuited
+        // by a first-byte fault).
+        let mut cpu = create_wrapping_memory_cpu();
+        cpu.set_x(5, u64::MAX); // base
+        // LDR Pt, [X5]: 1000010110 imm9=0 000 Rn=5 Pt=0.
+        let ldr = (0b1000010110u32 << 22) | (5 << 5);
+        assert_eq!(cpu.exec_sve_ldst(ldr).unwrap(), CpuExit::Continue);
+        // STR Pt, [X5]: 1110010110 ...
+        let str_ = (0b1110010110u32 << 22) | (5 << 5);
+        assert_eq!(cpu.exec_sve_ldst(str_).unwrap(), CpuExit::Continue);
+    }
+
+    #[test]
+    fn sve_ld1_immediate_offset_scales_by_vl_not_element_bytes() {
+        // #16: contiguous LD1 scalar+immediate scales the offset by VL (=16
+        // bytes here), NOT by the stored element count. For the widening
+        // LD1B Zt.H, imm4=1 must address base + 1*16, not base + 1*(16/2)*1.
+        let mut cpu = create_test_cpu();
+        let base = 0x200u64;
+        cpu.set_x(3, base); // Rn = X3
+        cpu.write_memory(base + 16, &[0xAA]).unwrap(); // VL-scaled (correct) target
+        cpu.write_memory(base + 8, &[0xBB]).unwrap(); // element-scaled (wrong) target
+        cpu.set_sve_pred(0, 0xFFFF); // all lanes active
+        // LD1B Zt.H: 1010010 dtype=0001 0 imm4=1 101 Pg=0 Rn=3 Zt=0.
+        let insn =
+            (0b1010010u32 << 25) | (0b0001 << 21) | (1 << 16) | (0b101 << 13) | (3 << 5);
+        assert_eq!(cpu.exec_sve_ldst(insn).unwrap(), CpuExit::Continue);
+        // Lane 0 (halfword) = zero-extended byte at base+16 = 0xAA.
+        let (lo, _hi) = cpu.get_simd_reg(0).unwrap();
+        assert_eq!(lo & 0xFFFF, 0x00AA, "LD1 imm offset must scale by VL (got {lo:#x})");
+    }
+
+    #[test]
+    fn sve_ldff1_gather_suppresses_non_first_fault() {
+        // #19: an LDFF1 gather lets the first active lane fault normally but
+        // suppresses a LATER faulting lane (clearing its FFR bit); a plain LD1
+        // gather still propagates the fault as an error.
+        let make = |first_fault: bool| {
+            let mut cpu = create_test_cpu();
+            // Z2: lane0 base = 0 (valid), lane1 base = 0x2000_0000 (faults,
+            // beyond the 256 MiB test memory).
+            cpu.set_simd_reg(2, 0, 0x2000_0000).unwrap();
+            cpu.set_sve_pred(0, (1 << 0) | (1 << 8)); // D lanes 0 and 1 active
+            cpu.sve_ffr = 0xFFFF;
+            // LD1D gather, vector base + imm (D): 1100010 msz=11 01 imm5=0 1 U=1 ff Pg Zn=2 Zt=0.
+            let word = (0b1100010u32 << 25)
+                | (0b11 << 23)
+                | (0b01 << 21)
+                | (1 << 15)
+                | (1 << 14)
+                | (2 << 5);
+            let insn = if first_fault { word | (1 << 13) } else { word };
+            (cpu, insn)
+        };
+        // LDFF1: lane0 ok, lane1 fault suppressed -> Continue, FFR bit cleared.
+        let (mut cpu, ff) = make(true);
+        assert_eq!(cpu.exec_sve_ldst(ff).unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.sve_ffr & (1 << 8), 0, "FFR bit for the faulting lane must clear");
+        // Plain LD1 gather: the fault propagates as an error.
+        let (mut cpu2, plain) = make(false);
+        assert!(
+            cpu2.exec_sve_ldst(plain).is_err(),
+            "a plain gather must propagate the lane fault"
+        );
     }
 
     #[test]
