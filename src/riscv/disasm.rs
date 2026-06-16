@@ -62,6 +62,7 @@ impl Op {
             Sraw => "sraw",
             Fence => "fence",
             FenceI => "fence.i",
+            CboZero => "cbo.zero",
             Ecall => "ecall",
             Ebreak => "ebreak",
             Mret => "mret",
@@ -505,7 +506,7 @@ impl Op {
             Addi | Slti | Sltiu | Xori | Ori | Andi | Addiw => Class::IArith,
             Slli | Srli | Srai | Slliw | Srliw | Sraiw | SlliUw | Rori | Roriw | Bclri | Bexti
             | Binvi | Bseti => Class::Shift,
-            Fence => Class::Bare,
+            Fence | CboZero => Class::Bare,
             FenceI | Ecall | Ebreak | Mret | Sret | Wfi => Class::Bare,
             Csrrw | Csrrs | Csrrc => Class::Csr,
             Csrrwi | Csrrsi | Csrrci => Class::Csri,

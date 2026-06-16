@@ -69,6 +69,7 @@ pub enum Op {
     Sraw,
     Fence,
     FenceI,
+    CboZero,
     Ecall,
     Ebreak,
     // ---- privileged / system (subset) ----
@@ -1513,6 +1514,7 @@ fn decode_fence(w: u32, isa: &Isa) -> Insn {
     match funct3(w) {
         0 => base(Op::Fence, w),
         1 if isa.zifencei => base(Op::FenceI, w),
+        2 if rd(w) == 0 && rs2(w) == 4 => base(Op::CboZero, w),
         _ => Insn::illegal(w, 4),
     }
 }

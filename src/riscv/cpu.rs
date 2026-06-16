@@ -580,6 +580,13 @@ impl RiscVCpu {
 
             // ---- FENCE / system ----
             Op::Fence | Op::FenceI => {}
+            Op::CboZero => {
+                let base = a & !0x3f;
+                self.mem.write(base, &[0; 64]).map_err(|_| Trap {
+                    cause: cause::STORE_ACCESS_FAULT,
+                    tval: base,
+                })?;
+            }
             Op::Ecall => {
                 self.pc = pc; // leave PC at the ECALL for the handler/embedder
                 let trap = Trap {
