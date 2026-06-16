@@ -35133,3 +35133,139 @@ fn diff_simd_fp16_two_reg_fpsr() {
     }
     run_fpsr_batch("simd_fp16_two_reg_fpsr", batch);
 }
+
+// commit c8b73c322aa0 temp: set special fp status flags
+#[test]
+fn diff_simd_three_same_fp_special_fpsr() {
+    // enc_scalar_two_reg is added later in this branch; define it locally so the
+    // test compiles at this commit.
+    fn enc_scalar_two_reg(u: u32, size: u32, opcode: u32) -> u32 {
+        (1 << 30)
+            | (u << 29)
+            | (0b11110 << 24)
+            | (size << 22)
+            | (0b10000 << 17)
+            | (opcode << 12)
+            | (0b10 << 10)
+            | (RN << 5)
+            | RD
+    }
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    // sNaN / +0 / finite bit patterns per esize (ft: 0=f32, 1=f64).
+    let snan = |ft: u32| -> u64 {
+        match ft {
+            0 => 0x7F80_0001u64,           // f32 sNaN
+            _ => 0x7FF0_0000_0000_0001u64, // f64 sNaN
+        }
+    };
+    let pzero = |_ft: u32| -> u64 { 0u64 };
+    let two = |ft: u32| -> u64 {
+        match ft {
+            0 => (2.0f32).to_bits() as u64,
+            _ => (2.0f64).to_bits(),
+        }
+    };
+
+    // --- 1) FMULX with an sNaN operand => IOC (new fp_status_mulx path).
+    // fp_status_mulx returns 0 for inf*0 (operands not finite), so an sNaN
+    // input is the reliable IOC trigger. opcode 0b11011, U=0, a_bit=0 => size=ft.
+    for &ft in &[0u32, 1] {
+        let insn = enc_three_same(1, 0, ft, 0b11011); // Q=1, U=0, FMULX
+        for initial_fpsr in [0u64, 0x10] {
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0;
+            st.set_vreg(RN as usize, snan(ft), snan(ft));
+            st.set_vreg(RM as usize, two(ft), two(ft));
+            batch.push((format!("fmulx_t{ft}_snan_ioc_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+    }
+
+    // --- 2) FP compares with an sNaN operand => IOC (new CmEq/CmGe/CmGt/AcGe/AcGt branch).
+    // (name, u, a_bit, opcode): FCMEQ(0,0,11100) FCMGE(1,0,11100) FCMGT(1,1,11100)
+    //                           FACGE(1,0,11101) FACGT(1,1,11101)
+    let cmp_variants: &[(&str, u32, u32, u32)] = &[
+        ("fcmeq", 0, 0, 0b11100),
+        ("fcmge", 1, 0, 0b11100),
+        ("fcmgt", 1, 1, 0b11100),
+        ("facge", 1, 0, 0b11101),
+        ("facgt", 1, 1, 0b11101),
+    ];
+    for &(nm, u, a_bit, opcode) in cmp_variants {
+        for &ft in &[0u32, 1] {
+            let size = (a_bit << 1) | ft;
+            let insn = enc_three_same(1, u, size, opcode); // Q=1 vector
+            let mut st = ArmState::zeroed();
+            st.fpsr = 0;
+            st.fpcr = 0;
+            st.set_vreg(RN as usize, snan(ft), snan(ft));
+            st.set_vreg(RM as usize, two(ft), two(ft));
+            batch.push((format!("{nm}_t{ft}_snan_ioc"), insn, st));
+        }
+    }
+
+    // --- 3) FRECPS / FRSQRTS step => inexact/overflow (new recps_rsqrts path).
+    // FRECPS(u=0,a_bit=0,11111)  FRSQRTS(u=0,a_bit=1,11111)
+    //   f32: subnormal (tiny) op vs finite op => the new tiny-operand IXC branch.
+    //   f64: huge*huge => step result overflows to +/-inf => OFC|IXC.
+    let step_variants: &[(&str, u32, u32)] = &[("frecps", 0, 0b11111), ("frsqrts", 1, 0b11111)];
+    for &(nm, a_bit, opcode) in step_variants {
+        for &ft in &[0u32, 1] {
+            let size = (a_bit << 1) | ft;
+            let insn = enc_three_same(1, 0, size, opcode); // Q=1, U=0
+            let (a_bits, b_bits) = match ft {
+                // smallest f32 subnormal (tiny, non-zero) vs 1.0 (finite, non-zero)
+                0 => (0x0000_0001u64, (1.0f32).to_bits() as u64),
+                // 1e300 * 1e300 overflows the fused step to +/-inf in f64
+                _ => ((1e300f64).to_bits(), (1e300f64).to_bits()),
+            };
+            let mut st = ArmState::zeroed();
+            st.fpsr = 0;
+            st.fpcr = 0;
+            st.set_vreg(RN as usize, a_bits, a_bits);
+            st.set_vreg(RM as usize, b_bits, b_bits);
+            batch.push((format!("{nm}_t{ft}_step_status"), insn, st));
+        }
+    }
+
+    // --- 4) FRECPE / FRSQRTE estimate => DZC on +0; IOC on negative FRSQRTE input
+    //        (new fp_status_estimate path). two-reg: sz_hi=1 selects FP estimate.
+    // FRECPE(u=0,opcode=11101)  FRSQRTE(u=1,opcode=11101)
+    for &(nm, u) in &[("frecpe", 0u32), ("frsqrte", 1u32)] {
+        for &ft in &[0u32, 1] {
+            let size = (1 << 1) | ft; // sz_hi=1, sz=ft
+            let insn = enc_two_reg(1, u, size, 0b11101); // Q=1 vector
+            // 4a: +0 input => DZC (estimate of zero is +/-inf, divide-by-zero).
+            let mut st0 = ArmState::zeroed();
+            st0.fpsr = 0;
+            st0.fpcr = 0;
+            st0.set_vreg(RN as usize, pzero(ft), pzero(ft));
+            batch.push((format!("{nm}_t{ft}_zero_dzc"), insn, st0));
+            // 4b: negative finite input => IOC for FRSQRTE (sqrt of negative).
+            let neg = match ft {
+                0 => (-4.0f32).to_bits() as u64,
+                _ => (-4.0f64).to_bits(),
+            };
+            let mut st1 = ArmState::zeroed();
+            st1.fpsr = 0;
+            st1.fpcr = 0;
+            st1.set_vreg(RN as usize, neg, neg);
+            batch.push((format!("{nm}_t{ft}_neg"), insn, st1));
+        }
+    }
+
+    // --- 5) Scalar FRECPX with an sNaN input => IOC (new fp_is_snan_bits branch).
+    // scalar two-reg: U=0, opcode=11111, sz_hi=1.
+    for &ft in &[0u32, 1] {
+        let size = (1 << 1) | ft;
+        let insn = enc_scalar_two_reg(0, size, 0b11111); // FRECPX scalar
+        let mut st = ArmState::zeroed();
+        st.fpsr = 0;
+        st.fpcr = 0;
+        st.set_vreg(RN as usize, snan(ft), 0);
+        batch.push((format!("frecpx_t{ft}_snan_ioc"), insn, st));
+    }
+
+    run_fpsr_batch("simd_three_same_fp_special_fpsr", batch);
+}

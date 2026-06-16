@@ -5428,9 +5428,7 @@ impl AArch64Cpu {
             } else {
                 fp_three_same_f64(kind, a, b, d)
             };
-            if kind == FpKind::Div {
-                self.fpsr |= fp_status_binop(esize, kind, a, b, res);
-            }
+            self.fpsr |= fp_three_same_status(esize, kind, a, b, d, res);
             write_elem(&mut dst, off, esize, res);
         }
 
@@ -6002,6 +6000,7 @@ impl AArch64Cpu {
                     (true, true) => fp_rsqrt_estimate_f32(a as u32) as u64,
                     (true, false) => fp_rsqrt_estimate_f64(a),
                 };
+                self.fpsr |= fp_status_estimate(esize, is_rsqrt, a, r);
                 write_elem(&mut dst, off, esize, r);
             }
             self.v[rd] = u128::from_le_bytes(dst);
@@ -6018,7 +6017,11 @@ impl AArch64Cpu {
             let esize = if sz == 0 { 4usize } else { 8 };
             let a = read_elem(&self.v[rn].to_le_bytes(), 0, esize);
             let mut dst = [0u8; 16];
-            write_elem(&mut dst, 0, esize, sve_fp_recpx(esize, a));
+            let r = sve_fp_recpx(esize, a);
+            if fp_is_snan_bits(esize, a) {
+                self.fpsr |= FPSR_IOC;
+            }
+            write_elem(&mut dst, 0, esize, r);
             self.v[rd] = u128::from_le_bytes(dst);
             return Some(Ok(CpuExit::Continue));
         }
@@ -11887,7 +11890,8 @@ impl AArch64Cpu {
                     let nn = if is_fmls { fp_neg_bits(ne, ebits) } else { ne };
                     let aa = read_elem(&acc, off, esz);
                     let r = fp_muladd_bits(aa, nn, mm, ebits);
-                    (r, fp_status_fma(esz, aa, nn, mm, r))
+                    let status = fp_status_fma(esz, aa, nn, mm, r);
+                    (r, fp_status_sve_underflow(esz, r, status))
                 };
                 self.fpsr |= status;
                 write_elem(&mut dst, off, esz, r);
@@ -11997,7 +12001,8 @@ impl AArch64Cpu {
                 }
                 let m = read_elem(&mb, off, esz);
                 let r = fp_muladd_bits(a, n, m, ebits);
-                self.fpsr |= fp_status_fma(esz, a, n, m, r);
+                let status = fp_status_fma(esz, a, n, m, r);
+                self.fpsr |= fp_status_sve_underflow(esz, r, status);
                 write_elem(&mut dst, off, esz, r);
             }
             self.v[zd] = u128::from_le_bytes(dst);
@@ -12164,18 +12169,7 @@ impl AArch64Cpu {
                 } else {
                     sve_recps(esz, x, y)
                 };
-                self.fpsr |= if esz == 8 {
-                    fp_status_assume_inexact(esz, r)
-                } else {
-                    let xf = sve_fp_to_f64(esz, x);
-                    let yf = sve_fp_to_f64(esz, y);
-                    let exact = if rsqrt {
-                        (3.0 - xf * yf) * 0.5
-                    } else {
-                        2.0 - xf * yf
-                    };
-                    fp_status_from_exact_f64(esz, exact, r)
-                };
+                self.fpsr |= fp_status_recps_rsqrts(esz, rsqrt, x, y, r);
                 write_elem(&mut dst, off, esz, r);
             }
             self.v[zd] = u128::from_le_bytes(dst);
@@ -12452,7 +12446,12 @@ impl AArch64Cpu {
                 8 => fp_three_same_f64(kind, x, y, 0),
                 _ => return Ok(CpuExit::Undefined(insn)),
             };
-            self.fpsr |= fp_status_binop(esize, kind, x, y, r);
+            let status = fp_three_same_status(esize, kind, x, y, 0, r);
+            self.fpsr |= if kind == FpKind::Mulx {
+                fp_status_sve_underflow(esize, r, status)
+            } else {
+                status
+            };
             write_elem(&mut dst, off, esize, r);
         }
         self.v[zd] = u128::from_le_bytes(dst);
@@ -19553,6 +19552,15 @@ fn fp_status_fma(esize: usize, addend: u64, op1: u64, op2: u64, result: u64) -> 
             && f32::from_bits(result as u32) == f32::from_bits(addend as u32)
         {
             FPSR_IXC
+        } else if status == 0
+            && esize == 4
+            && !fp32_is_zero(addend as u32)
+            && !fp32_is_zero(op1 as u32)
+            && !fp32_is_zero(op2 as u32)
+            && f32::from_bits(result as u32)
+                == f32::from_bits(fp_three_same_f32(FpKind::Mul, op1 as u32, op2 as u32, 0))
+        {
+            FPSR_IXC
         } else {
             status
         }
@@ -19598,6 +19606,25 @@ fn fp_status_recps_rsqrts(esize: usize, rsqrt: bool, a: u64, b: u64, result: u64
     if !fp_is_finite_bits(esize, a) || !fp_is_finite_bits(esize, b) {
         return 0;
     }
+    if esize == 8 {
+        if fp64_is_inf(result) {
+            return FPSR_OFC | FPSR_IXC;
+        }
+        let addend = if rsqrt {
+            3.0f64.to_bits()
+        } else {
+            2.0f64.to_bits()
+        };
+        let target = if rsqrt {
+            (f64::from_bits(result) * 2.0).to_bits()
+        } else {
+            result
+        };
+        if fp64_fma_exact(addend, fp_neg_bits(a, 64), b, target) {
+            return 0;
+        }
+        return FPSR_IXC;
+    }
     let x = sve_fp_to_f64(esize, a);
     let y = sve_fp_to_f64(esize, b);
     let exact = if rsqrt {
@@ -19605,7 +19632,57 @@ fn fp_status_recps_rsqrts(esize: usize, rsqrt: bool, a: u64, b: u64, result: u64
     } else {
         2.0 - x * y
     };
-    fp_status_from_exact_f64(esize, exact, result)
+    let status = fp_status_from_exact_f64(esize, exact, result);
+    if status == 0 && esize == 4 && !rsqrt {
+        let a32 = a as u32;
+        let b32 = b as u32;
+        if ((fp32_is_tiny(a32) && !fp32_is_zero(a32) && fp32_is_finite(b32) && !fp32_is_zero(b32))
+            || (fp32_is_tiny(b32) && !fp32_is_zero(b32) && fp32_is_finite(a32) && !fp32_is_zero(a32)))
+        {
+            return FPSR_IXC;
+        }
+        let product = fp_three_same_f32(
+            FpKind::Mul,
+            fp_neg_bits(a, 32) as u32,
+            b as u32,
+            0,
+        ) as u64;
+        if product == result && !fp32_is_zero(product as u32) {
+            return FPSR_IXC;
+        }
+    }
+    status
+}
+
+fn fp_status_sve_underflow(esize: usize, result: u64, status: u32) -> u32 {
+    if status & FPSR_IXC == 0 {
+        return status;
+    }
+    let underflow = match esize {
+        2 => fp16_is_tiny(result as u16) || fp16_is_zero(result as u16),
+        4 => fp32_is_tiny(result as u32) || fp32_is_zero(result as u32),
+        _ => fp64_is_tiny(result) || fp64_is_zero(result),
+    };
+    status | if underflow { FPSR_UFC } else { 0 }
+}
+
+fn fp_three_same_status(esize: usize, kind: FpKind, a: u64, b: u64, d: u64, result: u64) -> u32 {
+    use FpKind::*;
+    match kind {
+        Mla => fp_status_fma(esize, d, a, b, result),
+        Mls => fp_status_fma(esize, d, fp_neg_bits(a, (esize * 8) as u32), b, result),
+        Mulx => fp_status_mulx(esize, a, b, result),
+        Recps => fp_status_recps_rsqrts(esize, false, a, b, result),
+        Rsqrts => fp_status_recps_rsqrts(esize, true, a, b, result),
+        CmEq | CmGe | CmGt | AcGe | AcGt => {
+            if fp_is_snan_bits(esize, a) || fp_is_snan_bits(esize, b) {
+                FPSR_IOC
+            } else {
+                0
+            }
+        }
+        _ => fp_status_binop(esize, kind, a, b, result),
+    }
 }
 
 fn fp16_three_same_status(u: u32, a_bit: u32, opcode: u32, n: u16, m: u16, r: u16) -> u32 {
@@ -19845,7 +19922,16 @@ fn fp_status_binop_f32(kind: FpKind, a: u32, b: u32, result: u32) -> u32 {
         let y_effectively_lost = !fp32_is_zero(b) && r == x;
         let x_effectively_lost = matches!(kind, Add | Addp) && !fp32_is_zero(a) && r == y;
         let subtrahend_lost = matches!(kind, Sub | Abd) && !fp32_is_zero(b) && r == x.abs();
-        if y_effectively_lost || x_effectively_lost || subtrahend_lost {
+        let minuend_lost = matches!(kind, Abd) && !fp32_is_zero(a) && r == y.abs();
+        let subtract_minuend_lost = matches!(kind, Sub)
+            && !fp32_is_zero(a)
+            && result == (-f32::from_bits(b)).to_bits();
+        if y_effectively_lost
+            || x_effectively_lost
+            || subtrahend_lost
+            || minuend_lost
+            || subtract_minuend_lost
+        {
             status |= FPSR_IXC;
         }
     }
