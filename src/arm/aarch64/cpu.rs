@@ -11584,6 +11584,8 @@ impl AArch64Cpu {
                 let mm = widen(read_elem(&m, h_off, 2) as u16);
                 let aa = read_elem(&acc, j * 4, 4) as u32;
                 let r = fp_muladd_bits(aa as u64, nn as u64, mm as u64, 32) as u32;
+                self.fpsr |=
+                    fp_status_fma(4, aa as u64, nn as u64, mm as u64, r as u64);
                 write_elem(&mut dst, j * 4, 4, r as u64);
             }
             self.v[zd] = u128::from_le_bytes(dst);
@@ -11625,6 +11627,8 @@ impl AArch64Cpu {
                 let nn = widen(nbits);
                 let aa = read_elem(&acc, j * 4, 4) as u32;
                 let r = fp_muladd_bits(aa as u64, nn as u64, mm as u64, 32) as u32;
+                self.fpsr |=
+                    fp_status_fma(4, aa as u64, nn as u64, mm as u64, r as u64);
                 write_elem(&mut dst, j * 4, 4, r as u64);
             }
             self.v[zd] = u128::from_le_bytes(dst);

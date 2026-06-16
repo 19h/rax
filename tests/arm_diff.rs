@@ -34305,3 +34305,56 @@ fn diff_sve_fcmla_indexed_fpsr() {
     }
     run_fpsr_batch("sve_fcmla_indexed_fpsr", batch);
 }
+
+// commit e4473ffb2628 temp: set sve fmlal fpsr
+#[test]
+fn diff_sve_fmlal_fpsr_exceptions() {
+    // sNaN f16 (exp=0x1F, top mantissa bit clear, nonzero payload), replicated
+    // across all 8 halfword lanes; 1.0 (0x3c00) for the other operand. When
+    // widened to f32 the sNaN stays an f32 sNaN (0x7FA02000), so the
+    // commit's fp_status_fma(4,..) returns FPSR_IOC for every lane. Without the
+    // fix FPSR stays 0 and diverges from the oracle.
+    let snan_h: u64 = 0x7D01_7D01_7D01_7D01;
+    let one_h: u64 = 0x3C00_3C00_3C00_3C00;
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    // Non-indexed FMLALB/T and FMLSLB/T: sub=bit13, top=bit10.
+    for &sub in &[0u32, 1] {
+        for &top in &[0u32, 1] {
+            let insn = enc_sve2_fmlal(sub, top);
+            for initial_fpsr in [0u64, 0x10] {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                st.set_preg(0, 0xFFFF);
+                // Zn (RN) carries the sNaN, Zm (RM) carries 1.0, Zda (RD)=0.
+                st.set_vreg(RN as usize, snan_h, snan_h);
+                st.set_vreg(RM as usize, one_h, one_h);
+                st.set_vreg(RD as usize, 0, 0);
+                batch.push((
+                    format!("sve_fmlal_snan_sub{sub}_top{top}_fpsr{initial_fpsr:#x}"),
+                    insn,
+                    st,
+                ));
+            }
+        }
+    }
+
+    // Indexed FMLALB/T and FMLSLB/T: Zm restricted to z0..z7 (RM=2), index=3.
+    for &sub in &[0u32, 1] {
+        for &top in &[0u32, 1] {
+            let insn = enc_sve2_fmlal_idx(sub, top, 3, RM);
+            let mut st = ArmState::zeroed();
+            st.fpsr = 0;
+            st.fpcr = 0;
+            st.set_preg(0, 0xFFFF);
+            st.set_vreg(RN as usize, snan_h, snan_h);
+            st.set_vreg(RM as usize, one_h, one_h);
+            st.set_vreg(RD as usize, 0, 0);
+            batch.push((format!("sve_fmlal_idx_snan_sub{sub}_top{top}"), insn, st));
+        }
+    }
+
+    run_fpsr_batch("sve_fmlal_fpsr_exceptions", batch);
+}
