@@ -33566,3 +33566,93 @@ fn diff_sve_fcvt_fpsr() {
     }
     run_fpsr_batch("sve_fcvt_fpsr", batch);
 }
+
+// commit 12d4b2044ba4 temp: set sve fp-int cvt fpsr
+#[test]
+fn diff_sve_fp_int_cvt_fpsr_excs() {
+    // (opc, opc2, fp_sz, int_sz) per exec_sve_fp_int_cvt's width table.
+    let table = [
+        (0b01u32, 0b01u32, 2usize, 2usize), // fp16 <-> int16
+        (0b01, 0b10, 2, 4),                 // fp16 <-> int32
+        (0b01, 0b11, 2, 8),                 // fp16 <-> int64
+        (0b10, 0b10, 4, 4),                 // f32  <-> int32
+        (0b11, 0b10, 4, 8),                 // f32  <-> int64
+        (0b11, 0b00, 8, 4),                 // f64  <-> int32
+        (0b11, 0b11, 8, 8),                 // f64  <-> int64
+    ];
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (opc, opc2, fp_sz, int_sz) in table {
+        let cont = fp_sz.max(int_sz);
+        let elements = 16 / cont;
+        // FP source: +Inf in the fp_sz field -> fp_to_int_status returns IOC.
+        let inf_bits: u64 = match fp_sz {
+            2 => 0x7C00,                      // fp16 +Inf
+            4 => f32::INFINITY.to_bits() as u64,
+            _ => f64::INFINITY.to_bits(),
+        };
+        // Integer source: smallest int that is not exactly representable in the
+        // destination FP precision (11/24/53 bits) -> fp_status_int_to_fp_scaled
+        // returns IXC. Each value fits the signed range of int_sz.
+        let inexact_int: u64 = match fp_sz {
+            2 => 2_049,                       // 2^11 + 1 (fits i16)
+            4 => 16_777_217,                  // 2^24 + 1 (fits i32)
+            _ => 9_007_199_254_740_993,       // 2^53 + 1 (fits i64)
+        };
+
+        // FCVTZ direction (ig1=0b011): FP -> int, expect IOC from +Inf.
+        for u in 0..2u32 {
+            let insn = enc_sve_cvt(opc, 0b011, opc2, u);
+            for initial_fpsr in [0u64, 0x10] {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                let mut zn: u128 = 0;
+                for e in 0..elements {
+                    zn |= (inf_bits as u128) << (e * cont * 8);
+                }
+                st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+                st.set_preg(0, 0xFFFF);
+                batch.push((
+                    format!(
+                        "fcvtz{}_f{}i{}_ioc_fpsr{initial_fpsr:#x}",
+                        if u == 0 { "s" } else { "u" },
+                        fp_sz * 8,
+                        int_sz * 8
+                    ),
+                    insn,
+                    st,
+                ));
+            }
+        }
+
+        // CVTF direction (ig1=0b010): int -> FP, expect IXC from inexact integer.
+        for u in 0..2u32 {
+            let insn = enc_sve_cvt(opc, 0b010, opc2, u);
+            for initial_fpsr in [0u64, 0x01] {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                let imask: u64 = if int_sz == 8 {
+                    u64::MAX
+                } else {
+                    (1u64 << (int_sz * 8)) - 1
+                };
+                let mut zn: u128 = 0;
+                for e in 0..elements {
+                    zn |= ((inexact_int & imask) as u128) << (e * cont * 8);
+                }
+                st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+                st.set_preg(0, 0xFFFF);
+                batch.push((
+                    format!(
+                        "cvtf{}_f{}i{}_ixc_fpsr{initial_fpsr:#x}",
+                        if u == 0 { "s" } else { "u" },
+                        fp_sz * 8,
+                        int_sz * 8
+                    ),
+                    insn,
+                    st,
+                ));
+            }
+        }
+    }
+    run_fpsr_batch("sve_fp_int_cvt_fpsr_excs", batch);
+}

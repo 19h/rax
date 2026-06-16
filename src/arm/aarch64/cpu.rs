@@ -12655,9 +12655,29 @@ impl AArch64Cpu {
                 continue;
             }
             let res = if to_int {
-                sve_fcvtz(fp_sz, int_sz, signed, read_elem(&operand, off, fp_sz))
+                let x = read_elem(&operand, off, fp_sz);
+                let res = sve_fcvtz(fp_sz, int_sz, signed, x);
+                self.fpsr |=
+                    fp_to_int_status(sve_fp_to_f64(fp_sz, x), signed, (int_sz * 8) as u32);
+                res
             } else {
-                sve_cvtf(int_sz, fp_sz, signed, read_elem(&operand, off, int_sz))
+                let x = read_elem(&operand, off, int_sz);
+                let res = sve_cvtf(int_sz, fp_sz, signed, x);
+                let raw_int = if signed {
+                    match int_sz {
+                        2 => (x as u16 as i16 as i128).unsigned_abs(),
+                        4 => (x as u32 as i32 as i128).unsigned_abs(),
+                        _ => (x as i64 as i128).unsigned_abs(),
+                    }
+                } else {
+                    match int_sz {
+                        2 => (x as u16) as u128,
+                        4 => (x as u32) as u128,
+                        _ => x as u128,
+                    }
+                };
+                self.fpsr |= fp_status_int_to_fp_scaled(raw_int, fp_sz, res);
+                res
             };
             write_elem(&mut dst, off, cont, res);
         }
